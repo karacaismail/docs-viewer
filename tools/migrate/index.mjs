@@ -4,7 +4,7 @@ import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync } from 
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { CATEGORIES, PREFIX_TO_CATEGORY, STEM_OVERRIDES, PRODUCT_GROUPS, PRODUCT_GROUP_MAP } from "./categories.mjs";
-import { parseInline, slugify, flattenSegments } from "./inline.mjs";
+import { parseInline, slugify, flattenSegments, foldTr } from "./inline.mjs";
 import { detailToBlocks } from "./detail.mjs";
 import { createTransformer } from "./blocks.mjs";
 
@@ -15,6 +15,13 @@ const SKIP = new Set(["ARCHITECTURE-5.json"]); // 07A §5: spec, içerik değil
 
 const warnings = [];
 const fileWarn = (file) => (msg) => warnings.push(`${file}: ${msg}`);
+
+// 12A Parti 1 — Eğitim Yolu editöryel zenginleştirme overlay'i
+const ENRICHMENT = JSON.parse(
+  readFileSync(join(dirname(fileURLToPath(import.meta.url)), "glossary-enrichment.json"), "utf8"),
+);
+const enrichedCount = { n: 0 };
+const enrichmentMisses = new Set();
 
 function readClusters() {
   const files = readdirSync(SRC_DIR).filter((f) => f.endsWith(".json") && !SKIP.has(f)).sort();
@@ -87,6 +94,7 @@ function transformCluster({ file, stem, data }) {
   };
 
   // Glossary kayıtları — termId = term-<slug(term)>-<stem> (07A §4)
+  // longExplanation iki paragraf: kavram (meaning) ¶ gerekçe (why+abbrev) — 12A Done Definition
   const seen = new Set();
   const glossary = terms.map((t) => {
     let tid = `term-${slugify(t.term)}-${stem}`;
@@ -96,11 +104,25 @@ function transformCluster({ file, stem, data }) {
       t.abbrev_of ? `Açılımı: ${t.abbrev_of}.` : "",
       t.abbrev_tr ? `Türkçesi: ${t.abbrev_tr}.` : "",
     ].filter(Boolean).join(" ");
-    return {
+    const rec = {
       id: tid, pageId, label: t.term,
       shortExplanation: t.meaning ?? "",
-      longExplanation: [t.why ?? "", abbrev].filter(Boolean).join(" "),
+      longExplanation: [t.meaning ?? "", [t.why ?? "", abbrev].filter(Boolean).join(" ")]
+        .filter(Boolean).join("\n\n"),
     };
+    // 12A Parti 1 overlay'i — yalnız Eğitim Yolu (egitim) kategorisi
+    if (categoryId === "egitim") {
+      const e = ENRICHMENT.byLabel[foldTr(t.term)];
+      if (e) {
+        if (e.a) rec.realWorldAnalogy = e.a;
+        if (e.u?.length) rec.useCases = e.u;
+        if (e.l) rec.longExplanation += `\n\n${e.l}`;
+        enrichedCount.n += 1;
+      } else {
+        enrichmentMisses.add(t.term);
+      }
+    }
+    return rec;
   });
 
   return { page, glossary, images: ctx.images, oldId: data.id, icon: data.icon ?? "ph-file", order: data.order ?? 0 };
@@ -248,6 +270,9 @@ const report = [
   ...Object.entries(catCount).sort().map(([k, v]) => `- ${k}: ${v}`),
   "", `## Kayıp görsel varlıklar (${missingAssets.length}) — 07B §1 fallback aktif`,
   ...missingAssets.slice(0, 100).map((s) => `- ${s}`),
+  "", "## Glossary zenginleştirme (12A Parti 1 — Eğitim Yolu)",
+  `Zenginleştirilen kayıt: ${enrichedCount.n} | Overlay'de karşılığı olmayan label: ${enrichmentMisses.size}`,
+  ...[...enrichmentMisses].map((l) => `- eşleşmedi: ${l}`),
   "", `## Uyarılar (${warnings.length})`,
   ...[...new Set(warnings)].map((w) => `- ${w}`),
 ].join("\n");

@@ -33,6 +33,11 @@ export function parseInline(text) {
   return out.length ? out : [{ type: "text", text }];
 }
 
+// 13A fold'unun build-time karşılığı — enrichment anahtarı eşlemesi için
+export function foldTr(s) {
+  return String(s).replace(/[İIı]/g, "i").toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
+}
+
 export function flattenSegments(segments) {
   return (segments ?? []).map((s) => s.text ?? "").join("");
 }

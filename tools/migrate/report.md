@@ -103,6 +103,9 @@ Glossary kaydı: 679 | Search document: 3343
 - /assets/sus-actions.svg
 - /assets/sus-durable.svg
 
+## Glossary zenginleştirme (12A Parti 1 — Eğitim Yolu)
+Zenginleştirilen kayıt: 214 | Overlay'de karşılığı olmayan label: 0
+
 ## Uyarılar (15)
 - 00-overview.json: granularity-legend elle dönüşüm bekliyor (07A §3)
 - 04-kernel-schema.json: table özelliği düşürüldü: filterable/stateColumn
