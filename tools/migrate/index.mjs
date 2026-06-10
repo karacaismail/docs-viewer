@@ -7,6 +7,7 @@ import { CATEGORIES, PREFIX_TO_CATEGORY, STEM_OVERRIDES, PRODUCT_GROUPS, PRODUCT
 import { parseInline, slugify, flattenSegments, foldTr } from "./inline.mjs";
 import { detailToBlocks } from "./detail.mjs";
 import { createTransformer } from "./blocks.mjs";
+import { bindTermsInPage } from "./bindTerms.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const SRC_DIR = join(ROOT, "content-source");
@@ -125,7 +126,11 @@ function transformCluster({ file, stem, data }) {
     return rec;
   });
 
-  return { page, glossary, images: ctx.images, oldId: data.id, icon: data.icon ?? "ph-file", order: data.order ?? 0 };
+  // Parti 1-B: aynı-page birebir bağlama — yalnız egitim (12A §3a)
+  let boundTerms = 0;
+  if (categoryId === "egitim") boundTerms = bindTermsInPage(page, glossary);
+
+  return { page, glossary, boundTerms, images: ctx.images, oldId: data.id, icon: data.icon ?? "ph-file", order: data.order ?? 0 };
 }
 
 function buildNavigation(results) {
@@ -272,6 +277,7 @@ const report = [
   ...missingAssets.slice(0, 100).map((s) => `- ${s}`),
   "", "## Glossary zenginleştirme (12A Parti 1 — Eğitim Yolu)",
   `Zenginleştirilen kayıt: ${enrichedCount.n} | Overlay'de karşılığı olmayan label: ${enrichmentMisses.size}`,
+  `Segment bağlama (Parti 1-B): ${results.reduce((a, r) => a + (r.boundTerms ?? 0), 0)} bağlı terim | bağlı page: ${results.filter((r) => (r.boundTerms ?? 0) > 0).length}/${results.filter((r) => r.page.categoryId === "egitim").length} (egitim)`,
   ...[...enrichmentMisses].map((l) => `- eşleşmedi: ${l}`),
   "", `## Uyarılar (${warnings.length})`,
   ...[...new Set(warnings)].map((w) => `- ${w}`),

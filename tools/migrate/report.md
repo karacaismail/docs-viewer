@@ -105,6 +105,7 @@ Glossary kaydı: 679 | Search document: 3343
 
 ## Glossary zenginleştirme (12A Parti 1 — Eğitim Yolu)
 Zenginleştirilen kayıt: 214 | Overlay'de karşılığı olmayan label: 0
+Segment bağlama (Parti 1-B): 70 bağlı terim | bağlı page: 22/28 (egitim)
 
 ## Uyarılar (15)
 - 00-overview.json: granularity-legend elle dönüşüm bekliyor (07A §3)

@@ -47,7 +47,7 @@ Partiler yayını bloklamaz: glossary çekirdeği ilk yayında tam mevcuttur; ze
 
 Sapma kaydı: §2-A "kaynaktaki `enrich.terms`" yerine **overlay dosyası** kullanıldı — 28 kaynak dosyaya dağılmak yerine editöryel katman tek dosyada diff'lenebilir kalır ve kaynak clusters bozulmaz; migration overlay'i `foldTurkish(label)` anahtarıyla yalnız `egitim` kategorisine uygular. Bu karar ADR adayıdır ve 15 §3 buna göre güncellenmiştir.
 
-**Açık kalan:** Parti 1'in B akışı (paragraph içinde ilk-geçiş `term` segment bağlama) yapılmadı — terimler şimdilik sayfa üstü chip + panel ile erişiliyor. Parti 2–6 başlamadı.
+**Parti 1-B durumu:** segment bağlama uygulandı — ikinci sapma kaydıyla. §2-B'nin "otomatik yapılmaz" kuralının gerekçesi yanlış bağlam riskiydi; **aynı page'in kendi glossary kaydına, birebir kelime eşleşmesiyle** bağlama bu riski yapısal olarak taşımaz (kayıt zaten o page'in bağlamıdır). Bu daraltılmış kapsam migration'da otomatize edildi (`tools/migrate/bindTerms.mjs`): yalnız paragraph block'ları, page başına terim başına ilk geçiş, ≥3 karakter label, uzun label önceliği; cross-page ve fuzzy bağlama yasak kalır. Ölçüm: **70 bağlı terim, 22/28 egitim page'i** (kalan 6 page'de label'lar paragraph metninde birebir geçmiyor — definitionList/callout içinde yaşıyorlar; oraya bağlama §2-B kapsamı dışıdır). Doğrulama: `tests/bindTerms.test.ts` (ilk-geçiş, referans bütünlüğü, cross-page yasağı, kategori kapsamı) + `e2e/viewer.spec.ts` ikili kontrol testi. Terimler ayrıca sayfa üstü chip'lerle erişilebilir kalır. Parti 2–6 başlamadı.
 
 ## 4. Kayıt Başına Bitiş Tanımı (Done Definition)
 
