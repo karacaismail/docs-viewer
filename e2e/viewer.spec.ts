@@ -45,7 +45,13 @@ test.describe("klavye akışı (kabul #7, 13 §Overlay)", () => {
     await expect(input).toBeFocused();
     await input.fill("outbox");
     await expect(page.getByRole("option").first()).toBeVisible();
-    await page.keyboard.press("ArrowDown");
+    // Glossary sonuçları tasarım gereği hash taşımaz (13 §Overlay 4);
+    // block sonucuna inene kadar ok ile gez — klavye sözleşmesinin kendisi de böylece test edilir
+    for (let i = 0; i < 10; i += 1) {
+      const active = page.locator('[role="option"][aria-selected="true"]');
+      if ((await active.getAttribute("data-kind")) === "block") break;
+      await page.keyboard.press("ArrowDown");
+    }
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/#block-/);
     const hash = new URL(page.url()).hash.slice(1);

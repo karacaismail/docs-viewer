@@ -49,11 +49,13 @@ export function ContentArea() {
       {page.summary && <p className="lead">{page.summary}</p>}
 
       {terms.length > 0 && (
-        <div className="meta-row" role="list" aria-label="Bu sayfadaki terimler">
+        <ul className="meta-row" aria-label="Bu sayfadaki terimler" style={{ listStyle: "none", padding: 0, margin: "0 0 var(--space-default)" }}>
           {terms.map((t) => (
-            <GlossaryTermChip key={t.id} term={t} />
+            <li key={t.id}>
+              <GlossaryTermChip term={t} />
+            </li>
           ))}
-        </div>
+        </ul>
       )}
 
       <ContentRenderer blocks={page.blocks} />

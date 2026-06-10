@@ -109,6 +109,7 @@ export function SearchOverlay() {
                 key={r.id}
                 id={`sr-${i}`}
                 role="option"
+                data-kind={r.kind}
                 aria-selected={i === sel}
                 className="search-result"
                 onMouseEnter={() => setSel(i)}
