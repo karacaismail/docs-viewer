@@ -25,7 +25,7 @@ Bu set, `mimari/` klasöründeki mevcut içeriğin (≈198 cluster JSON + mimari
 | 10 | `10-uretim-05-navigation.md` | Navigation bileşenleri üretim yönergesi | Faz 5 |
 | 11 | `11-uretim-06-content-renderer.md` | Content renderer ve block bileşenleri yönergesi | Faz 6 |
 | 12 | `12-uretim-07-glossary.md` | Glossary, tooltip ve explanation panel yönergesi | Faz 7 |
-| 12A | `12A-glossary-editoryel-plani.md` | Editöryel plan: 613 otomatik kayıt envanteri, 6 parti öncelik sırası, bitiş tanımı, efor tahmini (12'nin bağlayıcı eki) | Faz 7 |
+| 12A | `12A-glossary-editoryel-plani.md` | Editöryel plan: 679 otomatik kayıt envanteri + uygulama durumu (§3a), 6 parti öncelik sırası, bitiş tanımı, efor tahmini (12'nin bağlayıcı eki) | Faz 7 |
 | 13 | `13-uretim-08-search.md` | MiniSearch tabanlı arama yönergesi | Faz 8 |
 | 13A | `13A-turkce-arama-normalizasyonu.md` | İ/I lowercase tuzağı + diacritic fold: `processTerm` sözleşmesi, gerçek veri doğrulamasıyla (13'ün bağlayıcı eki) | Faz 8 |
 | 14 | `14-uretim-09-a11y-ve-kabul.md` | Accessibility sözleşmesi ve kabul kriterleri | Faz 9 |

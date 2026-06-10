@@ -72,7 +72,7 @@ Kritik bulgu: dönüşüm "serbest metin → block" değil, büyük ölçüde **
 | `enrich.lesson` | 197 | `definitionList` block'u ("Bu konu 7 soruda") | Sabit anahtar seti: `ne, nicin, nasil, nerede, ne_zaman, kim, analoji` (+16 dosyada `frontend`, `backend`). Anahtar → Türkçe soru etiketi (term), değer → definition. `analoji` ayrıca glossary `realWorldAnalogy` adayıdır |
 | `enrich.stories` | 139 | `useCase` block'ları | Tek tip şekil: `{persona, context, outcome}` → §3'teki user-stories kuralıyla aynı |
 
-Bu tablo `07-uretim-02-data-migration.md`'deki bir kuralı revize eder: glossary "tamamen editöryel" değildir. **`enrich.terms` + terms block verisi otomatik taşınır — ölçülmüş hacim 613 bağlamsal kayıt** (391 benzersiz label, 29'u çok bağlamlı); editöryel akışlar ve parti planı `12A-glossary-editoryel-plani.md`'dedir. Otomatik label-eşleme yine yapılmaz (yanlış bağlam riski); script yalnızca aynı page içinde birebir kelime eşleşmesini aday olarak raporlar.
+Bu tablo `07-uretim-02-data-migration.md`'deki bir kuralı revize eder: glossary "tamamen editöryel" değildir. **`enrich.terms` + terms block verisi otomatik taşınır — migration ölçümü 679 bağlamsal kayıt** (item-level enrich dahil; 391 benzersiz label, 29'u çok bağlamlı); editöryel akışlar ve parti planı `12A-glossary-editoryel-plani.md`'dedir. Otomatik label-eşleme yine yapılmaz (yanlış bağlam riski); script yalnızca aynı page içinde birebir kelime eşleşmesini aday olarak raporlar.
 
 ## 5. İstisna Dosyalar
 

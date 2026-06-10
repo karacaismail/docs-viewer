@@ -6,7 +6,7 @@ Bu doküman, glossary iş yükünü ölçülebilir hale getirir: ne otomatik gel
 
 | Metrik | Değer |
 |---|---|
-| Otomatik taşınacak term kaydı (`enrich.terms` + terms block) | **613** |
+| Otomatik taşınacak term kaydı (`enrich.terms` + terms block) | **679** (migration ölçümü; item-level enrich dahil) |
 | Benzersiz label | 391 |
 | Birden çok page'de geçen label (bağlamsal varyant) | 29 — bağlamsal glossary tasarımını doğrular (`component` benzeri: aynı kelime, farklı bağlam) |
 | Terms'süz dosya | 1 (`70-edu-overview` — müfredat girişi, terim yükü bilinçli düşük) |
@@ -39,7 +39,15 @@ Sıralama ilkesi `03 §1` ile aynıdır: kullanıcı nereden okumaya başlıyors
 | 5 | Layer 1 + Stack + DX + Build + FE + LandX | ~110 | A seçmeli + B tam |
 | 6 | Ürün Modülleri (`s-*`, 64 page) | 102 | Yalnızca B + A'sız yayın kabul — kayıtlar tooltip seviyesinde yeterli; panel inceliği referans içerikte tolere edilir |
 
-Partiler yayını bloklamaz: glossary çekirdeği (613 otomatik kayıt) ilk yayında tam mevcuttur; zenginleştirme yayın sonrası da sürebilir. Yalnızca Parti 1, ilk yayının kabul kapsamındadır — eğitim deneyimi inceltilmemiş panelle çıkmaz.
+Partiler yayını bloklamaz: glossary çekirdeği ilk yayında tam mevcuttur; zenginleştirme yayın sonrası da sürebilir. Yalnızca Parti 1, ilk yayının kabul kapsamındadır — eğitim deneyimi inceltilmemiş panelle çıkmaz.
+
+## 3a. Uygulama Durumu (10 Haziran 2026)
+
+Ölçülen otomatik hacim 679 kayıttır (613 tahmini, block-level terms dahil edilince büyüdü). **Parti 1'in A akışı tamamlandı:** 199 benzersiz Eğitim Yolu terimi için elle yazılmış `realWorldAnalogy` + `useCases` overlay'i (`tools/migrate/glossary-enrichment.json`) ve tüm kayıtlarda iki paragraflı `longExplanation` (kavram ¶ gerekçe; çekirdek terimlerde üçüncü bağlam paragrafı). Kapsama: **214/215 (%99)**, mutabakat raporunda metrik olarak izleniyor. `caseStudies` bilinçli boş bırakıldı (§2-A kuralı: page'deki useCase block'larıyla çiftlenmez).
+
+Sapma kaydı: §2-A "kaynaktaki `enrich.terms`" yerine **overlay dosyası** kullanıldı — 28 kaynak dosyaya dağılmak yerine editöryel katman tek dosyada diff'lenebilir kalır ve kaynak clusters bozulmaz; migration overlay'i `foldTurkish(label)` anahtarıyla yalnız `egitim` kategorisine uygular. Bu karar ADR adayıdır ve 15 §3 buna göre güncellenmiştir.
+
+**Açık kalan:** Parti 1'in B akışı (paragraph içinde ilk-geçiş `term` segment bağlama) yapılmadı — terimler şimdilik sayfa üstü chip + panel ile erişiliyor. Parti 2–6 başlamadı.
 
 ## 4. Kayıt Başına Bitiş Tanımı (Done Definition)
 

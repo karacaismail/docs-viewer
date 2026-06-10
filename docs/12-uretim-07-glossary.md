@@ -26,7 +26,7 @@ src/components/glossary/
 
 ## İçerik Üretim Notu
 
-Glossary'nin çekirdeği migration'dan otomatik gelir: 613 kayıt (`enrich.terms` + terms block'ları) bağlamsal glossary kayıtlarına dönüştürülür (`07A-alan-esleme-tablosu.md` §4). Editöryel iş üç akıştır — zenginleştirme, segment bağlama, yeni terim — ve parti sırası, hacim, bitiş tanımı ve efor tahminiyle birlikte `12A-glossary-editoryel-plani.md`'de tanımlıdır; o doküman bu yönergenin bağlayıcı ekidir. Yazım üslubu `lesson-yazim-rehberi.md` ve dil tonu sözleşmesine uyar: Türkçe cümle, İngilizce jargon korunur, realWorldAnalogy günlük hayattan somut bir karşılık verir.
+Glossary'nin çekirdeği migration'dan otomatik gelir: 679 kayıt (`enrich.terms` + terms block'ları) bağlamsal glossary kayıtlarına dönüştürülür (`07A-alan-esleme-tablosu.md` §4). Editöryel iş üç akıştır — zenginleştirme, segment bağlama, yeni terim — ve parti sırası, hacim, bitiş tanımı ve efor tahminiyle birlikte `12A-glossary-editoryel-plani.md`'de tanımlıdır; o doküman bu yönergenin bağlayıcı ekidir. Yazım üslubu `lesson-yazim-rehberi.md` ve dil tonu sözleşmesine uyar: Türkçe cümle, İngilizce jargon korunur, realWorldAnalogy günlük hayattan somut bir karşılık verir.
 
 ## Kabul Kriterleri
 
