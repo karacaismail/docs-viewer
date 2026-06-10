@@ -29,4 +29,4 @@ src/engine/
 
 ## Kabul Kriterleri
 
-Engine birim testleri (Faz 3 listesi) yeşildir; `src/engine/` içinde React import'u yalnızca registry'nin component tipi referansında vardır; UI dosyalarından engine'e ters bağımlılık yoktur (engine → UI import'u lint kuralıyla yasaklanır).
+Engine birim testleri (Faz 3 listesi) yeşildir; `src/engine/` içinde React import'u yalnızca registry'nin component tipi referansında vardır; UI dosyalarından engine'e ters bağımlılık yoktur. Engine → UI import yasağının zorlama mekanizması iki katmanlıdır: Biome genel lint kapısı + `tests/yasaklar.test.ts` içindeki sınır taraması (engine dosyaları components'ten import edemez; React referansı yalnız `blockRegistry.ts`'te ve yalnız type-only olabilir) — CI'da otomatik koşar.

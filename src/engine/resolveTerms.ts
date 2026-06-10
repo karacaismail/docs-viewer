@@ -1,6 +1,7 @@
 // Bağlamsal glossary çözümü — eşleşme yalnız termId üzerinden (12 §Çözümleme)
-import { glossaryTerms } from "./loadStaticData";
+
 import type { GlossaryTerm } from "../schemas";
+import { glossaryTerms } from "./loadStaticData";
 
 const byId = new Map(glossaryTerms.map((t) => [t.id, t]));
 const byPage = new Map<string, GlossaryTerm[]>();

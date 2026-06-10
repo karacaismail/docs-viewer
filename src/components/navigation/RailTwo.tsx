@@ -1,10 +1,15 @@
 // Rail 2: accordion page listesi; tek gruplu kategoride düz liste (10 §Rail 2-3)
-import { useEffect, useState } from "react";
-import { Link, useRouterState } from "@tanstack/react-router";
+
 import * as Accordion from "@radix-ui/react-accordion";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import type { NavCategory } from "../../schemas";
 
-export function RailTwo({ category, onNavigate, plain }: {
+export function RailTwo({
+  category,
+  onNavigate,
+  plain,
+}: {
   category: NavCategory;
   onNavigate?: () => void;
   plain?: boolean;
@@ -12,7 +17,9 @@ export function RailTwo({ category, onNavigate, plain }: {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const activeSlug = pathname.replace(/^\/docs\//, "");
   const activeGroup = category.groups.find((g) => g.items.some((i) => i.slug === activeSlug))?.id;
-  const [openGroups, setOpenGroups] = useState<string[]>(activeGroup ? [activeGroup] : [category.groups[0]?.id ?? ""]);
+  const [openGroups, setOpenGroups] = useState<string[]>(
+    activeGroup ? [activeGroup] : [category.groups[0]?.id ?? ""],
+  );
 
   // Yeni aktif page kapalı gruptaysa o grup açılır (10 §Rail 2)
   useEffect(() => {

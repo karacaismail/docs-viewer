@@ -1,9 +1,24 @@
 // Open-Closed kayıt noktası — yeni block = yeni bileşen + bir satır (08 §2)
 import { registerBlock } from "../../engine";
-import { HeadingBlock, ParagraphBlock, CalloutBlock, DividerBlock, ListBlock, ImageBlock } from "./blocks/basicBlocks";
-import { DefinitionListBlock, StepListBlock, ChecklistBlock, UseCaseBlock, CaseStudyBlock, CardGridBlock, LessonHeaderBlock } from "./blocks/listBlocks";
-import { TableBlock, ComparisonTableBlock } from "./blocks/TableBlock";
+import {
+  CalloutBlock,
+  DividerBlock,
+  HeadingBlock,
+  ImageBlock,
+  ListBlock,
+  ParagraphBlock,
+} from "./blocks/basicBlocks";
 import { CodeBlock } from "./blocks/CodeBlock";
+import {
+  CardGridBlock,
+  CaseStudyBlock,
+  ChecklistBlock,
+  DefinitionListBlock,
+  LessonHeaderBlock,
+  StepListBlock,
+  UseCaseBlock,
+} from "./blocks/listBlocks";
+import { ComparisonTableBlock, TableBlock } from "./blocks/TableBlock";
 
 export function registerCoreBlocks(): void {
   registerBlock("heading", HeadingBlock);

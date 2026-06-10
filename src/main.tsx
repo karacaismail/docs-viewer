@@ -5,14 +5,14 @@ import "@fontsource/roboto/700.css";
 import "@fontsource/roboto-mono/400.css";
 import "./styles/tokens.css";
 import "./styles/globals.css";
+import { RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { RouterProvider } from "@tanstack/react-router";
 import { router } from "./app/router";
 import { registerCoreBlocks } from "./components/content/registerBlocks";
+import glossaryJson from "./data/glossary.json";
 import navigationJson from "./data/navigation.json";
 import pagesIndexJson from "./data/pages-index.json";
-import glossaryJson from "./data/glossary.json";
 
 registerCoreBlocks();
 

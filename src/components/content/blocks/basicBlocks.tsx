@@ -5,7 +5,7 @@ import { SegmentRenderer } from "../SegmentRenderer";
 type B<T extends Block["type"]> = { block: Extract<Block, { type: T }> };
 
 export function HeadingBlock({ block }: B<"heading">) {
-  const Tag = (`h${block.level}`) as "h2" | "h3" | "h4";
+  const Tag = `h${block.level}` as "h2" | "h3" | "h4";
   return <Tag id={block.id}>{block.text}</Tag>;
 }
 
@@ -18,8 +18,11 @@ export function ParagraphBlock({ block }: B<"paragraph">) {
 }
 
 const CALLOUT_ICON: Record<string, string> = {
-  info: "ph-info", tip: "ph-lightbulb", warning: "ph-warning",
-  danger: "ph-warning-octagon", tr: "ph-flag",
+  info: "ph-info",
+  tip: "ph-lightbulb",
+  warning: "ph-warning",
+  danger: "ph-warning-octagon",
+  tr: "ph-flag",
 };
 
 export function CalloutBlock({ block }: B<"callout">) {
@@ -45,7 +48,9 @@ export function ListBlock({ block }: B<"list">) {
   return (
     <Tag id={block.id}>
       {block.items.map((segs, i) => (
-        <li key={i}><SegmentRenderer segments={segs} /></li>
+        <li key={i}>
+          <SegmentRenderer segments={segs} />
+        </li>
       ))}
     </Tag>
   );

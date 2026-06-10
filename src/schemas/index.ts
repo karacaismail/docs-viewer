@@ -18,7 +18,17 @@ const segments = z.array(SegmentSchema);
 
 // ---- Block'lar (04 §3 — 16 type) ----
 export const CODE_LANGUAGES = [
-  "python", "sql", "yaml", "typescript", "javascript", "json", "css", "html", "bash", "http", "text",
+  "python",
+  "sql",
+  "yaml",
+  "typescript",
+  "javascript",
+  "json",
+  "css",
+  "html",
+  "bash",
+  "http",
+  "text",
 ] as const;
 
 const base = z.object({ id: id("block-") });
@@ -62,12 +72,14 @@ export const BlockSchema = z.discriminatedUnion("type", [
   base.extend({
     type: z.literal("cardGrid"),
     columns: z.number().int().positive().optional(),
-    cards: z.array(z.object({
-      icon: z.string().optional(),
-      title: z.string(),
-      tone: z.string().optional(),
-      segments,
-    })),
+    cards: z.array(
+      z.object({
+        icon: z.string().optional(),
+        title: z.string(),
+        tone: z.string().optional(),
+        segments,
+      }),
+    ),
   }),
   base.extend({
     type: z.literal("comparisonTable"),
@@ -112,11 +124,13 @@ export const PageSchema = z.object({
   summary: z.string(),
   categoryId: z.string(),
   tags: z.array(z.string()).optional(),
-  meta: z.object({
-    granularity: z.string().optional(),
-    state: z.string().optional(),
-    badge: z.string().optional(),
-  }).optional(),
+  meta: z
+    .object({
+      granularity: z.string().optional(),
+      state: z.string().optional(),
+      badge: z.string().optional(),
+    })
+    .optional(),
   related: z.array(id("page-")).optional(),
   blocks: z.array(BlockSchema),
 });
@@ -125,24 +139,30 @@ export type Page = z.infer<typeof PageSchema>;
 // ---- Navigation (03 §5) ----
 export const NavigationSchema = z.object({
   schemaVersion: z.string(),
-  categories: z.array(z.object({
-    id: z.string(),
-    label: z.string(),
-    icon: z.string(),
-    order: z.number(),
-    groups: z.array(z.object({
+  categories: z.array(
+    z.object({
       id: z.string(),
       label: z.string(),
+      icon: z.string(),
       order: z.number(),
-      items: z.array(z.object({
-        pageId: id("page-"),
-        slug: z.string(),
-        title: z.string(),
-        icon: z.string().optional(),
-        order: z.number(),
-      })),
-    })),
-  })),
+      groups: z.array(
+        z.object({
+          id: z.string(),
+          label: z.string(),
+          order: z.number(),
+          items: z.array(
+            z.object({
+              pageId: id("page-"),
+              slug: z.string(),
+              title: z.string(),
+              icon: z.string().optional(),
+              order: z.number(),
+            }),
+          ),
+        }),
+      ),
+    }),
+  ),
 });
 export type NavigationFile = z.infer<typeof NavigationSchema>;
 export type NavCategory = NavigationFile["categories"][number];
@@ -187,5 +207,8 @@ export const SearchIndexSchema = z.object({ schemaVersion: z.string(), documents
 // Lazy mimari (14 #15): eager index yalnız metadata taşır; gövde pages/<stem>.json'da
 export const PageIndexEntrySchema = PageSchema.omit({ blocks: true, tags: true });
 export type PageIndexEntry = z.infer<typeof PageIndexEntrySchema>;
-export const PagesIndexFileSchema = z.object({ schemaVersion: z.string(), pages: z.array(PageIndexEntrySchema) });
+export const PagesIndexFileSchema = z.object({
+  schemaVersion: z.string(),
+  pages: z.array(PageIndexEntrySchema),
+});
 export const PageFileSchema = z.object({ schemaVersion: z.string(), page: PageSchema });

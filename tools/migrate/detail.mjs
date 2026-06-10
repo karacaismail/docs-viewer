@@ -4,11 +4,27 @@
 import { parseInline } from "./inline.mjs";
 
 const LANG_NORM = {
-  sh: "bash", shell: "bash", js: "javascript", ts: "typescript",
-  jsonc: "json", openfga: "text", txt: "text", "": "text",
+  sh: "bash",
+  shell: "bash",
+  js: "javascript",
+  ts: "typescript",
+  jsonc: "json",
+  openfga: "text",
+  txt: "text",
+  "": "text",
 };
 const KNOWN_LANGS = new Set([
-  "python", "sql", "yaml", "typescript", "javascript", "json", "css", "html", "bash", "http", "text",
+  "python",
+  "sql",
+  "yaml",
+  "typescript",
+  "javascript",
+  "json",
+  "css",
+  "html",
+  "bash",
+  "http",
+  "text",
 ]);
 
 export function normalizeLang(lang, warn) {
@@ -19,7 +35,11 @@ export function normalizeLang(lang, warn) {
 }
 
 function parseMdTable(lines, nextId) {
-  const cells = (line) => line.replace(/^\||\|$/g, "").split("|").map((c) => c.trim());
+  const cells = (line) =>
+    line
+      .replace(/^\||\|$/g, "")
+      .split("|")
+      .map((c) => c.trim());
   const headers = cells(lines[0]);
   const rows = [];
   for (const line of lines.slice(1)) {
@@ -50,18 +70,25 @@ function textChunkToBlocks(chunk, nextId, warn) {
     } else if (/^\|.*\|\s*$/.test(line)) {
       flushPara();
       const tbl = [];
-      while (i < lines.length && /^\|.*\|\s*$/.test(lines[i])) { tbl.push(lines[i]); i += 1; }
+      while (i < lines.length && /^\|.*\|\s*$/.test(lines[i])) {
+        tbl.push(lines[i]);
+        i += 1;
+      }
       blocks.push(parseMdTable(tbl, nextId));
     } else if (/^\d+\.\s/.test(line)) {
       flushPara();
       const steps = [];
-      while (i < lines.length && (/^\d+\.\s/.test(lines[i]) || (/^\s{2,}\S/.test(lines[i]) && steps.length))) {
+      while (
+        i < lines.length &&
+        (/^\d+\.\s/.test(lines[i]) || (/^\s{2,}\S/.test(lines[i]) && steps.length))
+      ) {
         if (/^\d+\.\s/.test(lines[i])) steps.push(lines[i].replace(/^\d+\.\s*/, ""));
-        else steps[steps.length - 1] += " " + lines[i].trim(); // girintili devam → düzleştir (07B §1)
+        else steps[steps.length - 1] += ` ${lines[i].trim()}`; // girintili devam → düzleştir (07B §1)
         i += 1;
       }
       blocks.push({
-        id: nextId("steps"), type: "stepList",
+        id: nextId("steps"),
+        type: "stepList",
         steps: steps.map((s) => ({ title: "", segments: parseInline(s) })),
       });
     } else if (/^[-*]\s/.test(line)) {
@@ -69,10 +96,18 @@ function textChunkToBlocks(chunk, nextId, warn) {
       const items = [];
       while (i < lines.length && (/^[-*]\s/.test(lines[i]) || /^\s{2,}[-*\S]/.test(lines[i]))) {
         if (/^[-*]\s/.test(lines[i])) items.push(lines[i].replace(/^[-*]\s*/, ""));
-        else if (items.length) { items[items.length - 1] += " — " + lines[i].trim().replace(/^[-*]\s*/, ""); warn?.("girintili liste düzleştirildi"); }
+        else if (items.length) {
+          items[items.length - 1] += ` — ${lines[i].trim().replace(/^[-*]\s*/, "")}`;
+          warn?.("girintili liste düzleştirildi");
+        }
         i += 1;
       }
-      blocks.push({ id: nextId("list"), type: "list", ordered: false, items: items.map((s) => parseInline(s)) });
+      blocks.push({
+        id: nextId("list"),
+        type: "list",
+        ordered: false,
+        items: items.map((s) => parseInline(s)),
+      });
     } else if (line.trim() === "") {
       flushPara();
       i += 1;
@@ -91,13 +126,16 @@ export function detailToBlocks(text, nextId, warn) {
   if (typeof text !== "string" || !text.trim()) return [];
   const blocks = [];
   let last = 0;
-  let m;
   FENCE_RE.lastIndex = 0;
-  while ((m = FENCE_RE.exec(text)) !== null) {
+  for (;;) {
+    const m = FENCE_RE.exec(text);
+    if (m === null) break;
     if (m.index > last) blocks.push(...textChunkToBlocks(text.slice(last, m.index), nextId, warn));
     blocks.push({
-      id: nextId("code"), type: "codeBlock",
-      language: normalizeLang(m[1], warn), code: m[2].replace(/\n$/, ""),
+      id: nextId("code"),
+      type: "codeBlock",
+      language: normalizeLang(m[1], warn),
+      code: m[2].replace(/\n$/, ""),
     });
     last = m.index + m[0].length;
   }

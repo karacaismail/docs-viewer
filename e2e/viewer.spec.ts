@@ -1,5 +1,5 @@
 // Kabul kriterleri e2e kanıtları — 14 §2 listesinin otomasyonu
-import { test, expect, type Page } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 
 const FIRST = "/docs/egitim/edu-overview";
 const KERNEL = "/docs/kernel/kernel-authz"; // code block + tablo içeren temsilî sayfa
@@ -75,7 +75,9 @@ test.describe("klavye akışı (kabul #7, 13 §Overlay)", () => {
 test.describe("explanation panel sözleşmesi (kabul #10, 12 §Etkileşim)", () => {
   test.skip(({ viewport }) => (viewport?.width ?? 0) < 900, "desktop akışı");
 
-  test("panel açılır; Escape kapatır; focus tetikleyiciye döner; arka plan scroll kilitlenir", async ({ page }) => {
+  test("panel açılır; Escape kapatır; focus tetikleyiciye döner; arka plan scroll kilitlenir", async ({
+    page,
+  }) => {
     await page.goto(KERNEL);
     const chip = page.locator(".term-chip").first();
     await chip.click();
@@ -119,7 +121,9 @@ test.describe("explanation panel sözleşmesi (kabul #10, 12 §Etkileşim)", () 
     await skip.focus();
     await expect(skip).toBeFocused();
     // Rail 1'deki bir kategoriye klavyeyle gidilebilir
-    const kernelLink = page.getByRole("navigation", { name: "Ana kategoriler" }).getByRole("link", { name: /Kernel/ });
+    const kernelLink = page
+      .getByRole("navigation", { name: "Ana kategoriler" })
+      .getByRole("link", { name: /Kernel/ });
     await kernelLink.focus();
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/\/docs\/kernel\//);

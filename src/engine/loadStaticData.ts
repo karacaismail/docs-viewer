@@ -1,9 +1,10 @@
 // Statik veri yükleme — navigation + pages-index + glossary eager (küçük metadata);
 // page gövdeleri page-başına lazy chunk (14 #15), search-index lazy (13 §Index).
+
+import glossaryJson from "../data/glossary.json";
 import navigationJson from "../data/navigation.json";
 import pagesIndexJson from "../data/pages-index.json";
-import glossaryJson from "../data/glossary.json";
-import type { NavigationFile, Page, PageIndexEntry, GlossaryTerm } from "../schemas";
+import type { GlossaryTerm, NavigationFile, Page, PageIndexEntry } from "../schemas";
 
 export const navigation = navigationJson as unknown as NavigationFile;
 export const pagesIndex = (pagesIndexJson as unknown as { pages: PageIndexEntry[] }).pages;
@@ -29,7 +30,8 @@ let detailCache: Record<string, import("../schemas").GlossaryDetail> | null = nu
 export async function loadTermDetail(termId: string) {
   if (!detailCache) {
     const mod = await import("../data/glossary-detail.json");
-    detailCache = (mod.default as unknown as { details: Record<string, import("../schemas").GlossaryDetail> }).details;
+    detailCache = (mod.default as unknown as { details: Record<string, import("../schemas").GlossaryDetail> })
+      .details;
   }
   return detailCache[termId];
 }

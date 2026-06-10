@@ -1,12 +1,12 @@
-import { useEffect } from "react";
-import { Outlet, useRouterState } from "@tanstack/react-router";
 import * as Dialog from "@radix-ui/react-dialog";
-import { UiStateProvider, useUiState } from "../ui/UiState";
+import { Outlet, useRouterState } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { navigation } from "../../engine";
+import { ExplanationPanel } from "../glossary/ExplanationPanel";
 import { RailOne } from "../navigation/RailOne";
 import { RailTwo } from "../navigation/RailTwo";
 import { SearchOverlay } from "../search/SearchOverlay";
-import { ExplanationPanel } from "../glossary/ExplanationPanel";
-import { navigation } from "../../engine";
+import { UiStateProvider, useUiState } from "../ui/UiState";
 
 export function AppShell() {
   return (
@@ -41,7 +41,9 @@ function Shell() {
 
   return (
     <div className="shell">
-      <a className="skip-link" href="#icerik">İçeriğe atla</a>
+      <a className="skip-link" href="#icerik">
+        İçeriğe atla
+      </a>
 
       {/* Desktop: sabit iki rail */}
       <div className="shell__rails">
@@ -51,15 +53,25 @@ function Shell() {
 
       <div style={{ flex: 1, minWidth: 0 }}>
         {/* Mobile üst bar */}
-        <header className="topbar" role="banner">
-          <button className="iconbtn" aria-label="Kategoriler" onClick={() => ui.open("mobileNav")}>
+        <header className="topbar">
+          <button
+            type="button"
+            className="iconbtn"
+            aria-label="Kategoriler"
+            onClick={() => ui.open("mobileNav")}
+          >
             <i className="ph ph-list" aria-hidden />
           </button>
           <span className="topbar__title">{category?.label ?? "Dokümantasyon"}</span>
-          <button className="iconbtn" aria-label="Sayfa listesi" onClick={() => ui.open("mobileToc")}>
+          <button
+            type="button"
+            className="iconbtn"
+            aria-label="Sayfa listesi"
+            onClick={() => ui.open("mobileToc")}
+          >
             <i className="ph ph-tree-view" aria-hidden />
           </button>
-          <button className="iconbtn" aria-label="Ara" onClick={() => ui.open("search")}>
+          <button type="button" className="iconbtn" aria-label="Ara" onClick={() => ui.open("search")}>
             <i className="ph ph-magnifying-glass" aria-hidden />
           </button>
         </header>
@@ -70,24 +82,34 @@ function Shell() {
       </div>
 
       {/* Mobile Rail 1 — sheet */}
-      <Dialog.Root open={ui.layer === "mobileNav"} onOpenChange={(o) => (o ? ui.open("mobileNav") : ui.close())}>
+      <Dialog.Root
+        open={ui.layer === "mobileNav"}
+        onOpenChange={(o) => (o ? ui.open("mobileNav") : ui.close())}
+      >
         <Dialog.Portal>
           <Dialog.Overlay className="overlay-backdrop" />
           <Dialog.Content className="drawer" aria-describedby={undefined}>
             <Dialog.Title>Kategoriler</Dialog.Title>
-            <Dialog.Close className="iconbtn panel__close" aria-label="Kapat"><i className="ph ph-x" aria-hidden /></Dialog.Close>
+            <Dialog.Close className="iconbtn panel__close" aria-label="Kapat">
+              <i className="ph ph-x" aria-hidden />
+            </Dialog.Close>
             <RailOne activeSection={section} onNavigate={ui.close} plain />
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
 
       {/* Mobile Rail 2 — drawer */}
-      <Dialog.Root open={ui.layer === "mobileToc"} onOpenChange={(o) => (o ? ui.open("mobileToc") : ui.close())}>
+      <Dialog.Root
+        open={ui.layer === "mobileToc"}
+        onOpenChange={(o) => (o ? ui.open("mobileToc") : ui.close())}
+      >
         <Dialog.Portal>
           <Dialog.Overlay className="overlay-backdrop" />
           <Dialog.Content className="drawer" aria-describedby={undefined}>
             <Dialog.Title>{category?.label}</Dialog.Title>
-            <Dialog.Close className="iconbtn panel__close" aria-label="Kapat"><i className="ph ph-x" aria-hidden /></Dialog.Close>
+            <Dialog.Close className="iconbtn panel__close" aria-label="Kapat">
+              <i className="ph ph-x" aria-hidden />
+            </Dialog.Close>
             {category && <RailTwo category={category} onNavigate={ui.close} plain />}
           </Dialog.Content>
         </Dialog.Portal>

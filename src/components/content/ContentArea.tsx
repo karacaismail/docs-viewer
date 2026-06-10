@@ -1,10 +1,11 @@
 // Page render: metadata index'ten sync, gövde page-başına lazy chunk'tan (14 #15)
-import { useEffect, useRef, useState } from "react";
+
 import { Link, useParams, useRouterState } from "@tanstack/react-router";
-import { resolvePage, resolvePageById, termsOfPage, loadPageBlocks, scrollToBlockAnchor } from "../../engine";
+import { useEffect, useRef, useState } from "react";
+import { loadPageBlocks, resolvePage, resolvePageById, scrollToBlockAnchor, termsOfPage } from "../../engine";
 import type { Page } from "../../schemas";
-import { ContentRenderer } from "./ContentRenderer";
 import { GlossaryTermChip } from "../glossary/GlossaryTerm";
+import { ContentRenderer } from "./ContentRenderer";
 
 export function ContentArea() {
   const { section, page: pageSlug } = useParams({ from: "/docs/$section/$page" });
@@ -23,12 +24,17 @@ export function ContentArea() {
         if (alive && p) setPage(p);
       });
     }
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [entry]);
 
   useEffect(() => {
     document.title = `${entry?.title ?? "Sayfa bulunamadı"} — Mimari Dokümantasyon`;
-    if (!entry) { h1Ref.current?.focus(); return; }
+    if (!entry) {
+      h1Ref.current?.focus();
+      return;
+    }
     if (!page) return; // anchor/focus, gövde DOM'a girince
     if (hash) {
       requestAnimationFrame(() => scrollToBlockAnchor(hash)); // (10 §Routing 2)
@@ -41,8 +47,13 @@ export function ContentArea() {
   if (!entry) {
     return (
       <div className="notfound">
-        <h1 tabIndex={-1} ref={h1Ref}>Sayfa bulunamadı</h1>
-        <p>“{resolved.kind === "not-found" ? resolved.slug : ""}” adresinde bir doküman yok. Sol menüden devam edebilirsiniz.</p>
+        <h1 tabIndex={-1} ref={h1Ref}>
+          Sayfa bulunamadı
+        </h1>
+        <p>
+          “{resolved.kind === "not-found" ? resolved.slug : ""}” adresinde bir doküman yok. Sol menüden devam
+          edebilirsiniz.
+        </p>
       </div>
     );
   }
@@ -59,11 +70,17 @@ export function ContentArea() {
           {entry.meta?.state && <span className="badge">{entry.meta.state}</span>}
         </div>
       )}
-      <h1 tabIndex={-1} ref={h1Ref}>{entry.title}</h1>
+      <h1 tabIndex={-1} ref={h1Ref}>
+        {entry.title}
+      </h1>
       {entry.summary && <p className="lead">{entry.summary}</p>}
 
       {terms.length > 0 && (
-        <ul className="meta-row" aria-label="Bu sayfadaki terimler" style={{ listStyle: "none", padding: 0, margin: "0 0 var(--space-default)" }}>
+        <ul
+          className="meta-row"
+          aria-label="Bu sayfadaki terimler"
+          style={{ listStyle: "none", padding: 0, margin: "0 0 var(--space-default)" }}
+        >
           {terms.map((t) => (
             <li key={t.id}>
               <GlossaryTermChip term={t} />
@@ -75,7 +92,9 @@ export function ContentArea() {
       {page ? (
         <ContentRenderer blocks={page.blocks} />
       ) : (
-        <p role="status" aria-busy="true" style={{ color: "var(--color-text-muted)" }}>İçerik yükleniyor…</p>
+        <p role="status" aria-busy="true" style={{ color: "var(--color-text-muted)" }}>
+          İçerik yükleniyor…
+        </p>
       )}
 
       {related.length > 0 && (
@@ -85,7 +104,13 @@ export function ContentArea() {
             {related.map((p) => {
               const [s, pg] = p.slug.split("/");
               return (
-                <Link key={p.id} to="/docs/$section/$page" params={{ section: s, page: pg }} className="card" style={{ textDecoration: "none" }}>
+                <Link
+                  key={p.id}
+                  to="/docs/$section/$page"
+                  params={{ section: s, page: pg }}
+                  className="card"
+                  style={{ textDecoration: "none" }}
+                >
                   <div className="card__title">{p.title}</div>
                   <span style={{ color: "var(--color-text-secondary)" }}>{p.summary}</span>
                 </Link>

@@ -18,6 +18,9 @@ export default defineConfig({
   projects: [
     { name: "desktop", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } } },
     // 320px sözleşmesi (01, 09): en dar desteklenen viewport
-    { name: "mobile-320", use: { ...devices["Desktop Chrome"], viewport: { width: 320, height: 740 }, hasTouch: true } },
+    {
+      name: "mobile-320",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 320, height: 740 }, hasTouch: true },
+    },
   ],
 });

@@ -1,10 +1,11 @@
 // Smoke: router + shell + ilk page gerçekten render oluyor (05 §2.5 karşılığı, jsdom)
-import { afterEach, beforeAll, describe, expect, it } from "vitest";
+
+import { createMemoryHistory, createRouter, RouterProvider } from "@tanstack/react-router";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
-import { RouterProvider, createRouter, createMemoryHistory } from "@tanstack/react-router";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import { docRoute, rootRoute } from "../src/app/router";
 import { registerCoreBlocks } from "../src/components/content/registerBlocks";
-import { rootRoute, docRoute } from "../src/app/router";
-import { navigation, pagesIndex, loadPageBlocks } from "../src/engine";
+import { loadPageBlocks, navigation, pagesIndex } from "../src/engine";
 
 beforeAll(() => {
   registerCoreBlocks();

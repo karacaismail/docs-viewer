@@ -1,11 +1,10 @@
 // Slug -> index entry (sync, metadata); gövde loadPageBlocks ile lazy gelir.
 // Bulunamazsa fallback model (08 §4 — UI hata yönetimi yazmaz).
-import { pagesIndex } from "./loadStaticData";
-import type { PageIndexEntry } from "../schemas";
 
-export type ResolvedPage =
-  | { kind: "found"; entry: PageIndexEntry }
-  | { kind: "not-found"; slug: string };
+import type { PageIndexEntry } from "../schemas";
+import { pagesIndex } from "./loadStaticData";
+
+export type ResolvedPage = { kind: "found"; entry: PageIndexEntry } | { kind: "not-found"; slug: string };
 
 const bySlug = new Map(pagesIndex.map((p) => [p.slug, p]));
 const byId = new Map(pagesIndex.map((p) => [p.id, p]));

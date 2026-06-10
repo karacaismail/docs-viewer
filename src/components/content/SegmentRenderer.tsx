@@ -1,8 +1,9 @@
 // Tüm inline içeriğin tek render yolu (11 §Renderer 2) — HTML string yok.
-import { Fragment } from "react";
+
 import { Link } from "@tanstack/react-router";
-import type { Segment } from "../../schemas";
+import { Fragment } from "react";
 import { resolveRef } from "../../engine";
+import type { Segment } from "../../schemas";
 import { GlossaryTermInline } from "../glossary/GlossaryTerm";
 
 export function SegmentRenderer({ segments }: { segments: Segment[] }) {
@@ -34,7 +35,9 @@ function renderSegment(s: Segment) {
       if (!target) return s.text; // çözülemezse düz metin (08 §4)
       const [section, page] = target.slug.split("/");
       return (
-        <Link to="/docs/$section/$page" params={{ section, page }}>{target.title}</Link>
+        <Link to="/docs/$section/$page" params={{ section, page }}>
+          {target.title}
+        </Link>
       );
     }
     case "term":

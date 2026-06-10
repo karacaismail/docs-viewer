@@ -1,9 +1,10 @@
 // Sağdan açılan uzun açıklama paneli — Radix Dialog: focus trap + Escape +
 // kapanışta focus dönüşü + arka plan scroll kilidi (12 §Etkileşim 4).
 // Panel içeriği (longExplanation/analogy/useCases) lazy chunk'tan gelir (14 #15).
-import { useEffect, useState } from "react";
+
 import * as Dialog from "@radix-ui/react-dialog";
-import { resolveTerm, loadTermDetail } from "../../engine";
+import { useEffect, useState } from "react";
+import { loadTermDetail, resolveTerm } from "../../engine";
 import type { GlossaryDetail } from "../../schemas";
 import { useUiState } from "../ui/UiState";
 
@@ -21,11 +22,18 @@ export function ExplanationPanel() {
         if (alive && d) setDetail(d);
       });
     }
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [open, term]);
 
   return (
-    <Dialog.Root open={open} onOpenChange={(o) => { if (!o) ui.close(); }}>
+    <Dialog.Root
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) ui.close();
+      }}
+    >
       <Dialog.Portal>
         <Dialog.Overlay className="overlay-backdrop" />
         <Dialog.Content
@@ -48,7 +56,9 @@ export function ExplanationPanel() {
               <p style={{ color: "var(--color-text-secondary)" }}>{term.shortExplanation}</p>
 
               {!detail && (
-                <p role="status" aria-busy="true" style={{ color: "var(--color-text-muted)" }}>Açıklama yükleniyor…</p>
+                <p role="status" aria-busy="true" style={{ color: "var(--color-text-muted)" }}>
+                  Açıklama yükleniyor…
+                </p>
               )}
 
               {detail && (
@@ -68,7 +78,11 @@ export function ExplanationPanel() {
                   {detail.useCases && detail.useCases.length > 0 && (
                     <section className="panel-section">
                       <h3>Kullanım alanları</h3>
-                      <ul>{detail.useCases.map((u, i) => <li key={i}>{u}</li>)}</ul>
+                      <ul>
+                        {detail.useCases.map((u, i) => (
+                          <li key={i}>{u}</li>
+                        ))}
+                      </ul>
                     </section>
                   )}
 

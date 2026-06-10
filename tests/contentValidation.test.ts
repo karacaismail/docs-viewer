@@ -3,12 +3,18 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { NavigationSchema, PagesIndexFileSchema, PageFileSchema, GlossarySchema, SearchIndexSchema } from "../src/schemas";
-import { validateStaticData } from "../src/engine/validateStaticData";
+import glossary from "../src/data/glossary.json";
 import navigation from "../src/data/navigation.json";
 import pagesIndex from "../src/data/pages-index.json";
-import glossary from "../src/data/glossary.json";
 import searchIndex from "../src/data/search-index.json";
+import { validateStaticData } from "../src/engine/validateStaticData";
+import {
+  GlossarySchema,
+  NavigationSchema,
+  PageFileSchema,
+  PagesIndexFileSchema,
+  SearchIndexSchema,
+} from "../src/schemas";
 
 const PAGES_DIR = "src/data/pages";
 const pageFiles = readdirSync(PAGES_DIR).filter((f) => f.endsWith(".json"));

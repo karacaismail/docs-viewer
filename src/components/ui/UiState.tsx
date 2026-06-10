@@ -1,5 +1,5 @@
 // Üst katman state makinesi — aynı anda en fazla bir katman açık (09 §Davranış 3)
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from "react";
 
 type Layer = "none" | "search" | "panel" | "mobileNav" | "mobileToc";
 

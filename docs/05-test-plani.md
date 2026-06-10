@@ -51,6 +51,6 @@ axe-core taraması kritik ihlal vermez; dark tema kontrast oranları AA eşiğin
 
 ## 4. CI Kapıları
 
-PR birleşmesi için tamamı yeşil olmalıdır. Fiilî zincir (`projector/.github/workflows/deploy.yml`): migrate (içerik üretimi + mutabakat raporu) → `tsc --noEmit` → `vitest run --coverage` (şema + birim + kontrat + içerik doğrulama + coverage eşiği: ≥%80 satır, ≥%75 dal) → production build → kök-base e2e build → `playwright install chromium` → `playwright test` (e2e + axe) → Pages artifact → deploy. Lint kapısı (Biome) henüz kurulu değildir — bilinen açık kalem.
+PR birleşmesi için tamamı yeşil olmalıdır. Fiilî zincir (`projector/.github/workflows/deploy.yml`): `biome ci` (lint + format — anti-stack kararı: ESLint+Prettier yerine Biome) → migrate (içerik üretimi + mutabakat raporu) → `tsc --noEmit` → `vitest run --coverage` (şema + birim + kontrat + içerik doğrulama + coverage eşiği: ≥%80 satır, ≥%75 dal) → production build → kök-base e2e build → `playwright test` (e2e + axe) → `size-limit` (250KB eager JS) → Pages artifact → deploy. Yerel hook'lar lefthook'tadır (husky reddi — anti-stack): pre-commit biome, pre-push vitest.
 
 Deploy hedefi, ADR-0001'in öngördüğü Hetzner yerine kullanıcı kararıyla **GitHub Pages**'tir (public repo); bu sapma ADR-0003 adayıdır. Hetzner atomik rsync hattı (releases/<sha> + current symlink) ve n8n release orkestrasyonu, ileride taşınırsa geçerli şablon olarak bu paragrafta kalır.

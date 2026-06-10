@@ -1,11 +1,12 @@
 // axe-core taraması — kritik/ciddi ihlal sıfır (14 §1.5, kabul #11)
-import { test, expect } from "@playwright/test";
+
 import AxeBuilder from "@axe-core/playwright";
+import { expect, test } from "@playwright/test";
 
 const PAGES = [
-  "/docs/egitim/edu-overview",   // eğitim: checklist + tablo + steps
-  "/docs/kernel/kernel-authz",   // code block + callout yoğun
-  "/docs/genel/overview",        // cardGrid + image fallback + kv
+  "/docs/egitim/edu-overview", // eğitim: checklist + tablo + steps
+  "/docs/kernel/kernel-authz", // code block + callout yoğun
+  "/docs/genel/overview", // cardGrid + image fallback + kv
 ];
 
 test.describe("axe-core a11y taraması", () => {
@@ -15,13 +16,9 @@ test.describe("axe-core a11y taraması", () => {
     test(`kritik/ciddi ihlal yok: ${path}`, async ({ page }) => {
       await page.goto(path);
       await page.getByRole("heading", { level: 1 }).waitFor();
-      const results = await new AxeBuilder({ page })
-        .withTags(["wcag2a", "wcag2aa"])
-        .analyze();
+      const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
       const serious = results.violations.filter((v) => v.impact === "critical" || v.impact === "serious");
-      expect(
-        serious.map((v) => `${v.id}: ${v.help} (${v.nodes.length} node)`),
-      ).toEqual([]);
+      expect(serious.map((v) => `${v.id}: ${v.help} (${v.nodes.length} node)`)).toEqual([]);
     });
   }
 

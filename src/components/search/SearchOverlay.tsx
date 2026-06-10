@@ -1,8 +1,9 @@
 // MiniSearch overlay — lazy index, klavye sözleşmesi, block anchor hedefi (13)
-import { useEffect, useRef, useState } from "react";
+
 import * as Dialog from "@radix-ui/react-dialog";
 import { useNavigate } from "@tanstack/react-router";
 import type MiniSearch from "minisearch";
+import { useEffect, useRef, useState } from "react";
 import { foldTurkish, loadSearchIndex } from "../../engine";
 import type { SearchDoc } from "../../schemas";
 import { useUiState } from "../ui/UiState";
@@ -53,7 +54,10 @@ export function SearchOverlay() {
   useEffect(() => {
     if (!open || !ready) return;
     const t = window.setTimeout(() => {
-      if (!query.trim()) { setResults([]); return; }
+      if (!query.trim()) {
+        setResults([]);
+        return;
+      }
       void getIndex().then((ms) => {
         setResults(ms.search(query).slice(0, 30) as unknown as Result[]);
         setSel(0);
@@ -63,7 +67,7 @@ export function SearchOverlay() {
   }, [query, open, ready]);
 
   useEffect(() => {
-    listRef.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: "nearest" });
+    document.getElementById(`sr-${sel}`)?.scrollIntoView({ block: "nearest" });
   }, [sel]);
 
   const go = (r: Result) => {
@@ -73,9 +77,16 @@ export function SearchOverlay() {
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "ArrowDown") { e.preventDefault(); setSel((s) => Math.min(s + 1, results.length - 1)); }
-    else if (e.key === "ArrowUp") { e.preventDefault(); setSel((s) => Math.max(s - 1, 0)); }
-    else if (e.key === "Enter" && results[sel]) { e.preventDefault(); go(results[sel]); }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSel((s) => Math.min(s + 1, results.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSel((s) => Math.max(s - 1, 0));
+    } else if (e.key === "Enter" && results[sel]) {
+      e.preventDefault();
+      go(results[sel]);
+    }
   };
 
   return (
@@ -83,7 +94,9 @@ export function SearchOverlay() {
       <Dialog.Portal>
         <Dialog.Overlay className="overlay-backdrop" />
         <Dialog.Content className="search-overlay" role="search" aria-describedby={undefined}>
-          <Dialog.Title className="sr-only" style={{ position: "absolute", left: -9999 }}>Dokümanlarda ara</Dialog.Title>
+          <Dialog.Title className="sr-only" style={{ position: "absolute", left: -9999 }}>
+            Dokümanlarda ara
+          </Dialog.Title>
           <input
             className="search-input"
             type="search"
@@ -95,17 +108,21 @@ export function SearchOverlay() {
             aria-expanded={results.length > 0}
             aria-controls="search-results"
             aria-activedescendant={results[sel] ? `sr-${sel}` : undefined}
+            // biome-ignore lint/a11y/noAutofocus: search overlay açılışında odak input'a taşınır — 13 §Overlay 1 sözleşmesi
             autoFocus
           />
           <div className="search-results" id="search-results" role="listbox" ref={listRef}>
             {query.trim() && results.length === 0 && ready && (
-              <div className="search-empty" role="status">Sonuç bulunamadı: “{query}”</div>
+              <div className="search-empty" role="status">
+                Sonuç bulunamadı: “{query}”
+              </div>
             )}
             <span aria-live="polite" style={{ position: "absolute", left: -9999 }}>
               {query.trim() ? `${results.length} sonuç` : ""}
             </span>
             {results.map((r, i) => (
               <button
+                type="button"
                 key={r.id}
                 id={`sr-${i}`}
                 role="option"
@@ -124,7 +141,9 @@ export function SearchOverlay() {
             ))}
           </div>
           <div className="kbd-hint" aria-hidden>
-            <span>↑↓ gezin</span><span>Enter aç</span><span>Esc kapat</span>
+            <span>↑↓ gezin</span>
+            <span>Enter aç</span>
+            <span>Esc kapat</span>
           </div>
         </Dialog.Content>
       </Dialog.Portal>

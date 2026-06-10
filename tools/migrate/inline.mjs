@@ -1,15 +1,31 @@
 // Inline segment parser — 07A §3 (paragraph), 07B §1-2 (link, ref)
 // Markdown runtime'a taşınmaz; tüm parse build-time'dadır.
 
-const TR_MAP = { ı: "i", İ: "i", I: "i", ş: "s", Ş: "s", ğ: "g", Ğ: "g", ü: "u", Ü: "u", ö: "o", Ö: "o", ç: "c", Ç: "c" };
+const TR_MAP = {
+  ı: "i",
+  İ: "i",
+  I: "i",
+  ş: "s",
+  Ş: "s",
+  ğ: "g",
+  Ğ: "g",
+  ü: "u",
+  Ü: "u",
+  ö: "o",
+  Ö: "o",
+  ç: "c",
+  Ç: "c",
+};
 
 export function slugify(s) {
-  return String(s)
-    .replace(/[ıİIşŞğĞüÜöÖçÇ]/g, (c) => TR_MAP[c] ?? c)
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 64) || "x";
+  return (
+    String(s)
+      .replace(/[ıİIşŞğĞüÜöÖçÇ]/g, (c) => TR_MAP[c] ?? c)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 64) || "x"
+  );
 }
 
 // **bold** | `code` | [text](url) | {{ref:stem}} → segment dizisi
@@ -19,9 +35,10 @@ export function parseInline(text) {
   const out = [];
   if (typeof text !== "string" || text.length === 0) return out;
   let last = 0;
-  let m;
   INLINE_RE.lastIndex = 0;
-  while ((m = INLINE_RE.exec(text)) !== null) {
+  for (;;) {
+    const m = INLINE_RE.exec(text);
+    if (m === null) break;
     if (m.index > last) out.push({ type: "text", text: text.slice(last, m.index) });
     if (m[1] !== undefined) out.push({ type: "strong", text: m[1] });
     else if (m[2] !== undefined) out.push({ type: "code", text: m[2] });

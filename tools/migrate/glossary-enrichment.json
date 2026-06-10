@@ -1,204 +1,907 @@
 {
-  "_meta": "12A Parti 1 — Eğitim Yolu editöryel zenginleştirme. Anahtar: foldTurkish(label). a=realWorldAnalogy, u=useCases, l=longExplanation'a eklenen bağlam paragrafı. Yalnız categoryId=egitim sayfalarına uygulanır (tools/migrate/index.mjs).",
-  "byLabel": {
-    "cluster": { "a": "Ansiklopedinin tek maddesi: başka maddelere atıf verir ama kendi başına okunup anlaşılır.", "u": ["Tek konuyu derinlemesine öğrenmek için sayfayı baştan sona okumak", "Search sonucundan gelip yalnız ilgili block'u okumak"] },
-    "kod": { "a": "Yemek tarifi: adım adım yazılı talimat; ama tarif kendi kendine yemek pişirmez, bir aşçı (çalışma ortamı) gerekir.", "u": ["Bir özelliğin davranışını değiştirmek için ilgili dosyayı düzenlemek", "Code review'da satır satır okuyup hata aramak"] },
-    "derleyici": { "a": "Kitabın çevirmeni: romanı bir kez çevirir, okurlar artık çeviriden okur — her okuyuşta yeniden çeviri gerekmez.", "u": ["Go/Rust servislerini production binary'sine çevirmek", "TypeScript'i tarayıcının anladığı JavaScript'e çevirmek (tsc)"] },
-    "yorumlayici": { "a": "Simultane tercüman: konuşma sürerken cümle cümle çevirir; hızlı başlar ama her seferinde yeniden çevirir.", "u": ["Python script'ini değiştirip anında tekrar çalıştırmak", "REPL'de tek satır deneyip sonucu görmek"] },
-    "calisma zamani": { "a": "Tiyatro sahnesi: oyun metni (kod) aynı olsa da hangi sahnede oynandığı ışığı, sesi, kuralları belirler.", "u": ["Backend için Python interpreter sürümünü sabitlemek", "Frontend build'inin Node sürümüyle uyumunu CI'da kontrol etmek"] },
-    "kutuphane": { "a": "Alet çantası: çekici sen alır sen vurursun; çanta sana ne zaman çakacağını söylemez.", "u": ["Tarih hesapları için dayjs çağırmak", "JSON şema doğrulaması için zod kullanmak"] },
-    "framework": { "a": "Pasta kalıbı: hamuru sen koyarsın ama şekli kalıp belirler; kalıbın boşluklarını doldurursun.", "u": ["FastAPI route handler'ı yazıp çağrılmasını framework'e bırakmak", "React component'inin ne zaman render edileceğini React'a bırakmak"] },
-    "inversion of control": { "a": "Restoranda garson çağırmak yerine numaratör almak: sıra sende olunca sistem seni çağırır.", "u": ["Hook fonksiyonunun before_save anında framework tarafından çağrılması", "Event handler'ın kullanıcı tıklayınca tetiklenmesi"] },
-    "monolit": { "a": "Tek binadaki büyük mağaza: tüm reyonlar aynı çatı altında, tek kapı, tek güvenlik.", "u": ["Küçük ekiple tek deploy hattı yönetmek", "Modüller arası çağrıyı network'süz, fonksiyon çağrısıyla yapmak"] },
-    "mikro-servis": { "a": "AVM'deki bağımsız dükkânlar: her biri kendi kasası, kendi personeli; aralarında koridordan (network) gidilir.", "u": ["Bağımsız ölçeklenmesi gereken yoğun bir servisi ayırmak", "Farklı dillerde yazılmış ekip servislerini ayrı deploy etmek"] },
-    "moduler monolit": { "a": "Tek bina ama her dairenin kendi kilidi var: bina tek, daireler bağımsız; duvar delmek yasak.", "u": ["Modül sınırlarını import-linter ile CI'da zorlamak", "İleride gerekirse tek modülü servise ayırabilmek"] },
-    "meta-framework": { "a": "Lego fabrikası: oyuncak değil, oyuncak üretecek parça sistemleri üretir.", "u": ["Tek kernel üstünde CRM + LMS + e-ticaret gibi çok ürün çıkarmak", "DocType tanımından otomatik API + UI üretmek"] },
-    "ddd": { "a": "Hastanede bölümler uzmanlık alanına göre ayrılır: kardiyoloji kendi terminolojisi ve kurallarıyla çalışır, dahiliyeye karışmaz.", "u": ["Modül sınırlarını iş alanlarına (faturalama, stok) göre çizmek", "Kod isimlendirmesini iş diliyle (Invoice, Tenant) hizalamak"] },
-    "bit": { "a": "Işık düğmesi: açık ya da kapalı; üçüncü hâl yok.", "u": ["Donanım seviyesinde veri boyutu hesaplamak", "Bit flag'lerle çoklu açma-kapama durumu tutmak"] },
-    "byte": { "a": "Sekiz düğmeli sigorta kutusu: her kombinasyon farklı bir değer, toplam 256 ihtimal.", "u": ["Dosya boyutunu (KB/MB) hesaplamak", "Bir karakterin bellekte kapladığı yeri anlamak"] },
-    "ascii": { "a": "Eski daktilo klavyesi: İngiliz alfabesi var, 'ş' ve 'ğ' tuşu hiç yok.", "u": ["Eski protokollerin neden Türkçe karakter bozduğunu anlamak", "Dosya adlarında güvenli karakter seti seçmek"] },
-    "utf-8": { "a": "Evrensel posta kodu sistemi: hangi ülkenin adresi olursa olsun aynı zarf formatında taşınır.", "u": ["Veritabanı ve API'de Türkçe içeriği bozulmadan saklamak", "Çok dilli içerikte emoji ve özel karakter desteği"] },
-    "string": { "a": "İpe dizilmiş boncuklar: her boncuk bir karakter, sıra önemli.", "u": ["Kullanıcı adı, açıklama, adres gibi metin alanları", "Şablon metinde değişken birleştirme"] },
-    "integer": { "a": "Sayaç: tam tıklar, ara değer bilmez.", "u": ["Sipariş adedi, deneme sayısı gibi sayımlar", "Auto-increment olmayan ID üretiminde sıra numarası"] },
-    "float": { "a": "Lastikli şerit metre: hızlı ölçer ama milimetrede esner — kuyumcuda kullanılmaz.", "u": ["Bilimsel hesap ve grafik koordinatları", "Para DIŞINDA oran/ortalama hesapları"], "l": "Bu projede para alanlarında float şema seviyesinde reddedilir; Decimal zorunludur. Kural, code review'a değil tip sistemine gömülüdür." },
-    "decimal": { "a": "Kuyumcu terazisi: miligramı bile tam tartar, 'yaklaşık' kavramı yoktur.", "u": ["Fatura tutarı, KDV, bakiye gibi tüm para alanları", "Muhasebe mutabakatında kuruş eşitliği"], "l": "Money composite tipinin iç bileşenidir: Decimal tutar + currency code birlikte taşınır." },
-    "boolean": { "a": "Kapı: açık ya da kapalı; aralık 'belki' diye durum yok.", "u": ["is_active, is_deleted gibi durum bayrakları", "Feature flag'in açık/kapalı hali"] },
-    "scalar": { "a": "Tek malzeme: un. Kek değil, kekin bölünemez hammaddesi.", "u": ["DB kolonu tip seçimi", "API alanlarının en küçük yapı taşları"] },
-    "composite": { "a": "Sandviç: ekmek + iç malzeme; tek parça gibi satılır ama bileşenlerden oluşur.", "u": ["Money = Decimal + currency olarak modellenmesi", "Adres = sokak + şehir + posta kodu bütünü"] },
-    "validator": { "a": "Gümrük memuru: pasaport formatı doğru mu, süresi geçmiş mi — içeri girmeden kontrol.", "u": ["IBAN'ın MOD-97 kontrolünden geçirilmesi", "Email formatının kayıttan önce doğrulanması"] },
-    "coercion": { "a": "Standart elbise bedeni: 'orta boy', 'M', '38' hepsi aynı rafa, tek etiketle kaldırılır.", "u": ["'1.299,50 TL' girdisini Decimal(1299.50)'ye çevirmek", "Farklı tarih yazımlarını ISO formatına normalize etmek"] },
-    "primitive": { "a": "Standart vida setleri: her usta kendi vidasını dökmez, standart seti kullanır.", "u": ["Plugin'lerin Money/Phone/Email tiplerini hazır kullanması", "Tüm ürünlerde aynı doğrulama davranışı"] },
-    "doctype": { "a": "Matbaadaki form şablonu: bir kez tasarlanır; basılan her form (kayıt) aynı alanları taşır.", "u": ["'Müşteri' tanımından DB tablosu + form + API'nin otomatik üretilmesi", "Yeni varlık türünü kod yazmadan tanımlamak"], "l": "Bu mimarinin kalbidir: K02 DocType engine, tüm üst katman davranışını bu tanımdan türetir." },
-    "field": { "a": "Formdaki tek kutu: 'Ad Soyad' kutusu hem kâğıtta hem arşiv dosyasında hem bilgisayar kaydında aynı adla yaşar.", "u": ["DocType'a yeni alan ekleyince kolon + input + API alanının birlikte doğması", "Field metadata'sıyla (pii, audited) davranış türetme"] },
-    "fieldtype": { "a": "Kutu üstündeki ipucu: 'buraya sadece tarih yazılır' — yazan da okuyan da formatı bilir.", "u": ["Decimal seçince para doğrulamasının otomatik gelmesi", "Link seçince ilişki + arama kutusunun otomatik kurulması"] },
-    "naming series": { "a": "Noterin evrak numarası: 2026/000123 — sıralı, tahmin edilebilir, asla çakışmaz.", "u": ["SO-0001 formatlı sipariş numarası üretimi", "Yıl bazlı fatura serisi (INV-2026-####)"] },
-    "child table": { "a": "Fatura ve kalemleri: başlık tek kâğıt, satırlar onun altındaki çizelge; çizelge tek başına anlamsız.", "u": ["Sipariş → sipariş kalemleri modellemesi", "Bordro → kazanç/kesinti satırları"] },
-    "hook": { "a": "Düğün salonunun 'pasta kesilirken' anonsu: o anda kimin ne yapacağı önceden yazılmış; an gelince hepsi tetiklenir.", "u": ["before_insert'te varsayılan değer atamak", "on_submit'te stok düşümü tetiklemek"] },
-    "custom field": { "a": "Hazır giysiye terzi cebi ekletmek: üretici modeli değişmez, senin ceketinde fazladan cep olur.", "u": ["Bir tenant'ın müşteri kartına 'vergi dairesi' alanı eklemesi", "Sektöre özgü alanları kod değişikliği olmadan taşımak"] },
-    "property setter": { "a": "Otel odasındaki ayarlanabilir termostat: oda aynı, ayarı misafire göre değişir.", "u": ["Bir tenant'ta 'telefon' alanını zorunlu yapmak", "Bir alanın etiketini sektör diline çevirmek"] },
-    "submittable": { "a": "Noter onaylı belge: taslakken karalanır; mühürlendikten sonra üstünde oynanmaz, ancak iptal şerhi düşülür.", "u": ["Fatura kesinleştikten sonra tutar değişikliğini engellemek", "Journal entry'nin muhasebe dönemine kilitlenmesi"] },
-    "docstatus": { "a": "Evrakın köşesindeki kaşe: TASLAK / ONAYLI / İPTAL — tek bakışta hangi muameleyi göreceği belli.", "u": ["Submitted kayıtlarda alan kilitleme kuralları", "İptal akışında ters kayıt üretme"] },
-    "eav": { "a": "Her şeyi tek çekmeceye etiketli poşetlerle atmak: koymak kolay, 'kırmızı kazakları bul' demek kâbus.", "u": ["Neden tablo-per-tip tercih edildiğini anlamak (anti-örnek)", "Çok seyrek, sorgulanmayan ek özellikler için sınırlı kullanım"] },
-    "rdbms": { "a": "Devlet arşivi: klasörler (tablolar), fihristler (indeksler), erişim kuralları on yıllardır oturmuş.", "u": ["İlişkili iş verisini (sipariş-müşteri-fatura) tutarlı saklamak", "SQL ile ad-hoc rapor çekmek"] },
-    "postgresql": { "a": "İsviçre çakısı arşiv: klasik dolapların yanında harita çekmecesi (PostGIS), vektör rafı (pgvector) da var.", "u": ["JSONB ile esnek alan saklama", "pgvector ile embedding araması — ayrı DB kurmadan"] },
-    "tablo": { "a": "Excel sayfası disiplinlisi: kolonlar baştan tanımlı, her satır aynı düzene uyar.", "u": ["Her DocType'ın kendi tablosunu üretmesi", "Satır sayısı üzerinden büyüme planlaması"] },
-    "kolon": { "a": "Formdaki sabit başlıklı sütun: 'Tutar' sütununa kimse ad-soyad yazamaz.", "u": ["Field → kolon eşlemesinde tip seçimi", "Kolona indeks koyarak aramayı hızlandırma"] },
-    "satir": { "a": "Defterdeki tek kayıt çizgisi: bir müşteri, bir sipariş, bir fatura — her biri bir satır.", "u": ["Bir belgenin DB'deki karşılığını bulmak", "Satır bazlı yetki (RLS) uygulamak"] },
-    "primary key": { "a": "T.C. kimlik numarası: iki kişi aynı numarayı asla taşımaz.", "u": ["UUID v7 ile sıralanabilir benzersiz kimlik", "FK ilişkilerinin hedefi olmak"] },
-    "foreign key": { "a": "Kütüphane fişindeki kitap numarası: fiş kitabın kendisini değil, raftaki yerini gösterir; kitap yoksa fiş geçersizdir.", "u": ["Sipariş satırının müşteri kaydına bağlanması", "Yetim kayıt oluşumunu DB seviyesinde engellemek"] },
-    "index": { "a": "Kitabın arkasındaki dizin: kelimeyi bulmak için 500 sayfayı taramazsın, dizinden sayfaya atlarsın.", "u": ["Sık filtrelenen kolonları hızlandırmak", "EXPLAIN ile kullanımını doğrulamak"] },
-    "indeks": { "a": "Kitabın arkasındaki dizin: 'outbox' kelimesini bulmak için 500 sayfayı taramazsın, dizinden sayfaya atlarsın.", "u": ["Sık filtrelenen kolonlara (tenant_id, status) indeks koymak", "EXPLAIN ile indeksin gerçekten kullanıldığını doğrulamak"] },
-    "b-tree": { "a": "Alfabetik telefon rehberi: ortadan açar, yarıya böler, birkaç adımda ada ulaşırsın.", "u": ["WHERE ve ORDER BY sorgularının varsayılan indeksi", "Aralık sorguları (tarih >= X) için doğru yapı"] },
-    "transaction": { "a": "Düğün nikâhı: iki imza da atılırsa evlilik geçerli; biri vazgeçerse hiçbir imza geçmez.", "u": ["Para transferinde çekme+yatırmanın atomikliği", "Sipariş + stok düşümünün birlikte kaydı"] },
-    "acid": { "a": "Noter senedinin dört garantisi: ya tamamı geçerli ya hiçbiri; kurallara aykırısı yazılmaz; aynı anda iki işlem birbirini bozmaz; mühürlenen kaybolmaz.", "u": ["Mali kayıtlarda tutarlılık güvencesi", "Çok kullanıcılı eşzamanlı yazmada izolasyon"] },
-    "normalize": { "a": "Rehberde adresin tek yerde yazması: taşınınca tek satır güncellenir, yüz kartvizit değil.", "u": ["Müşteri bilgisini tek tabloda tutup FK ile bağlamak", "Güncelleme anomalilerini önlemek"] },
-    "denormalize": { "a": "Kasiyerin en çok satan ürün fiyatlarını ezberlemesi: her seferinde kataloğa bakmaz; katalog değişince ezberi tazelemek gerekir.", "u": ["Dashboard için projection tablosu üretmek", "Sık okunan müşteri adını sipariş satırına kopyalamak"] },
-    "join": { "a": "İki listeyi yan yana koyup isimden eşleştirmek: davetli listesi + masa listesi → kim hangi masada.", "u": ["Sipariş + müşteri bilgisini tek sorguda çekmek", "N+1 yerine tek JOIN'li sorgu yazmak"] },
-    "migration": { "a": "Köprü inşaatı: trafik akarken yeni köprü yapılır, açılır, eskisi sonra sökülür — yol asla kapanmaz.", "u": ["Yeni kolonu Alembic script'iyle eklemek", "Üretim DB'sini sürümler arasında güvenle taşımak"], "l": "Bu projede her migration'ın downgrade'i zorunludur ve CI'da sırayla uygulanabilirliği test edilir." },
-    "cqrs": { "a": "Mutfak ile vitrin ayrımı: yemek mutfakta yapılır (yazma), vitrinde hazır tabaklar durur (okuma) — müşteri mutfağa girmez.", "u": ["Dashboard'u projection'dan okuyup JOIN maliyetinden kurtulmak", "Yazma modelini değişmeden okuma modelini yeniden kurmak"] },
-    "api": { "a": "Restoran menüsü: ne sipariş edebileceğin ve neyin geleceği yazılı sözleşme; mutfağın içini bilmek zorunda değilsin.", "u": ["Frontend'in backend ile konuşması", "Üçüncü taraf entegrasyonlara yüzey açmak"] },
-    "http": { "a": "Posta protokolü: zarf formatı, adres yazımı, iade kuralları standart — kim gönderirse göndersin aynı kurallar.", "u": ["REST API'nin taşıma katmanı", "Status code ve header sözleşmeleri"] },
-    "rest": { "a": "Otel resepsiyonu: oda (kaynak) numarası söylersin, eylemi fiil belirler — anahtar al (GET), rezervasyon yap (POST), iptal et (DELETE).", "u": ["CRUD endpoint'lerini standart desenle tasarlamak", "Cache ve retry davranışını method semantiğine yaslamak"] },
-    "graphql": { "a": "Açık büfe: tabağına ne koyacağını sen seçersin; mutfak sabit menü dayatmaz.", "u": ["Mobilde yalnız gereken alanları çekerek veri tasarrufu", "Birden çok kaynağı tek istekte toplamak"] },
-    "json": { "a": "Ortak el yazısı: hem insan okur hem makine — taraflar alfabe tartışması yapmaz.", "u": ["API istek/cevap gövdesi", "Konfigürasyon ve içerik dosyaları (bu projenin tamamı)"] },
-    "endpoint": { "a": "Bankodaki gişe: 'Havale gişesi' yalnız havale işlemi yapar; doğru gişeye gitmek sana düşer.", "u": ["POST /api/orders ile sipariş oluşturma", "Endpoint başına yetki ve rate limit tanımlama"] },
-    "method": { "a": "Dilekçedeki talep türü: bilgi edinme / başvuru / itiraz — aynı makama farklı niyetle gidilir.", "u": ["GET'i cache'lemek, POST'u idempotency key ile korumak", "Doğru method seçimiyle otomatik retry güvenliği"] },
-    "status code": { "a": "Kargo takip durumu: 'teslim edildi', 'adres bulunamadı', 'dağıtımda' — tek koddan herkes aynı şeyi anlar.", "u": ["Frontend'in 404'te 'bulunamadı' ekranı göstermesi", "Monitoring'de 5xx oranı alarmı"] },
-    "idempotent": { "a": "Asansör düğmesi: beş kez basmak asansörü beş kez çağırmaz.", "u": ["Ağ kopunca isteği güvenle tekrarlamak", "Retry mekanizmalarının ön şartı"] },
-    "idempotency key": { "a": "Dilekçeye eklenen başvuru numarası: aynı numarayla ikinci kez gelirsen memur 'bu işlem zaten yapıldı' der, yeniden işlemez.", "u": ["Ödeme isteğinin çift çekimini engellemek", "Webhook'un mükerrer işlenmesini önlemek"] },
-    "versioning": { "a": "Elektrik prizi standartları: yeni bina yeni prizle gelir ama eski fişler için adaptör bir süre satılır.", "u": ["/api/v1 yaşarken v2'yi paralel açmak", "Kırıcı şema değişikliğini yeni sürümde toplamak"] },
-    "cors": { "a": "Site güvenliği: dış kapıdan gelen kuryeyi içeri almak için daire sahibinin (sunucu) onay listesi gerekir.", "u": ["frontend.example.com'dan api.example.com'a tarayıcı erişimi", "İzinli origin listesini ortam bazlı yönetmek"] },
-    "rate limit": { "a": "Sınıfta söz hakkı: her öğrenciye beş dakika; biri kürsüyü kapatamaz.", "u": ["Login denemelerini IP başına sınırlamak", "Tenant başına API kotası uygulamak"] },
-    "tenant": { "a": "AVM'deki bir dükkân sahibi: kendi kasası, kendi stoğu; komşu dükkânın defterini göremez.", "u": ["Şirket başına izole veri alanı", "Tenant bazlı faturalama ve kota"] },
-    "multi-tenancy": { "a": "Apartman: tek bina, ortak tesisat; her dairenin kendi kapısı ve kilidi.", "u": ["Tek deploy ile yüzlerce müşteriye hizmet", "Altyapı maliyetini müşteriler arasında paylaştırmak"] },
-    "tenant scope": { "a": "Personel kartıyla açılan kat: asansör seni yalnız kendi katına çıkarır; düğmeye bassan da komşu kat açılmaz.", "u": ["Her sorguya otomatik tenant_id filtresi enjekte etmek", "Sızıntıyı geliştirici disiplinine değil altyapıya yaslamak"] },
-    "row-level isolation": { "a": "Ortak dosya dolabı, etiketli klasörler: aynı çekmecede dururlar ama her klasörün sahibi bellidir.", "u": ["tenant_id kolonu + RLS ile en yaygın izolasyon", "Maliyet-etkin SaaS başlangıç modeli"] },
-    "schema-level": { "a": "Aynı binada ayrı arşiv odaları: dolaplar ortak değil; odanın anahtarı ayrı.", "u": ["Tenant başına ayrı backup/restore", "Orta seviye regülasyon ihtiyacı"] },
-    "cluster-level": { "a": "Ayrı bina: müşteri kendi binasını istiyor; maliyet onun, izolasyon tam.", "u": ["Enterprise müşteriye özel instance", "Veri yerleşim (residency) zorunlulukları"] },
-    "sub-tenant": { "a": "Holding ve şirketleri: tek çatı, ayrı muhasebeler; yıl sonunda konsolide tablo.", "u": ["Holding altında şirket bazlı operasyon", "Konsolide raporlama ile ayrı yetkilendirme"] },
-    "authentication": { "a": "Pasaport kontrolü: kim olduğunu kanıtlarsın; nereye girebileceğin sonraki kapının işi.", "u": ["Login + 2FA akışı", "Servisler arası kimlik (mTLS, token)"] },
-    "authorization": { "a": "Bilet turnikesi: pasaportun geçerli ama bu salona biletin var mı?", "u": ["Rol bazlı menü/aksiyon görünürlüğü", "Kayıt seviyesinde erişim kararı"] },
-    "session": { "a": "Vestiyer fişi: ceketin (durum) içeride; fişi iptal edersen ceket anında teslim edilmez olur.", "u": ["Anında oturum sonlandırma (revoke)", "Hassas panellerde stateful oturum"] },
-    "jwt": { "a": "Mühürlü davetiyeli bileklik: kapıda merkeze sormadan doğrulanır; ama sahibinden geri almak için ek liste gerekir.", "u": ["Stateless API ölçeklendirme", "Servisler arası claim taşıma"] },
-    "rbac": { "a": "Şirket kartı renkleri: mavi kart depoya, kırmızı kart kasaya girer — kişiye değil renge bakılır.", "u": ["Muhasebeci rolüne fatura izinleri atamak", "Yeni çalışana tek hamlede rol vermek"] },
-    "abac": { "a": "Bankadaki tutar kuralı: veznedar 50 bin TL'ye kadar onaylar, üstü müdür ister — karar kişinin değil niteliğin.", "u": ["Mesai dışı kritik işlem kısıtı", "Tutar eşiğine göre onay zinciri"] },
-    "rebac": { "a": "Aile albümü izni: 'arkadaşımın arkadaşı görebilir' — izin listeyle değil ilişkiyle tanımlı.", "u": ["Google Docs tarzı paylaşım modeli", "Board üyeliğinden kart erişimi türetmek"] },
-    "encryption at rest": { "a": "Kasadaki belgelerin şifreli yazılması: kasa çalınsa bile sayfalar anlamsız.", "u": ["PII alanlarının AES-256-GCM ile saklanması", "Disk/backup çalınmasına karşı koruma"] },
-    "tls": { "a": "Mühürlü zarf: postacı taşır ama açamaz; mühür kırılırsa belli olur.", "u": ["HTTPS ile tüm istemci trafiği", "Servisler arası iç trafik şifreleme"] },
-    "csrf": { "a": "Sahte imzalı talimat: kapıcıya 'daire 5 söyledi' diye not bırakmak; kapıcı imza kontrolü (token) yapmazsa kanar.", "u": ["Form aksiyonlarında CSRF token kontrolü", "SameSite cookie politikası"] },
-    "audit log": { "a": "Noterin ciltli defteri: sayfa koparılamaz, satır silinemez; kim ne zaman ne yaptıysa öylece durur.", "u": ["KVKK/denetim için kim-ne-ne zaman kaydı", "Şüpheli işlem geriye dönük inceleme"] },
-    "event": { "a": "Gazete manşeti: 'maç bitti 3-1' — olmuş bitmiş; okuyan ne yapacağına kendi karar verir.", "u": ["order.created sonrası bağımsız tepkiler (mail, stok, skor)", "Modüller arası gevşek bağlantı"] },
-    "command": { "a": "Garsona sipariş: 'bir çay getir' — tek muhatap, yapılması beklenen iş.", "u": ["send-email görevini worker'a vermek", "Kullanıcı niyetini tek işleyiciye yönlendirmek"] },
-    "pub/sub": { "a": "Cami hoparlörü: ezan okunur; kimin duyup ne yaptığını müezzin takip etmez.", "u": ["Bir event'e birden çok modülün abone olması", "Yayıncı-tüketici bağımsız evrimi"] },
-    "outbox": { "a": "Şirketin giden evrak sepeti: yazı önce deftere işlenir ve sepete konur; kurye sepetten alıp dağıtır — defterle kurye asla çelişmez.", "u": ["DB yazımı + event yayınının atomik birleşimi", "Worker'ın sepetten okuyup yayınlaması"], "l": "Dual-write probleminin standart çözümüdür ve bu mimaride scale primitives katmanının ilk taşıdır." },
-    "dual-write": { "a": "İki ayrı deftere aynı anda elle yazmak: telefon çalar, biri yazılır biri unutulur — defterler artık anlaşamaz.", "u": ["Neden outbox kullanıldığını anlamak (anti-örnek)", "DB + queue tutarsızlık vakalarını teşhis etmek"] },
-    "idempotent consumer": { "a": "Damgalı davetiye kontrolü: aynı davetiye ikinci kez gelirse 'zaten girdi' der, içeri ikinci tabak açmaz.", "u": ["At-least-once teslimde çift işlemeyi önlemek", "Event id'sini işlenmişler tablosunda tutmak"] },
-    "at-least-once": { "a": "Kararlı kurye: teslim onayı gelmezse tekrar getirir; bazen kapıya iki kez gelebilir.", "u": ["Mesaj kaybına tahammülsüz akışlar", "Idempotent consumer ile birlikte güvenli teslimat"] },
-    "exactly-once": { "a": "Hem kurye hem kapıda noter: tek teslim garanti ama maliyeti yüksek; çoğu ev için gereksiz.", "u": ["Neden genelde at-least-once + idempotency seçildiğini anlamak", "Gerçekten gerektiren dar finansal akışlar"] },
-    "dlq": { "a": "Postanenin 'dağıtılamayan' rafı: adresi bozuk mektup çöpe atılmaz, rafa kalkar; memur tek tek inceler.", "u": ["Zehirli mesajın kuyruğu tıkamasını önlemek", "DLQ doluluk alarmıyla insan müdahalesi"] },
-    "saga": { "a": "Düğün organizatörü: salon, yemek, orkestra ayrı esnaf; biri iptal ederse organizatör sırayla diğer kaporaları geri alır.", "u": ["Çok adımlı işlemde telafi (compensation) zinciri", "DBOS ile durable iş akışı yürütmek"] },
-    "backpressure": { "a": "Şişeye huniyle su doldurmak: şişe yetişemiyorsa huniyi yavaşlatırsın; yoksa taşar.", "u": ["Tüketici yavaşken yayıncıyı frenlemek", "Kuyruk derinliği eşiğiyle üretimi durdurmak"] },
-    "plugin": { "a": "Mutfak robotunun aksesuarı: rendeyi takarsın rendeler, çıkarırsın robot yine çalışır.", "u": ["Çekirdeğe dokunmadan sektör özelliği eklemek", "Marketplace'ten yetenek kurmak"] },
-    "manifest": { "a": "Cihaz kutusundaki içindekiler kartı: ad, model, gereksinimler — kutuyu açmadan ne olduğu belli.", "u": ["Plugin'in izin ve hook beyanını okumak", "Yükleme öncesi bağımlılık kontrolü"] },
-    "registry": { "a": "Apartman yönetiminin daire defteri: kim oturuyor, hangi dairede, ne zamandan beri — tek bakışta.", "u": ["Yüklü plugin'lerin sürüm envanteri", "Çakışma ve bağımlılık çözümü"], "l": "Aynı desen bu viewer'ın block sisteminde de kullanılır: type → component kaydı, switch zinciri yerine registry'den çözülür." },
-    "filter hook": { "a": "Fotoğraf filtresi zinciri: görüntü her filtreden geçerek değişir; sıra önemlidir.", "u": ["Kaydedilmeden önce veriyi dönüştürmek", "Fiyat hesabına zincirleme kural eklemek"] },
-    "action hook": { "a": "Kapı zili: çalınca ışık yanar, köpek havlar — zil kimseden cevap beklemez.", "u": ["on_submit'te bildirim göndermek", "Cache invalidation tetiklemek"] },
-    "semver": { "a": "Gözlük reçetesi: numara (MAJOR) değiştiyse eski camlar uymaz; çerçeve rötuşu (PATCH) sorunsuz takılır.", "u": ["Marketplace'te güvenli otomatik güncelleme", "Kernel API değişikliklerinin sınıflandırılması"] },
-    "contract test": { "a": "Priz-fiş standardı testi: yeni prizler üretilirken eski fişlerin hâlâ uyduğu fabrikada denenir.", "u": ["Kernel güncellemesinin plugin'leri kırmadığını kanıtlamak", "'Don't break userspace' kapısı"] },
-    "sandbox": { "a": "Çocuk oyun parkı: içeride istediğini yap; çitin dışına top da çıkmaz, çocuk da.", "u": ["Üçüncü taraf plugin'in dosya/ağ erişimini kısıtlamak", "Buggy kodun sistemi çökertmesini önlemek"] },
-    "plugin lifecycle": { "a": "Ev aletinin ömrü: kur, fişe tak, kullan, fişten çek, sök — her aşamanın kendi kuralı var.", "u": ["install/uninstall'da temiz kaynak yönetimi", "deactivate'te zamanlanmış işleri durdurmak"] },
-    "ci": { "a": "Fabrika giriş kalite kontrolü: her parça bantta üç testten geçmeden hatta giremez.", "u": ["Her push'ta lint + test + build koşmak", "Bozuk kodun main'e karışmasını engellemek"] },
-    "cd": { "a": "Otomatik şişeleme hattı: kaliteden geçen ürün elle taşınmadan rafa gider.", "u": ["Yeşil build'in otomatik yayınlanması", "İnsan hatasız, tekrarlanabilir deploy"] },
-    "blue/green": { "a": "Yedek sahne: yeni dekor yan sahnede kurulur; perde bir saniyede öbür sahneye döner, sorun olursa geri.", "u": ["Sıfır kesintili sürüm geçişi", "Anında rollback (symlink/traffic switch)"] },
-    "canary": { "a": "Madenci kanaryası: gaz varsa önce küçük kuş etkilenir; madenciler tahliye edilir.", "u": ["Yeni sürümü önce %5 trafiğe açmak", "Hata oranı artarsa otomatik geri çekmek"] },
-    "feature flag": { "a": "Şalterli vitrin: ürün rafta hazır; ışığı ne zaman yakacağına pazarlama karar verir.", "u": ["Kod deploy edilmiş ama özellik kapalı (dark launch)", "Tenant bazlı kademeli açılış"] },
-    "observability": { "a": "Uçak kokpiti: hız, yakıt, irtifa — pilot camdan bakarak değil göstergeyle uçar.", "u": ["Metrics + logs + traces üçlüsünü kurmak", "5 dakikada kök neden bulmak"] },
-    "slo": { "a": "Kargo taahhüdü: 'paketlerin %99'u iki günde teslim' — hedef yazılı, ölçülebilir.", "u": ["%99.9 uptime hedefi belirlemek", "Alarm eşiklerini hedefe bağlamak"] },
-    "error budget": { "a": "Aylık harçlık: dökersen ay sonuna kadar harcama yok — yeni oyuncak (feature) bekler.", "u": ["Budget bittiğinde feature dondurup stabilizasyona dönmek", "Risk iştahını sayıya bağlamak"] },
-    "on-call": { "a": "Nöbetçi eczane: gece yarısı da açık; nöbet listesi haftalık döner.", "u": ["Alarm geldiğinde ilk müdahale sahibi", "Eskalasyon zinciri tanımlamak"] },
-    "runbook": { "a": "Yangın talimatı: panik anında düşünmezsin, duvardaki adımları izlersin.", "u": ["'DB diski doldu' alarmının adım listesi", "Nöbetçinin uzman olmadan müdahalesi"] },
-    "post-mortem": { "a": "Maç sonrası video analizi: suçlu aramak değil, aynı golü bir daha yememek.", "u": ["Incident sonrası blameless rapor", "Aksiyon maddelerinin takibi"] },
-    "mttr": { "a": "Yol yardım süresi: lastik patladıktan kaç dakika sonra tekrar yoldasın?", "u": ["Kurtarma süresini ölçüp iyileştirmek", "Runbook kalitesinin metriği"] },
-    "unit test": { "a": "Aşçının tek malzemeyi tatması: domates iyi mi? — yemeğin tamamı değil, tek parça.", "u": ["Saf fonksiyonun sınır değerlerini test etmek", "Bug'ı pipeline'ın en ucuz noktasında yakalamak"] },
-    "integration test": { "a": "Yemeğin tabakta tadılması: malzemeler tek tek iyiydi; birlikte de uyumlu mu?", "u": ["API + DB'nin birlikte doğru çalışması", "Modüller arası sözleşmenin doğrulanması"] },
-    "e2e": { "a": "Müşteri gibi restorana girmek: kapıdan rezervasyona, servisten hesaba tüm deneyim.", "u": ["Playwright ile kritik kullanıcı akışları", "Yayın öncesi son güvence katmanı"] },
-    "mock": { "a": "Film setindeki maket araba: gerçek motoru yok ama sahne için yeterli; kaza riski sıfır.", "u": ["Banka API'sini test'te taklit etmek", "Dış bağımlılığı izole edip hızlı test"] },
-    "snapshot": { "a": "Mühürlü örnek numune: üretim hattındaki ürün numuneden saparsa zil çalar.", "u": ["Çıktı formatı değişimini görünür kılmak", "Bilinçli değişimde numuneyi yenilemek"] },
-    "branch": { "a": "Yol ayrımı: ana yoldan çıkar, işini görür, kavşaktan ana yola dönersin.", "u": ["Feature'ı main'i bozmadan geliştirmek", "İş bitince PR ile geri birleştirmek"] },
-    "pull request": { "a": "Editöre gönderilen taslak: yazı yayına girmeden önce ikinci göz okur, düzeltme ister.", "u": ["Code review zorunluluğu", "CI kapılarının merge öncesi koşması"] },
-    "semantic versioning": { "a": "Gözlük reçetesi: numara değişimi (MAJOR) eski camı geçersiz kılar; cam cilası (PATCH) fark ettirmez.", "u": ["1.0.0 → 1.1.0 güncellemesinin güvenliğini okumak", "Breaking change'i sürüm numarasıyla beyan etmek"] },
-    "conventional commits": { "a": "Resmi evrak konu kodu: 'İVD-2026/7' gören dosyanın hangi klasöre gideceğini bilir.", "u": ["feat:/fix: prefix'lerinden changelog üretmek", "Sürüm numarasını commit'lerden otomatik türetmek"] },
-    "hotfix": { "a": "Su borusu patlağına acil bant: ustanın tam tamiri beklenmez; bant şimdi, tamir planlı.", "u": ["Üretimdeki kritik bug'a dakikalar içinde yama", "Normal süreci bypass eden tanımlı acil yol"] },
-    "p95": { "a": "Sınıfın en yavaş 5 öğrencisini ayrı değerlendirmek: ortalama 'iyi' derken arka sıra kaybolmasın.", "u": ["Gerçek kullanıcı deneyimini ölçmek", "SLO'yu ortalamaya değil yüzdeliğe bağlamak"] },
-    "n+1 query": { "a": "Markete 100 kez gitmek: listeyle tek seferde almak dururken her ürün için ayrı sefer.", "u": ["ORM lazy-loading tuzağını teşhis etmek", "JOIN/prefetch ile tek sorguya indirmek"] },
-    "explain": { "a": "Navigasyonun rota önizlemesi: yola çıkmadan hangi sokaklardan geçeceğini gösterir.", "u": ["Sorgunun indeks kullanıp kullanmadığını görmek", "Optimizasyon öncesi kanıt toplamak"] },
-    "slow query log": { "a": "Hız kamerası: limiti aşan her araç plakasıyla kaydedilir; ceza sonra kesilir.", "u": ["Üretimde 500ms üstü sorguları yakalamak", "Optimizasyon listesini veriyle önceliklendirmek"] },
-    "flame graph": { "a": "Binanın termal kamerası: ısı nereden kaçıyorsa orası parlak — tahmin değil görüntü.", "u": ["CPU'yu yiyen fonksiyonu kanıtla bulmak", "Optimizasyonu en geniş aleve yapmak"] },
-    "sql injection": { "a": "Dilekçedeki boşluğa sahte madde eklemek: memur formu okurken eklenen maddeyi de resmi sanır.", "u": ["Parametreli sorgu/ORM ile girdiyi ayırmak", "Pentest'te ilk bakılan zafiyet"] },
-    "xss": { "a": "Panoya sahte duyuru asmak: okuyan herkes apartman yönetimi sandığı için kanar.", "u": ["Çıktı encoding + CSP başlıkları", "Bu projede HTML string render yasağının nedeni"], "l": "Viewer'daki dangerouslySetInnerHTML yasağı doğrudan bu saldırı sınıfına karşı mimari karardır." },
-    "idor": { "a": "Vestiyer fişindeki numarayı değiştirmek: 123 yerine 456 yazarsan başkasının ceketi gelir — görevli isme bakmıyorsa.", "u": ["Her kayıtta sahiplik kontrolü", "Tahmin edilemez ID (UUID) + yetki birlikte"] },
-    "bcrypt/argon2": { "a": "Kasayı bilerek yavaş açılan kilitle yapmak: sahibi için saniye, milyon deneme yapacak hırsız için yıllar.", "u": ["Parola hash'lemede MD5/SHA yerine argon2", "Round sayısıyla maliyeti donanıma göre ayarlamak"] },
-    "backup": { "a": "Evdeki önemli evrakın fotokopisini bankadaki kasada tutmak.", "u": ["Günlük otomatik DB yedeği", "Silme/şifreleme felaketinden dönüş"] },
-    "pitr": { "a": "Video kaydını istediğin saniyeye sarmak: 'yanlışlık 14:23'te oldu' → 14:22'ye dön.", "u": ["Yanlış DELETE'ten dakika hassasiyetiyle dönmek", "WAL arşiviyle sürekli kurtarma noktası"] },
-    "3-2-1": { "a": "Değerli fotoğrafın üç kopyası: biri telefonda, biri harici diskte, biri başka şehirdeki akrabada.", "u": ["Tek felaket noktasını elimine etmek", "Yedekleme politikasının sayısal kuralı"] },
-    "rpo/rto": { "a": "Sigorta poliçesi maddeleri: ne kadar hasarı kabul ediyorsun, tazminat kaç günde ödenir?", "u": ["İş birimiyle kayıp toleransını sözleşmek", "Backup sıklığı ve mimariyi hedefe göre seçmek"] },
-    "wal archiving": { "a": "Noterin her işlemi anında ikinci deftere de geçirmesi: ana defter yanarsa ikinciden aynen kurulur.", "u": ["PITR'ın ön şartı olarak sürekli arşiv", "Transaction kaybını sıfıra indirmek"] },
-    "kdv": { "a": "Fişin altındaki vergi satırı: fiyatın içinde görünmez değil, ayrı kalemde hesaplanır.", "u": ["Oran tablosunu (%1/%10/%20) ürün tipine bağlamak", "e-Arşiv faturada doğru kalem dökümü"] },
-    "vat": { "a": "Aynı verginin AB pasaportu: ülke değişince oranı ve beyanı değişir.", "u": ["AB satışında ülke bazlı oran seçimi", "OSS beyan dönemine uygun raporlama"] },
-    "reverse charge": { "a": "Karşı ödemeli kargo: ücreti gönderen değil alan öder; faturada 'ücret alıcıya ait' yazar.", "u": ["B2B AB satışında sıfır oranlı fatura kesmek", "Alıcının kendi ülkesinde VAT beyanı"] },
-    "fx rate": { "a": "Döviz büfesinin günlük panosu: dünkü işlem dünkü kurdan yazılır; bugünkü kurla dünü düzeltemezsin.", "u": ["İşlem tarihli kur saklamak", "Ay sonu değerleme ile işlem kuru ayrımı"] },
-    "merchant of record": { "a": "İhracat acentesi: malı sen üretirsin, gümrük ve vergiyle acente uğraşır; faturada satıcı o görünür.", "u": ["50 ülkenin vergi kuralını dışarıya devretmek", "Küçük ekiple global satış"] },
-    "spf": { "a": "Kapı görevlisine verilen kurye listesi: listede olmayan 'şirketten geliyorum' diyen içeri alınmaz.", "u": ["Domain adına sahte mail gönderimini engellemek", "DNS TXT kaydıyla yetkili sunucu beyanı"] },
-    "dkim": { "a": "Mektubun mühürlü mumu: yolda açılıp değiştirildiyse mühür kırığı belli olur.", "u": ["Mail içeriğinin bütünlük doğrulaması", "Sağlayıcı reputation'ını korumak"] },
-    "dmarc": { "a": "Kapı talimatı: 'listede yoksa veya mühür kırıksa — geri çevir / depoya al / yine de bildir'.", "u": ["SPF/DKIM uyumsuz maile politika uygulamak", "Raporlarla sahte gönderim girişimini izlemek"] },
-    "bounce": { "a": "'Adres yetersiz' damgasıyla dönen mektup: aynı adrese ısrar etmek postaneyle aranı bozar.", "u": ["Hard bounce'ı suppress list'e almak", "Liste hijyeniyle reputation korumak"] },
-    "complaint": { "a": "Komşunun 'broşür atmayın' şikayeti: ısrar edersen site yönetimi tüm broşürünü yasaklar.", "u": ["Spam işaretini anında listeden çıkarmaya çevirmek", "Complaint oranını sağlayıcı eşiklerinin altında tutmak"] },
-    "presigned url": { "a": "Tek kullanımlık misafir QR kodu: 15 dakika geçerli; kapıcıyı (backend) yormadan otoparka girersin.", "u": ["Browser'dan doğrudan S3'e dosya yüklemek", "Backend RAM'ini büyük dosyadan korumak"] },
-    "mime type": { "a": "Paketin içindekiler beyanı: kutuda 'kitap' yazması yetmez, gümrük açıp bakar (magic bytes).", "u": ["Uzantıya değil içeriğe göre tip tespiti", "Yanlış beyanlı zararlı dosyayı reddetmek"] },
-    "clamav": { "a": "Havaalanı X-ray cihazı: bavul (dosya) bilinen tehlike imzalarıyla taranır.", "u": ["Kullanıcı yüklemelerini servis öncesi taramak", "Karantina kovası + alarm akışı"] },
-    "sharp": { "a": "Fotoğrafçının baskı makinesi: dev negatifi cüzdan boyu fotoğrafa saniyede basar.", "u": ["5MB JPEG'i 200KB WebP'ye düşürmek", "Thumbnail varyantlarını upload anında üretmek"] },
-    "storage tier": { "a": "Ev-kiler-depo düzeni: her gün giyilen dolapta, mevsimlik kilerde, anı kutuları depoda.", "u": ["90 gün dokunulmayanı cold tier'a indirmek", "Depolama faturasını erişim sıklığına göre düşürmek"] },
-    "locale": { "a": "Adres etiketi: yalnız dil değil — tarih yazımı, para ayracı, hafta başlangıcı hepsi 'tr-TR' kutusunda.", "u": ["BCP 47 koduyla biçimlendirme seçmek", "en-US ile en-GB tarih farkını doğru basmak"] },
-    "jurisdiction": { "a": "Hangi mahkeme bakar sorusu: yaşadığın yer, vatandaşlığın ve işlemin yeri farklı cevap verebilir.", "u": ["KVKK + GDPR'ın aynı kullanıcıda kesişmesi", "Ülkeye göre zorunlu belge/saklama süreleri"] },
-    "functional currency": { "a": "Ailenin ev bütçesi parası: yurtdışında harcasan da defteri TL tutarsın; dövizi deftere çevirip yazarsın.", "u": ["Ledger'ı şirketin ana parasında tutmak", "EUR siparişi kayıt anı kuruyla TL'ye bağlamak"] },
-    "data residency": { "a": "Arşivin fiziken hangi binada durduğu: bazı evraklar yurt dışına çıkamaz.", "u": ["KVKK md.9 için TR lokasyonlu saklama", "Tenant bazlı bölge seçimi (region pinning)"] },
-    "dsar": { "a": "Bankadan 'tüm hesap dökümümü ver' talebi: yasal süre içinde, eksiksiz, okunur formatta.", "u": ["30 günde export/silme taleplerini otomatize etmek", "PII-flag'li alanları otomatik toplamak"] },
-    "anemic domain model": { "a": "İçi boş klasör etiketi: 'Faturalar' yazıyor ama kurallar başka çekmecede — klasör hiçbir şeyi koruyamıyor.", "u": ["Davranışı entity'ye taşıyıp service şişmesini önlemek", "Anti-pattern'i code review'da yakalamak"] },
-    "aggregate": { "a": "Aile dosyası: nüfus kayıtları tek dosyada, değişiklik tek memurun mührüyle — yarım aile güncellenemez.", "u": ["Invoice + satırlarını tek transaction sınırında tutmak", "Invariant'ı (toplam=satır toplamı) tek kapıdan korumak"] },
-    "strategy pattern": { "a": "Matkabın değiştirilebilir uçları: gövde aynı, uç işe göre takılır.", "u": ["Ödeme sağlayıcısını runtime'da seçmek", "if-else zincirini polimorfizme çevirmek"] },
-    "type switching": { "a": "Santral memurunun ezbere yönlendirmesi: yeni departman açılınca tüm memorize listeler tek tek güncellenir — biri unutulur.", "u": ["Anti-örnek: neden registry/strategy tercih edilir", "Kod tabanında switch(type) kokusunu aramak"] },
-    "metadata-driven": { "a": "Programlanabilir trafik tabelası: yol çizgisini kazımadan tabela içeriği merkezden değişir.", "u": ["Davranış kuralını DB'den runtime'da yüklemek", "Müşteri özelleştirmesini deploy'suz yapmak"] },
-    "tablo-per-tip": { "a": "Her evrak türüne ayrı dosya dolabı: faturalar fatura dolabında — 'tek dev dolapta her şey' karmaşası yok.", "u": ["DocType başına ayrı tablo üretmek", "Single Table Inheritance şişmesinden kaçınmak"] },
-    "money type": { "a": "Para zarfı: üstünde hem tutar hem para birimi yazar; zarflar karışmaz.", "u": ["100 TL ile 100 USD'nin ayrı tutulması", "Tutar + currency'nin tek tip olarak taşınması"] },
-    "utc": { "a": "Havacılığın tek saati: tüm pilotlar aynı saati konuşur; yerel saat yalnız yolcu anonsunda.", "u": ["Sunucu/DB zamanını tek standartta tutmak", "Kullanıcıya gösterirken yerele çevirmek"] },
-    "dst": { "a": "Yılda iki kez ileri-geri alınan duvar saati: unutan randevuya bir saat yanlış gider.", "u": ["AB kullanıcılı takvimlerde kayma önlemek", "Cron işlerini UTC'ye bağlamak"] },
-    "normallestirme": { "a": "Kütüphane kart sistemi: kitabın bilgisi tek kartta; ödünç defterine yalnız kart numarası yazılır.", "u": ["Bilgiyi tek kaynakta tutup FK ile bağlamak", "Güncellemeyi tek noktadan yapmak"] },
-    "junction table": { "a": "Düğün oturma planı: davetli listesi ayrı, masa listesi ayrı; 'kim hangi masada' üçüncü bir çizelge.", "u": ["Sipariş-ürün çok-çok ilişkisini modellemek", "Bağlantı başına ek bilgi (adet, fiyat) taşımak"] },
-    "composite key": { "a": "Koltuk numarası: 'salon 3 + koltuk 12' ikilisi tekildir; yalnız '12' hiçbir şey ifade etmez.", "u": ["Junction tabloda (siparis_id, urun_id) tekilliği", "Doğal anahtar çiftleriyle mükerrer kaydı engellemek"] },
-    "try/catch": { "a": "Cambazın güvenlik ağı: düşüş yine kötü ama ölümcül değil; ağ yoksa seyirci '500' görür.", "u": ["Dış çağrıyı sarıp anlamlı hata mesajı üretmek", "Hatanın doğru katmanda yakalanması"] },
-    "retry": { "a": "Meşgul çalan telefonu biraz sonra yeniden aramak: çoğu zaman ikinci arama bağlanır.", "u": ["Geçici network hatasında otomatik tekrar", "Idempotent işlemlerde güvenli tekrar"] },
-    "exponential backoff": { "a": "Kapıyı çalma görgüsü: cevap yoksa 1 dk, sonra 2, sonra 4 dk bekleyip çalarsın — yumruklamak kapıyı açtırmaz.", "u": ["Çöken servise nazik retry aralığı", "Thundering herd'ü önlemek (jitter ile)"] },
-    "idempotency": { "a": "Asansör düğmesi: kaç kez basarsan bas, asansör bir kez gelir.", "u": ["Retry'lı akışlarda çift kayıt önleme", "Mesaj tüketicisinde işlenmişlik kontrolü"] },
-    "circuit breaker": { "a": "Elektrik sigortası: kısa devrede hattı keser; ev yanmaz, usta gelince şalter kalkar.", "u": ["Çöken dış API'ye istek yağmurunu kesmek", "Half-open denemeyle otomatik toparlanma"] },
-    "expand/contract": { "a": "Köprü yenileme: yeni şerit açılır, trafik alışır, eski şerit sonra sökülür — yol hiç kapanmaz.", "u": ["Kolon yeniden adlandırmayı iki faza bölmek", "Eski + yeni kodun aynı şemayla yaşaması"] },
-    "backfill": { "a": "Yeni nüfus alanını eski kayıtlara işlemek: yeni doğanlar zaten kayıtlı; arşivdekiler memurla tamamlanır.", "u": ["NOT NULL kolonu eklemeden önce eski satırları doldurmak", "Büyük tablolarda parça parça (batched) doldurma"] },
-    "zero-downtime": { "a": "Açık kalp ameliyatı yerine stent: hasta (sistem) işlem boyunca uyanık ve çalışır.", "u": ["Gece bakım penceresi olmadan migration", "7/24 SaaS beklentisini karşılamak"] },
-    "forward-only": { "a": "Mürekkeple yazılan defter: yanlışı silmek yok; altına düzeltme satırı yazılır.", "u": ["Rollback yerine düzeltici migration", "Veri kaybı riskini azaltmak"] },
-    "log level": { "a": "Hastane alarm renkleri: mavi not, sarı dikkat, kırmızı acil — herkes her zile koşmaz.", "u": ["Üretimde DEBUG'ı kapatıp diski korumak", "ERROR'a alarm, WARN'a rapor bağlamak"] },
-    "structured log": { "a": "Form üzerine tutanak: serbest hikâye değil; 'tarih', 'kişi', 'olay' kutuları doldurulur — arşivde kutudan aranır.", "u": ["Grafana/Loki'de alan bazlı sorgu", "user_id=42'nin tüm işlemlerini saniyede bulmak"] },
-    "correlation id": { "a": "Kargo takip numarası: paket beş şubeden geçer; tek numarayla hepsi izlenir.", "u": ["Bir isteğin beş servisteki izini sürmek", "Hata raporuna tek ID ile log bağlamak"] },
-    "pii redaction": { "a": "Gazetenin sansürlü baskısı: haber okunur, isimler yıldızlı — sayfa sızsa da kimlik açığa çıkmaz.", "u": ["Log'a TCKN/telefon yazmadan maskelemek", "KVKK uyumlu log saklama"] },
-    "log aggregation": { "a": "Tüm şubelerin kameralarını tek güvenlik odasında izlemek: şube şube gezmek yerine tek ekran.", "u": ["30 sunucunun log'unu Loki'de toplamak", "Tek arama ile sistem geneli teşhis"] },
-    "cache": { "a": "Sık kullanılan baharatı dolaba değil tezgâha koymak: her seferinde kilere inilmez.", "u": ["DB sorgusunu Redis'ten 1ms'de cevaplamak", "Pahalı hesap sonucunu süreli saklamak"] },
-    "ttl": { "a": "Süt kutusundaki son kullanma tarihi: tarih geçince raftan iner, tazesi konur.", "u": ["Cache kaydının 300 sn sonra kendiliğinden düşmesi", "Eski veri gösterme riskini sınırlamak"] },
-    "invalidation": { "a": "Fiyat etiketi değişince rafdaki eski etiketi sökmek: sökmezsen kasada kavga çıkar.", "u": ["Ürün güncellenince cache anahtarını silmek", "Event'le cache temizliğini tetiklemek"] },
-    "token bucket": { "a": "Jetonlu çay ocağı: bardak başı jeton; jetonlar dakikada bir dolar — arada art arda iki çay olur, sürekli sel olmaz.", "u": ["Burst'e izin verip sürekli yükü kesmek", "API kotasını adil dağıtmak"] },
-    "429": { "a": "Gişedeki 'sırayı bekleyin' tabelası: kapı kapanmadı, yalnız 'şimdi değil' dendi.", "u": ["İstemciye Retry-After ile yavaşlama sinyali", "Rate limit aşımını standart kodla bildirmek"] },
-    "wcag": { "a": "Binaların engelli rampası standardı: rampa lütuf değil, yapı ruhsatının şartı.", "u": ["AA kontrast ve klavye erişim kapıları", "axe-core taramasını CI'a bağlamak"] },
-    "tap target": { "a": "Asansör düğmesi boyutu: pirinç tanesi kadar olsaydı yaşlı parmak hep yanlış kata basardı.", "u": ["44×44px minimum dokunma alanı", "Yan yana ikonlar arasına boşluk koymak"] },
-    "kontrast": { "a": "Gri kâğıda gri kalemle yazı: genç göz seçer, 60+ göz hiç okuyamaz.", "u": ["4.5:1 oranını token seviyesinde test etmek", "Dark temada muted metnin okunurluğu"] },
-    "affordance": { "a": "Kapı kolu biçimi: çekilecek kol uzun, itilecek plaka düz — yazı okumadan anlarsın.", "u": ["Butonun buton gibi görünmesi", "Tıklanabilirliği yalnız renkle değil biçimle anlatmak"] },
-    "progressive disclosure": { "a": "Doktorun soru sırası: önce 'neyiniz var', sonra detay — 50 soruluk formu kapıda uzatmaz.", "u": ["Uzun formu 3 adıma bölmek", "Gelişmiş ayarları 'daha fazla' altına saklamak"] },
-    "stack urunu": { "a": "AVM'deki markalı mağaza: kendi vitrini ve ürünü var; otopark, güvenlik, klima AVM'den (kernel) gelir.", "u": ["Tek modülü bağımsız satabilmek", "Ortak altyapı maliyetini ürünler arasında paylaştırmak"] }
+ "_meta": "12A Parti 1 — Eğitim Yolu editöryel zenginleştirme. Anahtar: foldTurkish(label). a=realWorldAnalogy, u=useCases, l=longExplanation'a eklenen bağlam paragrafı. Yalnız categoryId=egitim sayfalarına uygulanır (tools/migrate/index.mjs).",
+ "byLabel": {
+  "cluster": {
+   "a": "Ansiklopedinin tek maddesi: başka maddelere atıf verir ama kendi başına okunup anlaşılır.",
+   "u": [
+    "Tek konuyu derinlemesine öğrenmek için sayfayı baştan sona okumak",
+    "Search sonucundan gelip yalnız ilgili block'u okumak"
+   ]
+  },
+  "kod": {
+   "a": "Yemek tarifi: adım adım yazılı talimat; ama tarif kendi kendine yemek pişirmez, bir aşçı (çalışma ortamı) gerekir.",
+   "u": [
+    "Bir özelliğin davranışını değiştirmek için ilgili dosyayı düzenlemek",
+    "Code review'da satır satır okuyup hata aramak"
+   ]
+  },
+  "derleyici": {
+   "a": "Kitabın çevirmeni: romanı bir kez çevirir, okurlar artık çeviriden okur — her okuyuşta yeniden çeviri gerekmez.",
+   "u": [
+    "Go/Rust servislerini production binary'sine çevirmek",
+    "TypeScript'i tarayıcının anladığı JavaScript'e çevirmek (tsc)"
+   ]
+  },
+  "yorumlayici": {
+   "a": "Simultane tercüman: konuşma sürerken cümle cümle çevirir; hızlı başlar ama her seferinde yeniden çevirir.",
+   "u": ["Python script'ini değiştirip anında tekrar çalıştırmak", "REPL'de tek satır deneyip sonucu görmek"]
+  },
+  "calisma zamani": {
+   "a": "Tiyatro sahnesi: oyun metni (kod) aynı olsa da hangi sahnede oynandığı ışığı, sesi, kuralları belirler.",
+   "u": [
+    "Backend için Python interpreter sürümünü sabitlemek",
+    "Frontend build'inin Node sürümüyle uyumunu CI'da kontrol etmek"
+   ]
+  },
+  "kutuphane": {
+   "a": "Alet çantası: çekici sen alır sen vurursun; çanta sana ne zaman çakacağını söylemez.",
+   "u": ["Tarih hesapları için dayjs çağırmak", "JSON şema doğrulaması için zod kullanmak"]
+  },
+  "framework": {
+   "a": "Pasta kalıbı: hamuru sen koyarsın ama şekli kalıp belirler; kalıbın boşluklarını doldurursun.",
+   "u": [
+    "FastAPI route handler'ı yazıp çağrılmasını framework'e bırakmak",
+    "React component'inin ne zaman render edileceğini React'a bırakmak"
+   ]
+  },
+  "inversion of control": {
+   "a": "Restoranda garson çağırmak yerine numaratör almak: sıra sende olunca sistem seni çağırır.",
+   "u": [
+    "Hook fonksiyonunun before_save anında framework tarafından çağrılması",
+    "Event handler'ın kullanıcı tıklayınca tetiklenmesi"
+   ]
+  },
+  "monolit": {
+   "a": "Tek binadaki büyük mağaza: tüm reyonlar aynı çatı altında, tek kapı, tek güvenlik.",
+   "u": [
+    "Küçük ekiple tek deploy hattı yönetmek",
+    "Modüller arası çağrıyı network'süz, fonksiyon çağrısıyla yapmak"
+   ]
+  },
+  "mikro-servis": {
+   "a": "AVM'deki bağımsız dükkânlar: her biri kendi kasası, kendi personeli; aralarında koridordan (network) gidilir.",
+   "u": [
+    "Bağımsız ölçeklenmesi gereken yoğun bir servisi ayırmak",
+    "Farklı dillerde yazılmış ekip servislerini ayrı deploy etmek"
+   ]
+  },
+  "moduler monolit": {
+   "a": "Tek bina ama her dairenin kendi kilidi var: bina tek, daireler bağımsız; duvar delmek yasak.",
+   "u": [
+    "Modül sınırlarını import-linter ile CI'da zorlamak",
+    "İleride gerekirse tek modülü servise ayırabilmek"
+   ]
+  },
+  "meta-framework": {
+   "a": "Lego fabrikası: oyuncak değil, oyuncak üretecek parça sistemleri üretir.",
+   "u": [
+    "Tek kernel üstünde CRM + LMS + e-ticaret gibi çok ürün çıkarmak",
+    "DocType tanımından otomatik API + UI üretmek"
+   ]
+  },
+  "ddd": {
+   "a": "Hastanede bölümler uzmanlık alanına göre ayrılır: kardiyoloji kendi terminolojisi ve kurallarıyla çalışır, dahiliyeye karışmaz.",
+   "u": [
+    "Modül sınırlarını iş alanlarına (faturalama, stok) göre çizmek",
+    "Kod isimlendirmesini iş diliyle (Invoice, Tenant) hizalamak"
+   ]
+  },
+  "bit": {
+   "a": "Işık düğmesi: açık ya da kapalı; üçüncü hâl yok.",
+   "u": ["Donanım seviyesinde veri boyutu hesaplamak", "Bit flag'lerle çoklu açma-kapama durumu tutmak"]
+  },
+  "byte": {
+   "a": "Sekiz düğmeli sigorta kutusu: her kombinasyon farklı bir değer, toplam 256 ihtimal.",
+   "u": ["Dosya boyutunu (KB/MB) hesaplamak", "Bir karakterin bellekte kapladığı yeri anlamak"]
+  },
+  "ascii": {
+   "a": "Eski daktilo klavyesi: İngiliz alfabesi var, 'ş' ve 'ğ' tuşu hiç yok.",
+   "u": [
+    "Eski protokollerin neden Türkçe karakter bozduğunu anlamak",
+    "Dosya adlarında güvenli karakter seti seçmek"
+   ]
+  },
+  "utf-8": {
+   "a": "Evrensel posta kodu sistemi: hangi ülkenin adresi olursa olsun aynı zarf formatında taşınır.",
+   "u": [
+    "Veritabanı ve API'de Türkçe içeriği bozulmadan saklamak",
+    "Çok dilli içerikte emoji ve özel karakter desteği"
+   ]
+  },
+  "string": {
+   "a": "İpe dizilmiş boncuklar: her boncuk bir karakter, sıra önemli.",
+   "u": ["Kullanıcı adı, açıklama, adres gibi metin alanları", "Şablon metinde değişken birleştirme"]
+  },
+  "integer": {
+   "a": "Sayaç: tam tıklar, ara değer bilmez.",
+   "u": ["Sipariş adedi, deneme sayısı gibi sayımlar", "Auto-increment olmayan ID üretiminde sıra numarası"]
+  },
+  "float": {
+   "a": "Lastikli şerit metre: hızlı ölçer ama milimetrede esner — kuyumcuda kullanılmaz.",
+   "u": ["Bilimsel hesap ve grafik koordinatları", "Para DIŞINDA oran/ortalama hesapları"],
+   "l": "Bu projede para alanlarında float şema seviyesinde reddedilir; Decimal zorunludur. Kural, code review'a değil tip sistemine gömülüdür."
+  },
+  "decimal": {
+   "a": "Kuyumcu terazisi: miligramı bile tam tartar, 'yaklaşık' kavramı yoktur.",
+   "u": ["Fatura tutarı, KDV, bakiye gibi tüm para alanları", "Muhasebe mutabakatında kuruş eşitliği"],
+   "l": "Money composite tipinin iç bileşenidir: Decimal tutar + currency code birlikte taşınır."
+  },
+  "boolean": {
+   "a": "Kapı: açık ya da kapalı; aralık 'belki' diye durum yok.",
+   "u": ["is_active, is_deleted gibi durum bayrakları", "Feature flag'in açık/kapalı hali"]
+  },
+  "scalar": {
+   "a": "Tek malzeme: un. Kek değil, kekin bölünemez hammaddesi.",
+   "u": ["DB kolonu tip seçimi", "API alanlarının en küçük yapı taşları"]
+  },
+  "composite": {
+   "a": "Sandviç: ekmek + iç malzeme; tek parça gibi satılır ama bileşenlerden oluşur.",
+   "u": ["Money = Decimal + currency olarak modellenmesi", "Adres = sokak + şehir + posta kodu bütünü"]
+  },
+  "validator": {
+   "a": "Gümrük memuru: pasaport formatı doğru mu, süresi geçmiş mi — içeri girmeden kontrol.",
+   "u": ["IBAN'ın MOD-97 kontrolünden geçirilmesi", "Email formatının kayıttan önce doğrulanması"]
+  },
+  "coercion": {
+   "a": "Standart elbise bedeni: 'orta boy', 'M', '38' hepsi aynı rafa, tek etiketle kaldırılır.",
+   "u": [
+    "'1.299,50 TL' girdisini Decimal(1299.50)'ye çevirmek",
+    "Farklı tarih yazımlarını ISO formatına normalize etmek"
+   ]
+  },
+  "primitive": {
+   "a": "Standart vida setleri: her usta kendi vidasını dökmez, standart seti kullanır.",
+   "u": [
+    "Plugin'lerin Money/Phone/Email tiplerini hazır kullanması",
+    "Tüm ürünlerde aynı doğrulama davranışı"
+   ]
+  },
+  "doctype": {
+   "a": "Matbaadaki form şablonu: bir kez tasarlanır; basılan her form (kayıt) aynı alanları taşır.",
+   "u": [
+    "'Müşteri' tanımından DB tablosu + form + API'nin otomatik üretilmesi",
+    "Yeni varlık türünü kod yazmadan tanımlamak"
+   ],
+   "l": "Bu mimarinin kalbidir: K02 DocType engine, tüm üst katman davranışını bu tanımdan türetir."
+  },
+  "field": {
+   "a": "Formdaki tek kutu: 'Ad Soyad' kutusu hem kâğıtta hem arşiv dosyasında hem bilgisayar kaydında aynı adla yaşar.",
+   "u": [
+    "DocType'a yeni alan ekleyince kolon + input + API alanının birlikte doğması",
+    "Field metadata'sıyla (pii, audited) davranış türetme"
+   ]
+  },
+  "fieldtype": {
+   "a": "Kutu üstündeki ipucu: 'buraya sadece tarih yazılır' — yazan da okuyan da formatı bilir.",
+   "u": [
+    "Decimal seçince para doğrulamasının otomatik gelmesi",
+    "Link seçince ilişki + arama kutusunun otomatik kurulması"
+   ]
+  },
+  "naming series": {
+   "a": "Noterin evrak numarası: 2026/000123 — sıralı, tahmin edilebilir, asla çakışmaz.",
+   "u": ["SO-0001 formatlı sipariş numarası üretimi", "Yıl bazlı fatura serisi (INV-2026-####)"]
+  },
+  "child table": {
+   "a": "Fatura ve kalemleri: başlık tek kâğıt, satırlar onun altındaki çizelge; çizelge tek başına anlamsız.",
+   "u": ["Sipariş → sipariş kalemleri modellemesi", "Bordro → kazanç/kesinti satırları"]
+  },
+  "hook": {
+   "a": "Düğün salonunun 'pasta kesilirken' anonsu: o anda kimin ne yapacağı önceden yazılmış; an gelince hepsi tetiklenir.",
+   "u": ["before_insert'te varsayılan değer atamak", "on_submit'te stok düşümü tetiklemek"]
+  },
+  "custom field": {
+   "a": "Hazır giysiye terzi cebi ekletmek: üretici modeli değişmez, senin ceketinde fazladan cep olur.",
+   "u": [
+    "Bir tenant'ın müşteri kartına 'vergi dairesi' alanı eklemesi",
+    "Sektöre özgü alanları kod değişikliği olmadan taşımak"
+   ]
+  },
+  "property setter": {
+   "a": "Otel odasındaki ayarlanabilir termostat: oda aynı, ayarı misafire göre değişir.",
+   "u": ["Bir tenant'ta 'telefon' alanını zorunlu yapmak", "Bir alanın etiketini sektör diline çevirmek"]
+  },
+  "submittable": {
+   "a": "Noter onaylı belge: taslakken karalanır; mühürlendikten sonra üstünde oynanmaz, ancak iptal şerhi düşülür.",
+   "u": [
+    "Fatura kesinleştikten sonra tutar değişikliğini engellemek",
+    "Journal entry'nin muhasebe dönemine kilitlenmesi"
+   ]
+  },
+  "docstatus": {
+   "a": "Evrakın köşesindeki kaşe: TASLAK / ONAYLI / İPTAL — tek bakışta hangi muameleyi göreceği belli.",
+   "u": ["Submitted kayıtlarda alan kilitleme kuralları", "İptal akışında ters kayıt üretme"]
+  },
+  "eav": {
+   "a": "Her şeyi tek çekmeceye etiketli poşetlerle atmak: koymak kolay, 'kırmızı kazakları bul' demek kâbus.",
+   "u": [
+    "Neden tablo-per-tip tercih edildiğini anlamak (anti-örnek)",
+    "Çok seyrek, sorgulanmayan ek özellikler için sınırlı kullanım"
+   ]
+  },
+  "rdbms": {
+   "a": "Devlet arşivi: klasörler (tablolar), fihristler (indeksler), erişim kuralları on yıllardır oturmuş.",
+   "u": ["İlişkili iş verisini (sipariş-müşteri-fatura) tutarlı saklamak", "SQL ile ad-hoc rapor çekmek"]
+  },
+  "postgresql": {
+   "a": "İsviçre çakısı arşiv: klasik dolapların yanında harita çekmecesi (PostGIS), vektör rafı (pgvector) da var.",
+   "u": ["JSONB ile esnek alan saklama", "pgvector ile embedding araması — ayrı DB kurmadan"]
+  },
+  "tablo": {
+   "a": "Excel sayfası disiplinlisi: kolonlar baştan tanımlı, her satır aynı düzene uyar.",
+   "u": ["Her DocType'ın kendi tablosunu üretmesi", "Satır sayısı üzerinden büyüme planlaması"]
+  },
+  "kolon": {
+   "a": "Formdaki sabit başlıklı sütun: 'Tutar' sütununa kimse ad-soyad yazamaz.",
+   "u": ["Field → kolon eşlemesinde tip seçimi", "Kolona indeks koyarak aramayı hızlandırma"]
+  },
+  "satir": {
+   "a": "Defterdeki tek kayıt çizgisi: bir müşteri, bir sipariş, bir fatura — her biri bir satır.",
+   "u": ["Bir belgenin DB'deki karşılığını bulmak", "Satır bazlı yetki (RLS) uygulamak"]
+  },
+  "primary key": {
+   "a": "T.C. kimlik numarası: iki kişi aynı numarayı asla taşımaz.",
+   "u": ["UUID v7 ile sıralanabilir benzersiz kimlik", "FK ilişkilerinin hedefi olmak"]
+  },
+  "foreign key": {
+   "a": "Kütüphane fişindeki kitap numarası: fiş kitabın kendisini değil, raftaki yerini gösterir; kitap yoksa fiş geçersizdir.",
+   "u": ["Sipariş satırının müşteri kaydına bağlanması", "Yetim kayıt oluşumunu DB seviyesinde engellemek"]
+  },
+  "index": {
+   "a": "Kitabın arkasındaki dizin: kelimeyi bulmak için 500 sayfayı taramazsın, dizinden sayfaya atlarsın.",
+   "u": ["Sık filtrelenen kolonları hızlandırmak", "EXPLAIN ile kullanımını doğrulamak"]
+  },
+  "indeks": {
+   "a": "Kitabın arkasındaki dizin: 'outbox' kelimesini bulmak için 500 sayfayı taramazsın, dizinden sayfaya atlarsın.",
+   "u": [
+    "Sık filtrelenen kolonlara (tenant_id, status) indeks koymak",
+    "EXPLAIN ile indeksin gerçekten kullanıldığını doğrulamak"
+   ]
+  },
+  "b-tree": {
+   "a": "Alfabetik telefon rehberi: ortadan açar, yarıya böler, birkaç adımda ada ulaşırsın.",
+   "u": ["WHERE ve ORDER BY sorgularının varsayılan indeksi", "Aralık sorguları (tarih >= X) için doğru yapı"]
+  },
+  "transaction": {
+   "a": "Düğün nikâhı: iki imza da atılırsa evlilik geçerli; biri vazgeçerse hiçbir imza geçmez.",
+   "u": ["Para transferinde çekme+yatırmanın atomikliği", "Sipariş + stok düşümünün birlikte kaydı"]
+  },
+  "acid": {
+   "a": "Noter senedinin dört garantisi: ya tamamı geçerli ya hiçbiri; kurallara aykırısı yazılmaz; aynı anda iki işlem birbirini bozmaz; mühürlenen kaybolmaz.",
+   "u": ["Mali kayıtlarda tutarlılık güvencesi", "Çok kullanıcılı eşzamanlı yazmada izolasyon"]
+  },
+  "normalize": {
+   "a": "Rehberde adresin tek yerde yazması: taşınınca tek satır güncellenir, yüz kartvizit değil.",
+   "u": ["Müşteri bilgisini tek tabloda tutup FK ile bağlamak", "Güncelleme anomalilerini önlemek"]
+  },
+  "denormalize": {
+   "a": "Kasiyerin en çok satan ürün fiyatlarını ezberlemesi: her seferinde kataloğa bakmaz; katalog değişince ezberi tazelemek gerekir.",
+   "u": ["Dashboard için projection tablosu üretmek", "Sık okunan müşteri adını sipariş satırına kopyalamak"]
+  },
+  "join": {
+   "a": "İki listeyi yan yana koyup isimden eşleştirmek: davetli listesi + masa listesi → kim hangi masada.",
+   "u": ["Sipariş + müşteri bilgisini tek sorguda çekmek", "N+1 yerine tek JOIN'li sorgu yazmak"]
+  },
+  "migration": {
+   "a": "Köprü inşaatı: trafik akarken yeni köprü yapılır, açılır, eskisi sonra sökülür — yol asla kapanmaz.",
+   "u": ["Yeni kolonu Alembic script'iyle eklemek", "Üretim DB'sini sürümler arasında güvenle taşımak"],
+   "l": "Bu projede her migration'ın downgrade'i zorunludur ve CI'da sırayla uygulanabilirliği test edilir."
+  },
+  "cqrs": {
+   "a": "Mutfak ile vitrin ayrımı: yemek mutfakta yapılır (yazma), vitrinde hazır tabaklar durur (okuma) — müşteri mutfağa girmez.",
+   "u": [
+    "Dashboard'u projection'dan okuyup JOIN maliyetinden kurtulmak",
+    "Yazma modelini değişmeden okuma modelini yeniden kurmak"
+   ]
+  },
+  "api": {
+   "a": "Restoran menüsü: ne sipariş edebileceğin ve neyin geleceği yazılı sözleşme; mutfağın içini bilmek zorunda değilsin.",
+   "u": ["Frontend'in backend ile konuşması", "Üçüncü taraf entegrasyonlara yüzey açmak"]
+  },
+  "http": {
+   "a": "Posta protokolü: zarf formatı, adres yazımı, iade kuralları standart — kim gönderirse göndersin aynı kurallar.",
+   "u": ["REST API'nin taşıma katmanı", "Status code ve header sözleşmeleri"]
+  },
+  "rest": {
+   "a": "Otel resepsiyonu: oda (kaynak) numarası söylersin, eylemi fiil belirler — anahtar al (GET), rezervasyon yap (POST), iptal et (DELETE).",
+   "u": [
+    "CRUD endpoint'lerini standart desenle tasarlamak",
+    "Cache ve retry davranışını method semantiğine yaslamak"
+   ]
+  },
+  "graphql": {
+   "a": "Açık büfe: tabağına ne koyacağını sen seçersin; mutfak sabit menü dayatmaz.",
+   "u": ["Mobilde yalnız gereken alanları çekerek veri tasarrufu", "Birden çok kaynağı tek istekte toplamak"]
+  },
+  "json": {
+   "a": "Ortak el yazısı: hem insan okur hem makine — taraflar alfabe tartışması yapmaz.",
+   "u": ["API istek/cevap gövdesi", "Konfigürasyon ve içerik dosyaları (bu projenin tamamı)"]
+  },
+  "endpoint": {
+   "a": "Bankodaki gişe: 'Havale gişesi' yalnız havale işlemi yapar; doğru gişeye gitmek sana düşer.",
+   "u": ["POST /api/orders ile sipariş oluşturma", "Endpoint başına yetki ve rate limit tanımlama"]
+  },
+  "method": {
+   "a": "Dilekçedeki talep türü: bilgi edinme / başvuru / itiraz — aynı makama farklı niyetle gidilir.",
+   "u": [
+    "GET'i cache'lemek, POST'u idempotency key ile korumak",
+    "Doğru method seçimiyle otomatik retry güvenliği"
+   ]
+  },
+  "status code": {
+   "a": "Kargo takip durumu: 'teslim edildi', 'adres bulunamadı', 'dağıtımda' — tek koddan herkes aynı şeyi anlar.",
+   "u": ["Frontend'in 404'te 'bulunamadı' ekranı göstermesi", "Monitoring'de 5xx oranı alarmı"]
+  },
+  "idempotent": {
+   "a": "Asansör düğmesi: beş kez basmak asansörü beş kez çağırmaz.",
+   "u": ["Ağ kopunca isteği güvenle tekrarlamak", "Retry mekanizmalarının ön şartı"]
+  },
+  "idempotency key": {
+   "a": "Dilekçeye eklenen başvuru numarası: aynı numarayla ikinci kez gelirsen memur 'bu işlem zaten yapıldı' der, yeniden işlemez.",
+   "u": ["Ödeme isteğinin çift çekimini engellemek", "Webhook'un mükerrer işlenmesini önlemek"]
+  },
+  "versioning": {
+   "a": "Elektrik prizi standartları: yeni bina yeni prizle gelir ama eski fişler için adaptör bir süre satılır.",
+   "u": ["/api/v1 yaşarken v2'yi paralel açmak", "Kırıcı şema değişikliğini yeni sürümde toplamak"]
+  },
+  "cors": {
+   "a": "Site güvenliği: dış kapıdan gelen kuryeyi içeri almak için daire sahibinin (sunucu) onay listesi gerekir.",
+   "u": [
+    "frontend.example.com'dan api.example.com'a tarayıcı erişimi",
+    "İzinli origin listesini ortam bazlı yönetmek"
+   ]
+  },
+  "rate limit": {
+   "a": "Sınıfta söz hakkı: her öğrenciye beş dakika; biri kürsüyü kapatamaz.",
+   "u": ["Login denemelerini IP başına sınırlamak", "Tenant başına API kotası uygulamak"]
+  },
+  "tenant": {
+   "a": "AVM'deki bir dükkân sahibi: kendi kasası, kendi stoğu; komşu dükkânın defterini göremez.",
+   "u": ["Şirket başına izole veri alanı", "Tenant bazlı faturalama ve kota"]
+  },
+  "multi-tenancy": {
+   "a": "Apartman: tek bina, ortak tesisat; her dairenin kendi kapısı ve kilidi.",
+   "u": ["Tek deploy ile yüzlerce müşteriye hizmet", "Altyapı maliyetini müşteriler arasında paylaştırmak"]
+  },
+  "tenant scope": {
+   "a": "Personel kartıyla açılan kat: asansör seni yalnız kendi katına çıkarır; düğmeye bassan da komşu kat açılmaz.",
+   "u": [
+    "Her sorguya otomatik tenant_id filtresi enjekte etmek",
+    "Sızıntıyı geliştirici disiplinine değil altyapıya yaslamak"
+   ]
+  },
+  "row-level isolation": {
+   "a": "Ortak dosya dolabı, etiketli klasörler: aynı çekmecede dururlar ama her klasörün sahibi bellidir.",
+   "u": ["tenant_id kolonu + RLS ile en yaygın izolasyon", "Maliyet-etkin SaaS başlangıç modeli"]
+  },
+  "schema-level": {
+   "a": "Aynı binada ayrı arşiv odaları: dolaplar ortak değil; odanın anahtarı ayrı.",
+   "u": ["Tenant başına ayrı backup/restore", "Orta seviye regülasyon ihtiyacı"]
+  },
+  "cluster-level": {
+   "a": "Ayrı bina: müşteri kendi binasını istiyor; maliyet onun, izolasyon tam.",
+   "u": ["Enterprise müşteriye özel instance", "Veri yerleşim (residency) zorunlulukları"]
+  },
+  "sub-tenant": {
+   "a": "Holding ve şirketleri: tek çatı, ayrı muhasebeler; yıl sonunda konsolide tablo.",
+   "u": ["Holding altında şirket bazlı operasyon", "Konsolide raporlama ile ayrı yetkilendirme"]
+  },
+  "authentication": {
+   "a": "Pasaport kontrolü: kim olduğunu kanıtlarsın; nereye girebileceğin sonraki kapının işi.",
+   "u": ["Login + 2FA akışı", "Servisler arası kimlik (mTLS, token)"]
+  },
+  "authorization": {
+   "a": "Bilet turnikesi: pasaportun geçerli ama bu salona biletin var mı?",
+   "u": ["Rol bazlı menü/aksiyon görünürlüğü", "Kayıt seviyesinde erişim kararı"]
+  },
+  "session": {
+   "a": "Vestiyer fişi: ceketin (durum) içeride; fişi iptal edersen ceket anında teslim edilmez olur.",
+   "u": ["Anında oturum sonlandırma (revoke)", "Hassas panellerde stateful oturum"]
+  },
+  "jwt": {
+   "a": "Mühürlü davetiyeli bileklik: kapıda merkeze sormadan doğrulanır; ama sahibinden geri almak için ek liste gerekir.",
+   "u": ["Stateless API ölçeklendirme", "Servisler arası claim taşıma"]
+  },
+  "rbac": {
+   "a": "Şirket kartı renkleri: mavi kart depoya, kırmızı kart kasaya girer — kişiye değil renge bakılır.",
+   "u": ["Muhasebeci rolüne fatura izinleri atamak", "Yeni çalışana tek hamlede rol vermek"]
+  },
+  "abac": {
+   "a": "Bankadaki tutar kuralı: veznedar 50 bin TL'ye kadar onaylar, üstü müdür ister — karar kişinin değil niteliğin.",
+   "u": ["Mesai dışı kritik işlem kısıtı", "Tutar eşiğine göre onay zinciri"]
+  },
+  "rebac": {
+   "a": "Aile albümü izni: 'arkadaşımın arkadaşı görebilir' — izin listeyle değil ilişkiyle tanımlı.",
+   "u": ["Google Docs tarzı paylaşım modeli", "Board üyeliğinden kart erişimi türetmek"]
+  },
+  "encryption at rest": {
+   "a": "Kasadaki belgelerin şifreli yazılması: kasa çalınsa bile sayfalar anlamsız.",
+   "u": ["PII alanlarının AES-256-GCM ile saklanması", "Disk/backup çalınmasına karşı koruma"]
+  },
+  "tls": {
+   "a": "Mühürlü zarf: postacı taşır ama açamaz; mühür kırılırsa belli olur.",
+   "u": ["HTTPS ile tüm istemci trafiği", "Servisler arası iç trafik şifreleme"]
+  },
+  "csrf": {
+   "a": "Sahte imzalı talimat: kapıcıya 'daire 5 söyledi' diye not bırakmak; kapıcı imza kontrolü (token) yapmazsa kanar.",
+   "u": ["Form aksiyonlarında CSRF token kontrolü", "SameSite cookie politikası"]
+  },
+  "audit log": {
+   "a": "Noterin ciltli defteri: sayfa koparılamaz, satır silinemez; kim ne zaman ne yaptıysa öylece durur.",
+   "u": ["KVKK/denetim için kim-ne-ne zaman kaydı", "Şüpheli işlem geriye dönük inceleme"]
+  },
+  "event": {
+   "a": "Gazete manşeti: 'maç bitti 3-1' — olmuş bitmiş; okuyan ne yapacağına kendi karar verir.",
+   "u": ["order.created sonrası bağımsız tepkiler (mail, stok, skor)", "Modüller arası gevşek bağlantı"]
+  },
+  "command": {
+   "a": "Garsona sipariş: 'bir çay getir' — tek muhatap, yapılması beklenen iş.",
+   "u": ["send-email görevini worker'a vermek", "Kullanıcı niyetini tek işleyiciye yönlendirmek"]
+  },
+  "pub/sub": {
+   "a": "Cami hoparlörü: ezan okunur; kimin duyup ne yaptığını müezzin takip etmez.",
+   "u": ["Bir event'e birden çok modülün abone olması", "Yayıncı-tüketici bağımsız evrimi"]
+  },
+  "outbox": {
+   "a": "Şirketin giden evrak sepeti: yazı önce deftere işlenir ve sepete konur; kurye sepetten alıp dağıtır — defterle kurye asla çelişmez.",
+   "u": ["DB yazımı + event yayınının atomik birleşimi", "Worker'ın sepetten okuyup yayınlaması"],
+   "l": "Dual-write probleminin standart çözümüdür ve bu mimaride scale primitives katmanının ilk taşıdır."
+  },
+  "dual-write": {
+   "a": "İki ayrı deftere aynı anda elle yazmak: telefon çalar, biri yazılır biri unutulur — defterler artık anlaşamaz.",
+   "u": ["Neden outbox kullanıldığını anlamak (anti-örnek)", "DB + queue tutarsızlık vakalarını teşhis etmek"]
+  },
+  "idempotent consumer": {
+   "a": "Damgalı davetiye kontrolü: aynı davetiye ikinci kez gelirse 'zaten girdi' der, içeri ikinci tabak açmaz.",
+   "u": ["At-least-once teslimde çift işlemeyi önlemek", "Event id'sini işlenmişler tablosunda tutmak"]
+  },
+  "at-least-once": {
+   "a": "Kararlı kurye: teslim onayı gelmezse tekrar getirir; bazen kapıya iki kez gelebilir.",
+   "u": ["Mesaj kaybına tahammülsüz akışlar", "Idempotent consumer ile birlikte güvenli teslimat"]
+  },
+  "exactly-once": {
+   "a": "Hem kurye hem kapıda noter: tek teslim garanti ama maliyeti yüksek; çoğu ev için gereksiz.",
+   "u": [
+    "Neden genelde at-least-once + idempotency seçildiğini anlamak",
+    "Gerçekten gerektiren dar finansal akışlar"
+   ]
+  },
+  "dlq": {
+   "a": "Postanenin 'dağıtılamayan' rafı: adresi bozuk mektup çöpe atılmaz, rafa kalkar; memur tek tek inceler.",
+   "u": ["Zehirli mesajın kuyruğu tıkamasını önlemek", "DLQ doluluk alarmıyla insan müdahalesi"]
+  },
+  "saga": {
+   "a": "Düğün organizatörü: salon, yemek, orkestra ayrı esnaf; biri iptal ederse organizatör sırayla diğer kaporaları geri alır.",
+   "u": ["Çok adımlı işlemde telafi (compensation) zinciri", "DBOS ile durable iş akışı yürütmek"]
+  },
+  "backpressure": {
+   "a": "Şişeye huniyle su doldurmak: şişe yetişemiyorsa huniyi yavaşlatırsın; yoksa taşar.",
+   "u": ["Tüketici yavaşken yayıncıyı frenlemek", "Kuyruk derinliği eşiğiyle üretimi durdurmak"]
+  },
+  "plugin": {
+   "a": "Mutfak robotunun aksesuarı: rendeyi takarsın rendeler, çıkarırsın robot yine çalışır.",
+   "u": ["Çekirdeğe dokunmadan sektör özelliği eklemek", "Marketplace'ten yetenek kurmak"]
+  },
+  "manifest": {
+   "a": "Cihaz kutusundaki içindekiler kartı: ad, model, gereksinimler — kutuyu açmadan ne olduğu belli.",
+   "u": ["Plugin'in izin ve hook beyanını okumak", "Yükleme öncesi bağımlılık kontrolü"]
+  },
+  "registry": {
+   "a": "Apartman yönetiminin daire defteri: kim oturuyor, hangi dairede, ne zamandan beri — tek bakışta.",
+   "u": ["Yüklü plugin'lerin sürüm envanteri", "Çakışma ve bağımlılık çözümü"],
+   "l": "Aynı desen bu viewer'ın block sisteminde de kullanılır: type → component kaydı, switch zinciri yerine registry'den çözülür."
+  },
+  "filter hook": {
+   "a": "Fotoğraf filtresi zinciri: görüntü her filtreden geçerek değişir; sıra önemlidir.",
+   "u": ["Kaydedilmeden önce veriyi dönüştürmek", "Fiyat hesabına zincirleme kural eklemek"]
+  },
+  "action hook": {
+   "a": "Kapı zili: çalınca ışık yanar, köpek havlar — zil kimseden cevap beklemez.",
+   "u": ["on_submit'te bildirim göndermek", "Cache invalidation tetiklemek"]
+  },
+  "semver": {
+   "a": "Gözlük reçetesi: numara (MAJOR) değiştiyse eski camlar uymaz; çerçeve rötuşu (PATCH) sorunsuz takılır.",
+   "u": ["Marketplace'te güvenli otomatik güncelleme", "Kernel API değişikliklerinin sınıflandırılması"]
+  },
+  "contract test": {
+   "a": "Priz-fiş standardı testi: yeni prizler üretilirken eski fişlerin hâlâ uyduğu fabrikada denenir.",
+   "u": ["Kernel güncellemesinin plugin'leri kırmadığını kanıtlamak", "'Don't break userspace' kapısı"]
+  },
+  "sandbox": {
+   "a": "Çocuk oyun parkı: içeride istediğini yap; çitin dışına top da çıkmaz, çocuk da.",
+   "u": ["Üçüncü taraf plugin'in dosya/ağ erişimini kısıtlamak", "Buggy kodun sistemi çökertmesini önlemek"]
+  },
+  "plugin lifecycle": {
+   "a": "Ev aletinin ömrü: kur, fişe tak, kullan, fişten çek, sök — her aşamanın kendi kuralı var.",
+   "u": ["install/uninstall'da temiz kaynak yönetimi", "deactivate'te zamanlanmış işleri durdurmak"]
+  },
+  "ci": {
+   "a": "Fabrika giriş kalite kontrolü: her parça bantta üç testten geçmeden hatta giremez.",
+   "u": ["Her push'ta lint + test + build koşmak", "Bozuk kodun main'e karışmasını engellemek"]
+  },
+  "cd": {
+   "a": "Otomatik şişeleme hattı: kaliteden geçen ürün elle taşınmadan rafa gider.",
+   "u": ["Yeşil build'in otomatik yayınlanması", "İnsan hatasız, tekrarlanabilir deploy"]
+  },
+  "blue/green": {
+   "a": "Yedek sahne: yeni dekor yan sahnede kurulur; perde bir saniyede öbür sahneye döner, sorun olursa geri.",
+   "u": ["Sıfır kesintili sürüm geçişi", "Anında rollback (symlink/traffic switch)"]
+  },
+  "canary": {
+   "a": "Madenci kanaryası: gaz varsa önce küçük kuş etkilenir; madenciler tahliye edilir.",
+   "u": ["Yeni sürümü önce %5 trafiğe açmak", "Hata oranı artarsa otomatik geri çekmek"]
+  },
+  "feature flag": {
+   "a": "Şalterli vitrin: ürün rafta hazır; ışığı ne zaman yakacağına pazarlama karar verir.",
+   "u": ["Kod deploy edilmiş ama özellik kapalı (dark launch)", "Tenant bazlı kademeli açılış"]
+  },
+  "observability": {
+   "a": "Uçak kokpiti: hız, yakıt, irtifa — pilot camdan bakarak değil göstergeyle uçar.",
+   "u": ["Metrics + logs + traces üçlüsünü kurmak", "5 dakikada kök neden bulmak"]
+  },
+  "slo": {
+   "a": "Kargo taahhüdü: 'paketlerin %99'u iki günde teslim' — hedef yazılı, ölçülebilir.",
+   "u": ["%99.9 uptime hedefi belirlemek", "Alarm eşiklerini hedefe bağlamak"]
+  },
+  "error budget": {
+   "a": "Aylık harçlık: dökersen ay sonuna kadar harcama yok — yeni oyuncak (feature) bekler.",
+   "u": ["Budget bittiğinde feature dondurup stabilizasyona dönmek", "Risk iştahını sayıya bağlamak"]
+  },
+  "on-call": {
+   "a": "Nöbetçi eczane: gece yarısı da açık; nöbet listesi haftalık döner.",
+   "u": ["Alarm geldiğinde ilk müdahale sahibi", "Eskalasyon zinciri tanımlamak"]
+  },
+  "runbook": {
+   "a": "Yangın talimatı: panik anında düşünmezsin, duvardaki adımları izlersin.",
+   "u": ["'DB diski doldu' alarmının adım listesi", "Nöbetçinin uzman olmadan müdahalesi"]
+  },
+  "post-mortem": {
+   "a": "Maç sonrası video analizi: suçlu aramak değil, aynı golü bir daha yememek.",
+   "u": ["Incident sonrası blameless rapor", "Aksiyon maddelerinin takibi"]
+  },
+  "mttr": {
+   "a": "Yol yardım süresi: lastik patladıktan kaç dakika sonra tekrar yoldasın?",
+   "u": ["Kurtarma süresini ölçüp iyileştirmek", "Runbook kalitesinin metriği"]
+  },
+  "unit test": {
+   "a": "Aşçının tek malzemeyi tatması: domates iyi mi? — yemeğin tamamı değil, tek parça.",
+   "u": ["Saf fonksiyonun sınır değerlerini test etmek", "Bug'ı pipeline'ın en ucuz noktasında yakalamak"]
+  },
+  "integration test": {
+   "a": "Yemeğin tabakta tadılması: malzemeler tek tek iyiydi; birlikte de uyumlu mu?",
+   "u": ["API + DB'nin birlikte doğru çalışması", "Modüller arası sözleşmenin doğrulanması"]
+  },
+  "e2e": {
+   "a": "Müşteri gibi restorana girmek: kapıdan rezervasyona, servisten hesaba tüm deneyim.",
+   "u": ["Playwright ile kritik kullanıcı akışları", "Yayın öncesi son güvence katmanı"]
+  },
+  "mock": {
+   "a": "Film setindeki maket araba: gerçek motoru yok ama sahne için yeterli; kaza riski sıfır.",
+   "u": ["Banka API'sini test'te taklit etmek", "Dış bağımlılığı izole edip hızlı test"]
+  },
+  "snapshot": {
+   "a": "Mühürlü örnek numune: üretim hattındaki ürün numuneden saparsa zil çalar.",
+   "u": ["Çıktı formatı değişimini görünür kılmak", "Bilinçli değişimde numuneyi yenilemek"]
+  },
+  "branch": {
+   "a": "Yol ayrımı: ana yoldan çıkar, işini görür, kavşaktan ana yola dönersin.",
+   "u": ["Feature'ı main'i bozmadan geliştirmek", "İş bitince PR ile geri birleştirmek"]
+  },
+  "pull request": {
+   "a": "Editöre gönderilen taslak: yazı yayına girmeden önce ikinci göz okur, düzeltme ister.",
+   "u": ["Code review zorunluluğu", "CI kapılarının merge öncesi koşması"]
+  },
+  "semantic versioning": {
+   "a": "Gözlük reçetesi: numara değişimi (MAJOR) eski camı geçersiz kılar; cam cilası (PATCH) fark ettirmez.",
+   "u": [
+    "1.0.0 → 1.1.0 güncellemesinin güvenliğini okumak",
+    "Breaking change'i sürüm numarasıyla beyan etmek"
+   ]
+  },
+  "conventional commits": {
+   "a": "Resmi evrak konu kodu: 'İVD-2026/7' gören dosyanın hangi klasöre gideceğini bilir.",
+   "u": ["feat:/fix: prefix'lerinden changelog üretmek", "Sürüm numarasını commit'lerden otomatik türetmek"]
+  },
+  "hotfix": {
+   "a": "Su borusu patlağına acil bant: ustanın tam tamiri beklenmez; bant şimdi, tamir planlı.",
+   "u": ["Üretimdeki kritik bug'a dakikalar içinde yama", "Normal süreci bypass eden tanımlı acil yol"]
+  },
+  "p95": {
+   "a": "Sınıfın en yavaş 5 öğrencisini ayrı değerlendirmek: ortalama 'iyi' derken arka sıra kaybolmasın.",
+   "u": ["Gerçek kullanıcı deneyimini ölçmek", "SLO'yu ortalamaya değil yüzdeliğe bağlamak"]
+  },
+  "n+1 query": {
+   "a": "Markete 100 kez gitmek: listeyle tek seferde almak dururken her ürün için ayrı sefer.",
+   "u": ["ORM lazy-loading tuzağını teşhis etmek", "JOIN/prefetch ile tek sorguya indirmek"]
+  },
+  "explain": {
+   "a": "Navigasyonun rota önizlemesi: yola çıkmadan hangi sokaklardan geçeceğini gösterir.",
+   "u": ["Sorgunun indeks kullanıp kullanmadığını görmek", "Optimizasyon öncesi kanıt toplamak"]
+  },
+  "slow query log": {
+   "a": "Hız kamerası: limiti aşan her araç plakasıyla kaydedilir; ceza sonra kesilir.",
+   "u": ["Üretimde 500ms üstü sorguları yakalamak", "Optimizasyon listesini veriyle önceliklendirmek"]
+  },
+  "flame graph": {
+   "a": "Binanın termal kamerası: ısı nereden kaçıyorsa orası parlak — tahmin değil görüntü.",
+   "u": ["CPU'yu yiyen fonksiyonu kanıtla bulmak", "Optimizasyonu en geniş aleve yapmak"]
+  },
+  "sql injection": {
+   "a": "Dilekçedeki boşluğa sahte madde eklemek: memur formu okurken eklenen maddeyi de resmi sanır.",
+   "u": ["Parametreli sorgu/ORM ile girdiyi ayırmak", "Pentest'te ilk bakılan zafiyet"]
+  },
+  "xss": {
+   "a": "Panoya sahte duyuru asmak: okuyan herkes apartman yönetimi sandığı için kanar.",
+   "u": ["Çıktı encoding + CSP başlıkları", "Bu projede HTML string render yasağının nedeni"],
+   "l": "Viewer'daki dangerouslySetInnerHTML yasağı doğrudan bu saldırı sınıfına karşı mimari karardır."
+  },
+  "idor": {
+   "a": "Vestiyer fişindeki numarayı değiştirmek: 123 yerine 456 yazarsan başkasının ceketi gelir — görevli isme bakmıyorsa.",
+   "u": ["Her kayıtta sahiplik kontrolü", "Tahmin edilemez ID (UUID) + yetki birlikte"]
+  },
+  "bcrypt/argon2": {
+   "a": "Kasayı bilerek yavaş açılan kilitle yapmak: sahibi için saniye, milyon deneme yapacak hırsız için yıllar.",
+   "u": ["Parola hash'lemede MD5/SHA yerine argon2", "Round sayısıyla maliyeti donanıma göre ayarlamak"]
+  },
+  "backup": {
+   "a": "Evdeki önemli evrakın fotokopisini bankadaki kasada tutmak.",
+   "u": ["Günlük otomatik DB yedeği", "Silme/şifreleme felaketinden dönüş"]
+  },
+  "pitr": {
+   "a": "Video kaydını istediğin saniyeye sarmak: 'yanlışlık 14:23'te oldu' → 14:22'ye dön.",
+   "u": ["Yanlış DELETE'ten dakika hassasiyetiyle dönmek", "WAL arşiviyle sürekli kurtarma noktası"]
+  },
+  "3-2-1": {
+   "a": "Değerli fotoğrafın üç kopyası: biri telefonda, biri harici diskte, biri başka şehirdeki akrabada.",
+   "u": ["Tek felaket noktasını elimine etmek", "Yedekleme politikasının sayısal kuralı"]
+  },
+  "rpo/rto": {
+   "a": "Sigorta poliçesi maddeleri: ne kadar hasarı kabul ediyorsun, tazminat kaç günde ödenir?",
+   "u": ["İş birimiyle kayıp toleransını sözleşmek", "Backup sıklığı ve mimariyi hedefe göre seçmek"]
+  },
+  "wal archiving": {
+   "a": "Noterin her işlemi anında ikinci deftere de geçirmesi: ana defter yanarsa ikinciden aynen kurulur.",
+   "u": ["PITR'ın ön şartı olarak sürekli arşiv", "Transaction kaybını sıfıra indirmek"]
+  },
+  "kdv": {
+   "a": "Fişin altındaki vergi satırı: fiyatın içinde görünmez değil, ayrı kalemde hesaplanır.",
+   "u": ["Oran tablosunu (%1/%10/%20) ürün tipine bağlamak", "e-Arşiv faturada doğru kalem dökümü"]
+  },
+  "vat": {
+   "a": "Aynı verginin AB pasaportu: ülke değişince oranı ve beyanı değişir.",
+   "u": ["AB satışında ülke bazlı oran seçimi", "OSS beyan dönemine uygun raporlama"]
+  },
+  "reverse charge": {
+   "a": "Karşı ödemeli kargo: ücreti gönderen değil alan öder; faturada 'ücret alıcıya ait' yazar.",
+   "u": ["B2B AB satışında sıfır oranlı fatura kesmek", "Alıcının kendi ülkesinde VAT beyanı"]
+  },
+  "fx rate": {
+   "a": "Döviz büfesinin günlük panosu: dünkü işlem dünkü kurdan yazılır; bugünkü kurla dünü düzeltemezsin.",
+   "u": ["İşlem tarihli kur saklamak", "Ay sonu değerleme ile işlem kuru ayrımı"]
+  },
+  "merchant of record": {
+   "a": "İhracat acentesi: malı sen üretirsin, gümrük ve vergiyle acente uğraşır; faturada satıcı o görünür.",
+   "u": ["50 ülkenin vergi kuralını dışarıya devretmek", "Küçük ekiple global satış"]
+  },
+  "spf": {
+   "a": "Kapı görevlisine verilen kurye listesi: listede olmayan 'şirketten geliyorum' diyen içeri alınmaz.",
+   "u": ["Domain adına sahte mail gönderimini engellemek", "DNS TXT kaydıyla yetkili sunucu beyanı"]
+  },
+  "dkim": {
+   "a": "Mektubun mühürlü mumu: yolda açılıp değiştirildiyse mühür kırığı belli olur.",
+   "u": ["Mail içeriğinin bütünlük doğrulaması", "Sağlayıcı reputation'ını korumak"]
+  },
+  "dmarc": {
+   "a": "Kapı talimatı: 'listede yoksa veya mühür kırıksa — geri çevir / depoya al / yine de bildir'.",
+   "u": ["SPF/DKIM uyumsuz maile politika uygulamak", "Raporlarla sahte gönderim girişimini izlemek"]
+  },
+  "bounce": {
+   "a": "'Adres yetersiz' damgasıyla dönen mektup: aynı adrese ısrar etmek postaneyle aranı bozar.",
+   "u": ["Hard bounce'ı suppress list'e almak", "Liste hijyeniyle reputation korumak"]
+  },
+  "complaint": {
+   "a": "Komşunun 'broşür atmayın' şikayeti: ısrar edersen site yönetimi tüm broşürünü yasaklar.",
+   "u": [
+    "Spam işaretini anında listeden çıkarmaya çevirmek",
+    "Complaint oranını sağlayıcı eşiklerinin altında tutmak"
+   ]
+  },
+  "presigned url": {
+   "a": "Tek kullanımlık misafir QR kodu: 15 dakika geçerli; kapıcıyı (backend) yormadan otoparka girersin.",
+   "u": ["Browser'dan doğrudan S3'e dosya yüklemek", "Backend RAM'ini büyük dosyadan korumak"]
+  },
+  "mime type": {
+   "a": "Paketin içindekiler beyanı: kutuda 'kitap' yazması yetmez, gümrük açıp bakar (magic bytes).",
+   "u": ["Uzantıya değil içeriğe göre tip tespiti", "Yanlış beyanlı zararlı dosyayı reddetmek"]
+  },
+  "clamav": {
+   "a": "Havaalanı X-ray cihazı: bavul (dosya) bilinen tehlike imzalarıyla taranır.",
+   "u": ["Kullanıcı yüklemelerini servis öncesi taramak", "Karantina kovası + alarm akışı"]
+  },
+  "sharp": {
+   "a": "Fotoğrafçının baskı makinesi: dev negatifi cüzdan boyu fotoğrafa saniyede basar.",
+   "u": ["5MB JPEG'i 200KB WebP'ye düşürmek", "Thumbnail varyantlarını upload anında üretmek"]
+  },
+  "storage tier": {
+   "a": "Ev-kiler-depo düzeni: her gün giyilen dolapta, mevsimlik kilerde, anı kutuları depoda.",
+   "u": ["90 gün dokunulmayanı cold tier'a indirmek", "Depolama faturasını erişim sıklığına göre düşürmek"]
+  },
+  "locale": {
+   "a": "Adres etiketi: yalnız dil değil — tarih yazımı, para ayracı, hafta başlangıcı hepsi 'tr-TR' kutusunda.",
+   "u": ["BCP 47 koduyla biçimlendirme seçmek", "en-US ile en-GB tarih farkını doğru basmak"]
+  },
+  "jurisdiction": {
+   "a": "Hangi mahkeme bakar sorusu: yaşadığın yer, vatandaşlığın ve işlemin yeri farklı cevap verebilir.",
+   "u": ["KVKK + GDPR'ın aynı kullanıcıda kesişmesi", "Ülkeye göre zorunlu belge/saklama süreleri"]
+  },
+  "functional currency": {
+   "a": "Ailenin ev bütçesi parası: yurtdışında harcasan da defteri TL tutarsın; dövizi deftere çevirip yazarsın.",
+   "u": ["Ledger'ı şirketin ana parasında tutmak", "EUR siparişi kayıt anı kuruyla TL'ye bağlamak"]
+  },
+  "data residency": {
+   "a": "Arşivin fiziken hangi binada durduğu: bazı evraklar yurt dışına çıkamaz.",
+   "u": ["KVKK md.9 için TR lokasyonlu saklama", "Tenant bazlı bölge seçimi (region pinning)"]
+  },
+  "dsar": {
+   "a": "Bankadan 'tüm hesap dökümümü ver' talebi: yasal süre içinde, eksiksiz, okunur formatta.",
+   "u": ["30 günde export/silme taleplerini otomatize etmek", "PII-flag'li alanları otomatik toplamak"]
+  },
+  "anemic domain model": {
+   "a": "İçi boş klasör etiketi: 'Faturalar' yazıyor ama kurallar başka çekmecede — klasör hiçbir şeyi koruyamıyor.",
+   "u": ["Davranışı entity'ye taşıyıp service şişmesini önlemek", "Anti-pattern'i code review'da yakalamak"]
+  },
+  "aggregate": {
+   "a": "Aile dosyası: nüfus kayıtları tek dosyada, değişiklik tek memurun mührüyle — yarım aile güncellenemez.",
+   "u": [
+    "Invoice + satırlarını tek transaction sınırında tutmak",
+    "Invariant'ı (toplam=satır toplamı) tek kapıdan korumak"
+   ]
+  },
+  "strategy pattern": {
+   "a": "Matkabın değiştirilebilir uçları: gövde aynı, uç işe göre takılır.",
+   "u": ["Ödeme sağlayıcısını runtime'da seçmek", "if-else zincirini polimorfizme çevirmek"]
+  },
+  "type switching": {
+   "a": "Santral memurunun ezbere yönlendirmesi: yeni departman açılınca tüm memorize listeler tek tek güncellenir — biri unutulur.",
+   "u": ["Anti-örnek: neden registry/strategy tercih edilir", "Kod tabanında switch(type) kokusunu aramak"]
+  },
+  "metadata-driven": {
+   "a": "Programlanabilir trafik tabelası: yol çizgisini kazımadan tabela içeriği merkezden değişir.",
+   "u": ["Davranış kuralını DB'den runtime'da yüklemek", "Müşteri özelleştirmesini deploy'suz yapmak"]
+  },
+  "tablo-per-tip": {
+   "a": "Her evrak türüne ayrı dosya dolabı: faturalar fatura dolabında — 'tek dev dolapta her şey' karmaşası yok.",
+   "u": ["DocType başına ayrı tablo üretmek", "Single Table Inheritance şişmesinden kaçınmak"]
+  },
+  "money type": {
+   "a": "Para zarfı: üstünde hem tutar hem para birimi yazar; zarflar karışmaz.",
+   "u": ["100 TL ile 100 USD'nin ayrı tutulması", "Tutar + currency'nin tek tip olarak taşınması"]
+  },
+  "utc": {
+   "a": "Havacılığın tek saati: tüm pilotlar aynı saati konuşur; yerel saat yalnız yolcu anonsunda.",
+   "u": ["Sunucu/DB zamanını tek standartta tutmak", "Kullanıcıya gösterirken yerele çevirmek"]
+  },
+  "dst": {
+   "a": "Yılda iki kez ileri-geri alınan duvar saati: unutan randevuya bir saat yanlış gider.",
+   "u": ["AB kullanıcılı takvimlerde kayma önlemek", "Cron işlerini UTC'ye bağlamak"]
+  },
+  "normallestirme": {
+   "a": "Kütüphane kart sistemi: kitabın bilgisi tek kartta; ödünç defterine yalnız kart numarası yazılır.",
+   "u": ["Bilgiyi tek kaynakta tutup FK ile bağlamak", "Güncellemeyi tek noktadan yapmak"]
+  },
+  "junction table": {
+   "a": "Düğün oturma planı: davetli listesi ayrı, masa listesi ayrı; 'kim hangi masada' üçüncü bir çizelge.",
+   "u": ["Sipariş-ürün çok-çok ilişkisini modellemek", "Bağlantı başına ek bilgi (adet, fiyat) taşımak"]
+  },
+  "composite key": {
+   "a": "Koltuk numarası: 'salon 3 + koltuk 12' ikilisi tekildir; yalnız '12' hiçbir şey ifade etmez.",
+   "u": [
+    "Junction tabloda (siparis_id, urun_id) tekilliği",
+    "Doğal anahtar çiftleriyle mükerrer kaydı engellemek"
+   ]
+  },
+  "try/catch": {
+   "a": "Cambazın güvenlik ağı: düşüş yine kötü ama ölümcül değil; ağ yoksa seyirci '500' görür.",
+   "u": ["Dış çağrıyı sarıp anlamlı hata mesajı üretmek", "Hatanın doğru katmanda yakalanması"]
+  },
+  "retry": {
+   "a": "Meşgul çalan telefonu biraz sonra yeniden aramak: çoğu zaman ikinci arama bağlanır.",
+   "u": ["Geçici network hatasında otomatik tekrar", "Idempotent işlemlerde güvenli tekrar"]
+  },
+  "exponential backoff": {
+   "a": "Kapıyı çalma görgüsü: cevap yoksa 1 dk, sonra 2, sonra 4 dk bekleyip çalarsın — yumruklamak kapıyı açtırmaz.",
+   "u": ["Çöken servise nazik retry aralığı", "Thundering herd'ü önlemek (jitter ile)"]
+  },
+  "idempotency": {
+   "a": "Asansör düğmesi: kaç kez basarsan bas, asansör bir kez gelir.",
+   "u": ["Retry'lı akışlarda çift kayıt önleme", "Mesaj tüketicisinde işlenmişlik kontrolü"]
+  },
+  "circuit breaker": {
+   "a": "Elektrik sigortası: kısa devrede hattı keser; ev yanmaz, usta gelince şalter kalkar.",
+   "u": ["Çöken dış API'ye istek yağmurunu kesmek", "Half-open denemeyle otomatik toparlanma"]
+  },
+  "expand/contract": {
+   "a": "Köprü yenileme: yeni şerit açılır, trafik alışır, eski şerit sonra sökülür — yol hiç kapanmaz.",
+   "u": ["Kolon yeniden adlandırmayı iki faza bölmek", "Eski + yeni kodun aynı şemayla yaşaması"]
+  },
+  "backfill": {
+   "a": "Yeni nüfus alanını eski kayıtlara işlemek: yeni doğanlar zaten kayıtlı; arşivdekiler memurla tamamlanır.",
+   "u": [
+    "NOT NULL kolonu eklemeden önce eski satırları doldurmak",
+    "Büyük tablolarda parça parça (batched) doldurma"
+   ]
+  },
+  "zero-downtime": {
+   "a": "Açık kalp ameliyatı yerine stent: hasta (sistem) işlem boyunca uyanık ve çalışır.",
+   "u": ["Gece bakım penceresi olmadan migration", "7/24 SaaS beklentisini karşılamak"]
+  },
+  "forward-only": {
+   "a": "Mürekkeple yazılan defter: yanlışı silmek yok; altına düzeltme satırı yazılır.",
+   "u": ["Rollback yerine düzeltici migration", "Veri kaybı riskini azaltmak"]
+  },
+  "log level": {
+   "a": "Hastane alarm renkleri: mavi not, sarı dikkat, kırmızı acil — herkes her zile koşmaz.",
+   "u": ["Üretimde DEBUG'ı kapatıp diski korumak", "ERROR'a alarm, WARN'a rapor bağlamak"]
+  },
+  "structured log": {
+   "a": "Form üzerine tutanak: serbest hikâye değil; 'tarih', 'kişi', 'olay' kutuları doldurulur — arşivde kutudan aranır.",
+   "u": ["Grafana/Loki'de alan bazlı sorgu", "user_id=42'nin tüm işlemlerini saniyede bulmak"]
+  },
+  "correlation id": {
+   "a": "Kargo takip numarası: paket beş şubeden geçer; tek numarayla hepsi izlenir.",
+   "u": ["Bir isteğin beş servisteki izini sürmek", "Hata raporuna tek ID ile log bağlamak"]
+  },
+  "pii redaction": {
+   "a": "Gazetenin sansürlü baskısı: haber okunur, isimler yıldızlı — sayfa sızsa da kimlik açığa çıkmaz.",
+   "u": ["Log'a TCKN/telefon yazmadan maskelemek", "KVKK uyumlu log saklama"]
+  },
+  "log aggregation": {
+   "a": "Tüm şubelerin kameralarını tek güvenlik odasında izlemek: şube şube gezmek yerine tek ekran.",
+   "u": ["30 sunucunun log'unu Loki'de toplamak", "Tek arama ile sistem geneli teşhis"]
+  },
+  "cache": {
+   "a": "Sık kullanılan baharatı dolaba değil tezgâha koymak: her seferinde kilere inilmez.",
+   "u": ["DB sorgusunu Redis'ten 1ms'de cevaplamak", "Pahalı hesap sonucunu süreli saklamak"]
+  },
+  "ttl": {
+   "a": "Süt kutusundaki son kullanma tarihi: tarih geçince raftan iner, tazesi konur.",
+   "u": ["Cache kaydının 300 sn sonra kendiliğinden düşmesi", "Eski veri gösterme riskini sınırlamak"]
+  },
+  "invalidation": {
+   "a": "Fiyat etiketi değişince rafdaki eski etiketi sökmek: sökmezsen kasada kavga çıkar.",
+   "u": ["Ürün güncellenince cache anahtarını silmek", "Event'le cache temizliğini tetiklemek"]
+  },
+  "token bucket": {
+   "a": "Jetonlu çay ocağı: bardak başı jeton; jetonlar dakikada bir dolar — arada art arda iki çay olur, sürekli sel olmaz.",
+   "u": ["Burst'e izin verip sürekli yükü kesmek", "API kotasını adil dağıtmak"]
+  },
+  "429": {
+   "a": "Gişedeki 'sırayı bekleyin' tabelası: kapı kapanmadı, yalnız 'şimdi değil' dendi.",
+   "u": ["İstemciye Retry-After ile yavaşlama sinyali", "Rate limit aşımını standart kodla bildirmek"]
+  },
+  "wcag": {
+   "a": "Binaların engelli rampası standardı: rampa lütuf değil, yapı ruhsatının şartı.",
+   "u": ["AA kontrast ve klavye erişim kapıları", "axe-core taramasını CI'a bağlamak"]
+  },
+  "tap target": {
+   "a": "Asansör düğmesi boyutu: pirinç tanesi kadar olsaydı yaşlı parmak hep yanlış kata basardı.",
+   "u": ["44×44px minimum dokunma alanı", "Yan yana ikonlar arasına boşluk koymak"]
+  },
+  "kontrast": {
+   "a": "Gri kâğıda gri kalemle yazı: genç göz seçer, 60+ göz hiç okuyamaz.",
+   "u": ["4.5:1 oranını token seviyesinde test etmek", "Dark temada muted metnin okunurluğu"]
+  },
+  "affordance": {
+   "a": "Kapı kolu biçimi: çekilecek kol uzun, itilecek plaka düz — yazı okumadan anlarsın.",
+   "u": ["Butonun buton gibi görünmesi", "Tıklanabilirliği yalnız renkle değil biçimle anlatmak"]
+  },
+  "progressive disclosure": {
+   "a": "Doktorun soru sırası: önce 'neyiniz var', sonra detay — 50 soruluk formu kapıda uzatmaz.",
+   "u": ["Uzun formu 3 adıma bölmek", "Gelişmiş ayarları 'daha fazla' altına saklamak"]
+  },
+  "stack urunu": {
+   "a": "AVM'deki markalı mağaza: kendi vitrini ve ürünü var; otopark, güvenlik, klima AVM'den (kernel) gelir.",
+   "u": ["Tek modülü bağımsız satabilmek", "Ortak altyapı maliyetini ürünler arasında paylaştırmak"]
   }
+ }
 }

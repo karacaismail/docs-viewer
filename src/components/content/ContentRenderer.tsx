@@ -1,6 +1,7 @@
 // blocks.map -> registry çözümü (11 §Renderer 1) — switch zinciri yok.
-import type { Block } from "../../schemas";
+
 import { resolveBlock } from "../../engine";
+import type { Block } from "../../schemas";
 
 export function ContentRenderer({ blocks }: { blocks: Block[] }) {
   return (

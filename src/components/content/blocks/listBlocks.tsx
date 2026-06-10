@@ -10,7 +10,9 @@ export function DefinitionListBlock({ block }: B<"definitionList">) {
       {block.items.map((it, i) => (
         <div key={i}>
           <dt>{it.term}</dt>
-          <dd style={{ whiteSpace: "pre-line" }}><SegmentRenderer segments={it.definition} /></dd>
+          <dd style={{ whiteSpace: "pre-line" }}>
+            <SegmentRenderer segments={it.definition} />
+          </dd>
         </div>
       ))}
     </dl>
@@ -36,7 +38,11 @@ export function ChecklistBlock({ block }: B<"checklist">) {
       {block.title && <h3>{block.title}</h3>}
       <ul className="checklist">
         {block.items.map((it, i) => (
-          <li key={i}><span><SegmentRenderer segments={it.segments} /></span></li>
+          <li key={i}>
+            <span>
+              <SegmentRenderer segments={it.segments} />
+            </span>
+          </li>
         ))}
       </ul>
     </section>
@@ -47,9 +53,13 @@ export function UseCaseBlock({ block }: B<"useCase">) {
   return (
     <article id={block.id} className="usecase">
       <div className="usecase__title">{block.title}</div>
-      <div style={{ whiteSpace: "pre-line" }}><SegmentRenderer segments={block.scenario} /></div>
+      <div style={{ whiteSpace: "pre-line" }}>
+        <SegmentRenderer segments={block.scenario} />
+      </div>
       {block.outcome && (
-        <div className="usecase__outcome"><SegmentRenderer segments={block.outcome} /></div>
+        <div className="usecase__outcome">
+          <SegmentRenderer segments={block.outcome} />
+        </div>
       )}
     </article>
   );
@@ -59,7 +69,9 @@ export function CaseStudyBlock({ block }: B<"caseStudy">) {
   return (
     <article id={block.id} className="usecase">
       <div className="usecase__title">{block.title}</div>
-      <div style={{ whiteSpace: "pre-line" }}><SegmentRenderer segments={block.story} /></div>
+      <div style={{ whiteSpace: "pre-line" }}>
+        <SegmentRenderer segments={block.story} />
+      </div>
     </article>
   );
 }
@@ -86,14 +98,22 @@ export function LessonHeaderBlock({ block }: B<"lessonHeader">) {
       <div className="lesson-header__unit">{block.unit}</div>
       <h2 style={{ margin: "0.25rem 0", border: "none" }}>{block.title}</h2>
       <div className="lesson-header__meta">
-        <span><i className="ph ph-clock" aria-hidden /> {block.durationMin} dk</span>
-        <span><i className="ph ph-steps" aria-hidden /> Seviye: {block.level}</span>
+        <span>
+          <i className="ph ph-clock" aria-hidden /> {block.durationMin} dk
+        </span>
+        <span>
+          <i className="ph ph-steps" aria-hidden /> Seviye: {block.level}
+        </span>
         {block.prereq.length > 0 && <span>Ön-koşul: {block.prereq.join(", ")}</span>}
       </div>
       {block.goals.length > 0 && (
         <>
           <strong>Hedefler</strong>
-          <ul>{block.goals.map((g, i) => <li key={i}>{g}</li>)}</ul>
+          <ul>
+            {block.goals.map((g, i) => (
+              <li key={i}>{g}</li>
+            ))}
+          </ul>
         </>
       )}
     </header>

@@ -1,10 +1,14 @@
 // Rail 1: kategori seçimi route değiştirmez, Rail 2'yi değiştirir (10 §Rail 1).
 // Pragmatik istisna: kategori seçimi o kategorinin ilk page'ine gider — URL tek doğruluk kaynağı.
 import { Link } from "@tanstack/react-router";
-import { navigation, useFirstSlugOf } from "./navData";
 import { useUiState } from "../ui/UiState";
+import { navigation, useFirstSlugOf } from "./navData";
 
-export function RailOne({ activeSection, onNavigate, plain }: {
+export function RailOne({
+  activeSection,
+  onNavigate,
+  plain,
+}: {
   activeSection: string;
   onNavigate?: () => void;
   plain?: boolean;
@@ -16,7 +20,13 @@ export function RailOne({ activeSection, onNavigate, plain }: {
       {!plain && (
         <div className="rail1__brand">
           Mimari Doküman
-          <button className="iconbtn" aria-label="Ara (Cmd+K)" onClick={() => ui.open("search")} style={{ float: "right" }}>
+          <button
+            type="button"
+            className="iconbtn"
+            aria-label="Ara (Cmd+K)"
+            onClick={() => ui.open("search")}
+            style={{ float: "right" }}
+          >
             <i className="ph ph-magnifying-glass" aria-hidden />
           </button>
         </div>

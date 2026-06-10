@@ -1,8 +1,11 @@
 // Fail loudly — dev'de açılışta şema + çapraz referans doğrulaması (08 §1).
 // Prod'a bozuk veri CI kapısından zaten ulaşamaz (05 §2.4).
-import { NavigationSchema, PagesIndexFileSchema, GlossarySchema } from "../schemas";
+import { GlossarySchema, NavigationSchema, PagesIndexFileSchema } from "../schemas";
 
-export interface ValidationIssue { where: string; message: string }
+export interface ValidationIssue {
+  where: string;
+  message: string;
+}
 
 export function validateStaticData(
   navigation: unknown,
@@ -11,11 +14,24 @@ export function validateStaticData(
 ): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const nav = NavigationSchema.safeParse(navigation);
-  if (!nav.success) issues.push(...nav.error.issues.map((i) => ({ where: `navigation:${i.path.join(".")}`, message: i.message })));
+  if (!nav.success)
+    issues.push(
+      ...nav.error.issues.map((i) => ({ where: `navigation:${i.path.join(".")}`, message: i.message })),
+    );
   const pf = PagesIndexFileSchema.safeParse(pagesFile);
-  if (!pf.success) issues.push(...pf.error.issues.slice(0, 20).map((i) => ({ where: `pages-index:${i.path.join(".")}`, message: i.message })));
+  if (!pf.success)
+    issues.push(
+      ...pf.error.issues
+        .slice(0, 20)
+        .map((i) => ({ where: `pages-index:${i.path.join(".")}`, message: i.message })),
+    );
   const gl = GlossarySchema.safeParse(glossary);
-  if (!gl.success) issues.push(...gl.error.issues.slice(0, 20).map((i) => ({ where: `glossary:${i.path.join(".")}`, message: i.message })));
+  if (!gl.success)
+    issues.push(
+      ...gl.error.issues
+        .slice(0, 20)
+        .map((i) => ({ where: `glossary:${i.path.join(".")}`, message: i.message })),
+    );
 
   if (nav.success && pf.success) {
     const pageIds = new Set(pf.data.pages.map((p) => p.id));
@@ -23,7 +39,10 @@ export function validateStaticData(
       for (const g of c.groups)
         for (const it of g.items)
           if (!pageIds.has(it.pageId))
-            issues.push({ where: `navigation:${c.id}/${g.id}`, message: `kırık pageId referansı: ${it.pageId}` });
+            issues.push({
+              where: `navigation:${c.id}/${g.id}`,
+              message: `kırık pageId referansı: ${it.pageId}`,
+            });
   }
   if (gl.success && pf.success) {
     const pageIds = new Set(pf.data.pages.map((p) => p.id));

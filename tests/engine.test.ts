@@ -1,8 +1,8 @@
 // Engine birim testleri (05 — Faz 3 listesi)
 import { describe, expect, it } from "vitest";
+import { navigation } from "../src/engine/loadStaticData";
 import { resolvePage, resolveRef } from "../src/engine/resolvePage";
 import { resolveTerm, termsOfPage } from "../src/engine/resolveTerms";
-import { navigation } from "../src/engine/loadStaticData";
 
 describe("resolvePage", () => {
   it("bilinen slug'ı index entry'ye çözer (sync, metadata)", () => {

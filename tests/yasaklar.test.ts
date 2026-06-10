@@ -23,6 +23,24 @@ describe("yasaklar (01 §Yasaklar)", () => {
     expect(offenders).toEqual([]);
   });
 
+  it("engine → UI import yasağı (08 §Kabul): engine, components'ten import edemez", () => {
+    const engineFiles = walk("src/engine");
+    const offenders: string[] = [];
+    for (const f of engineFiles) {
+      const src = readFileSync(f, "utf8");
+      for (const m of src.matchAll(/^import\s[^;]*?from\s+["']([^"']+)["']/gm)) {
+        const spec = m[1];
+        if (spec.includes("components")) offenders.push(`${f} -> ${spec}`);
+        if (spec === "react" || spec.startsWith("react-")) {
+          // React referansı yalnız registry'de ve yalnız type-only olabilir (08 §2-3)
+          const typeOnly = m[0].startsWith("import type");
+          if (!f.endsWith("blockRegistry.ts") || !typeOnly) offenders.push(`${f} -> ${spec} (type-only/registry dışı)`);
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
   it("yasak bağımlılıklar yok: next, redux, flowbite, markdown renderer", () => {
     const pkg = JSON.parse(readFileSync("package.json", "utf8"));
     const deps = Object.keys({ ...pkg.dependencies, ...pkg.devDependencies });

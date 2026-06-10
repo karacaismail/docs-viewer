@@ -1,8 +1,9 @@
 // 13A §4 entegrasyon: Türkçe normalizasyonlu arama gerçek index üzerinde
-import { describe, expect, it } from "vitest";
+
 import MiniSearch from "minisearch";
-import { foldTurkish } from "../src/engine/foldTurkish";
+import { describe, expect, it } from "vitest";
 import searchIndex from "../src/data/search-index.json";
+import { foldTurkish } from "../src/engine/foldTurkish";
 import type { SearchDoc } from "../src/schemas";
 
 const docs = (searchIndex as unknown as { documents: SearchDoc[] }).documents;

@@ -7,7 +7,10 @@ import type { HighlighterCore } from "shiki/core";
 import type { Block } from "../../../schemas";
 
 type B = { block: Extract<Block, { type: "codeBlock" }> };
-interface TokenLine { content: string; color?: string }
+interface TokenLine {
+  content: string;
+  color?: string;
+}
 
 let hlPromise: Promise<HighlighterCore> | null = null;
 
@@ -47,13 +50,16 @@ export function CodeBlock({ block }: B) {
     getHighlighter()
       .then((hl) => hl.codeToTokens(block.code, { lang: block.language, theme: "github-dark-default" }))
       .then((result) => {
-        if (alive) setLines(result.tokens.map((line) => line.map((t) => ({ content: t.content, color: t.color }))));
+        if (alive)
+          setLines(result.tokens.map((line) => line.map((t) => ({ content: t.content, color: t.color }))));
       })
       .catch(() => {
         // Tokenization hatası block'u düşürmez (11 §CodeBlock 5)
         if (import.meta.env.DEV) console.warn(`Shiki tokenization başarısız: ${block.language}`);
       });
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [block.code, block.language]);
 
   const copy = async () => {
@@ -72,23 +78,42 @@ export function CodeBlock({ block }: B) {
         <i className="ph ph-code" aria-hidden />
         <span className="title">{block.title ?? block.language}</span>
         {(block.copyEnabled ?? true) && (
-          <button className="iconbtn" onClick={copy} aria-label={copied ? "Kopyalandı" : "Kodu kopyala"} style={{ minHeight: 32, minWidth: 32 }}>
+          <button
+            type="button"
+            className="iconbtn"
+            onClick={copy}
+            aria-label={copied ? "Kopyalandı" : "Kodu kopyala"}
+            style={{ minHeight: 32, minWidth: 32 }}
+          >
             <i className={`ph ${copied ? "ph-check" : "ph-copy"}`} aria-hidden />
           </button>
         )}
-        <span aria-live="polite" style={{ position: "absolute", left: -9999 }}>{copied ? "Kod panoya kopyalandı" : ""}</span>
+        <span aria-live="polite" style={{ position: "absolute", left: -9999 }}>
+          {copied ? "Kod panoya kopyalandı" : ""}
+        </span>
       </div>
+      {/* biome-ignore lint/a11y/noNoninteractiveTabindex: scroll bölgesi klavyeyle odaklanabilir olmalı (axe: scrollable-region-focusable) */}
       <pre tabIndex={0}>
         <code>
           {(lines ?? rawLines.map((l) => [{ content: l }] as TokenLine[])).map((line, i) => (
             <span key={i} className={hl.has(i + 1) ? "line--hl" : undefined}>
               {showNumbers && (
-                <span aria-hidden style={{ display: "inline-block", width: "2.5em", color: "var(--color-text-muted)", userSelect: "none" }}>
+                <span
+                  aria-hidden
+                  style={{
+                    display: "inline-block",
+                    width: "2.5em",
+                    color: "var(--color-text-muted)",
+                    userSelect: "none",
+                  }}
+                >
                   {i + 1}
                 </span>
               )}
               {line.map((t, j) => (
-                <span key={j} style={t.color ? { color: t.color } : undefined}>{t.content}</span>
+                <span key={j} style={t.color ? { color: t.color } : undefined}>
+                  {t.content}
+                </span>
               ))}
               {"\n"}
             </span>

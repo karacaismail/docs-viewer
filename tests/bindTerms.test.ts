@@ -34,8 +34,7 @@ describe("term segment bağlama (Parti 1-B)", () => {
   });
 
   it("her bağlı termId glossary'de çözülür (referans bütünlüğü)", () => {
-    for (const p of edu)
-      for (const s of termSegmentsOf(p)) expect(termIds.has(s.termId), p.id).toBe(true);
+    for (const p of edu) for (const s of termSegmentsOf(p)) expect(termIds.has(s.termId), p.id).toBe(true);
   });
 
   it("bağlama yalnız aynı page'in kaydına yapılır (cross-page yasak)", () => {
