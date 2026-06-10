@@ -2,7 +2,7 @@
 
 Bu doküman, `mimari/` klasöründeki mevcut varlıkların sayımını yapar ve her grubun yeni doc viewer'daki rolünü tanımlar. Migration yönergesi (`07-uretim-02-data-migration.md`) bu envanteri girdi kabul eder.
 
-## 1. Cluster JSON Dosyaları (215 dosya — birincil içerik kaynağı; 197 özgün + 17 aday + 1 kapsam dışı)
+## 1. Cluster JSON Dosyaları (218 dosya — birincil içerik kaynağı; 197 özgün + 20 aday + 1 kapsam dışı)
 
 Dosya adlandırması `NN-kategori-konu.json` sözleşmesini izler. Kategori prefix'leri ve sayıları:
 
@@ -13,8 +13,8 @@ Dosya adlandırması `NN-kategori-konu.json` sözleşmesini izler. Kategori pref
 | `scale-*` | 15 | Scale primitives (outbox, saga, cache, realtime…) | Scale Primitives |
 | `cc-*` + `crosscut-*` | 17 | Çapraz-kesen konular (i18n, privacy, compliance…) | Çapraz-Kesen |
 | `sus-*` | 12 | Sürdürülebilirlik (versioning, bitemporal, conformance…) | Sürdürülebilirlik |
-| `stack-*` | 17 | Stack ürün aileleri (commerce, accounting…) + 5 aday yatay stack (workspace, compliance, channel, builder, service) | Stack Ürünleri |
-| `dist-*` | 4 | Distributions — sektör paketleri (site, ngo, travel, construction); `badge: DISTRIBUTION` | Stack Ürünleri (ayrı grup) |
+| `stack-*` | 19 | Stack ürün aileleri (commerce, accounting…) + 6 aday yatay stack (workspace, compliance, channel, builder, service, messaging) + 1 taksonomi kavram kaydı (editions) | Stack Ürünleri |
+| `dist-*` | 5 | Distributions — sektör paketleri (site, ngo, travel, construction, realestate); `badge: DISTRIBUTION` | Stack Ürünleri (ayrı grup) |
 | `fe-*` | 9 | Frontend tech-stack kararları | Frontend Tech-Stack |
 | `layer1-*` + `l1-*` | 12 | Layer 1 in-tree servisler (party, file, audit…) | Layer 1 — In-tree |
 | `kernel-*` + `k-*` | 8 | Layer 0 kernel domain'leri | Kernel — Layer 0 |

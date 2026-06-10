@@ -28,7 +28,7 @@ Rail 2, seçili kategorinin page listesini accordion gruplar halinde gösterir. 
 
 - `egitim`: tek düz liste, ünite sırasına göre (overview → u01 → … → u25). Accordion'a gerek yok; sıralı okuma akışı bölünmez.
 - `urunler` (64 page): `00-overview.json`'daki 9 ürün kategorisi accordion grubu olur — Çekirdek Operasyon, Finans & Muhasebe, Tedarik Zinciri & Lojistik, İnsan Kaynakları, Müşteri & Gelir, İçerik & İşbirliği, Veri & Zeka, Platform/Altyapı, Dikey çözümler. Her `s-*` page'i bir gruba atanır; atama tablosu migration'da üretilir ve `navigation.json`'da taşınır.
-- `stack`: iki accordion grubu — **Yatay Stack'ler** (`stack-*`: alıcısı yatay paketler) ve **Distributions** (`dist-*`: sektör paketleri = stack + konfigürasyon + hazır içerik; SAP Industry Cloud / Drupal distribution deseni, HEDEF_MIMARI L3 vertical kararıyla uyumlu). Ayrım kavramsal sözleşmedir: stack kod paketi, distribution paketleme paketidir.
+- `stack`: iki accordion grubu — **Yatay Stack'ler** (`stack-*`: alıcısı yatay paketler) ve **Distributions** (`dist-*`: sektör paketleri = stack + konfigürasyon + hazır içerik; SAP Industry Cloud / Drupal distribution deseni, HEDEF_MIMARI L3 vertical kararıyla uyumlu). Ayrım kavramsal sözleşmedir: stack kod paketi, distribution paketleme paketidir. Üçüncü kavram **Edition** ayrı grup değildir: mevcut bir stack'in pazarlama paketlenmesidir (aynı modül seti; onboarding/fiyat/landing varyantı) — katalogda `stack-editions` kavram kaydıyla belgelenir ve Rail 2'de Yatay Stack'ler grubunda yaşar.
 - Diğer kategoriler: page sayısı ≤ 17 olduğundan tek accordion grubu veya konu bazlı 2–3 grup yeterlidir; grup başına 10 item üst sınırı hedeflenir (bilişsel yük sınırı).
 
 ## 3. Slug ve ID Sözleşmeleri
