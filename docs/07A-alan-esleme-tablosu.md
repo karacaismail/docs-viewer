@@ -42,7 +42,7 @@ Kritik bulgu: dönüşüm "serbest metin → block" değil, büyük ölçüde **
 | `heading` | 316 | `heading` | `level` korunur; `icon` alanı düşer (heading'de ikon yeni modelde yok) |
 | `paragraph` | 315 | `paragraph` | `text` → segments: `**…**` → `strong` (227 dosyada var), `` `…` `` → `code` (54), kalan → `text` |
 | `callout` | 314 | `callout` | `label` → `title`, `body` → segments. Variant eşlemesi: `info`→info, `tip`→info, `warning`→warning, `critical`→danger, `tr`→info + title'a "TR" öneki. Alternatif: variant enum'una `tip` ve `tr` eklenir — karar §6'da |
-| `table` | 155 | `table` | `headers` → `columns`, `rows` (tüm hücreler string) → segment parse. `compact`(30), `filterable`(6), `stateColumn`(2) ilk kapsamda düşer, raporda listelenir |
+| `table` | 155 | `table` | `headers` → `columns`, `rows` → segment parse. **Hücre string veya obje olabilir** — `{text, state?, enrich?}` (24 obje hücre; ilk tarama yalnız string göstermişti): `text` (+` (state)`) düzleştirilir, hücre `enrich.terms` glossary'ye akar. `compact`(30), `filterable`(6), `stateColumn`(2) ilk kapsamda düşer, raporda listelenir |
 | `image` | 83 | **`image` — YENİ block type gerekli** | Master prompt'ta image yok; 83 kullanım düşürülemez. Şemaya `{src, alt, caption}` ile eklenir |
 | `code` | 52 | `codeBlock` | `lang` → `language`, `content` → `code`, `title` korunur. Dil envanteri: python(17), sql(12), yaml(11), typescript(5), http(2), text(2), sh/bash(2), openfga(1). `openfga` Shiki'de yok → `text` fallback; enum bu listeden kurulur |
 | `list` | 52 | **`list` — YENİ block type gerekli** | Düz liste (`ordered` flag, 5 adet ordered); `stepList`/`definitionList`'e zorlamak semantiği bozar. `{ordered?, items: segments[][]}` ile eklenir |
@@ -57,8 +57,8 @@ Kritik bulgu: dönüşüm "serbest metin → block" değil, büyük ölçüde **
 | `examples` | 7 | `useCase` | `items[].label` → title, `text` → scenario |
 | `user-stories` | 6 | `useCase` | `stories[].{persona,context,outcome}` → title=persona, scenario=context, outcome=outcome |
 | `ref-grid` | 3 | `cardGrid` | refs → kart + internal link |
-| `layer-cards` | 2 | elle dönüşüm | Otomatik kural yazılmaz (toplam 2); migration raporu işaretler, editör `cardGrid`'e çevirir |
-| `tree` | 2 | elle dönüşüm | Aynı kural; aday hedef `list` (nested) veya `codeBlock` (ascii ağaç) |
+| `layer-cards` | 2 | `cardGrid` — **otomatik** | Kart yapısı (`{tag, name, desc, tone, enrich}`) keşifte düzenli çıktı: `tag — name` → title, `desc` → segments; kart `enrich.terms` glossary'ye akar. 'Elle' kararı uygulamada revize edildi |
+| `tree` | 2 | `codeBlock(text)` — **otomatik** | `root {name, children, comment}` yapısı düzenli; ASCII ağaca (`├─/└─` + `# comment`) deterministik çevrilir, monospace render çizimi korur (07B diyagram kararıyla aynı ilke) |
 | `granularity-legend` | 1 | elle dönüşüm | Tek kullanım; `definitionList` adayı |
 | `blocks[].enrich` | 165 | bitişik block'lara açılır | Block-level enrich (info 42, lesson 59, detail 20, stories 6, terms 5) yeni modelde yok; ilgili block'un hemen ardına callout/useCase olarak deterministik sırayla eklenir |
 
@@ -90,4 +90,13 @@ Bu tablo `07-uretim-02-data-migration.md`'deki bir kuralı revize eder: glossary
 4. `codeBlock.language` enum'u gerçek envanterden kurulur: `python, sql, yaml, typescript, bash, http, text` (+`sh`→bash, `openfga`→text normalize).
 5. `cardGrid` kartlarına opsiyonel `tone` alanı (7 kullanım) — eklenmezse düşürme kararı rapora yazılır.
 
-Elle dönüşüm gerektiren toplam yük: 5 block (layer-cards 2, tree 2, granularity-legend 1) — otomasyon istisnası bu kadar küçük olduğu için script'e özel kural yazılmaz.
+Elle dönüşüm yükü uygulamada 5'ten 1'e indi: `layer-cards` ve `tree` kaynak yapıları düzenli çıktığı için otomatikleştirildi (yukarıdaki revize satırlar); yalnız `granularity-legend` (1 block) placeholder callout'la bekliyor.
+
+## 3a. Uygulama Keşifleri (kod-doğumlu kararlar — bu tabloya geri işlendi)
+
+Migration yazımı sırasında tablo öngörülerini düzelten dört keşif yapıldı ve hepsi yukarıya/04'e işlendi:
+
+1. **`{{ref:x}}` iç-referans sözdizimi:** kaynak içerikte (kv-row değerleri, ref-grid) sayfalar birbirine eski cluster id'siyle atıf veriyor. Yeni `ref` segment type'ı doğdu (04 §4); runtime'da `sourceId`/stem üzerinden slug'a çözülür, çözülemezse düz metne düşer (08 §4 fallback ilkesi).
+2. **`page.sourceId` alanı:** `related` ve `{{ref}}` çözümü eski id uzayında çalışmak zorunda — stem (`kernel-authz`) ile eski id (`k-authz`) farklı. Çözüm iki anahtarlıdır; bu alan eklenmeden 165 related referansı kayıptı.
+3. **Tablo hücre objesi:** §3 tablosundaki revize satır — ilk örneklem taraması `s-*` dışını kapsamadığı için obje hücreler görünmemişti; üründe `[object Object]` olarak yüzeye çıktı ve düzeltildi.
+4. **tree/layer-cards otomasyonu:** 'elle dönüşüm' kararı, kaynak yapıların düzenli çıkması üzerine otomatikleştirildi — pozitif sapma, yukarıdaki satırlarda revize.

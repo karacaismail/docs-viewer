@@ -27,6 +27,7 @@ Eager/lazy bölünmesi performans bütçesinin (14 #15) yapısal karşılığıd
 | `summary` | string | evet | Rail 2 ve search'te görünür |
 | `categoryId` | string | evet | Rail 1 referansı |
 | `tags` | string[] | hayır | Search boost alanı |
+| `sourceId` | string | hayır | Eski cluster id'si — `{{ref:x}}` ve `related` çözüm anahtarı (kaynak veri eski id ile referans verir, 07A §3a) |
 | `meta` | { granularity?, state?, badge? } | hayır | Eski şemadan taşınan rozet bilgisi (07A §2) |
 | `related` | string[] (pageId) | hayır | Sayfa sonu "İlgili sayfalar" cardGrid'i |
 | `blocks` | Block[] | evet | Sıralı içerik |
@@ -43,7 +44,7 @@ Her block iki ortak alan taşır: `id` (benzersiz, anchor hedefi) ve `type` (dis
 | `definitionList` | `items[]: { term, definition: segments[] }` |
 | `stepList` | `steps[]: { title, segments[] }` |
 | `checklist` | `items[]: { text, checked? }` |
-| `table` | `caption?`, `columns[]`, `rows[][]` (hücre = segments) |
+| `table` | `caption?`, `columns[]`, `rows[][]` (hücre = segments; kaynak hücre objesi `{text, state?, enrich?}` migration'da düzleştirilir — 07A §3) |
 | `codeBlock` | `title?`, `language`, `code`, `showLineNumbers?`, `highlightedLines?`, `copyEnabled?` |
 | `cardGrid` | `cards[]: { icon?, title, segments[] }` |
 | `comparisonTable` | `caption?`, `columns[]`, `rows[]` (boyut/karşılaştırma semantiği) |
@@ -67,6 +68,7 @@ Paragraph ve benzeri block'ların metni segment dizisidir; Markdown veya HTML yo
 | `strong` | `text` | Vurgu |
 | `code` | `text` | Inline kod |
 | `link` | `text`, `href` | Yalnızca dış bağlantı; `target=_blank` + `rel=noopener` (07B §2) |
+| `ref` | `text`, `refId` | İç sayfa bağlantısı — kaynak içerikteki `{{ref:x}}` sözdiziminden (07A §3a keşfi); runtime'da eski cluster id veya stem üzerinden slug'a çözülür, çözülemezse düz metne düşer |
 
 `termId` çözülemezse segment düz metin gibi render edilir; kullanıcıya hata gösterilmez, CI'da uyarı üretilir.
 
@@ -84,6 +86,8 @@ Paragraph ve benzeri block'ların metni segment dizisidir; Markdown veya HTML yo
 | `caseStudies` | { title, story }[] | hayır | |
 
 Global tek anlamlı glossary yasağı burada somutlaşır: `component` kavramı render-engine bağlamında ve design-system bağlamında ayrı kayıtlardır.
+
+Fiziksel saklama mantıksal modeli ikiye böler (§1, 14 #15): ilk dört alan `glossary.json` core'unda (eager — tooltip/chip), `longExplanation` ve sonrası `glossary-detail.json`'da (lazy — panel açılışında, termId anahtarıyla).
 
 ## 6. Search Document Modeli
 
