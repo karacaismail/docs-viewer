@@ -69,10 +69,20 @@ export function createTransformer(ctx) {
       }
       case "table": {
         if (b.filterable || b.stateColumn) warn("table özelliği düşürüldü: filterable/stateColumn");
+        // Hücre string veya obje ({text, state?, enrich?}) olabilir — 07A tablosunun eksiği, burada kapatıldı
+        const cellToSegments = (c) => {
+          if (typeof c === "string") return parseInline(c);
+          if (c && typeof c === "object") {
+            if (c.enrich?.terms) collectTerms(c.enrich.terms);
+            const txt = c.text ?? "";
+            return c.state ? parseInline(`${txt} (${c.state})`) : parseInline(txt);
+          }
+          return parseInline(String(c ?? ""));
+        };
         push({
           id: nextId("table"), type: "table",
           caption: b.caption ?? undefined, columns: b.headers ?? [],
-          rows: (b.rows ?? []).map((r) => r.map((c) => parseInline(String(c)))),
+          rows: (b.rows ?? []).map((r) => r.map(cellToSegments)),
         });
         break;
       }
