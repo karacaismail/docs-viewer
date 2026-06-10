@@ -11,7 +11,7 @@ Bu doküman, iki seviyeli navigasyonun bilgi mimarisini ve URL/ID sözleşmeleri
 | 2 | `kernel` | Kernel — Layer 0 | `ph-cube` | `kernel-*`, `k-*` | 8 |
 | 3 | `scale` | Scale Primitives | `ph-trend-up` | `scale-*` | 15 |
 | 4 | `layer1` | Layer 1 — In-tree | `ph-stack` | `layer1-*`, `l1-*` | 12 |
-| 5 | `stack` | Stack Ürünleri | `ph-package` | `stack-*`, `dist-*` | 21 (17 yatay + 4 distribution) |
+| 5 | `stack` | Stack Ürünleri | `ph-package` | `stack-*`, `dist-*` | 24 (19 yatay + 5 distribution) |
 | 6 | `urunler` | Ürün Modülleri | `ph-squares-four` | `s-*` | 72 |
 | 7 | `crosscut` | Çapraz-Kesen | `ph-arrows-out` | `cc-*`, `crosscut-*` | 17 |
 | 8 | `dx` | DX & Services | `ph-puzzle-piece` | `dx-*`, services | 4 |

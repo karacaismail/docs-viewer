@@ -7,6 +7,8 @@ const PAGES = [
   "/docs/egitim/edu-overview", // eğitim: checklist + tablo + steps
   "/docs/kernel/kernel-authz", // code block + callout yoğun
   "/docs/genel/overview", // cardGrid + image fallback + kv
+  "/docs/stack/stack-workspace", // aday katalog şablonu: paket kartı + kv-row + callout
+  "/docs/stack/stack-editions", // KAVRAM kaydı: taksonomi kartı + 5'li kv-row + parse'lı paragraph
 ];
 
 test.describe("axe-core a11y taraması", () => {
