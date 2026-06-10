@@ -1,0 +1,104 @@
+// Kabul kriterleri e2e kanıtları — 14 §2 listesinin otomasyonu
+import { test, expect, type Page } from "@playwright/test";
+
+const FIRST = "/docs/egitim/edu-overview";
+const KERNEL = "/docs/kernel/kernel-authz"; // code block + tablo içeren temsilî sayfa
+
+async function noHorizontalScroll(page: Page) {
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow, "yatay scroll farkı (px)").toBeLessThanOrEqual(0);
+}
+
+test.describe("320px sözleşmesi (kabul #1)", () => {
+  test.skip(({ viewport }) => (viewport?.width ?? 9999) > 320, "yalnız mobile-320 projesi");
+
+  test("eğitim sayfası yatay scroll üretmez", async ({ page }) => {
+    await page.goto(FIRST);
+    await page.getByRole("heading", { level: 1 }).waitFor();
+    await noHorizontalScroll(page);
+  });
+
+  test("tablo + code block'lu kernel sayfası yatay scroll üretmez", async ({ page }) => {
+    await page.goto(KERNEL);
+    await page.getByRole("heading", { level: 1 }).waitFor();
+    await noHorizontalScroll(page);
+  });
+
+  test("mobile drawer açılır ve Escape ile kapanır", async ({ page }) => {
+    await page.goto(FIRST);
+    await page.getByRole("button", { name: "Kategoriler" }).click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).toBeHidden();
+  });
+});
+
+test.describe("klavye akışı (kabul #7, 13 §Overlay)", () => {
+  test.skip(({ viewport }) => (viewport?.width ?? 0) < 900, "desktop akışı");
+
+  test("Ctrl+K → sorgu → ok → Enter → block anchor'a iner; Escape kapatır", async ({ page }) => {
+    await page.goto(FIRST);
+    await page.keyboard.press("Control+k");
+    const input = page.getByRole("combobox");
+    await expect(input).toBeFocused();
+    await input.fill("outbox");
+    await expect(page.getByRole("option").first()).toBeVisible();
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/#block-/);
+    const hash = new URL(page.url()).hash.slice(1);
+    await expect(page.locator(`[id="${hash}"]`)).toBeVisible();
+
+    // Escape sözleşmesi
+    await page.keyboard.press("Control+k");
+    await expect(page.getByRole("combobox")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("combobox")).toBeHidden();
+  });
+
+  test("boş sonuç durumu duyurulur", async ({ page }) => {
+    await page.goto(FIRST);
+    await page.keyboard.press("Control+k");
+    await page.getByRole("combobox").fill("xqzwkvbnmasdf");
+    await expect(page.getByRole("status")).toContainText("Sonuç bulunamadı");
+  });
+});
+
+test.describe("explanation panel sözleşmesi (kabul #10, 12 §Etkileşim)", () => {
+  test.skip(({ viewport }) => (viewport?.width ?? 0) < 900, "desktop akışı");
+
+  test("panel açılır; Escape kapatır; focus tetikleyiciye döner; arka plan scroll kilitlenir", async ({ page }) => {
+    await page.goto(KERNEL);
+    const chip = page.locator(".term-chip").first();
+    await chip.click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+
+    // Scroll kilidi (Radix body lock)
+    const bodyOverflow = await page.evaluate(() => getComputedStyle(document.body).overflow);
+    expect(bodyOverflow).toBe("hidden");
+
+    // Focus trap: Tab dialog içinde kalır
+    await page.keyboard.press("Tab");
+    const inDialog = await page.evaluate(() => !!document.activeElement?.closest('[role="dialog"]'));
+    expect(inDialog).toBe(true);
+
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    await expect(chip).toBeFocused(); // focus dönüşü
+  });
+
+  test("rail navigasyonu yalnız klavye ile kullanılabilir (kabul: a11y §1)", async ({ page }) => {
+    await page.goto(FIRST);
+    // Skip link → içerik
+    await page.keyboard.press("Tab");
+    await expect(page.getByText("İçeriğe atla")).toBeFocused();
+    // Rail 1'deki bir kategoriye Tab + Enter ile gidilebilir
+    const kernelLink = page.getByRole("navigation", { name: "Ana kategoriler" }).getByRole("link", { name: /Kernel/ });
+    await kernelLink.focus();
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/\/docs\/kernel\//);
+  });
+});

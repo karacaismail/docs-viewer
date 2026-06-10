@@ -26,5 +26,13 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
+    coverage: {
+      provider: "v8",
+      // Kapsam dürüst tutulur: birim/kontrat testlerinin hedeflediği katmanlar.
+      // UI kabuk bileşenleri (shell/nav/search) e2e ile kanıtlanır, coverage'a girmez.
+      include: ["src/engine/**", "src/schemas/**", "src/components/content/blocks/**"],
+      exclude: ["src/components/content/blocks/CodeBlock.tsx"], // Shiki async — e2e kapsamında
+      thresholds: { lines: 80, branches: 75 },
+    },
   },
 } as Parameters<typeof defineConfig>[0]);

@@ -27,12 +27,25 @@ jobs:
       - run: npm ci
       - run: npm run migrate          # içerik üretimi + mutabakat raporu
       - run: npx tsc --noEmit         # type-check kapısı
-      - run: npx vitest run           # test + içerik doğrulama kapısı (şema + referans bütünlüğü)
+      - run: npx vitest run --coverage  # test + içerik doğrulama + coverage eşiği (80/75)
       - run: npm run build            # production build
         env:
           VITE_BASE: "/${{ github.event.repository.name }}/"  # Pages alt yolu
       - name: SPA fallback (404.html)
         run: cp build/index.html build/404.html
+      # E2e + axe — build edilmiş ürün üzerinde, kök base ile (05 §2.5)
+      - name: E2e için kök-base build
+        run: VITE_OUT=/tmp/e2e-build vite build && node tools/syncBuild.mjs
+        env:
+          VITE_OUT: /tmp/e2e-build
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
+      # Pages artifact'i alt-yol base'li ilk build'den
+      - name: Pages build (alt yol)
+        run: VITE_OUT=/tmp/pages-build vite build && cp -r /tmp/pages-build/. build/ && cp build/index.html build/404.html
+        env:
+          VITE_BASE: "/${{ github.event.repository.name }}/"
+          VITE_OUT: /tmp/pages-build
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build

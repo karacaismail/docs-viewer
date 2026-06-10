@@ -48,3 +48,45 @@ describe("block kontratları (semantik HTML — 11 §3)", () => {
     expect(screen.getByRole("list").tagName).toBe("OL");
   });
 });
+
+describe("pedagojik block kontratları", () => {
+  it("useCase: title + scenario + outcome", async () => {
+    const { UseCaseBlock } = await import("../src/components/content/blocks/listBlocks");
+    render(<UseCaseBlock block={{ id: "block-t-uc", type: "useCase", title: "Persona", scenario: seg("bağlam"), outcome: seg("sonuç") }} />);
+    expect(screen.getByText("Persona")).toBeTruthy();
+    expect(screen.getByText("sonuç")).toBeTruthy();
+  });
+
+  it("caseStudy: title + story", async () => {
+    const { CaseStudyBlock } = await import("../src/components/content/blocks/listBlocks");
+    render(<CaseStudyBlock block={{ id: "block-t-cs", type: "caseStudy", title: "Vaka", story: seg("hikâye") }} />);
+    expect(screen.getByText("hikâye")).toBeTruthy();
+  });
+
+  it("cardGrid: kart başlıkları render edilir", async () => {
+    const { CardGridBlock } = await import("../src/components/content/blocks/listBlocks");
+    render(<CardGridBlock block={{ id: "block-t-cg", type: "cardGrid", cards: [{ title: "Kart 1", segments: seg("içerik") }] }} />);
+    expect(screen.getByText("Kart 1")).toBeTruthy();
+  });
+
+  it("checklist: title + liste yapısı", async () => {
+    const { ChecklistBlock } = await import("../src/components/content/blocks/listBlocks");
+    render(<ChecklistBlock block={{ id: "block-t-chk", type: "checklist", title: "Hazırlık", items: [{ segments: seg("madde") }] }} />);
+    expect(screen.getByRole("heading", { level: 3, name: "Hazırlık" })).toBeTruthy();
+    expect(screen.getByRole("list").tagName).toBe("UL");
+  });
+
+  it("lessonHeader: ünite + hedefler", async () => {
+    const { LessonHeaderBlock } = await import("../src/components/content/blocks/listBlocks");
+    render(<LessonHeaderBlock block={{ id: "block-t-lh", type: "lessonHeader", unit: "Ünite 01", title: "Başlık", level: "baslangic", durationMin: 45, prereq: [], goals: ["hedef bir"] }} />);
+    expect(screen.getByText("Ünite 01")).toBeTruthy();
+    expect(screen.getByText("hedef bir")).toBeTruthy();
+  });
+
+  it("image: kayıp varlıkta erişilebilir fallback (07B §1)", async () => {
+    const { ImageBlock } = await import("../src/components/content/blocks/basicBlocks");
+    render(<ImageBlock block={{ id: "block-t-img", type: "image", src: "/assets/yok.svg", alt: "alternatif metin", caption: "altyazı" }} />);
+    expect(screen.getAllByLabelText("alternatif metin").length).toBeGreaterThan(0);
+    expect(screen.getByText("altyazı")).toBeTruthy();
+  });
+});
