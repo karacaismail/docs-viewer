@@ -98,13 +98,16 @@ test.describe("explanation panel sözleşmesi (kabul #10, 12 §Etkileşim)", () 
 
   test("rail navigasyonu yalnız klavye ile kullanılabilir (kabul: a11y §1)", async ({ page }) => {
     await page.goto(FIRST);
-    // Skip link → içerik
-    await page.keyboard.press("Tab");
-    await expect(page.getByText("İçeriğe atla")).toBeFocused();
-    // Rail 1'deki bir kategoriye Tab + Enter ile gidilebilir
+    // Açılışta focus h1'e taşınır (10 §Routing 4 — bilinçli tasarım); skip link çalışır durumda
+    const skip = page.getByText("İçeriğe atla");
+    await skip.focus();
+    await expect(skip).toBeFocused();
+    // Rail 1'deki bir kategoriye klavyeyle gidilebilir
     const kernelLink = page.getByRole("navigation", { name: "Ana kategoriler" }).getByRole("link", { name: /Kernel/ });
     await kernelLink.focus();
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/\/docs\/kernel\//);
+    // Yeni sayfada focus h1'dedir — screen reader duyurusunun kanıtı
+    await expect(page.getByRole("heading", { level: 1 })).toBeFocused();
   });
 });

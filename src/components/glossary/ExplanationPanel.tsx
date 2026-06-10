@@ -13,7 +13,15 @@ export function ExplanationPanel() {
     <Dialog.Root open={open} onOpenChange={(o) => { if (!o) ui.close(); }}>
       <Dialog.Portal>
         <Dialog.Overlay className="overlay-backdrop" />
-        <Dialog.Content className="panel-right" aria-describedby={undefined}>
+        <Dialog.Content
+          className="panel-right"
+          aria-describedby={undefined}
+          onCloseAutoFocus={(e) => {
+            // Kontrollü Dialog: focus dönüşünü biz yönetiriz (12 §Etkileşim 4)
+            e.preventDefault();
+            ui.returnFocusEl?.focus();
+          }}
+        >
           {term && (
             <>
               <Dialog.Close className="iconbtn panel__close" aria-label="Paneli kapat">
