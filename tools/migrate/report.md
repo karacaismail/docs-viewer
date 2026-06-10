@@ -1,7 +1,7 @@
 # Migration Mutabakat Raporu
 
-Kaynak dosya: 197 (+1 kapsam dışı) | Üretilen page: 197 | Atlanan: 0
-Glossary kaydı: 679 | Search document: 3343
+Kaynak dosya: 214 (+1 kapsam dışı) | Üretilen page: 214 | Atlanan: 0
+Glossary kaydı: 679 | Search document: 3395
 
 ## Kategori dağılımı
 - build: 5
@@ -14,9 +14,9 @@ Glossary kaydı: 679 | Search document: 3343
 - landx: 7
 - layer1: 12
 - scale: 15
-- stack: 12
+- stack: 21
 - sus: 12
-- urunler: 64
+- urunler: 72
 
 ## Kayıp görsel varlıklar (0) — 07B §1 fallback aktif
 

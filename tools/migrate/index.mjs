@@ -183,6 +183,14 @@ function buildNavigation(results) {
         order: gi,
         items: sortItems(gmap.get(g.id)),
       })).filter((g) => g.items.length > 0);
+    } else if (c.id === "stack") {
+      // Stack kategorisi: yatay paketler + Distributions (sektör paketleri) ayrı gruplar
+      const horiz = pages.filter((r) => !r.page.id.startsWith("page-dist-"));
+      const dists = pages.filter((r) => r.page.id.startsWith("page-dist-"));
+      groups = [
+        { id: "yatay", label: "Yatay Stack'ler", order: 0, items: sortItems(horiz) },
+        ...(dists.length ? [{ id: "dist", label: "Distributions", order: 1, items: sortItems(dists) }] : []),
+      ];
     } else {
       groups = [{ id: "tumu", label: "Tümü", order: 0, items: sortItems(pages, c.id === "egitim") }];
     }

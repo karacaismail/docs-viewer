@@ -9,11 +9,12 @@ Dosya adlandırması `NN-kategori-konu.json` sözleşmesini izler. Kategori pref
 | Prefix | Adet | İçerik alanı | Yeni IA'daki hedef kategori |
 |---|---|---|---|
 | `edu-*` | 28 | Eğitim üniteleri (u01–u25, overview, test) | Eğitim Yolu |
-| `s-*` | 64 | Sektör/ürün modülleri (crm, sales, wms, payroll…) | Ürün Modülleri — Layer 2 |
+| `s-*` | 72 | Sektör/ürün modülleri (crm, sales, wms, payroll…) + 10 Haziran 2026 aday genişlemesi (comms, mail, channel-hub, scheduling, esign, isg, kvkk, iot) | Ürün Modülleri — Layer 2 |
 | `scale-*` | 15 | Scale primitives (outbox, saga, cache, realtime…) | Scale Primitives |
 | `cc-*` + `crosscut-*` | 17 | Çapraz-kesen konular (i18n, privacy, compliance…) | Çapraz-Kesen |
 | `sus-*` | 12 | Sürdürülebilirlik (versioning, bitemporal, conformance…) | Sürdürülebilirlik |
-| `stack-*` | 12 | Stack ürün aileleri (commerce, accounting, hrms…) | Stack Ürünleri |
+| `stack-*` | 17 | Stack ürün aileleri (commerce, accounting…) + 5 aday yatay stack (workspace, compliance, channel, builder, service) | Stack Ürünleri |
+| `dist-*` | 4 | Distributions — sektör paketleri (site, ngo, travel, construction); `badge: DISTRIBUTION` | Stack Ürünleri (ayrı grup) |
 | `fe-*` | 9 | Frontend tech-stack kararları | Frontend Tech-Stack |
 | `layer1-*` + `l1-*` | 12 | Layer 1 in-tree servisler (party, file, audit…) | Layer 1 — In-tree |
 | `kernel-*` + `k-*` | 8 | Layer 0 kernel domain'leri | Kernel — Layer 0 |
