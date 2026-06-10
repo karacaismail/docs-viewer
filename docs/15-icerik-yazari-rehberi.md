@@ -21,7 +21,7 @@ Metin düzeltmesi serbesttir; **block silmek ve ID değiştirmek serbest değild
 
 ## 4. Görsel Eklemek
 
-Görsel dosyası `public/assets/` altına konur, block `image` type'ı ile `src/alt/caption` taşır (07A §3). `alt` zorunludur ve anlam taşır. Mevcut 83 varlık `npm run assets` üreticisinden gelir (07B §1 kapanışı) — elle çizilmiş SVG bir varlığın yerini alacaksa aynı dosya adına yazılır, üretici o dosyayı yeniden üretmeden önce şablon dışına alınmalıdır. İçerik doğrulama testi her `src`'nin diskte var olmasını zorlar; kayıp src CI'ı kırar.
+Görsel dosyası `public/assets/` altına konur, block `image` type'ı ile `src/alt/caption` taşır (07A §3). `alt` zorunludur ve anlam taşır. Mevcut 100 varlık `npm run assets` üreticisinden gelir (07B §1 kapanışı; üç şablon ailesi — ürün kartı `stack/`, diyagram, paket kartı `cards/`) — elle çizilmiş SVG bir varlığın yerini alacaksa aynı dosya adına yazılır, üretici o dosyayı yeniden üretmeden önce şablon dışına alınmalıdır. İçerik doğrulama testi her `src`'nin diskte var olmasını zorlar; kayıp src CI'ı kırar.
 
 ## 5. Yeni Block Type İhtiyacı
 

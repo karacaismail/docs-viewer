@@ -1,6 +1,6 @@
-// 83 görsel varlığın deterministik üretimi (07B §1 kapanışı).
+// 100 görsel varlığın deterministik üretimi (07B §1 kapanışı + katalog genişlemesi).
 // Renkler 09A token değerleridir (SVG'ler <object> ile izole yüklendiği için hex gömülür).
-// İki şablon ailesi: 70 ürün kartı (stack/s-*) + 13 adlandırılmış diyagram.
+// Üç şablon ailesi: 70 ürün kartı (stack/s-*) + 13 adlandırılmış diyagram + 17 paket kartı (cards/).
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -87,7 +87,7 @@ ${txt(620, 416, "Ortak altyapı: ürün kernel'e dokunmaz", { size: 13, fill: C.
 }
 
 // ---- Şablon A2: paket kartı (cards/ — aday stack/dist/modül; 15 §4) ----
-function packageCard(stem, title, kindLabel, accentColor) {
+function packageCard(title, kindLabel, accentColor) {
   const lines = wrap(title, 26);
   const t = lines.map((l, i) => txt(400, 170 + i * 36, l, { size: 26, weight: 500 })).join("");
   return svg(
@@ -367,8 +367,8 @@ for (const [src, meta] of [...images.entries()].sort()) {
     const stem = rel.slice(6, -4);
     if (stem.startsWith("s-")) content = productCard(stem.slice(2), meta.title);
     else if (stem.startsWith("dist-"))
-      content = packageCard(stem, meta.title, "DISTRIBUTION — SEKTÖR PAKETİ", C.tr);
-    else content = packageCard(stem, meta.title, "YATAY STACK — PAKET ÜRÜN", C.accent);
+      content = packageCard(meta.title, "DISTRIBUTION — SEKTÖR PAKETİ", C.tr);
+    else content = packageCard(meta.title, "YATAY STACK — PAKET ÜRÜN", C.accent);
   } else if (named[rel]) {
     content = named[rel]();
   } else {
