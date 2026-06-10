@@ -1,6 +1,6 @@
 // İçerik doğrulama kapısı (05 §2.4) — üretilmiş gerçek veri tüm şemalardan geçer;
 // kırık referans build'i kırar. Lazy mimari: index + page-başına dosyalar (14 #15).
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import glossary from "../src/data/glossary.json";
@@ -73,5 +73,17 @@ describe("içerik doğrulama kapısı", () => {
 
   it("çapraz referans bütünlüğü: navigation/glossary -> pages-index", () => {
     expect(validateStaticData(navigation, pagesIndex, glossary)).toEqual([]);
+  });
+
+  it("görsel varlık bütünlüğü: her image src public/assets'te mevcut (07B §1 kapanışı)", () => {
+    const missing: string[] = [];
+    for (const f of pageFiles) {
+      const page = JSON.parse(readFileSync(join(PAGES_DIR, f), "utf8")).page as {
+        blocks: { type: string; src?: string }[];
+      };
+      for (const b of page.blocks)
+        if (b.type === "image" && b.src && !existsSync(join("public", b.src))) missing.push(`${f}: ${b.src}`);
+    }
+    expect(missing).toEqual([]);
   });
 });
