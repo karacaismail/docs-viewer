@@ -1,0 +1,738 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-edu-u13-log",
+  "sourceId": "edu-u13",
+  "slug": "egitim/edu-u13-log",
+  "title": "Log Disiplini — yazılımın günlüğü",
+  "summary": "Çökmüş üretimi log olmadan çözmek = karanlık odada iğne aramak. Doğru log = aydınlık.",
+  "categoryId": "egitim",
+  "tags": [
+   "education",
+   "logging",
+   "structured-logging",
+   "correlation-id",
+   "observability"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-crosscut-observability",
+   "page-edu-u11-hata-yonetimi",
+   "page-crosscut-security"
+  ],
+  "blocks": [
+   {
+    "id": "block-edu-u13-log-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Log seviyeleri, correlation ID, structured (JSON) log, log injection güvenlik açığı, 'log her şeyi' = log hiçbir şey."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u13-log-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Log disiplininin özü:"
+     },
+     {
+      "type": "text",
+      "text": " *'Az log = sorun çözülmez. Çok log = sorun bulunamaz. Doğru yapısal log = tek aramayla bulunur.'* JSON + "
+     },
+     {
+      "type": "term",
+      "text": "correlation ID",
+      "termId": "term-correlation-id-edu-u13-log"
+     },
+     {
+      "type": "text",
+      "text": " = sağlıklı log."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u13-log-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "En klasik tuzak",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Geliştirici "
+     },
+     {
+      "type": "code",
+      "text": "console.log('hata oldu')"
+     },
+     {
+      "type": "text",
+      "text": " yazar, üretimde 100.000 satır. Hangi user'da? Hangi request'te? Bilinmez. Çözüm: "
+     },
+     {
+      "type": "strong",
+      "text": "structured log"
+     },
+     {
+      "type": "text",
+      "text": " — "
+     },
+     {
+      "type": "code",
+      "text": "logger.error('payment_failed', {userId, orderId, errorCode})"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u13-log-co-2",
+    "type": "callout",
+    "variant": "info",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a şöyle yaz: *'Payment service'e structured log ekle. Pino logger ile JSON çıktı, her log'da correlation_id, level, message, user_id. PII (email, tel) için redact list ekle. DEBUG sadece dev'de, üretimde INFO+.'* Sadece 'log ekle' dersen "
+     },
+     {
+      "type": "code",
+      "text": "console.log"
+     },
+     {
+      "type": "text",
+      "text": " üretir."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u13-log-h-log-seviyesi-ne-zaman",
+    "type": "heading",
+    "level": 4,
+    "text": "Log seviyesi → ne zaman"
+   },
+   {
+    "id": "block-edu-u13-log-table",
+    "type": "table",
+    "columns": [
+     "Seviye",
+     "Ne zaman",
+     "Üretimde?",
+     "Örnek"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "DEBUG"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Geliştirme detayı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✗ KAPALI"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "'Database query: SELECT * FROM ...'"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "INFO"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Normal iş olayı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ AÇIK"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "'Sipariş #1234 oluşturuldu'"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "WARN"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Beklenmedik ama hata değil"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ AÇIK"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "'Stok azaldı: 5 kaldı'"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "ERROR"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hata, exception"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ AÇIK + alarm"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "'Banka API timeout'"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u13-log-h-log-icerigi-kontrol-listesi",
+    "type": "heading",
+    "level": 4,
+    "text": "Log içeriği — kontrol listesi"
+   },
+   {
+    "id": "block-edu-u13-log-table-2",
+    "type": "table",
+    "columns": [
+     "Alan",
+     "Zorunlu mu?",
+     "Örnek"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "timestamp"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ Zorunlu"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ISO 8601 UTC"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "level"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ Zorunlu"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "'info', 'error'"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "message"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ Zorunlu"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "'order_created' (sabit, parametre değil)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "correlation_id"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ Zorunlu"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "UUID per request"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "user_id"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Varsa"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "42"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "error stack"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ERROR'da zorunlu"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tam stack trace"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "PII"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✗ YASAK"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Email/telefon/T.C. maskelenir"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u13-log-co-3",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Güvenlik: Log Injection",
+    "segments": [
+     {
+      "type": "code",
+      "text": "logger.info('User ' + req.body.name + ' logged in')"
+     },
+     {
+      "type": "text",
+      "text": " → saldırgan name'e "
+     },
+     {
+      "type": "code",
+      "text": "\\n[ERROR] Admin\\npassword reset OK"
+     },
+     {
+      "type": "text",
+      "text": " yazar → fake log üretildi. Çözüm: "
+     },
+     {
+      "type": "strong",
+      "text": "structured log her zaman"
+     },
+     {
+      "type": "text",
+      "text": ": "
+     },
+     {
+      "type": "code",
+      "text": "logger.info('login', {user: req.body.name})"
+     },
+     {
+      "type": "text",
+      "text": " — name escape edilir."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u13-log-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-edu-u13-log-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Log = yazılımın günlüğü."
+     },
+     {
+      "type": "text",
+      "text": " Üretimde sorun çıkınca 'ne oldu, kim yaptı, ne zaman' sorularına ancak log cevap verir."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u13-log-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "4 seviye + 1 yasak:"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u13-log-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "code",
+       "text": "DEBUG"
+      },
+      {
+       "type": "text",
+       "text": ": Geliştirici için detay. Üretimde KAPALI."
+      }
+     ],
+     [
+      {
+       "type": "code",
+       "text": "INFO"
+      },
+      {
+       "type": "text",
+       "text": ": 'Sipariş #1234 oluşturuldu' gibi iş olayı."
+      }
+     ],
+     [
+      {
+       "type": "code",
+       "text": "WARN"
+      },
+      {
+       "type": "text",
+       "text": ": 'Stok azaldı (5 kaldı)' — sorun değil ama dikkat."
+      }
+     ],
+     [
+      {
+       "type": "code",
+       "text": "ERROR"
+      },
+      {
+       "type": "text",
+       "text": ": İstisna fırlatıldı, hata oluştu."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "~~"
+      },
+      {
+       "type": "code",
+       "text": "FATAL"
+      },
+      {
+       "type": "text",
+       "text": "~~: Modern sistemde gereksiz; ERROR + alarm yeter."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u13-log-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Structured logging:"
+     },
+     {
+      "type": "text",
+      "text": " Düz metin değil JSON. "
+     },
+     {
+      "type": "code",
+      "text": "{level, message, user_id, request_id, timestamp}"
+     },
+     {
+      "type": "text",
+      "text": ". Grafana/Loki bu alanları indeksler."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u13-log-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Correlation ID:"
+     },
+     {
+      "type": "text",
+      "text": " Bir request, A → B → C → D servislerinden geçer. Hepsi aynı "
+     },
+     {
+      "type": "code",
+      "text": "correlation_id"
+     },
+     {
+      "type": "text",
+      "text": " kullanırsa, sonradan 'bu siparişe ne oldu' sorgusunu tek aramayla cevaplarsın."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u13-log-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Log injection (güvenlik):"
+     },
+     {
+      "type": "text",
+      "text": " Kullanıcı input'unu log'a doğrudan yazma. Saldırgan "
+     },
+     {
+      "type": "code",
+      "text": "\\n[ERROR] Admin password reset"
+     },
+     {
+      "type": "text",
+      "text": " yazarsa, fake log girer. Çözüm: "
+     },
+     {
+      "type": "term",
+      "text": "structured log",
+      "termId": "term-structured-log-edu-u13-log"
+     },
+     {
+      "type": "text",
+      "text": " + escape."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u13-log-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-edu-u13-log-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yazılımın yaptığı işleri zaman damgalı, yapısal şekilde dosyaya yazmak. Sonradan sorun çıkarsa bu kayıtlardan geri çözmek."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Üretimde hata 'gözlemlenebilir' değilse, çözülemez. Log = gözlemin temeli. Yanlış log = gürültü = hiç yok gibi."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) JSON formatında log yaz. 2) Her HTTP request'e correlation_id ata, tüm log'larda kullan. 3) DEBUG'u üretimde kapat; INFO/WARN/ERROR aç. 4) PII (email, telefon) maskele. 5) Tüm log'u Loki/Grafana'ya akıt."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her servis bir logger kullanır (Python: structlog, JS: pino). cc-obs cluster'ı log infra'sını anlatır."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her iş olayında (sipariş oluştu, kullanıcı girdi, ödeme alındı) INFO. Hata olduğunda ERROR + Sentry."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici log satırı yazar; SRE Loki/Grafana kurar; on-call mühendis sorun çıkınca log okur."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Karayolları kazaya gidip 'ne oldu?' diye soruyor. Görgü tanıkları ifade veriyor. Tutanak yazılıyor. Sigorta tutanaktan tazminat ödüyor. Log = tutanak. Yok = sigorta yok = hata öğrenilmiyor."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u13-log-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-edu-u13-log-story",
+    "type": "useCase",
+    "title": "Doktor muayene defteri — Ayşe Teyze (63)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Ayşe Teyze yıllardır aynı doktora gidiyor. Doktor her ziyarette dosyaya kısa not yazar: 'tansiyon yüksek, ilaç X verildi'. 5 yıl sonra Ayşe Teyze farklı bir doktora geliyor; dosyayı okuyup geçmişi anında anlıyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Bu log. Doğru yazılırsa 5 yıl sonra okunabilir; kötü yazılırsa 'doktor anlamadı, dosya yine baştan'."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u13-log-story-2",
+    "type": "useCase",
+    "title": "Bakkal Hatice Teyze (62) — sipariş defteri",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Hatice Teyze günde 50 satış yapar; her satışı deftere yazar. Müşteri 'geçen hafta ne almıştım?' diye sorduğunda defterden bulur. Ama eğer 'mama' diye yazıp markasını yazmadıysa, müşteri 'kedi maması mı, bebek maması mı?' sorusunu cevaplayamaz."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Eksik log = sonradan işe yaramaz. Structured log = 'urun: kedi_mamasi_2kg, miktar: 1, fiyat: 45TL' — net cevap."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u13-log-story-3",
+    "type": "useCase",
+    "title": "Apartman güvenlik kamerası — Murat Bey (61)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Murat Bey 8 daireli binayı yönetir. Yeni güvenlik kamerası taktı; her gece 50 GB kaydediyor. Disk hemen doluyor. Önemli olanı bulmak için saatlerce gerekti."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Çözüm: gündüz sadece 'hareket algılandı' anları kaydet (warn/error log). Gece sürekli kayıt sadece olay sonrası 1 saat. = log seviyeleri."
+     }
+    ]
+   }
+  ]
+ }
+}

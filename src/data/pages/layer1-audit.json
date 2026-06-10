@@ -1,0 +1,792 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-layer1-audit",
+  "sourceId": "l1-audit",
+  "slug": "layer1/layer1-audit",
+  "title": "Audit + Activity",
+  "summary": "Compliance + UX. İki ayrı concept, ayrı tut.",
+  "categoryId": "layer1",
+  "tags": [
+   "audit",
+   "activity",
+   "compliance"
+  ],
+  "meta": {
+   "granularity": "buyuk-tas",
+   "state": "wip",
+   "badge": "Layer 1 — In-tree"
+  },
+  "related": [
+   "page-kernel-schema",
+   "page-crosscut-tr",
+   "page-crosscut-security"
+  ],
+  "blocks": [
+   {
+    "id": "block-layer1-audit-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "İki ayrı kavram tek modülde: Audit (yasal/zorunlu) ve Activity (UX/feed)."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-audit-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "🏗️ Mimari karar: bitemporal vs klasik audit",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu cluster "
+     },
+     {
+      "type": "strong",
+      "text": "klasik audit tablosu"
+     },
+     {
+      "type": "text",
+      "text": " yaklaşımını anlatır (yan tablo + değişiklik logu). Daha derin bir yaklaşım — "
+     },
+     {
+      "type": "strong",
+      "text": "bitemporal ana tablo"
+     },
+     {
+      "type": "text",
+      "text": " — "
+     },
+     {
+      "type": "ref",
+      "text": "sus-bitemporal",
+      "refId": "sus-bitemporal"
+     },
+     {
+      "type": "text",
+      "text": " cluster'ında işlenir.\n\n"
+     },
+     {
+      "type": "strong",
+      "text": "Karar (hibrit):"
+     },
+     {
+      "type": "text",
+      "text": " Aşağıdaki DocType'lar için bitemporal "
+     },
+     {
+      "type": "strong",
+      "text": "zorunludur"
+     },
+     {
+      "type": "text",
+      "text": " (bedava audit + time-travel + KVKK uyumu): HRMS bordro, GL (genel muhasebe), KVKK kişisel veri kayıtları, sözleşme/poliçe kayıtları, sağlık verisi. Geri kalan tipler için klasik audit yeterli.\n\n"
+     },
+     {
+      "type": "strong",
+      "text": "Neden hibrit?"
+     },
+     {
+      "type": "text",
+      "text": " Bitemporal her tabloda zorunlu olursa disk ve yazma maliyeti büyür; klasik audit her yerde olursa \"o tarihte ne biliyorduk\" sorusu kolay cevap bulmaz. Doğru disiplin: gerçek kritiklik seviyesinde bitemporal."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-audit-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "İki ayrı concept, ayrı tut:"
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-audit-note",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Audit ≠ Activity. Birleştirme tuzağına düşme."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-audit-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Audit Log"
+      },
+      {
+       "type": "text",
+       "text": " (compliance) — immutable, append-only. Her DocType save'inde alan diff'i. KVKK ve mali kanun zorunlu. Retention: 10 yıl (mali için)."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Activity Feed"
+      },
+      {
+       "type": "text",
+       "text": " (UX) — \"Ahmet bu issue'ya yorum yaptı, 5 dk önce\". Soft delete OK, expire olabilir."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-layer1-audit-code",
+    "type": "codeBlock",
+    "title": "audit_log şeması — partition'lı, append-only",
+    "language": "sql",
+    "code": "CREATE TABLE audit_log (\n  id uuid PRIMARY KEY,\n  tenant_id uuid NOT NULL,\n  occurred_at timestamptz NOT NULL DEFAULT now(),\n  occurred_by uuid REFERENCES users(id),\n  doctype text NOT NULL,\n  document_id text NOT NULL,\n  action text NOT NULL,            -- create|update|delete|submit|cancel\n  changes jsonb NOT NULL,          -- {field: {old: ..., new: ...}}\n  ip_address inet,\n  user_agent text\n) PARTITION BY RANGE (occurred_at);\n\n-- Monthly partitions\nCREATE TABLE audit_log_2026_01 PARTITION OF audit_log\n  FOR VALUES FROM ('2026-01-01') TO ('2026-02-01');"
+   },
+   {
+    "id": "block-layer1-audit-note-2",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Aylık range partition; append-only; user_agent + ip korkulu davranış tespiti için."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-audit-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Neden tenant_id PRIMARY içinde değil?"
+     },
+     {
+      "type": "text",
+      "text": " Audit cross-tenant join yapmaz; partition + index yeter. "
+     },
+     {
+      "type": "strong",
+      "text": "Neden changes jsonb?"
+     },
+     {
+      "type": "text",
+      "text": " Field şemaları değişebilir, audit eski şemayı korumalı. "
+     },
+     {
+      "type": "strong",
+      "text": "Neden user_agent + ip?"
+     },
+     {
+      "type": "text",
+      "text": " Compromise tespiti: aynı user'dan beklenmedik ip = alarm."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-audit-h-audit-vs-activity-yan-yana",
+    "type": "heading",
+    "level": 4,
+    "text": "Audit vs Activity — yan yana"
+   },
+   {
+    "id": "block-layer1-audit-note-3",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "İki concept'in farkı tek tabloda."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-audit-table",
+    "type": "table",
+    "columns": [
+     "Özellik",
+     "Audit",
+     "Activity",
+     "Durum"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Saklama süresi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "10 yıl (mali)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "30-180 gün (configurable)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hazır (ok)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Mutability"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Immutable / append-only"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Soft delete OK"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hazır (ok)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Storage"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Partition + cold storage"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hot table + Redis stream"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Geliştiriliyor (wip)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Görünürlük"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sadece admin/denetçi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tüm üyeler"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hazır (ok)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Yasal değer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kanıt"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yok"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hazır (ok)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Realtime push"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hayır"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Evet (SSE/WebSocket)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Planlı (planned)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Schema değişikliği"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "JSONB ile esnek"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Versiyonlu DocType event"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kısmen (partial)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Sorgu pattern"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Forensic (kim/ne/ne zaman)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Feed (en yeniler)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hazır (ok)"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-layer1-audit-h-gercek-dunya-ornekleri",
+    "type": "heading",
+    "level": 4,
+    "text": "Gerçek dünya örnekleri"
+   },
+   {
+    "id": "block-layer1-audit-note-4",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "5 farklı stack'ten audit kullanım senaryosu."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-audit-uc",
+    "type": "useCase",
+    "title": "Muhasebe (#10)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Vergi denetiminde \"12 ay önce şu hesap kalemini kim değiştirdi\" sorusu. Audit log olmasa hapis."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-audit-uc-2",
+    "type": "useCase",
+    "title": "HRMS (#9)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "\"Çalışan maaşı 2025-03 → 2025-04'te kim onayladı\". HR compliance."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-audit-uc-3",
+    "type": "useCase",
+    "title": "GitHub PR",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "\"Bu satırı 3 ay önce şu kişi şu commit'te ekledi\". Activity feed."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-audit-uc-4",
+    "type": "useCase",
+    "title": "Drive (#7)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "\"Bu dosyayı bu hafta kim açtı, indirdi, değiştirdi\". Hem audit hem activity."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-audit-uc-5",
+    "type": "useCase",
+    "title": "SaaS support",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "\"Müşteri X'in hesabına dün admin Y giriş yaptı (impersonation)\". Audit."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-audit-div",
+    "type": "divider"
+   },
+   {
+    "id": "block-layer1-audit-h-landx-bakisi-d01-audit-log-event-sourcing",
+    "type": "heading",
+    "level": 4,
+    "text": "LandX bakışı: D01 Audit Log & Event Sourcing"
+   },
+   {
+    "id": "block-layer1-audit-note-5",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Audit'i event sourcing pattern'ine yükselten LandX modülü."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-audit-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "LandX "
+     },
+     {
+      "type": "strong",
+      "text": "D01 — Audit Log & Event Sourcing"
+     },
+     {
+      "type": "text",
+      "text": " (Faz 3 · P0 · Compliance + Platform Ops) bu cluster'ın audit log kısmını event sourcing pattern'ine yükseltir: append-only event log, replay capability, forensic search, retention policy."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-audit-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Event sourcing'in pratik faydası:"
+     },
+     {
+      "type": "text",
+      "text": " sistemin geçmişteki herhangi bir anına geri sarılabilir. Bug raporu: 'dün 14:00'da hesap kalemi yanlış göründü' → replay 2026-06-04T14:00:00Z, o anki state üretilir."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-audit-feat",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Append-Only Log",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Immutable, replay-safe, partition'lı (monthly)."
+       }
+      ]
+     },
+     {
+      "term": "Event Replay",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geçmiş state yeniden inşa edilebilir (forensic)."
+       }
+      ]
+     },
+     {
+      "term": "Forensic Search",
+      "definition": [
+       {
+        "type": "text",
+        "text": "\"X kullanıcısı son 30 gün ne yaptı\" sorgusu."
+       }
+      ]
+     },
+     {
+      "term": "Retention Policy",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yasal süre (mali 10 yıl, KVKK varsayılan 5 yıl, configurable)."
+       }
+      ]
+     },
+     {
+      "term": "Agent Audit Channel",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Agent eylemleri ayrı kanal + ek metadata ("
+       },
+       {
+        "type": "code",
+        "text": "run_id"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "tool_name"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "capability_scope_id"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "blast_radius"
+       },
+       {
+        "type": "text",
+        "text": ")."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-audit-co-2",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Yaygın hata",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Audit ve Activity'yi tek tabloda tutma cazibesi büyük (DRY hissi). Bunu yaparsan: (a) audit kirlenir, (b) UI sorguları audit'i yavaşlatır, (c) retention politikası karışır."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-audit-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "İki ayrı tablo, iki ayrı erişim deseni. Activity = hot reads, Audit = cold writes + nadir okuma. Birleştirirsen indeks ekonomisi de bozulur."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-audit-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-layer1-audit-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bunları "
+     },
+     {
+      "type": "strong",
+      "text": "karıştırma"
+     },
+     {
+      "type": "text",
+      "text": ". Audit immutable + 10 yıl retention; Activity soft-delete OK, sevkıyat sonrası temizlik mümkün. Yanlışlıkla birleştirilirse: ya audit kirlenir (UX değişiklikleri yasal kayda girer), ya activity şişer (her log entry'sini gösteren feed yorulur)."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-audit-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-layer1-audit-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistemde kim, ne zaman, neyi değiştirdi sorularına cevap veren kayıt günlüğü. Yazılımın 'noter defteri'."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İhtilaf çıktığında veya bir kazadan sonra geriye dönüp 'ne oldu' sorusunu cevaplayabilmemiz lazım. Audit olmazsa sorumlu bulunmaz, hata tekrarlar."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her veri değişikliği (oluştur, güncelle, sil) ayrı bir defter satırı yaratır: kim yaptı, ne zaman yaptı, eski ve yeni hâli neydi."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yönetici panelinde 'Hareketler' veya 'İşlem geçmişi' sekmesi. Her kayıt için 'kim ne yaptı' gösterilir."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her veri değişikliğinde, kullanıcı tıklamaları, sistem işlemleri — sessizce kayda alınır."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Denetçi okur ama kendisi yazmaz; sistem otomatik yazar; son kullanıcı bunun farkında bile olmaz."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir bankanın gişe işlem defteri: her havalede kim, kime, ne kadar, hangi saat — her şey kayıtlı. Hata olunca defteri açarsın."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-audit-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-layer1-audit-story",
+    "type": "useCase",
+    "title": "Vergi denetçisi",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "12 ay önce bir muhasebe hesabının değişiklik tarihçesini ister."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Audit log partition'ı (2025-06) çekilir; alan diff'leri JSON olarak gösterilir. Denetim kapanır."
+     }
+    ]
+   }
+  ]
+ }
+}

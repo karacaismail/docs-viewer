@@ -1,0 +1,589 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-landx-l1-identity",
+  "sourceId": "landx-l1",
+  "slug": "landx/landx-l1-identity",
+  "title": "LandX L1 — Kimlik & Kiracılık (Identity)",
+  "summary": "I01–I05. Multi-tenant izolasyon, user + agent identity, MFA, permission framework.",
+  "categoryId": "landx",
+  "tags": [
+   "landx",
+   "identity",
+   "tenancy",
+   "rbac",
+   "agent"
+  ],
+  "meta": {
+   "badge": "LandX L1 — 5 modül"
+  },
+  "related": [],
+  "blocks": [
+   {
+    "id": "block-landx-l1-identity-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "I01–I05. Multi-tenant izolasyon, user + agent identity, MFA, permission framework."
+     }
+    ]
+   },
+   {
+    "id": "block-landx-l1-identity-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "L1: kimlik, kiracılık, agent capability scopes. "
+     },
+     {
+      "type": "strong",
+      "text": "Önemli kavram"
+     },
+     {
+      "type": "text",
+      "text": ": agent kullanıcı adına çalışırken etkin yetki = "
+     },
+     {
+      "type": "code",
+      "text": "user_perms ∩ agent_scope ∩ session_limits"
+     },
+     {
+      "type": "text",
+      "text": ". Bu intersection model framework'ün güvenlik temeli."
+     }
+    ]
+   },
+   {
+    "id": "block-landx-l1-identity-h-i01-tenant-lifecycle-management",
+    "type": "heading",
+    "level": 4,
+    "text": "I01 — Tenant Lifecycle Management"
+   },
+   {
+    "id": "block-landx-l1-identity-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Faz 1 · P0 · Identity Squad."
+     },
+     {
+      "type": "text",
+      "text": " Tenant provisioning, suspend, archive, kota yönetimi. Multi-tenant SaaS'in en alt katmanı."
+     }
+    ]
+   },
+   {
+    "id": "block-landx-l1-identity-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "KPI",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Provisioning p95 <60sn, isolation breach 0, schema-per-tenant migration eşzamanlılığı >%95"
+       }
+      ]
+     },
+     {
+      "term": "Capabilities",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tenant Provisioning · Quota & Resource Limits · Tenant Configuration · Suspension & Lifecycle"
+       }
+      ]
+     },
+     {
+      "term": "Bizim eşdeğer",
+      "definition": [
+       {
+        "type": "ref",
+        "text": "k-tenancy",
+        "refId": "k-tenancy"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-landx-l1-identity-h-i02-user-identity-core",
+    "type": "heading",
+    "level": 4,
+    "text": "I02 — User & Identity Core"
+   },
+   {
+    "id": "block-landx-l1-identity-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Faz 1 · P0 · Identity Squad."
+     },
+     {
+      "type": "text",
+      "text": " Bireysel, kurumsal, "
+     },
+     {
+      "type": "strong",
+      "text": "agent"
+     },
+     {
+      "type": "text",
+      "text": ", system kullanıcı — hepsi tek polymorphic identity modelinde. "
+     },
+     {
+      "type": "code",
+      "text": "principal_type"
+     },
+     {
+      "type": "text",
+      "text": " ayrımı zorunlu (agent ≠ human)."
+     }
+    ]
+   },
+   {
+    "id": "block-landx-l1-identity-kv-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "KPI",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kullanıcı arama p95 <300ms, principal type resolution %100, merge/split conflict <%0.1"
+       }
+      ]
+     },
+     {
+      "term": "Capabilities",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Principal Model (Human/Agent/Service) · Identity Federation (OIDC/SAML) · Profile Merge & Split · Org Membership"
+       }
+      ]
+     },
+     {
+      "term": "Önemli alan",
+      "definition": [
+       {
+        "type": "code",
+        "text": "agent_user"
+       },
+       {
+        "type": "text",
+        "text": ": "
+       },
+       {
+        "type": "code",
+        "text": "agent_kind"
+       },
+       {
+        "type": "text",
+        "text": " (conversational/workflow/cron/embedded), "
+       },
+       {
+        "type": "code",
+        "text": "on_behalf_of_user_id"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "capability_set_id"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-landx-l1-identity-h-i03-authentication-sessions",
+    "type": "heading",
+    "level": 4,
+    "text": "I03 — Authentication & Sessions"
+   },
+   {
+    "id": "block-landx-l1-identity-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Faz 1 · P0 · Identity Squad."
+     },
+     {
+      "type": "text",
+      "text": " Password, OAuth, OIDC, magic link, passkey, API key, "
+     },
+     {
+      "type": "strong",
+      "text": "agent token"
+     },
+     {
+      "type": "text",
+      "text": " — tek auth katmanı. Agent token'ları human session'lardan ayrı muhasebe edilir (kısa TTL, max_tool_calls)."
+     }
+    ]
+   },
+   {
+    "id": "block-landx-l1-identity-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Başkasının kimliğini güvenle kullanmaya yarayan standart yöntem."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Google ile gir, Facebook ile gir — parola paylaşmadan."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Token (geçici geçiş kartı) alıp sisteme sunarsın."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Üçüncü taraflar entegre eder."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Otele girerken kimlik göstermek yerine kart vermek."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-landx-l1-identity-kv-3",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "KPI",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Login latency p95 <800ms, brute-force başarı 0, agent token TTL ihlali 0"
+       }
+      ]
+     },
+     {
+      "term": "Capabilities",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Credential Types (Password/Passkey/API Key/Agent Token) · Session Management · MFA & Step-up · Risk-based Auth"
+       }
+      ]
+     },
+     {
+      "term": "Bizim eşdeğer",
+      "definition": [
+       {
+        "type": "ref",
+        "text": "k-identity",
+        "refId": "k-identity"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-landx-l1-identity-h-i04-permission-framework",
+    "type": "heading",
+    "level": 4,
+    "text": "I04 — Permission Framework"
+   },
+   {
+    "id": "block-landx-l1-identity-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Faz 1 · P0 · Identity Squad."
+     },
+     {
+      "type": "text",
+      "text": " RBAC + ABAC + agent capability scopes. Agent kullanıcı adına çalışırken "
+     },
+     {
+      "type": "code",
+      "text": "user_perms ∩ agent_scope"
+     },
+     {
+      "type": "text",
+      "text": " kesişimi geçerli."
+     }
+    ]
+   },
+   {
+    "id": "block-landx-l1-identity-kv-4",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "KPI",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Permission check p99 <10ms, misconfig (over-privileged) tespit %100, agent privilege escalation 0"
+       }
+      ]
+     },
+     {
+      "term": "Capabilities",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Roles & Permissions · Agent Capability Scopes · Field-level/Row-level Security · Permission Audit"
+       }
+      ]
+     },
+     {
+      "term": "Agent scope alanları",
+      "definition": [
+       {
+        "type": "code",
+        "text": "allowed_tools"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "allowed_resources"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "max_invocations_per_session"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "max_token_cost_usd"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "blast_radius"
+       }
+      ]
+     },
+     {
+      "term": "Bizim eşdeğer",
+      "definition": [
+       {
+        "type": "ref",
+        "text": "k-authz",
+        "refId": "k-authz"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-landx-l1-identity-h-i05-multi-tenant-isolation",
+    "type": "heading",
+    "level": 4,
+    "text": "I05 — Multi-Tenant Isolation"
+   },
+   {
+    "id": "block-landx-l1-identity-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Faz 2 · P0 · Identity Squad + Security Squad."
+     },
+     {
+      "type": "text",
+      "text": " Schema-per-tenant izolasyon, query interception, cross-tenant erişim tespiti, tenant context propagation. Agent çağrıları tenant context'i kaybetmeden alt servislere taşınmalı."
+     }
+    ]
+   },
+   {
+    "id": "block-landx-l1-identity-kv-5",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "KPI",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Cross-tenant breach 0, tenant context propagation hatası <%0.01, schema switch overhead p99 <2ms"
+       }
+      ]
+     },
+     {
+      "term": "Capabilities",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tenant Context Propagation (Context Sealing) · Query Interception · Schema Routing · Tenant Data Export/Deletion (KVKK madde 7)"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-landx-l1-identity-co",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Agent ≠ Human disiplini",
+    "segments": [
+     {
+      "type": "text",
+      "text": "LandX'in en güçlü fikirlerinden biri: agent ve human kullanıcılar "
+     },
+     {
+      "type": "strong",
+      "text": "aynı Principal modelinde"
+     },
+     {
+      "type": "text",
+      "text": " ama farklı "
+     },
+     {
+      "type": "code",
+      "text": "principal_type"
+     },
+     {
+      "type": "text",
+      "text": " ile. Agent'ın yetkisi her zaman üç kümeyi keser: (a) kim adına çalışıyor → user'ın izinleri, (b) hangi capability pack atanmış → agent scope, (c) session limit. Bu kesişim sıfırsa tool çağrılamaz. Privilege escalation matematiksel olarak imkansız."
+     }
+    ]
+   },
+   {
+    "id": "block-landx-l1-identity-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-landx-l1-identity-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "I01–I05. Multi-tenant izolasyon, user + agent identity, MFA, permission framework."
+     }
+    ]
+   },
+   {
+    "id": "block-landx-l1-identity-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-landx-l1-identity-lesson-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "LandX yapay zeka katmanının 1. seviyesi: 'kim, ne yapabilir' soruları."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Ajanın yetkisi belli olmazsa rastgele iş yapar."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kimlik, oturum, yetki, kiracılık modülleri."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her ajan eyleminin önündeki kapı bekçisi."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her ajan çalışmaya başlamadan önce."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Güvenlik mühendisi politika koyar; sistem uygular."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Devlet dairesindeki personel kartı: nereye girebilir, hangi belgeyi imzalayabilir — kartta yazılı."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

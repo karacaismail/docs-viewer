@@ -1,0 +1,198 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-fe-monorepo",
+  "sourceId": "fe-monorepo",
+  "slug": "frontend/fe-monorepo",
+  "title": "Frontend — Monorepo İskeleti",
+  "summary": "pnpm workspaces, apps/ + packages/ + tools/, sıkı paket sınırı.",
+  "categoryId": "frontend",
+  "tags": [
+   "frontend",
+   "monorepo",
+   "pnpm",
+   "packages"
+  ],
+  "meta": {},
+  "related": [],
+  "blocks": [
+   {
+    "id": "block-fe-monorepo-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "pnpm workspaces, apps/ + packages/ + tools/, sıkı paket sınırı."
+     }
+    ]
+   },
+   {
+    "id": "block-fe-monorepo-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "pnpm workspaces"
+     },
+     {
+      "type": "text",
+      "text": " — strict node_modules, workspace native, hızlı. Tek codebase'de web + mobile + OTA server + 11 paylaşılan paket."
+     }
+    ]
+   },
+   {
+    "id": "block-fe-monorepo-tree",
+    "type": "codeBlock",
+    "title": "saas-panel/",
+    "language": "text",
+    "code": "saas-panel/\n├─ apps/\n│  ├─ web/   # PWA Vite build, ana giriş noktası\n│  ├─ mobile/   # Capacitor wrapper (ios/, android/)\n│  └─ ota-server/   # FastAPI, OTA manifest + S3 yönlendirme\n├─ packages/\n│  ├─ ui/   # Flowbite + Radix + Phosphor wrapper'ları\n│  ├─ api/   # openapi-typescript types + openapi-fetch client\n│  ├─ domain/   # Zod schemas, business logic, CASL abilities\n│  ├─ i18n/   # ICU mesajlar (tr, en, ar), date/number formatters\n│  ├─ ai/   # AI SDK provider router, prompt registry, schema-driven UI dispatcher\n│  ├─ auth/   # Logto adapter, Capacitor in-app browser flow\n│  ├─ kyc/   # TC NFC Capacitor plugin + KYB Veriff adapter\n│  ├─ realtime/   # SSE client, WS client, Yjs/Hocuspocus setup\n│  ├─ offline/   # TanStack Query persist + IDB write queue\n│  ├─ native/   # Capacitor plugin'lerin tek noktadan dispatch'i\n│  └─ test-utils/   # MSW handlers, fixture factory'leri\n├─ tools/\n│  ├─ eslint-config/   # Biome config + custom rules\n│  └─ tsconfig/   # Paylaşılan tsconfig.base.json\n├─ docs/\n│  ├─ TECH_STACK.md   # Bu doküman\n│  ├─ ENGINEERING_MANIFESTO.md\n│  ├─ CLAUDE.md   # AI agent context\n│  └─ adr/   # Architecture Decision Records\n├─ .github/workflows/\n│  ├─ web-deploy.yml   # Ubuntu runner → Hetzner\n│  ├─ ios-build.yml   # macOS runner → TestFlight\n│  ├─ android-build.yml   # Ubuntu runner → Play Console\n│  └─ ota-publish.yml   # JS bundle → kendi OTA server\n├─ pnpm-workspace.yaml\n├─ lefthook.yml\n└─ biome.json"
+   },
+   {
+    "id": "block-fe-monorepo-co",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Sırayla başlama",
+    "segments": [
+     {
+      "type": "text",
+      "text": "1. "
+     },
+     {
+      "type": "strong",
+      "text": "Repo iskeleti"
+     },
+     {
+      "type": "text",
+      "text": " (pnpm-workspace.yaml + tsconfig.base.json + Biome config + lefthook.yml) en yüksek kaldıraçlı çünkü diğer hepsinin ön şartı.\n2. "
+     },
+     {
+      "type": "strong",
+      "text": "packages/domain Zod schema'ları"
+     },
+     {
+      "type": "text",
+      "text": " — kullanıcı, organizasyon, KYC submission, AI conversation. Backend FastAPI bunlardan Pydantic üretebilir (datamodel-code-generator).\n3. "
+     },
+     {
+      "type": "strong",
+      "text": "packages/kyc TC NFC plugin scaffold"
+     },
+     {
+      "type": "text",
+      "text": " — Capacitor plugin generator çalıştır, iOS/Android boş bridge'i kur, mock implementation.\n4. "
+     },
+     {
+      "type": "strong",
+      "text": "Logto + Hetzner kurulum"
+     },
+     {
+      "type": "text",
+      "text": " — docker-compose hazır, organizations feature aç.\n5. "
+     },
+     {
+      "type": "strong",
+      "text": "OTA server iskelet"
+     },
+     {
+      "type": "text",
+      "text": " — FastAPI + Hetzner Object Storage. 3 endpoint yeterli (manifest, upload, rollout)."
+     }
+    ]
+   },
+   {
+    "id": "block-fe-monorepo-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-fe-monorepo-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "pnpm workspaces, apps/ + packages/ + tools/, sıkı paket sınırı."
+     }
+    ]
+   },
+   {
+    "id": "block-fe-monorepo-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-fe-monorepo-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tüm frontend kodunun tek bir kod deposunda toplandığı düzen. 15 ürünün arayüzü ayrı ayrı klasörlerde ama aynı çatı altında."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Ayrı depo kuralsız: her ürünün kütüphanesi farklı sürüm olur, paylaşım acı verir. Tek depoda paylaşım kolay, tutarlılık garanti."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir ana klasör + içinde 'packages' alt klasörleri (her ürün için bir tane) + 'shared' (paylaşılan). Bir komutla hepsi build edilir."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "GitHub'da tek bir repo. İçinde 15 ürün ayrı klasör."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yeni ürün eklenirken yeni klasör açılır; mevcut kodu paylaşmak isteyince shared'a taşınır."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "DevOps mühendisi kurar; her ürün ekibi kendi klasöründe çalışır; kütüphane mimar ortak parçaları yönetir."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Büyük bir kütüphane: ayrı raflar (ürünler) + ortak okuma salonu (paylaşılan parçalar) + tek kütüphaneci."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

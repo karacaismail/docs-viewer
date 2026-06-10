@@ -1,0 +1,645 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-edu-u04b-veri-tasarim",
+  "sourceId": "edu-u04b",
+  "slug": "egitim/edu-u04b-veri-tasarim",
+  "title": "Veri Tasarımı — normalleştirme ve ilişkiler",
+  "summary": "Doğru tablo yapısı 3 ay sonra hayat kurtarır; yanlış yapı 3 ay sonra her şeyi yeniden yazdırır.",
+  "categoryId": "egitim",
+  "tags": [
+   "education",
+   "data-modeling",
+   "normalization",
+   "foreign-key",
+   "junction-table"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-edu-u04-veritabani",
+   "page-kernel-schema",
+   "page-scale-projections"
+  ],
+  "blocks": [
+   {
+    "id": "block-edu-u04b-veri-tasarim-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "1NF/2NF/3NF normalleştirme, foreign key kuralları, many-to-many junction tablo, ne zaman denormalize."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04b-veri-tasarim-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Üç kural:"
+     },
+     {
+      "type": "text",
+      "text": " *(1) Bilgi tekrar etmez — her bilgi tek yerde.* *(2) İlişki "
+     },
+     {
+      "type": "term",
+      "text": "foreign key",
+      "termId": "term-foreign-key-edu-u04b-veri-tasarim"
+     },
+     {
+      "type": "text",
+      "text": " ile kurulur.* *(3) Çok-çoklu ilişki için ayrı junction tablo.* Bu üç kuralı uygulayan veri tasarımı 5 yıl yaşar."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04b-veri-tasarim-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "En klasik hata",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Programcı 'fatura' tablosuna müşteri adını + ürün listesini virgülle yazar: "
+     },
+     {
+      "type": "code",
+      "text": "'Ahmet Yılmaz', 'Domates, Soğan, Patates'"
+     },
+     {
+      "type": "text",
+      "text": ". 3 ay sonra 'domateste fiyat değiştirelim, hangi faturalarda var?' sorusuna cevap "
+     },
+     {
+      "type": "strong",
+      "text": "YOK"
+     },
+     {
+      "type": "text",
+      "text": ". Junction tablo zorunlu."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04b-veri-tasarim-co-2",
+    "type": "callout",
+    "variant": "info",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a şöyle yaz: *'Sipariş + Ürün many-to-many ilişki kur, junction tablosu "
+     },
+     {
+      "type": "code",
+      "text": "siparis_kalem(siparis_id, urun_id, adet, fiyat)"
+     },
+     {
+      "type": "text",
+      "text": " ile. Prisma şemasında her iki tarafta "
+     },
+     {
+      "type": "code",
+      "text": "@relation"
+     },
+     {
+      "type": "text",
+      "text": " ekle. FK ON DELETE RESTRICT.'* Bu detayları söylemezsen virgüllü liste döndürür."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04b-veri-tasarim-h-iliski-turleri-pratik-tablosu",
+    "type": "heading",
+    "level": 4,
+    "text": "İlişki türleri — pratik tablosu"
+   },
+   {
+    "id": "block-edu-u04b-veri-tasarim-table",
+    "type": "table",
+    "columns": [
+     "İlişki",
+     "Örnek",
+     "Çözüm"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Bire-bir (1:1)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Müşteri → Müşteri Profili"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Aynı tabloya koy veya FK + UNIQUE"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Bire-çok (1:N)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Müşteri → Siparişler"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "FK çocuk tabloda: siparis.musteri_id"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Çok-çoklu (N:N)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sipariş ↔ Ürün"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Junction tablo: siparis_kalem"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kendine referans"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kategori → Üst Kategori"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "FK aynı tabloda: kategori.parent_id"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u04b-veri-tasarim-h-normallestirme-denetim-listesi",
+    "type": "heading",
+    "level": 4,
+    "text": "Normalleştirme — denetim listesi"
+   },
+   {
+    "id": "block-edu-u04b-veri-tasarim-table-2",
+    "type": "table",
+    "columns": [
+     "Kontrol",
+     "Sorun",
+     "Çözüm"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kolonda virgüllü liste var mı?"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "'domates, soğan, patates'"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Ayrı tabloya çıkar (1NF)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Aynı bilgi 2+ yerde mi?"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Müşteri adı hem sipariş hem fatura'da"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "FK ile bağla, tek yerde tut"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "İsim değişince 10 yer güncellenecek mi?"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Evet → tasarım yanlış"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Normalleştir"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "JOIN çok yavaş mı?"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "p99 > 500ms"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "CQRS okuma projeksiyonu — ama denormalize EN SON çare"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u04b-veri-tasarim-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Denormalize ne zaman caiz?",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Sadece"
+     },
+     {
+      "type": "text",
+      "text": " okuma çok yavaşladıysa, "
+     },
+     {
+      "type": "strong",
+      "text": "cache çözmediyse"
+     },
+     {
+      "type": "text",
+      "text": ", ve denormalize verinin güncel kalması için outbox/event listener kurduysan. 'Hızlı olsun' diye baştan denormalize = kötü."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04b-veri-tasarim-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-edu-u04b-veri-tasarim-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Normalleştirme nedir?"
+     },
+     {
+      "type": "text",
+      "text": " Bir bilgi sadece bir yerde durur; tekrar etmez. Müşteri adres bilgisi siparişe yazılırsa 100 siparişte 100 kopya olur — müşteri taşınırsa hepsini güncellemek gerekir."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04b-veri-tasarim-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "3 seviye:"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04b-veri-tasarim-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "1NF"
+       },
+       {
+        "type": "text",
+        "text": ": Her kolonda tek değer (virgülle ayrılmış liste YASAK)."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "2NF"
+       },
+       {
+        "type": "text",
+        "text": ": Tablonun her sütunu birincil anahtarın tamamına bağlı (birincil anahtarın bir parçasına bağlı kolon ayrı tabloya)."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "3NF"
+       },
+       {
+        "type": "text",
+        "text": ": Transitive bağımlılık yok (A→B→C ise B ve C ayrı tabloya)."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04b-veri-tasarim-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Foreign key (yabancı anahtar):"
+     },
+     {
+      "type": "text",
+      "text": " bir tablodaki kolonun başka tabloyu işaret etmesi — "
+     },
+     {
+      "type": "code",
+      "text": "siparis.musteri_id → musteri.id"
+     },
+     {
+      "type": "text",
+      "text": ". Veritabanı 'olmayan müşteriye sipariş'in yazılmasına izin vermez."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04b-veri-tasarim-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Junction tablo (many-to-many):"
+     },
+     {
+      "type": "text",
+      "text": " sipariş ↔ ürün — bir siparişte çok ürün, bir ürün çok siparişte. Üçüncü tablo gerekir: "
+     },
+     {
+      "type": "code",
+      "text": "siparis_kalem(siparis_id, urun_id, adet, fiyat)"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04b-veri-tasarim-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Ne zaman denormalize?"
+     },
+     {
+      "type": "text",
+      "text": " Sadece okuma çok yavaşladıysa ve cache çözmediyse. CQRS pattern'i ile okuma projeksiyonları "
+     },
+     {
+      "type": "term",
+      "text": "denormalize",
+      "termId": "term-denormalize-edu-u04b-veri-tasarim"
+     },
+     {
+      "type": "text",
+      "text": " tutulur."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04b-veri-tasarim-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-edu-u04b-veri-tasarim-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Veriyi nasıl tablolara böleceğini öğrenirsin. Tekrar eden bilgi ayrı tabloya çıkar; ilişkiyi foreign key kurar; çok-çoklu ilişki için üçüncü tablo açarsın."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yanlış tablo yapısı bir kez büyüdükten sonra düzeltmek aylar alır. Doğru yapı baştan kurulursa 'müşteri taşındı' sorunu 3 saniyede çözülür."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Tekrar eden bilgiyi bul (müşteri adı, ürün açıklaması) → ayrı tabloya çıkar. 2) Bağlantıyı "
+       },
+       {
+        "type": "code",
+        "text": "_id"
+       },
+       {
+        "type": "text",
+        "text": " kolonu ile kur. 3) Veritabanına FK constraint yaz — bütünlüğü DB korur, sen değil."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her DocType tanımlarken (k-schema) ilişki türü seçilir: one-to-one, one-to-many, many-to-many. Many-to-many için junction tablo otomatik üretilir."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tablo açarken "
+       },
+       {
+        "type": "strong",
+        "text": "ilk önce"
+       },
+       {
+        "type": "text",
+        "text": " normalleştir. Sonra performans sorunu çıkarsa CQRS okuma projeksiyonu eklenir — ama temel veri her zaman normalleştirilmiştir."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Veri modelci (genelde mimar veya senior dev) ilk şemayı çizer. Junior dev junction tabloyu eklemeyi öğrenir."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kütüphanede her kitabın bir kart-numarası var. Ödünç defterine kitabın tüm bilgisini değil, kart-numarasını yazarsın. Kitap adı değişirse (yeni baskı) tek kart günceller, defter eski kalır."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04b-veri-tasarim-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-edu-u04b-veri-tasarim-story",
+    "type": "useCase",
+    "title": "Manav Selim Bey (62) — müşteri telefonu",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Selim Bey müşteri listesini Excel'de tutuyordu. Bir müşterinin telefonu değişti; sipariş listesinde, fatura listesinde, teslimat listesinde — üç ayrı yerde güncellemek zorunda kaldı. Birini unuttu, yanlış telefonu aradı, sipariş kaçırdı."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Doğru tasarım: müşteri tek tabloda. Sipariş ve fatura "
+     },
+     {
+      "type": "code",
+      "text": "musteri_id"
+     },
+     {
+      "type": "text",
+      "text": " ile bağlanır. Telefon tek yerde değişir, her yer otomatik günceldir."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04b-veri-tasarim-story-2",
+    "type": "useCase",
+    "title": "Berber Mehmet Usta (60) — randevu defteri",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Mehmet Usta defterinde her randevuya müşteri adını, telefonunu, geçmiş saç modelini yazardı. Aynı müşteri 10 sayfada 10 kez yazılı. Adres değişince geriye gidip silmek günler aldı."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Yazılım: müşteri tablosu + randevu tablosu (musteri_id ile). 10 randevu = 10 satır, ama müşteri bilgisi 1 yerde. Adres güncellemek 5 saniye."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04b-veri-tasarim-story-3",
+    "type": "useCase",
+    "title": "Terzi Ayşe Teyze (63) — sipariş kalemleri",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Bir sipariş 3 farklı kumaş + 2 farklı düğme içeriyor. Ayşe Teyze deftere 'kumaş1, kumaş2, kumaş3, düğme1, düğme2' yazdı. Kumaş2 stokta kalmadığında geri çekmek istedi, ama hangi siparişlerde geçtiğini bulması saatler aldı."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Junction tablo: "
+     },
+     {
+      "type": "code",
+      "text": "siparis_kalem"
+     },
+     {
+      "type": "text",
+      "text": " — her satır bir kalem. Kumaş2 hangi siparişlerde geçtiği tek sorgu: 'SELECT siparis_id FROM siparis_kalem WHERE urun_id = kumas2'."
+     }
+    ]
+   }
+  ]
+ }
+}

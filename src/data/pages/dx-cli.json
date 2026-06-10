@@ -1,0 +1,206 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-dx-cli",
+  "sourceId": "dx-cli",
+  "slug": "dx/dx-cli",
+  "title": "Plugin CLI + Scaffolding",
+  "summary": "create-module CLI, hook contract, test harness.",
+  "categoryId": "dx",
+  "tags": [
+   "dx",
+   "cli",
+   "scaffolding"
+  ],
+  "meta": {},
+  "related": [],
+  "blocks": [
+   {
+    "id": "block-dx-cli-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "create-module CLI, hook contract, test harness."
+     }
+    ]
+   },
+   {
+    "id": "block-dx-cli-h-cli-scaffolding",
+    "type": "heading",
+    "level": 4,
+    "text": "CLI scaffolding"
+   },
+   {
+    "id": "block-dx-cli-code",
+    "type": "codeBlock",
+    "language": "bash",
+    "code": "$ framework create-module my-inventory-ext\n? Module name: my-inventory-ext\n? Publisher: acme-corp\n? License: LGPL-3.0\n? Depends on: [framework, commerce]\n? Language: TypeScript / Python / Both\n\nCreated:\n  my-inventory-ext/\n    plugin.yaml\n    handlers/\n      sales_order.ts        # TypeScript hook\n      sales_order.py        # Python hook\n    doctypes/\n      MyInventoryItem.json\n    fixtures/\n      categories.json\n    translations/\n      tr.po, en.po\n    tests/\n      test_sales_order.py\n      test_sales_order.test.ts\n    README.md\n    .gitignore"
+   },
+   {
+    "id": "block-dx-cli-h-hook-contract-specification",
+    "type": "heading",
+    "level": 4,
+    "text": "Hook contract specification"
+   },
+   {
+    "id": "block-dx-cli-code-2",
+    "type": "codeBlock",
+    "title": "@framework/sdk types",
+    "language": "typescript",
+    "code": "export interface HookContext {\n  tenant: { id: string; locale: string; timezone: string };\n  user: { id: string; roles: string[]; email: string };\n  trace: { traceId: string; spanId: string };\n  events: { publish(event: DomainEvent): Promise<void> };\n  tax: TaxService;\n  storage: StorageService;\n  ai: AIService;\n  db: ReadOnlyDB;        // read-only, write only via aggregate\n  logger: Logger;\n}\n\nexport type DocumentHook<T> = (doc: T, ctx: HookContext) => Promise<void> | void;\nexport type ValidationHook<T> = (doc: T, ctx: HookContext) => Promise<ValidationError[] | void>;"
+   },
+   {
+    "id": "block-dx-cli-h-testing",
+    "type": "heading",
+    "level": 4,
+    "text": "Testing"
+   },
+   {
+    "id": "block-dx-cli-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Unit test"
+      },
+      {
+       "type": "text",
+       "text": ": pytest (Python), vitest (TS). Mock framework SDK."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Integration test"
+      },
+      {
+       "type": "text",
+       "text": ": framework test harness — gerçek DB, gerçek event bus."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "E2E test"
+      },
+      {
+       "type": "text",
+       "text": ": Playwright + framework dev server."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Boundary test"
+      },
+      {
+       "type": "text",
+       "text": ": importlinter — modül A modül B internal'ına dokunmasın."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-dx-cli-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-dx-cli-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "create-module CLI, hook contract, test harness."
+     }
+    ]
+   },
+   {
+    "id": "block-dx-cli-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-dx-cli-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici komut satırı aracı: 'yeni modül oluştur', 'test koş', 'deploy et' gibi sık komutları tek kelime ile yapan yardımcı."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici aynı işi 50 kere yapacak. Her seferinde 10 adımlık komut yazmak yorucu. CLI tek satıra indirir."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "fw new module hrms"
+       },
+       {
+        "type": "text",
+        "text": " gibi tek komut → sistem tüm klasör + dosyaları üretir."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici terminalinde — günlük araç."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici sık tekrarlanan iş yaparken."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici kullanır; DevOps yazar."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mutfak robotunun hazır ayarları: 'hamur hazırla' tuşuna basarsın, robot tüm adımları kendi yapar."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

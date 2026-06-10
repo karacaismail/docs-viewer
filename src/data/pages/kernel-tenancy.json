@@ -1,0 +1,784 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-kernel-tenancy",
+  "sourceId": "k-tenancy",
+  "slug": "kernel/kernel-tenancy",
+  "title": "Tenancy",
+  "summary": "SaaS = aynı yazılım çok müşteriye, izole veri. Day-1'den tenant_id her satırda.",
+  "categoryId": "kernel",
+  "tags": [
+   "tenancy",
+   "multi-tenant",
+   "rls",
+   "kernel"
+  ],
+  "meta": {
+   "badge": "Layer 0 — Kernel #4"
+  },
+  "related": [],
+  "blocks": [
+   {
+    "id": "block-kernel-tenancy-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Aynı sistemin içinde birden çok müşteri (kiracı) yan yana ama birbirini görmeden çalışsın diye kurulan ayırma yapısı."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-tenancy-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "\"SaaS yapıyoruz\" = \"aynı yazılımı çok müşteriye, herkesin verisi izole\" demek. Tenancy bunun mekanizması."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-tenancy-h-uc-model",
+    "type": "heading",
+    "level": 4,
+    "text": "Üç model"
+   },
+   {
+    "id": "block-kernel-tenancy-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Single-tenant (DB-per-tenant)"
+      },
+      {
+       "type": "text",
+       "text": " — her müşteri kendi DB'si. Enterprise müşteri \"verim kimseyle aynı yerde olmasın\" diyorsa. Operasyon cehennemi, migration zorlaşır."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Multi-tenant shared schema + tenant_id"
+      },
+      {
+       "type": "text",
+       "text": " — tek DB, tüm tablolarda "
+      },
+      {
+       "type": "code",
+       "text": "tenant_id"
+      },
+      {
+       "type": "text",
+       "text": ". En yaygın. Default'umuz bu."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Multi-tenant schema-per-tenant"
+      },
+      {
+       "type": "text",
+       "text": " — tek DB, her tenant kendi PostgreSQL schema'sı. Backup/restore kolay; 10K+ tenant'ta migration zorlaşır."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Hybrid (Shopify pattern)"
+      },
+      {
+       "type": "text",
+       "text": " — küçük tenant'lar shared \"pod\"larda, dev müşteriler dedicated pod. Pod-aware routing."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-kernel-tenancy-h-iki-seviyeli-tenancy-muhasebe-senaryosu",
+    "type": "heading",
+    "level": 4,
+    "text": "İki seviyeli tenancy — muhasebe senaryosu"
+   },
+   {
+    "id": "block-kernel-tenancy-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Mali müşavir bürosu senin müşterin. Bürosunun 50 mükellefi var, her mükellefin defteri ayrı. "
+     },
+     {
+      "type": "strong",
+      "text": "İki seviyeli tenancy"
+     },
+     {
+      "type": "text",
+      "text": ":"
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-tenancy-code",
+    "type": "codeBlock",
+    "language": "sql",
+    "code": "tenant_id   = office_uuid       # mali müşavir bürosu (faturalama, login)\ncompany_id  = client_company    # mükellef şirket (defter, fatura, beyanname)\n\n-- Her finansal kayıtta her iki kolon\nCREATE TABLE journal_entry (\n  id uuid PRIMARY KEY,\n  tenant_id uuid NOT NULL,\n  company_id uuid NOT NULL,\n  ...\n);\nCREATE INDEX ON journal_entry (tenant_id, company_id);"
+   },
+   {
+    "id": "block-kernel-tenancy-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "RLS policy iki seviyeyi de kontrol eder. Bunu modellemezsen büro tüm mükellefleri karıştırır."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-tenancy-h-tenant-user",
+    "type": "heading",
+    "level": 4,
+    "text": "Tenant ≠ User"
+   },
+   {
+    "id": "block-kernel-tenancy-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bir user birden çok tenant'ta üye olabilir (Slack workspace switcher). User ↔ Tenant "
+     },
+     {
+      "type": "strong",
+      "text": "many-to-many"
+     },
+     {
+      "type": "text",
+      "text": ":"
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-tenancy-code-2",
+    "type": "codeBlock",
+    "language": "sql",
+    "code": "CREATE TABLE membership (\n  user_id uuid REFERENCES users(id),\n  tenant_id uuid REFERENCES tenants(id),\n  role text NOT NULL,\n  joined_at timestamptz NOT NULL,\n  PRIMARY KEY (user_id, tenant_id)\n);"
+   },
+   {
+    "id": "block-kernel-tenancy-h-tenant-site",
+    "type": "heading",
+    "level": 4,
+    "text": "Tenant ≠ Site"
+   },
+   {
+    "id": "block-kernel-tenancy-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bir tenant birden çok site (subdomain, custom domain) işletebilir. CMS müşterisinin 5 marka sitesi olabilir, hepsi aynı tenant'a ait. "
+     },
+     {
+      "type": "code",
+      "text": "site"
+     },
+     {
+      "type": "text",
+      "text": " tablosu ayrı, "
+     },
+     {
+      "type": "code",
+      "text": "tenant_id"
+     },
+     {
+      "type": "text",
+      "text": "'ye bağlı."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-tenancy-h-custom-domain-e-ticaret-saas",
+    "type": "heading",
+    "level": 4,
+    "text": "Custom domain — e-ticaret SaaS"
+   },
+   {
+    "id": "block-kernel-tenancy-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Shopify gibi: her merchant kendi domain'ini kullanır (acme-store.com). DNS provisioning (CNAME), SSL certificate (Let's Encrypt + ACME), routing (host header → tenant lookup). Senin \"Domain\" küme'n bunu modelliyor — DNS + SSL/TLS + Wildcard."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-tenancy-code-3",
+    "type": "codeBlock",
+    "title": "Tenant resolver middleware",
+    "language": "python",
+    "code": "@app.middleware(\"http\")\nasync def tenant_resolver(request, call_next):\n    host = request.headers[\"host\"]\n    # 1. Custom domain mi?  acme-store.com → tenant lookup\n    # 2. Subdomain mi?       acme.myplatform.com → \"acme\" prefix\n    # 3. Path-based mi?      myplatform.com/acme/... → path prefix\n    tenant = await resolve_tenant(host, request.url.path)\n    request.state.tenant = tenant\n    # PostgreSQL RLS context\n    await db.execute(f\"SET LOCAL app.tenant_id = '{tenant.id}'\")\n    return await call_next(request)"
+   },
+   {
+    "id": "block-kernel-tenancy-h-15-urunde-tenant-tanimi",
+    "type": "heading",
+    "level": 4,
+    "text": "15 üründe tenant tanımı"
+   },
+   {
+    "id": "block-kernel-tenancy-uc",
+    "type": "useCase",
+    "title": "Notion",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "workspace = tenant. Personal + Acme Inc. ayrı workspace. workspace_id = tenant_id."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-tenancy-uc-2",
+    "type": "useCase",
+    "title": "Slack",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "workspace = tenant. Her message, channel, file workspace'e ait."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-tenancy-uc-3",
+    "type": "useCase",
+    "title": "Shopify (#12)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "her merchant kendi store'una sahip — customer DB, ürün, domain, tema. tenant_id = store_id."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-tenancy-uc-4",
+    "type": "useCase",
+    "title": "Linear",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "organization = tenant. Issue, project organization'a bağlı."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-tenancy-uc-5",
+    "type": "useCase",
+    "title": "HRMS (#9)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "tenant = company. Türk + Alman şirket aynı tabloda, tenant_id ile izole."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-tenancy-uc-6",
+    "type": "useCase",
+    "title": "Muhasebe (#10)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "tenant = mali müşavir bürosu + sub-tenant = mükellef. İki seviyeli."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-tenancy-uc-7",
+    "type": "useCase",
+    "title": "LMS (#6)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "tenant = okul/kurum. 500 okul aynı LMS kodunu kullanır."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-tenancy-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Tuzak #1 — \"önce tek tenant\"",
+    "segments": [
+     {
+      "type": "text",
+      "text": "\"İlk müşterim için tutarlı çalışsın, sonradan çoklarım\" düşüncesi. Kaybedilen 6-12 ay. Çünkü retrofit = tüm tabloları rebuild + tüm query'leri rewrite + cross-tenant leak penceresi. "
+     },
+     {
+      "type": "strong",
+      "text": "Day-1'de tenant_id her satırda."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-tenancy-co-2",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Tuzak #2 — PgBouncer + RLS",
+    "segments": [
+     {
+      "type": "text",
+      "text": "PgBouncer transaction mode kullanıyorsan "
+     },
+     {
+      "type": "code",
+      "text": "SET LOCAL app.tenant_id"
+     },
+     {
+      "type": "text",
+      "text": " yapmalısın (transaction scope). "
+     },
+     {
+      "type": "code",
+      "text": "SET"
+     },
+     {
+      "type": "text",
+      "text": " (session scope) kullanırsan bir sonraki transaction farklı tenant'a bağlanır → "
+     },
+     {
+      "type": "strong",
+      "text": "veri sızıntısı"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-tenancy-co-3",
+    "type": "callout",
+    "variant": "info",
+    "title": "Sharding hazırlığı (Shopify)",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Shopify Black Friday'de saniyede 80K request'i shop_id ile pod sharding ile karşıladı. Sen şimdiden sharding yapmayacaksın ama her query tenant_id ile filtre olunca, pod routing eklemek future-day mesele olur — kod değişikliği değil, infra."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-tenancy-div",
+    "type": "divider"
+   },
+   {
+    "id": "block-kernel-tenancy-h-landx-bakisi-i01-tenant-lifecycle-i05-multi-tenant-isolation",
+    "type": "heading",
+    "level": 4,
+    "text": "LandX bakışı: I01 Tenant Lifecycle + I05 Multi-Tenant Isolation"
+   },
+   {
+    "id": "block-kernel-tenancy-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "LandX "
+     },
+     {
+      "type": "strong",
+      "text": "I01 — Tenant Lifecycle Management"
+     },
+     {
+      "type": "text",
+      "text": " (Faz 1 · P0) tenant provisioning'i state machine olarak modeller: "
+     },
+     {
+      "type": "code",
+      "text": "provisioning/active/suspended/archived/deleted"
+     },
+     {
+      "type": "text",
+      "text": ". *Provisioning p95 <60sn, isolation breach 0* hedefi."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-tenancy-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Provisioning adımları",
+      "definition": [
+       {
+        "type": "text",
+        "text": "reserve → create_schema → seed → finalize. Her adım "
+       },
+       {
+        "type": "code",
+        "text": "rollback_token"
+       },
+       {
+        "type": "text",
+        "text": " üretir."
+       }
+      ]
+     },
+     {
+      "term": "Quota kaynakları",
+      "definition": [
+       {
+        "type": "text",
+        "text": "users / storage_gb / api_calls / "
+       },
+       {
+        "type": "strong",
+        "text": "llm_tokens"
+       },
+       {
+        "type": "text",
+        "text": " / agents — soft warning + hard limit + renewal period"
+       }
+      ]
+     },
+     {
+      "term": "Configuration Profile",
+      "definition": [
+       {
+        "type": "text",
+        "text": "brand_name, logo_url, primary_color, locale (tr-TR/en-US/de-DE), timezone, plugin subscription"
+       }
+      ]
+     },
+     {
+      "term": "Suspension reason",
+      "definition": [
+       {
+        "type": "text",
+        "text": "payment_failed / abuse / customer_request / "
+       },
+       {
+        "type": "strong",
+        "text": "legal_hold"
+       },
+       {
+        "type": "text",
+        "text": " — "
+       },
+       {
+        "type": "code",
+        "text": "ai_summary"
+       },
+       {
+        "type": "text",
+        "text": " ile özetli"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-tenancy-p-8",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "LandX "
+     },
+     {
+      "type": "strong",
+      "text": "I05 — Multi-Tenant Isolation"
+     },
+     {
+      "type": "text",
+      "text": " (Faz 2 · P0 · Identity + Security Squad) bu cluster'ın PostgreSQL RLS bölümünü bir adım öteye götürür: "
+     },
+     {
+      "type": "strong",
+      "text": "agent çağrıları tenant context'i kaybetmeden alt servislere taşınmalı"
+     },
+     {
+      "type": "text",
+      "text": ". *Cross-tenant breach 0, schema switch overhead p99 <2ms.*"
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-tenancy-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Tenant Context Propagation"
+      },
+      {
+       "type": "text",
+       "text": " — "
+      },
+      {
+       "type": "code",
+       "text": "Request Context"
+      },
+      {
+       "type": "text",
+       "text": " (tenant_id + principal_id + agent_id + trace_id + entry_point: http/mcp/cron/event/agent_tool)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Context Sealing"
+      },
+      {
+       "type": "text",
+       "text": " — "
+      },
+      {
+       "type": "code",
+       "text": "seal_id"
+      },
+      {
+       "type": "text",
+       "text": ", "
+      },
+      {
+       "type": "code",
+       "text": "signature"
+      },
+      {
+       "type": "text",
+       "text": " (encrypted), "
+      },
+      {
+       "type": "code",
+       "text": "expires_at"
+      },
+      {
+       "type": "text",
+       "text": " — agent çağrıları context'i değiştiremez"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Query Interception"
+      },
+      {
+       "type": "text",
+       "text": " — orijinal query rewrite, "
+      },
+      {
+       "type": "code",
+       "text": "tenant_filter_added"
+      },
+      {
+       "type": "text",
+       "text": " kontrol, "
+      },
+      {
+       "type": "code",
+       "text": "Cross-Tenant Detection"
+      },
+      {
+       "type": "text",
+       "text": " (AI classification)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Schema Routing"
+      },
+      {
+       "type": "text",
+       "text": " — "
+      },
+      {
+       "type": "code",
+       "text": "pg_schema"
+      },
+      {
+       "type": "text",
+       "text": " resolver, connection pool eşleme"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "KVKK Madde 7 entegrasyonu"
+      },
+      {
+       "type": "text",
+       "text": " — "
+      },
+      {
+       "type": "code",
+       "text": "Tenant Deletion"
+      },
+      {
+       "type": "text",
+       "text": " (legal_hold_check zorunlu, AI review recommendation)"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-kernel-tenancy-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-kernel-tenancy-p-9",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "SaaS = aynı yazılım çok müşteriye, izole veri. Day-1'den tenant_id her satırda."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-tenancy-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-kernel-tenancy-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Aynı sistemin içinde birden çok müşteri (kiracı) yan yana ama birbirini görmeden çalışsın diye kurulan ayırma yapısı. Her müşterinin verisi kendi çekmecesinde durur."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tek sistem üzerinde 100 müşteri ayrı ayrı dünyalar gibi yaşar. Bu sayede her müşteriye ayrı sunucu kurmak gerekmez; maliyet düşer, bakım kolaylaşır. Veriler de karışmaz."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her kayda görünmez bir 'kiracı kimliği' eklenir. Bir müşteri verisini sorguladığında sistem kendiliğinden 'sadece bu kiracının kayıtlarını getir' filtresini koyar. Müşteri başka müşterinin verisine asla erişemez."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her form, her rapor, her arama — kiracı kimliği otomatik eklenmiş olarak çalışır."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sisteme giriş yapar yapmaz. Kullanıcı kendi kiracı dünyasında oturur."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kiracı yöneticisi kendi kullanıcılarını yönetir; sistem genel yöneticisi tüm kiracıları görür ama günlük işe karışmaz."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir AVM'deki dükkânlar: aynı bina, aynı altyapı (elektrik, su), ama her dükkânın kendi sahibi, kendi kasası, kendi müşterisi. Komşu dükkânın işine karışılmaz."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-tenancy-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-kernel-tenancy-story",
+    "type": "useCase",
+    "title": "AVM güvenlik şefi Kemal Bey",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Bir AVM'de 80 farklı mağaza var: tekstilci ayrı, fastfoodçu ayrı, eczane ayrı. Her birinin envanteri, satışı, çalışanı farklı. Hiçbiri komşunun stokuna bakamamalı."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "AVM'nin ortak yönetim sistemi her mağazaya kendi 'kiracı' kartı verir. Tekstilci içeri girince sadece kendi verilerini görür, yan komşusunun gelirini değil. Aynı bina, aynı altyapı; ama ayrı dünyalar."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-tenancy-story-2",
+    "type": "useCase",
+    "title": "Kurumsal okul müdiresi Nazan Hanım",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Aynı eğitim grubunun 5 ilkokulu, 3 lisesi var. Her okulun öğrencisi ayrı, notu ayrı, etkinliği ayrı. Bir okuldaki veli başka okulu görmemeli."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Tek sistem üstünde 8 'kiracı' (her okul bir kiracı). Veliler kendi okul kartıyla girer, sadece kendi okulunu görür. Üst yönetim ise tüm 8 okula tek panelden bakabilir."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-tenancy-story-3",
+    "type": "useCase",
+    "title": "Site yönetim şirketi sahibi İlhan Bey",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "12 farklı siteyi yönetir. Her sitenin sakini, aidatı, gideri kendi. Sakin başka siteyi görmemeli; muhasebeci kendi yönettiği sitenin defterini görmeli."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Yönetim yazılımı 12 ayrı 'kiracı' tutar. Sakin telefonundan girince yalnız kendi sitesini görür. İlhan Bey ise tek panelden 12'sini, hangisi geride hangi alacak — anında karşılaştırır."
+     }
+    ]
+   }
+  ]
+ }
+}

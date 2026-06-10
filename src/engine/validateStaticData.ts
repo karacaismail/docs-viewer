@@ -1,6 +1,6 @@
 // Fail loudly — dev'de açılışta şema + çapraz referans doğrulaması (08 §1).
 // Prod'a bozuk veri CI kapısından zaten ulaşamaz (05 §2.4).
-import { NavigationSchema, PagesFileSchema, GlossarySchema } from "../schemas";
+import { NavigationSchema, PagesIndexFileSchema, GlossarySchema } from "../schemas";
 
 export interface ValidationIssue { where: string; message: string }
 
@@ -12,8 +12,8 @@ export function validateStaticData(
   const issues: ValidationIssue[] = [];
   const nav = NavigationSchema.safeParse(navigation);
   if (!nav.success) issues.push(...nav.error.issues.map((i) => ({ where: `navigation:${i.path.join(".")}`, message: i.message })));
-  const pf = PagesFileSchema.safeParse(pagesFile);
-  if (!pf.success) issues.push(...pf.error.issues.slice(0, 20).map((i) => ({ where: `pages:${i.path.join(".")}`, message: i.message })));
+  const pf = PagesIndexFileSchema.safeParse(pagesFile);
+  if (!pf.success) issues.push(...pf.error.issues.slice(0, 20).map((i) => ({ where: `pages-index:${i.path.join(".")}`, message: i.message })));
   const gl = GlossarySchema.safeParse(glossary);
   if (!gl.success) issues.push(...gl.error.issues.slice(0, 20).map((i) => ({ where: `glossary:${i.path.join(".")}`, message: i.message })));
 

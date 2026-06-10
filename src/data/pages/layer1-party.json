@@ -1,0 +1,312 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-layer1-party",
+  "sourceId": "l1-party",
+  "slug": "layer1/layer1-party",
+  "title": "Party / Contact",
+  "summary": "Customer/Supplier/Employee yazma — Party yaz. Generic core, role module.",
+  "categoryId": "layer1",
+  "tags": [
+   "party",
+   "contact",
+   "person",
+   "organization"
+  ],
+  "meta": {
+   "badge": "Layer 1 — In-tree"
+  },
+  "related": [],
+  "blocks": [
+   {
+    "id": "block-layer1-party-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Sistemdeki bütün 'taraf' kayıtları: müşteri, tedarikçi, çalışan, ortak — hepsi tek bir adres defterinde."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-party-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Frappe pattern: generic "
+     },
+     {
+      "type": "code",
+      "text": "Contact"
+     },
+     {
+      "type": "text",
+      "text": "/"
+     },
+     {
+      "type": "code",
+      "text": "Address"
+     },
+     {
+      "type": "text",
+      "text": " core'da, *Party Type* (Customer rolü) module'de. Bu ürünün de 13 üründe gerekli ortak primitive'i."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-party-h-yapi",
+    "type": "heading",
+    "level": 4,
+    "text": "Yapı"
+   },
+   {
+    "id": "block-layer1-party-code",
+    "type": "codeBlock",
+    "language": "yaml",
+    "code": "doctype: Party              # Person veya Organization\n  fields:\n    party_type: Select [Person, Organization]\n    name: Data\n    primary_contact: Link Contact\n    primary_address: Link Address\n    locale, timezone, currency\n\ndoctype: Contact\n  fields:\n    party: Link Party\n    email, phone, website\n    is_primary: Check\n\ndoctype: Address\n  fields:\n    party: Link Party\n    country, region, city, district, street, postal_code\n    geo: Geolocation\n    type: Select [billing, shipping, ...]\n\ndoctype: PartyRole          # Module katmanında (commerce, hr modülünde)\n  fields:\n    party: Link Party\n    role_type: Select [customer, supplier, employee, lead]\n    role_data: JSON         # role-specific fields"
+   },
+   {
+    "id": "block-layer1-party-h-ornekler-ayni-party-farkli-role",
+    "type": "heading",
+    "level": 4,
+    "text": "Örnekler — aynı party, farklı role"
+   },
+   {
+    "id": "block-layer1-party-uc",
+    "type": "useCase",
+    "title": "Real estate (#1)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Party = aynı kişi hem alıcı (buyer role), hem satıcı (seller role), hem danışman (agent role) olabilir. Üç ayrı tablo değil, tek Party + üç role."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-party-uc-2",
+    "type": "useCase",
+    "title": "Hastane",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Party = doktor, hemşire, hasta, refakatçi. Doktor aynı zamanda hasta olabilir. Tek Party."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-party-uc-3",
+    "type": "useCase",
+    "title": "Üniversite",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "öğrenci mezun olunca aynı Party, role değişir (alumni). LinkedIn benzeri network kurabilirsin."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-party-uc-4",
+    "type": "useCase",
+    "title": "E-ticaret B2B (#2)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "bir şirket hem alıcı hem satıcı olabilir (distributor pattern). Tek Organization, dual role."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-party-uc-5",
+    "type": "useCase",
+    "title": "CRM",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "lead → contact → customer dönüşümü. Aynı Party, role evrimi. Yeni tablo değil."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-party-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Tuzak — \"Customer\" core'a koyma",
+    "segments": [
+     {
+      "type": "ref",
+      "text": "s-social",
+      "refId": "s-social"
+     },
+     {
+      "type": "text",
+      "text": " medyada \"Customer\" yok. "
+     },
+     {
+      "type": "ref",
+      "text": "s-cms",
+      "refId": "s-cms"
+     },
+     {
+      "type": "text",
+      "text": " CMS'te yok. "
+     },
+     {
+      "type": "ref",
+      "text": "s-lms",
+      "refId": "s-lms"
+     },
+     {
+      "type": "text",
+      "text": " LMS'te yok. Eğer Customer'ı core'a koyarsan bu 3 ürün için ölü kavram taşımış olursun. Generic kısım (Person/Org/Contact/Address) core, \"Customer\" rolü module'de."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-party-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Satışa sunulan eşya veya hizmet."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İşletmenin gelir kaynağı."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Katalogda fotoğraf + fiyat + stok bilgisi."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Üretici/satıcı yönetir."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bakkalın rafındaki her eşya."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-party-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-layer1-party-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Customer/Supplier/Employee yazma — Party yaz. Generic core, role module."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-party-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-layer1-party-lesson-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistemdeki bütün 'taraf' kayıtları: müşteri, tedarikçi, çalışan, ortak — hepsi tek bir adres defterinde toplanır."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Aynı kişi hem müşteri hem tedarikçi olabilir. Her modül ayrı tablo tutarsa bilgi karışır, telefon güncellense bir yerde günceller, diğerinde eski kalır."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tek bir 'Party' tablosu vardır. Üzerine 'rol' bilgisi eklenir: bu satır hem müşteri hem tedarikçi. Tek adres, tek telefon, tek e-posta — değiştirince her yerde güncellenir."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tüm modüllerin (satış, satın alma, İK) kişi/kurum gösterdiği yer Party tablosuna bakar."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yeni bir müşteri veya tedarikçi kaydı geldiğinde önce 'bu kişi sistemde var mı' kontrol edilir; varsa rol eklenir."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistem yöneticisi kayıt politikasını belirler; her modül kendi sorumluluğunu Party üstünde işler."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Ailenin tek bir telefon rehberi: anne, baba, kardeş — hepsi aynı defterde. Her ihtiyaca ayrı defter tutsan, yeni telefonu birinde günceller diğerinde unutursun."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

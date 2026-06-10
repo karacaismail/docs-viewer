@@ -1,0 +1,735 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-fe-anti-stack",
+  "sourceId": "fe-anti",
+  "slug": "frontend/fe-anti-stack",
+  "title": "Frontend — Anti-Stack + Çelişki Kararları",
+  "summary": "Açıkça reddedilen tercihler ve çelişkili kararların çözümü.",
+  "categoryId": "frontend",
+  "tags": [
+   "frontend",
+   "anti-stack",
+   "decisions",
+   "rejected"
+  ],
+  "meta": {},
+  "related": [],
+  "blocks": [
+   {
+    "id": "block-fe-anti-stack-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Açıkça reddedilen tercihler ve çelişkili kararların çözümü."
+     }
+    ]
+   },
+   {
+    "id": "block-fe-anti-stack-h-4-anti-stack-acikca-reddedilen",
+    "type": "heading",
+    "level": 4,
+    "text": "4. Anti-stack (açıkça reddedilen)"
+   },
+   {
+    "id": "block-fe-anti-stack-table",
+    "type": "table",
+    "columns": [
+     "Reddedilen",
+     "Sebep"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Next.js"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Server/Client component belirsizliği, vibecoding anti-pattern (kullanıcı kuralı)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Supabase"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Stack kuralı, Prisma + Postgres yeterli"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "socket.io"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "SSE + WS + Yjs üçlüsü zaten kapsıyor, fazla abstraction"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "i18next"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ICU plugin gerektiriyor, react-intl native"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Detox"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Maestro daha sade"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "husky"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "lefthook daha hızlı"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "ESLint + Prettier ayrı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Biome tek araçta"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "TanStack Form"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "RHF nested form için şu an daha olgun"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Orval"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "openapi-fetch + el TanStack hook daha temiz"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Replicache / PowerSync"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "TanStack Query queue yeterli"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Embedded WebView OAuth"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Store policy ihlali"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Capgo OTA (managed)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Supabase bağımlısı"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Keycloak"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Logto tercih (Node native, daha hafif)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Sumsub / Veriff (KYC tarafı)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kendi TC NFC modülü"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-fe-anti-stack-h-3-celiskilerin-cozum-kararlari",
+    "type": "heading",
+    "level": 4,
+    "text": "3. Çelişkilerin çözüm kararları"
+   },
+   {
+    "id": "block-fe-anti-stack-table-2",
+    "type": "table",
+    "columns": [
+     "Çelişki",
+     "Karar"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "socket.io vs WS vs SSE vs CRDT"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "socket.io "
+       },
+       {
+        "type": "strong",
+        "text": "YOK"
+       },
+       {
+        "type": "text",
+        "text": ". SSE notification, WS presence, Yjs collab — üç kanal, tek abstraction zorlaması yok."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Refine vs TanStack Query"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Refine headless (data + auth + access). UI'a karışmaz. TanStack Query Refine içinde zaten çalışır."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Flowbite (Tailwind) vs SCSS"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "SCSS sadece token + tema + complex animation. Tailwind component-level. Token tek doğruluk kaynağı SCSS."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Zustand vs TanStack Query"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Server state Query, ephemeral UI Zustand, form RHF, URL nuqs. Karar matrisi bağlayıcı."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "AI SDK vs Vite (RSC yok)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "useChat/useCompletion zaten Vite uyumlu. RSC yerine schema-driven dispatcher (custom registry)."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Capgo OTA vs Supabase yasağı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kendi minimal FastAPI OTA server."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Embedded WebView OAuth"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "YASAK. ASWebAuthenticationSession (iOS) + Custom Tabs (Android) zorunlu."
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-fe-anti-stack-h-9-acik-riskler-azaltma",
+    "type": "heading",
+    "level": 4,
+    "text": "9. Açık riskler & azaltma"
+   },
+   {
+    "id": "block-fe-anti-stack-table-3",
+    "type": "table",
+    "columns": [
+     "Risk",
+     "Etki",
+     "Azaltma"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "TC NFC plugin geliştirme süresi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "2-3 hafta, test cihazı bağımlı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Mock plugin ile UI paralel; gerçek cihaz testi Hüseyin"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Logto OSS audit log yetersizliği"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Compliance"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kendi audit servisi "
+       },
+       {
+        "type": "code",
+        "text": "packages/audit"
+       },
+       {
+        "type": "text",
+        "text": " veya Logto Cloud Pro"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "PostHog kaynak tüketimi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hetzner faturası"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Ayrı sunucu, S3 offload, retention 90 gün"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Yjs CRDT öğrenme eğrisi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Geliştirme yavaşlığı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Önce read-only collab, sonra write"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Multi-provider AI fallback karmaşıklığı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Beklenmedik maliyet"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Provider router'a budget limiter, daily cap"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "jmrtd LGPL lisans"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hukuki"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Dynamic link garantisi; SaaS web tarafı kapalı kaynak değil"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Capacitor 7 → 8 breaking change"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Bakım"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Renovate + smoke test on upgrade"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-fe-anti-stack-h-10-adr-sonraki-adim",
+    "type": "heading",
+    "level": 4,
+    "text": "10. ADR (sonraki adım)"
+   },
+   {
+    "id": "block-fe-anti-stack-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Şu kararlar "
+     },
+     {
+      "type": "code",
+      "text": "docs/adr/"
+     },
+     {
+      "type": "text",
+      "text": " altında ayrı ADR olarak yazılmalı:"
+     }
+    ]
+   },
+   {
+    "id": "block-fe-anti-stack-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "ADR-001: Logto seçimi (vs Keycloak vs Authentik)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "ADR-002: Kendi OTA server (vs Capgo / Capawesome)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "ADR-003: TC NFC kendi plugin (vs Sumsub / Veriff)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "ADR-004: Multi-provider AI router pattern"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "ADR-005: Refine headless mode (UI ayrımı)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "ADR-006: SSE + WS + Yjs üç kanal (vs socket.io)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "ADR-007: Biome (vs ESLint + Prettier)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "ADR-008: react-intl (vs i18next)"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-fe-anti-stack-co",
+    "type": "callout",
+    "variant": "info",
+    "title": "Dokümantasyon disiplini",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Sahibi:"
+     },
+     {
+      "type": "text",
+      "text": " İsmail · "
+     },
+     {
+      "type": "strong",
+      "text": "Versiyon:"
+     },
+     {
+      "type": "text",
+      "text": " 1.0.0 · "
+     },
+     {
+      "type": "strong",
+      "text": "Son güncelleme:"
+     },
+     {
+      "type": "text",
+      "text": " 2026-05-14. Bu doküman tek doğruluk kaynağıdır. CLAUDE.md, Cursor rules ve AI agent prompt'ları buradan üretilir. Tek bir karar değişimi → yeni ADR + bu dokümana güncelleme."
+     }
+    ]
+   },
+   {
+    "id": "block-fe-anti-stack-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-fe-anti-stack-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Açıkça reddedilen tercihler ve çelişkili kararların çözümü."
+     }
+    ]
+   },
+   {
+    "id": "block-fe-anti-stack-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-fe-anti-stack-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Frontend dünyasında uzak duracağımız teknolojiler."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bazı teknolojiler popüler olsa da bu projeye uymaz."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tablo: 'X yasak, çünkü Y'."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici dokümanlarının yasaklılar sayfası."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "'Bunu kullansak' deyince — yazılı gerekçeye bakılır."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Baş geliştirici tutar; ekip uyar."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mutfakta yasak raf: niye yasak yazılı."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

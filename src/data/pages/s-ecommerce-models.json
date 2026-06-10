@@ -1,0 +1,1882 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-s-ecommerce-models",
+  "sourceId": "s-ecommerce-models",
+  "slug": "urunler/s-ecommerce-models",
+  "title": "E-Ticaret İş Modelleri — Capability Flag Mimarisi",
+  "summary": "B2C, B2B, C2C, B2B2B, B2B2C, C2B, D2C, B2G, C2G, G2C, B2E, P2P, M2C, O2O — hepsi capability flag. Tenant 'B2C'den geçmez; 'B2B yeteneğini açar'.",
+  "categoryId": "urunler",
+  "tags": [
+   "core-operations",
+   "ecommerce",
+   "b2c",
+   "b2b",
+   "c2c",
+   "b2b2b",
+   "b2b2c",
+   "capability-flag",
+   "architecture"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "wip"
+  },
+  "related": [
+   "page-stack-commerce",
+   "page-s-marketplace",
+   "page-s-billing",
+   "page-kernel-tenancy",
+   "page-layer1-party",
+   "page-philosophy",
+   "page-sus-boundaries",
+   "page-s-classifieds"
+  ],
+  "blocks": [
+   {
+    "id": "block-s-ecommerce-models-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Tüm e-ticaret modelleri 2-eksen matrisinden türer: sell-side aktör × buy-side aktör. Enum değil — capability flag. Composition, transition değil."
+     }
+    ]
+   },
+   {
+    "id": "block-s-ecommerce-models-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Mimari karar:"
+     },
+     {
+      "type": "text",
+      "text": " *'B2C'den B2B'ye geçiş'* anlatımı yanlış. Doğrusu *'B2B yeteneğini açma'*. Bu fark veri modelinde yıkıcı migration yerine "
+     },
+     {
+      "type": "strong",
+      "text": "eklemeli capability flag"
+     },
+     {
+      "type": "text",
+      "text": " demek. 50 yıllık sürdürülebilirlik hedefine birebir hizmet eder."
+     }
+    ]
+   },
+   {
+    "id": "block-s-ecommerce-models-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Composition > Transition",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Müşteri model değiştirmiyor — yetenek ekliyor. Aynı tenant aynı anda hem B2C hem D2C hem marketplace olabilir. Enum tek seçim zorlar; capability flag çoklu açar. "
+     },
+     {
+      "type": "strong",
+      "text": "Mimari kararı baştan al, sonradan dönmek imkânsız."
+     }
+    ]
+   },
+   {
+    "id": "block-s-ecommerce-models-h-2-eksen-matrisi-modellerin-kaynagi",
+    "type": "heading",
+    "level": 4,
+    "text": "2-eksen matrisi — modellerin kaynağı"
+   },
+   {
+    "id": "block-s-ecommerce-models-table",
+    "type": "table",
+    "columns": [
+     "Sell-side ↓ / Buy-side →",
+     "Consumer (C)",
+     "Business (B)",
+     "Government (G)",
+     "Employee (E)",
+     "Peer (P)"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Business"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "B2C"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "B2B"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "B2G"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "B2E"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Consumer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "C2B"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "C2G"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Manufacturer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "M2C / D2C"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "M2B"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Government"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "G2C"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "G2B"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Peer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "P2P"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-s-ecommerce-models-h-14-yaygin-model-capability-flag-karsiligi",
+    "type": "heading",
+    "level": 4,
+    "text": "14 yaygın model — capability flag karşılığı"
+   },
+   {
+    "id": "block-s-ecommerce-models-table-2",
+    "type": "table",
+    "columns": [
+     "Model",
+     "Sell-side",
+     "Buy-side",
+     "Capability flag",
+     "Örnek"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "B2C"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Business"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Consumer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "b2c"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Trendyol, Hepsiburada"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "B2B"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Business"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Business"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "b2b"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Alibaba, SAP Ariba"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "C2C"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Consumer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Consumer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "c2c"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sahibinden, eBay"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "B2B2B"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "B (aracı)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "B"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "b2b + reseller"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Distribütör / bayi zinciri"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "B2B2C"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "B → B → C"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Consumer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "b2b + b2c + reseller"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Marka → bayi → son kullanıcı"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "C2B"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Consumer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Business"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "c2b"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Freelancer, influencer"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "D2C"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Manufacturer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Consumer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "d2c"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Aracısız marka satışı"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "B2G"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Business"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Government"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "b2g"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kamu ihalesi, e-devlet tedarik"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "C2G"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Consumer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Government"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "c2g"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Vergi, harç, ceza ödeme"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "G2C / G2B"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Government"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "C / B"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "g2c / g2b"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "E-devlet servisleri"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "B2E"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Business"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Employee"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "b2e"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kafeterya, yan haklar"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "P2P"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Peer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Peer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "p2p"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kripto, aracısız değiş-tokuş"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "M2C / M2B"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Manufacturer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "C / B"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "d2c"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "B2B2C'nin ilk halkası"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "O2O"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "B (online)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "C (offline)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "b2c + o2o"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Click & collect, mağazadan teslim"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-s-ecommerce-models-h-hibrit-dikey-capability-ler",
+    "type": "heading",
+    "level": 4,
+    "text": "Hibrit / dikey capability'ler"
+   },
+   {
+    "id": "block-s-ecommerce-models-table-3",
+    "type": "table",
+    "columns": [
+     "Capability",
+     "Açıldığında",
+     "Bağımlılık"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "marketplace"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Multi-vendor mağaza — komisyon, satıcı dashboard, ödeme split"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "b2c veya b2b"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "dropship"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Stoksuz satış — tedarikçi direkt sevkiyat"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "b2c veya b2b"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "subscription"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Recurring billing — abonelik kutusu, MRR"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "s-billing"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "social"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Instagram/TikTok kanal satışı + checkout"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "b2c"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "headless"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Storefront yok; sadece API + SDK"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hiçbiri"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "o2o"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Click & collect, mağazadan teslim"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "b2c + fiziksel mağaza"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-s-ecommerce-models-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'tenant_capabilities tablo: tenant_id, capability TEXT, enabled BOOL, enabled_at. Order DocType'a sell_party_kind + buy_party_kind kolonu (ENUM business/consumer/manufacturer/government/employee/peer). Order.model derived field: kind1 + 2 + kind2. Capability check middleware her endpoint öncesi.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-s-ecommerce-models-co-3",
+    "type": "callout",
+    "variant": "info",
+    "title": "Roadmap önerisi",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Faz 2:"
+     },
+     {
+      "type": "text",
+      "text": " b2c + b2b + d2c capability'leri (en yaygın). "
+     },
+     {
+      "type": "strong",
+      "text": "Faz 3:"
+     },
+     {
+      "type": "text",
+      "text": " marketplace + subscription + o2o. "
+     },
+     {
+      "type": "strong",
+      "text": "Faz 4:"
+     },
+     {
+      "type": "text",
+      "text": " b2g (TR e-İhale entegrasyonu) + b2e (kurumsal kafeterya). "
+     },
+     {
+      "type": "strong",
+      "text": "Faz 5+:"
+     },
+     {
+      "type": "text",
+      "text": " p2p, niş kombinasyonlar."
+     }
+    ]
+   },
+   {
+    "id": "block-s-ecommerce-models-co-4",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Transaction Depth — 3. eksen",
+    "segments": [
+     {
+      "type": "text",
+      "text": "2-eksen matrisi (sell-side × buy-side) yetmez. "
+     },
+     {
+      "type": "strong",
+      "text": "3. eksen: transaction depth."
+     },
+     {
+      "type": "text",
+      "text": "\n\n- "
+     },
+     {
+      "type": "strong",
+      "text": "Lead-gen mode"
+     },
+     {
+      "type": "text",
+      "text": " — platform sadece eşleştirir; ödeme/teslimat platform DIŞINDA (Sahibinden, arsam.net, classifieds)\n- "
+     },
+     {
+      "type": "strong",
+      "text": "Full-transaction mode"
+     },
+     {
+      "type": "text",
+      "text": " — sepet + ödeme + kargo + iade içeride (Trendyol, Hepsiburada)\n- "
+     },
+     {
+      "type": "strong",
+      "text": "Hybrid mode"
+     },
+     {
+      "type": "text",
+      "text": " — çekirdek lead-gen + opsiyonel secure-payment katmanı\n\nAynı satıcı tipi (B2C) iki farklı dünyada yaşayabilir. Capability flag: "
+     },
+     {
+      "type": "code",
+      "text": "transaction_depth = 'lead_gen' | 'full' | 'hybrid'"
+     },
+     {
+      "type": "text",
+      "text": ". Bu eksen DocType seçiminden gelir modeline kadar her şeyi etkiler. Detaylar: "
+     },
+     {
+      "type": "code",
+      "text": "s-classifieds"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-s-ecommerce-models-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-s-ecommerce-models-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Felsefe (mimari karar):"
+     }
+    ]
+   },
+   {
+    "id": "block-s-ecommerce-models-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "*'Müşteri B2C'den B2B'ye geçmez. Müşteri B2B yeteneğini açar.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-s-ecommerce-models-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu fark mimari yıkım/migration yerine "
+     },
+     {
+      "type": "strong",
+      "text": "additif konfigürasyon"
+     },
+     {
+      "type": "text",
+      "text": " demek. 50 yıllık sürdürülebilirlik hedefiyle birebir örtüşür. Şema değişmez; capability flag açılır."
+     }
+    ]
+   },
+   {
+    "id": "block-s-ecommerce-models-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "2-eksen matrisi (modellerin türetildiği yer):"
+     }
+    ]
+   },
+   {
+    "id": "block-s-ecommerce-models-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Sell-side aktör tipi"
+      },
+      {
+       "type": "text",
+       "text": ": Business / Consumer / Manufacturer / Government / Employee / Peer"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Buy-side aktör tipi"
+      },
+      {
+       "type": "text",
+       "text": ": Business / Consumer / Manufacturer / Government / Employee / Peer"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-s-ecommerce-models-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu iki eksenin 6×6 kombinasyonu → 36 olası model. Pazarda 14'ü yaygın isimle bilinir; geri kalan 22'si niş ama mimari aynı çalışır."
+     }
+    ]
+   },
+   {
+    "id": "block-s-ecommerce-models-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "14 yaygın model:"
+     }
+    ]
+   },
+   {
+    "id": "block-s-ecommerce-models-table-4",
+    "type": "table",
+    "columns": [
+     "Model",
+     "Sell-side",
+     "Buy-side",
+     "Örnek"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "strong",
+        "text": "B2C"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Business"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Consumer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Trendyol, Hepsiburada"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "B2B"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Business"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Business"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Alibaba, SAP Ariba"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "C2C"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Consumer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Consumer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sahibinden, eBay"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "B2B2B"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Business"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Business (aracılı)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Distribütör/bayi zinciri"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "B2B2C"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Business"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "B (→ C)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Marka → bayi → son müşteri (pazaryeri satıcı)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "C2B"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Consumer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Business"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Freelancer, influencer"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "D2C"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Manufacturer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Consumer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Aracısız marka satışı"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "B2G"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Business"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Government"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kamu ihalesi, e-devlet tedarik"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "C2G"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Consumer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Government"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Vergi, harç, ceza ödeme"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "G2C / G2B"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Government"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "C/B"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "E-devlet kullanıcı/işletme servisleri"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "B2E"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Business"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Employee"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kafeterya, yan haklar, kurumsal iç satış"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "P2P"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Peer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Peer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Blockchain/kripto, aracısız değiş-tokuş"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "M2C / M2B"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Manufacturer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "C/B"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "B2B2C'nin ilk halkasını ayırt etmek"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "O2O"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Business (online)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Consumer (offline)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Click & collect, mağazadan teslim"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-s-ecommerce-models-p-8",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Hibrit/dikey modeller (paralel capability):"
+     }
+    ]
+   },
+   {
+    "id": "block-s-ecommerce-models-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Marketplace"
+      },
+      {
+       "type": "text",
+       "text": " (multi-vendor): tek mağaza → çok-satıcılı pazaryerine kompozisyon"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Dropshipping"
+      },
+      {
+       "type": "text",
+       "text": ": stoksuz satış, tedarikçi-direkt sevkiyat"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Subscription commerce"
+      },
+      {
+       "type": "text",
+       "text": ": tekrarlı satış (recurring billing)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Social commerce"
+      },
+      {
+       "type": "text",
+       "text": ": sosyal medya kanalı üstünden satış"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Headless / API-first"
+      },
+      {
+       "type": "text",
+       "text": ": sunum katmanından ayrık çekirdek"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-s-ecommerce-models-p-9",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Capability flag patterni (uygulama):"
+     }
+    ]
+   },
+   {
+    "id": "block-s-ecommerce-models-code",
+    "type": "codeBlock",
+    "language": "sql",
+    "code": "CREATE TABLE tenant_capabilities (\n  tenant_id INT,\n  capability TEXT,        -- 'b2c', 'b2b', 'marketplace', 'dropship', 'subscription'\n  enabled BOOL DEFAULT false,\n  enabled_at TIMESTAMPTZ,\n  PRIMARY KEY (tenant_id, capability)\n);"
+   },
+   {
+    "id": "block-s-ecommerce-models-p-10",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Müşteri 'B2B aç' dediğinde:"
+     }
+    ]
+   },
+   {
+    "id": "block-s-ecommerce-models-list-3",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Yeni capability row eklenir ("
+      },
+      {
+       "type": "code",
+       "text": "INSERT (tenant_id, 'b2b', true)"
+      },
+      {
+       "type": "text",
+       "text": ")"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Mevcut tablolar değişmez"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "B2B'ye özgü alanlar (vergi no, fatura adresi, kredi limiti) "
+      },
+      {
+       "type": "strong",
+       "text": "opsiyonel"
+      },
+      {
+       "type": "text",
+       "text": " kolon olarak zaten var; sadece UI'de görünür"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Mevcut B2C siparişleri bozulmaz"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-s-ecommerce-models-p-11",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Aktör tablosu"
+     },
+     {
+      "type": "text",
+      "text": " (party DocType'tan türer):"
+     }
+    ]
+   },
+   {
+    "id": "block-s-ecommerce-models-code-2",
+    "type": "codeBlock",
+    "language": "sql",
+    "code": "party (id, name, kind ENUM('business','consumer','manufacturer','government','employee','peer'), ...)\norder (id, sell_party_id, buy_party_id, model TEXT, ...)"
+   },
+   {
+    "id": "block-s-ecommerce-models-p-12",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "code",
+      "text": "order.model"
+     },
+     {
+      "type": "text",
+      "text": " derived field (computed): "
+     },
+     {
+      "type": "code",
+      "text": "sell_party.kind || '2' || buy_party.kind"
+     },
+     {
+      "type": "text",
+      "text": " → 'B2C', 'B2B', vs. otomatik."
+     }
+    ]
+   },
+   {
+    "id": "block-s-ecommerce-models-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-s-ecommerce-models-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "E-ticaret iş modelleri (B2C, B2B, marketplace vs.) ayrı yazılımlar değil — tek altyapıda capability flag olarak açılan yetenekler."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Müşteri büyürken model değişir (B2C → +B2B → +marketplace). Geleneksel yaklaşım yeni yazılım kurar veya migration yapar; ikisi de pahalı + risk. Capability flag = sıfır migration, sıfır risk."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Sell-side ve Buy-side aktör tipini DocType'ta tut. 2) Capability flag tablosu tenant başına. 3) UI feature flag ile koşullu görünüm. 4) Model adı (B2B, B2C vs.) view layer'da derived/hesaplanan alan."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "s-ecommerce-models"
+       },
+       {
+        "type": "text",
+        "text": " cluster — felsefe + matris. "
+       },
+       {
+        "type": "code",
+        "text": "s-commerce"
+       },
+       {
+        "type": "text",
+        "text": " cluster — uygulama. "
+       },
+       {
+        "type": "code",
+        "text": "k-tenancy"
+       },
+       {
+        "type": "text",
+        "text": " — capability tablosu."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk e-ticaret tenant'ı oluşturulmadan ÖNCE bu mimari karar. Sonradan refactor 1000x pahalı."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mimar capability listesi tanımlar; backend developer flag tabloyu kurar; ürün ekibi hangi yetenek hangi tier'da satılır karar."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Apartman dairesi: 1+1 olarak başlar, sahibi balkon kapatır (yetenek+), bodrumu mağaza yapar (yetenek+), sonra çatıya teras (yetenek+). Daire tipini değiştirmedi; "
+       },
+       {
+        "type": "strong",
+        "text": "yetenekler ekledi"
+       },
+       {
+        "type": "text",
+        "text": ". Her ekleme öncekini yıkmadan yapıldı."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-s-ecommerce-models-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-s-ecommerce-models-story",
+    "type": "useCase",
+    "title": "Bakkal Hatice Teyze (62) — online satış başlangıcı",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Hatice Teyze mahallede 30 yıllık bakkal. Pandemide WhatsApp'tan sipariş aldı. Şimdi gerçek bir online satış kurmak istiyor: önce mahalleye paket servisi (B2C), sonra civar marketlere toptan satış (B2B), bir gün belki başka bakkalları da pazaryerine alacak (marketplace)."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Bu sistemde tek bir hesap. Önce "
+     },
+     {
+      "type": "strong",
+      "text": "b2c capability"
+     },
+     {
+      "type": "text",
+      "text": " açılır — site, sepet, ödeme. 6 ay sonra "
+     },
+     {
+      "type": "strong",
+      "text": "b2b capability"
+     },
+     {
+      "type": "text",
+      "text": " açılır — toptan müşteri kartı + vergi no + kredi limiti aynı sistemde. Bir sonraki sene "
+     },
+     {
+      "type": "strong",
+      "text": "marketplace capability"
+     },
+     {
+      "type": "text",
+      "text": " — başka satıcılar Hatice Teyze'nin sitesinde mağaza açar, komisyon alır. "
+     },
+     {
+      "type": "strong",
+      "text": "Tek migration yok, hep eklemeli."
+     }
+    ]
+   },
+   {
+    "id": "block-s-ecommerce-models-story-2",
+    "type": "useCase",
+    "title": "Manav Selim Bey (62) — birden fazla model aynı anda",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Selim Bey haftalık halden alış (B2B alıcı tarafı), mahallede perakende satış (B2C satıcı tarafı), turistlere döviz hesabıyla satış (?). Sistem her birini ayrı yazılım istiyordu, vazgeçti."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Capability flag ile: Selim Bey "
+     },
+     {
+      "type": "strong",
+      "text": "alış-tarafında B2B"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "strong",
+      "text": "satış-tarafında B2C + O2O (mağazadan teslim) + Social (Instagram'dan sipariş)"
+     },
+     {
+      "type": "text",
+      "text": ". Hepsi tek tablo, tek müşteri kartı, tek stok. Aktör tipi ve capability flag birlikte modeller türetir."
+     }
+    ]
+   },
+   {
+    "id": "block-s-ecommerce-models-story-3",
+    "type": "useCase",
+    "title": "Yusuf Bey (66) — kamu ihalesi (B2G)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Yusuf Bey emekli, küçük temizlik ürünleri toptanı işletiyor. Belediyenin temizlik malzeme ihalesini aldı. Normal satış sisteminde fatura kesmek farklı — B2G fatura formatı, e-İhale entegrasyonu, ödeme 60 gün vadeli."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "strong",
+      "text": "b2g capability"
+     },
+     {
+      "type": "text",
+      "text": " açılır → aynı sistemden B2G siparişi: fatura otomatik kamu formatında, ödeme termini 60 gün varsayılan, e-İhale ID kaydedilir. Mevcut B2C siparişleri etkilenmez."
+     }
+    ]
+   }
+  ]
+ }
+}

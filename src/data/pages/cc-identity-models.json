@@ -1,0 +1,1314 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-cc-identity-models",
+  "sourceId": "cc-identity-models",
+  "slug": "crosscut/cc-identity-models",
+  "title": "Global Kimlik Modelleri — Ad, Telefon, Adres, Vergi No",
+  "summary": "firstName/lastName ölümcül varsayım. E.164 telefon, ülke-aware adres, VAT ID VIES doğrulama, TC kimlik, cinsiyet non-binary. Klasik 'ABD merkezli' tasarım hataları.",
+  "categoryId": "crosscut",
+  "tags": [
+   "crosscut",
+   "identity",
+   "address",
+   "phone",
+   "vat",
+   "e164",
+   "vies",
+   "i18n"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-cc-jurisdiction-resolver",
+   "page-cc-i18n-standards",
+   "page-cc-compliance-matrix",
+   "page-layer1-party",
+   "page-edu-u02b-para-tarih",
+   "page-edu-u04b-veri-tasarim"
+  ],
+  "blocks": [
+   {
+    "id": "block-cc-identity-models-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "İsim modeli (tek fullName), telefon E.164, ülke-aware adres formatı, VAT ID VIES, TC kimlik 11-hane + algoritma, cinsiyet alanı opsiyonel + non-binary."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Klasik ABD-merkezli hata:"
+     },
+     {
+      "type": "text",
+      "text": " firstName/lastName, 10-hane telefon, state+ZIP zorunlu. Bu varsayımlar 2. ülkede çöker. Global model = ortak iskelet + ülke-aware özelleştirme."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "firstName/lastName YASAK",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Endonezya tek isim (Sukarno), Çin soyad önce (Wang Wei), Rusya patronymic (Anna Sergeyevna Petrova), İspanya çoklu soyad (García Márquez). "
+     },
+     {
+      "type": "strong",
+      "text": "Çözüm:"
+     },
+     {
+      "type": "text",
+      "text": " tek "
+     },
+     {
+      "type": "code",
+      "text": "full_name"
+     },
+     {
+      "type": "text",
+      "text": " alanı + opsiyonel "
+     },
+     {
+      "type": "code",
+      "text": "given_name"
+     },
+     {
+      "type": "text",
+      "text": "/"
+     },
+     {
+      "type": "code",
+      "text": "family_name"
+     },
+     {
+      "type": "text",
+      "text": " + "
+     },
+     {
+      "type": "code",
+      "text": "name_order"
+     },
+     {
+      "type": "text",
+      "text": " enum."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-co-2",
+    "type": "callout",
+    "variant": "danger",
+    "title": "VAT ID için VIES — B2B zorunlu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AB içi B2B fatura kesiyorsan müşterinin VAT ID'sini "
+     },
+     {
+      "type": "strong",
+      "text": "VIES API"
+     },
+     {
+      "type": "text",
+      "text": " ile doğrulamak ZORUNLU. Geçersiz VAT = reverse charge yok = sen ülkenin KDV oranıyla faturalarsın (DE %19, FR %20). Otomasyon: vies.ec.europa.eu — ücretsiz API."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'Person tablosu: full_name + opsiyonel given_name/family_name + name_order enum + honorific_prefix/suffix + preferred_pronouns. ContactPhone: phone_e164 + country_code (libphonenumber parse). PostalAddress: country_code + line_1/2 + city + region + postal_code nullable + formatted + raw_input JSONB. TaxId: tax_id_type enum + tax_id_value + VIES verification job. Cinsiyet opsiyonel + non_binary enum.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-h-adres-formati-ulke-ornekleri",
+    "type": "heading",
+    "level": 4,
+    "text": "Adres formatı — ülke örnekleri"
+   },
+   {
+    "id": "block-cc-identity-models-table",
+    "type": "table",
+    "columns": [
+     "Ülke",
+     "Sıralama",
+     "Posta kodu",
+     "Region zorunlu?"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "TR"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sokak → Mahalle → İlçe → Şehir → PK"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "5 hane"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "İl zorunlu"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "US"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Street → City → State → ZIP"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "5 / 9 hane"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "State zorunlu"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "GB"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Line1 → Town → County → Postcode"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "AB12 3CD"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "County opsiyonel"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "JP"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Postcode → Prefecture → City → Block"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "7 hane (zorunlu)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Ters sıralı"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "IE"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Eircode (2015+) veya yok"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yeni sistem"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Opsiyonel"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "HK"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Floor → Building → Street → District"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "YOK"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "District"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "DE"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Straße → PLZ → Stadt"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "5 hane"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Land opsiyonel"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-h-vergi-kimlik-numarasi-matrisi",
+    "type": "heading",
+    "level": 4,
+    "text": "Vergi/kimlik numarası matrisi"
+   },
+   {
+    "id": "block-cc-identity-models-table-2",
+    "type": "table",
+    "columns": [
+     "Tür",
+     "Format",
+     "Doğrulama"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "TC Kimlik"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "11 hane + algoritma"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Mod kontrolü + NVI API"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "AB VAT"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Ülke prefix + 8-12 hane"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "VIES API real-time"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "ABD EIN"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "XX-XXXXXXX"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "IRS lookup sınırlı"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "ABD SSN"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "XXX-XX-XXXX"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Saklamamayı tercih et"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "BR CPF"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "XXX.XXX.XXX-XX"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Algoritma + Receita Federal"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "BR CNPJ"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "XX.XXX.XXX/XXXX-XX"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Algoritma + RF"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-cc-identity-models-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "En klasik 'ABD merkezli' tasarım hatalarının düzeltilmesi:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "1. İsim modeli — firstName/lastName YANLIŞ"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Global kültürlerde:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Tek isim"
+      },
+      {
+       "type": "text",
+       "text": " (Endonezya, Madagaskar): 'Sukarno', 'Suharto' — soyad yok"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Soyad önce"
+      },
+      {
+       "type": "text",
+       "text": " (Çin, Macaristan, Japonya): 'Wang Wei', 'Kovács István'"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Patronymic"
+      },
+      {
+       "type": "text",
+       "text": " (Rusya, İzlanda): 'Anna Sergeyevna Petrova' — orta isim baba adı"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Çoklu soyad"
+      },
+      {
+       "type": "text",
+       "text": " (İspanya): 'García Márquez' — anne + baba soyadı"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Onur unvanı"
+      },
+      {
+       "type": "text",
+       "text": " (Tayland, Endonezya): 'H.E.', 'Dato\\''"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Doğru model:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-code",
+    "type": "codeBlock",
+    "language": "sql",
+    "code": "CREATE TABLE person (\n  id BIGSERIAL,\n  full_name TEXT NOT NULL,                -- ham, kullanıcının yazdığı\n  display_name TEXT,                      -- kısa (UI'de gösterim)\n  given_name TEXT,                        -- opsiyonel (Latin alfabeli kültürler için)\n  family_name TEXT,                       -- opsiyonel\n  name_order ENUM('given_family','family_given','single','custom') DEFAULT 'given_family',\n  honorific_prefix TEXT,                  -- 'Dr.', 'Prof.', 'H.E.'\n  honorific_suffix TEXT,                  -- 'Jr.', 'PhD'\n  preferred_pronouns TEXT,                -- opsiyonel ('he/him', 'she/her', 'they/them')\n  ...\n);"
+   },
+   {
+    "id": "block-cc-identity-models-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "2. Telefon — E.164 zorunlu"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "E.164 = uluslararası telefon formatı: "
+     },
+     {
+      "type": "code",
+      "text": "+[ülke kodu][numara]"
+     },
+     {
+      "type": "text",
+      "text": ", max 15 hane."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "TR: "
+      },
+      {
+       "type": "code",
+       "text": "+905321234567"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "ABD: "
+      },
+      {
+       "type": "code",
+       "text": "+14155551234"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Almanya: "
+      },
+      {
+       "type": "code",
+       "text": "+493012345678"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-p-8",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "'10 haneli telefon' varsayımı = YANLIŞ. Doğrulama ülke bazlı (libphonenumber kütüphanesi)."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-code-2",
+    "type": "codeBlock",
+    "language": "sql",
+    "code": "CREATE TABLE contact_phone (\n  id BIGSERIAL,\n  person_id BIGINT,\n  phone_e164 TEXT NOT NULL CHECK (phone_e164 ~ '^\\+[1-9][0-9]{1,14}$'),\n  country_code CHAR(2),                   -- ISO 3166 'TR', 'US' (libphonenumber parse)\n  type ENUM('mobile','landline','voip','toll_free'),\n  verified_at TIMESTAMPTZ,\n  ...\n);"
+   },
+   {
+    "id": "block-cc-identity-models-p-9",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "3. Adres — ülke-aware format"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-table-3",
+    "type": "table",
+    "columns": [
+     "Ülke",
+     "Sıralama",
+     "Posta kodu",
+     "State/İl"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "TR"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sokak → Mahalle → İlçe → Şehir → PK"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "5 hane (zorunlu değil)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "İl zorunlu"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "US"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Street → City → State → ZIP"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "5+4 hane"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "State zorunlu"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "GB"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Line1 → Line2 → Town → County → Postcode"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Karmaşık (AB12 3CD)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "County opsiyonel"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "JP"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Postcode → Prefecture → City → Block → Building"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "7 hane"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Ters sıralı"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "IE"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Eircode (2015+) veya yok"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yeni sistem"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Opsiyonel"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "HK"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Floor → Building → Street → District"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Posta kodu YOK"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "District"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-p-10",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Doğru model:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-code-3",
+    "type": "codeBlock",
+    "language": "sql",
+    "code": "CREATE TABLE postal_address (\n  id BIGSERIAL,\n  country_code CHAR(2) NOT NULL,          -- ISO 3166\n  -- Ham alanlar (her ülke için kullanılır)\n  line_1 TEXT,                            -- sokak/cadde\n  line_2 TEXT,                            -- mahalle/apartman\n  city TEXT,                              -- şehir/town\n  region TEXT,                            -- il/state/prefecture/county\n  postal_code TEXT,                       -- nullable (HK, IE)\n  -- Ekstra metadata\n  formatted TEXT,                         -- ülkeye göre tek-string format (UI'de)\n  raw_input JSONB,                        -- kullanıcının girdiği tüm alanlar (audit)\n  ...\n);"
+   },
+   {
+    "id": "block-cc-identity-models-p-11",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Kütüphane: "
+     },
+     {
+      "type": "strong",
+      "text": "i18n-postal-address"
+     },
+     {
+      "type": "text",
+      "text": " (Node), "
+     },
+     {
+      "type": "strong",
+      "text": "google-libaddressinput"
+     },
+     {
+      "type": "text",
+      "text": " (multi-platform). Her ülkenin format şemasını CLDR'den çeker."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-p-12",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "4. Vergi/Kimlik numarası"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-table-4",
+    "type": "table",
+    "columns": [
+     "Tür",
+     "Format",
+     "Doğrulama"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "strong",
+        "text": "TC Kimlik"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "11 hane"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Algoritma (mod 10 + mod 11) + opsiyonel NVI API"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "AB VAT ID"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Ülke prefix + 8-12 hane"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "VIES API"
+       },
+       {
+        "type": "text",
+        "text": " (vies.ec.europa.eu) — real-time doğrulama"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "ABD EIN"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "XX-XXXXXXX"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "IRS lookup (sınırlı)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "ABD SSN"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "XXX-XX-XXXX"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "KVKK risk — saklamamayı tercih"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Brezilya CPF"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "XXX.XXX.XXX-XX"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Algoritma + Receita Federal"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Brezilya CNPJ"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "XX.XXX.XXX/XXXX-XX"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Algoritma + RF"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-p-13",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "B2B için VIES kritik:"
+     },
+     {
+      "type": "text",
+      "text": " AB içi B2B fatura kesiyorsan, müşterinin VAT ID'sini VIES ile doğrulamak zorundasın. Geçersiz VAT ID = reverse charge uygulayamazsın = AB ülkesinin KDV oranıyla faturalamak zorundasın."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-code-4",
+    "type": "codeBlock",
+    "language": "sql",
+    "code": "CREATE TABLE tax_id (\n  id BIGSERIAL,\n  party_id BIGINT,\n  country_code CHAR(2),\n  tax_id_type TEXT,                       -- 'TC_KIMLIK', 'EU_VAT', 'US_EIN', 'BR_CPF'\n  tax_id_value TEXT,\n  verified_at TIMESTAMPTZ,\n  verification_source TEXT,               -- 'VIES', 'NVI', 'manual'\n  verification_response JSONB,\n  ...\n);"
+   },
+   {
+    "id": "block-cc-identity-models-p-14",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "5. Cinsiyet alanı — non-binary + opsiyonel"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-list-3",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Almanya"
+      },
+      {
+       "type": "text",
+       "text": ": yasal olarak 'männlich', 'weiblich', 'divers' (üçüncü seçenek)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Çoğu yargı bölgesi"
+      },
+      {
+       "type": "text",
+       "text": ": opsiyonel"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "KVKK"
+      },
+      {
+       "type": "text",
+       "text": ": özel nitelikli kişisel veri — zorunlu yapma"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-code-5",
+    "type": "codeBlock",
+    "language": "sql",
+    "code": "CREATE TYPE gender_t AS ENUM ('male','female','non_binary','prefer_not_to_say','other');\n\nCREATE TABLE person_demographics (\n  person_id BIGINT,\n  gender gender_t,                        -- nullable + opsiyonel\n  gender_other TEXT,                      -- 'other' seçilirse serbest metin\n  legal_gender TEXT,                      -- yasal cinsiyet (vergi/sigorta için)\n  pronouns TEXT,                          -- ('he/him', 'she/her', 'they/them')\n  ...\n);"
+   },
+   {
+    "id": "block-cc-identity-models-p-15",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "6. Doğum tarihi + yaş doğrulama (KVKK)"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-list-4",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Tam doğum tarihi yerine "
+      },
+      {
+       "type": "strong",
+       "text": "yaş aralığı"
+      },
+      {
+       "type": "text",
+       "text": " (örn. 18-25, 26-35) yeterli olabilir → veri minimizasyonu prensibi"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Yasal yaş kontrolü için (alkol, sigara, kumar): sadece "
+      },
+      {
+       "type": "strong",
+       "text": "18+ flag"
+      },
+      {
+       "type": "text",
+       "text": ", tarihi sakla; tarihi GÖSTERME"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "COPPA/GDPR: < 13/16 yaş ebeveyn rızası (ülke bazlı "
+      },
+      {
+       "type": "code",
+       "text": "digital_consent_age"
+      },
+      {
+       "type": "text",
+       "text": ")"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-cc-identity-models-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Global SaaS için kimlik veri modelleri — isim, adres, telefon, vergi numarası, cinsiyet. ABD-merkezli varsayımları kırma."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "firstName/lastName, '10 hane telefon', 'state zorunlu' = 2. ülkede çöker. Baştan global modellersen sonradan refactor yok."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) fullName tek alan + opsiyonel given/family. 2) E.164 + libphonenumber. 3) i18n-postal-address. 4) VAT VIES API. 5) Cinsiyet opsiyonel + non-binary. 6) Veri minimizasyonu (yaş aralığı)."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "cc-identity-models"
+       },
+       {
+        "type": "text",
+        "text": " cluster + "
+       },
+       {
+        "type": "code",
+        "text": "l1-party"
+       },
+       {
+        "type": "text",
+        "text": " DocType ile entegre."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk kullanıcı kaydından ÖNCE. Sonradan migration ağrılı."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Backend dev şema; frontend dev ülke-aware form; hukuk team yasal cinsiyet/yaş kuralları."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Pasaport ofisi: her ülkenin pasaport formatı farklı (TR çipli, AB elektronik, Hindistan basılı), ama dünya genelinde 'pasaport' kavramı standart. ICAO yapısı tek; içerik ülke-aware. Kimlik veri modeli aynı: ortak iskelet + ülke-aware özelleştirme."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-cc-identity-models-story",
+    "type": "useCase",
+    "title": "Mali müşavir Hasan Bey (58) — AB B2B fatura",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Hasan Bey'in TR şirketi Almanya'daki bir firmaya yazılım hizmeti veriyor. Reverse charge uygulamak için Alman firmanın VAT ID'sini bilmek lazım — sadece 'DE123456789' yetmez, geçerli mi?"
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "VIES API çağrısı: VAT ID + şirket adı + adres döner. Geçerli → reverse charge uygulanır (KDV yok). Geçersiz → Almanya KDV oranıyla fatura (%19) kesilir. Manuel kontrol = zaman kaybı + hata."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-story-2",
+    "type": "useCase",
+    "title": "Pazarlama Ayşe Hanım (45) — adres formu",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Site Türkçe-Almanca yayında. Adres formu 'first name, last name, street, city, state, ZIP'. Alman kullanıcı 'state' alanına şaşırıyor (Almanya'da yok); Japon kullanıcı sıralamayı ters bekliyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "i18n-postal-address kütüphanesi: country_code seçiminden sonra form alanları dinamik. Alman için 'Land' alanı, Japon için ters sıra, Türk için 'il/ilçe/mahalle'. Tek codebase, ülke-aware form."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-identity-models-story-3",
+    "type": "useCase",
+    "title": "Geliştirici Murat Bey (61'lik abisi 32) — isim problemi",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Indonesia'lı kullanıcı kayıt: isim 'Sukarno'. Form 'first name + last name' zorunlu yapıyor. Kullanıcı 'last name'i boş bırakıyor, kayıt başarısız."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "fullName tek alan + opsiyonel given/family. Sukarno = full_name='Sukarno', name_order='single'. Sorunsuz kayıt. Display name 'Sukarno' UI'de göründüğü gibi."
+     }
+    ]
+   }
+  ]
+ }
+}

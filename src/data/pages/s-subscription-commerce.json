@@ -1,0 +1,596 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-s-subscription-commerce",
+  "sourceId": "s-subscription-commerce",
+  "slug": "urunler/s-subscription-commerce",
+  "title": "Subscription Commerce — abonelik tabanlı e-ticaret",
+  "summary": "Müşteri tek seferlik değil, periyodik (aylık/yıllık) ürün alır. Abonelik kutusu, recurring billing, churn yönetimi.",
+  "categoryId": "urunler",
+  "tags": [
+   "core-operations",
+   "ecommerce",
+   "subscription",
+   "recurring",
+   "capability",
+   "mrr"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-s-ecommerce-models",
+   "page-stack-commerce",
+   "page-s-billing",
+   "page-scale-workers-deep",
+   "page-layer1-notification"
+  ],
+  "blocks": [
+   {
+    "id": "block-s-subscription-commerce-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Abonelik kutusu (subscription box), recurring billing, pause/skip/cancel, churn tahmin. s-billing infra üstüne."
+     }
+    ]
+   },
+   {
+    "id": "block-s-subscription-commerce-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Subscription commerce = MRR + müşteri sadakati."
+     },
+     {
+      "type": "text",
+      "text": " Tek seferlik satış 1× ciro; aylık abonelik LTV (lifetime value) 10×+. Ama churn yönetimi olmadan büyüme yanılsamadır."
+     }
+    ]
+   },
+   {
+    "id": "block-s-subscription-commerce-co",
+    "type": "callout",
+    "variant": "info",
+    "title": "SaaS vs Commerce abonelik farkı",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "SaaS subscription"
+     },
+     {
+      "type": "text",
+      "text": " = yazılım hizmeti (Pro plan). "
+     },
+     {
+      "type": "strong",
+      "text": "Subscription commerce"
+     },
+     {
+      "type": "text",
+      "text": " = fiziksel ürün periyodik teslim. İkisi de aynı recurring billing motorunu paylaşır ("
+     },
+     {
+      "type": "code",
+      "text": "s-billing"
+     },
+     {
+      "type": "text",
+      "text": "); iş mantığı farklı. Karıştırma."
+     }
+    ]
+   },
+   {
+    "id": "block-s-subscription-commerce-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'Subscription DocType: customer_id, product_id, interval ENUM (weekly/monthly/quarterly/yearly), next_billing_date, status (active/paused/cancelled). Cron her gece next_billing_date ≤ today olanları işle: Stripe charge + order create + shipment trigger. Customer portal: pause/skip/cancel endpoints.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-s-subscription-commerce-h-subscription-tipleri",
+    "type": "heading",
+    "level": 4,
+    "text": "Subscription tipleri"
+   },
+   {
+    "id": "block-s-subscription-commerce-table",
+    "type": "table",
+    "columns": [
+     "Tip",
+     "Örnek",
+     "Kritik özellik"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Subscription box"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "BarkBox, FabFitFun"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Curated + sürpriz"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Replenishment"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kahve, vitamin"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Auto-skip envanter doluysa"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Curated"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Stitch Fix"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "AI/insan personalization"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Access"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Amazon Prime, Costco"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Üye-indirim + öncelik"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-s-subscription-commerce-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-s-subscription-commerce-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Subscription commerce ≠ SaaS subscription:"
+     }
+    ]
+   },
+   {
+    "id": "block-s-subscription-commerce-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "SaaS subscription"
+      },
+      {
+       "type": "text",
+       "text": " (s-billing): yazılım hizmeti — Pro plan, kullanıcı sayısı."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Subscription commerce"
+      },
+      {
+       "type": "text",
+       "text": ": fiziksel/dijital ürün periyodik teslim — kahve kutusu, gıda paketi, dergi."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-s-subscription-commerce-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "İkisi aynı recurring billing motorunu paylaşır; iş mantığı farklı."
+     }
+    ]
+   },
+   {
+    "id": "block-s-subscription-commerce-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Tipik akışlar:"
+     }
+    ]
+   },
+   {
+    "id": "block-s-subscription-commerce-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Subscription box"
+       },
+       {
+        "type": "text",
+        "text": ": aylık seçilmiş ürünler kutusu (BarkBox, FabFitFun)"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Replenishment"
+       },
+       {
+        "type": "text",
+        "text": ": tüketilen ürün otomatik yenileme (kahve, vitamin)"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Curated subscription"
+       },
+       {
+        "type": "text",
+        "text": ": AI/insan kürasyonlu kişiselleştirilmiş"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Access subscription"
+       },
+       {
+        "type": "text",
+        "text": ": indirim/öncelik üyeliği (Amazon Prime)"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-s-subscription-commerce-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Kritik özellikler:"
+     }
+    ]
+   },
+   {
+    "id": "block-s-subscription-commerce-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Pause / Skip"
+      },
+      {
+       "type": "text",
+       "text": ": ay atlama (müşteri tatilde)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Swap"
+      },
+      {
+       "type": "text",
+       "text": ": bu ay başka ürün al"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Loyalty"
+      },
+      {
+       "type": "text",
+       "text": ": 3 ay üst üste = bonus ürün"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Address rotation"
+      },
+      {
+       "type": "text",
+       "text": ": ofise mi eve mi (B2B subscription)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Dunning"
+      },
+      {
+       "type": "text",
+       "text": ": ödeme alınamazsa retry + email + askıya alma"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-s-subscription-commerce-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Capability flag: `subscription`"
+     },
+     {
+      "type": "text",
+      "text": " açıldığında:"
+     }
+    ]
+   },
+   {
+    "id": "block-s-subscription-commerce-list-3",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Ürün kartına "
+      },
+      {
+       "type": "code",
+       "text": "subscribable"
+      },
+      {
+       "type": "text",
+       "text": " boolean + "
+      },
+      {
+       "type": "code",
+       "text": "interval"
+      },
+      {
+       "type": "text",
+       "text": " (haftalık/aylık/yıllık)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Order'a "
+      },
+      {
+       "type": "code",
+       "text": "subscription_id"
+      },
+      {
+       "type": "text",
+       "text": " + "
+      },
+      {
+       "type": "code",
+       "text": "cycle_number"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Recurring scheduler (s-workers-deep + s-billing entegre)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Customer portal: pause, skip, cancel buttons"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-s-subscription-commerce-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-s-subscription-commerce-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tek seferlik satış yerine periyodik (haftalık/aylık) teslimat yapma yeteneği."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "MRR (Monthly Recurring Revenue) = öngörülebilir gelir. SaaS değil ama mantığı aynı."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Product subscribable + interval. 2) Subscription tablosu (customer, product, schedule). 3) Cron job (s-workers-deep) ayın 1'inde fatura+sevkiyat. 4) Customer portal pause/skip/cancel."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "s-subscription-commerce"
+       },
+       {
+        "type": "text",
+        "text": " capability + "
+       },
+       {
+        "type": "code",
+        "text": "s-billing"
+       },
+       {
+        "type": "text",
+        "text": " recurring motor + "
+       },
+       {
+        "type": "code",
+        "text": "s-workers-deep"
+       },
+       {
+        "type": "text",
+        "text": " scheduler."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk abonelik ürünü eklenmeden ÖNCE: pause/skip/cancel + dunning policy hazır."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Ürün ekibi katalog + interval; backend dev scheduler; CS team churn analysis."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Süt aboneliği: süt ablası her sabah kapıya bırakır. Tatilde 'bu hafta yok' der. Para da ay sonu peşin değil, otomatik kesme. Modern hali aynı, yazılım üzerinde."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-s-subscription-commerce-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-s-subscription-commerce-story",
+    "type": "useCase",
+    "title": "Ayşe Teyze (63) — vitamin yenileme",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Ayşe Teyze doktorun verdiği vitamini hatırlamayı sürekli unutuyor. Bitince yeni alacağı yer 'kapalı' oluyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Aylık yenileme abone olundu. Her ayın 1'inde otomatik gönderim. Tatildeyse 'pause 1 ay' butonu. Hatırlatma + paket = unutmak yok."
+     }
+    ]
+   },
+   {
+    "id": "block-s-subscription-commerce-story-2",
+    "type": "useCase",
+    "title": "Bakkal Hatice Teyze (62) — mahallenin sebze kutusu",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Hatice Teyze her hafta mahalleye 30 ailelik sebze paketi yapıyor. Hatırlatma + ödeme + adres bir bir telefon ediyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "30 aile haftalık subscription. Her Perşembe otomatik kesme + Cuma teslim. Bayramda pause 1 hafta opsiyonu. Hatice Teyze sadece paketler."
+     }
+    ]
+   }
+  ]
+ }
+}

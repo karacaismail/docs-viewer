@@ -1,0 +1,750 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-edu-u03-doctype",
+  "sourceId": "edu-u03",
+  "slug": "egitim/edu-u03-doctype",
+  "title": "DocType ile Model — anlatımsal giriş",
+  "summary": "Sen tip dizisi tanımlarsın; framework DB tablosu, REST endpoint, form, audit'i otomatik üretir. Metadata-driven model.",
+  "categoryId": "egitim",
+  "tags": [
+   "education",
+   "u03",
+   "doctype",
+   "model"
+  ],
+  "meta": {
+   "granularity": "buyuk-tas",
+   "state": "ok"
+  },
+  "related": [
+   "page-edu-u02-veri-tip",
+   "page-edu-u04-veritabani",
+   "page-kernel-schema"
+  ],
+  "blocks": [
+   {
+    "id": "block-edu-u03-doctype-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Sen tip dizisi tanımlarsın; framework DB tablosu, REST endpoint, form, audit'i otomatik üretir. Metadata-driven model."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u03-doctype-lh",
+    "type": "lessonHeader",
+    "unit": "Ünite 03",
+    "title": "DocType — kod yazmadan ürün modeli kurmak",
+    "level": "orta",
+    "durationMin": 75,
+    "prereq": [
+     "edu-u01",
+     "edu-u02"
+    ],
+    "goals": [
+     "Bir DocType tanımının hangi 8+ çıktıyı otomatik ürettiğini sayabilirsin.",
+     "Field, naming series, child table, hook kavramlarını projeden örneklerle anlatabilirsin.",
+     "Bir 'Müşteri Şikayeti' DocType'ını YAML olarak yazabilirsin.",
+     "Custom field vs property setter farkını söyleyebilirsin."
+    ]
+   },
+   {
+    "id": "block-edu-u03-doctype-h-kavramlar",
+    "type": "heading",
+    "level": 4,
+    "text": "Kavramlar"
+   },
+   {
+    "id": "block-edu-u03-doctype-h-anlatim-bir-doctype-tanimladiginda-ne-olur",
+    "type": "heading",
+    "level": 4,
+    "text": "Anlatım — bir DocType tanımladığında ne olur?"
+   },
+   {
+    "id": "block-edu-u03-doctype-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Frappe'nin "
+     },
+     {
+      "type": "strong",
+      "text": "devrimsel fikri"
+     },
+     {
+      "type": "text",
+      "text": " şu: yazılım modelini koda değil "
+     },
+     {
+      "type": "strong",
+      "text": "metadata'ya"
+     },
+     {
+      "type": "text",
+      "text": " koy. Sen 'Müşteri Şikayeti' "
+     },
+     {
+      "type": "term",
+      "text": "DocType",
+      "termId": "term-doctype-edu-u03-doctype"
+     },
+     {
+      "type": "text",
+      "text": "'ı tanımlarsın — alanlar, izinler, naming — framework gerisini üretir."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u03-doctype-note",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Schema = kod değil, veri. Drupal Entity API, Salesforce Object, Strapi Content-Type hepsi aynı patern."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u03-doctype-story",
+    "type": "useCase",
+    "title": "Plugin geliştirici",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Yeni 'Yedek Parça Talebi' tipi eklemek istiyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Manifest'e DocType ekler; deploy sonrası DB, API, form hazır. Kod yazmadı."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u03-doctype-feat",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "PostgreSQL fiziksel tablo",
+      "definition": [
+       {
+        "type": "code",
+        "text": "tabMusteriSikayeti"
+       },
+       {
+        "type": "text",
+        "text": " — alanlar gerçek kolon, indeksli."
+       }
+      ]
+     },
+     {
+      "term": "REST API endpoint",
+      "definition": [
+       {
+        "type": "code",
+        "text": "GET /api/resource/MusteriSikayeti"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "POST"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "PUT"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "DELETE"
+       },
+       {
+        "type": "text",
+        "text": "."
+       }
+      ]
+     },
+     {
+      "term": "GraphQL schema",
+      "definition": [
+       {
+        "type": "code",
+        "text": "type MusteriSikayeti { … }"
+       },
+       {
+        "type": "text",
+        "text": " + "
+       },
+       {
+        "type": "code",
+        "text": "query musteriSikayetleri(filter)"
+       },
+       {
+        "type": "text",
+        "text": "."
+       }
+      ]
+     },
+     {
+      "term": "Admin form",
+      "definition": [
+       {
+        "type": "text",
+        "text": "List view, form view, kanban, calendar (DocType metadata'sına bağlı)."
+       }
+      ]
+     },
+     {
+      "term": "Permission engine",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Role-based kurallar query'ye otomatik WHERE eklenir."
+       }
+      ]
+     },
+     {
+      "term": "Audit logger",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her save'de alan diff'i "
+       },
+       {
+        "type": "code",
+        "text": "audit_log"
+       },
+       {
+        "type": "text",
+        "text": " tablosuna yazılır."
+       }
+      ]
+     },
+     {
+      "term": "Search indexer",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yeni satırda event yayınlanır, Search projection güncellenir."
+       }
+      ]
+     },
+     {
+      "term": "Hook noktaları",
+      "definition": [
+       {
+        "type": "code",
+        "text": "before_insert"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "validate"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "on_submit"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "on_change"
+       },
+       {
+        "type": "text",
+        "text": " … plugin tepki verir."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u03-doctype-h-adim-adim-musteri-sikayeti-doctype-ini-yaz",
+    "type": "heading",
+    "level": 4,
+    "text": "Adım-adım: 'Müşteri Şikayeti' DocType'ını yaz"
+   },
+   {
+    "id": "block-edu-u03-doctype-code",
+    "type": "codeBlock",
+    "title": "doctype/musteri_sikayeti.yml",
+    "language": "yaml",
+    "code": "doctype: MusteriSikayeti\nnaming: format:SIK-{YYYY}-{####}\nis_submittable: false\nfields:\n  - name: konu          # Field name (DB kolon adı)\n    type: Data          # max 140 char string\n    required: true\n    in_list_view: true  # liste sayfasında görünsün\n\n  - name: aciklama\n    type: Text          # uzun metin\n    required: true\n\n  - name: oncelik\n    type: Select        # closed enum\n    options: [\"dusuk\", \"orta\", \"yuksek\", \"acil\"]\n    default: \"orta\"\n\n  - name: atanan\n    type: Link          # başka DocType'a FK\n    options: User       # hangi DocType — User\n\n  - name: musteri\n    type: Link\n    options: Customer\n    required: true\n    in_list_view: true\n\n  - name: ekler\n    type: Table         # child table (1-N)\n    options: SikayetEki # child DocType\n\npermissions:\n  - role: Manager\n    perm: [read, write, create, delete]\n  - role: Customer\n    perm: [read, create]\n    ifowner: true       # sadece kendi kayıtlarını görsün\n\nhooks:\n  on_change: helpdesk.handlers.on_complaint_change"
+   },
+   {
+    "id": "block-edu-u03-doctype-note-2",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Tek bir YAML dosyası → DB + API + form + audit + permission."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u03-doctype-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Naming series"
+     },
+     {
+      "type": "text",
+      "text": " açıklaması: "
+     },
+     {
+      "type": "code",
+      "text": "SIK-{YYYY}-{####}"
+     },
+     {
+      "type": "text",
+      "text": " → "
+     },
+     {
+      "type": "code",
+      "text": "SIK-2026-0001"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "code",
+      "text": "SIK-2026-0002"
+     },
+     {
+      "type": "text",
+      "text": ". Yıl değişince ####'ler resetlenir. Distributed-safe olması için worker-lock kullanılır."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u03-doctype-h-custom-field-vs-property-setter-tenant-ozellestirmesi",
+    "type": "heading",
+    "level": 4,
+    "text": "Custom field vs Property setter — tenant özelleştirmesi"
+   },
+   {
+    "id": "block-edu-u03-doctype-grid",
+    "type": "cardGrid",
+    "columns": 2,
+    "cards": [
+     {
+      "icon": "ph-plus-circle",
+      "title": "Custom field",
+      "tone": "good",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Tenant 'Acme Ltd' kendi şikayet formuna "
+       },
+       {
+        "type": "code",
+        "text": "is_urgent: bool"
+       },
+       {
+        "type": "text",
+        "text": " eklemek ister. Admin → Custom Field. Kod değişmedi. Sadece Acme görür."
+       }
+      ]
+     },
+     {
+      "icon": "ph-sliders",
+      "title": "Property setter",
+      "tone": "good",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Tenant 'Beta Inc' "
+       },
+       {
+        "type": "code",
+        "text": "atanan"
+       },
+       {
+        "type": "text",
+        "text": " alanını zorunlu yapmak ister (varsayılan değil). Admin → Property Setter → "
+       },
+       {
+        "type": "code",
+        "text": "atanan.required = 1"
+       },
+       {
+        "type": "text",
+        "text": ". Kod değişmedi."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u03-doctype-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Tuzak — JSON-her-şey",
+    "segments": [
+     {
+      "type": "text",
+      "text": "'Tüm DocType'ları tek "
+     },
+     {
+      "type": "code",
+      "text": "records"
+     },
+     {
+      "type": "text",
+      "text": " tablosunda JSON kolonda tutsam ya' diye düşünebilirsin. WordPress "
+     },
+     {
+      "type": "code",
+      "text": "wp_postmeta"
+     },
+     {
+      "type": "text",
+      "text": " bu yola gitti — felaket. WHERE/ORDER/JOIN performansı çöker, index zor, tip safety yok.\n\n"
+     },
+     {
+      "type": "strong",
+      "text": "Doğru yol:"
+     },
+     {
+      "type": "text",
+      "text": " Her DocType kendi fiziksel tablosu. JSON sadece schema-less ek için."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u03-doctype-h-submittable-doctype-fatura-ornegi",
+    "type": "heading",
+    "level": 4,
+    "text": "Submittable DocType — fatura örneği"
+   },
+   {
+    "id": "block-edu-u03-doctype-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "Draft (docstatus=0)",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Tüm alanlar düzenlenebilir. Kullanıcı yazıyor."
+       }
+      ]
+     },
+     {
+      "title": "Submit (docstatus=1)",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Belge gönderildi. Mali alanlar "
+       },
+       {
+        "type": "strong",
+        "text": "kilitlenir"
+       },
+       {
+        "type": "text",
+        "text": " — fatura no, tutar değiştirilemez."
+       }
+      ]
+     },
+     {
+      "title": "On_submit hook çalışır",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Muhasebe yevmiye girişi otomatik oluşur. Stok azalır. Müşteriye mail gider."
+       }
+      ]
+     },
+     {
+      "title": "Cancel (docstatus=2)",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Belge iptal. Yevmiye ters kayıt, stok geri yüklenir — hook tarafından."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u03-doctype-chk",
+    "type": "checklist",
+    "title": "Bu üniteyi anladığımı nereden anlarım?",
+    "items": [
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "DocType tanımlandığında otomatik üretilen 8 çıktıyı sayabilirim. — DB, REST, GraphQL, form, permission, audit, search, hooks"
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Naming series'in ne işe yaradığını ve formatını anlatabilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Child table'ı bir gerçek dünya örneğiyle açıklayabilirim. — Sipariş → SiparişKalemleri."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Custom field ile Property setter farkını söyleyebilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Submittable DocType'ın 3 docstatus değerini ve ne anlama geldiğini biliyorum."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Bir 'Görev (Task)' DocType'ını YAML olarak yazdım. — Mini-projeyi yaptıysan."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u03-doctype-h-mini-proje",
+    "type": "heading",
+    "level": 4,
+    "text": "Mini-proje"
+   },
+   {
+    "id": "block-edu-u03-doctype-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Defterine bir 'Görev (Task)' DocType'ı yaz. Alanlar: başlık, açıklama, atanan kişi, son tarih, durum (todo/doing/done), öncelik, etiketler (multi-select), proje (link). Naming "
+     },
+     {
+      "type": "code",
+      "text": "TASK-{####}"
+     },
+     {
+      "type": "text",
+      "text": ". Hooks: "
+     },
+     {
+      "type": "code",
+      "text": "on_change"
+     },
+     {
+      "type": "text",
+      "text": " → atananın takvimine ekle."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u03-doctype-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Bonus:"
+     },
+     {
+      "type": "text",
+      "text": " İki "
+     },
+     {
+      "type": "term",
+      "text": "child table",
+      "termId": "term-child-table-edu-u03-doctype"
+     },
+     {
+      "type": "text",
+      "text": " ekle: (a) "
+     },
+     {
+      "type": "code",
+      "text": "comments"
+     },
+     {
+      "type": "text",
+      "text": " (yorumlar), (b) "
+     },
+     {
+      "type": "code",
+      "text": "time_entries"
+     },
+     {
+      "type": "text",
+      "text": " (zaman kaydı). Permission: User kendi atadığı görevleri görsün; Manager hepsini."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u03-doctype-co-2",
+    "type": "callout",
+    "variant": "info",
+    "title": "Sonraki ünite",
+    "segments": [
+     {
+      "type": "ref",
+      "text": "edu-u04",
+      "refId": "edu-u04"
+     },
+     {
+      "type": "text",
+      "text": " — Veritabanı Temelleri. DocType'ın altındaki PostgreSQL kolon-indeks-ilişki mantığını öğreneceğiz. Mimari bu seviyede şekilleniyor."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u03-doctype-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-edu-u03-doctype-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Sen tip dizisi tanımlarsın; framework DB tablosu, "
+     },
+     {
+      "type": "term",
+      "text": "REST",
+      "termId": "term-rest-edu-u03-doctype"
+     },
+     {
+      "type": "text",
+      "text": " endpoint, form, audit'i otomatik üretir. Metadata-driven model."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u03-doctype-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-edu-u03-doctype-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Ünite 03 — DocType ile Model. Kod yazmadan veri tipleri tanımlama yöntemi."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her özel ihtiyaç için programcı çağırmak yavaş. DocType yöntemi yöneticiye 'kendi tipini tanımla' der."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tanım kartına alan isimleri yazılır; sistem geri kalanı (tablo, form, API) kendiliğinden üretir."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Müfredatın 3. ünitesi — 01 ve 02'ye dayanır."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistem 'merkez yönetim paneli' olmaya başlayınca lazım olur."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yönetici tanımlar; geliştirici devreye girmek zorunda kalmaz."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir mağazanın 'yeni ürün kartı' şablonu: doldurursun, raf düzeni otomatik kurulur."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

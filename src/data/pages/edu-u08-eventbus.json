@@ -1,0 +1,469 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-edu-u08-eventbus",
+  "sourceId": "edu-u08",
+  "slug": "egitim/edu-u08-eventbus",
+  "title": "Event Bus & Outbox",
+  "summary": "Senkron vs asenkron, event-driven, transactional outbox, idempotency, DLQ.",
+  "categoryId": "egitim",
+  "tags": [
+   "education",
+   "u08",
+   "event",
+   "outbox",
+   "saga"
+  ],
+  "meta": {
+   "granularity": "buyuk-tas",
+   "state": "ok"
+  },
+  "related": [
+   "page-edu-u05-api",
+   "page-edu-u09-plugin",
+   "page-kernel-bus",
+   "page-scale-outbox",
+   "page-scale-saga"
+  ],
+  "blocks": [
+   {
+    "id": "block-edu-u08-eventbus-lh",
+    "type": "lessonHeader",
+    "unit": "Ünite 08",
+    "title": "Event Bus & Outbox — modüller arası gevşek bağ",
+    "level": "ileri",
+    "durationMin": 75,
+    "prereq": [
+     "edu-u04",
+     "edu-u05"
+    ],
+    "goals": [
+     "Senkron ile asenkron iletişimin farkı.",
+     "Event bus'ın neden direct call'a tercih edildiğini söyleyebilirsin.",
+     "Dual-write tuzağını ve transactional outbox çözümünü anlatabilirsin.",
+     "Idempotent consumer'ın retry mekaniğindeki rolünü biliyorsun.",
+     "At-least-once vs at-most-once vs exactly-once delivery garantilerini ayırt edebilirsin.",
+     "Bir DLQ akışını tasarlayabilirsin (retry budget + jitter + alarm)."
+    ]
+   },
+   {
+    "id": "block-edu-u08-eventbus-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "İki modül A→B doğrudan konuşursa: B değişirse A da değişir. "
+     },
+     {
+      "type": "term",
+      "text": "Event",
+      "termId": "term-event-edu-u08-eventbus"
+     },
+     {
+      "type": "text",
+      "text": " bus ile A 'order.created' yayar, B dinler — B değişirse A'nın haberi olmaz. "
+     },
+     {
+      "type": "strong",
+      "text": "Bağ kopmaz, ama zayıflar."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u08-eventbus-h-transactional-outbox-akisi-adim-adim",
+    "type": "heading",
+    "level": 3,
+    "text": "Transactional outbox akışı — adım adım"
+   },
+   {
+    "id": "block-edu-u08-eventbus-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "1. Business write",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Sipariş kaydet: "
+       },
+       {
+        "type": "code",
+        "text": "INSERT INTO orders ..."
+       },
+       {
+        "type": "text",
+        "text": " (DB transaction başlar)."
+       }
+      ]
+     },
+     {
+      "title": "2. Outbox write (aynı transaction)",
+      "segments": [
+       {
+        "type": "code",
+        "text": "INSERT INTO outbox(event, payload, status='pending')"
+       },
+       {
+        "type": "text",
+        "text": " — atomik, sipariş ile birlikte."
+       }
+      ]
+     },
+     {
+      "title": "3. COMMIT",
+      "segments": [
+       {
+        "type": "text",
+        "text": "İki satır ya birlikte commit ya birlikte rollback. Veri tutarlılığı garanti."
+       }
+      ]
+     },
+     {
+      "title": "4. Worker poll",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Ayrı worker outbox tablosundan 'pending' satırları çeker (interval 1-5sn)."
+       }
+      ]
+     },
+     {
+      "title": "5. Publish + mark sent",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Kafka/RabbitMQ'ya iletir; başarılıysa "
+       },
+       {
+        "type": "code",
+        "text": "UPDATE outbox SET status='sent'"
+       },
+       {
+        "type": "text",
+        "text": " veya satırı siler."
+       }
+      ]
+     },
+     {
+      "title": "6. Consumer + idempotency",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Tüketici event'i alır → idempotency_key kontrolü (gördüm mü?) → değilse işle, sonra kaydet."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u08-eventbus-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Dual-write tuzağı",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Sipariş kaydı + Kafka mesajı için iki ayrı "
+     },
+     {
+      "type": "code",
+      "text": "INSERT"
+     },
+     {
+      "type": "text",
+      "text": ". Eğer DB başarılı ama Kafka düşerse: müşterinin parası çekildi ama kargo yola çıkmadı. "
+     },
+     {
+      "type": "strong",
+      "text": "Çözüm: Outbox"
+     },
+     {
+      "type": "text",
+      "text": ". DB transaction içinde 'outbox' tablosuna bir satır INSERT et. Ayrı worker bu satırları Kafka'ya iletir; iletilince siler. Atomik garanti."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u08-eventbus-co-2",
+    "type": "callout",
+    "variant": "tr",
+    "title": "DLQ disiplini",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Hata alan mesaj "
+     },
+     {
+      "type": "strong",
+      "text": "3-5 kez retry"
+     },
+     {
+      "type": "text",
+      "text": " (exponential backoff + jitter) → hâlâ başarısızsa "
+     },
+     {
+      "type": "strong",
+      "text": "DLQ"
+     },
+     {
+      "type": "text",
+      "text": ". DLQ'da bekleyen mesaj sayısı "
+     },
+     {
+      "type": "strong",
+      "text": "Slack alarmı"
+     },
+     {
+      "type": "text",
+      "text": ". Operatör inceler, fix sonrası replay et. DLQ'ya hiç bakmazsan sessiz veri kaybı."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u08-eventbus-co-3",
+    "type": "callout",
+    "variant": "info",
+    "title": "Exactly-once myth",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Dağıtık sistemde 'exactly-once' delivery teoride imkânsız (FLP impossibility). Pratik çözüm: "
+     },
+     {
+      "type": "strong",
+      "text": "at-least-once delivery + idempotent consumer"
+     },
+     {
+      "type": "text",
+      "text": ". Sonuç pratikte 'exactly-once processing' verir, ama maliyeti milyonda bir gibi."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u08-eventbus-h-uc-perspektiften-event-bus",
+    "type": "heading",
+    "level": 3,
+    "text": "Üç perspektiften event bus"
+   },
+   {
+    "id": "block-edu-u08-eventbus-story",
+    "type": "useCase",
+    "title": "Sipariş modülü geliştirici",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Sipariş tamamlanınca kargo, fatura, müşteri-puanı modülleri tetiklenmeli."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "code",
+      "text": "order.completed"
+     },
+     {
+      "type": "text",
+      "text": " event'i yayar — diğer modüller direkt çağrılmadan dinler. Yeni bir modül eklemek için sipariş kodu DEĞİŞMEZ."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u08-eventbus-story-2",
+    "type": "useCase",
+    "title": "Operasyon mühendisi",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Sabaha karşı 3'te Kafka'da 100K bekleyen mesaj görür."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Consumer lag dashboard'una bakar → bir consumer down. Restart → lag eriyor. Outbox sayesinde mesajlar kaybolmadı, sadece geç işlendi."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u08-eventbus-story-3",
+    "type": "useCase",
+    "title": "Mimar",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Yeni 'partner API'ye sipariş bilgisi gönder' özelliği eklenecek."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Event bus'a yeni subscriber ekler → sipariş kodu hiç ellenmez. Saatler yerine dakikalar."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u08-eventbus-chk",
+    "type": "checklist",
+    "title": "Kontrol listesi",
+    "items": [
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Senkron ile asenkron'un avantaj/sakıncaları."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Event vs Command farkını söyleyebilirim (geçmiş/gelecek)."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Pub/Sub'da yayıncının abone listesini bilmeme avantajı."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Dual-write'ın neden tehlikeli olduğunu örnekle anlatabilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Outbox pattern'in atomik garantiyi nasıl sağladığını söyleyebilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "At-least-once + idempotent = pratik exactly-once mantığını biliyorum."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "DLQ'nun rolünü ve alarm akışını biliyorum."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Saga pattern'in dağıtık transaction için 2PC alternatifi olduğunu biliyorum."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u08-eventbus-co-4",
+    "type": "callout",
+    "variant": "info",
+    "title": "Sonraki ünite",
+    "segments": [
+     {
+      "type": "ref",
+      "text": "edu-u09",
+      "refId": "edu-u09"
+     },
+     {
+      "type": "text",
+      "text": " — Plugin Mimarisi. Çekirdeği bozmadan davranış eklemek."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u08-eventbus-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-edu-u08-eventbus-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Ünite 08 — Olay Yayını ve Outbox. Modüller arası haberleşme."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Modüller birbirini doğrudan çağırırsa karışık olur. Anons sistemi bağımsız tutar."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Olay üreticisi 'şu oldu' der → ilgilenenler duyar, tepki verir."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Müfredatın 8. ünitesi."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Modüller arasında 'bağımlı olmadan haberli olmak' isteyince."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mimarlar ve modül geliştiricileri."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Okul anons hoparlörü: 'ders bitti' anonsu — herkes kendi tepkisini verir."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

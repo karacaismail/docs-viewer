@@ -1,0 +1,602 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-layer1-misc",
+  "sourceId": "l1-misc",
+  "slug": "layer1/layer1-misc",
+  "title": "i18n, Money, Realtime, Webhook, API Gateway, Calendar, Reporting",
+  "summary": "Layer 1 in-tree paketinin geri kalanı.",
+  "categoryId": "layer1",
+  "tags": [
+   "i18n",
+   "money",
+   "realtime",
+   "webhook",
+   "api"
+  ],
+  "meta": {
+   "badge": "Layer 1 — In-tree"
+  },
+  "related": [],
+  "blocks": [
+   {
+    "id": "block-layer1-misc-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Layer 1 in-tree paketinin geri kalanı."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-misc-h-i18n-localization",
+    "type": "heading",
+    "level": 4,
+    "text": "i18n / Localization"
+   },
+   {
+    "id": "block-layer1-misc-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Uluslararasılaştırma — yazılımın çoklu dilde çalışması."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Farklı pazarlara hizmet için."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Metinler kod yerine sözlük dosyalarında."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici yapı kurar, çevirmen doldurur."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Restoran menüsünün arka sayfasında İngilizce hali."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-misc-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Translation files"
+      },
+      {
+       "type": "text",
+       "text": " — gettext .po (her plugin kendi tr.po, en.po taşır)."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "UI strings"
+      },
+      {
+       "type": "text",
+       "text": " — server-rendered (Jinja "
+      },
+      {
+       "type": "code",
+       "text": "_(\"text\")"
+      },
+      {
+       "type": "text",
+       "text": "), client (React "
+      },
+      {
+       "type": "code",
+       "text": "t('text')"
+      },
+      {
+       "type": "text",
+       "text": ")."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "DocType label translation"
+      },
+      {
+       "type": "text",
+       "text": " — admin paneli \"Customer\" → \"Müşteri\"."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Number formatting"
+      },
+      {
+       "type": "text",
+       "text": " — 1.000,50 (TR) vs 1,000.50 (US)."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Date formatting"
+      },
+      {
+       "type": "text",
+       "text": " — DD.MM.YYYY (TR) vs MM/DD/YYYY (US)."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Currency formatting"
+      },
+      {
+       "type": "text",
+       "text": " — ₺1.234,56 vs $1,234.56."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Pluralization"
+      },
+      {
+       "type": "text",
+       "text": " — CLDR rules."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "RTL support"
+      },
+      {
+       "type": "text",
+       "text": " — Arapça/İbranice tenant'lar için."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-layer1-misc-h-money-tax-fx",
+    "type": "heading",
+    "level": 4,
+    "text": "Money + Tax + FX"
+   },
+   {
+    "id": "block-layer1-misc-code",
+    "type": "codeBlock",
+    "language": "yaml",
+    "code": "doctype: Currency\n  - code (ISO 4217: TRY, USD, EUR, GBP)\n  - symbol (₺, $, €)\n  - decimals (2 for fiat, 8 for crypto)\n  - format\n\ndoctype: ExchangeRate\n  - from_currency\n  - to_currency\n  - rate (Decimal)\n  - effective_date\n  - source (TCMB, Fixer, ECB)\n\n# TCMB günlük kur entegrasyonu\n@scheduler.daily(at=\"15:30\")  # TCMB kur yayın saati\nasync def fetch_tcmb_rates():\n    rates = await tcmb.get_today_rates()\n    for r in rates:\n        await ExchangeRate.create(...)"
+   },
+   {
+    "id": "block-layer1-misc-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Tax engine"
+     },
+     {
+      "type": "text",
+      "text": " — KDV (TR), VAT (EU), Sales Tax (US), GST. Adapter pattern. KDV oranları 2024 itibariyle: standart %20, indirimli %10 (gıda, sağlık), süper indirimli %1 (temel gıda)."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-misc-h-realtime-sse-websocket",
+    "type": "heading",
+    "level": 4,
+    "text": "Realtime / SSE / WebSocket"
+   },
+   {
+    "id": "block-layer1-misc-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "SSE"
+      },
+      {
+       "type": "text",
+       "text": " (Server-Sent Events) — tek yönlü server → client. Notification, dashboard refresh, live counter. HTTP üstünde, proxy-friendly."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "WebSocket"
+      },
+      {
+       "type": "text",
+       "text": " — çift yönlü. Chat, co-editing, real-time game state."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Presence"
+      },
+      {
+       "type": "text",
+       "text": " — \"kim online\" — Redis pub/sub + heartbeat."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-layer1-misc-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Frappe core'da Node.js socket.io server bundled. Sen Python tarafında "
+     },
+     {
+      "type": "code",
+      "text": "fastapi-sse"
+     },
+     {
+      "type": "text",
+      "text": " + "
+     },
+     {
+      "type": "code",
+      "text": "websockets"
+     },
+     {
+      "type": "text",
+      "text": " kullan, scale için Redis Pub/Sub."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-misc-h-webhook-api-gateway",
+    "type": "heading",
+    "level": 4,
+    "text": "Webhook + API Gateway"
+   },
+   {
+    "id": "block-layer1-misc-list-3",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Outgoing webhook"
+      },
+      {
+       "type": "text",
+       "text": " — tenant admin \"OrderPlaced event şu URL'e\" config'ler. Framework event bus subscriber'ı. Retry (exponential backoff), HMAC signature, dead letter."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Incoming webhook"
+      },
+      {
+       "type": "text",
+       "text": " — Stripe, GitHub vs. POST atar. Signature verification, idempotency, event publish."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "API Gateway"
+      },
+      {
+       "type": "text",
+       "text": " — DocType'tan otomatik REST + GraphQL endpoint. OpenAPI 3.1 spec autogen. Versioning ("
+      },
+      {
+       "type": "code",
+       "text": "/api/v1/"
+      },
+      {
+       "type": "text",
+       "text": "). Throttling per tenant + per key."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-layer1-misc-h-calendar",
+    "type": "heading",
+    "level": 4,
+    "text": "Calendar"
+   },
+   {
+    "id": "block-layer1-misc-list-4",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Event entity (start, end, all-day, location, attendees)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Recurrence rule (RRULE) — \"her pazartesi\", \"her ayın ilk perşembesi\""
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Exception (recurring serisinin bir oturumu iptal)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Timezone-aware (DST geçişleri, IANA zone)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "iCal export (.ics dosyası)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "CalDAV protocol (Apple Calendar, Outlook sync)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Availability query (boş slot ara)"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-layer1-misc-h-reporting-dashboard",
+    "type": "heading",
+    "level": 4,
+    "text": "Reporting + Dashboard"
+   },
+   {
+    "id": "block-layer1-misc-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Frappe Report Builder, Odoo Studio, Salesforce Reports muadili. No-code query builder, scheduled export, dashboard widget. Drag-drop chart configuration. KPI tile, trend, table, gauge. CSV/Excel/PDF export."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-misc-div",
+    "type": "divider"
+   },
+   {
+    "id": "block-layer1-misc-h-landx-bakisi-s01-auto-rest-s02-auto-admin-ui-s03-form-validation",
+    "type": "heading",
+    "level": 4,
+    "text": "LandX bakışı: S01 Auto REST + S02 Auto Admin UI + S03 Form & Validation"
+   },
+   {
+    "id": "block-layer1-misc-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "LandX L3 Application Surface katmanı bu cluster'ın \"Webhook + API Gateway + Reporting\" bölümünü tamamlar: DocType tanımından otomatik olarak üretilen üç yüzey."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-misc-feat",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "S01 — Auto REST API Engine",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Faz 1 · P0."
+       },
+       {
+        "type": "text",
+        "text": " DocType → CRUD + filter + bulk endpoint. Aynı tanımdan OpenAPI spec, MCP tool listesi, GraphQL schema türetilir. *DocType → endpoint p95 <60sn, OpenAPI conformance %100.* Capabilities: CRUD Endpoint Generation, OpenAPI Spec, Bulk & Batch (idempotent), Pagination & Cursor, Webhooks."
+       }
+      ]
+     },
+     {
+      "term": "S02 — Auto Admin UI Engine",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Faz 2 · P0."
+       },
+       {
+        "type": "text",
+        "text": " DocType → auto-generated admin UI: list, detail, form, bulk action, filter side-panel. Flowbite + React Router v7. "
+       },
+       {
+        "type": "strong",
+        "text": "AI co-pilot her ekranda."
+       },
+       {
+        "type": "text",
+        "text": " *DocType → çalışır UI <2dk, Lighthouse a11y >90.* "
+       },
+       {
+        "type": "code",
+        "text": "Saved View"
+       },
+       {
+        "type": "text",
+        "text": " (filter_state + sort_state + is_shared), "
+       },
+       {
+        "type": "code",
+        "text": "ai_quick_filter"
+       },
+       {
+        "type": "text",
+        "text": " (doğal dil filtresi)."
+       }
+      ]
+     },
+     {
+      "term": "S03 — Form & Validation Framework",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Faz 2 · P1."
+       },
+       {
+        "type": "text",
+        "text": " Form lifecycle, server-side + client-side validation, conditional fields, wizard flows, "
+       },
+       {
+        "type": "strong",
+        "text": "AI auto-fill"
+       },
+       {
+        "type": "text",
+        "text": ", draft autosave. Tüm validation kuralları MCP tool olarak dış dünyaya da expose edilir."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-misc-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-layer1-misc-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Layer 1 in-tree paketinin geri kalanı."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-misc-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-layer1-misc-lesson-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistemin küçük ama vazgeçilmez yardımcı modülleri: takvim, para, dil çevirisi, ayarlar, anlık iletişim. 'Her yerde lazım ama büyük modül değil' işler."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bu küçük parçaları her ürün ayrı ayrı yazsa zaman kaybı olur. Bir kez yazılır, hepsine sunulur."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici lazım olunca 'l1-misc'ten al' der; sistem hazır verir."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tarih seçici, para birimi gösterimi, dil değiştirme, anlık bildirim — hepsi buradan."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tüm ürünlerin geliştirilme sürecinde sürekli kullanılır."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tüm ekipler kullanır; bir mimar bakar."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir ev aletinin standart bağlantı kabloları: TV, dolap, lamba — hepsi aynı duy kullanır. Ayrı ayrı kablo üretmek anlamsız."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

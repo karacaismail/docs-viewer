@@ -1,0 +1,874 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-edu-u25-doctype-vs-ddd",
+  "sourceId": "edu-u25",
+  "slug": "egitim/edu-u25-doctype-vs-ddd",
+  "title": "DocType vs Klasik DDD — Anemic Domain Tuzağı",
+  "summary": "Klasik DDD'de Invoice/Contract/Receipt ayrı aggregate. Meta-framework'te DocType **runtime metadata Strategy'si**. İkisini karıştırma — tek-tablo + if-else YASAK.",
+  "categoryId": "egitim",
+  "tags": [
+   "education",
+   "ddd",
+   "doctype",
+   "strategy",
+   "aggregate",
+   "anti-pattern"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-kernel-schema",
+   "page-s-studio",
+   "page-sus-declarative",
+   "page-sus-timi",
+   "page-philosophy",
+   "page-edu-u04-veritabani",
+   "page-edu-u04b-veri-tasarim"
+  ],
+  "blocks": [
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "DocType ≠ tek Document tablo + type switching. Metadata-driven Strategy + tablo-per-tip + policy plugin. Klasik DDD'nin 3 yaklaşımı runtime karşılığı."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Eleştiri çıktı:"
+     },
+     {
+      "type": "text",
+      "text": " *'DocType DDD'ye aykırı, anemic domain üretir.'* "
+     },
+     {
+      "type": "strong",
+      "text": "Cevap:"
+     },
+     {
+      "type": "text",
+      "text": " klasik DDD çerçevesinde haklı — ama bu proje meta-framework. DocType "
+     },
+     {
+      "type": "strong",
+      "text": "tek tablo + if-else DEĞİL"
+     },
+     {
+      "type": "text",
+      "text": "; runtime'da Strategy + "
+     },
+     {
+      "type": "term",
+      "text": "tablo-per-tip",
+      "termId": "term-tablo-per-tip-edu-u25-doctype-vs-ddd"
+     },
+     {
+      "type": "text",
+      "text": " + policy plugin."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Tek tablo + type switching YASAK",
+    "segments": [
+     {
+      "type": "code",
+      "text": "if (type == 'invoice') doA else if (type == 'contract') doB"
+     },
+     {
+      "type": "text",
+      "text": " anti-pattern. Bu projede YAPILMAZ. Doğru pattern: "
+     },
+     {
+      "type": "strong",
+      "text": "DocType engine tablo-per-tip generate eder"
+     },
+     {
+      "type": "text",
+      "text": " + "
+     },
+     {
+      "type": "strong",
+      "text": "davranış kuralı varsa policy plugin Strategy"
+     },
+     {
+      "type": "text",
+      "text": " + "
+     },
+     {
+      "type": "strong",
+      "text": "sadece etiketse value object enum"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-co-2",
+    "type": "callout",
+    "variant": "info",
+    "title": "Klasik DDD 3 yaklaşımı — meta-framework karşılığı",
+    "segments": [
+     {
+      "type": "text",
+      "text": "DDD'nin 3 doğru yaklaşımı bu projede "
+     },
+     {
+      "type": "strong",
+      "text": "runtime metadata olarak"
+     },
+     {
+      "type": "text",
+      "text": " yaşar:\n\n1. "
+     },
+     {
+      "type": "strong",
+      "text": "Ayrı aggregate"
+     },
+     {
+      "type": "text",
+      "text": " (Invoice, Contract ayrı) → "
+     },
+     {
+      "type": "strong",
+      "text": "DocType tablo-per-tip generation"
+     },
+     {
+      "type": "text",
+      "text": "\n2. "
+     },
+     {
+      "type": "strong",
+      "text": "Strategy pattern"
+     },
+     {
+      "type": "text",
+      "text": " (DocumentPolicy) → "
+     },
+     {
+      "type": "strong",
+      "text": "Policy plugin metadata'dan yüklenir"
+     },
+     {
+      "type": "text",
+      "text": "\n3. "
+     },
+     {
+      "type": "strong",
+      "text": "Value object"
+     },
+     {
+      "type": "text",
+      "text": " (DocumentType) → "
+     },
+     {
+      "type": "strong",
+      "text": "DocCategory enum"
+     },
+     {
+      "type": "text",
+      "text": "\n\nÜçü birlikte yaşar. Her durumda doğru pattern uygulanır."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'Yeni DocType tanımlanırsa: tabXxx tablosu DDL ile generate edilir, controller/policy class auto-discover (Strategy), CRUD API + admin form auto-render. if/else type-switching YASAK. Tipe göre davranış varsa DocPolicy interface implementasyonu (e.g. InvoicePolicy implements DocPolicy).'*"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-h-3-yaklasim-ne-zaman-hangisi",
+    "type": "heading",
+    "level": 4,
+    "text": "3 yaklaşım — ne zaman hangisi"
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-table",
+    "type": "table",
+    "columns": [
+     "Durum",
+     "Yaklaşım",
+     "Karşılık"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Farklı kurallar + farklı yaşam"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Ayrı aggregate"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "DocType tablo-per-tip"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Aynı kavram + tipe göre davranış"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Strategy pattern"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Policy plugin (metadata'dan)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Sadece etiket / filtre"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Value object"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "DocCategory enum"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Tek tablo + type switching"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ANTI-PATTERN"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "YASAK ❌"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Bu ünite ne anlatıyor:"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Projenin merkez kavramı 'DocType' yaygın bir DDD eleştirisinin hedefi:"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "*'DocType DDD'ye aykırı! Tek Document entity + if (type==X) switch = anemic domain.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu eleştiri "
+     },
+     {
+      "type": "strong",
+      "text": "klasik DDD çerçevesinde haklı"
+     },
+     {
+      "type": "text",
+      "text": ". Ama bu projeye "
+     },
+     {
+      "type": "strong",
+      "text": "doğru uygulanmazsa kafa karıştırır"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "60+ için günlük benzetme:"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Kitapçıda 3 farklı belge türü var: fatura, sözleşme, makbuz."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-p-8",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Yanlış yaklaşım (anemic domain):"
+     },
+     {
+      "type": "text",
+      "text": " *Tek 'belge defteri' var; her satıra 'tür' yazılır; satırı işleyen memur her satırda 'türü ne?' diye if-else yapar.* Sonuç: defter çorba, yeni tür eklemek tüm if-else'leri güncellemek."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-p-9",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Doğru yaklaşım (klasik DDD):"
+     },
+     {
+      "type": "text",
+      "text": " *Fatura defteri ayrı, sözleşme defteri ayrı, makbuz defteri ayrı. Her birinin kendi memuru, kendi kuralı.*"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-p-10",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Bu projenin yaklaşımı (meta-framework):"
+     },
+     {
+      "type": "text",
+      "text": " *Kitapçı sahibi bilgisayardan 'yeni defter türü tanımla' der; sistem yeni defterin kurallarını, sayfalarını, memurunu "
+     },
+     {
+      "type": "strong",
+      "text": "otomatik üretir"
+     },
+     {
+      "type": "text",
+      "text": ". Sonuç: klasik DDD'nin 3 defter ayrımı gerçekleşir, ama defter sayısı önceden kodda yazılmaz.*"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-p-11",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Klasik DDD'nin 3 yaklaşımı — meta-framework karşılığı:"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-table-2",
+    "type": "table",
+    "columns": [
+     "Klasik DDD",
+     "Meta-framework",
+     "Ne zaman"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Ayrı aggregate (Invoice, Contract)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "DocType tablo-per-tip generation"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tipler farklı kural + farklı yaşam döngüsü"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Strategy pattern (DocumentPolicy)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Policy plugin metadata'dan"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Aynı kavram + tipe göre davranış"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Value object (DocumentType)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "DocCategory enum"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sadece etiket/filtre, davranış değişmez"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-p-12",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Tek tablo + type switching YASAK"
+     },
+     {
+      "type": "text",
+      "text": " — projede yapılmaz. Klasik DDD'nin haklı eleştirisi bu pattern'i hedefler; biz onu hedeflemiyoruz."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-p-13",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Frappe DocType nasıl çalışıyor (gerçek):"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Admin paneli 'yeni DocType' der: Invoice + alanlar (date, amount, customer)"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Sistem "
+       },
+       {
+        "type": "code",
+        "text": "tabInvoice"
+       },
+       {
+        "type": "text",
+        "text": " tablosunu "
+       },
+       {
+        "type": "strong",
+        "text": "otomatik üretir"
+       },
+       {
+        "type": "text",
+        "text": " (DDL execute)"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "text",
+        "text": "CRUD API'leri "
+       },
+       {
+        "type": "strong",
+        "text": "otomatik açılır"
+       },
+       {
+        "type": "text",
+        "text": " (REST + GraphQL)"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Admin form "
+       },
+       {
+        "type": "strong",
+        "text": "otomatik render edilir"
+       },
+       {
+        "type": "text",
+        "text": " (alan tiplerine göre)"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Davranış kuralı varsa "
+       },
+       {
+        "type": "code",
+        "text": "invoice_controller.py"
+       },
+       {
+        "type": "text",
+        "text": " Python dosyası yüklenir (Strategy pattern)"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-p-14",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Sonuç: 1 DocType = 1 tablo + 1 controller + 1 UI. "
+     },
+     {
+      "type": "strong",
+      "text": "Tek-tablo + if-else DEĞİL."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-p-15",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Senin projende ne uygulanır?"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Stack ürünleri (Invoice, Order, Subscription) için "
+      },
+      {
+       "type": "strong",
+       "text": "ayrı aggregate"
+      },
+      {
+       "type": "text",
+       "text": " (klasik DDD #1)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Aynı stack içinde tipler için "
+      },
+      {
+       "type": "strong",
+       "text": "DocType tablo-per-tip + policy plugin"
+      },
+      {
+       "type": "text",
+       "text": " (DDD #2 metadata-driven)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Filtreleme/raporlama için "
+      },
+      {
+       "type": "strong",
+       "text": "DocCategory value object"
+      },
+      {
+       "type": "text",
+       "text": " (DDD #3)"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-p-16",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Üçü birlikte yaşar. Tek-tablo + type-switching anti-pattern YASAK."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "DocType ≠ tek tablo + type switching. Klasik DDD'nin 3 yaklaşımı (ayrı aggregate / Strategy / value object) runtime metadata olarak yaşar."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tek tablo + if-else = anemic domain anti-pattern. Yeni tip eklemek mevcut kodu kırar. DocType doğru kurulursa: Strategy + tablo-per-tip + policy plugin."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) DocType admin paneli (k-schema). 2) Her DocType kendi DB tablosu (DDL generation). 3) Kuralı varsa policy plugin (Strategy). 4) Sadece etiketse value object enum."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "k-schema"
+       },
+       {
+        "type": "text",
+        "text": " cluster — engine. "
+       },
+       {
+        "type": "code",
+        "text": "s-studio"
+       },
+       {
+        "type": "text",
+        "text": " — low-code arayüz. Bu cluster — pedagoji."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk DocType tanımından ÖNCE bu disiplin net olmalı."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mimar DocType pattern karar; geliştirici policy plugin yazımı; admin user runtime'da yeni tip tanımı."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kitapçı: 1 defter + 'bu satır fatura' notu = karmaşa (anemic). Ayrı defterler = klasik DDD. Bilgisayardan 'yeni defter türü tanımla' = meta-framework. Üçü de farklı yaklaşım; en kötü 1. Bu proje 3."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-story",
+    "type": "useCase",
+    "title": "Kitapçı Hatice Teyze (62) — 3 defter",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Hatice Teyze 30 yıllık kırtasiyeci. Fatura defteri, sipariş defteri, sözleşme defteri ayrı ayrı tutuyor. Yeni 'iade defteri' eklemek istediğinde diğerleri etkilenmiyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Bu klasik DDD ayrı aggregate yaklaşımı. Hatice Teyze tek deftere her şeyi yazsa, sayfa karıştırma + 'bu satır fatura mı sipariş mi' soruları başlar. Ayrı defterler = ayrı kurallar = sağlam sistem."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-story-2",
+    "type": "useCase",
+    "title": "Apartman yöneticisi Murat Bey (61) — yeni evrak türü",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Murat Bey apartman kararları, su faturaları, sakin sözleşmeleri için ayrı klasörler tutuyor. Yeni 'asansör bakım sözleşmesi' türü eklenmesi gerekiyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Sistem-de (meta-framework): admin paneline gir, 'asansör bakım' DocType tanımla. Sistem yeni klasör + form + kuralları otomatik üretir. Mevcut 3 evrak türü etkilenmez."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-story-3",
+    "type": "useCase",
+    "title": "Geliştirici Selim Bey (62'lik abisi 32) — anti-pattern uyarısı",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Selim Bey 'Document' tablosu yapayım, doc_type field koyayım, handler'da if-else dallandırayım' diye düşünüyordu."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Eleştiri: anemic domain. Doğrusu — DocType engine ile "
+     },
+     {
+      "type": "strong",
+      "text": "tablo-per-tip generation"
+     },
+     {
+      "type": "text",
+      "text": " + tipler arası farklı kural varsa "
+     },
+     {
+      "type": "strong",
+      "text": "policy plugin Strategy"
+     },
+     {
+      "type": "text",
+      "text": " kullan. if-else YASAK."
+     }
+    ]
+   }
+  ]
+ }
+}

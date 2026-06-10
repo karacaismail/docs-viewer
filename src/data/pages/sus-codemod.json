@@ -1,0 +1,224 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-sus-codemod",
+  "sourceId": "sus-codemod",
+  "slug": "sus/sus-codemod",
+  "title": "Otomatik upgrade — kendini-yükselten döngü",
+  "summary": "Drupal Rector + AI: her deprecation bir codemod kuralı olur; AI eski kodu yeniden yazar. \"Migration aracı = AI\".",
+  "categoryId": "sus",
+  "tags": [
+   "sustainability",
+   "codemod",
+   "drupal",
+   "rector",
+   "ai"
+  ],
+  "meta": {},
+  "related": [
+   "page-build-sequence",
+   "page-deploy-yap"
+  ],
+  "blocks": [
+   {
+    "id": "block-sus-codemod-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Eski kod elle taşınmaz — AI okur, codemod yazar, otomatik dönüştürür."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-codemod-co",
+    "type": "callout",
+    "variant": "tip",
+    "title": "AI bükümü",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Drupal'da codemod'u "
+     },
+     {
+      "type": "strong",
+      "text": "insan"
+     },
+     {
+      "type": "text",
+      "text": " yazar. Bizde AI yazıp uygular: deprecation notlarını okur, LibCST kuralı üretir, tüketici reposunda koşar, PR açar. "
+     },
+     {
+      "type": "strong",
+      "text": "Kendini-yükselten upgrade döngüsü."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-codemod-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Disiplin:"
+     },
+     {
+      "type": "text",
+      "text": " her deprecation = bir codemod. CI'da "
+     },
+     {
+      "type": "code",
+      "text": "codemod-check.yml"
+     },
+     {
+      "type": "text",
+      "text": " yeni deprecation'ı görür ve karşılığında codemod dosyası yoksa PR'ı bloke eder. Bu disiplin sayesinde Drupal contrib eklenti uyum oranı %98'e çıktı."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-codemod-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-sus-codemod-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistem büyüyüp eski API'leri \"deprecated\" (kullanımdan kaldırılan) ilan ettiğinde, her deprecated için bir codemod (kod-dönüştürücü) yazılır. AI bu codemod'u otomatik uygular; tüketici kodu yeni API'ye geçer."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "50 yıl boyunca kullanıcılardan \"manuel upgrade yap\" istemek mümkün değil. Drupal majör sürümlerinde Rector resmî desteği olunca contrib eklenti uyumu %67'den %98'e çıktı."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her deprecation duyurusu beraberinde bir codemod kuralı getirir (Python'da LibCST tabanlı AST dönüşümü). AI bu kuralı tüketici reposunda koşar; eski kod yeni API'ye dönüşür. BC modu açıkken iki API aynı anda çalışır."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "/codemods/ klasöründe her kural ayrı dosya. CI'da "
+       },
+       {
+        "type": "code",
+        "text": "codemod-check.yml"
+       },
+       {
+        "type": "text",
+        "text": " her deprecation için codemod var mı kontrol eder."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her API değişikliği duyurusunda — eski API kullanımdan kaldırılırken yenisi açıklanır + dönüşüm kuralı yayınlanır."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mimar API'yi değiştirir + codemod yazar; AI ajan tüketici kodunda koşar; tüketici PR'ı alıp birleştirir."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Posta dağıtımcısı tarih değiştirmesi: 2024'te 5 hane posta kodu \"yeterli değil\" deniyor, 7 haneye geçiliyor. PTT eski adres defterlerini tarayan otomatik sistem kuruyor: 5 hanelileri 7 haneye çeviriyor, otomatik. Vatandaş elle güncellemek zorunda kalmıyor."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-sus-codemod-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-sus-codemod-story",
+    "type": "useCase",
+    "title": "Banka müşterisi Ayşe Hanım, IBAN geçişi",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "2009'da banka hesap numarası 12 hane. 2010'da IBAN sistemi geldi (26 hane TR'de). Ayşe Hanım'ın tüm otomatik ödemeleri (elektrik, su, telefon) eski numaraya bağlıydı."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Banka arka planda eski-yeni çevirim tablosu hazırladı; eski numarayla gelen talep IBAN'a otomatik çevrildi. Müşteri hiçbir şey yapmadı — geçiş hissedilmedi. Yazılım codemod tam buna benzer: arka planda otomatik dönüşüm."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-codemod-story-2",
+    "type": "useCase",
+    "title": "Tapu memuru Engin Bey, TKGM dijital geçişi",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "1990'lardan beri tüm tapu kayıtları kağıt + el yazısı. 2010'da TAKBİS dijital sistemi geldi. 30 yıllık kağıt arşiv tek tek yazılarak girilseydi 20 yıl sürerdi."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Otomatik OCR + ad-eşleştirme + adres standardizasyonu 3 yıl içinde tüm arşivi taradı. Kağıttan dijitale codemod. Yazılım sürüm geçişi de aynı: AI otomatik dönüştürür."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-codemod-story-3",
+    "type": "useCase",
+    "title": "Sigortacı Gülay Hanım, KKB skor formatı",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "2015'te KKB skoru 0-100 aralığında verilirdi. 2020'de 0-1900 sistemine geçildi. Eski poliçelerde \"min 70\" yazıyor; yeni sistemde 70 saçma rakam."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Otomatik dönüşüm formülü: eski_skor × 19 = yeni_skor. Tüm sözleşmelerde otomatik güncelleme yapıldı. Gülay Hanım elle dönüştürmek zorunda kalmadı. Codemod tek satır kuralla milyonlarca kayıt çevirir."
+     }
+    ]
+   }
+  ]
+ }
+}

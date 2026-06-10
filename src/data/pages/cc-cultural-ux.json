@@ -1,0 +1,1620 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-cc-cultural-ux",
+  "sourceId": "cc-cultural-ux",
+  "slug": "crosscut/cc-cultural-ux",
+  "title": "Kültürel UX — Renk, Jest, Font Fallback, Ekran Okuyucu Dili",
+  "summary": "Renk anlamı (kırmızı CN uğur / EU uyarı), jest/manken seçimi, font stack (Latin+Arabic+CJK+Devanagari), RTL ikon yönü, lang attribute screen reader.",
+  "categoryId": "crosscut",
+  "tags": [
+   "crosscut",
+   "ux",
+   "culture",
+   "font",
+   "a11y",
+   "rtl",
+   "screen-reader",
+   "semiotics"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-cc-i18n-standards",
+   "page-cc-a11y-backend",
+   "page-cc-jurisdiction-resolver",
+   "page-fe-core-ui",
+   "page-fe-mobile"
+  ],
+  "blocks": [
+   {
+    "id": "block-cc-cultural-ux-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Kültürel anlam (renk, jest), font fallback stratejisi (Unicode coverage), RTL ikon yönü, ekran okuyucu lang attribute disiplini."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "i18n'in görünmez %20'si:"
+     },
+     {
+      "type": "text",
+      "text": " kültür + a11y. Renk yanlış mesaj iletebilir, font yoksa metin kutu çıkar, lang attribute yanlışsa screen reader saçma telaffuz eder."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Mesaj iletme — icon + text + renk üçü",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Renk tek başına mesaj iletmesin. Kırmızı = error Batı'da; CN'de uğur. "
+     },
+     {
+      "type": "strong",
+      "text": "Icon + metin + renk birlikte"
+     },
+     {
+      "type": "text",
+      "text": " = hem kültürel hem a11y (renk körü). WCAG 1.4.1 zorunlu."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-co-2",
+    "type": "callout",
+    "variant": "danger",
+    "title": "`<html lang>` her zaman doğru",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Screen reader telaffuz için kritik. WCAG 3.1.1 (A). "
+     },
+     {
+      "type": "code",
+      "text": "<html lang='en'>"
+     },
+     {
+      "type": "text",
+      "text": " ama Türkçe içerik = saçma telaffuz. Dinamik dil değişiminde JS update + inline "
+     },
+     {
+      "type": "code",
+      "text": "<p lang='en'>"
+     },
+     {
+      "type": "text",
+      "text": " karışık içerik için."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'CSS font-family stack: Inter + Noto Sans Arabic + Noto Sans CJK + Noto Sans Devanagari, system-ui fallback. @font-face unicode-range ile partial loading. Tema sistemi cultural variant: jurisdiction CN için primary kırmızı. document.documentElement.lang = locale dinamik set. Renk ile birlikte icon + text mesaj.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-h-renk-kulturel-anlam-pazar-matrisi",
+    "type": "heading",
+    "level": 4,
+    "text": "Renk kültürel anlam — pazar matrisi"
+   },
+   {
+    "id": "block-cc-cultural-ux-table",
+    "type": "table",
+    "columns": [
+     "Renk",
+     "Batı",
+     "CN/Doğu Asya",
+     "Hindistan",
+     "Ortadoğu"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kırmızı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tehlike"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "UĞUR, mutluluk"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Saflık"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kan, dikkat"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Beyaz"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Saflık"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "YAS, ölüm"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yas"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Saflık"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Yeşil"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Doğa"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sağlıksızlık"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Doğa"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "KUTSAL (İslam)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Sarı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Dikkat"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "İmparatorluk"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kutsal"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yas"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Mor"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Lüks"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yas"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yas"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-h-font-fallback-unicode-coverage",
+    "type": "heading",
+    "level": 4,
+    "text": "Font fallback — Unicode coverage"
+   },
+   {
+    "id": "block-cc-cultural-ux-table-2",
+    "type": "table",
+    "columns": [
+     "Yazı sistemi",
+     "Font",
+     "Boyut",
+     "Lazy?"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Latin + Cyrillic"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Inter"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "~150 KB"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Default"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Arabic + Hebrew"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Noto Sans Arabic"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "~120 KB"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Lazy (locale=ar/he)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "CJK"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Noto Sans CJK"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "~5 MB"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Mutlak lazy"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Devanagari"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Noto Sans Devanagari"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "~150 KB"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Lazy (locale=hi)"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-h-metin-genislemesi-dil-bazli",
+    "type": "heading",
+    "level": 4,
+    "text": "Metin genişlemesi dil bazlı"
+   },
+   {
+    "id": "block-cc-cultural-ux-table-3",
+    "type": "table",
+    "columns": [
+     "Dil",
+     "Genişleme",
+     "UI etkisi"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "İngilizce"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "%100"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Baseline"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Almanca"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "%135"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Buton/label taşar"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Fransızca"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "%120"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hafif taşar"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Türkçe"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "%110"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Az uzun"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Çince/Japonca"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "%50"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Boşluk fazla"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-cc-cultural-ux-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Bu cluster i18n'in 'estetik + a11y' boyutu — teknik standartlardan ayrı."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-h",
+    "type": "heading",
+    "level": 2,
+    "text": "1. Renk Anlamları (kültürel semiyotik)"
+   },
+   {
+    "id": "block-cc-cultural-ux-table-4",
+    "type": "table",
+    "columns": [
+     "Renk",
+     "Batı / Latin",
+     "Çin / Doğu Asya",
+     "Hindistan",
+     "Ortadoğu"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Kırmızı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tehlike, uyarı, dur"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "Uğur, mutluluk, evlilik"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Saflık, evlilik"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kan, dikkat"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Beyaz"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Saflık, evlilik"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "Yas, ölüm"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yas"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Saflık, barış"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Yeşil"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Doğa, başarı (gain)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sağlıksızlık"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Doğa, başarı"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "İslam, kutsallık"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Sarı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Dikkat, ucuz"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "İmparatorluk"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kutsal"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yas"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Mor"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Lüks, kraliyet"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yas (Brezilya)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yas"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Siyah"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Modernite, lüks"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kötü, ölüm"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Negatif"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Resmi"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Mimari:"
+     },
+     {
+      "type": "text",
+      "text": " UI palet'i değiştir mecbur değil — ama "
+     },
+     {
+      "type": "strong",
+      "text": "anlamı bağla"
+     },
+     {
+      "type": "text",
+      "text": ". 'success = yeşil', 'error = kırmızı' Batı default; Çin için ayarlanabilir tema. Renk "
+     },
+     {
+      "type": "strong",
+      "text": "mesaj iletmek için tek araç DEĞİL"
+     },
+     {
+      "type": "text",
+      "text": " (a11y prensibi: icon + renk + metin)."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-h-2",
+    "type": "heading",
+    "level": 2,
+    "text": "2. Jest, Manken, Görsel Uygunluk"
+   },
+   {
+    "id": "block-cc-cultural-ux-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "👍 (thumbs up): Batı 'iyi'; Ortadoğu/Yunanistan/Iran "
+      },
+      {
+       "type": "strong",
+       "text": "kaba/küfür"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "👌 (OK gesture): Batı 'tamam'; Brezilya "
+      },
+      {
+       "type": "strong",
+       "text": "kaba"
+      },
+      {
+       "type": "text",
+       "text": "; Almanya nötr"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "🤞 (parmaklar çapraz): Batı 'şans'; Vietnam "
+      },
+      {
+       "type": "strong",
+       "text": "kaba"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "✋ (el): Yunan "
+      },
+      {
+       "type": "strong",
+       "text": "küfür"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "☝ (işaret parmağı): Asya "
+      },
+      {
+       "type": "strong",
+       "text": "kaba"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Manken/model:"
+     },
+     {
+      "type": "text",
+      "text": " Suudi'de kadın yüzü açık görseli yasak; Batı'da çeşitlilik beklenir (diversity). Görsel asset jurisdiction-aware seçilir."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-h-3",
+    "type": "heading",
+    "level": 2,
+    "text": "3. Font Fallback Stratejisi"
+   },
+   {
+    "id": "block-cc-cultural-ux-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Tek font tüm yazı sistemlerini kapsamaz."
+     },
+     {
+      "type": "text",
+      "text": " Unicode coverage:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-table-5",
+    "type": "table",
+    "columns": [
+     "Yazı sistemi",
+     "Örnek font",
+     "Boyut"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Latin"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Inter, Roboto"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "~150 KB"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Arabic"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Noto Sans Arabic"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "~120 KB"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Hebrew"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Noto Sans Hebrew"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "~80 KB"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "CJK (Çince, Japonca, Korece)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Noto Sans CJK"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "~5 MB"
+       },
+       {
+        "type": "text",
+        "text": " (büyük!)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Devanagari (Hintçe)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Noto Sans Devanagari"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "~150 KB"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Cyrillic"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Inter (built-in)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "~150 KB"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Strateji:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-code",
+    "type": "codeBlock",
+    "language": "css",
+    "code": "font-family:\n  'Inter',                    /* Latin + Cyrillic */\n  'Noto Sans Arabic',         /* Arabic, Hebrew */\n  'Noto Sans CJK',            /* Çince, Japonca, Korece */\n  'Noto Sans Devanagari',     /* Hintçe */\n  system-ui, sans-serif;"
+   },
+   {
+    "id": "block-cc-cultural-ux-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Lazy load:"
+     },
+     {
+      "type": "text",
+      "text": " sadece o sayfada gerekli fontu yükle. Kullanıcı locale=hi-IN ise CJK indirme."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-p-8",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "CSS `unicode-range`:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-code-2",
+    "type": "codeBlock",
+    "language": "css",
+    "code": "@font-face {\n  font-family: 'Inter';\n  unicode-range: U+0000-00FF, U+0131, U+0152-0153;  /* Latin */\n  ...\n}"
+   },
+   {
+    "id": "block-cc-cultural-ux-h-4",
+    "type": "heading",
+    "level": 2,
+    "text": "4. RTL — Sadece Metin Değil"
+   },
+   {
+    "id": "block-cc-cultural-ux-p-9",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Aynalanan elemanlar:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Geri ok ← → → (ikon flip)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Slider yönü (min sol → max sağ → tersine döner)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Breadcrumb: A › B › C → C ‹ B ‹ A"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Progress bar: dolma yönü tersine"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Drawer (yan menü): sağdan açılır"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-p-10",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "CSS logical properties"
+     },
+     {
+      "type": "text",
+      "text": " (margin-inline-start, padding-block-end) zorunlu. "
+     },
+     {
+      "type": "code",
+      "text": "margin-left"
+     },
+     {
+      "type": "text",
+      "text": " HARDCODE = RTL'de bozulur."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-h-5",
+    "type": "heading",
+    "level": 2,
+    "text": "5. Ekran Okuyucu `lang` Attribute"
+   },
+   {
+    "id": "block-cc-cultural-ux-p-11",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Screen reader (NVDA, JAWS, VoiceOver) telaffuz için sayfanın "
+     },
+     {
+      "type": "strong",
+      "text": "gerçek dilini"
+     },
+     {
+      "type": "text",
+      "text": " bilir."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-p-12",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Yanlış:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-code-3",
+    "type": "codeBlock",
+    "language": "html",
+    "code": "<html lang='en'>\n<body>\n  <p>Merhaba dünya</p>  <!-- screen reader Türkçe'yi İngilizce telaffuz eder -->\n</body>"
+   },
+   {
+    "id": "block-cc-cultural-ux-p-13",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Doğru:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-code-4",
+    "type": "codeBlock",
+    "language": "html",
+    "code": "<html lang='tr'>\n<body>\n  <p>Merhaba dünya</p>\n  <p lang='en'>Hello world</p>  <!-- karışık dilli içerik için -->\n</body>"
+   },
+   {
+    "id": "block-cc-cultural-ux-p-14",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Disiplin:"
+     },
+     {
+      "type": "text",
+      "text": " her sayfada "
+     },
+     {
+      "type": "code",
+      "text": "<html lang>"
+     },
+     {
+      "type": "text",
+      "text": " doğru set + farklı dilli içerik için "
+     },
+     {
+      "type": "code",
+      "text": "lang"
+     },
+     {
+      "type": "text",
+      "text": " attribute. WCAG 3.1.1 (A) + 3.1.2 (AA) zorunlu."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-h-6",
+    "type": "heading",
+    "level": 2,
+    "text": "6. Metin Genişlemesi (Locale-aware Layout)"
+   },
+   {
+    "id": "block-cc-cultural-ux-p-15",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Dil bazlı genişleme oranı:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-table-6",
+    "type": "table",
+    "columns": [
+     "Dil",
+     "Genişleme",
+     "Etki"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "İngilizce (baseline)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "%100"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Almanca"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "%135"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Buton/label taşar"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Fransızca"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "%120"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hafif taşar"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "İspanyolca"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "%125"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Orta"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Çince/Japonca"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "%50"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Boşluk fazla"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Türkçe"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "%110"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hafif uzun"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-p-16",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Mimari:"
+     },
+     {
+      "type": "text",
+      "text": " UI bileşenleri "
+     },
+     {
+      "type": "strong",
+      "text": "width: auto"
+     },
+     {
+      "type": "text",
+      "text": " + "
+     },
+     {
+      "type": "strong",
+      "text": "max-width"
+     },
+     {
+      "type": "text",
+      "text": " kullanmalı. Sabit "
+     },
+     {
+      "type": "code",
+      "text": "width: 200px"
+     },
+     {
+      "type": "text",
+      "text": " button = Almanca'da bozuk. Pseudo-localization test'i ile yakala."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-cc-cultural-ux-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "i18n'in kültür + a11y boyutu: renk anlamı, jest, font fallback, RTL ikon yönü, screen reader lang attribute."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Teknik standart (BCP 47, ICU) yetmez — kültürel/algısal anlam ayrı. Yanlış renk = yanlış mesaj; yanlış font = okunamayan içerik; yanlış lang = yanlış telaffuz."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Cultural theme variant per jurisdiction. 2) Mesaj icon+text+renk üçü birlikte. 3) Font stack + unicode-range + lazy load. 4) CSS logical properties RTL. 5) "
+       },
+       {
+        "type": "code",
+        "text": "<html lang>"
+       },
+       {
+        "type": "text",
+        "text": " dinamik + inline lang çoklu dil."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "cc-cultural-ux"
+       },
+       {
+        "type": "text",
+        "text": " cluster + "
+       },
+       {
+        "type": "code",
+        "text": "cc-i18n-standards"
+       },
+       {
+        "type": "text",
+        "text": " (teknik) + "
+       },
+       {
+        "type": "code",
+        "text": "cc-a11y-backend"
+       },
+       {
+        "type": "text",
+        "text": " (EAA). Frontend bileşen kütüphanesinde uygulanır."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk ek dil/kültür eklenmeden ÖNCE font + lang disiplini. Cultural theme ek pazar açılımında."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Designer kültürel renk + manken; frontend dev font stack + lang attribute; a11y consultant denetim."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yemek davetinde misafire göre menü: vejetaryen, alerjisi var, dini kısıt. Aynı yemeği herkese koymak ayıp. Yazılım UI = misafir davası: herkese 'aynı menü' kültürel saldırı; yerel adaptasyon = saygı."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-cc-cultural-ux-story",
+    "type": "useCase",
+    "title": "Ürün tasarımcı Selin Hanım (38) — CN açılım",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Tasarım sisteminde 'success = yeşil', 'error = kırmızı'. CN pazara açıldığında 'yeni yıl indirim' banner'ı yeşil yaptılar — yerel ekip 'kırmızı olsa daha uğurlu' dedi."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Tema sistemine "
+     },
+     {
+      "type": "strong",
+      "text": "cultural variant"
+     },
+     {
+      "type": "text",
+      "text": " eklendi: jurisdiction CN ise primary accent = kırmızı (uğur). Mesaj iletme "
+     },
+     {
+      "type": "strong",
+      "text": "icon + metin + renk"
+     },
+     {
+      "type": "text",
+      "text": " üçü birlikte (a11y + kültürel)."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-story-2",
+    "type": "useCase",
+    "title": "Geliştirici Murat Bey (61'lik abisi 30) — font fallback",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Web sitesi Türkçe + İngilizce yayında. Hindistan kullanıcı 'टेस्ट' (Devanagari) yorum yazdı; sayfada kutu karakterler (Tofu) görünüyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Font stack güncellendi: Inter + Noto Sans Devanagari + Noto Sans CJK lazy load. unicode-range ile sadece gerekli karakter setleri yüklenir. Tofu sorunu çözüldü."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-cultural-ux-story-3",
+    "type": "useCase",
+    "title": "A11y consultant Ayşe Hanım (50) — screen reader",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "WCAG audit: site "
+     },
+     {
+      "type": "code",
+      "text": "<html lang='en'>"
+     },
+     {
+      "type": "text",
+      "text": " ama Türkçe içerik. Screen reader 'Merhaba'yı 'mer-haba' diye telaffuz ediyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "code",
+      "text": "<html lang='tr'>"
+     },
+     {
+      "type": "text",
+      "text": " set + dinamik dil değişiminde JS update + farklı dilli içerik için inline "
+     },
+     {
+      "type": "code",
+      "text": "lang"
+     },
+     {
+      "type": "text",
+      "text": " attribute. WCAG 3.1.1 (A) compliance."
+     }
+    ]
+   }
+  ]
+ }
+}

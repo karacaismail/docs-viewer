@@ -7,13 +7,15 @@ Bu doküman, dört statik veri dosyasının yapısal sözleşmesini tanımlar. A
 ```txt
 src/
   data/
-    navigation.json      -> Rail 1/2 ağacı (yapısı: 03-navigation-ia.md §5)
-    pages.json           -> tüm page + block içeriği
-    glossary.json        -> bağlamsal terim açıklamaları
-    search-index.json    -> MiniSearch kaynak dokümanları (build-time üretilir)
+    navigation.json        -> Rail 1/2 ağacı (yapısı: 03-navigation-ia.md §5) — eager
+    pages-index.json       -> page metadata'sı (id, slug, title, summary, meta, related) — eager
+    pages/<stem>.json      -> page gövdesi (blocks) — page-başına lazy chunk (14 #15)
+    glossary.json          -> terim core'u (label + shortExplanation; tooltip/chip) — eager
+    glossary-detail.json   -> panel içeriği (long/analogy/useCases) — lazy
+    search-index.json      -> MiniSearch kaynak dokümanları — lazy
 ```
 
-`search-index.json` elle düzenlenmez; migration/build script'i `pages.json` + `glossary.json`'dan üretir ve dosya başına "generated — elle düzenleme yasak" işareti taşır.
+Eager/lazy bölünmesi performans bütçesinin (14 #15) yapısal karşılığıdır ve `size-limit` CI kapısıyla korunur. Tüm dosyalar migration tarafından üretilir, elle düzenlenmez ("generated — elle düzenleme yasak" işareti).
 
 ## 2. Page Modeli
 

@@ -4,9 +4,15 @@ import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-const FILES = ["navigation.json", "pages.json", "glossary.json", "search-index.json"];
-const hashAll = () =>
-  FILES.map((f) => createHash("sha256").update(readFileSync(`src/data/${f}`)).digest("hex"));
+import { readdirSync } from "node:fs";
+
+const hashAll = () => {
+  const files = [
+    ...readdirSync("src/data").filter((f) => f.endsWith(".json")).map((f) => `src/data/${f}`),
+    ...readdirSync("src/data/pages").map((f) => `src/data/pages/${f}`),
+  ].sort();
+  return files.map((f) => createHash("sha256").update(readFileSync(f)).digest("hex"));
+};
 
 describe("migration determinizmi", () => {
   it("iki çalıştırma aynı çıktıyı üretir", () => {

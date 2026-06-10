@@ -1,0 +1,470 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-l1-quiet-hours",
+  "sourceId": "l1-quiet-hours",
+  "slug": "layer1/l1-quiet-hours",
+  "title": "Quiet Hours — sessiz saatler",
+  "summary": "Kullanıcının saat dilimi + uyku saati = bildirim göndermeme. Acil olmayan SMS gece atılmaz.",
+  "categoryId": "layer1",
+  "tags": [
+   "layer1",
+   "notification",
+   "quiet-hours",
+   "timezone",
+   "ux"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-layer1-notification",
+   "page-edu-u22-email-sms",
+   "page-edu-u15-ux-60-plus"
+  ],
+  "blocks": [
+   {
+    "id": "block-l1-quiet-hours-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "User timezone + sleep window (22:00-08:00 varsayılan). Critical bypass (security, payment). Per-channel ayar."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-quiet-hours-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Sessiz saatler = saygı."
+     },
+     {
+      "type": "text",
+      "text": " Özellikle 60+ kullanıcı için. Otomatik varsayılan + kullanıcı ince ayar."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-quiet-hours-co",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'Notification worker: user.quietHours + user.timezone kontrol. Quiet window içinde + not critical → reschedule next available. Critical bypass tablo (security, payment_failed). Per-channel ayar.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-l1-quiet-hours-h-60-onerilen-default",
+    "type": "heading",
+    "level": 4,
+    "text": "60+ önerilen default"
+   },
+   {
+    "id": "block-l1-quiet-hours-table",
+    "type": "table",
+    "columns": [
+     "Kanal",
+     "Quiet window",
+     "Bypass"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Email"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hep açık"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Push"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "20:00-09:00"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Critical"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "SMS"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "22:00-08:00"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Security, payment"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Phone call"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hep kapalı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sadece kullanıcı acil"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-l1-quiet-hours-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-l1-quiet-hours-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Quiet Hours mantığı:"
+     }
+    ]
+   },
+   {
+    "id": "block-l1-quiet-hours-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Her kullanıcının "
+      },
+      {
+       "type": "code",
+       "text": "timezone"
+      },
+      {
+       "type": "text",
+       "text": " + "
+      },
+      {
+       "type": "code",
+       "text": "quiet_hours_start"
+      },
+      {
+       "type": "text",
+       "text": " + "
+      },
+      {
+       "type": "code",
+       "text": "quiet_hours_end"
+      },
+      {
+       "type": "text",
+       "text": " saklanır"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Bildirim göndermeden önce: kullanıcının yerel saatine çevir, quiet window içinde mi?"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "İçindeyse: cron job uyandırma saatine kaydır"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Kritik bildirim (security alert, payment failed): bypass"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-l1-quiet-hours-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Kullanıcı bazında ayar:"
+     }
+    ]
+   },
+   {
+    "id": "block-l1-quiet-hours-code",
+    "type": "codeBlock",
+    "language": "sql",
+    "code": "user_notification_prefs(\n  user_id, channel, quiet_start TIME, quiet_end TIME, bypass_critical BOOL\n)"
+   },
+   {
+    "id": "block-l1-quiet-hours-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Per-channel:"
+     }
+    ]
+   },
+   {
+    "id": "block-l1-quiet-hours-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Email: 24 saat aç (kullanıcı sabah okur)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Push: 22:00-08:00 kapalı"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "SMS: sadece kritik"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-l1-quiet-hours-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Cron job:"
+     }
+    ]
+   },
+   {
+    "id": "block-l1-quiet-hours-list-3",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "'Send notification' job'ı queue'ya alındığında scheduled_at hesapla"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Kullanıcı quiet'te → next available time"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Saat dilimine göre delayed"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-l1-quiet-hours-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "60+ kullanıcı için ekstra:"
+     }
+    ]
+   },
+   {
+    "id": "block-l1-quiet-hours-list-4",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Varsayılan quiet window genişletilmeli (20:00-09:00)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Acil yenisinin de bypass'i kullanıcı seçer"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-l1-quiet-hours-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-l1-quiet-hours-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kullanıcının sessiz saatlerini bilgilendirme katmanı."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "60+ kullanıcı gece bildirimle uyanırsa rahatsız olur."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) User profili timezone + quiet window. 2) Bildirim gönderirken kontrol. 3) Kritik bypass. 4) Per-channel ayar."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "l1-notification"
+       },
+       {
+        "type": "text",
+        "text": " ile birlikte. Worker bildirim göndermeden önce kontrol."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk push notification öncesi."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Backend developer worker logic; product team UX ayarları."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Apartman kapıcısı: gece 22'den sonra zil çalmayacak, acil dışı misafir gelmeyecek. Acil ise (yangın) bypass."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-l1-quiet-hours-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-l1-quiet-hours-story",
+    "type": "useCase",
+    "title": "Ayşe Teyze (63) — gece bildirimi",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Ayşe Teyze gece 02:00'de telefon zili çaldı: 'Aylık raporunuz hazır'. Korktu, kalkamadı."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Quiet hours: Ayşe Teyze'nin profili 22:00-09:00 sessiz. Rapor bildirimi 09:00'da gelir."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-quiet-hours-story-2",
+    "type": "useCase",
+    "title": "Mehmet Bey (61) — kart kullanımı uyarı",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Mehmet Bey gece 03:00'te uyandı; banka SMS: 'Kartınız İspanya'da kullanıldı'."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Kritik bypass. Quiet hours içinde olsa bile gönderildi — saldırı olabilir, hemen bilmek lazım."
+     }
+    ]
+   }
+  ]
+ }
+}

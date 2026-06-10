@@ -11,7 +11,7 @@ import { RouterProvider } from "@tanstack/react-router";
 import { router } from "./app/router";
 import { registerCoreBlocks } from "./components/content/registerBlocks";
 import navigationJson from "./data/navigation.json";
-import pagesJson from "./data/pages.json";
+import pagesIndexJson from "./data/pages-index.json";
 import glossaryJson from "./data/glossary.json";
 
 registerCoreBlocks();
@@ -19,7 +19,7 @@ registerCoreBlocks();
 // Fail loudly — dev'de açılış doğrulaması (08 §1); zod prod bundle'a girmez
 if (import.meta.env.DEV) {
   const { validateStaticData } = await import("./engine/validateStaticData");
-  const issues = validateStaticData(navigationJson, pagesJson, glossaryJson);
+  const issues = validateStaticData(navigationJson, pagesIndexJson, glossaryJson);
   if (issues.length > 0) {
     console.error("İçerik doğrulama hataları:", issues);
     document.getElementById("app")!.textContent =

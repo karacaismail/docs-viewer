@@ -1,0 +1,538 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-scale-streaming",
+  "sourceId": "scale-streaming",
+  "slug": "scale/scale-streaming",
+  "title": "Streaming — Kafka, real-time aggregation",
+  "summary": "Modüler monolith için NADİREN gerekli. Ama 1M event/sn akışı varsa: Kafka + Flink/Materialize.",
+  "categoryId": "scale",
+  "tags": [
+   "scale",
+   "streaming",
+   "kafka",
+   "flink",
+   "real-time"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-scale-outbox",
+   "page-scale-projections",
+   "page-kernel-bus"
+  ],
+  "blocks": [
+   {
+    "id": "block-scale-streaming-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Kafka topic + consumer group, windowing, stateful aggregation. Modüler monolit'te Postgres LISTEN/NOTIFY veya outbox yeter."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-streaming-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Streaming'in altın kuralı:"
+     },
+     {
+      "type": "text",
+      "text": " *'Postgres + worker yetmediğinden emin olmadan Kafka ekleme.'* Ekip + operations yükü ciddi."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-streaming-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Kafka over-engineering tuzağı",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Startup '100 event/sn'de Kafka kuruyor — günde 4 saat operations. Çözüm: Postgres NOTIFY + worker = 100K/sn'ye kadar yeter."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-streaming-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'Şu an Kafka YASAK. Postgres NOTIFY + outbox + scale-workers. 100K+ event/sn'e ulaşılırsa Redpanda değerlendirilecek (Kafka değil, daha basit).'*"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-streaming-h-karar-matrisi",
+    "type": "heading",
+    "level": 4,
+    "text": "Karar matrisi"
+   },
+   {
+    "id": "block-scale-streaming-table",
+    "type": "table",
+    "columns": [
+     "Event/sn",
+     "Çözüm",
+     "Operations yükü"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "< 1K"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sync handler"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yok"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "1K-10K"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Outbox + worker"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Düşük"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "10K-100K"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Postgres NOTIFY + pool"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Orta"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "100K-1M"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Redpanda/Kafka"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yüksek"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "1M+"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kafka cluster"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Ciddi (dedicated team)"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-streaming-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-scale-streaming-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Streaming = real-time event processing."
+     },
+     {
+      "type": "text",
+      "text": " Klasik batch yerine sürekli akış."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-streaming-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Ne zaman GEREKLI:"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-streaming-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "> 100K event/saniye"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Sub-second latency hedefi"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Windowed aggregation (son 5 dk count)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Multiple consumer with replay"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-streaming-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Mevcut framework için:"
+     },
+     {
+      "type": "text",
+      "text": " Çoğu SaaS bunu gerekmez. "
+     },
+     {
+      "type": "strong",
+      "text": "Postgres LISTEN/NOTIFY + outbox + worker"
+     },
+     {
+      "type": "text",
+      "text": " yeterli. Kafka ekleme = ekip + operations + cost."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-streaming-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Eğer gerekirse:"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-streaming-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Kafka"
+      },
+      {
+       "type": "text",
+       "text": " (en yaygın): KRaft mode, ZooKeeper-less"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Redpanda"
+      },
+      {
+       "type": "text",
+       "text": ": Kafka-uyumlu, daha hızlı, Go yazılı"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "NATS JetStream"
+      },
+      {
+       "type": "text",
+       "text": ": Daha basit, küçük ölçek"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Materialize/RisingWave"
+      },
+      {
+       "type": "text",
+       "text": ": Streaming SQL"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-streaming-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Patterns:"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-streaming-list-3",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Event sourcing"
+      },
+      {
+       "type": "text",
+       "text": ": tüm state'i event'lerden kur"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "CQRS"
+      },
+      {
+       "type": "text",
+       "text": ": read/write ayrı (scale-projections cluster zaten anlatıyor)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Windowed aggregation"
+      },
+      {
+       "type": "text",
+       "text": ": 'son 5 dk view count' sürekli güncel"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-streaming-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Karar mantığı:"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-streaming-list-4",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Olay sayısı < 10K/sn → Outbox + worker"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "10K-100K/sn → Postgres + tuned worker pool"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "100K+/sn → Kafka düşünülebilir"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-streaming-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-scale-streaming-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sürekli event akışını real-time işleme platformu."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "100K+ event/sn için klasik request-response yetmez."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Önce gerçekten gerekli mi sor. 2) Gerekirse Kafka/Redpanda. 3) Consumer group + windowing."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "scale-streaming"
+       },
+       {
+        "type": "text",
+        "text": " cluster. Mevcut framework için OPSIYONEL."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sadece 100K+ event/sn olduğunda. Erken eklenirse over-engineering."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Senior DataOps + Kafka deneyimi olan ekip."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Köy değirmeni: un öğütüyor sürekli, her dakika kontrol. Tek seferlik 'şu kadar öğüt' = batch, sürekli = streaming."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-scale-streaming-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-scale-streaming-story",
+    "type": "useCase",
+    "title": "Belediye trafik ışığı — sürekli akış",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Trafik ışığı sürekli araç sayar, dakika başı raporlar."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Bu streaming. Tek olay değil, sürekli akış."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-streaming-story-2",
+    "type": "useCase",
+    "title": "Hatice Teyze (62) — market kasası",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Hatice Teyze ay sonu raporu çıkarır; günlük detay lazım değil."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Bu batch processing — streaming değil. Çoğu küçük işletme bu kategoride."
+     }
+    ]
+   }
+  ]
+ }
+}

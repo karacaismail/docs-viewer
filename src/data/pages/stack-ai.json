@@ -1,0 +1,750 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-stack-ai",
+  "sourceId": "s-ai",
+  "slug": "stack/stack-ai",
+  "title": "AI Stack",
+  "summary": "Framework AI-first iddiasının çıktığı yer. Diğer stack'ler bu primitive'leri tüketir.",
+  "categoryId": "stack",
+  "tags": [
+   "ai",
+   "llm",
+   "mcp",
+   "rag",
+   "agent"
+  ],
+  "meta": {
+   "badge": "Layer 2 Stack #9 — Differentiator"
+  },
+  "related": [],
+  "blocks": [
+   {
+    "id": "block-stack-ai-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Sistemin yapay zeka altyapısı: ajanlar, hafıza, vektör arama gibi parçaların bir arada bulunduğu modül."
+     }
+    ]
+   },
+   {
+    "id": "block-stack-ai-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "🔒 AI yetki sınırı: action yüzeyi (zorunlu)",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajanın bu sistemdeki erişimi "
+     },
+     {
+      "type": "strong",
+      "text": "tipli, yetkili, audit'li action yüzeyiyle"
+     },
+     {
+      "type": "text",
+      "text": " sınırlıdır. "
+     },
+     {
+      "type": "strong",
+      "text": "Ham SQL erişimi YOKTUR."
+     },
+     {
+      "type": "text",
+      "text": "\n\nMCP server her bounded context'te yalnız onaylı "
+     },
+     {
+      "type": "strong",
+      "text": "action"
+     },
+     {
+      "type": "text",
+      "text": "'ları açar ("
+     },
+     {
+      "type": "code",
+      "text": "publish_order"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "code",
+      "text": "approve_invoice"
+     },
+     {
+      "type": "text",
+      "text": " gibi). AI ham tabloya erişip kayıt değiştirmek yerine, sözleşmeli action'ı çağırır; sistem validation + yetki + side-effect + audit'i içkin uygular.\n\nDetay ve felsefesi: "
+     },
+     {
+      "type": "ref",
+      "text": "sus-actions",
+      "refId": "sus-actions"
+     },
+     {
+      "type": "text",
+      "text": " (Palantir Ontology kalıtımı). Bu disiplin uygulanmadan AI ajan "
+     },
+     {
+      "type": "strong",
+      "text": "üretime alınmaz"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-stack-ai-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu stack diğer module'lerin tüketeceği AI primitive'lerini sağlar. Her bounded context kendi tool'larını expose eder, agent'lar MCP üstünden çağırır."
+     }
+    ]
+   },
+   {
+    "id": "block-stack-ai-img",
+    "type": "image",
+    "src": "/assets/stack/s-ai.svg",
+    "alt": "AI Stack ürünü — kategori, muadiller ve katman pozisyonu",
+    "caption": "AI Stack kategori şeması · pazar muadilleri + AI/TR ipuçları"
+   },
+   {
+    "id": "block-stack-ai-h-module-ler",
+    "type": "heading",
+    "level": 4,
+    "text": "Module'ler"
+   },
+   {
+    "id": "block-stack-ai-feat",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Model Routing",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Hangi LLM (OpenAI, Anthropic, Gemini, local Ollama), fallback, cost-aware"
+       }
+      ]
+     },
+     {
+      "term": "Prompt Template",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Versioned, A/B test, observability"
+       }
+      ]
+     },
+     {
+      "term": "Tool Calling / Function Calling",
+      "definition": [
+       {
+        "type": "text",
+        "text": "DocType action otomatik tool olarak expose"
+       }
+      ]
+     },
+     {
+      "term": "Agent",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Pydantic AI tarzı type-safe agent (Generic Deps + ResultT)"
+       }
+      ]
+     },
+     {
+      "term": "MCP Server",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Her bounded context kendi MCP server'ını expose. Claude Desktop, Cursor doğrudan bağlanır"
+       }
+      ]
+     },
+     {
+      "term": "Embedding Pipeline",
+      "definition": [
+       {
+        "type": "text",
+        "text": "DocType save → chunk → embed → pgvector projection"
+       }
+      ]
+     },
+     {
+      "term": "RAG",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Hybrid retrieval (BM25 + vector RRF), reranking (Cohere/BGE), GraphRAG opsiyonel"
+       }
+      ]
+     },
+     {
+      "term": "Streaming Response",
+      "definition": [
+       {
+        "type": "text",
+        "text": "SSE LLM token stream"
+       }
+      ]
+     },
+     {
+      "term": "Moderation",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Toxicity, NSFW, PII detection"
+       }
+      ]
+     },
+     {
+      "term": "Anomaly Detection",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Stat + ML, fraud, hatalı transaction"
+       }
+      ]
+     },
+     {
+      "term": "Forecasting",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Talep tahmini, sales, inventory"
+       }
+      ]
+     },
+     {
+      "term": "OCR / Document Parsing",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Fiş, fatura, sözleşme"
+       }
+      ]
+     },
+     {
+      "term": "Auto-categorization",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Banka transaction → hesap planı (muhasebe), email → label"
+       }
+      ]
+     },
+     {
+      "term": "Generation",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Image (DALL-E, SD), text, code"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-stack-ai-h-pydantic-ai-tarzi-agent",
+    "type": "heading",
+    "level": 4,
+    "text": "Pydantic AI tarzı agent"
+   },
+   {
+    "id": "block-stack-ai-code",
+    "type": "codeBlock",
+    "title": "Type-safe agent",
+    "language": "python",
+    "code": "from pydantic_ai import Agent\nfrom dataclasses import dataclass\n\n@dataclass\nclass Deps:\n    tenant_id: str\n    db: Database\n\nclass OrderSuggestion(BaseModel):\n    customer_id: str\n    products: list[str]\n    reasoning: str\n\nsales_agent = Agent[Deps, OrderSuggestion](\n    \"openai:gpt-4o\",\n    deps_type=Deps,\n    result_type=OrderSuggestion,\n    system_prompt=\"Sales recommendation agent...\",\n)\n\n@sales_agent.tool\nasync def search_products(ctx, query: str) -> list[Product]:\n    return await ctx.deps.db.search_products(query, tenant=ctx.deps.tenant_id)\n\n# Çağırma\nresult = await sales_agent.run(\"Acme'ye yeni kampanya öner\", deps=deps)\nprint(result.data.products)"
+   },
+   {
+    "id": "block-stack-ai-h-mcp-entegrasyonu",
+    "type": "heading",
+    "level": 4,
+    "text": "MCP entegrasyonu"
+   },
+   {
+    "id": "block-stack-ai-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Model Context Protocol — ajanın araçları ortak bir dilde çağırmasını sağlayan standart."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her ajanla her araç ayrı entegrasyon yapsa kıyamet kopardı. Ortak protokol = takılıp çalış."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sunucu MCP konuşur, ajan MCP konuşur, ortada anlaşır."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Araç sağlayıcı MCP uyumlu yapar; ajan otomatik tanır."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "USB standardı: hangi marka olursa olsun, takarsın çalışır."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-stack-ai-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "MCP (Model Context Protocol, Anthropic, 2024) JSON-RPC 2.0. Server tarafı: her bounded context kendi MCP server'ını expose eder. Örnek: "
+     },
+     {
+      "type": "code",
+      "text": "commerce"
+     },
+     {
+      "type": "text",
+      "text": " module'ü "
+     },
+     {
+      "type": "code",
+      "text": "list_products"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "code",
+      "text": "search_products"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "code",
+      "text": "create_order"
+     },
+     {
+      "type": "text",
+      "text": " tool'larını publish eder. Client tarafı: agent'lar MCP üstünden bu tool'ları çağırır. Claude Desktop, Cursor, herhangi MCP client doğrudan kullanır."
+     }
+    ]
+   },
+   {
+    "id": "block-stack-ai-div",
+    "type": "divider"
+   },
+   {
+    "id": "block-stack-ai-h-landx-bakisi-l2-agent-runtime-11-modul-detayli",
+    "type": "heading",
+    "level": 4,
+    "text": "LandX bakışı: L2 Agent Runtime — 11 modül detaylı"
+   },
+   {
+    "id": "block-stack-ai-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "LandX L2 katmanı (A01–A11) bu stack'in genişletilmiş halidir. Her modül ayrı bounded context, ama hepsi bu stack altında yaşar. "
+     },
+     {
+      "type": "strong",
+      "text": "Framework'ün asıl farklılaşma noktası burası."
+     }
+    ]
+   },
+   {
+    "id": "block-stack-ai-feat-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "A01 — MCP Server Framework",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "strong",
+        "text": "Faz 1 · P0."
+       },
+       {
+        "type": "text",
+        "text": " MCP-native server. Plugin tool'ları otomatik MCP endpoint olarak servis edilir. Transport: stdio / SSE / streaming-http. *Tool discovery latency <100ms, uptime >%99.95.* Capabilities: Endpoint Management, Initialize Handshake, Discovery (tools/resources/prompts), Tool Invocation Protocol, Streaming Responses."
+       }
+      ]
+     },
+     {
+      "term": "A02 — Tool Registry & Discovery",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "strong",
+        "text": "Faz 1 · P0."
+       },
+       {
+        "type": "text",
+        "text": " Merkezi tool kataloğu. Her tool: I/O schema (json_schema), description_for_llm (AI), examples (few-shot), side-effect annotations ("
+       },
+       {
+        "type": "code",
+        "text": "read_only"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "idempotent"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "destructive"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "blast_radius"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "cost_class"
+       },
+       {
+        "type": "text",
+        "text": "). Semantic search (vector embedding) + Usage Analytics. *Tool description LLM selection accuracy >%90.*"
+       }
+      ]
+     },
+     {
+      "term": "A03 — Agent Identity & Capability Scopes",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Faz 1 · P0."
+       },
+       {
+        "type": "text",
+        "text": " "
+       },
+       {
+        "type": "code",
+        "text": "user_perms ∩ agent_scope ∩ session_limits"
+       },
+       {
+        "type": "text",
+        "text": " kesişim modeli. Capability Pack, Agent-User Binding, Session Limits (token_budget, tool_calls_remaining, usd_cost_accumulated), Tool Execution Sandbox (none/process/container/firecracker), Violation & Incident (AI threat assessment). *Privilege escalation 0.*"
+       }
+      ]
+     },
+     {
+      "term": "A04 — Agent Memory Layer",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "strong",
+        "text": "Faz 2 · P0."
+       },
+       {
+        "type": "text",
+        "text": " 4 katmanlı bellek: short-term (conversation buffer + compaction), long-term semantic (memory_kind: fact/preference/rule/skill/observation, embedding, decay_factor, TTL), episodic (episode summary + emotion_tone + key_actions), procedural (learned procedure, approved_by_human). Memory Hygiene: forgetting & "
+       },
+       {
+        "type": "strong",
+        "text": "PII scrubbing in memory"
+       },
+       {
+        "type": "text",
+        "text": "."
+       }
+      ]
+     },
+     {
+      "term": "A05 — Vector Store & Embedding Pipeline",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Faz 2 · P0."
+       },
+       {
+        "type": "text",
+        "text": " pgvector + embedding job runner + model versioning + hybrid search + reranking. HNSW parametreleri. Reindex strategy (dual_write/blue_green/in_place). *NDCG@10 >0.75.* Detay: "
+       },
+       {
+        "type": "ref",
+        "text": "l1-search",
+        "refId": "l1-search"
+       },
+       {
+        "type": "text",
+        "text": "."
+       }
+      ]
+     },
+     {
+      "term": "A06 — Prompt Library & Versioning",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Faz 2 · P0."
+       },
+       {
+        "type": "text",
+        "text": " Prompt'lar kod gibi versiyonlanır. Prompt Version (system_template, user_template, variables_schema/output_schema json_schema, model_target). A/B Testing (experiment + result + AI analysis), Eval Suite (case + graders: exact/llm_judge/regex/json_schema), Rollout & Rollback (rollout_percent), Drift Detection (distribution/quality/cost/latency)."
+       }
+      ]
+     },
+     {
+      "term": "A07 — LLM Provider Abstraction",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Faz 1 · P0."
+       },
+       {
+        "type": "text",
+        "text": " Provider Registry (anthropic/openai/azure_openai/bedrock/vertex/ollama) + Model Catalog (context_window, max_output_tokens, cost_per_million, capability_tier: haiku/sonnet/opus_class). Routing & Fallback (Routing Rule + Decision with AI explanation), Retry & Circuit Breaker (closed/open/half_open), Streaming Adapter."
+       }
+      ]
+     },
+     {
+      "term": "A08 — LLM Observability & Cost Tracking",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Faz 2 · P0."
+       },
+       {
+        "type": "text",
+        "text": " Her LLM çağrısı: input/output, token count, latency, cost, trace, hallucination skoru. Langfuse-equivalent ama MCP-aware. LLM Trace (Span/Tool Call Span), Cost Attribution (tenant/user/agent/feature/prompt), Quality Signals (Hallucination Detection + User Feedback), Replay & Debug. *Cost attribution accuracy >%99.*"
+       }
+      ]
+     },
+     {
+      "term": "A09 — Agent Orchestration & Workflow",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "strong",
+        "text": "Faz 3 · P0."
+       },
+       {
+        "type": "text",
+        "text": " Plan-execute-reflect döngüsü, alt-agent çağrısı, paralel tool execution, checkpoint/resume, human-in-the-loop. Workflow Definition (orchestration_pattern: react/plan_execute/multi_agent/router/dag), Execution Run + Step, Checkpoint & Resume (durable), Approval Request + Interrupt, Sub-Agent Invocation. *Multi-step task success >%75, checkpoint-resume reliability >%99.*"
+       }
+      ]
+     },
+     {
+      "term": "A10 — Streaming & SSE Primitives",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Faz 2 · P1."
+       },
+       {
+        "type": "text",
+        "text": " LLM token stream + tool progress stream + workflow step stream + log stream — unified. Stream Channel + Subscription + Reconnect/Resume + Backpressure (drop_oldest/drop_newest/block/sample) + Transport (SSE/WebSocket). *fan-out 1→N latency p99 <100ms.*"
+       }
+      ]
+     },
+     {
+      "term": "A11 — Conversation & Session Management",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Faz 2 · P0."
+       },
+       {
+        "type": "text",
+        "text": " Konuşma geçmişi, multi-turn context, message threading, "
+       },
+       {
+        "type": "strong",
+        "text": "branching"
+       },
+       {
+        "type": "text",
+        "text": " (alternative replies), conversation forking. Agent↔human ve agent↔agent karışık konuşmaları destekler. Context Window Compaction (head_truncate/tail_truncate/"
+       },
+       {
+        "type": "strong",
+        "text": "summarize"
+       },
+       {
+        "type": "text",
+        "text": "/hierarchical). *Context window optimization >%30 token tasarrufu.*"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-stack-ai-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu 11 modülün toplam etkisi",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Diğer framework'ler (Frappe/Odoo/Drupal/WordPress/Shopify) tarihsel olarak human-first. A01-A11 katmanı her DocType action'ını otomatik MCP tool yapar, agent'a session-bound yetki verir, semantic memory + vector retrieval'ı kernel-adjacent kurar, prompt'u kod gibi versiyonlar, multi-provider LLM'i tek soyutlamada birleştirir, her LLM çağrısının cost+quality+hallucination skorunu tutar, durable multi-agent workflow çalıştırır. Bu kombinasyon hiçbir mevcut framework'te yok — sen var ediyorsun."
+     }
+    ]
+   },
+   {
+    "id": "block-stack-ai-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-stack-ai-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Framework AI-first iddiasının çıktığı yer. Diğer stack'ler bu primitive'leri tüketir."
+     }
+    ]
+   },
+   {
+    "id": "block-stack-ai-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-stack-ai-lesson-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistemin yapay zeka altyapısı: ajanlar, hafıza, vektör arama gibi parçaların bir arada bulunduğu modül. Yapay zekayı sisteme sırf bir özellik olarak değil, omurganın bir parçası olarak yerleştirir."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yapay zeka modüllere tek tek eklenirse her modül farklı şekilde davranır. Tek merkezi modül olursa tüm sistem ortak akıllı altyapıyı paylaşır."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "AI modülü hazır primitive'ler sunar: 'bu metne benzer kayıtları bul', 'bu konuşmanın özetini çıkar', 'bu kararı veren ajanı çağır'. Diğer modüller bu hazır API'lere bağlanır."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her modülün ihtiyacı olduğunda çağırdığı ortak hizmet katmanı. Kullanıcı doğrudan görmez; ama akıllı önerileri, otomatik etiketlemeleri hisseder."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Veri girişi yapıldığında otomatik kategorize için, bir form doldurulurken alanları öneri için, geçmiş kayıtlardan benzerini bulmak için."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mimar altyapıyı kurar; geliştirici hazır API'leri çağırır; son kullanıcı sistemi 'tahmin eden, hatırlayan' olarak deneyimler."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir hastanenin merkezi laboratuvarı: doktorlar (modüller) yalnızca örnek gönderir; tahlilleri yapan, sonuç döndüren laboratuvardır. Her doktor kendine ayrı lab kurmaz."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

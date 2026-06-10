@@ -1,0 +1,711 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-build-sequence",
+  "sourceId": "build-sequence",
+  "slug": "build/build-sequence",
+  "title": "Build Sırası — 5 Stage",
+  "summary": "Kernel → Scale primitives → Layer 1 → Layer 2 + DX → Scale proof.",
+  "categoryId": "build",
+  "tags": [
+   "build",
+   "roadmap",
+   "stages"
+  ],
+  "meta": {},
+  "related": [],
+  "blocks": [
+   {
+    "id": "block-build-sequence-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Hangi modülün önce, hangisinin sonra yapılacağını gösteren inşa yol haritası."
+     }
+    ]
+   },
+   {
+    "id": "block-build-sequence-table",
+    "type": "table",
+    "caption": "İnşa sırası — bağımlılığı az olan modülden başlanır, üstüne yığılır.",
+    "columns": [
+     "Stage",
+     "Süre tahmini",
+     "Ne yapılır",
+     "Bitiş kriteri"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Stage 1 — Kernel"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "3-6 ay"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Layer 0 tam shipping: DocType engine (custom field, child table, naming, hooks), Identity (session, OAuth, 2FA, OIDC, SSO, impersonation), Authz (RBAC + ReBAC + ABAC + RLS), Tenancy (multi/single/hybrid + sub-tenant), Event Bus (in-process), Polyglot runtime (embedded JS), Plugin Registry + Manifest + Lifecycle."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Runtime'da yeni DocType tanımlanır, Python + TS hook bağlanır, authz transparent filtreleme yapar. Tek process'te çalışır. External developer plugin scaffold + publish edebilir."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Stage 2 — Scale primitives"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "2-3 ay"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Outbox save pipeline'a, CQRS projection deklaratif support, Hot Counter, Background Workers + Scheduler, Saga (DBOS), Idempotency. Event bus Redis Streams driver."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Config flag ile in-process → Redis swap, module kodu değişmez. Outbox event projection rebuild tetikler. Saga step crash'inde compensation çalışır."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Stage 3 — Layer 1"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "4-6 ay"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Party/Contact, File (driver), Workflow + ECA, Notification (channel driver), Audit, Search (FTS + pgvector hybrid), Calendar, i18n, Money + Tax, Realtime SSE/WS, Webhook, API Gateway, Reporting, Cache, Rate Limit, Settings, Secrets, Health."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Topluluk module'ü File backend'ini S3'ten R2'ye değiştirir, core kodu değişmez. Search backend Meilisearch'a swap olur, API aynı kalır."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Stage 4 — Layer 2 stacks + DX"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "12-18 ay (parallel)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Commerce, Accounting + TR uyum, HRMS + TR uyum, PMS, LMS, CMS, MRP, AI, Marketing, Helpdesk, Drive, TR Compliance. + Marketplace + CLI + Sidecar runtime + WASM runtime + Packwerk-style CI."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Dış geliştirici plugin scaffold → build → publish (core'a hiç dokunmadan). Boundary violation CI'da fail. 5 ürün uçtan uca canlıda."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Stage 5 — Scale proof"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "3-6 ay"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sosyal medya (#15) — fan-out, ranking, moderation. Hybrid push/pull, celebrity threshold (~10K). Aynı Feed module küçük tenant'ta single-process, dev tenant'ta Kafka + read replica."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "10K+ TPS sustained, p99 < 500ms, multi-region replication. Kernel hiç değişmez."
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-build-sequence-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yazılım inşa sırası: hangi modülü önce, hangisini sonra yapacağımızı belirleyen yol haritası."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sıralı gitmezsen, bir modülün hazır olmayan başka modüle ihtiyacı çıkar, çıkmaz bekler. Doğru sıra, beklemeleri azaltır."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bağımlılık ağacı çıkarılır: temel modüller önce, üstüne yığılanlar sonra. Her sprintte bağımsız çalışabilen modüller paralel yürür."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Proje yönetim panelinde Gantt şeması olarak."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sprint planlamasında ve büyük dönüm noktası kararlarında."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mimar sırayı çıkarır, proje yöneticisi sprinte böler, ekipler uygular."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Apartman inşaatı: önce temel, sonra kolonlar, sonra duvarlar, en son boya. Tersine yapamazsın."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-build-sequence-co",
+    "type": "callout",
+    "variant": "info",
+    "title": "🛤 Sürdürülebilirlik aşamaları (paralel yol haritası)",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Yukarıdaki 5 Stage build sırası "
+     },
+     {
+      "type": "strong",
+      "text": "mimari/runtime yapımı"
+     },
+     {
+      "type": "text",
+      "text": " anlatır. Buna paralel "
+     },
+     {
+      "type": "strong",
+      "text": "sürdürülebilirlik mekanizmaları"
+     },
+     {
+      "type": "text",
+      "text": " 4 aşamada inşa edilir; her aşamanın bir build stage'inde eşiği vardır.\n\n"
+     },
+     {
+      "type": "strong",
+      "text": "Aşama 0 — Sınır kapıları (Stage 1 ile paralel)."
+     },
+     {
+      "type": "text",
+      "text": " İlk Layer 2 modülü yazılmadan ÖNCE: "
+     },
+     {
+      "type": "code",
+      "text": "import-linter"
+     },
+     {
+      "type": "text",
+      "text": " + "
+     },
+     {
+      "type": "code",
+      "text": "boundaries.yml"
+     },
+     {
+      "type": "text",
+      "text": " CI kapısı + BC politikası taslağı ("
+     },
+     {
+      "type": "ref",
+      "text": "sus-boundaries",
+      "refId": "sus-boundaries"
+     },
+     {
+      "type": "text",
+      "text": "). En düşük maliyet, en yüksek koruma.\n\n"
+     },
+     {
+      "type": "strong",
+      "text": "Aşama 1 — Sözleşme katmanı (Stage 2-3 paralel)."
+     },
+     {
+      "type": "text",
+      "text": " İlk dış entegratör/plugin ortaya çıkmadan ÖNCE: tarih-tabanlı versiyon + response transform + DocType snapshot ("
+     },
+     {
+      "type": "ref",
+      "text": "sus-versioning",
+      "refId": "sus-versioning"
+     },
+     {
+      "type": "text",
+      "text": " + "
+     },
+     {
+      "type": "ref",
+      "text": "sus-timi",
+      "refId": "sus-timi"
+     },
+     {
+      "type": "text",
+      "text": ").\n\n"
+     },
+     {
+      "type": "strong",
+      "text": "Aşama 2 — Kendini-yükselten döngü (Stage 4)."
+     },
+     {
+      "type": "text",
+      "text": " İkinci major sürüm planlanırken: codemod + bitemporal + DBOS ("
+     },
+     {
+      "type": "ref",
+      "text": "sus-codemod",
+      "refId": "sus-codemod"
+     },
+     {
+      "type": "text",
+      "text": " + "
+     },
+     {
+      "type": "ref",
+      "text": "sus-bitemporal",
+      "refId": "sus-bitemporal"
+     },
+     {
+      "type": "text",
+      "text": " + "
+     },
+     {
+      "type": "ref",
+      "text": "sus-durable",
+      "refId": "sus-durable"
+     },
+     {
+      "type": "text",
+      "text": ").\n\n"
+     },
+     {
+      "type": "strong",
+      "text": "Aşama 3 — DX + AI (Stage 5)."
+     },
+     {
+      "type": "text",
+      "text": " AI ajan üretime alınmadan ÖNCE: declarative türetme + tipli action yüzeyi ("
+     },
+     {
+      "type": "ref",
+      "text": "sus-declarative",
+      "refId": "sus-declarative"
+     },
+     {
+      "type": "text",
+      "text": " + "
+     },
+     {
+      "type": "ref",
+      "text": "sus-actions",
+      "refId": "sus-actions"
+     },
+     {
+      "type": "text",
+      "text": ")."
+     }
+    ]
+   },
+   {
+    "id": "block-build-sequence-img",
+    "type": "image",
+    "src": "/assets/roadmap-7-faz.svg",
+    "alt": "7 fazlı 60 aylık 70+ ürün roadmap zaman çizelgesi",
+    "caption": "60 ay 70+ ürün — 7 fazda hangi ürünler ne zaman canlıya çıkar"
+   },
+   {
+    "id": "block-build-sequence-co-2",
+    "type": "callout",
+    "variant": "info",
+    "title": "70+ ürün build sırası",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Faz 1"
+     },
+     {
+      "type": "text",
+      "text": " (kernel + scale + L1): atomic-types, k-*, scale-*, l1-*. ~6 ay. 0 ürün canlı.\n"
+     },
+     {
+      "type": "strong",
+      "text": "Faz 2"
+     },
+     {
+      "type": "text",
+      "text": " (ilk 10 stack ürünü): s-crm, s-ecommerce (s-commerce), s-accounting, s-hrms, s-payroll, s-pms, s-helpdesk, s-billing, s-cms, s-drive. ~12 ay.\n"
+     },
+     {
+      "type": "strong",
+      "text": "Faz 3"
+     },
+     {
+      "type": "text",
+      "text": " (Çekirdek Op + Finans tamamla): s-sales, s-pos, s-inventory, s-purchase, s-mrp, s-revrec, s-fpa, s-tax-compliance. ~6 ay.\n"
+     },
+     {
+      "type": "strong",
+      "text": "Faz 4"
+     },
+     {
+      "type": "text",
+      "text": " (Tedarik + Müşteri + İçerik): s-wms, s-tms, s-fsm, s-marketing, s-clm, s-cpq, s-pim, s-dms, s-wiki, s-social, s-community. ~12 ay.\n"
+     },
+     {
+      "type": "strong",
+      "text": "Faz 5"
+     },
+     {
+      "type": "text",
+      "text": " (Veri-Zeka): s-ai, s-rag, s-bi, s-etl, s-observability, s-predictive. ~6 ay.\n"
+     },
+     {
+      "type": "strong",
+      "text": "Faz 6"
+     },
+     {
+      "type": "text",
+      "text": " (Platform farklılaştırıcı): s-studio (low-code), s-bpm, s-ipaas. ~6 ay.\n"
+     },
+     {
+      "type": "strong",
+      "text": "Faz 7"
+     },
+     {
+      "type": "text",
+      "text": " (Dikey TR — geleneksel oyuncuya rakip): s-property (arsam), s-restaurant (e-menum), s-incentive (Segika), s-education, s-clinic. ~12 ay.\n\n"
+     },
+     {
+      "type": "strong",
+      "text": "Toplam ~60 ay"
+     },
+     {
+      "type": "text",
+      "text": " = 5 yıl. Tek ekip için imkânsız; çoklu squad zorunlu. Her squad: 1 senior + 2 mid + 1 junior + 1 AI eşi."
+     }
+    ]
+   },
+   {
+    "id": "block-build-sequence-co-3",
+    "type": "callout",
+    "variant": "info",
+    "title": "Capability-first build sıralaması",
+    "segments": [
+     {
+      "type": "text",
+      "text": "E-ticaret faz sıralaması (s-ecommerce-models'a göre):\n\n"
+     },
+     {
+      "type": "strong",
+      "text": "Faz 2 capability'leri:"
+     },
+     {
+      "type": "text",
+      "text": " b2c (varsayılan) + b2b (kurumsal müşteri) + d2c (üreticiden direkt).\n"
+     },
+     {
+      "type": "strong",
+      "text": "Faz 3:"
+     },
+     {
+      "type": "text",
+      "text": " marketplace (multi-vendor) + subscription (recurring teslim) + o2o (click & collect).\n"
+     },
+     {
+      "type": "strong",
+      "text": "Faz 4:"
+     },
+     {
+      "type": "text",
+      "text": " dropship (stoksuz) + social (Instagram/TikTok) + headless (API-only).\n"
+     },
+     {
+      "type": "strong",
+      "text": "Faz 5:"
+     },
+     {
+      "type": "text",
+      "text": " b2g (e-İhale TR) + b2e (kurumsal kafeterya).\n"
+     },
+     {
+      "type": "strong",
+      "text": "Faz 6+:"
+     },
+     {
+      "type": "text",
+      "text": " p2p, niş.\n\nHer faz capability tablosuna "
+     },
+     {
+      "type": "strong",
+      "text": "yeni satır"
+     },
+     {
+      "type": "text",
+      "text": " ekler — mevcut yapı bozulmaz."
+     }
+    ]
+   },
+   {
+    "id": "block-build-sequence-co-4",
+    "type": "callout",
+    "variant": "info",
+    "title": "Uluslararasılaştırma — hangi fazda",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Faz 1 (kernel + scale + L1)"
+     },
+     {
+      "type": "text",
+      "text": ": cc-jurisdiction-resolver, cc-i18n-standards. 6 eksen çekirdek yapı; baştan kurulmalı.\n\n"
+     },
+     {
+      "type": "strong",
+      "text": "Faz 2"
+     },
+     {
+      "type": "text",
+      "text": ": cc-fx-ledger (çok para birimli muhasebe), cc-notification-consent (transactional/marketing ayrımı), İYS kayıt (TR).\n\n"
+     },
+     {
+      "type": "strong",
+      "text": "Faz 3"
+     },
+     {
+      "type": "text",
+      "text": ": cc-compliance-matrix (KVKK + GDPR + CCPA), DSAR pipeline, sanctions API.\n\n"
+     },
+     {
+      "type": "strong",
+      "text": "Faz 4"
+     },
+     {
+      "type": "text",
+      "text": ": cc-a11y EAA uyumu (AB 28 Haziran 2025), data residency multi-region.\n\n"
+     },
+     {
+      "type": "strong",
+      "text": "Faz 5+"
+     },
+     {
+      "type": "text",
+      "text": ": Bölgeye özel ödeme yöntemleri (Pix, iDEAL, UPI), yerel SMS regülasyon (DLT/10DLC).\n\nHerşey config-as-data; her ülkeye açılım = yeni policy_version + sanctions sync, kod değişikliği MİNİMUM."
+     }
+    ]
+   },
+   {
+    "id": "block-build-sequence-co-5",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Resolver operasyonu = Faz 1 zorunluğu",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Faz 1 (kernel + scale + L1)"
+     },
+     {
+      "type": "text",
+      "text": " içinde:\n- "
+     },
+     {
+      "type": "code",
+      "text": "cc-jurisdiction-resolver"
+     },
+     {
+      "type": "text",
+      "text": " — resolver çekirdek\n- "
+     },
+     {
+      "type": "code",
+      "text": "cc-resolver-ops"
+     },
+     {
+      "type": "text",
+      "text": " — operasyonel sertleştirme (cache, failure, governance, decision-trace)\n- "
+     },
+     {
+      "type": "code",
+      "text": "cc-identity-models"
+     },
+     {
+      "type": "text",
+      "text": " — kullanıcı veri modelleri (isim/telefon/adres/vergi global)\n\nBu üçü ayrılmaz. Resolver olmadan operasyon kuramazsın; ops olmadan resolver canlıya alınmaz; identity models olmadan resolver yanlış kullanıcıyı tanır."
+     }
+    ]
+   },
+   {
+    "id": "block-build-sequence-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-build-sequence-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Kernel → Scale primitives → Layer 1 → Layer 2 + DX → Scale proof."
+     }
+    ]
+   },
+   {
+    "id": "block-build-sequence-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-build-sequence-lesson-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yazılım inşa sırası: hangi modülü önce, hangisini sonra yapacağımızı belirleyen yol haritası."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sıralı gitmezsen, bir modülün hazır olmayan başka modüle ihtiyacı çıkar, çıkmaz bekler."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bağımlılık ağacı: temel modüller önce, üstüne yığılanlar sonra."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Proje yönetim panelinde Gantt şeması olarak."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sprint planlamasında ve büyük dönüm noktası kararlarında."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mimar sırayı çıkarır; PM sprinte böler; ekipler uygular."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Apartman inşaatı: önce temel, sonra kolonlar, sonra duvarlar, en son boya. Tersine yapamazsın."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

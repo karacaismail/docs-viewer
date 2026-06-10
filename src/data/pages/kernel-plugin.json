@@ -1,0 +1,1177 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-kernel-plugin",
+  "sourceId": "k-plugin",
+  "slug": "kernel/kernel-plugin",
+  "title": "Plugin Registry + Manifest",
+  "summary": "Framework olmanın can damarı. Plugin yazılabiliyorsa platform, yazılamıyorsa uygulama.",
+  "categoryId": "kernel",
+  "tags": [
+   "plugin",
+   "manifest",
+   "extension",
+   "kernel"
+  ],
+  "meta": {
+   "badge": "Layer 0 — Kernel #6"
+  },
+  "related": [],
+  "blocks": [
+   {
+    "id": "block-kernel-plugin-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Sistemin ana koduna dokunmadan yeni özellikler eklemenizi sağlayan eklenti listesi."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-plugin-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Framework olmanın can damarı. Plugin yazılabiliyorsa platform, yazılamıyorsa uygulama. Tahtanda bu yoktu — eklemek zorundayız."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-plugin-h-plugin-manifest-kanonik-format",
+    "type": "heading",
+    "level": 4,
+    "text": "Plugin manifest — kanonik format"
+   },
+   {
+    "id": "block-kernel-plugin-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Frappe "
+     },
+     {
+      "type": "code",
+      "text": "hooks.py"
+     },
+     {
+      "type": "text",
+      "text": ", Odoo "
+     },
+     {
+      "type": "code",
+      "text": "__manifest__.py"
+     },
+     {
+      "type": "text",
+      "text": ", WordPress plugin header, Strapi "
+     },
+     {
+      "type": "code",
+      "text": "strapi-server.js"
+     },
+     {
+      "type": "text",
+      "text": " — hepsi aynı fikrin farklı versiyonu. Bizim format (Python + TS uyumlu, YAML):"
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-plugin-code",
+    "type": "codeBlock",
+    "title": "plugin.yaml",
+    "language": "yaml",
+    "code": "name: my_inventory_extension\nversion: 1.2.3\napi_version: \"1.0\"        # framework API contract version\npublisher: acme-corp\nlicense: LGPL-3.0\ndescription: \"Custom inventory extensions for Acme\"\n\ndepends:\n  - framework: \"^1.0.0\"\n  - commerce: \"^2.1.0\"\n  - accounting: \"^1.5.0\"\n\npermissions:\n  - read: [Customer, SalesOrder]\n  - write: [SalesOrder]\n  - publish_event: [OrderShipped]\n\nhooks:\n  doc_events:\n    SalesOrder:\n      before_save: handlers/sales_order.py::before_save\n      on_submit: handlers/sales_order.ts::onSubmit\n  schedule:\n    daily: tasks/cleanup.py::daily_cleanup\n    cron:\n      - schedule: \"0 */6 * * *\"\n        handler: tasks/sync.py::sync_partners\n\ndoctypes:           # DocType'ları bu plugin tanımlar\n  - definitions/custom_field.json\n\nfixtures:           # Initial data (seed)\n  - fixtures/categories.json\n\ntranslations:\n  - translations/tr.po\n  - translations/en.po\n\nui:\n  pages:\n    - path: /inventory/dashboard\n      component: pages/Dashboard.tsx\n  menu:\n    - title: \"Acme Inventory\"\n      icon: ph-package\n      route: /inventory"
+   },
+   {
+    "id": "block-kernel-plugin-h-dependency-resolution",
+    "type": "heading",
+    "level": 4,
+    "text": "Dependency resolution"
+   },
+   {
+    "id": "block-kernel-plugin-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Odoo'nun "
+     },
+     {
+      "type": "code",
+      "text": "depends"
+     },
+     {
+      "type": "text",
+      "text": " listesi: install sırasında topological sort. A plugin'i B'ye bağlıysa, B önce yüklenir. Cycle detection — framework boot'ta hata verir, install fail."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-plugin-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Semantic versioning — Backstage pattern'i: extension point'ler tek tek versiyonlanır, deprecation per-hook. "
+     },
+     {
+      "type": "code",
+      "text": "commerce: \"^2.1.0\""
+     },
+     {
+      "type": "text",
+      "text": " = \"2.1.0 ile uyumlu, 3.0.0 değil\"."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-plugin-h-plugin-lifecycle-hooks",
+    "type": "heading",
+    "level": 4,
+    "text": "Plugin lifecycle hooks"
+   },
+   {
+    "id": "block-kernel-plugin-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "code",
+       "text": "before_install"
+      },
+      {
+       "type": "text",
+       "text": " — install öncesi check (lisans, dependency)."
+      }
+     ],
+     [
+      {
+       "type": "code",
+       "text": "after_install"
+      },
+      {
+       "type": "text",
+       "text": " — schema migration, fixtures, default config."
+      }
+     ],
+     [
+      {
+       "type": "code",
+       "text": "before_uninstall"
+      },
+      {
+       "type": "text",
+       "text": " — cleanup uyarısı."
+      }
+     ],
+     [
+      {
+       "type": "code",
+       "text": "after_uninstall"
+      },
+      {
+       "type": "text",
+       "text": " — data export/anonymize seçeneği."
+      }
+     ],
+     [
+      {
+       "type": "code",
+       "text": "before_migrate"
+      },
+      {
+       "type": "text",
+       "text": " — version upgrade öncesi."
+      }
+     ],
+     [
+      {
+       "type": "code",
+       "text": "after_migrate"
+      },
+      {
+       "type": "text",
+       "text": " — version upgrade sonrası."
+      }
+     ],
+     [
+      {
+       "type": "code",
+       "text": "clear_cache"
+      },
+      {
+       "type": "text",
+       "text": " — cache invalidation."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-kernel-plugin-h-hook-kategorileri-frappe-esinli",
+    "type": "heading",
+    "level": 4,
+    "text": "Hook kategorileri — Frappe esinli"
+   },
+   {
+    "id": "block-kernel-plugin-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Frappe ~30 hook kategorisi destekler. Sen başlangıç için:"
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-plugin-table",
+    "type": "table",
+    "columns": [
+     "Kategori",
+     "Hook tipi",
+     "Örnek"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Document lifecycle"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "doc_events"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "before_save, validate, on_submit, on_cancel, after_delete"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Schedule"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "scheduler_events"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "hourly, daily, weekly, monthly, cron"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Permission"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "permission_query_conditions, has_permission"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "SELECT WHERE injection"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Override"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "override_doctype_class, override_method"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Default davranışı değiştir"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "UI"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "app_include_js/css, doctype_js, page"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Form behavior, page routes"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Boot/data"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "boot_session, fixtures, setup_wizard"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "İlk kurulum, seed"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Web"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "website_route_rules, redirects, home_page"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Public site routes"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Mail/Notification"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "notification_config, sender_field"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Email pipeline"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Auth"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "auth_hooks"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Custom auth providers"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Jinja/Template"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "jinja_methods, jinja_filters"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Template extension"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Migration"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "before_migrate, after_migrate"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Schema upgrade"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Search"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "search_routes, global_search"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Search extension"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Workflow"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "workflow_action_handlers"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Custom transition actions"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "API"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "api_routes, override_whitelisted_methods"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "REST/RPC endpoints"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Realtime"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "realtime_handlers"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "WebSocket channels"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "AI"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ai_tools, ai_agents"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "MCP tools, agent definitions"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-kernel-plugin-h-marketplace",
+    "type": "heading",
+    "level": 4,
+    "text": "Marketplace"
+   },
+   {
+    "id": "block-kernel-plugin-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "VS Code Marketplace + Shopify App Store muadili. Publisher kayıt olur, plugin yükler, review (security scan + manual). Tenant admin App Store'a girer, install eder. Install:"
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-plugin-list-2",
+    "type": "list",
+    "ordered": true,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Manifest indir, schema migration uygula."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Fixtures yükle (seed data)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Hook'ları register et."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Permission'lar tenant admin onayına sun (\"şu DocType'ları okuyacak\")."
+      }
+     ],
+     [
+      {
+       "type": "code",
+       "text": "after_install"
+      },
+      {
+       "type": "text",
+       "text": " çalıştır."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-kernel-plugin-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Tuzak — global mutable state",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Junior plugin'i çoğunlukla \"framework'ün global'ine yamala\" diye düşünür. Yasak. Hook registry üzerinden bağlanır. Strapi'nin \"admin extension\" sorununu yaratan budur: \"plugin update'i extension'larımı kırıyor\". Hook contract'ı semver ile koru."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-plugin-div",
+    "type": "divider"
+   },
+   {
+    "id": "block-kernel-plugin-h-landx-bakisi-k01-plugin-lifecycle-k05-service-container",
+    "type": "heading",
+    "level": 4,
+    "text": "LandX bakışı: K01 Plugin Lifecycle + K05 Service Container"
+   },
+   {
+    "id": "block-kernel-plugin-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "LandX "
+     },
+     {
+      "type": "strong",
+      "text": "K01 — Plugin Lifecycle Manager"
+     },
+     {
+      "type": "text",
+      "text": " (Faz 1 · P0) plugin manifest'in tam alanlarını verir: "
+     },
+     {
+      "type": "code",
+      "text": "slug"
+     },
+     {
+      "type": "text",
+      "text": " (globally unique), "
+     },
+     {
+      "type": "code",
+      "text": "version"
+     },
+     {
+      "type": "text",
+      "text": " (semver), "
+     },
+     {
+      "type": "code",
+      "text": "license"
+     },
+     {
+      "type": "text",
+      "text": " (MIT/Apache-2.0/Proprietary/Commercial), "
+     },
+     {
+      "type": "code",
+      "text": "signed"
+     },
+     {
+      "type": "text",
+      "text": " (boolean), "
+     },
+     {
+      "type": "code",
+      "text": "signature_authority"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "code",
+      "text": "compatibility_matrix"
+     },
+     {
+      "type": "text",
+      "text": " (kernel sürüm aralığı). *Plugin install p95 <30sn, dependency conflict otomatik tespiti %100, downtime-free upgrade >%95.*"
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-plugin-feat",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Plugin Capability Beyanı",
+      "definition": [
+       {
+        "type": "code",
+        "text": "declared_doctypes"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "declared_hooks"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "strong",
+        "text": "`declared_tools`"
+       },
+       {
+        "type": "text",
+        "text": " (MCP tool'ları), "
+       },
+       {
+        "type": "code",
+        "text": "declared_routes"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "required_capabilities"
+       },
+       {
+        "type": "text",
+        "text": " (başka plugin'lerden ihtiyaç), "
+       },
+       {
+        "type": "code",
+        "text": "optional_capabilities"
+       }
+      ]
+     },
+     {
+      "term": "Install Workflow",
+      "definition": [
+       {
+        "type": "code",
+        "text": "install_id"
+       },
+       {
+        "type": "text",
+        "text": " (idempotent + mcp), "
+       },
+       {
+        "type": "code",
+        "text": "strategy"
+       },
+       {
+        "type": "text",
+        "text": " (atomic/staged/canary), "
+       },
+       {
+        "type": "code",
+        "text": "dry_run"
+       },
+       {
+        "type": "text",
+        "text": " (plan üret), "
+       },
+       {
+        "type": "code",
+        "text": "install_log"
+       },
+       {
+        "type": "text",
+        "text": " (streaming), "
+       },
+       {
+        "type": "code",
+        "text": "rollback_token"
+       }
+      ]
+     },
+     {
+      "term": "Upgrade & Migration",
+      "definition": [
+       {
+        "type": "code",
+        "text": "migration_plan"
+       },
+       {
+        "type": "text",
+        "text": " (AI-generated), "
+       },
+       {
+        "type": "code",
+        "text": "breaking_changes"
+       },
+       {
+        "type": "text",
+        "text": " (AI), "
+       },
+       {
+        "type": "code",
+        "text": "downtime_estimate_sec"
+       },
+       {
+        "type": "text",
+        "text": " (AI)"
+       }
+      ]
+     },
+     {
+      "term": "Dependency Graph",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Cycle detection, "
+       },
+       {
+        "type": "code",
+        "text": "resolution_strategy"
+       },
+       {
+        "type": "text",
+        "text": " (strict/optimistic/forced), "
+       },
+       {
+        "type": "code",
+        "text": "resolution_plan_explanation"
+       },
+       {
+        "type": "text",
+        "text": " (AI), "
+       },
+       {
+        "type": "code",
+        "text": "Conflict Detection"
+       },
+       {
+        "type": "text",
+        "text": " (AI auto-resolution suggestion)"
+       }
+      ]
+     },
+     {
+      "term": "Plugin Registry",
+      "definition": [
+       {
+        "type": "code",
+        "text": "Local Registry"
+       },
+       {
+        "type": "text",
+        "text": " (sync, trusted_publishers, verification_policy), "
+       },
+       {
+        "type": "code",
+        "text": "Health Probe"
+       },
+       {
+        "type": "text",
+        "text": " (liveness/readiness, error_rate_5m)"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-plugin-p-8",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "LandX "
+     },
+     {
+      "type": "strong",
+      "text": "K05 — Service Container & Configuration"
+     },
+     {
+      "type": "text",
+      "text": " (Faz 2 · P1) dependency injection + hierarchical config + feature flags + secrets — hepsini tek modüle taşır. *Config read p99 <5ms, feature flag toggle propagation <2sn, secret rotation downtime 0.*"
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-plugin-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Service Registry",
+      "definition": [
+       {
+        "type": "code",
+        "text": "name"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "interface"
+       },
+       {
+        "type": "text",
+        "text": " (protokol/abstract), "
+       },
+       {
+        "type": "code",
+        "text": "implementation"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "scope"
+       },
+       {
+        "type": "text",
+        "text": " (singleton/transient/scoped/tenant_scoped)"
+       }
+      ]
+     },
+     {
+      "term": "Configuration Hierarchy",
+      "definition": [
+       {
+        "type": "text",
+        "text": "global → tenant → user → agent → session — "
+       },
+       {
+        "type": "code",
+        "text": "Hierarchical Lookup"
+       },
+       {
+        "type": "text",
+        "text": " ile "
+       },
+       {
+        "type": "code",
+        "text": "source_scope"
+       },
+       {
+        "type": "text",
+        "text": " döner"
+       }
+      ]
+     },
+     {
+      "term": "Feature Flag",
+      "definition": [
+       {
+        "type": "code",
+        "text": "rollout_strategy"
+       },
+       {
+        "type": "text",
+        "text": " (boolean/percentage/cohort/rule), "
+       },
+       {
+        "type": "code",
+        "text": "rule_expression"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "Flag Evaluation"
+       },
+       {
+        "type": "text",
+        "text": " per subject"
+       }
+      ]
+     },
+     {
+      "term": "Secrets Resolution",
+      "definition": [
+       {
+        "type": "code",
+        "text": "provider"
+       },
+       {
+        "type": "text",
+        "text": " (vault/aws_sm/gcp_sm/local), "
+       },
+       {
+        "type": "code",
+        "text": "rotation_policy"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "last_rotated_at"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-plugin-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-kernel-plugin-p-9",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Framework olmanın can damarı. Plugin yazılabiliyorsa platform, yazılamıyorsa uygulama."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-plugin-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-kernel-plugin-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistemin ana koduna dokunmadan yeni özellikler eklemenizi sağlayan eklenti listesi. Telefonun uygulama mağazasına benzer."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her müşterinin ihtiyacı farklı. Birine 'kargo entegrasyonu', diğerine 'e-fatura' lazım. Eklenti olmasaydı her müşteriye ayrı sistem yazardık."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Eklenti yazarı bir 'tanıtım kartı' (manifest) hazırlar. Sistem bu kartı okur, eklentiyi listesine ekler. Kullanıcı 'kur' butonuna bastığında eklenti devreye girer."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yönetici panelinde 'Eklentiler' menüsü. Açıp kapatabilir, ayarlarını değiştirebilirsiniz."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yeni bir iş ihtiyacı doğduğunda. Sistem yazarına bağımlı kalmadan, hazır eklentilerden seçersiniz."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Üçüncü taraf yazarlar yazar; sistem yöneticisi kurar; son kullanıcı yeni özelliği menüde görür."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mutfak robotunun aksesuarları: aynı motor, farklı uçlar. Bugün doğrayıcı taktınız, yarın blender. Robot değişmez; iş değişir."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-plugin-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-kernel-plugin-story",
+    "type": "useCase",
+    "title": "Çiçekçi Selma Hanım — sipariş takip eklentisi",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Mahalleye çiçek dağıtırken WhatsApp'tan gelen siparişleri Excel'e aktarıyor; kargo şirketinin web sitesine ayrıca giriyor. Tek tek vakit alıyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Yazılım pazarından 'WhatsApp Sipariş Eklentisi' kurar; WhatsApp mesajları otomatik sipariş kartına dönüşür. Sonra 'Aras Kargo Eklentisi' kurar; tek tuşla kargo açılır. Kod yazmadan yeni yetenekler."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-plugin-story-2",
+    "type": "useCase",
+    "title": "Eczane Bilge Hanım — SGK reçete eklentisi",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Reçeteleri SGK sistemine ayrıca giriyor; hem eczane defterine hem SGK ekranına aynı bilgiyi iki kez yazıyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "'SGK Reçete Köprü' eklentisini pazaryerinden kurar. Eczanesindeki reçete kaydı SGK'ya otomatik geçer. Yazılımcı çağırma maliyeti sıfır; aylık eklenti ücreti ödeniyor."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-plugin-story-3",
+    "type": "useCase",
+    "title": "Apartman yöneticisi Zeynep Hanım — KKB borç sorgu eklentisi",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Yeni kiracı geliyor; sicilini sormak istiyor ama KKB'ye ayrı abone değil; ayrıca işlem ücretli ve zor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Yönetim yazılımına 'KKB Hızlı Sorgu' eklentisi kurar. Kiracı kartında tek butonla rapor görünür. İhtiyaç bittiğinde eklenti kapatılır; abonelik durur."
+     }
+    ]
+   }
+  ]
+ }
+}

@@ -1,0 +1,427 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-scale-workers",
+  "sourceId": "scale-workers",
+  "slug": "scale/scale-workers",
+  "title": "Workers + Scheduler",
+  "summary": "Async job queue. Outbox relay, projection rebuild, fan-out, cron — hepsi burada.",
+  "categoryId": "scale",
+  "tags": [
+   "workers",
+   "queue",
+   "cron",
+   "scheduler"
+  ],
+  "meta": {
+   "badge": "Scale primitive #4"
+  },
+  "related": [],
+  "blocks": [
+   {
+    "id": "block-scale-workers-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Async job queue. Outbox relay, projection rebuild, fan-out, cron — hepsi burada."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-workers-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Async job queue. Outbox relay, projection rebuild, fan-out, scheduled task, webhook delivery — hepsi burada."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-workers-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sırayla yapılacak işleri bekleten kuyruk."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Aynı anda 1000 iş gelirse hepsi birden çalışmasın diye."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "FIFO (önce gelen önce çıkar)."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistem yönetir."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bankamatik sırası."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-scale-workers-h-job-kategorileri",
+    "type": "heading",
+    "level": 4,
+    "text": "Job kategorileri"
+   },
+   {
+    "id": "block-scale-workers-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Immediate"
+      },
+      {
+       "type": "text",
+       "text": " — queue'ya at, en yakın worker alır. (örn: email send)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Scheduled"
+      },
+      {
+       "type": "text",
+       "text": " — 15 dk sonra çalışsın. (örn: kart abandonment reminder)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Recurring"
+      },
+      {
+       "type": "text",
+       "text": " — her gün 02:00. (örn: daily cleanup)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Priority"
+      },
+      {
+       "type": "text",
+       "text": " — yüksek (payment webhook), normal, düşük (marketing email)."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-workers-h-implementasyon-secimi",
+    "type": "heading",
+    "level": 4,
+    "text": "Implementasyon seçimi"
+   },
+   {
+    "id": "block-scale-workers-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Shared hosting:"
+      },
+      {
+       "type": "text",
+       "text": " "
+      },
+      {
+       "type": "code",
+       "text": "arq"
+      },
+      {
+       "type": "text",
+       "text": " (asyncio Redis queue) tek worker process."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Orta ölçek:"
+      },
+      {
+       "type": "text",
+       "text": " "
+      },
+      {
+       "type": "code",
+       "text": "dramatiq"
+      },
+      {
+       "type": "text",
+       "text": " + RabbitMQ. Birden çok worker pod."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Büyük ölçek:"
+      },
+      {
+       "type": "text",
+       "text": " "
+      },
+      {
+       "type": "code",
+       "text": "Celery"
+      },
+      {
+       "type": "text",
+       "text": " + Redis/RabbitMQ broker. Veya direkt Kafka consumer."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Durable workflow:"
+      },
+      {
+       "type": "text",
+       "text": " "
+      },
+      {
+       "type": "code",
+       "text": "DBOS"
+      },
+      {
+       "type": "text",
+       "text": " (Postgres-native, ek altyapı yok) — saga için ideal. "
+      },
+      {
+       "type": "code",
+       "text": "Temporal.io"
+      },
+      {
+       "type": "text",
+       "text": " (Cassandra/PG backend) — büyük workload için."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-workers-h-idempotency",
+    "type": "heading",
+    "level": 4,
+    "text": "Idempotency"
+   },
+   {
+    "id": "block-scale-workers-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Job iki kez çalışsa bile sonuç aynı olmalı (network retry, worker restart). Pattern: her job "
+     },
+     {
+      "type": "code",
+      "text": "idempotency_key"
+     },
+     {
+      "type": "text",
+      "text": " taşır, handler \"bu key işlendi mi\" check'ler. "
+     },
+     {
+      "type": "ref",
+      "text": "scale-idempotency",
+      "refId": "scale-idempotency"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-workers-h-job-tanimi-kod-ornegi",
+    "type": "heading",
+    "level": 4,
+    "text": "Job tanımı — kod örneği"
+   },
+   {
+    "id": "block-scale-workers-code",
+    "type": "codeBlock",
+    "language": "python",
+    "code": "from framework.workers import job, schedule\n\n@job(queue=\"emails\", retry=3, backoff=\"exponential\", timeout=60)\nasync def send_welcome_email(user_id: str):\n    user = await User.get(user_id)\n    await mailer.send(user.email, template=\"welcome\")\n\n@schedule(cron=\"0 2 * * *\", queue=\"maintenance\")  # Her gün 02:00\nasync def daily_cleanup():\n    await archive_old_outbox_rows()\n    await rebuild_search_index_for_stale_docs()"
+   },
+   {
+    "id": "block-scale-workers-h-worker-pool-sizing",
+    "type": "heading",
+    "level": 4,
+    "text": "Worker pool sizing"
+   },
+   {
+    "id": "block-scale-workers-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Tek-process (shared host)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "asyncio loop + 1 worker. Yeterli ~100 req/s."
+       }
+      ]
+     },
+     {
+      "term": "Küçük SaaS",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1 web pod + 1 worker pod, her biri 4 vCPU."
+       }
+      ]
+     },
+     {
+      "term": "Orta SaaS",
+      "definition": [
+       {
+        "type": "text",
+        "text": "3 web + 3 worker + 1 scheduler pod. Horizontal scale."
+       }
+      ]
+     },
+     {
+      "term": "Büyük (sosyal medya)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Web pool, worker pool per queue (emails, fanout, projections, webhooks), autoscale."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-scale-workers-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-scale-workers-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Async job queue. Outbox relay, projection rebuild, fan-out, cron — hepsi burada."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-workers-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-scale-workers-lesson-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Arka planda iş gören 'çalışanlar' — kullanıcı görmeden ağır işleri sırayla yapan dijital görevliler."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Ağır işi kullanıcının ekranında yapamayız; kullanıcı bekletilemez. Arka çalışana yollar, sonucu hazır olunca haber verirsin."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir iş kuyruğa atılır → çalışan sırası gelince alır, yapar, sonucu kaydeder → ana sistem 'bitti' bildirimi alır."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Excel raporu üretimi, toplu e-posta gönderimi, fotoğraf optimizasyonu — hepsi çalışan tarafında."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İşlem 1 saniyeden uzun sürüyorsa kuyruğa atılır."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici 'çalışana ver' der; çalışan modülü kuyruğu yönetir; son kullanıcı hızla cevap aldığını görür."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Restoranda siparişten sonra mutfak: müşteri masada bekler, mutfak yemeği hazırlar, garson getirir. Müşteri mutfakta beklemez."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

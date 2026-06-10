@@ -1,0 +1,195 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-sus-conformance",
+  "sourceId": "sus-conformance",
+  "slug": "sus/sus-conformance",
+  "title": "Test-önce sözleşme koşumu",
+  "summary": "PostgreSQL merge-gate disiplini + Stripe-mock + Hypothesis property-based testing. \"Sözleşme korunduğunu sadece çalışan test kanıtlar.\"",
+  "categoryId": "sus",
+  "tags": [
+   "sustainability",
+   "test",
+   "conformance",
+   "property",
+   "stripe-mock"
+  ],
+  "meta": {},
+  "related": [
+   "page-anti-patterns"
+  ],
+  "blocks": [
+   {
+    "id": "block-sus-conformance-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Plugin sözleşmesinin korunduğunu otomatik conformance testleri + property-based invariant testleri sürekli kanıtlar."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-conformance-co",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Shopify Packwerk retrospektif",
+    "segments": [
+     {
+      "type": "text",
+      "text": "*\"Strategies strongly oriented toward running code and executable results rather than philosophical ideals.\"* — Felsefe değil, çalışan test."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-conformance-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Bu projede:"
+     },
+     {
+      "type": "text",
+      "text": " Plugin manifest'iyle birlikte her plugin bir conformance suite geçer. Hypothesis property-based testler invariant'ları korur (örn. tüm girdi kombinasyonlarında \"toplam değişmez\" kuralı). Golden file diff'i sözleşme değişikliği erken yakalar."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-conformance-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-sus-conformance-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sözleşme katmanının korunduğu, sürekli koşan test kümesiyle kanıtlanır: plugin-sözleşme conformance testleri (her plugin'in beklenen davranışı sergilediğini), property-based testler (rastgele girdilerle invariant'ların korunduğunu) ve golden-response diff'leri (yanıt formatı değişmediğini)."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yazılı politika ve CI sınır kapısı sözleşmeyi savunur — ama gerçek dünya değişkenliğini test etmez. Sözleşmenin 50 yıl sonra hâlâ tutarlı olduğunu sadece çalışan testler kanıtlar."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Üç katman: (1) conformance suite — her plugin standart API'yi geçer mi; (2) Hypothesis (Python) property-based testing — rastgele üretilen girdilerle invariant'lar bozulur mu; (3) golden file — kanonik yanıtın diff'i alınır, değişirse PR sorulur."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "tests/conformance/ + tests/property/ + tests/golden/"
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her sözleşmeye \"public\" denilen yüzeyle eşzamanlı — sözleşme = test."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Plugin yazarı conformance suite'i geçer; mimar property invariant'larını tanımlar; CI golden diff'i kontrol eder."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Ehliyet sınavı: her ehliyet sahibinin trafikte aynı kuralı izlediği nasıl kanıtlanır? \"Yazılı kanun var\" yetmez; her sürücü pratik sınavı geçer. Sözleşme = trafik kanunu; conformance suite = direksiyon sınavı. Sözlü söz vermek yetmez; davranışı kanıtlamak gerekir."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-sus-conformance-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-sus-conformance-story",
+    "type": "useCase",
+    "title": "Otomobil servisi sahibi Hasan Bey",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Her marka aracın egzoz emisyonu yasal sınırın altında kalmalı. \"Söz veriyoruz\" yeterli değil; yıllık periyodik muayene zorunlu."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Muayene = conformance test. Sözleşme yıllık olarak çalışıyor halde mi diye kanıtlanır. Yazılım plugin'i de aynı: standart API'ye uyduğu test ile kanıtlanır."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-conformance-story-2",
+    "type": "useCase",
+    "title": "Apartman yönetim kurulu, asansör periyodik kontrolü",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Asansör yasal olarak 6 ayda kontrol edilmek zorunda. Form 12 maddeli, her madde işaretli olmak zorunda. Yapılmazsa kullanım dışı."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Sözleşme = 12 madde; kontrol formu = conformance. \"Sözleşme yaşıyor\" diyebilmek için her 6 ayda form geçer. Yazılım golden file disiplinin benzeri."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-conformance-story-3",
+    "type": "useCase",
+    "title": "Marka franchise denetimi (zincir restoran)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Şube açan girişimci marka standartlarına uyacağına söz verir. Marka her 3 ayda gizli müşteri gönderir; standartları test eder."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Sözlü söz yetmez; davranış kanıtlanmalı. Test başarısızsa franchise lisansı askıya alınır. Conformance suite plugin lisansı için tam aynı disiplin."
+     }
+    ]
+   }
+  ]
+ }
+}

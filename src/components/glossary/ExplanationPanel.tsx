@@ -1,13 +1,28 @@
 // Sağdan açılan uzun açıklama paneli — Radix Dialog: focus trap + Escape +
-// kapanışta focus dönüşü + arka plan scroll kilidi (12 §Etkileşim 4)
+// kapanışta focus dönüşü + arka plan scroll kilidi (12 §Etkileşim 4).
+// Panel içeriği (longExplanation/analogy/useCases) lazy chunk'tan gelir (14 #15).
+import { useEffect, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { resolveTerm } from "../../engine";
+import { resolveTerm, loadTermDetail } from "../../engine";
+import type { GlossaryDetail } from "../../schemas";
 import { useUiState } from "../ui/UiState";
 
 export function ExplanationPanel() {
   const ui = useUiState();
   const term = ui.panelTermId ? resolveTerm(ui.panelTermId) : undefined;
   const open = ui.layer === "panel" && !!term;
+  const [detail, setDetail] = useState<GlossaryDetail | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    setDetail(null);
+    if (open && term) {
+      void loadTermDetail(term.id).then((d) => {
+        if (alive && d) setDetail(d);
+      });
+    }
+    return () => { alive = false; };
+  }, [open, term]);
 
   return (
     <Dialog.Root open={open} onOpenChange={(o) => { if (!o) ui.close(); }}>
@@ -32,35 +47,43 @@ export function ExplanationPanel() {
               </Dialog.Title>
               <p style={{ color: "var(--color-text-secondary)" }}>{term.shortExplanation}</p>
 
-              <section className="panel-section">
-                <h3>Açıklama</h3>
-                <p style={{ whiteSpace: "pre-line" }}>{term.longExplanation}</p>
-              </section>
-
-              {term.realWorldAnalogy && (
-                <section className="panel-section">
-                  <h3>Gerçek dünya analojisi</h3>
-                  <p>{term.realWorldAnalogy}</p>
-                </section>
+              {!detail && (
+                <p role="status" aria-busy="true" style={{ color: "var(--color-text-muted)" }}>Açıklama yükleniyor…</p>
               )}
 
-              {term.useCases && term.useCases.length > 0 && (
-                <section className="panel-section">
-                  <h3>Kullanım alanları</h3>
-                  <ul>{term.useCases.map((u, i) => <li key={i}>{u}</li>)}</ul>
-                </section>
-              )}
+              {detail && (
+                <>
+                  <section className="panel-section">
+                    <h3>Açıklama</h3>
+                    <p style={{ whiteSpace: "pre-line" }}>{detail.longExplanation}</p>
+                  </section>
 
-              {term.caseStudies && term.caseStudies.length > 0 && (
-                <section className="panel-section">
-                  <h3>Vaka çalışmaları</h3>
-                  {term.caseStudies.map((c, i) => (
-                    <div key={i} className="usecase">
-                      <div className="usecase__title">{c.title}</div>
-                      {c.story}
-                    </div>
-                  ))}
-                </section>
+                  {detail.realWorldAnalogy && (
+                    <section className="panel-section">
+                      <h3>Gerçek dünya analojisi</h3>
+                      <p>{detail.realWorldAnalogy}</p>
+                    </section>
+                  )}
+
+                  {detail.useCases && detail.useCases.length > 0 && (
+                    <section className="panel-section">
+                      <h3>Kullanım alanları</h3>
+                      <ul>{detail.useCases.map((u, i) => <li key={i}>{u}</li>)}</ul>
+                    </section>
+                  )}
+
+                  {detail.caseStudies && detail.caseStudies.length > 0 && (
+                    <section className="panel-section">
+                      <h3>Vaka çalışmaları</h3>
+                      {detail.caseStudies.map((c, i) => (
+                        <div key={i} className="usecase">
+                          <div className="usecase__title">{c.title}</div>
+                          {c.story}
+                        </div>
+                      ))}
+                    </section>
+                  )}
+                </>
               )}
             </>
           )}

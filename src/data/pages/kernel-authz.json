@@ -1,0 +1,914 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-kernel-authz",
+  "sourceId": "k-authz",
+  "slug": "kernel/kernel-authz",
+  "title": "Authorization",
+  "summary": "Kim ne yapabilir? Query layer'a örülmüş — application-level if-check yetmez.",
+  "categoryId": "kernel",
+  "tags": [
+   "authz",
+   "rbac",
+   "rebac",
+   "abac",
+   "rls",
+   "kernel"
+  ],
+  "meta": {
+   "badge": "Layer 0 — Kernel #3"
+  },
+  "related": [],
+  "blocks": [
+   {
+    "id": "block-kernel-authz-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "'Sen ne yapabilirsin?' kararını veren güvenlik katmanı; her ekran ve kayıt için izin kontrolü."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Authentication"
+     },
+     {
+      "type": "text",
+      "text": " ("
+     },
+     {
+      "type": "ref",
+      "text": "k-identity",
+      "refId": "k-identity"
+     },
+     {
+      "type": "text",
+      "text": ") = \"kim\". "
+     },
+     {
+      "type": "strong",
+      "text": "Authorization"
+     },
+     {
+      "type": "text",
+      "text": " = \"ne yapabilir\". Karıştırılmasın. Authz *query layer'a örülmeli*; application-level if-check yetmez."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-h-uc-model-birlikte",
+    "type": "heading",
+    "level": 4,
+    "text": "Üç model birlikte"
+   },
+   {
+    "id": "block-kernel-authz-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Gerçek hayatta üç modeli birlikte kullanırsın:"
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "RBAC (Role-Based)"
+      },
+      {
+       "type": "text",
+       "text": " — admin, editor, viewer rolleri. Klasik. Frappe'nin "
+      },
+      {
+       "type": "code",
+       "text": "Role"
+      },
+      {
+       "type": "text",
+       "text": " + "
+      },
+      {
+       "type": "code",
+       "text": "DocPerm"
+      },
+      {
+       "type": "text",
+       "text": " sistemi."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "ABAC (Attribute-Based)"
+      },
+      {
+       "type": "text",
+       "text": " — \"kullanıcının departmanı IT ise saat 09-18 arası ise iç ağdaysa\". Koşul-temelli. SpiceDB'de \"caveats\" olarak."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "ReBAC (Relationship-Based)"
+      },
+      {
+       "type": "text",
+       "text": " — \"kullanıcı bu document'in owner'ı ise\" veya \"bu projenin member'ı ise\". Google Zanzibar, OpenFGA, SpiceDB temeli."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-kernel-authz-h-openfga-modeli-kanonik",
+    "type": "heading",
+    "level": 4,
+    "text": "OpenFGA modeli — kanonik"
+   },
+   {
+    "id": "block-kernel-authz-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Senin framework'ünde OpenFGA-style DSL ile authz tanımla:"
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-code",
+    "type": "codeBlock",
+    "title": "OpenFGA model DSL",
+    "language": "text",
+    "code": "model\n  schema 1.1\n\ntype user\n\ntype organization\n  relations\n    define member: [user]\n    define admin: [user]\n\ntype document\n  relations\n    define parent: [organization]\n    define owner: [user]\n    define editor: [user] or owner or admin from parent\n    define viewer: [user] or editor or member from parent"
+   },
+   {
+    "id": "block-kernel-authz-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Sonra "
+     },
+     {
+      "type": "code",
+      "text": "check(user:alice, viewer, document:report-2026)"
+     },
+     {
+      "type": "text",
+      "text": " diye sorgu yaparsın. Sistem tuple store'a bakar: "
+     },
+     {
+      "type": "code",
+      "text": "document:report-2026.parent = organization:acme"
+     },
+     {
+      "type": "text",
+      "text": " + "
+     },
+     {
+      "type": "code",
+      "text": "organization:acme.member = user:alice"
+     },
+     {
+      "type": "text",
+      "text": " → "
+     },
+     {
+      "type": "strong",
+      "text": "true"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-h-query-layer-injection-kritik",
+    "type": "heading",
+    "level": 4,
+    "text": "Query layer injection — kritik"
+   },
+   {
+    "id": "block-kernel-authz-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Frappe'nin "
+     },
+     {
+      "type": "code",
+      "text": "permission_query_conditions"
+     },
+     {
+      "type": "text",
+      "text": " hook'u — junior'a illa öğret:"
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-code-2",
+    "type": "codeBlock",
+    "title": "Permission query injection",
+    "language": "python",
+    "code": "# hooks.py\npermission_query_conditions = {\n    \"SalesOrder\": \"myapp.permissions.sales_order_conditions\"\n}\n\n# myapp/permissions.py\ndef sales_order_conditions(user):\n    if not user:\n        user = framework.session.user\n    if \"Sales Manager\" in get_roles(user):\n        return \"\"  # No restriction\n    # Sales rep sadece kendi siparişlerini görür\n    return f\"`tabSalesOrder`.owner = {escape(user)}\""
+   },
+   {
+    "id": "block-kernel-authz-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu fonksiyon her "
+     },
+     {
+      "type": "code",
+      "text": "SELECT * FROM tabSalesOrder"
+     },
+     {
+      "type": "text",
+      "text": " sorgusunda WHERE'e otomatik AND'lenir. Application kodu ona bakmaz. Module geliştirici yanlışlıkla "
+     },
+     {
+      "type": "code",
+      "text": "db.query('SELECT...')"
+     },
+     {
+      "type": "text",
+      "text": " yazarsa bile WHERE injected."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-h-postgresql-row-level-security-defense-in-depth",
+    "type": "heading",
+    "level": 4,
+    "text": "PostgreSQL Row-Level Security — defense in depth"
+   },
+   {
+    "id": "block-kernel-authz-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "OpenFGA pratikte aplikasyon layer'ında çalışır. "
+     },
+     {
+      "type": "ref",
+      "text": "k-tenancy",
+      "refId": "k-tenancy"
+     },
+     {
+      "type": "text",
+      "text": " izolasyonu için ek katman olarak PostgreSQL RLS de aç:"
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-code-3",
+    "type": "codeBlock",
+    "language": "sql",
+    "code": "ALTER TABLE tabSalesOrder ENABLE ROW LEVEL SECURITY;\n\nCREATE POLICY tenant_isolation ON tabSalesOrder\nUSING (tenant_id = current_setting('app.tenant_id')::uuid);\n\n-- Session başında:\nSET LOCAL app.tenant_id = 'acme-tenant-uuid';"
+   },
+   {
+    "id": "block-kernel-authz-p-8",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Performans: "
+     },
+     {
+      "type": "code",
+      "text": "tenant_id"
+     },
+     {
+      "type": "text",
+      "text": " üzerinde index varsa overhead %2-5. "
+     },
+     {
+      "type": "strong",
+      "text": "PgBouncer transaction mode"
+     },
+     {
+      "type": "text",
+      "text": "'da "
+     },
+     {
+      "type": "code",
+      "text": "SET LOCAL"
+     },
+     {
+      "type": "text",
+      "text": " kullan (session değişkeni tx scope'una bağlanır, cross-tenant leak imkansız)."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-h-field-level-security",
+    "type": "heading",
+    "level": 4,
+    "text": "Field-level security"
+   },
+   {
+    "id": "block-kernel-authz-p-9",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bazı alanlar belli rolde görünmez. HRMS senaryosu: çalışan listesinde maaş alanı sadece HR rolüne görünür. DocType metadata'da:"
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-code-4",
+    "type": "codeBlock",
+    "language": "yaml",
+    "code": "field: salary\npermlevel: 1   # default 0 = herkes; 1 = sadece HR\n\ndoctype_permission:\n  - role: Employee, permlevel: 0, read: 1\n  - role: HR, permlevel: 1, read: 1, write: 1"
+   },
+   {
+    "id": "block-kernel-authz-h-resource-sharing-drive-pattern",
+    "type": "heading",
+    "level": 4,
+    "text": "Resource sharing — Drive pattern"
+   },
+   {
+    "id": "block-kernel-authz-p-10",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "ref",
+      "text": "s-drive",
+      "refId": "s-drive"
+     },
+     {
+      "type": "text",
+      "text": " ürünü için: kullanıcı dosyayı belli kişilerle paylaşır. ReBAC tuple ekler: "
+     },
+     {
+      "type": "code",
+      "text": "document:photo-summer-2026.viewer = user:bob"
+     },
+     {
+      "type": "text",
+      "text": ". Sonraki query'de Bob'un access listesi bu dosyayı içerir."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-h-gercek-dunya-ornekleri",
+    "type": "heading",
+    "level": 4,
+    "text": "Gerçek dünya örnekleri"
+   },
+   {
+    "id": "block-kernel-authz-uc",
+    "type": "useCase",
+    "title": "Trello",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "board member sadece o board'u görür. Karta atanmış kişi karta erişebilir. "
+     },
+     {
+      "type": "strong",
+      "text": "ReBAC"
+     },
+     {
+      "type": "text",
+      "text": " — \"X, board:Y'nin member'ı\" relation tuple'ı."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-uc-2",
+    "type": "useCase",
+    "title": "Gmail",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "mail'in receiver'ısın → okuyabilirsin. Sender'sın → \"Sent\" klasöründe silebilirsin. "
+     },
+     {
+      "type": "strong",
+      "text": "ABAC"
+     },
+     {
+      "type": "text",
+      "text": " — attribute (sender/receiver) + action (read/delete)."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-uc-3",
+    "type": "useCase",
+    "title": "E-ticaret admin",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "customer-service rolü sipariş görür, refund yetkisi var ama 1000 TL üstü onaylayamaz. Manager 10K TL altı, üstü CFO. "
+     },
+     {
+      "type": "strong",
+      "text": "RBAC + ABAC"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-uc-4",
+    "type": "useCase",
+    "title": "Drive (#7)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "dosya paylaşımı — link share, kişi share, klasör share, organization-wide. Hepsi resource-başına ACL. "
+     },
+     {
+      "type": "strong",
+      "text": "Çoklu ReBAC"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-uc-5",
+    "type": "useCase",
+    "title": "GitHub",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "repo maintainer issue kapatabilir, contributor PR açabilir, public viewer sadece okur. Org takım izinleri repo'lara cascade. "
+     },
+     {
+      "type": "strong",
+      "text": "Hierarchical ReBAC"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-uc-6",
+    "type": "useCase",
+    "title": "HRMS (#9)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "İK uzmanı tüm maaşları, yönetici direct report'ların, çalışan kendininkini. Field-level + relationship-based."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-uc-7",
+    "type": "useCase",
+    "title": "Healthcare",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "doktor sadece kendi hastasının kaydını görür. Acil servis \"break-glass\" ile başkasınınkine erişir ama audit log'a kırmızı flag."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "En kritik kural",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Authz "
+     },
+     {
+      "type": "strong",
+      "text": "kesinlikle module olamaz"
+     },
+     {
+      "type": "text",
+      "text": ". Query layer'a örülmesi zorunlu. Module olsa, bir geliştirici manuel "
+     },
+     {
+      "type": "code",
+      "text": "SELECT *"
+     },
+     {
+      "type": "text",
+      "text": " yazıp WHERE eklemeyi unutursa — *bir tane unutsa* tüm tenant'ların verisi sızar. Frappe'nin "
+     },
+     {
+      "type": "code",
+      "text": "permission_query_conditions"
+     },
+     {
+      "type": "text",
+      "text": " pattern'i + OpenFGA \"List Objects\" API'si + PostgreSQL RLS = defense-in-depth."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-co-2",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Tuzak — application-level check",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Junior çoğunlukla şöyle yazar:\n\n"
+     },
+     {
+      "type": "code",
+      "text": "orders = db.query(\"SELECT * FROM orders\")\nreturn [o for o in orders if o.user_id == current_user.id]"
+     },
+     {
+      "type": "text",
+      "text": "\n\nBu yanlış: DB'den tüm satırlar geldi, sonra filter. 10M satırlık tabloda bellek patlar. Doğrusu: query layer authz'i otomatik WHERE'e çevirir, DB'den sadece izinli satır gelir."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Hangi araç",
+    "segments": [
+     {
+      "type": "text",
+      "text": "OpenFGA (Auth0/Okta sponsorlu CNCF Sandbox) veya SpiceDB (AuthZed) inceleyebilirsin. İkisi de Zanzibar implementation, gRPC API, kendi sidecar'larında çalışıyor. Sen authz layer'ını OpenFGA-style relation tuple'lar üzerine kurabilirsin (in-process Python lib + opsiyonel sidecar)."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-div",
+    "type": "divider"
+   },
+   {
+    "id": "block-kernel-authz-h-landx-bakisi-i04-permission-framework-a03-agent-capability-scope",
+    "type": "heading",
+    "level": 4,
+    "text": "LandX bakışı: I04 Permission Framework + A03 Agent Capability Scopes"
+   },
+   {
+    "id": "block-kernel-authz-p-11",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "LandX "
+     },
+     {
+      "type": "strong",
+      "text": "I04"
+     },
+     {
+      "type": "text",
+      "text": " RBAC + ABAC + agent capability scopes'u tek frameworkte birleştirir. Asıl yenilik: agent kullanıcı adına çalışırken etkin yetki "
+     },
+     {
+      "type": "strong",
+      "text": "üç kümeyi keser"
+     },
+     {
+      "type": "text",
+      "text": ":"
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-code-5",
+    "type": "codeBlock",
+    "language": "text",
+    "code": "etkin_yetki = user_perms  ∩  agent_scope  ∩  session_limits\n\n# user_perms     → kim adına çalışıyor (I04 RBAC + ABAC)\n# agent_scope    → hangi capability pack atanmış (A03)\n# session_limits → token budget, tool call quota, rate limit (A03)\n\n# Kesişim boşsa → tool çağrılamaz. Privilege escalation matematiksel olarak imkansız."
+   },
+   {
+    "id": "block-kernel-authz-p-12",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "LandX "
+     },
+     {
+      "type": "strong",
+      "text": "A03 — Agent Identity & Capability Scopes"
+     },
+     {
+      "type": "text",
+      "text": " (Faz 1 · P0 · Agent Runtime + Security Squad) bu kesişimin runtime icra ettiği yer. *Privilege escalation 0, scope drift tespit <1sn, scope binding accuracy %100* hedefi."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Capability Pack alanları",
+      "definition": [
+       {
+        "type": "code",
+        "text": "included_tools"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "excluded_tools"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "max_token_budget"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "max_runtime_sec"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "approved_by_human"
+       },
+       {
+        "type": "text",
+        "text": " (audited)"
+       }
+      ]
+     },
+     {
+      "term": "Sandbox alanları",
+      "definition": [
+       {
+        "type": "code",
+        "text": "isolation_level"
+       },
+       {
+        "type": "text",
+        "text": " (none/process/container/firecracker), "
+       },
+       {
+        "type": "code",
+        "text": "network_egress_allowlist"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "filesystem_readonly"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "max_memory_mb"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "max_cpu_seconds"
+       }
+      ]
+     },
+     {
+      "term": "Violation tipleri",
+      "definition": [
+       {
+        "type": "text",
+        "text": "out_of_scope / budget_exceeded / blast_radius / sandbox_breach — hepsi "
+       },
+       {
+        "type": "code",
+        "text": "ai_threat_assessment"
+       },
+       {
+        "type": "text",
+        "text": " ile AI-aware"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-p-13",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Field-level + Row-level Security"
+     },
+     {
+      "type": "text",
+      "text": " (I04): "
+     },
+     {
+      "type": "code",
+      "text": "Field Mask Policy"
+     },
+     {
+      "type": "text",
+      "text": " (redact/partial/hash/encrypt) + "
+     },
+     {
+      "type": "code",
+      "text": "Row-level Filter"
+     },
+     {
+      "type": "text",
+      "text": " (CEL/JSONLogic/Python sandbox). Authorization Decision her zaman audit log'a düşer."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-kernel-authz-p-14",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Kim ne yapabilir? Query layer'a örülmüş — application-level if-check yetmez."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-kernel-authz-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "'Sen ne yapabilirsin?' kararını veren güvenlik katmanı. Kimliğiniz belli olduktan sonra hangi ekranı görebilir, hangi kaydı düzenleyebilirsiniz — bu katman karar verir."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sisteme giren herkes her şeyi yapamaz. Muhasebeci faturayı düzenler, sekreter sadece okur. Yetki yoksa sistem 'yetkin yok' der."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her kullanıcıya bir rol atanır (yönetici, muhasebeci, sekreter). Roller hangi ekranlara, hangi kayıtlara dokunabileceğine karar verir. Bir tıklamada arka planda sessizce kontrol yapılır."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Menülerde gizlenen seçenekler, 'düzenle' butonunun grileşmesi, izin yok uyarısı."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her ekran açılırken, her kayıt görüntülenirken, her butona basılırken — milisaniyede."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yönetici rolleri atar; geliştirici izin kurallarını yazar; son kullanıcı kendi rolüne göre sistemde dolaşır."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir hastanedeki kart sistemi: doktor kartı ile uzmana, hastanın kartı ile hasta odasına, temizlikçi kartı ile depoya açılır. Yanlış yere yanlış kart yaramaz."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-kernel-authz-story",
+    "type": "useCase",
+    "title": "Hastane danışma görevlisi Esra Hanım",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Çağrı geldiğinde 'kim hasta nereye gidebilir' sorusunu cevaplar. Doktor çocuk hastalarına bakmaz; temizlikçi ameliyathaneye giremez; eczacı reçete dışı ilaç veremez."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Yetki sistemi tam böyle çalışır: kullanıcı (doktor, hemşire, temizlikçi) kendi kartını okuturken sistem 'bu kişi şuraya gidebilir' kararı verir. Yanlış kart yanlış yerde geçerli olmaz."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-story-2",
+    "type": "useCase",
+    "title": "Banka şube müdürü Ali Bey",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Gişede 100.000 TL üstü işlemleri sadece müdür onaylayabilir; vezne çalışanı 5.000 TL altı işlemleri kendi yapar; veznedar başkasının şifresini değiştiremez."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Banka sisteminde her kullanıcının rolü (vezne / müdür / İK / muhasebe) ve rolün sınırları yazılı. Sistem her tıklamada sessizce kontrol eder: 'Bu butona basabilir mi?' Cevap hayırsa buton silikleşir veya hata mesajı verilir."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-authz-story-3",
+    "type": "useCase",
+    "title": "Anaokulu müdiresi Pelin Hanım",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Veliler sadece kendi çocuklarının fotoğraflarını görmeli; öğretmen kendi sınıfının kayıtlarına ulaşmalı; müdire tüm okul kayıtlarına."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Sistem yetki kuralı buna göre kurulur: veli giriş yapınca sadece kendi çocuğu görünür. Müdire giriş yapınca tüm okul. Aynı sistem, herkesin gördüğü farklı pencere."
+     }
+    ]
+   }
+  ]
+ }
+}

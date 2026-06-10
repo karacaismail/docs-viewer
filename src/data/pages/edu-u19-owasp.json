@@ -1,0 +1,706 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-edu-u19-owasp",
+  "sourceId": "edu-u19",
+  "slug": "egitim/edu-u19-owasp",
+  "title": "Güvenlik Tuzakları — OWASP Top 10",
+  "summary": "En yaygın 10 saldırı: SQL injection, XSS, CSRF, IDOR... Bunları bilmeden web yazılımı yazılmaz.",
+  "categoryId": "egitim",
+  "tags": [
+   "education",
+   "security",
+   "owasp",
+   "sql-injection",
+   "xss",
+   "csrf"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-crosscut-security",
+   "page-kernel-authz",
+   "page-edu-u07-security",
+   "page-cc-privacy"
+  ],
+  "blocks": [
+   {
+    "id": "block-edu-u19-owasp-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "SQL injection, XSS, CSRF, SSRF, IDOR, input validation, parola hashing, secret management, least privilege."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u19-owasp-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "OWASP Top 10 = ezber kategorisi."
+     },
+     {
+      "type": "text",
+      "text": " Her birini somut örnekle bil, kodda nerede tuzak, framework nasıl koruyor — bunu bilmeden production'a çıkma."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u19-owasp-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "SQL Injection - hala yaşıyor",
+    "segments": [
+     {
+      "type": "text",
+      "text": "2026'da bile %5 web uygulamada SQL injection açığı var. Sebep: string concat. "
+     },
+     {
+      "type": "code",
+      "text": "query = 'SELECT * FROM user WHERE name = \"' + name + '\"';' = klasik. **Her zaman prepared statement: "
+     },
+     {
+      "type": "text",
+      "text": "query('SELECT * FROM user WHERE name = $1', [name])`.**"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u19-owasp-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'Bu endpoint için OWASP kontrol listesi: 1) Prepared statement (SQL injection). 2) Auth middleware (broken access). 3) Zod input validation. 4) Rate limit. 5) Output escape (React varsayılan). 6) Audit log.'* AI bunları default vermez; iste."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u19-owasp-h-owasp-top-10-cozum-map",
+    "type": "heading",
+    "level": 4,
+    "text": "OWASP Top 10 → çözüm map"
+   },
+   {
+    "id": "block-edu-u19-owasp-table",
+    "type": "table",
+    "columns": [
+     "Saldırı",
+     "Bir cümle",
+     "Çözüm"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Broken Access"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ID değiştir, başkasını gör"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Her endpoint user.id kontrolü"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Crypto"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "MD5 parola"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "bcrypt/argon2 + HTTPS"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Injection"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "String concat SQL"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Prepared statement"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Insecure Design"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Limit yok"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Rate limit + token TTL"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Misconfiguration"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Default şifre"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Checklist + secret rotation"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Vulnerable Comp."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Eski lib"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Dependabot"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Auth Failures"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Brute force"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Rate limit + MFA"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Software Integrity"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Unsigned package"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Lock file + npm audit"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Logging"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Saldırı görünmez"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Structured log + Sentry"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "SSRF"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "URL fetch internal"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Whitelist + AWS metadata block"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u19-owasp-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-edu-u19-owasp-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "OWASP Top 10 (2021):"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u19-owasp-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Broken Access Control (IDOR)"
+       },
+       {
+        "type": "text",
+        "text": ": "
+       },
+       {
+        "type": "code",
+        "text": "/api/order/123"
+       },
+       {
+        "type": "text",
+        "text": " istek atınca başkasının siparişini görme. Çözüm: her endpoint kullanıcı yetkisini DB'de doğrular."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Cryptographic Failures"
+       },
+       {
+        "type": "text",
+        "text": ": Parolayı MD5'le hash'leme, https kullanmama. Çözüm: bcrypt/argon2, HTTPS zorunlu."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Injection (SQL/NoSQL/Command)"
+       },
+       {
+        "type": "text",
+        "text": ": "
+       },
+       {
+        "type": "code",
+        "text": "WHERE name = '${userInput}'"
+       },
+       {
+        "type": "text",
+        "text": " = saldırgan yazılır SQL çalışır. Çözüm: prepared statement ("
+       },
+       {
+        "type": "code",
+        "text": "WHERE name = $1"
+       },
+       {
+        "type": "text",
+        "text": ")."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Insecure Design"
+       },
+       {
+        "type": "text",
+        "text": ": Şifre sıfırlama maili sınırsız → spam. Çözüm: rate limit + token TTL."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Security Misconfiguration"
+       },
+       {
+        "type": "text",
+        "text": ": Default parolalar, açık port'lar, debug mode prod'da. Çözüm: checklist + Trivy/Snyk tarama."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Vulnerable Components"
+       },
+       {
+        "type": "text",
+        "text": ": 3 yıllık library, bilinen CVE. Çözüm: Dependabot + haftalık update."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Authentication Failures"
+       },
+       {
+        "type": "text",
+        "text": ": Brute force, parola reuse. Çözüm: rate limit + MFA + breach password check."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Software & Data Integrity"
+       },
+       {
+        "type": "text",
+        "text": ": CI/CD'ye unsigned package, npm typo-squatting. Çözüm: lock file + audit."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Logging Failures"
+       },
+       {
+        "type": "text",
+        "text": ": Saldırı log'a yazılmaz, fark edilmez. Çözüm: structured log + alarm."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "SSRF"
+       },
+       {
+        "type": "text",
+        "text": ": Sunucu saldırgan URL'ini fetch eder, internal network'e gider. Çözüm: URL whitelist."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u19-owasp-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "XSS (Cross-Site Scripting):"
+     },
+     {
+      "type": "text",
+      "text": " Saldırgan kullanıcının tarayıcısında JS çalıştırır."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u19-owasp-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Stored: yorum alanına "
+      },
+      {
+       "type": "code",
+       "text": "<script>"
+      },
+      {
+       "type": "text",
+       "text": " yazılır, herkes etkilenir"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Reflected: URL parametre'ye yazılır, tıklayan etkilenir"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "DOM: Frontend "
+      },
+      {
+       "type": "code",
+       "text": "innerHTML"
+      },
+      {
+       "type": "text",
+       "text": " saldırgan input'la dolar"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Çözüm:"
+      },
+      {
+       "type": "text",
+       "text": " Framework auto-escape (React, Vue varsayılan) + CSP header"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u19-owasp-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "CSRF (Cross-Site Request Forgery):"
+     },
+     {
+      "type": "text",
+      "text": " Saldırgan başka sitedeyken senin siteye istek attırır."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u19-owasp-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Çözüm:"
+      },
+      {
+       "type": "text",
+       "text": " SameSite cookie + CSRF token"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u19-owasp-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-edu-u19-owasp-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "En yaygın 10 web saldırısı; nasıl yapılır, nasıl korunur."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir bug = bir özellik kaybı. Bir güvenlik açığı = tüm veri tabanı sızıntısı + iş kaybı."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Prepared statement (SQL injection). 2) Framework auto-escape (XSS). 3) SameSite cookie + CSRF token. 4) Her endpoint yetki kontrolü (IDOR). 5) bcrypt/argon2 parola. 6) Dependabot. 7) Rate limit."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "cc-security"
+       },
+       {
+        "type": "text",
+        "text": " cluster + her DocType handler'da yetki kontrolü. CI'da Snyk/Trivy tarama."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk satır kod yazılırken. Sonradan eklemek imkânsız."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tüm geliştiriciler bilir; security champion kontrol eder; pentester yılda 1 doğrular."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Apartman güvenlik: kapı kilidi (auth), interkom (validation), kamera (logging), bekçi (rate limit), site sözleşmesi (yetki). Hepsi olunca güvenli."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u19-owasp-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-edu-u19-owasp-story",
+    "type": "useCase",
+    "title": "Apartman kapı görevlisi — Murat Bey (61)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Yeni güvenlik görevlisi geldi. 'Kim sorarsa söyle' diyen Murat Bey. Saldırgan 'Ahmet Bey 5. katta mı?' diye sordu, görevli 'evet' dedi. Hırsızlık."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Information disclosure: 'kim, nerede oturuyor' bilgisi açığı. Güvenlik görevlisi sadece sakine bilgi verir, dışarıya değil. "
+     },
+     {
+      "type": "strong",
+      "text": "Yetki kontrolü her cevapta."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u19-owasp-story-2",
+    "type": "useCase",
+    "title": "Hatice Teyze (62) — sahte SMS",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Hatice Teyze'ye bankadan SMS geldi: 'Hesabınız tıklayın'. Linke tıkladı, formuna kart bilgilerini girdi."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Phishing + XSS-tarzı. Hatice Teyze sahte siteye düştü. "
+     },
+     {
+      "type": "strong",
+      "text": "Eğitim + bank sitenin tek bir URL olduğunu vurgulama gerek."
+     }
+    ]
+   }
+  ]
+ }
+}

@@ -1,0 +1,354 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-scale-projections",
+  "sourceId": "scale-projections",
+  "slug": "scale/scale-projections",
+  "title": "CQRS Projections (Materialized Read Models)",
+  "summary": "Yazma normalize, okuma denormalize. Event-driven senkron.",
+  "categoryId": "scale",
+  "tags": [
+   "cqrs",
+   "projection",
+   "read-model",
+   "scale"
+  ],
+  "meta": {
+   "badge": "Scale primitive #2"
+  },
+  "related": [],
+  "blocks": [
+   {
+    "id": "block-scale-projections-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Hızlı listeleme ve rapor için, ana veri yanında önceden hesaplanmış kopya tablolar."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-projections-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Write model normalize, transaction-safe; read model denormalize, hız için. Event-driven olarak senkronize."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-projections-h-klasik-problem",
+    "type": "heading",
+    "level": 4,
+    "text": "Klasik problem"
+   },
+   {
+    "id": "block-scale-projections-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "E-ticaret dashboard'unda \"müşterinin son 30 günde toplam harcaması\". Naif:"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-projections-code",
+    "type": "codeBlock",
+    "language": "sql",
+    "code": "SELECT SUM(total) FROM orders\nWHERE customer_id = ?\n  AND created_at > NOW() - INTERVAL '30 days'"
+   },
+   {
+    "id": "block-scale-projections-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "10M sipariş, 1M müşteri olunca her dashboard request'inde aynı query. Yavaş. Cache'liyorsun, stale."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-projections-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sık kullanılan verinin yakın bir yerde tutulması."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her seferinde uzaktan çekmek yavaşlar."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bellekte yedek; süresi dolunca yenilenir."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistem otomatik."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tezgâh üstündeki ekmek — depodan her seferinde almak yerine."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-scale-projections-h-projection-ile",
+    "type": "heading",
+    "level": 4,
+    "text": "Projection ile"
+   },
+   {
+    "id": "block-scale-projections-code-2",
+    "type": "codeBlock",
+    "language": "python",
+    "code": "# Bir tabloya CustomerStats projection'ı kur\n# customer_id, total_spent_30d, order_count, last_order_at\n\n@bus.on(OrderPlaced)\ndef update_customer_stats(event):\n    stats = db.get_or_create_stats(event.customer_id)\n    stats.total_spent_30d += event.total\n    stats.order_count += 1\n    stats.last_order_at = event.timestamp\n    db.save(stats)"
+   },
+   {
+    "id": "block-scale-projections-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Dashboard request'inde tek SELECT, hazır agrege. Eventual consistency = event işlenene kadar 1-2 saniye gecikme olabilir. Çoğu zaman OK."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-projections-h-doctype-a-projection-metadata",
+    "type": "heading",
+    "level": 4,
+    "text": "DocType'a projection metadata"
+   },
+   {
+    "id": "block-scale-projections-code-3",
+    "type": "codeBlock",
+    "language": "yaml",
+    "code": "doctype: CustomerStats\nis_projection: true\nsource_events: [OrderPlaced, OrderCancelled, OrderRefunded]\nrebuild_strategy: replay  # event store'dan baştan kur\n\nprojection_handler:\n  OrderPlaced: |\n    customer = stats.get(event.customer_id)\n    customer.total_spent += event.total\n    customer.order_count += 1\n  OrderCancelled: |\n    customer = stats.get(event.customer_id)\n    customer.total_spent -= event.refund_amount"
+   },
+   {
+    "id": "block-scale-projections-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Framework bunu görür, otomatik subscriber kurar. Projection rebuild komutu: "
+     },
+     {
+      "type": "code",
+      "text": "framework rebuild-projection CustomerStats"
+     },
+     {
+      "type": "text",
+      "text": " — event store'dan baştan replay eder (durable workflow ile, kesintide kaldığı yerden)."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-projections-h-eventual-consistency-penceresi",
+    "type": "heading",
+    "level": 4,
+    "text": "Eventual consistency penceresi"
+   },
+   {
+    "id": "block-scale-projections-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Event işlenene kadar 1-5 saniye gecikme tipik. Dashboard \"total spent\"i 2 saniye stale olabilir. Çoğu zaman OK. Ödeme/finansal sayfalarda fresh-read gerekirse: "
+     },
+     {
+      "type": "code",
+      "text": "?fresh=true"
+     },
+     {
+      "type": "text",
+      "text": " param → write model'den oku (yavaş ama kesin)."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-projections-h-gercek-dunya-ornekleri",
+    "type": "heading",
+    "level": 4,
+    "text": "Gerçek dünya örnekleri"
+   },
+   {
+    "id": "block-scale-projections-uc",
+    "type": "useCase",
+    "title": "Twitter timeline",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "PostCreated event'inden materialize edilmiş per-user timeline. Okuma anında JOIN yok."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-projections-uc-2",
+    "type": "useCase",
+    "title": "YouTube view count",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "yazma: "
+     },
+     {
+      "type": "code",
+      "text": "view++"
+     },
+     {
+      "type": "text",
+      "text": ", okuma: cached projection."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-projections-uc-3",
+    "type": "useCase",
+    "title": "Stripe dashboard",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "\"this month revenue\" — her ödeme event'i projection update'i."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-projections-uc-4",
+    "type": "useCase",
+    "title": "Sosyal medya feed (#14)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "bütün fan-out işi projection."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-projections-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-scale-projections-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Yazma normalize, okuma denormalize. Event-driven senkron."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-projections-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-scale-projections-lesson-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Hızlı listeleme ve rapor için, ana veri yanında önceden hesaplanmış kopya tablolar. 'Sorulduğunda yetişmeyelim, önceden hazırlayalım' fikri."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Karmaşık raporlar her seferinde hesaplansa sistem yavaşlar. Önceden hazırlanmış özet tabloları olursa sayfa milisaniyede açılır."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Ana veri değiştiğinde sistem ilgili özet tablosunu da kendiliğinden günceller. Kullanıcı sayfayı açtığında doğrudan özet tablosundan okur, ana tabloyu hiç sıkmaz."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Liste sayfaları, dashboard'lar, yıllık raporlar — hepsi projection tablosundan beslenir."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Karmaşık sorgu, çok sayıda ilişkili tablo, ağır toplam hesabı söz konusu olduğunda."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici projection kurallarını yazar; sistem otomatik günceller; son kullanıcı hızı görür."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir kafenin günlük 'en çok satan 10 ürün' panosu: her sipariş geldiğinde pano güncellenir. Müşteri sorduğunda kafe sahibi her seferinde defterleri karıştırmaz; tabelaya bakar."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

@@ -1,0 +1,604 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-s-billing",
+  "sourceId": "s-billing",
+  "slug": "urunler/s-billing",
+  "title": "Billing + Subscription — SaaS satış altyapısı",
+  "summary": "15 SaaS ürünü SaaS olarak satılacak: abonelik, trial, prorate, dunning, fatura, vergi otomasyonu.",
+  "categoryId": "urunler",
+  "tags": [
+   "stack",
+   "billing",
+   "subscription",
+   "saas",
+   "tax",
+   "invoicing"
+  ],
+  "meta": {
+   "granularity": "buyuk-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-stack-commerce",
+   "page-stack-accounting",
+   "page-crosscut-tr",
+   "page-cc-privacy",
+   "page-s-subscription-commerce",
+   "page-s-ecommerce-models"
+  ],
+  "blocks": [
+   {
+    "id": "block-s-billing-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Subscription lifecycle, trial, upgrade/downgrade prorating, dunning (ödeme başarısız), invoice PDF, KDV otomatik."
+     }
+    ]
+   },
+   {
+    "id": "block-s-billing-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Billing = revenue engine."
+     },
+     {
+      "type": "text",
+      "text": " Bug = direct gelir kaybı. Çift fatura, eksik fatura, vergi hatası — hepsi muhasebe + güven krizi."
+     }
+    ]
+   },
+   {
+    "id": "block-s-billing-img",
+    "type": "image",
+    "src": "/assets/stack/s-billing.svg",
+    "alt": "Billing + Subscription — SaaS satış altyapısı ürünü — kategori, muadiller ve katman pozisyonu",
+    "caption": "Billing + Subscription — SaaS satış altyapısı kategori şeması · pazar muadilleri + AI/TR ipuçları"
+   },
+   {
+    "id": "block-s-billing-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Stripe vs custom",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Custom billing yazmak = aylar + sürekli compliance bakım. "
+     },
+     {
+      "type": "strong",
+      "text": "Stripe (uluslararası) veya Iyzico (TR) zorunlu seçim"
+     },
+     {
+      "type": "text",
+      "text": " — kendisi PCI-DSS, vergi, dunning vs. hallediyor. Sıfırdan billing yazma."
+     }
+    ]
+   },
+   {
+    "id": "block-s-billing-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'Stripe entegrasyonu: Checkout Session ile signup, webhook listener payment.succeeded → subscription tablosu güncelle. Plan değişikliği için Stripe API. Dunning Stripe'ın smart_retries ayarı. Fatura PDF Stripe'ın hosted invoice URL'i.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-s-billing-h-subscription-state-machine",
+    "type": "heading",
+    "level": 4,
+    "text": "Subscription state machine"
+   },
+   {
+    "id": "block-s-billing-table",
+    "type": "table",
+    "columns": [
+     "Durum",
+     "Sonraki olası durum",
+     "Tetikleyici"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "trialing"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "active / canceled"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Trial sonu + kart ekleme"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "active"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "past_due / canceled"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Ödeme başarısız / kullanıcı iptal"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "past_due"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "active / unpaid"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Dunning retry başarılı / max retry"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "unpaid"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "active / canceled"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Manuel ödeme / süre dolması"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "canceled"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "active"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Reactivation (90 gün içinde)"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-s-billing-co-3",
+    "type": "callout",
+    "variant": "info",
+    "title": "SaaS billing ≠ Subscription commerce",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "s-billing"
+     },
+     {
+      "type": "text",
+      "text": " = SaaS hizmeti aboneliği (Pro plan, kullanıcı sayısı). "
+     },
+     {
+      "type": "strong",
+      "text": "s-subscription-commerce"
+     },
+     {
+      "type": "text",
+      "text": " = fiziksel/dijital ürün periyodik teslim (kahve kutusu, vitamin yenileme). İkisi aynı recurring billing motorunu paylaşır; iş mantığı farklı. Bu cluster motor; e-ticaret tarafı için s-subscription-commerce'e bak."
+     }
+    ]
+   },
+   {
+    "id": "block-s-billing-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-s-billing-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Subscription lifecycle:"
+     }
+    ]
+   },
+   {
+    "id": "block-s-billing-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Signup"
+       },
+       {
+        "type": "text",
+        "text": " — Trial 14 gün, ücretsiz, kart bilgisi opsiyonel"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Trial ending"
+       },
+       {
+        "type": "text",
+        "text": " — Bitime 3 gün kala uyarı email"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Conversion"
+       },
+       {
+        "type": "text",
+        "text": " — Kart bilgisi alınır, ilk faturalandırma"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Renewal"
+       },
+       {
+        "type": "text",
+        "text": " — Otomatik aylık/yıllık fatura"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Upgrade"
+       },
+       {
+        "type": "text",
+        "text": " — Daha üst plana geçiş, anlık prorate"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Downgrade"
+       },
+       {
+        "type": "text",
+        "text": " — Alt plana, bir sonraki dönem aktif"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Cancellation"
+       },
+       {
+        "type": "text",
+        "text": " — Dönem sonuna kadar erişim sürer"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Reactivation"
+       },
+       {
+        "type": "text",
+        "text": " — 90 gün içinde geri gelse aynı plan"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-s-billing-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Dunning (ödeme başarısız):"
+     }
+    ]
+   },
+   {
+    "id": "block-s-billing-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "1. deneme: 1 gün sonra retry"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "2. deneme: 3 gün sonra + email"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "3. deneme: 7 gün sonra + son uyarı"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Hala başarısız: hesap suspend (veri silinmez)"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-s-billing-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Prorating (orantılı):"
+     }
+    ]
+   },
+   {
+    "id": "block-s-billing-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Free → Pro mid-month → Pro'nun günlük ücreti × kalan gün"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Pro → Enterprise mid-month → fark günlük × kalan gün, hemen ücret"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-s-billing-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Tax (KDV/VAT):"
+     }
+    ]
+   },
+   {
+    "id": "block-s-billing-list-3",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "TR müşteri: %20 KDV otomatik"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "AB müşteri: KDV reverse charge (B2B) veya yerel oran (B2C)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "ABD müşteri: state tax (TaxJar entegrasyonu)"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-s-billing-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Fatura PDF:"
+     },
+     {
+      "type": "text",
+      "text": " Pandoc/wkhtmltopdf ile HTML → PDF. e-Fatura entegrasyonu TR için ayrı."
+     }
+    ]
+   },
+   {
+    "id": "block-s-billing-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-s-billing-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "SaaS ürününü satmak için abonelik yönetimi, ödeme tahsilatı, fatura üretimi ve müşteri lifecycle'i."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tek seferlik ödeme = e-ticaret. Aylık tekrar gelir = SaaS. Subscription mimarisi olmadan SaaS satamazsın."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Stripe/Paddle ödeme sağlayıcı entegrasyonu. 2) Subscription tablo: customer + plan + status + period. 3) Webhook listener: payment.succeeded/failed. 4) Dunning state machine. 5) Invoice PDF üretici. 6) KVKK/vergi otomatik."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "s-billing"
+       },
+       {
+        "type": "text",
+        "text": " cluster + Stripe (uluslararası) veya Iyzico/PayTR (TR). l1-audit ile her billing event log."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk müşteri kazanmadan ÖNCE billing altyapısı hazır. Sonradan migration = aylar."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Backend mühendisi entegrasyon yazar; muhasebe vergi kuralı verir; CS dunning sürecini takip."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Internet servisi: ayda 200 TL, otomatik kesilir. Ödenmezse uyarı, sonra kesinti, sonra hattın sökülmesi. SaaS aynı."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-s-billing-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-s-billing-story",
+    "type": "useCase",
+    "title": "Apartman aidatı — Murat Bey (61)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Murat Bey aidat tablosu tutuyor. Dairenin biri ay ortasında satıldı, yeni sakin geldi. Eski sakine 'yarısı sen öde' diye not yazdı; yeni sakine 'kalan yarısı'."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Bu prorate. Tam ay almak adil değildi; günlük hesaba göre bölündü."
+     }
+    ]
+   },
+   {
+    "id": "block-s-billing-story-2",
+    "type": "useCase",
+    "title": "Spor salonu üyeliği — Yusuf Bey (66)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Yusuf Bey aylık üyelik aldı, 3 ay sonra iptal istedi. Salon 'bu ay sonuna kadar gel' dedi."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Bu cancellation policy: dönem sonuna kadar erişim, sonra otomatik kapanma."
+     }
+    ]
+   }
+  ]
+ }
+}

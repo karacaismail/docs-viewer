@@ -1,0 +1,282 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-sus-durable",
+  "sourceId": "sus-durable",
+  "slug": "sus/sus-durable",
+  "title": "Postgres-native durable execution",
+  "summary": "DBOS: ayrı orkestratör altyapısı yok; workflow durumu mevcut Postgres'inde checkpoint'lenir. AI ajan güvenilirliği için.",
+  "categoryId": "sus",
+  "tags": [
+   "sustainability",
+   "dbos",
+   "postgres",
+   "durable",
+   "ai-agent"
+  ],
+  "meta": {},
+  "related": [
+   "page-scale-saga",
+   "page-scale-workers"
+  ],
+  "blocks": [
+   {
+    "id": "block-sus-durable-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Uzun iş akışı yarıda çökerse otomatik son adımdan devam eder; ayrı Temporal/Restate gerek yok; mevcut Postgres'inde durur."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-durable-co",
+    "type": "callout",
+    "variant": "tip",
+    "title": "DBOS niye?",
+    "segments": [
+     {
+      "type": "text",
+      "text": "*\"Postgres-native\"*: ayrı Temporal/Restate kümesi kurmazsın. Saga/Workflow durumu zaten kullanılan Postgres'inde checkpoint'lenir. FastAPI + Pydantic AI ile AI ajan güvenilirliği içkin."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-durable-img",
+    "type": "image",
+    "src": "/assets/sus-durable.svg",
+    "alt": "DBOS durable execution akışı — 4 adımdan 3'üncüde çöküş, ama 1-2 checkpoint'lendi; yeniden başlama 3'ten devam",
+    "caption": "Her tamamlanan adım Postgres'e checkpoint olur; çöküş sonrası DBOS son checkpoint'ten devam eder."
+   },
+   {
+    "id": "block-sus-durable-note",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "DBOS checkpoint zinciri görsel"
+     }
+    ]
+   },
+   {
+    "id": "block-sus-durable-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Uzun iş akışı her adımdan sonra Postgres'e kaydedilir."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "AI ajan task'ı saatler sürer; sunucu yeniden başlatma sıfırdan başlatamaz."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "@DBOS.workflow + @DBOS.step dekoratörü; sistem her adımdan sonra kayıt atar."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici dekorator koyar; sistem otomatik tutar."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mutfakta tarif defterine her aşamada saat yazmak: elektrik kesilirse 'saat 14:00'te dinlendirmedeydim' diyebilirsin."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-sus-durable-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Bu projeye uygulama:"
+     },
+     {
+      "type": "text",
+      "text": " Mevcut Saga + Outbox primitive'leri DBOS Transact üstüne oturur. Doküman zaten \"DBOS (Postgres-native, ek altyapı yok)\" diyor — somutlaştırması yapılır."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-durable-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-sus-durable-lesson-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistem, uzun çalışan işleri (örn. AI ajan task'ı, çoklu-adım sipariş akışı) her adımdan sonra Postgres'e checkpoint atar. Sunucu çökse veya yeniden başlasa iş kaldığı adımdan devam eder."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "AI ajan saatlerce çalışıyor olabilir; sunucu yeniden başlatma her seferinde sıfırdan başlamak demek olursa AI hiç bitiremez. Durable execution = çökme dirençli iş akışı."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "DBOS Transact kütüphanesi her adıma "
+       },
+       {
+        "type": "code",
+        "text": "@DBOS.workflow"
+       },
+       {
+        "type": "text",
+        "text": " veya "
+       },
+       {
+        "type": "code",
+        "text": "@DBOS.step"
+       },
+       {
+        "type": "text",
+        "text": " dekoratörü ekler; her tamamlanan adım Postgres'te kayıtlı. Çöküş sonrası kütüphane son tamamlanan adımdan devam eder."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "framework/scale/durable/ — DBOS entegrasyonu, ek altyapı yok."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk AI ajan veya uzun-saga akışı yazılmadan önce."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici dekoratörü koyar; sistem checkpoint atar; AI ajan kaldığı yerden devam eder; operasyon yeniden başlatmaktan korkmaz."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Marketin çek-defteri: kasiyer sipariş aldıkça defter sayfasına yazıyor. Yarısında elektrik kesilirse: defter sayfasındaki son satırdan devam — sıfırdan başlamak yok. Checkpoint = defter satırı."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-sus-durable-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-sus-durable-story",
+    "type": "useCase",
+    "title": "Banka havale memuru Ali Bey",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Yurt dışı havale 4 aşamalı: kontrol, blokaj, swift, teyit. Adım 3'te sistem çöktü. Manuel yapsalardı baştan başlatmak gerekirdi."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Banka sistemi her aşamayı kayıt altına aldı. Yeniden başlayınca \"3. aşama yarım kalmış\" diye otomatik devam etti. Müşteri farkına bile varmadı. Durable execution = bu disiplin."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-durable-story-2",
+    "type": "useCase",
+    "title": "Aşçı Mahmut Bey, çok-saatlik tarif",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Düğün için 8 saatlik pişirme: marine, fırın, dinlendirme, kesim. Her aşamada saati kaydederse elektrik kesilince \"saat 14:00'te dinlendirmedeydim\" diyebilir."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Hiç not tutmasaydı sil baştan tarif başlamak zorunda kalırdı. Defter notları = checkpoint. Durable execution mutfak disiplini."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-durable-story-3",
+    "type": "useCase",
+    "title": "İnşaat hakediş ödemesi, Engin Bey",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Her ay yapılan iş ölçülür, miktar onaylanır, ödeme emri yazılır, kasaya gönderilir. Adımlardan biri yarım kalırsa iş karışır."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Her adım imzalı evrak ile kayıt altında. Sonraki ay yeniden başlanmaz; yarıda kalan adımdan devam edilir. Durable iş akışı = imzalı evrak zinciri."
+     }
+    ]
+   }
+  ]
+ }
+}

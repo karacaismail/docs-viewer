@@ -1,0 +1,728 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-edu-u21-money-tax",
+  "sourceId": "edu-u21",
+  "slug": "egitim/edu-u21-money-tax",
+  "title": "Money + Tax — para ve vergi derinleştirme",
+  "summary": "Çoklu kur, kur tarihi, TR KDV %1/%8/%18, B2B reverse charge, uluslararası ödeme sağlayıcı seçimi.",
+  "categoryId": "egitim",
+  "tags": [
+   "education",
+   "money",
+   "tax",
+   "kdv",
+   "vat",
+   "payment-provider"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-edu-u02b-para-tarih",
+   "page-s-billing",
+   "page-stack-accounting",
+   "page-crosscut-tr"
+  ],
+  "blocks": [
+   {
+    "id": "block-edu-u21-money-tax-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "FX rate (kur tablosu + tarih), TR KDV %1/%8/%18, AB B2B reverse charge, Iyzico/PayTR vs Stripe seçimi."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u21-money-tax-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Para ve vergi sistemin en muhafazakar tarafı."
+     },
+     {
+      "type": "text",
+      "text": " Bug = yasal sorun + müşteri itirazı. Hızlı yazılmaz, doğru yazılır. Test çoktur."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u21-money-tax-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Vergi oranını sabit kodlama",
+    "segments": [
+     {
+      "type": "code",
+      "text": "const KDV = 0.20;"
+     },
+     {
+      "type": "text",
+      "text": " = 1 yıl sonra oran değişti, kod güncellenmedi, tüm fatura yanlış. Çözüm: "
+     },
+     {
+      "type": "strong",
+      "text": "vergi oranı tablosu"
+     },
+     {
+      "type": "text",
+      "text": " — "
+     },
+     {
+      "type": "code",
+      "text": "tax_rate(category, country, rate, valid_from, valid_to)"
+     },
+     {
+      "type": "text",
+      "text": ". Tarihe göre sorgulanır."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u21-money-tax-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'Invoice tablosuna: amount Decimal(18,2), currency char(3), fx_rate Decimal(18,6), fx_date date, tax_rate Decimal(5,4). Total = amount * (1 + tax_rate). Currency convert: amount * fx_rate. Geçmiş fatura asla anlık kurla yeniden hesaplanmaz.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u21-money-tax-h-odeme-saglayici-secim-matrisi",
+    "type": "heading",
+    "level": 4,
+    "text": "Ödeme sağlayıcı seçim matrisi"
+   },
+   {
+    "id": "block-edu-u21-money-tax-table",
+    "type": "table",
+    "columns": [
+     "Sağlayıcı",
+     "TR uyum",
+     "Uluslararası",
+     "Subscription",
+     "MoR (vergi)"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Iyzico"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ Mükemmel"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✗"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sınırlı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✗"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "PayTR"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ Mükemmel"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sınırlı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✗"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Stripe"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sınırlı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ Mükemmel"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ En iyi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✗"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Paddle"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Orta"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ MoR"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "PayPal"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Düşük güven"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sınırlı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✗"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u21-money-tax-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-edu-u21-money-tax-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Çoklu kur (FX) — kritik kurallar:"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u21-money-tax-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Anlık kur ile geçmiş işlem hesaplama YASAK"
+       },
+       {
+        "type": "text",
+        "text": " — geçen ay yapılan 100$ siparişi bugünkü kurla hesaplama. "
+       },
+       {
+        "type": "strong",
+        "text": "Kur tarihi şart"
+       },
+       {
+        "type": "text",
+        "text": "."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Kur tablosu"
+       },
+       {
+        "type": "text",
+        "text": ": "
+       },
+       {
+        "type": "code",
+        "text": "fx_rate(from_currency, to_currency, rate, valid_at)"
+       },
+       {
+        "type": "text",
+        "text": ". Her gün TCMB veya exchange API'den çek."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Faturada hem ana hem dönüştürülmüş"
+       },
+       {
+        "type": "text",
+        "text": ": 100 USD (kur: 32.50, fatura tarihi 2026-06-06) = 3250 TL."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u21-money-tax-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "TR KDV (Katma Değer Vergisi):"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u21-money-tax-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "%1"
+      },
+      {
+       "type": "text",
+       "text": ": Temel gıda, kitap, dergi"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "%8"
+      },
+      {
+       "type": "text",
+       "text": " → 2023'te %10'a çıktı sonra %20'e: Tekstil, gıda, sağlık (güncel oran her zaman doğrula)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "%20"
+      },
+      {
+       "type": "text",
+       "text": " (2024 standart): Diğer mal/hizmet"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u21-money-tax-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Stopaj (gelir/kurumlar vergisi):"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u21-money-tax-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Serbest meslek %20 stopaj"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Kira %20 stopaj"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Bunlar fatura üzerinde gösterilir"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u21-money-tax-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "AB VAT:"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u21-money-tax-list-3",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "B2B (alıcı VAT no'lu firma): "
+      },
+      {
+       "type": "strong",
+       "text": "Reverse charge"
+      },
+      {
+       "type": "text",
+       "text": " — alıcı kendi ülkesinde öder"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "B2C (bireysel): Satıcının ülkesi mi alıcının mı? OSS (One-Stop Shop) ile basitleştirilebilir."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u21-money-tax-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "ABD Sales Tax:"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u21-money-tax-list-4",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "50 eyaletin her birinde farklı. "
+      },
+      {
+       "type": "strong",
+       "text": "TaxJar"
+      },
+      {
+       "type": "text",
+       "text": " veya "
+      },
+      {
+       "type": "strong",
+       "text": "Avalara"
+      },
+      {
+       "type": "text",
+       "text": " otomasyon zorunlu."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u21-money-tax-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Ödeme sağlayıcı karşılaştırma (60+ junior altı için):"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u21-money-tax-list-5",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Iyzico/PayTR"
+      },
+      {
+       "type": "text",
+       "text": ": TR pazarı, BKM POS, taksit destekli, TL"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Stripe"
+      },
+      {
+       "type": "text",
+       "text": ": Uluslararası, multi-currency, abonelik için en iyi"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "PayPal"
+      },
+      {
+       "type": "text",
+       "text": ": Düşük güven (TR'de), pahalı komisyon"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Paddle"
+      },
+      {
+       "type": "text",
+       "text": ": Merchant of Record (vergi yükünü alır) — küçük ekip için ideal"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u21-money-tax-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-edu-u21-money-tax-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Çoklu kur, vergi (KDV/VAT/Sales Tax), ödeme sağlayıcı seçiminin detayları."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yanlış kur = muhasebe açık. Yanlış vergi = ceza. Yanlış sağlayıcı = komisyon çöplüğü."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Kur tablosu + tarih saklama. 2) Vergi oranı DocType'a göre. 3) AB için OSS/B2B reverse charge. 4) TR için Iyzico/PayTR, uluslararası için Stripe/Paddle."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "s-billing"
+       },
+       {
+        "type": "text",
+        "text": " + "
+       },
+       {
+        "type": "code",
+        "text": "s-accounting"
+       },
+       {
+        "type": "text",
+        "text": " + "
+       },
+       {
+        "type": "code",
+        "text": "cc-tr"
+       },
+       {
+        "type": "text",
+        "text": " cluster'ları. atomic-types Money tipi."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk fatura kesilmeden ÖNCE tüm vergi mantığı hazır."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici tablo + entegrasyon; muhasebe oran ve istisnalar; mali müşavir denetler."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Manav: ürünün ağırlığı + birim fiyatı + KDV = toplam. Üçü ayrı; kafadan toplama yok. Yazılım aynı: tutar + kur + vergi ayrı kolonlarda."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u21-money-tax-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-edu-u21-money-tax-story",
+    "type": "useCase",
+    "title": "Manav Selim Bey (62) — yabancı müşteri",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Selim Bey turistlere meyve satıyor. Bir gün €20 verdi turist; Selim Bey 'kur nedir?' diye sordu. Anlık kurla TL'ye çevirdi."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Doğru zaman = anlık. Ama bunu "
+     },
+     {
+      "type": "strong",
+      "text": "kayda alırsa"
+     },
+     {
+      "type": "text",
+      "text": " 'bugünkü kur' bilgisi ileride 3 ay sonra muhasebeci için kritik. Kayıt: 20 EUR + kur 35.50 = 710 TL. "
+     },
+     {
+      "type": "strong",
+      "text": "Tarih + kur birlikte saklanır."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u21-money-tax-story-2",
+    "type": "useCase",
+    "title": "Apartman aidatı + KDV — Murat Bey (61)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Murat Bey 3 daireye temizlik hizmeti faturası kesti. Hepsine %20 KDV ekledi."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Apartman temizlik hizmet KDV oranını doğru bilmesi gerek — yanlış oran iade veya ceza. Sisteme "
+     },
+     {
+      "type": "strong",
+      "text": "vergi oranı her DocType'ta"
+     },
+     {
+      "type": "text",
+      "text": " tanımlı olmalı, sabit değil."
+     }
+    ]
+   }
+  ]
+ }
+}

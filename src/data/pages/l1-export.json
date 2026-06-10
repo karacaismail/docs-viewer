@@ -1,0 +1,443 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-l1-export",
+  "sourceId": "l1-export",
+  "slug": "layer1/l1-export",
+  "title": "Veri Dışa Aktarma — CSV, Excel, PDF",
+  "summary": "100K satırlık export'u synchronously yapma; worker → S3 → email link. Excel için xlsx, PDF için Pandoc.",
+  "categoryId": "layer1",
+  "tags": [
+   "layer1",
+   "export",
+   "csv",
+   "xlsx",
+   "pdf"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-scale-workers-deep",
+   "page-layer1-file",
+   "page-stack-accounting"
+  ],
+  "blocks": [
+   {
+    "id": "block-l1-export-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Streaming CSV (memory-safe), xlsx (büyük spreadsheet), PDF (Pandoc + HTML template), background job için S3 + email."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-export-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Export = senin sisteminden çıkış kapısı."
+     },
+     {
+      "type": "text",
+      "text": " Müşteri verisini dışarı alabilmesi gerek."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-export-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Synchronous export tuzağı",
+    "segments": [
+     {
+      "type": "text",
+      "text": "100K satırı senkron = browser 30 sn bekler, timeout. "
+     },
+     {
+      "type": "strong",
+      "text": "Background job + email link"
+     },
+     {
+      "type": "text",
+      "text": " zorunlu."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-export-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'POST /orders/export: sync if rows<1000, else queue. Worker: streaming CSV → S3 multipart → presigned URL 1 saat → email link. UI: 'rapor hazırlanıyor' bildirimi.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-l1-export-h-format-kullanim",
+    "type": "heading",
+    "level": 4,
+    "text": "Format → kullanım"
+   },
+   {
+    "id": "block-l1-export-table",
+    "type": "table",
+    "columns": [
+     "Format",
+     "En iyi",
+     "Yazı için"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "CSV"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Veri taşıma"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Streaming, RAM-safe"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Excel xlsx"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Muhasebe"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ExcelJS, formula desteği"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "PDF"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Rapor, fatura"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Pandoc + HTML template"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "JSON"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "API entegrasyon"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Standart"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "UBL-TR XML"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "TR e-fatura"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "GIB onaylı"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-l1-export-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-l1-export-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Export boyut sınıfları:"
+     }
+    ]
+   },
+   {
+    "id": "block-l1-export-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Küçük"
+      },
+      {
+       "type": "text",
+       "text": " (<1000 satır): Synchronous, browser direct download"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Orta"
+      },
+      {
+       "type": "text",
+       "text": " (1K-100K): Background job, S3'e koy, email link"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Büyük"
+      },
+      {
+       "type": "text",
+       "text": " (100K+): Background job, chunk'lı, S3 multipart"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-l1-export-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "CSV streaming:"
+     }
+    ]
+   },
+   {
+    "id": "block-l1-export-code",
+    "type": "codeBlock",
+    "language": "javascript",
+    "code": "const stream = db.queryStream();\nstream.pipe(csvFormatter).pipe(fs.createWriteStream('out.csv'));"
+   },
+   {
+    "id": "block-l1-export-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Excel (xlsx):"
+     },
+     {
+      "type": "text",
+      "text": " SheetJS veya ExcelJS. Stream-write için ExcelJS."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-export-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "PDF:"
+     },
+     {
+      "type": "text",
+      "text": " Pandoc (Markdown → PDF) veya Puppeteer (HTML → PDF)."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-export-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "TR e-Fatura:"
+     },
+     {
+      "type": "text",
+      "text": " GIB UBL-TR formatı (XML). Ayrı entegrasyon."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-export-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-l1-export-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Veritabanından CSV/Excel/PDF dosyası üretme + güvenli teslim."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Müşteri 'tüm sipariş listesi indir' der."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) <1K: sync direct. 2) >1K: background + S3 + email. 3) Streaming write. 4) PDF için Pandoc."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "l1-export"
+       },
+       {
+        "type": "text",
+        "text": " cluster + "
+       },
+       {
+        "type": "code",
+        "text": "scale-workers-deep"
+       },
+       {
+        "type": "text",
+        "text": "."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk müşteri sorduğunda."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Backend developer worker; frontend developer UX."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Belediye nüfus suretini hemen vermez; 'hazırlanınca SMS gelecek'."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-l1-export-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-l1-export-story",
+    "type": "useCase",
+    "title": "Murat Bey (61) apartman raporu",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Yıllık aidat raporunu Excel'de istiyor. 5000 satır."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Export butonu → 'rapor hazırlanıyor' → 30 sn sonra email link."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-export-story-2",
+    "type": "useCase",
+    "title": "Hatice Teyze (62) market",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Muhasebeciye aylık satışları vermek istiyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "CSV export: tarih + ürün + miktar + tutar."
+     }
+    ]
+   }
+  ]
+ }
+}

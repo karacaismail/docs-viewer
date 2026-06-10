@@ -147,19 +147,27 @@ export const NavigationSchema = z.object({
 export type NavigationFile = z.infer<typeof NavigationSchema>;
 export type NavCategory = NavigationFile["categories"][number];
 
-// ---- Glossary (04 §5) ----
+// ---- Glossary (04 §5) — core eager (tooltip/chip), detail lazy (panel; 14 #15) ----
 export const GlossaryTermSchema = z.object({
   id: id("term-"),
   pageId: id("page-"),
   label: z.string(),
   shortExplanation: z.string(),
+});
+export type GlossaryTerm = z.infer<typeof GlossaryTermSchema>;
+export const GlossarySchema = z.object({ schemaVersion: z.string(), terms: z.array(GlossaryTermSchema) });
+
+export const GlossaryDetailSchema = z.object({
   longExplanation: z.string(),
   realWorldAnalogy: z.string().optional(),
   useCases: z.array(z.string()).optional(),
   caseStudies: z.array(z.object({ title: z.string(), story: z.string() })).optional(),
 });
-export type GlossaryTerm = z.infer<typeof GlossaryTermSchema>;
-export const GlossarySchema = z.object({ schemaVersion: z.string(), terms: z.array(GlossaryTermSchema) });
+export type GlossaryDetail = z.infer<typeof GlossaryDetailSchema>;
+export const GlossaryDetailFileSchema = z.object({
+  schemaVersion: z.string(),
+  details: z.record(z.string(), GlossaryDetailSchema),
+});
 
 // ---- Search index (04 §6) ----
 export const SearchDocSchema = z.object({
@@ -176,4 +184,8 @@ export const SearchDocSchema = z.object({
 export type SearchDoc = z.infer<typeof SearchDocSchema>;
 export const SearchIndexSchema = z.object({ schemaVersion: z.string(), documents: z.array(SearchDocSchema) });
 
-export const PagesFileSchema = z.object({ schemaVersion: z.string(), pages: z.array(PageSchema) });
+// Lazy mimari (14 #15): eager index yalnız metadata taşır; gövde pages/<stem>.json'da
+export const PageIndexEntrySchema = PageSchema.omit({ blocks: true, tags: true });
+export type PageIndexEntry = z.infer<typeof PageIndexEntrySchema>;
+export const PagesIndexFileSchema = z.object({ schemaVersion: z.string(), pages: z.array(PageIndexEntrySchema) });
+export const PageFileSchema = z.object({ schemaVersion: z.string(), page: PageSchema });

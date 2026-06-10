@@ -1,0 +1,560 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-cc-rollout",
+  "sourceId": "cc-rollout",
+  "slug": "crosscut/cc-rollout",
+  "title": "Feature Flag + Kademeli Rollout",
+  "summary": "Yeni özelliği %5 kullanıcıya aç, izle, sorun yoksa %100'e çık. Sorun varsa anında kapat (kill switch).",
+  "categoryId": "crosscut",
+  "tags": [
+   "crosscut",
+   "feature-flag",
+   "rollout",
+   "ab-test",
+   "kill-switch"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-scale-saga",
+   "page-sus-versioning",
+   "page-crosscut-observability"
+  ],
+  "blocks": [
+   {
+    "id": "block-cc-rollout-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Boolean flag, % rollout, tenant whitelist, A/B test variant. Backend: Unleash veya custom. Frontend: aynı flag'i okur."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-rollout-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Feature flag = deploy ile launch'u ayırma."
+     },
+     {
+      "type": "text",
+      "text": " Kod ürünleşse de özellik kapalı. Açma kararı ürün/SRE'nin; deploy kararı geliştiricinin. İki rol ayrı."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-rollout-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Flag çöplüğü",
+    "segments": [
+     {
+      "type": "text",
+      "text": "6 ay önce eklenen flag hala kodda. İki dalı da maintain etmek zorunda kalıyorsun. Bir gün biri 'kapalı dal' kodunu silsin diyor; sorun çıkıyor. "
+     },
+     {
+      "type": "strong",
+      "text": "Her flag'in TTL'i olmalı; 30-60 gün sonra temizlenmeli."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-rollout-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'Yeni checkout flow'u flag arkasından yaz. Flag adı: "
+     },
+     {
+      "type": "code",
+      "text": "new_checkout_v2"
+     },
+     {
+      "type": "text",
+      "text": ". Backend ve frontend aynı flag'i okur. Default OFF. Tenant whitelist tablosu + % rollout. Flag'in TTL'i 2026-12-01.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-rollout-h-rollout-asamalari-bekleme-suresi",
+    "type": "heading",
+    "level": 4,
+    "text": "Rollout aşamaları + bekleme süresi"
+   },
+   {
+    "id": "block-cc-rollout-table",
+    "type": "table",
+    "columns": [
+     "Aşama",
+     "Kullanıcı %",
+     "Bekleme",
+     "Metrik kontrolü"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Internal"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Şirket içi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "1 hafta"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Bug var mı?"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Beta"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Whitelist"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "3 gün"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Geri bildirim?"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "%5"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Random %5"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "2 gün"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Error rate < %0.5?"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "%25"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Random %25"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "1 gün"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "p95 latency normal?"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "%50"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Random %50"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "24 saat"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hala iyi?"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "%100"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tüm kullanıcı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "30 gün"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Flag temizle"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-rollout-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-cc-rollout-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Feature flag türleri:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-rollout-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Release flag"
+       },
+       {
+        "type": "text",
+        "text": ": Yeni özellik gizli, hazır olduğunda aç"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Experiment flag"
+       },
+       {
+        "type": "text",
+        "text": ": A/B test — kullanıcının %50'sine A, %50'sine B göster"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Ops flag (kill switch)"
+       },
+       {
+        "type": "text",
+        "text": ": Sorun olunca özelliği anında kapat"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Permission flag"
+       },
+       {
+        "type": "text",
+        "text": ": Premium kullanıcıya bu özellik"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-cc-rollout-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Rollout stratejisi:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-rollout-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "%1 internal (dogfooding)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "%5 beta tester'lar"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "%10 random kullanıcılar"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "%50 — metrikler iyiyse"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "%100 — 24 saat sorun yoksa"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-rollout-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Herhangi bir adımda sorun → kill switch → %0."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-rollout-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Flag temizlik (technical debt):"
+     },
+     {
+      "type": "text",
+      "text": "\nFlag açık kaldıkça kod karışır. Her flag'in "
+     },
+     {
+      "type": "strong",
+      "text": "sona erme tarihi"
+     },
+     {
+      "type": "text",
+      "text": " olmalı; 30 gün sonra kod temizliği şart."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-rollout-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Vibecoding ile çakışma:"
+     },
+     {
+      "type": "text",
+      "text": "\nAI ajan flag'in iki dalını da bilmeli — *'flag açıksa X, kapalıysa Y'* — yoksa flag'i yok sayar."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-rollout-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-cc-rollout-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir özelliği aşamalı olarak kullanıcılara açma + sorun çıkarsa anında kapatma sistemi."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tek seferde herkese açmak = sorun çıkarsa herkese çıkar. Aşamalı = sorun küçük grupta görünür, dakikada geri alınır."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Yeni özelliği flag arkasına yaz: "
+       },
+       {
+        "type": "code",
+        "text": "if (flags.newCheckout) { ... } else { ... }"
+       },
+       {
+        "type": "text",
+        "text": ". 2) %1 internal → %5 beta → %10 → %50 → %100. 3) Her adımda metrik izle. 4) Sorun = kill switch. 5) %100 + 30 gün = flag temizle."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "cc-rollout"
+       },
+       {
+        "type": "text",
+        "text": " cluster. Unleash veya custom feature_flags tablosu. Frontend ve backend aynı flag'i okur."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her yeni özellik için. Bug fix bile risk taşıyorsa flag arkasından."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Ürün ekibi flag stratejisi; geliştirici flag yazar; SRE kill switch erişimine sahip."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yeni ilaç önce 50 gönüllüye, sonra 500, sonra binlerce. FDA kademeli onay süreci aynı mantık."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-cc-rollout-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-cc-rollout-story",
+    "type": "useCase",
+    "title": "Berber Mehmet Usta (60) — yeni saç modeli",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Mehmet Usta yeni saç modelini öğrendi. Tüm müşterilere aynı modeli vermedi; önce yakın 3 müşteriye denedi."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Bu canary rollout. 3 müşteri beğendi, sonra herkese. Beğenmeselerdi, sadece 3 kişi etkilenirdi."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-rollout-story-2",
+    "type": "useCase",
+    "title": "Aşçı Hatice Teyze (62) — yeni reçete",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Yeni baklava reçetesi denedi; önce komşulara verdi, sonra dükkâna koydu."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Aynı pattern: küçük gruba test, geri bildirim, sonra geniş kullanım."
+     }
+    ]
+   }
+  ]
+ }
+}

@@ -1,0 +1,653 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-edu-u11-hata-yonetimi",
+  "sourceId": "edu-u11",
+  "slug": "egitim/edu-u11-hata-yonetimi",
+  "title": "Hata Yönetimi — try/catch'ten DLQ'ya",
+  "summary": "Hatasız yazılım yoktur; hatayla doğru başa çıkan yazılım vardır. Üretimdeki çöküşlerin %40'ı hata yönetimi eksikliğinden.",
+  "categoryId": "egitim",
+  "tags": [
+   "education",
+   "error-handling",
+   "retry",
+   "circuit-breaker",
+   "dlq"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-scale-saga",
+   "page-scale-idempotency",
+   "page-crosscut-observability",
+   "page-sus-durable"
+  ],
+  "blocks": [
+   {
+    "id": "block-edu-u11-hata-yonetimi-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Ne zaman try/catch, ne zaman retry, ne zaman vazgeçip Dead Letter Queue'ya at. Idempotency anahtar kavram."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u11-hata-yonetimi-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Hata yönetiminin temel sorusu:"
+     },
+     {
+      "type": "text",
+      "text": " *'Bu hata bir daha denersem geçer mi?'* Geçici (network kopması) = evet, "
+     },
+     {
+      "type": "term",
+      "text": "retry",
+      "termId": "term-retry-edu-u11-hata-yonetimi"
+     },
+     {
+      "type": "text",
+      "text": ". Kalıcı (veri bozuk) = hayır, "
+     },
+     {
+      "type": "term",
+      "text": "DLQ",
+      "termId": "term-dlq-edu-u11-hata-yonetimi"
+     },
+     {
+      "type": "text",
+      "text": ". Bu ayrımı yapmazsan ya sonsuz retry'a girersin, ya hatayı sessizce yutarsın."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u11-hata-yonetimi-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "İdempotency'siz retry",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Banka API'ye 'sipariş öde' isteği gönderdin, 503 aldın. Retry ettin, bu sefer 200 OK. Ama belki ilk istek de geçmişti, sen bilmedin. = "
+     },
+     {
+      "type": "strong",
+      "text": "çift ödeme."
+     },
+     {
+      "type": "text",
+      "text": " Çözüm: her isteğe "
+     },
+     {
+      "type": "code",
+      "text": "Idempotency-Key: <uuid>"
+     },
+     {
+      "type": "text",
+      "text": " ekle; sunucu aynı key'i bir kez işler."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u11-hata-yonetimi-co-2",
+    "type": "callout",
+    "variant": "info",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a şöyle yaz: *'Bu ödeme handler'ını yaz: idempotency key kontrol et, varsa kayıttan dön. Dış API çağrısını try/catch ile sar. 503/timeout = exponential backoff retry max 3 kez. Diğer hatalar DLQ'ya. Sentry'e gönder.'* Bu detayları söylemezsen kod basit "
+     },
+     {
+      "type": "code",
+      "text": "try { } catch (e) { console.log(e) }"
+     },
+     {
+      "type": "text",
+      "text": " üretir — üretimde işe yaramaz."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u11-hata-yonetimi-h-hata-turu-yapilacak-is",
+    "type": "heading",
+    "level": 4,
+    "text": "Hata türü → yapılacak iş"
+   },
+   {
+    "id": "block-edu-u11-hata-yonetimi-table",
+    "type": "table",
+    "columns": [
+     "Hata türü",
+     "Örnek",
+     "Yapılacak"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kullanıcı hatası"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Geçersiz email"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Validation, 400 dön, retry YOK"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Geçici hata (5xx, timeout)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Banka API down"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Exponential backoff, max 3-5 retry"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kalıcı hata (kötü veri)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "JSON parse hatası"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "DLQ'ya at, alarm, retry YOK"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Beklenmedik hata (bug)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "NullPointer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sentry'e fırlat, kullanıcıya 'tekrar dene'"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Servis tamamen kapalı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Banka 5 dakikadır 503"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Circuit breaker AÇIK, 30 sn istek gönderme"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u11-hata-yonetimi-h-retry-parametreleri-saglikli-varsayilan",
+    "type": "heading",
+    "level": 4,
+    "text": "Retry parametreleri — sağlıklı varsayılan"
+   },
+   {
+    "id": "block-edu-u11-hata-yonetimi-table-2",
+    "type": "table",
+    "columns": [
+     "Parametre",
+     "Değer",
+     "Açıklama"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Max attempts"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "3-5"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sonsuz değil; çabuk DLQ"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Initial delay"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "100ms"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "İlk retry hemen değil, ufak bekle"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Backoff multiplier"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "2x"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "100, 200, 400, 800, 1600 ms"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Max delay"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "30s"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Çok uzun retry kullanıcıyı bekletir"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Jitter"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "±%20"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tüm clientlar aynı anda retry yapmasın (thundering herd)"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u11-hata-yonetimi-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "DLQ olmayan sistem = retry sonsuz",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Sonsuz retry = log dosyaları doluyor, CPU yanıyor, asıl hata fark edilmiyor. DLQ + Slack/email alarm = on-call mühendis hemen haberdar."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u11-hata-yonetimi-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-edu-u11-hata-yonetimi-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Üç tür hata var:"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u11-hata-yonetimi-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Beklenen hata (validation)"
+       },
+       {
+        "type": "text",
+        "text": ": Kullanıcı 18 yaşından küçük → kayıt reddet. *try/catch yapma, validation katmanında yakala.*"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Geçici hata (transient)"
+       },
+       {
+        "type": "text",
+        "text": ": Banka API 503 döndü, network koptu. *Retry et, exponential backoff ile.*"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Kalıcı hata (permanent)"
+       },
+       {
+        "type": "text",
+        "text": ": Veri bozuk, harici sistem kalıcı kapalı. *Dead Letter Queue'ya (DLQ) at, alarm üret.*"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u11-hata-yonetimi-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Retry kuralları:"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u11-hata-yonetimi-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Sadece "
+      },
+      {
+       "type": "strong",
+       "text": "idempotent"
+      },
+      {
+       "type": "text",
+       "text": " işlemler retry edilebilir. Yoksa 2 kez sipariş alır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Exponential backoff: 1s, 2s, 4s, 8s, 16s — sonra vazgeç"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Maximum 3-5 deneme; daha fazla = daha fazla yük"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u11-hata-yonetimi-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Circuit breaker (Hystrix paterni):"
+     },
+     {
+      "type": "text",
+      "text": " dış sistem 10 sn boyunca her isteğe 503 dönüyorsa, devreyi 'AÇIK' duruma getir → bir süre hiç istek gönderme. Bu, çöken sistemi bombardımandan korur."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u11-hata-yonetimi-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "DLQ (Dead Letter Queue):"
+     },
+     {
+      "type": "text",
+      "text": " Retry'ı geçemeyen mesajlar buraya düşer. İnsan bakar, manuel inceler. Kuyruk değil, parking lot."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u11-hata-yonetimi-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-edu-u11-hata-yonetimi-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir kod parçasının hatasını yakalamak, gerekirse tekrar denemek, deneme başarısız olursa park alanına atmak. Üç katman var: validation (önle), retry (geçici sorun), DLQ (kalıcı sorun)."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Hata olmadan yazılım üretime çıkamaz. Doğru hata yönetimi olmadan üretim her gece sahibini uyandırır."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) try/catch yalnız beklenmedik hata için — kullanıcı hatası validation'da yakalansın. 2) Geçici hata için retry + backoff. 3) Hala başarısızsa DLQ. 4) DLQ'ya düşeni mutlaka insan görsün — alarm bağla."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her dış sistem çağrısında (banka, email, SMS, kargo API, vb.) — outbound webhook + scale-saga + DLQ var."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Üretimde "
+       },
+       {
+        "type": "strong",
+        "text": "her"
+       },
+       {
+        "type": "text",
+        "text": " dış çağrı için. İçeride bile veritabanı kilitlenebilir → retry'a sahip ol."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici try/catch yazar; SRE retry kuralını ayarlar; on-call mühendis DLQ'yu inceler."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Trafik ışığında araç bekleyiş = retry (geçici engel). Çıkmaz sokak = DLQ (vazgeç, geri dön). Sürekli çalan ev zili = circuit breaker (kimse açmıyorsa bir süre çalma)."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u11-hata-yonetimi-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-edu-u11-hata-yonetimi-story",
+    "type": "useCase",
+    "title": "Bankamatik kullanan Yusuf Bey (65)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Yusuf Bey 500 TL çekmek istedi. 'İşlem yapılıyor' yazısı uzun sürdü, makine 'hata oluştu' dedi ama parayı verdi. Yusuf Bey emin değil; bir daha denedi. Bu sefer para verdi ama hesaptan 2 kez düşmüş."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Idempotency anahtarı olmayan sistem. Sonradan banka 1000 TL'yi geri yatırdı, ama Yusuf Bey'in itimadı sarsıldı. "
+     },
+     {
+      "type": "strong",
+      "text": "Idempotency key = 'aynı işlem 1 kere işle' garantisi."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u11-hata-yonetimi-story-2",
+    "type": "useCase",
+    "title": "Bakkal Hatice Teyze (62) — kart POS'u",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Müşteri kart bastı, POS 'iletişim hatası' dedi. Hatice Teyze tekrar bastı, yine hata. 5 kez denedi, sonunda 'tamam' dedi. Ertesi gün hesabında 5 kez 50 TL düşmüş görüyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "POS retry yapmış ama idempotency yokmuş. Banka itiraz formuyla 4'ünü iade etti. "
+     },
+     {
+      "type": "strong",
+      "text": "Retry'ı çağıran taraf 'aynı işlemi tekrar et' demeli; çağrılan taraf 'aynısını mı?' diye anlamalı."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u11-hata-yonetimi-story-3",
+    "type": "useCase",
+    "title": "Apartman yöneticisi Murat Bey (61) — elektrik faturası",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Murat Bey kapı kapı tahsil ediyor. 5 dairede yok. Notuna yazdı, 'üç gün sonra tekrar dene'. Üçüncü denemede yine yoksa apartman yönetimine bildiriyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Murat Bey'in iş akışı = retry pattern. 3 deneme + sonrası DLQ (apartman yönetimine bildir). "
+     },
+     {
+      "type": "strong",
+      "text": "Sonsuz değil, sınırlı."
+     }
+    ]
+   }
+  ]
+ }
+}

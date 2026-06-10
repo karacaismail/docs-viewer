@@ -1,0 +1,469 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-scale-gis",
+  "sourceId": "scale-gis",
+  "slug": "scale/scale-gis",
+  "title": "PostGIS — coğrafi veri ve sorgular",
+  "summary": "'Bana 5 km'deki bakkallar' = klasik SQL değil PostGIS. Mesafe, geofencing, route planning.",
+  "categoryId": "scale",
+  "tags": [
+   "scale",
+   "gis",
+   "postgis",
+   "geo",
+   "distance"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-atomic-types",
+   "page-layer1-search"
+  ],
+  "blocks": [
+   {
+    "id": "block-scale-gis-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "PostgreSQL PostGIS extension. Geo coordinate (POINT), spatial index (GiST), distance sorgular, geofencing."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-gis-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "PostGIS = Postgres'in 'gizli süper gücü'."
+     },
+     {
+      "type": "text",
+      "text": " Coğrafi sorgu için tek seçenek. Lat/lng kolonu açtın diye yetmez; PostGIS olmadan 'yakın olanı bul' yapılmaz."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-gis-co",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'Postgres'e PostGIS extension. shop tablosuna location geography(POINT,4326). GiST index. Proximity query: ST_Distance + ORDER BY location <-> point. Geofencing: ST_Contains(zone.boundary, user_location).'*"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-gis-h-postgis-fonksiyon-cheatsheet",
+    "type": "heading",
+    "level": 4,
+    "text": "PostGIS fonksiyon cheatsheet"
+   },
+   {
+    "id": "block-scale-gis-table",
+    "type": "table",
+    "columns": [
+     "Sorgu",
+     "Fonksiyon",
+     "Örnek"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Mesafe"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ST_Distance"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ST_Distance(a, b) → meter"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "İçinde mi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ST_Contains"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ST_Contains(polygon, point)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "En yakın K"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ORDER BY <->"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ORDER BY loc <-> point LIMIT 10"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Buffer (X metre)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ST_Buffer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ST_Buffer(point, 1000)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kesişme"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ST_Intersects"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ST_Intersects(a, b)"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-gis-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-scale-gis-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "PostGIS ne?"
+     },
+     {
+      "type": "text",
+      "text": " PostgreSQL'in coğrafi veri eklentisi. Lat/lng saklama + sorgu."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-gis-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Use case'ler:"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-gis-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "'Bana yakın 10 bakkal' (proximity)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "'Kullanıcı bu mahallede mi?' (containment)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "'A noktasından B'ye yürüme mesafesi' (route)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "'Mağaza teslimat bölgesi içinde mi?' (geofencing)"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-gis-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Tipler:"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-gis-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "POINT"
+      },
+      {
+       "type": "text",
+       "text": " (lat, lng): tek nokta"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "POLYGON"
+      },
+      {
+       "type": "text",
+       "text": ": bölge (mahalle sınırı)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "LINESTRING"
+      },
+      {
+       "type": "text",
+       "text": ": rota (yol parçası)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "GEOGRAPHY"
+      },
+      {
+       "type": "text",
+       "text": ": yer küre üzerinde (gerçek mesafe)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "GEOMETRY"
+      },
+      {
+       "type": "text",
+       "text": ": düz koordinat (Euclidean)"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-gis-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Sorgu örnekleri:"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-gis-code",
+    "type": "codeBlock",
+    "language": "sql",
+    "code": "-- Yakındaki bakkallar\nSELECT name, ST_Distance(location, ST_MakePoint(28.97, 41.03)::geography) AS m\nFROM shop ORDER BY location <-> ST_MakePoint(28.97, 41.03) LIMIT 10;\n\n-- Geofencing\nSELECT * FROM delivery_zone\nWHERE ST_Contains(boundary, ST_MakePoint(28.97, 41.03));"
+   },
+   {
+    "id": "block-scale-gis-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Index zorunlu:"
+     },
+     {
+      "type": "text",
+      "text": " "
+     },
+     {
+      "type": "code",
+      "text": "CREATE INDEX shop_loc ON shop USING GIST(location);"
+     },
+     {
+      "type": "text",
+      "text": " Olmadan tablo scan = ölüm."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-gis-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-scale-gis-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Coğrafi koordinat (lat/lng) ile sorgu yapma altyapısı."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "'Yakın olanları bul' SQL'de imkânsız; PostGIS extension ile mümkün."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) PostGIS extension yükle. 2) POINT tipi kolon. 3) GiST index. 4) Proximity/containment sorgular."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "scale-gis"
+       },
+       {
+        "type": "text",
+        "text": " cluster. atomic-types Geo Coordinate ile bağlantılı."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Konum-tabanlı özellik gerekirse. Yoksa eklenmesin."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Backend developer; map specialist (Mapbox/MapLibre)."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Posta dağıtıcı: 'şu mahalleye git, en yakın 10 kapı'. PostGIS aynı: 'şu noktaya yakın 10 dükkân'."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-scale-gis-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-scale-gis-story",
+    "type": "useCase",
+    "title": "Mahalle market — Selim Bey (62) teslimat",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Selim Bey market'i. Müşteri 'kapıma kadar getirir misin?' diyor. 'Yakın mahalleye veririm, uzakta veremem'."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Geofencing: 2 km poligon. Müşteri içinde mi? Evet → teslimat, hayır → sadece dükkândan."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-gis-story-2",
+    "type": "useCase",
+    "title": "Apartman taksimat — Murat Bey (61)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Murat Bey en yakın eczaneyi soruyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "PostGIS proximity: kullanıcı konumundan en yakın 5 eczane sıralı."
+     }
+    ]
+   }
+  ]
+ }
+}

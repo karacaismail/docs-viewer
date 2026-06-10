@@ -1,0 +1,1042 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-fe-test-tooling",
+  "sourceId": "fe-tooling",
+  "slug": "frontend/fe-test-tooling",
+  "title": "Frontend — Test + Tooling + Observability + Security",
+  "summary": "Vitest + Playwright + Maestro · Biome + lefthook · Sentry + PostHog · OWASP baseline.",
+  "categoryId": "frontend",
+  "tags": [
+   "frontend",
+   "test",
+   "tooling",
+   "observability"
+  ],
+  "meta": {},
+  "related": [],
+  "blocks": [
+   {
+    "id": "block-fe-test-tooling-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Vitest + Playwright + Maestro · Biome + lefthook · Sentry + PostHog · OWASP baseline."
+     }
+    ]
+   },
+   {
+    "id": "block-fe-test-tooling-h-2-13-test",
+    "type": "heading",
+    "level": 4,
+    "text": "2.13 Test"
+   },
+   {
+    "id": "block-fe-test-tooling-table",
+    "type": "table",
+    "columns": [
+     "Katman",
+     "Seçim",
+     "Gerekçe"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Unit/integration"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Vitest + @testing-library/react + user-event"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Vite native, ESM"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "API mock"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "MSW"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hem unit hem E2E"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "E2E web"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "Playwright"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Auto-wait, trace viewer, parallel"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Visual regression"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Storybook + Chromatic (opsiyonel) veya Playwright snapshot"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "PR gate"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Component isolation"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Storybook 8 + @storybook/test-runner"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Interaction test"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Mobile E2E"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "Maestro"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "YAML, Capacitor uyumlu"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Accessibility"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "axe-core + Storybook a11y addon"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "WCAG 2.1 AA gate"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Performance gate"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Lighthouse CI"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "PWA score < 90 PR bloklar"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Load/stress"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "k6"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Backend ile birlikte"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-fe-test-tooling-h-test-first-rituel-her-feature",
+    "type": "heading",
+    "level": 4,
+    "text": "Test-first ritüel (her feature)"
+   },
+   {
+    "id": "block-fe-test-tooling-list",
+    "type": "list",
+    "ordered": true,
+    "items": [
+     [
+      {
+       "type": "code",
+       "text": "packages/domain"
+      },
+      {
+       "type": "text",
+       "text": " Zod schema yaz (kontrat)."
+      }
+     ],
+     [
+      {
+       "type": "code",
+       "text": "packages/test-utils"
+      },
+      {
+       "type": "text",
+       "text": " MSW handler yaz."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Vitest unit test (failing)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Implementation."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Storybook story + interaction test."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Playwright/Maestro happy path."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-fe-test-tooling-h-2-14-tooling",
+    "type": "heading",
+    "level": 4,
+    "text": "2.14 Tooling"
+   },
+   {
+    "id": "block-fe-test-tooling-table-2",
+    "type": "table",
+    "columns": [
+     "Katman",
+     "Seçim",
+     "Gerekçe"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Lint + format"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "Biome"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Rust, ~10x ESLint hızında, tek config"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Import sort"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Biome dahili"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Framework → 3rd-party → shared → relative"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Git hooks"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "lefthook"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Go, YAML, husky'den hızlı"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Commit"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "commitlint + cz-git"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Conventional commits"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Changelog"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "changesets"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Monorepo versioning"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Bundle analiz"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "rollup-plugin-visualizer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Vite uyumlu"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Inline TS check"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "vite-plugin-checker"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "TS + Biome PR'dan önce"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "SVG → component"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "vite-plugin-svgr"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Custom Phosphor variant"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Env validation"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "t3-env + Zod"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Runtime env type-safe"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-fe-test-tooling-h-2-12-observability",
+    "type": "heading",
+    "level": 4,
+    "text": "2.12 Observability"
+   },
+   {
+    "id": "block-fe-test-tooling-table-3",
+    "type": "table",
+    "columns": [
+     "Katman",
+     "Seçim",
+     "Gerekçe"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Error monitoring"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "Sentry self-host (Hetzner)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Web + Capacitor native crash, source map"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Analytics + feature flags + session replay"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "PostHog self-host"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tek üründe; ClickHouse + Kafka + Postgres + Redis"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Tracing"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "OpenTelemetry web SDK → Grafana Tempo"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Backend ile aynı stack"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Logging"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Pino (eğer Node middleware) → Grafana Loki"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "JSON structured"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Uptime"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Uptime Kuma self-host"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hafif, kendi sunucuda"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-fe-test-tooling-co",
+    "type": "callout",
+    "variant": "info",
+    "title": "PostHog self-host kaynak",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Hetzner "
+     },
+     {
+      "type": "strong",
+      "text": "CX42 veya AX41"
+     },
+     {
+      "type": "text",
+      "text": " (8 vCPU / 16GB RAM), ayrı sunucu önerilir. Session replay açıkken disk tüketimi yüksek; S3-uyumlu object storage (Hetzner Object Storage) ile blob offload. Retention 90 gün."
+     }
+    ]
+   },
+   {
+    "id": "block-fe-test-tooling-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kullanıcının sisteme bağlı kaldığı süre."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Giriş yapıp her tıklamada tekrar giriş yapmasın diye."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tarayıcıda kayıtlı kimlik bilgisi (cookie veya token)."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistem yönetir."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Otelin oda kartı — check-out'a kadar geçerli."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-fe-test-tooling-h-7-guvenlik-baseline",
+    "type": "heading",
+    "level": 4,
+    "text": "7. Güvenlik baseline"
+   },
+   {
+    "id": "block-fe-test-tooling-table-4",
+    "type": "table",
+    "columns": [
+     "Alan",
+     "Politika"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Auth token"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "httpOnly cookie + refresh token rotation, mobile'da secure storage"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "XSS"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "DOMPurify"
+       },
+       {
+        "type": "text",
+        "text": " zorunlu her model çıktısında, react-markdown rehype sanitize"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "CSRF"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "SameSite=Lax + custom header doğrulama"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "CSP"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "strict-dynamic, nonce-based, Capacitor için custom scheme allow"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Bağımlılık"
+       }
+      ],
+      [
+       {
+        "type": "code",
+        "text": "pnpm audit"
+       },
+       {
+        "type": "text",
+        "text": " CI gate, Renovate haftalık PR"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Secret"
+       }
+      ],
+      [
+       {
+        "type": "code",
+        "text": "t3-env"
+       },
+       {
+        "type": "text",
+        "text": " runtime check, GitHub Secrets, Hetzner Vault opsiyonel"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "KVKK"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "KYC veri retention 1 yıl, EİDS uyumlu, kullanıcı veri export endpoint"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "PII log"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Pino redact ("
+       },
+       {
+        "type": "code",
+        "text": "password"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "tckn"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "iban"
+       },
+       {
+        "type": "text",
+        "text": ", vb.)"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-fe-test-tooling-h-8-performans-butcesi",
+    "type": "heading",
+    "level": 4,
+    "text": "8. Performans bütçesi"
+   },
+   {
+    "id": "block-fe-test-tooling-table-5",
+    "type": "table",
+    "columns": [
+     "Metrik",
+     "Hedef"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "LCP (web)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 2.5s"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "INP"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 200ms"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "CLS"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 0.1"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Bundle (initial JS)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 250kb gzip"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Lighthouse PWA"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "> 90"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "TTI mobile (mid-tier Android)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 3.5s"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Cold start (Capacitor)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 1.8s"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-fe-test-tooling-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-fe-test-tooling-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Vitest + Playwright + Maestro · Biome + lefthook · Sentry + PostHog · OWASP baseline."
+     }
+    ]
+   },
+   {
+    "id": "block-fe-test-tooling-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-fe-test-tooling-lesson-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Frontend kodunun otomatik test edildiği araçlar."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Manuel test imkansız; otomatik test hata yakalar."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her kod değişikliğinde test koşar; geçmezse yayına çıkmaz."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "GitHub Actions üzerinde otomatik."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her pull request açıldığında."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici yazar; CI koşturur."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Üretim bandında kalite kontrolü."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

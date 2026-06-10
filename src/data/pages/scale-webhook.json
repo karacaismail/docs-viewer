@@ -1,0 +1,576 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-scale-webhook",
+  "sourceId": "scale-webhook",
+  "slug": "scale/scale-webhook",
+  "title": "Outbound Webhook — dış sisteme olay yollama",
+  "summary": "Marketplace + entegrasyon ekosistemi için: 'sipariş oluştu' olayını dış sistem URL'ine HMAC-imzalı POST ile yolla.",
+  "categoryId": "scale",
+  "tags": [
+   "scale",
+   "webhook",
+   "outbound",
+   "hmac",
+   "integration"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-scale-outbox",
+   "page-layer1-misc",
+   "page-crosscut-security",
+   "page-scale-saga"
+  ],
+  "blocks": [
+   {
+    "id": "block-scale-webhook-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "HMAC imzalama, exponential backoff retry, dead letter queue, replay protection, signature documentation."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-webhook-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Webhook = Push API."
+     },
+     {
+      "type": "text",
+      "text": " Senin sistem dış sistemleri "
+     },
+     {
+      "type": "strong",
+      "text": "proaktif"
+     },
+     {
+      "type": "text",
+      "text": " bilgilendirir. Polling 100x daha pahalı + 100x daha geç haber alır."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-webhook-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "İmzasız webhook = saldırı yüzeyi",
+    "segments": [
+     {
+      "type": "text",
+      "text": "İmza yoksa saldırgan dış URL'e sahte webhook gönderir; alıcı 'sipariş ödendi' kabul eder. "
+     },
+     {
+      "type": "strong",
+      "text": "HMAC zorunlu."
+     },
+     {
+      "type": "text",
+      "text": " Customer'a 'signing secret' ver, dokümantasyonla nasıl doğrulanacağını açıkla."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-webhook-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'Webhook worker yaz: outbox tablosundan event al, customer'ın URL'ine HMAC-SHA256 imzalı POST. Header: X-Webhook-Id (uuid), X-Webhook-Timestamp, X-Webhook-Signature. Retry: 1s, 10s, 1dk, 10dk, 1saat. 24 saat sonra DLQ.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-webhook-h-webhook-gonderim-header-lari",
+    "type": "heading",
+    "level": 4,
+    "text": "Webhook gönderim header'ları"
+   },
+   {
+    "id": "block-scale-webhook-table",
+    "type": "table",
+    "columns": [
+     "Header",
+     "Değer",
+     "Sebep"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "X-Webhook-Id"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "uuid"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Idempotency"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "X-Webhook-Timestamp"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "unix epoch"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Replay koruması (5dk eski reject)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "X-Webhook-Event"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "order.created"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Event tipi"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "X-Webhook-Signature"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "sha256=..."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "HMAC imza"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "X-Webhook-Attempt"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "2"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Retry sayacı (debug için)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Content-Type"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "application/json"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Payload tipi"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-webhook-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-scale-webhook-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Webhook = ters HTTP istek."
+     },
+     {
+      "type": "text",
+      "text": " Senin sistem, dış URL'e olay yollar."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-webhook-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Olmazsa olmaz 5 özellik:"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-webhook-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "HMAC imza"
+       },
+       {
+        "type": "text",
+        "text": " — "
+       },
+       {
+        "type": "code",
+        "text": "X-Webhook-Signature: sha256=..."
+       },
+       {
+        "type": "text",
+        "text": ". Alıcı imzayı doğrular; senin gönderdiğinden emin olur."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Idempotency ID"
+       },
+       {
+        "type": "text",
+        "text": " — "
+       },
+       {
+        "type": "code",
+        "text": "X-Webhook-Id: uuid"
+       },
+       {
+        "type": "text",
+        "text": ". Alıcı aynı ID'yi 2. kez işlemez."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Timestamp"
+       },
+       {
+        "type": "text",
+        "text": " — "
+       },
+       {
+        "type": "code",
+        "text": "X-Webhook-Timestamp: 1717683600"
+       },
+       {
+        "type": "text",
+        "text": ". 5 dk eski isteği reddet (replay attack)."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Retry + exponential backoff"
+       },
+       {
+        "type": "text",
+        "text": " — 2xx alana kadar 1s, 10s, 1dk, 10dk, 1 saat... max 24 saat."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "DLQ"
+       },
+       {
+        "type": "text",
+        "text": " — 24 saat sonra hala başarısız → DLQ'ya at, admin'e bildir."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-scale-webhook-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Alıcıya dokümantasyon:"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-webhook-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Signature verification kodu (her dilde örnek)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Idempotency nasıl yapılır"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Payload örnek + alan açıklaması"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "2xx, 4xx, 5xx anlamları"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-webhook-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Customer-facing UI:"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-webhook-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Webhook URL kayıt formu"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Hangi olaylara abone (sipariş, ödeme, kullanıcı)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Test webhook gönder butonu"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Geçmiş gönderimler + status"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-webhook-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-scale-webhook-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistemde olay olunca dış URL'e HMAC-imzalı POST atan, retry-ve-DLQ ile garanti teslim eden mekanizma."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Marketplace + entegrasyon ekosistemi olmadan SaaS büyüyemez. Webhook = ekosistemin protokolü."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Outbox tablosundan webhook event'i al. 2) Customer'ın kayıtlı URL'ine HMAC-imzalı POST. 3) 2xx değilse exponential backoff retry. 4) 24 saat sonra DLQ. 5) Customer'a dashboard'ta göster."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "scale-webhook"
+       },
+       {
+        "type": "text",
+        "text": " worker. "
+       },
+       {
+        "type": "code",
+        "text": "scale-outbox"
+       },
+       {
+        "type": "text",
+        "text": "'tan event okur. "
+       },
+       {
+        "type": "code",
+        "text": "cc-obs"
+       },
+       {
+        "type": "text",
+        "text": "'a metrik gönderir."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk public API sunulduğunda webhook da sun. Sonradan eklemek 5x iş."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Backend mühendisi worker yazar; DevRel dokümantasyon hazırlar; customer support DLQ inceler."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Telegram bot: olay olduğunda mesaj atar. Sen sormazsın, o haber verir."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-scale-webhook-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-scale-webhook-story",
+    "type": "useCase",
+    "title": "Posta servisi — Hatice Teyze (62) güncellemeli sipariş",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Hatice Teyze butik dükkân, online sipariş aldı. Müşteri 'kargoya verildi mi?' diye 10 kez aradı."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Webhook ile çözüm: kargo şirketi 'paket teslim' olayını Hatice Teyze'nin sitesine push eder. Müşteri yenilemeden 'teslim edildi' bildirimi alır."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-webhook-story-2",
+    "type": "useCase",
+    "title": "Apartman aidat — Murat Bey (61) banka bildirimi",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Murat Bey apartman aidatlarını banka hesabından takip ediyordu. 5 hesaba günde 10 kez bakıyordu."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Banka webhook'u kayıt: 'hesaba para yattı' olayında Murat Bey'in tablosunu otomatik güncelle. Manuel takip son."
+     }
+    ]
+   }
+  ]
+ }
+}

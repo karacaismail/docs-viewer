@@ -1,0 +1,1273 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-cc-resolver-ops",
+  "sourceId": "cc-resolver-ops",
+  "slug": "crosscut/cc-resolver-ops",
+  "title": "Resolver Operasyonel Sertleştirme — Migration, Cache, Failure, Governance",
+  "summary": "Resolver canlıya nasıl alınır? Mevcut kullanıcı backfill, cache strategy (hot path), failure mode (deny-by-default), config governance (4-göz + OpenFGA), decision-trace observability.",
+  "categoryId": "crosscut",
+  "tags": [
+   "crosscut",
+   "resolver",
+   "operations",
+   "migration",
+   "cache",
+   "governance",
+   "observability"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-cc-jurisdiction-resolver",
+   "page-cc-compliance-matrix",
+   "page-cc-rollout",
+   "page-crosscut-observability",
+   "page-cc-obs-deep",
+   "page-layer1-audit",
+   "page-kernel-authz"
+  ],
+  "blocks": [
+   {
+    "id": "block-cc-resolver-ops-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Resolver'ın 'şu an çalışıyor' demek yetmez — canlıya alma + güvenli işletme disiplini. 5 katman: migration, cache, failure, governance, observability."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Resolver yokken 50K kullanıcın var."
+     },
+     {
+      "type": "text",
+      "text": " Jurisdiction backfill'i için: IP geo + signup country + payment + delivery sinyallerinden confidence score. Yüksek → otomatik; orta/düşük → insan onay veya self-service."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Failure mode = deny-by-default",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Resolver çöktüğünde "
+     },
+     {
+      "type": "strong",
+      "text": "sessiz kabul YASAL İHLAL"
+     },
+     {
+      "type": "text",
+      "text": ". Fallback policy yüklenir (en sıkı kural seti). Marketing skip, sanctions check zorunlu, audit 'resolver_fallback' tag, SRE alarm. 'Bilmiyorsan en kısıtlayıcıya uy.'"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-co-2",
+    "type": "callout",
+    "variant": "danger",
+    "title": "4-göz config governance",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Yanlış config = milyon dolar ceza. "
+     },
+     {
+      "type": "strong",
+      "text": "Tek kişi yetkisi YASAK."
+     },
+     {
+      "type": "text",
+      "text": " Draft (compliance) → Review (legal) → Approve (CTO) → Deploy (openclaw). Üç farklı kişi. OpenFGA ile yetki ayrımı + audit log."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'Backfill script: user table'ından sinyalleri topla (user_country, payment_country, ip_geo, delivery), confidence score, %70 yüksek otomatik update + log. Resolver cache: in-process LRU + Redis + Postgres (3 katman). Config change tablosu: draft_by/reviewed_by/approved_by ENİ FARKLI olmalı (CHECK constraint). decision_trace tablosu month-partitioned, 5 yıl retention.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-h-rollout-asamalari",
+    "type": "heading",
+    "level": 4,
+    "text": "Rollout aşamaları"
+   },
+   {
+    "id": "block-cc-resolver-ops-table",
+    "type": "table",
+    "columns": [
+     "Aşama",
+     "Kullanıcı %",
+     "Süre",
+     "Onay metrik"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Shadow mode"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "%100 (paralel)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "1-2 hafta"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Karar farkı < %1"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Opt-in beta"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "%5 (whitelist)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "1 hafta"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Bug yok"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kademeli"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "%25 → %50"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "3 gün"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "p95 latency OK"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Full"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "%100"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Eski hard-coded deprecated"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-h-cache-stratejisi",
+    "type": "heading",
+    "level": 4,
+    "text": "Cache stratejisi"
+   },
+   {
+    "id": "block-cc-resolver-ops-table-2",
+    "type": "table",
+    "columns": [
+     "Katman",
+     "TTL",
+     "Invalidation"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "L1: In-process LRU"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "60 sn"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "TTL"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "L2: Redis (per-user)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "5 dk"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "login/profile-update event"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "L2: Redis (per-jurisdiction)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "1 saat"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "config-update webhook"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "L2: Sanctions list"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "6 saat"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "nightly sync"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "L3: Postgres"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Source of truth"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-h-config-governance-workflow",
+    "type": "heading",
+    "level": 4,
+    "text": "Config governance workflow"
+   },
+   {
+    "id": "block-cc-resolver-ops-table-3",
+    "type": "table",
+    "columns": [
+     "Adım",
+     "Yetki (OpenFGA)",
+     "Kişi"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "1. Draft"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "compliance:write"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Compliance officer"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "2. Review"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "legal:approve"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Legal counsel"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "3. Approve"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "config:deploy"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "CTO veya designated"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "4. Deploy"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "openclaw:execute"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "openclaw bot"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "5. Shadow"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "24 saat paralel"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "6. Active"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "effective_from'da"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-cc-resolver-ops-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Resolver kurmak değil, işletmek zor."
+     },
+     {
+      "type": "text",
+      "text": " Bu cluster 5 operasyonel katman:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-h",
+    "type": "heading",
+    "level": 2,
+    "text": "1. Migration & Rollout (en kritik)"
+   },
+   {
+    "id": "block-cc-resolver-ops-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Resolver henüz yokken sisteminde 10K kullanıcı varsa, "
+     },
+     {
+      "type": "strong",
+      "text": "jurisdiction'ları nasıl backfill edersin?"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Backfill stratejisi:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Sinyal toplama"
+       },
+       {
+        "type": "text",
+        "text": ": mevcut user_country, IP geolocation, payment_country, delivery_address.country, signup timezone — hepsinden jurisdiction tahmini"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Confidence score"
+       },
+       {
+        "type": "text",
+        "text": ": yüksek (3+ sinyal eşleşti) / orta (2 sinyal) / düşük (1 sinyal veya çelişki)"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Bulk update"
+       },
+       {
+        "type": "text",
+        "text": ": yüksek-confidence kullanıcılar otomatik; orta/düşük insan onayı bekler"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Self-service düzeltme"
+       },
+       {
+        "type": "text",
+        "text": ": kullanıcı 'yargı bölgem yanlış' diye düzeltebilsin"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Rollout — shadow mode → opt-in → full:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Shadow mode"
+      },
+      {
+       "type": "text",
+       "text": ": Resolver eski sistemle paralel çalışır; karar farkları log'lanır ama eski sistem uygulanır (1-2 hafta)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Opt-in beta"
+      },
+      {
+       "type": "text",
+       "text": ": %5 tenant resolver'a alınır; sorun yoksa kademeli"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Full migration"
+      },
+      {
+       "type": "text",
+       "text": ": tüm tenant resolver'a; eski hard-coded rules deprecated"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Feature flag ("
+     },
+     {
+      "type": "code",
+      "text": "cc-rollout"
+     },
+     {
+      "type": "text",
+      "text": ") ile her aşama kontrolü."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-h-2",
+    "type": "heading",
+    "level": 2,
+    "text": "2. Cache Strategy (hot path)"
+   },
+   {
+    "id": "block-cc-resolver-ops-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Resolver her request'te çalışıyorsa milisaniye fark eder."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-p-8",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "3 katmanlı cache:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-table-4",
+    "type": "table",
+    "columns": [
+     "Katman",
+     "TTL",
+     "Invalidation"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "strong",
+        "text": "User-level cache"
+       },
+       {
+        "type": "text",
+        "text": " (per-session)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "5 dk"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "login/profile-update event"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Jurisdiction config"
+       },
+       {
+        "type": "text",
+        "text": " (per-country)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "1 saat"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "config-update webhook"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Sanctions list"
+       },
+       {
+        "type": "text",
+        "text": " (global)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "6 saat"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "nightly sync + manuel"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-p-9",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Cache stack:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "L1: In-process LRU (her pod kendi)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "L2: Redis cluster (shared)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "L3: Postgres (source of truth)"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-p-10",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Invalidation event-based:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-code",
+    "type": "codeBlock",
+    "language": "text",
+    "code": "Config admin değişiklik yaptı\n  ↓\nopenclaw → config-update event yayınlar\n  ↓\nRedis L2 cache flush (per-jurisdiction key)\n  ↓\nPod'lar L1 cache'lerini çağırınca yeniden DB'den çeker"
+   },
+   {
+    "id": "block-cc-resolver-ops-p-11",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Cache miss penalty düşük: tek DB query (~5ms) acceptable."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-h-3",
+    "type": "heading",
+    "level": 2,
+    "text": "3. Failure Mode — Deny-by-Default"
+   },
+   {
+    "id": "block-cc-resolver-ops-p-12",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Resolver çöktüğünde:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-code-2",
+    "type": "codeBlock",
+    "language": "text",
+    "code": "resolver hata fırlattı\n  ↓\nFallback policy yüklenir (en sıkı kural seti)\n  ↓\nİstek devam eder, ama:\n  - Marketing email gönderilmez\n  - Veri yurt dışına aktarılmaz\n  - Sanctions check geçilmiyorsa REDDET\n  - Audit log: 'resolver_fallback' tag\n  ↓\nAlarm: SRE on-call"
+   },
+   {
+    "id": "block-cc-resolver-ops-p-13",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Felsefe:"
+     },
+     {
+      "type": "text",
+      "text": " *'Bilmiyorsan en kısıtlayıcı kurala uy.'* Sessiz kabul = yasal ihlal."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-p-14",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Asla bunu yapma:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-list-3",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Resolver çöktü → request reddet (kullanıcı deneyimi yok eder)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Resolver çöktü → varsayılan kabul (yasal ihlal)"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-p-15",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Doğru:"
+     },
+     {
+      "type": "text",
+      "text": " fallback policy + alarm + audit."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-h-4",
+    "type": "heading",
+    "level": 2,
+    "text": "4. Config Governance — 4-göz + OpenFGA"
+   },
+   {
+    "id": "block-cc-resolver-ops-p-16",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Kim config yazıyor?"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-p-17",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Jurisdiction config = yasal yükümlülüklerin koddaki karşılığı. Yanlış config = milyon dolarlık ceza."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-p-18",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Yetki akışı:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-code-3",
+    "type": "codeBlock",
+    "language": "text",
+    "code": "1. Compliance officer config_draft oluşturur (status='draft')\n   ↓ OpenFGA: 'compliance:write' yetkisi gerekli\n2. Legal counsel review eder (status='reviewed')\n   ↓ OpenFGA: 'legal:approve' yetkisi gerekli (FARKLI KİŞİ)\n3. CTO veya designated approver onay (status='approved')\n   ↓ OpenFGA: 'config:deploy' yetkisi\n4. openclaw deploy (status='deployed', effective_from set)\n   ↓ Cache invalidation event\n5. 24 saat shadow mode (eski + yeni paralel, fark log'lanır)\n6. Yeni config aktif (effective_from'da)"
+   },
+   {
+    "id": "block-cc-resolver-ops-p-19",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "4-göz prensibi"
+     },
+     {
+      "type": "text",
+      "text": ": 1 kişi yazar, başka kişi onaylar. Her adım audit log."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-code-4",
+    "type": "codeBlock",
+    "language": "sql",
+    "code": "CREATE TABLE config_change (\n  id BIGSERIAL,\n  jurisdiction_code TEXT,\n  draft_by INT,\n  draft_at TIMESTAMPTZ,\n  reviewed_by INT,                -- DRAFT_BY ile FARKLI\n  reviewed_at TIMESTAMPTZ,\n  approved_by INT,                -- yine FARKLI\n  approved_at TIMESTAMPTZ,\n  deployed_at TIMESTAMPTZ,\n  effective_from TIMESTAMPTZ,\n  diff_json JSONB,                -- önceki versiyondan fark\n  status TEXT,\n  CHECK (draft_by != reviewed_by),\n  CHECK (reviewed_by != approved_by)\n);"
+   },
+   {
+    "id": "block-cc-resolver-ops-h-5",
+    "type": "heading",
+    "level": 2,
+    "text": "5. Decision-Trace Observability"
+   },
+   {
+    "id": "block-cc-resolver-ops-p-20",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Resolver bir karar verdi → o kararı "
+     },
+     {
+      "type": "strong",
+      "text": "sonradan açıklayabilmek"
+     },
+     {
+      "type": "text",
+      "text": " yasal ihtiyaç."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-p-21",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "*\"Bu kullanıcıya neden EUR + DE KDV uygulandı?\"* sorusunun cevabı 2 yıl sonra bile bulunabilmeli."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-code-5",
+    "type": "codeBlock",
+    "language": "sql",
+    "code": "CREATE TABLE decision_trace (\n  trace_id UUID DEFAULT gen_random_uuid(),\n  request_id UUID,\n  user_id INT,\n  decided_at TIMESTAMPTZ DEFAULT now(),\n  -- Inputs\n  input_url TEXT,\n  input_user_country CHAR(2),\n  input_payment_country CHAR(2),\n  input_delivery_country CHAR(2),\n  input_ip_geo CHAR(2),\n  -- Resolved axes\n  resolved_locale TEXT,\n  resolved_jurisdiction TEXT,\n  resolved_currency CHAR(3),\n  resolved_tax_region TEXT,\n  resolved_timezone TEXT,\n  resolved_data_residency TEXT,\n  -- Policy applied\n  applied_policy_id BIGINT,\n  applied_policy_version INT,\n  -- Outcome\n  outcome TEXT,                   -- 'success', 'fallback', 'rejected_sanctions'\n  PRIMARY KEY (trace_id)\n);"
+   },
+   {
+    "id": "block-cc-resolver-ops-p-22",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Retention"
+     },
+     {
+      "type": "text",
+      "text": ": 5 yıl (denetim için). Partition by month."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-p-23",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Sampling"
+     },
+     {
+      "type": "text",
+      "text": ": %100 (her karar). Compliance açısından sample alma; performans için async insert (batch)."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-p-24",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "OpenTelemetry entegrasyonu"
+     },
+     {
+      "type": "text",
+      "text": ": trace_id ile request'i mikroservislerde takip et. Langfuse decision-trace özelliği AI agent kararları için ek dashboard."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-h-6",
+    "type": "heading",
+    "level": 2,
+    "text": "6. Edge Cases (gerçek hayat)"
+   },
+   {
+    "id": "block-cc-resolver-ops-list-4",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Kullanıcı sınır geçti"
+      },
+      {
+       "type": "text",
+       "text": " (TR → DE taşındı): jurisdiction değişti, eski siparişler eski oranla kalır; yeni siparişler yeni jurisdiction"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "VPN kullanan kullanıcı"
+      },
+      {
+       "type": "text",
+       "text": ": IP geo DE ama signup country TR, address TR — IP'ye değil signup'a güven (config gerek)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Tatil ortası DST geçişi"
+      },
+      {
+       "type": "text",
+       "text": ": 'her 09:00'da fatura kes' cron job → server UTC'de; kullanıcı yerel saat görüntülenir; geçiş günü duplikat fatura riski (idempotency)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Çift vatandaş"
+      },
+      {
+       "type": "text",
+       "text": ": TR + DE pasaport → hangi jurisdiction? Kullanıcı seçimi + signup tercihi"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-cc-resolver-ops-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Resolver kurmak değil, güvenli işletmek için 5 katman: migration/rollout, cache, failure mode, config governance, decision-trace observability."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Resolver 'çalışır' demek yetmez. Backfill yanlış → toplu yasal ihlal. Cache invalidation yanlış → eski kuralla cevap = ihlal. Config governance yok → 1 yanlış commit milyon dolar ceza."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Shadow mode → opt-in beta → full rollout. 2) 3-katmanlı cache (L1+L2+L3) + event-based invalidate. 3) Deny-by-default fallback. 4) 4-göz config + OpenFGA yetki. 5) decision_trace 5 yıl saklama."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "cc-resolver-ops"
+       },
+       {
+        "type": "text",
+        "text": " cluster + "
+       },
+       {
+        "type": "code",
+        "text": "cc-jurisdiction-resolver"
+       },
+       {
+        "type": "text",
+        "text": " (resolver kendisi) + "
+       },
+       {
+        "type": "code",
+        "text": "cc-rollout"
+       },
+       {
+        "type": "text",
+        "text": " (feature flag) + "
+       },
+       {
+        "type": "code",
+        "text": "l1-audit"
+       },
+       {
+        "type": "text",
+        "text": " (decision_trace)."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Resolver canlıya alınmadan ÖNCE bu 5 katman hazır. Aksi: prod incident garanti."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "SRE migration + cache; backend dev failure mode; compliance officer config governance; legal review."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Köprü yapımı: köprüyü kurmak teknik mesele; trafik açmak başka mesele. Önce bir lane'i test trafiğine aç (shadow), sonra kamyonlara, sonra hepsine. Çöktüğünde tahliye planı (failure mode). Bakım yapan ekibin yetkisi (governance). Trafik raporu (observability). Kurmak 1 yıl, işletmek 50 yıl."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-cc-resolver-ops-story",
+    "type": "useCase",
+    "title": "SRE Murat Bey (61'lik abisi 36) — backfill",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Resolver canlıya alındı, 50K mevcut kullanıcı var. Her birinin jurisdiction'ı boş."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Backfill script: IP geo + signup country + payment country sinyallerinden tahmin. 35K (%70) yüksek confidence → otomatik atama. 12K orta → CS team batch onay. 3K düşük → 'profilini güncelle' email + kullanıcı kendisi seçer."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-story-2",
+    "type": "useCase",
+    "title": "Compliance officer Ayşe Hanım (45) — config governance",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Yeni KDV oranı 1 Temmuz'da yürürlüğe girecek. Ayşe Hanım config'i güncellemek istiyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "code",
+      "text": "config_draft"
+     },
+     {
+      "type": "text",
+      "text": " oluştur (status=draft). Legal review (Hasan Bey) → reviewed. CTO approve. openclaw deploy (effective_from='2026-07-01T00:00:00+03:00'). 1 Temmuz'a kadar shadow mode'da test. Geçişte sorun yok."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-resolver-ops-story-3",
+    "type": "useCase",
+    "title": "Geliştirici Selim Bey (62'lik abisi 32) — resolver çöktü",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Redis cluster 5 dk crash'lendi. Resolver cache'siz, DB throttled. Bazı kullanıcılar 500 alıyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Failure mode kicks in: deny-by-default fallback policy. Marketing email skip; çekirdek hizmet (login, checkout) en sıkı kuralla devam. Audit: 5dk boyunca her karar 'resolver_fallback' tagged. SRE alarm geldi, Redis düzeltildi, normal döndü."
+     }
+    ]
+   }
+  ]
+ }
+}

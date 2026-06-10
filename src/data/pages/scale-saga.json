@@ -1,0 +1,338 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-scale-saga",
+  "sourceId": "scale-saga",
+  "slug": "scale/scale-saga",
+  "title": "Saga + Compensation",
+  "summary": "Cross-aggregate transaction. Adım fail ederse önceki adımları geri al.",
+  "categoryId": "scale",
+  "tags": [
+   "saga",
+   "compensation",
+   "workflow",
+   "scale"
+  ],
+  "meta": {
+   "badge": "Scale primitive #5"
+  },
+  "related": [],
+  "blocks": [
+   {
+    "id": "block-scale-saga-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Cross-aggregate transaction. Adım fail ederse önceki adımları geri al."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-saga-co",
+    "type": "callout",
+    "variant": "info",
+    "title": "🛠 Implementasyon kararı: DBOS",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu cluster Saga deseninin "
+     },
+     {
+      "type": "strong",
+      "text": "ne yaptığını"
+     },
+     {
+      "type": "text",
+      "text": " anlatır. "
+     },
+     {
+      "type": "strong",
+      "text": "Nasıl koşturulduğu"
+     },
+     {
+      "type": "text",
+      "text": " ayrı bir karardır: bu projede "
+     },
+     {
+      "type": "strong",
+      "text": "DBOS Transact"
+     },
+     {
+      "type": "text",
+      "text": " seçildi (Postgres-native durable execution).\n\n"
+     },
+     {
+      "type": "strong",
+      "text": "Neden DBOS?"
+     },
+     {
+      "type": "text",
+      "text": " Mevcut PostgreSQL altyapısına oturuyor; Temporal/Restate gibi ayrı orkestratör kümesi gerekmiyor; FastAPI + Pydantic AI uyumlu; AI ajan güvenilirliği için ideal. Detay: "
+     },
+     {
+      "type": "ref",
+      "text": "sus-durable",
+      "refId": "sus-durable"
+     },
+     {
+      "type": "text",
+      "text": ".\n\n"
+     },
+     {
+      "type": "strong",
+      "text": "Reddedilen alternatif:"
+     },
+     {
+      "type": "text",
+      "text": " Temporal — ayrı altyapı maliyeti, fazladan operasyonel yük, mevcut Postgres-first felsefesine aykırı."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-saga-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Cross-aggregate transaction. \"Order place → Payment charge → Stock reserve → Shipping create\" — herhangi biri fail ederse önceki adımları geri al."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-saga-h-orchestration-vs-choreography",
+    "type": "heading",
+    "level": 4,
+    "text": "Orchestration vs Choreography"
+   },
+   {
+    "id": "block-scale-saga-grid",
+    "type": "cardGrid",
+    "columns": 2,
+    "cards": [
+     {
+      "icon": "ph-check-circle",
+      "title": "Orchestration",
+      "tone": "good",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Merkezi koordinatör adım sırasını ve kompansasyonu bilir. Debug kolay, test edilebilir.\n\n"
+       },
+       {
+        "type": "strong",
+        "text": "Modüler monolit için tercih."
+       }
+      ]
+     },
+     {
+      "icon": "ph-circle-half",
+      "title": "Choreography",
+      "tone": "neutral",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Servisler event'lere reaktif. Merkezi koordinatör yok. Mikroservis için daha uygun. Modüler monolitte fazla karmaşık."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-scale-saga-h-dbos-implementasyonu",
+    "type": "heading",
+    "level": 4,
+    "text": "DBOS implementasyonu"
+   },
+   {
+    "id": "block-scale-saga-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "DBOS Postgres'i durable execution log olarak kullanır — ek altyapı yok. Workflow durable: process crash olursa kaldığı yerden devam eder. Saga için ideal."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-saga-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistemde olan biteni metin satırları halinde kayıt."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Hata teşhisi ve geriye dönük analiz için."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her olay zaman damgalı kaydedilir."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistem yazar, geliştirici okur."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kaptanın seyir defteri."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-scale-saga-code",
+    "type": "codeBlock",
+    "language": "python",
+    "code": "from dbos import DBOS\n\n@DBOS.workflow()\nasync def place_order_saga(order_id: str):\n    try:\n        payment = await DBOS.transaction(charge_payment)(order_id)\n        stock = await DBOS.transaction(reserve_stock)(order_id)\n        shipping = await DBOS.transaction(create_shipment)(order_id)\n        await DBOS.transaction(finalize_order)(order_id)\n        return order_id\n    except StockUnavailable:\n        await DBOS.transaction(refund_payment)(payment)\n        raise\n    except ShippingFailed:\n        await DBOS.transaction(release_stock)(stock)\n        await DBOS.transaction(refund_payment)(payment)\n        raise"
+   },
+   {
+    "id": "block-scale-saga-h-temporal-alternatif",
+    "type": "heading",
+    "level": 4,
+    "text": "Temporal alternatif"
+   },
+   {
+    "id": "block-scale-saga-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Temporal.io (Cadence fork) — en olgun durable execution platformu. Workflow kodu deterministic Python olarak yazılır, history replay ile state yeniden kurulur. Cassandra/PostgreSQL backend. Self-host veya Temporal Cloud. Çok yüksek throughput senaryoları için."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-saga-co-2",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Distributed transaction (2PC) yapma",
+    "segments": [
+     {
+      "type": "text",
+      "text": "İki ayrı DB'yi tek transaction'da commit etmeye çalışmak (XA, 2PC) yavaş ve fragile. Modern mimaride pratikte kullanılmıyor. Saga + outbox + idempotency, doğru pattern."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-saga-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-scale-saga-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Cross-aggregate transaction. Adım fail ederse önceki adımları geri al."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-saga-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-scale-saga-lesson-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Birden çok adımdan oluşan uzun işlemlerin (ödeme + kargo + envanter) yarım kalmadan, geri çevrilebilir biçimde yürütülmesi."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir adım hata verirse önceki adımlar nasıl geri alınacak? 'Ödeme alındı ama kargo açılmadı' kaza sayılır. Saga her adımın geri alma yolunu da yazar."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Adımlar sırayla yürür: 1) ödeme al, 2) kargo aç, 3) envanter düş. Her adımın 'geri al' eşi var. 2. adım başarısızsa 1'in geri alımı (iade) tetiklenir."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sipariş onay süreci, abonelik yenileme, fatura kesme — tüm çok-adımlı işlerde."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir işlem 2'den fazla adım taşıyorsa."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici adımları + geri alımı tanımlar; sistem orkestra şefi rolünü oynar; son kullanıcı 'her ne olsa tutarlı sonuç' alır."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tatil rezervasyonu: uçak + otel + araba. Uçak iptal olursa otel ve araba da iptal edilir. Saga bu zinciri otomatik yönetir."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

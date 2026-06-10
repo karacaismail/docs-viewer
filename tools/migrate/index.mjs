@@ -256,12 +256,37 @@ const searchIndex = buildSearchIndex(results, glossary);
 const missingAssets = [...new Set(results.flatMap((r) => r.images))];
 
 mkdirSync(OUT_DIR, { recursive: true });
+mkdirSync(join(OUT_DIR, "pages"), { recursive: true });
 const HEADER_KEY = "__generated";
 const write = (name, obj) =>
   writeFileSync(join(OUT_DIR, name), JSON.stringify({ [HEADER_KEY]: "tools/migrate — elle düzenleme yasak (04 §1)", ...obj }, null, 1));
 write("navigation.json", navigation);
-write("pages.json", { schemaVersion: "1.0", pages: results.map((r) => r.page) });
-write("glossary.json", { schemaVersion: "1.0", terms: glossary });
+// Performans bütçesi (14 #15): page gövdeleri ayrı lazy chunk'lar, metadata küçük eager index
+write("pages-index.json", {
+  schemaVersion: "1.0",
+  pages: results.map((r) => ({
+    id: r.page.id, sourceId: r.page.sourceId, slug: r.page.slug,
+    title: r.page.title, summary: r.page.summary, categoryId: r.page.categoryId,
+    meta: r.page.meta, related: r.page.related,
+  })),
+});
+for (const r of results) {
+  write(join("pages", `${r.page.id.slice(5)}.json`), { schemaVersion: "1.0", page: r.page });
+}
+// Glossary bölünmesi (14 #15): tooltip/chip için core eager; panel içeriği lazy detail
+write("glossary.json", {
+  schemaVersion: "1.0",
+  terms: glossary.map((t) => ({ id: t.id, pageId: t.pageId, label: t.label, shortExplanation: t.shortExplanation })),
+});
+write("glossary-detail.json", {
+  schemaVersion: "1.0",
+  details: Object.fromEntries(glossary.map((t) => [t.id, {
+    longExplanation: t.longExplanation,
+    ...(t.realWorldAnalogy ? { realWorldAnalogy: t.realWorldAnalogy } : {}),
+    ...(t.useCases ? { useCases: t.useCases } : {}),
+    ...(t.caseStudies ? { caseStudies: t.caseStudies } : {}),
+  }])),
+});
 write("search-index.json", searchIndex);
 
 // Mutabakat raporu (07 + 12A §5)

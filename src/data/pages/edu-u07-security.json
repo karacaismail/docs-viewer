@@ -1,0 +1,511 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-edu-u07-security",
+  "sourceId": "edu-u07",
+  "slug": "egitim/edu-u07-security",
+  "title": "Yetkilendirme & Güvenlik",
+  "summary": "Identity, session, RBAC/ABAC, audit, KVKK, encryption at rest + transit.",
+  "categoryId": "egitim",
+  "tags": [
+   "education",
+   "u07",
+   "security",
+   "rbac",
+   "kvkk"
+  ],
+  "meta": {
+   "granularity": "buyuk-tas",
+   "state": "ok"
+  },
+  "related": [
+   "page-edu-u06-tenancy",
+   "page-edu-u08-eventbus",
+   "page-kernel-authz",
+   "page-crosscut-security"
+  ],
+  "blocks": [
+   {
+    "id": "block-edu-u07-security-lh",
+    "type": "lessonHeader",
+    "unit": "Ünite 07",
+    "title": "Yetkilendirme & Güvenlik",
+    "level": "orta",
+    "durationMin": 70,
+    "prereq": [
+     "edu-u06"
+    ],
+    "goals": [
+     "Authentication (kimlik) vs authorization (yetki) farkı.",
+     "RBAC / ABAC / ReBAC modellerini birer örnekle anlatabilirsin.",
+     "Encryption at rest vs in transit farkı.",
+     "Session vs token (JWT) farkı ve hangisi ne zaman seçilir.",
+     "KVKK silme talebinin sistem üzerindeki yansımasını biliyorsun.",
+     "Audit log'un neden append-only olduğunu açıklayabilirsin."
+    ]
+   },
+   {
+    "id": "block-edu-u07-security-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Güvenlik üç sırayla işler: "
+     },
+     {
+      "type": "strong",
+      "text": "1) Kim?"
+     },
+     {
+      "type": "text",
+      "text": " ("
+     },
+     {
+      "type": "term",
+      "text": "authentication",
+      "termId": "term-authentication-edu-u07-security"
+     },
+     {
+      "type": "text",
+      "text": ") → "
+     },
+     {
+      "type": "strong",
+      "text": "2) Ne yapabilir?"
+     },
+     {
+      "type": "text",
+      "text": " ("
+     },
+     {
+      "type": "term",
+      "text": "authorization",
+      "termId": "term-authorization-edu-u07-security"
+     },
+     {
+      "type": "text",
+      "text": ") → "
+     },
+     {
+      "type": "strong",
+      "text": "3) Ne yaptı?"
+     },
+     {
+      "type": "text",
+      "text": " (audit). Bu üçlüyü kafanda ayır."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u07-security-h-bir-api-isteginin-guvenlik-yolculugu",
+    "type": "heading",
+    "level": 3,
+    "text": "Bir API isteğinin güvenlik yolculuğu"
+   },
+   {
+    "id": "block-edu-u07-security-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "TLS handshake",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Client TLS ile bağlanır; trafik şifreli (HTTPS). Plain HTTP yasak."
+       }
+      ]
+     },
+     {
+      "title": "Token decode + verify",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Authorization: Bearer <jwt> header okunur. İmza public key ile doğrulanır; süre dolmuş mu kontrol edilir."
+       }
+      ]
+     },
+     {
+      "title": "Tenant scope",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Token'daki tenant_id otomatik query context'e set edilir. Cross-tenant erişim teknik olarak imkânsız."
+       }
+      ]
+     },
+     {
+      "title": "Permission check (RBAC)",
+      "segments": [
+       {
+        "type": "text",
+        "text": "user.role ∈ allowed_roles? Reddi → 403. Onay → devam."
+       }
+      ]
+     },
+     {
+      "title": "Business logic",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Hook'lar (before_save, validate) çalışır; iş kuralları uygulanır."
+       }
+      ]
+     },
+     {
+      "title": "Audit emit",
+      "segments": [
+       {
+        "type": "text",
+        "text": "İşlem sonunda audit log'a append: user, action, target, before/after, IP, UA."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u07-security-co",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Session vs JWT — ne zaman ne?",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Session"
+     },
+     {
+      "type": "text",
+      "text": " = küçük/orta SaaS, anında revoke gerekli, kullanıcı bağımlı state büyük. "
+     },
+     {
+      "type": "strong",
+      "text": "JWT"
+     },
+     {
+      "type": "text",
+      "text": " = mikroservis/distributed, stateless gateway, scale önemli. "
+     },
+     {
+      "type": "strong",
+      "text": "Hibrit"
+     },
+     {
+      "type": "text",
+      "text": " (JWT + revoke list cache) = modern saaS'ın çoğunluğunun seçimi."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u07-security-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sıkıştırılmış güvenli oturum belirteci."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her istekte parola sormamak için."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İmzalı bir metin; karşı taraf doğrular."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistem üretir, geliştirici taşır."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Konser bandı — bir kez aldın, kontrol edilince geçersin."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u07-security-co-2",
+    "type": "callout",
+    "variant": "tr",
+    "title": "KVKK silme talebi",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Kullanıcı 'beni unutun' der → sistem "
+     },
+     {
+      "type": "strong",
+      "text": "soft-delete"
+     },
+     {
+      "type": "text",
+      "text": " (deleted_at = now) → 30 gün bekleme → "
+     },
+     {
+      "type": "strong",
+      "text": "hard-delete"
+     },
+     {
+      "type": "text",
+      "text": " + audit log + KVKK kayıt mektubu. Her aşama audit'lenir; geriye dönüş yok."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u07-security-co-3",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Audit log'a yazma izni",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Audit tablosuna "
+     },
+     {
+      "type": "strong",
+      "text": "sadece sistem yazabilir, hiç kimse silemez/değiştiremez"
+     },
+     {
+      "type": "text",
+      "text": " (append-only). DB seviyesinde UPDATE/DELETE revoke edilir. Aksi halde 'denetim manipüle edildi' tartışmasına maruz kalırsın."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u07-security-h-uc-perspektiften-guvenlik",
+    "type": "heading",
+    "level": 3,
+    "text": "Üç perspektiften güvenlik"
+   },
+   {
+    "id": "block-edu-u07-security-story",
+    "type": "useCase",
+    "title": "İK uzmanı",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "İşten ayrılan çalışanın profilini görmek istiyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "RBAC: HR rolü → 'eski çalışan görüntüleme' izni var → görür. Bir muhasebe çalışanı aynı sayfaya 403 alır."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u07-security-story-2",
+    "type": "useCase",
+    "title": "CISO",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Geçen ay kim hangi kişisel veriyi indirdi diye haftalık rapor okur."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Audit log'tan export filtreli rapor; suspicious pattern (gece, çok sayıda, IP yabancı) flag'lenir."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u07-security-story-3",
+    "type": "useCase",
+    "title": "Son kullanıcı",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Profilini şirket dışından login etmek ister."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "2FA gerekiyor → SMS/Authenticator kodu istenir. Başarısız 3 deneme → hesap geçici kilit + email."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u07-security-chk",
+    "type": "checklist",
+    "title": "Kontrol listesi",
+    "items": [
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Authentication ile authorization farkını söyleyebilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "RBAC/ABAC/ReBAC için bir örnek verebilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Session vs JWT trade-off'unu üç senaryoda anlatabilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Encryption at rest + in transit'in neden ikisinin de gerektiğini biliyorum."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Audit log'un append-only olmasının gerekçesini söyleyebilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "KVKK silme akışını adım adım anlatabilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Tenant scope guardrail'ın query layer'da olduğunu biliyorum (üst kattan değil)."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u07-security-co-4",
+    "type": "callout",
+    "variant": "info",
+    "title": "Sonraki ünite",
+    "segments": [
+     {
+      "type": "ref",
+      "text": "edu-u08",
+      "refId": "edu-u08"
+     },
+     {
+      "type": "text",
+      "text": " — Event Bus & Outbox. Modüller birbirine doğrudan değil, olay ile bağlanır."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u07-security-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-edu-u07-security-lesson-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Ünite 07 — Yetkilendirme ve Güvenlik. Kim ne yapabilir? Veriler nasıl korunur?"
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Veri sızıntısı en büyük kazadır. Güvenlik baştan kurulur."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kimlik doğrulama + yetki kontrolü + şifreleme + denetim kaydı."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Müfredatın 7. ünitesi."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her yazılım — değişiklik değil zorunluluk."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tüm geliştiriciler; güvenlik mühendisi danışmanı."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Banka güvenlik altyapısı: kasalar + kameralar + alarmlar."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

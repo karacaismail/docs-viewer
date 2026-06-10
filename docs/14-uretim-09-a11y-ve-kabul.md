@@ -33,7 +33,7 @@ Hedef WCAG AA'dır. A11y bu projede son faz "cilası" değildir — her fazın k
 | 14 | Migration deterministiktir: script'in ikinci çalıştırması diff üretmez |
 | 15 | Performans bütçesi: initial JS < 250KB gzip; Shiki ve search index ayrı chunk'tadır |
 
-Kanıt durumu (10 Haziran 2026): #1, #7, #9, #10, #11 Playwright e2e + axe ile (`e2e/`); #2–#6, #8, #12, #14 Vitest birim/kontrat/tarama testleriyle (`tests/`); #13 CI zinciriyle otomatik kanıtlıdır. #13'teki lint kapısı (Biome) henüz kurulu değildir; #15 uygulama JS'i için sağlanır (uygulama ~8KB + vendor ~148KB gzip) ancak otomatik bundle-size kapısı yoktur ve `content` chunk'ı (~389KB gzip) eager yüklenir — ikisi de bilinen açık kalemdir.
+Kanıt durumu (10 Haziran 2026): #1, #7, #9, #10, #11 Playwright e2e + axe ile (`e2e/`); #2–#6, #8, #12, #14 Vitest birim/kontrat/tarama testleriyle (`tests/`); #13 CI zinciriyle otomatik kanıtlıdır. **#15 artık otomatik kapıdır:** `size-limit` CI'da eager JS toplamını (app + vendor + content-meta) 250KB gzip eşiğine karşı ölçer — ölçülen ~212KB. Page gövdeleri page-başına lazy chunk'tır (`pages-index.json` + `pages/<stem>.json`), glossary panel içeriği ayrı lazy dosyadadır (`glossary-detail.json`); Shiki ve search-index zaten ayrıydı. #13'teki lint kapısı (Biome) henüz kurulu değildir — kalan tek açık kalem.
 
 ## 3. Sürdürülebilirlik Notu
 

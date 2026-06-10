@@ -1,0 +1,558 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-edu-u10-deploy",
+  "sourceId": "edu-u10",
+  "slug": "egitim/edu-u10-deploy",
+  "title": "Deploy & Operations",
+  "summary": "Git, CI/CD, GitHub Actions, Hetzner, observability, on-call, runbook, incident.",
+  "categoryId": "egitim",
+  "tags": [
+   "education",
+   "u10",
+   "deploy",
+   "ops",
+   "observability"
+  ],
+  "meta": {
+   "granularity": "buyuk-tas",
+   "state": "ok"
+  },
+  "related": [
+   "page-edu-u08-eventbus",
+   "page-edu-u09-plugin",
+   "page-deploy-yap",
+   "page-crosscut-observability"
+  ],
+  "blocks": [
+   {
+    "id": "block-edu-u10-deploy-lh",
+    "type": "lessonHeader",
+    "unit": "Ünite 10",
+    "title": "Deploy & Operations — production hayatı",
+    "level": "ileri",
+    "durationMin": 70,
+    "prereq": [
+     "edu-u08"
+    ],
+    "goals": [
+     "Git workflow + CI/CD'nin amaçlarını ve farkını anlatabilirsin.",
+     "Frontend (GitHub Pages) vs backend (Hetzner) deploy farkını biliyorsun.",
+     "Observability üçlüsünü (metrics/logs/traces) sayabilirsin.",
+     "Blue/Green ve Canary deploy stratejilerini ayırt edebilirsin.",
+     "On-call rotasyonunun mantığını söyleyebilirsin.",
+     "Runbook'un incident'ta rolünü açıklayabilirsin.",
+     "Post-mortem kültürünün neden 'blameless' olduğunu söyleyebilirsin."
+    ]
+   },
+   {
+    "id": "block-edu-u10-deploy-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Production canlı sistemdir; geri alınmayan etkiler vardır. "
+     },
+     {
+      "type": "strong",
+      "text": "CI"
+     },
+     {
+      "type": "text",
+      "text": " her commit'i test eder, "
+     },
+     {
+      "type": "strong",
+      "text": "CD"
+     },
+     {
+      "type": "text",
+      "text": " geçen testi canlıya çıkarır. Bozulursa "
+     },
+     {
+      "type": "term",
+      "text": "observability",
+      "termId": "term-observability-edu-u10-deploy"
+     },
+     {
+      "type": "text",
+      "text": " ile sebep bulunur. "
+     },
+     {
+      "type": "term",
+      "text": "On-call",
+      "termId": "term-on-call-edu-u10-deploy"
+     },
+     {
+      "type": "text",
+      "text": " mühendis "
+     },
+     {
+      "type": "term",
+      "text": "runbook",
+      "termId": "term-runbook-edu-u10-deploy"
+     },
+     {
+      "type": "text",
+      "text": "'tan müdahale eder. Sonra blameless "
+     },
+     {
+      "type": "term",
+      "text": "post-mortem",
+      "termId": "term-post-mortem-edu-u10-deploy"
+     },
+     {
+      "type": "text",
+      "text": " yapılır."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u10-deploy-h-bir-incident-in-yasam-dongusu",
+    "type": "heading",
+    "level": 3,
+    "text": "Bir incident'ın yaşam döngüsü"
+   },
+   {
+    "id": "block-edu-u10-deploy-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "1. Alarm tetiklenir",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Prometheus/Grafana threshold aşılır → PagerDuty/Slack on-call'a bildirir."
+       }
+      ]
+     },
+     {
+      "title": "2. Acknowledge",
+      "segments": [
+       {
+        "type": "text",
+        "text": "On-call 5 dk içinde 'gördüm' der. Aksi halde escalation: 2. seviye uyandırılır."
+       }
+      ]
+     },
+     {
+      "title": "3. Triage + runbook",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Severity belirlenir (SEV-1/2/3). İlgili runbook açılır, adımlar uygulanır."
+       }
+      ]
+     },
+     {
+      "title": "4. Mitigate",
+      "segments": [
+       {
+        "type": "text",
+        "text": "İlk hedef DURDUR (rollback, feature flag kapat, traffic shift). Sebep aramak SONRA."
+       }
+      ]
+     },
+     {
+      "title": "5. Resolve",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Sistem normal. İlk metric SLO içine döndü. Alarm clear."
+       }
+      ]
+     },
+     {
+      "title": "6. Post-mortem",
+      "segments": [
+       {
+        "type": "text",
+        "text": "48 saat içinde yazılı analiz. 'Kim suçlu?' DEĞİL, 'Süreçte ne kırıldı?'. Action items + sahip + deadline."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u10-deploy-feat",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Metrics",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sayılabilir veriler: RPS, latency, error rate, queue depth."
+       }
+      ]
+     },
+     {
+      "term": "Logs",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Zaman damgalı metin/JSON kayıtlar. Hata stack trace, request body."
+       }
+      ]
+     },
+     {
+      "term": "Traces",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tek bir request'in tüm modüller arası yolculuğu (span'lar)."
+       }
+      ]
+     },
+     {
+      "term": "Alarms",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Threshold + duration → notification."
+       }
+      ]
+     },
+     {
+      "term": "Dashboards",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Görsel özet: anomali hızlı görünür."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u10-deploy-co",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bizim deploy",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Frontend:"
+     },
+     {
+      "type": "text",
+      "text": " Mac'te "
+     },
+     {
+      "type": "code",
+      "text": "yap"
+     },
+     {
+      "type": "text",
+      "text": " → GitHub Actions → Pages. "
+     },
+     {
+      "type": "strong",
+      "text": "Backend:"
+     },
+     {
+      "type": "text",
+      "text": " Hetzner sunucu, ayrı pipeline (SSH/rsync veya Docker). Detay: "
+     },
+     {
+      "type": "ref",
+      "text": "deploy-yap",
+      "refId": "deploy-yap"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u10-deploy-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Feature flag = risk yönetimi",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Yeni ödeme flow'unu deploy et ama flag KAPALI. Dark launch (kod çalışıyor, kullanıcı görmüyor) → metric izle → %1 canary → %10 → %50 → %100. Hata varsa flag KAPAT, deploy/rollback gerek YOK."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u10-deploy-co-3",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Blameless post-mortem",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Hata yapan KIŞIYI sorgulamak yerine SİSTEMI sorgula. 'Niye Ali production'a yanlış config push etti?' yerine 'Niye sistem yanlış config'i kabul etti? Validation neden yoktu?'. Suçlama kültürü → hata gizlenir → tekrar olur. "
+     },
+     {
+      "type": "strong",
+      "text": "Öğrenme kültürü → hata raporlanır → düzeltilir."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u10-deploy-h-uc-perspektiften-ops",
+    "type": "heading",
+    "level": 3,
+    "text": "Üç perspektiften ops"
+   },
+   {
+    "id": "block-edu-u10-deploy-story",
+    "type": "useCase",
+    "title": "On-call mühendis (gece 03:00)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "PagerDuty uyandırır: 'DB connection pool exhausted'."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Runbook açar → 'connection_max sayısını artır + slow query'leri logla' → 10 dk içinde mitigate. Sabah post-mortem: 'Yeni rapor sayfası N+1 query yapıyor'."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u10-deploy-story-2",
+    "type": "useCase",
+    "title": "SRE / observability",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Yeni servis canlıya alınıyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Önce metric/log/trace tanımları, sonra deploy. SLO 99.9% → error budget 43 dk/ay. Aşılırsa feature freeze."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u10-deploy-story-3",
+    "type": "useCase",
+    "title": "Ürün yöneticisi",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Yeni özelliği istiyor ama error budget %85 tükenmiş."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Mühendislik 'no' der. Önce stabilizasyon. PM kabul etmek zorunda — kurum kuralı."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u10-deploy-chk",
+    "type": "checklist",
+    "title": "Kontrol listesi",
+    "items": [
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "CI ile CD farkını söyleyebilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Blue/Green ile Canary'nin farklı kullanım nedenlerini biliyorum."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Feature flag'in deploy-rollout ayrımı sağladığını anlatabilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Observability'nin 3 ayağını sayabilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "SLO ve error budget arasındaki ilişkiyi söyleyebilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "On-call rotasyonunun amacını söyleyebilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Bir alarm için runbook ne içerir, açıklayabilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Incident yaşam döngüsünün 6 adımını sayabilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Blameless post-mortem'ın 'sistem' odaklı olmasının nedenini söyleyebilirim."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u10-deploy-co-4",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Tebrikler — müfredat sonu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "10 ünite bitti. Artık bu projenin mimarısın. Detaylı teknik için Layer-0 ve Layer-1 cluster'larına dal: "
+     },
+     {
+      "type": "ref",
+      "text": "k-schema",
+      "refId": "k-schema"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "ref",
+      "text": "k-identity",
+      "refId": "k-identity"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "ref",
+      "text": "scale-outbox",
+      "refId": "scale-outbox"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "ref",
+      "text": "l1-workflow",
+      "refId": "l1-workflow"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u10-deploy-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-edu-u10-deploy-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Ünite 10 — Deploy ve Operasyon. Yazılımı sunucuya taşıma ve sürekli çalıştırma."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici bilgisayarındaki kod kullanıcıya fayda etmez. Sunucuya taşımak gerekir."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Git → GitHub Actions → Hetzner → izleme + nöbetçi."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Müfredatın son ünitesi — bütün bilgiyi pratiğe döker."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yazılım canlıya çıkmaya hazır olduğunda."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici hazırlar; DevOps mühendisi pipeline'ı kurar."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Restoran zincirinin yeni menüye geçişi: önce dene, sonra tüm şubelere aynı reçete."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

@@ -14,7 +14,9 @@ export default defineConfig({
         // İçerik verisi ayrı, cache'lenebilir chunk'larda — uygulama kodu küçük kalır (14 #15)
         manualChunks(id: string) {
           if (id.includes("src/data/search-index")) return "search-index";
-          if (id.includes("src/data/")) return "content";
+          if (id.includes("src/data/glossary-detail")) return "glossary-detail"; // panel lazy (14 #15)
+          if (id.includes("src/data/pages/")) return undefined; // page-başına lazy chunk (14 #15)
+          if (id.includes("src/data/")) return "content-meta"; // navigation + index + glossary (eager, küçük)
           if (id.includes("node_modules/minisearch")) return "minisearch";
           if (id.includes("node_modules/shiki") || id.includes("node_modules/@shikijs")) return undefined;
           if (id.includes("node_modules")) return "vendor";

@@ -1,0 +1,644 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-dx-api-gateway",
+  "sourceId": "dx-api-gateway",
+  "slug": "dx/dx-api-gateway",
+  "title": "API Gateway + Developer Portal",
+  "summary": "Public API kullanıcısı için tek giriş: auth, rate limit, versioning, dokümantasyon, API key yönetimi.",
+  "categoryId": "dx",
+  "tags": [
+   "dx",
+   "api-gateway",
+   "developer-portal",
+   "openapi",
+   "versioning"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-sus-versioning",
+   "page-scale-ratelimit",
+   "page-crosscut-security",
+   "page-dx-cli"
+  ],
+  "blocks": [
+   {
+    "id": "block-dx-api-gateway-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Kong/Tyk/custom. Auth + rate limit gateway katmanında. OpenAPI spec → Swagger UI. API key dashboard."
+     }
+    ]
+   },
+   {
+    "id": "block-dx-api-gateway-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Gateway = tek giriş prensibi."
+     },
+     {
+      "type": "text",
+      "text": " 100 endpoint'in her birinde auth + rate limit yazmak yerine, tek katmanda halledilir. Mikro hizmet/monolit fark etmez."
+     }
+    ]
+   },
+   {
+    "id": "block-dx-api-gateway-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Portal olmadan API satılmaz",
+    "segments": [
+     {
+      "type": "text",
+      "text": "'Bizim API'mız var, dokümantasyon e-posta isteyin' = 2010. "
+     },
+     {
+      "type": "strong",
+      "text": "Self-service portal"
+     },
+     {
+      "type": "text",
+      "text": " olmadan modern geliştirici sigaya sokar. Stripe/Twilio portal seviyesi standart."
+     }
+    ]
+   },
+   {
+    "id": "block-dx-api-gateway-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'Express gateway middleware: JWT/API key auth, scale-ratelimit entegrasyonu, OpenAPI 3.x spec auto-generate (tsoa veya zod-to-openapi), Swagger UI /docs. API key tablo: customer_id, key_hash, last_used. Test/live prefix.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-dx-api-gateway-h-gateway-sorumluluklari",
+    "type": "heading",
+    "level": 4,
+    "text": "Gateway sorumlulukları"
+   },
+   {
+    "id": "block-dx-api-gateway-table",
+    "type": "table",
+    "columns": [
+     "Sorumluluk",
+     "Gateway",
+     "Backend service"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Auth"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✗ (gateway'in geçirdiği header'a güvenir)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Rate limit"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✗"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Logging"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ (iş seviyesi)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "CORS"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✗"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Versioning route"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✗"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Iş mantığı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✗"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "DB erişim"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✗"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-dx-api-gateway-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-dx-api-gateway-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Gateway sorumlulukları:"
+     }
+    ]
+   },
+   {
+    "id": "block-dx-api-gateway-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Auth"
+       },
+       {
+        "type": "text",
+        "text": ": JWT veya API key doğrulama; backend service'ler auth bilmiyor"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Rate limit"
+       },
+       {
+        "type": "text",
+        "text": ": Customer tier'ına göre — "
+       },
+       {
+        "type": "code",
+        "text": "cc-ratelimit"
+       },
+       {
+        "type": "text",
+        "text": " ile entegre"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Versioning"
+       },
+       {
+        "type": "text",
+        "text": ": "
+       },
+       {
+        "type": "code",
+        "text": "/v1"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "/v2"
+       },
+       {
+        "type": "text",
+        "text": " routing; sus-versioning ile uyumlu"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Logging"
+       },
+       {
+        "type": "text",
+        "text": ": Tüm istekler + response time, error rate"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Caching"
+       },
+       {
+        "type": "text",
+        "text": ": GET response cache (TTL)"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "CORS"
+       },
+       {
+        "type": "text",
+        "text": ": Browser istemcileri için header yönetimi"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Webhook signature"
+       },
+       {
+        "type": "text",
+        "text": ": Dış sistem webhook'larını doğrulama"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-dx-api-gateway-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Developer Portal — olmazsa olmaz:"
+     }
+    ]
+   },
+   {
+    "id": "block-dx-api-gateway-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Self-service API key"
+      },
+      {
+       "type": "text",
+       "text": ": Geliştirici kayıt → key al → dene"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Interactive docs"
+      },
+      {
+       "type": "text",
+       "text": ": Swagger UI / Stoplight — kod örnekleri"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Quickstart"
+      },
+      {
+       "type": "text",
+       "text": ": 5 dakikada ilk istek"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "SDK"
+      },
+      {
+       "type": "text",
+       "text": ": TypeScript, Python, Go SDK üret (Stainless veya OpenAPI Generator)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Changelog"
+      },
+      {
+       "type": "text",
+       "text": ": Her API değişikliği"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Status page"
+      },
+      {
+       "type": "text",
+       "text": ": Uptime, incidents"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-dx-api-gateway-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Stripe-tarzı best practice:"
+     }
+    ]
+   },
+   {
+    "id": "block-dx-api-gateway-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "API key prefix: "
+      },
+      {
+       "type": "code",
+       "text": "sk_live_xxx"
+      },
+      {
+       "type": "text",
+       "text": ", "
+      },
+      {
+       "type": "code",
+       "text": "sk_test_xxx"
+      },
+      {
+       "type": "text",
+       "text": " (canlı/test)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Idempotency-Key header desteği"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Request ID her response'da ("
+      },
+      {
+       "type": "code",
+       "text": "X-Request-Id"
+      },
+      {
+       "type": "text",
+       "text": ")"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Hata mesajları açıklayıcı (machine + human readable)"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-dx-api-gateway-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-dx-api-gateway-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Public API'ye gelen istekleri tek noktada karşılayan ve geliştirici müşteri için self-service dashboard sunan altyapı."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Backend service'lerin auth/rate limit/log bilme yükünü almak + müşteriye 5 dakikada başlangıç."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Gateway katmanı (Kong veya custom Node.js middleware). 2) OpenAPI 3.x spec generate. 3) Swagger UI deploy. 4) API key tablosu + dashboard. 5) Stainless veya OpenAPI Generator ile SDK."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "dx-api-gateway"
+       },
+       {
+        "type": "text",
+        "text": " cluster + sus-versioning + scale-ratelimit entegrasyonu."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Public API açılmadan önce. Önce gateway kur, sonra endpoint yayınla."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Platform mühendisi gateway kurar; DevRel portal + dokümantasyon; ürün ekibi API roadmap."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Hastane danışma masası: kim hangi doktora, hangi katta, ne saatte. Doktorlar 'beni bul' tek tek bilmek zorunda değil — danışma bilir."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-dx-api-gateway-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-dx-api-gateway-story",
+    "type": "useCase",
+    "title": "Apartman ana kapı — Murat Bey (61) zil sistemi",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Murat Bey ana kapıyı kilitledi; her daire için zil + interkom var. Misafir zile basar, sakin açar."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Bu API Gateway: tek giriş, kim girecek kontrol. Sakin her misafire 'şu kapıdan gel' demek zorunda değil."
+     }
+    ]
+   },
+   {
+    "id": "block-dx-api-gateway-story-2",
+    "type": "useCase",
+    "title": "Otobüs durağı tabelası — Yusuf Bey (66)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Yusuf Bey tabeladan otobüs saatlerini öğreniyor; hangi otobüs nereye gider, ne zaman gelir — hepsi tek yerde."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Bu developer portal: kullanıcı tek yere bakar, bilgi alır, deneme yapar."
+     }
+    ]
+   }
+  ]
+ }
+}

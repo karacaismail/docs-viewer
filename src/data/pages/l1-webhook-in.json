@@ -1,0 +1,529 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-l1-webhook-in",
+  "sourceId": "l1-webhook-in",
+  "slug": "layer1/l1-webhook-in",
+  "title": "Inbound Webhook — dış sistemden gelen olay alma",
+  "summary": "Stripe ödendi dediğinde, Sentry hata dediğinde — webhook gelir. HMAC doğrula, idempotency uygula, hızlı 2xx dön.",
+  "categoryId": "layer1",
+  "tags": [
+   "layer1",
+   "webhook",
+   "inbound",
+   "hmac",
+   "idempotency"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-scale-webhook",
+   "page-scale-workers-deep",
+   "page-crosscut-security"
+  ],
+  "blocks": [
+   {
+    "id": "block-l1-webhook-in-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "HMAC signature verification, event ID idempotency, replay protection (timestamp), fast 2xx response, error handling."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-webhook-in-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Inbound webhook = dış sistemin sana mesajı."
+     },
+     {
+      "type": "text",
+      "text": " İmza doğrulanmamış webhook = saldırı yüzeyi."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-webhook-in-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "İmza doğrulamadan kabul = vahim",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Saldırgan "
+     },
+     {
+      "type": "code",
+      "text": "/webhooks/stripe"
+     },
+     {
+      "type": "text",
+      "text": " endpoint'ine fake "
+     },
+     {
+      "type": "code",
+      "text": "payment.succeeded"
+     },
+     {
+      "type": "text",
+      "text": " yollar. "
+     },
+     {
+      "type": "strong",
+      "text": "HMAC zorunlu."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-webhook-in-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'/webhooks/stripe: stripe.webhooks.constructEvent ile HMAC + timestamp. webhook_events tablosu event.id INSERT ON CONFLICT DO NOTHING. Conflict = duplicate, 200 dön. Yeni = queue'ya at, 200 dön.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-l1-webhook-in-h-webhook-handler-kontrol-listesi",
+    "type": "heading",
+    "level": 4,
+    "text": "Webhook handler kontrol listesi"
+   },
+   {
+    "id": "block-l1-webhook-in-table",
+    "type": "table",
+    "columns": [
+     "Adım",
+     "İş",
+     "Süre"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "1. HMAC verify"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Stripe SDK"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 5ms"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "2. Timestamp"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 5dk eski"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 1ms"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "3. Idempotency"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "INSERT ON CONFLICT"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 10ms"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "4. Queue push"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "BullMQ/DBOS"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 5ms"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "5. Respond 200"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "HTTP"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 100ms total"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "6. Worker async"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Asıl iş"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "saniyeler"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-l1-webhook-in-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-l1-webhook-in-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Inbound webhook kritik kuralları:"
+     }
+    ]
+   },
+   {
+    "id": "block-l1-webhook-in-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "HMAC imza doğrula HER ZAMAN"
+       },
+       {
+        "type": "text",
+        "text": " — "
+       },
+       {
+        "type": "code",
+        "text": "X-Stripe-Signature"
+       },
+       {
+        "type": "text",
+        "text": " header'ı secret ile karşılaştır"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Timestamp kontrol"
+       },
+       {
+        "type": "text",
+        "text": " — 5 dk eski isteği reddet (replay attack)"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Event ID idempotency"
+       },
+       {
+        "type": "text",
+        "text": " — "
+       },
+       {
+        "type": "code",
+        "text": "event.id"
+       },
+       {
+        "type": "text",
+        "text": "'yi DB'ye INSERT ON CONFLICT DO NOTHING"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Hızlı 2xx dön"
+       },
+       {
+        "type": "text",
+        "text": " — handler 5 sn aşarsa Stripe retry yapar. Queue'ya at; 200 hemen"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Replay endpoint"
+       },
+       {
+        "type": "text",
+        "text": " — Stripe dashboard'tan 'webhook tekrar gönder' yaparsan idempotency çalışmalı"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-l1-webhook-in-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Workflow:"
+     }
+    ]
+   },
+   {
+    "id": "block-l1-webhook-in-steps-2",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "text",
+        "text": "HTTP request gelir"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "text",
+        "text": "HMAC + timestamp doğrula"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Event ID DB'ye INSERT (idempotent)"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Event'i queue'ya at"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "text",
+        "text": "200 OK dön (< 100ms)"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Worker queue'dan alıp asıl işi yapar"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-l1-webhook-in-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-l1-webhook-in-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Dış sistemden gelen webhook'u doğrulayıp güvenle işleme."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Stripe, Sentry, GitHub vs. event'lerini almak için."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Endpoint /webhooks/<provider>. 2) HMAC doğrula. 3) Event ID DB'ye INSERT. 4) Queue'ya at. 5) 200 OK <100ms."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "l1-webhook-in"
+       },
+       {
+        "type": "text",
+        "text": " cluster."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk dış entegrasyondan önce."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Backend developer endpoint + worker."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Apartman güvenlik kameraları: sahte alarm (replay), aynı alarm 2 kez (idempotency)."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-l1-webhook-in-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-l1-webhook-in-story",
+    "type": "useCase",
+    "title": "Apartman postacısı — Murat Bey (61) gelen mektup",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Posta gelir, Murat Bey damgaya bakıyor (TEDAŞ damgalı mı)."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "HMAC = TEDAŞ damgası. Sahte fatura kabul edilmez."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-webhook-in-story-2",
+    "type": "useCase",
+    "title": "Berber Mehmet Usta (60) — banka SMS",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Aynı SMS 5 dakika sonra tekrar geldi."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Aynı transaction_id varsa idempotency = 1 kez kayıt."
+     }
+    ]
+   }
+  ]
+ }
+}

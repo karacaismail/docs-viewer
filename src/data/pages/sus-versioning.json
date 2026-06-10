@@ -1,0 +1,322 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-sus-versioning",
+  "sourceId": "sus-versioning",
+  "slug": "sus/sus-versioning",
+  "title": "Tarih-tabanlı versiyonlama + dönüşüm katmanı",
+  "summary": "Stripe 2011'den beri her API sürümüyle uyumlu (14 yıl). Çekirdek tek-sürüm yazar, dönüşüm katmanı eskileri yaşatır.",
+  "categoryId": "sus",
+  "tags": [
+   "sustainability",
+   "stripe",
+   "api-versioning"
+  ],
+  "meta": {},
+  "related": [
+   "page-sus-bc-policy",
+   "page-kernel-schema"
+  ],
+  "blocks": [
+   {
+    "id": "block-sus-versioning-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Çekirdek mühendisleri yalnız en güncel sürümü bilir; response transform layer eski sürüme döner. \"if-version\" zinciri yok."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-versioning-co",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Stripe yöntemi",
+    "segments": [
+     {
+      "type": "text",
+      "text": "*\"Instead of writing messy conditionals, Stripe abstracts version differences into named gates.\"* Çekirdek tek-sürüm; eskileri katman yaşatır."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-versioning-img",
+    "type": "image",
+    "src": "/assets/sus-versioning.svg",
+    "alt": "Stripe tarih-tabanlı versiyonlama — çekirdek tek sürüm, transform katmanı her müşteriyi pin'lendiği sürüme döner",
+    "caption": "Çekirdek son sürümü üretir; transform katmanı her müşteriyi pin'lendiği eski sürüme döner."
+   },
+   {
+    "id": "block-sus-versioning-note",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Stripe versiyon mekaniği görsel"
+     }
+    ]
+   },
+   {
+    "id": "block-sus-versioning-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tek çekirdek + transform katmanı: çekirdek temiz, eskiler katmanda yaşar."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Aynı kodda 'if v < 2024' zinciri olursa yıllar içinde okunamaz."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Müşteri ilk isteğinde bir sürüme pin; çekirdek son sürümü döner; transform yanıtı eskiye çevirir."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Çekirdek geliştiricisi son sürüme yazar; sürüm mühendisi transform günceller."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Terzi defteri: müşterinin 2010 ölçüsü pin'li; terzi yeni teknikle dikiyor ama o müşterinin kalıbı sabit."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-sus-versioning-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Mevcut Stripe sürümü:"
+     },
+     {
+      "type": "text",
+      "text": " "
+     },
+     {
+      "type": "code",
+      "text": "2026-05-27.dahlia"
+     },
+     {
+      "type": "text",
+      "text": ". Aylık küçük sürümler additive (uyumlu), major sürümler (Acacia gibi) kırıcı sayılır ama eski yüzeyi koruyacak transform yazılır. Bu disiplin sayesinde 2011'de yazılmış entegrasyon 2025'te hâlâ çalışıyor."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-versioning-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Versiyon tarihleri",
+      "definition": [
+       {
+        "type": "text",
+        "text": "framework/contracts/versions.py"
+       }
+      ]
+     },
+     {
+      "term": "İsimli kapılar",
+      "definition": [
+       {
+        "type": "text",
+        "text": "framework/contracts/gates.py"
+       }
+      ]
+     },
+     {
+      "term": "Dönüşüm modülleri",
+      "definition": [
+       {
+        "type": "text",
+        "text": "framework/contracts/response_transforms/*.py"
+       }
+      ]
+     },
+     {
+      "term": "İlk sürüm",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk dış entegratör doğduğu gün (eşik)"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-sus-versioning-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-sus-versioning-lesson-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistem her yeni sürümü tarih etiketiyle adlandırır (2026-06-01 gibi). Müşteri hesabı ilk istekte o tarihe \"pinlenir\" ve sonsuza kadar o sürümü yaşar; çekirdek arada evrilir ama eski sürüm dönüşüm katmanıyla yanıtı eskiye çevirir."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Eğer çekirdekte sürüm kontrolü olursa ("
+       },
+       {
+        "type": "code",
+        "text": "if v < 2025: ..."
+       },
+       {
+        "type": "text",
+        "text": ") yıllar içinde kod çorba olur. Çözüm: çekirdek temiz tek-sürüm; eski sürümler ayrı katmanda yaşar."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Çekirdek en yeni sürümü üretir → \"response compatibility layer\" yanıtı istemcinin pin'lendiği eski sürüme dönüştürür. Stripe bunu \"named gates\" ile yapar — isimli soyut farklar."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "framework/contracts/response_transforms/ klasöründe her sürüm değişikliği bir dönüşüm modülü."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk dış entegratör çıkar çıkmaz — o gün sürüm 1.0 ilan edilir, sonra 2026-06-01, 2027-02-15 gibi tarihler."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Çekirdek geliştirici sadece son sürüme yazar; sürüm mühendisi dönüşüm katmanını günceller; dış entegratör hiçbir şey değiştirmek zorunda değil."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mahalle terzisi Mehmet Bey'in defteri: müşteri ilk geldiği gün ölçüsü deftere yazılır ve hiç değişmez (\"sürüm pinleme\"). Mehmet Bey yıllar içinde dikiş yöntemini geliştirir ama o müşterinin ölçüsüne sadık kalır; siparişte aynı kalıbı çıkarır. Yeni gelen müşteri yeni ölçü defterine yazılır."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-sus-versioning-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-sus-versioning-story",
+    "type": "useCase",
+    "title": "Lokantacı Recep Bey, fiks menü",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "1998'de açtığı lokantanın menüsünde 12 yemek var. Müdavim Hatice Hanım hep \"3 numara\" diyor. Recep Bey 25 yıldır 3 numarayı kuru fasulye olarak çıkarıyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Menü numarası sözleşme. Yeni yemek eklenirse 13-14-15 olur, eski 12 numara sabit. Hatice Hanım'ın 25 yıllık alışkanlığı bozulmaz. Yazılım sürüm pinleme = menü numarası."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-versioning-story-2",
+    "type": "useCase",
+    "title": "Apartman yönetim sözleşmesi",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "2010'da kabul edilen yönetim planı, daire 7'nin bahçeyi kullanma hakkını söylüyor. 2025'te yeni yönetim planı geliyor — bahçe kuralı değişiyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "2010'da imzalayan daire 7 \"eski sürüm\" hakları altında bahçeye girebilmeye devam ediyor (pinleme). 2025'ten sonra alan yeni daireler yeni kurala tabi. Çekirdek (apartman) tek kuralla yönetilse de daire 7 dönüşüm katmanıyla eski hakkı yaşar."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-versioning-story-3",
+    "type": "useCase",
+    "title": "Sigortacı Gülay Hanım, poliçe maddeleri",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Müşteri 2015'te yaptırdığı kasko poliçesinde \"hasar/değer\" oranı %75. Şirket 2025'te oranı %85'e çıkardı. Müşteri \"benim 2015 poliçem ne olacak?\" diye soruyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Eski poliçe imzalandığı sürümle yaşar; yeni oran sadece yeni sözleşmelere uygulanır. Şirket çekirdeği yeni kuralla işler ama dönüşüm katmanı eski müşteriye eski oranı sunar. Yazılım API versiyonlaması tam bu disiplin."
+     }
+    ]
+   }
+  ]
+ }
+}

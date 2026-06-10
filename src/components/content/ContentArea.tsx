@@ -1,7 +1,8 @@
-// Page render: başlık + summary + meta + term chip'leri + blocks + related (11 §Renderer)
-import { useEffect, useRef } from "react";
+// Page render: metadata index'ten sync, gövde page-başına lazy chunk'tan (14 #15)
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useRouterState } from "@tanstack/react-router";
-import { resolvePage, resolvePageById, termsOfPage, scrollToBlockAnchor } from "../../engine";
+import { resolvePage, resolvePageById, termsOfPage, loadPageBlocks, scrollToBlockAnchor } from "../../engine";
+import type { Page } from "../../schemas";
 import { ContentRenderer } from "./ContentRenderer";
 import { GlossaryTermChip } from "../glossary/GlossaryTerm";
 
@@ -9,44 +10,57 @@ export function ContentArea() {
   const { section, page: pageSlug } = useParams({ from: "/docs/$section/$page" });
   const hash = useRouterState({ select: (s) => s.location.hash });
   const resolved = resolvePage(section, pageSlug);
+  const [page, setPage] = useState<Page | null>(null);
   const h1Ref = useRef<HTMLHeadingElement>(null);
 
+  const entry = resolved.kind === "found" ? resolved.entry : null;
+
   useEffect(() => {
-    const title = resolved.kind === "found" ? resolved.page.title : "Sayfa bulunamadı";
-    document.title = `${title} — Mimari Dokümantasyon`;
+    let alive = true;
+    setPage(null);
+    if (entry) {
+      void loadPageBlocks(entry.id.slice(5)).then((p) => {
+        if (alive && p) setPage(p);
+      });
+    }
+    return () => { alive = false; };
+  }, [entry]);
+
+  useEffect(() => {
+    document.title = `${entry?.title ?? "Sayfa bulunamadı"} — Mimari Dokümantasyon`;
+    if (!entry) { h1Ref.current?.focus(); return; }
+    if (!page) return; // anchor/focus, gövde DOM'a girince
     if (hash) {
-      // İçerik mount edildikten sonra anchor'a in (10 §Routing 2)
-      requestAnimationFrame(() => scrollToBlockAnchor(hash));
+      requestAnimationFrame(() => scrollToBlockAnchor(hash)); // (10 §Routing 2)
     } else {
       window.scrollTo({ top: 0 });
-      h1Ref.current?.focus(); // sayfa değişimi screen reader'a duyurulur (10 §Routing 4)
+      h1Ref.current?.focus(); // sayfa değişimi duyurulur (10 §Routing 4)
     }
-  }, [resolved, hash]);
+  }, [entry, page, hash]);
 
-  if (resolved.kind === "not-found") {
+  if (!entry) {
     return (
       <div className="notfound">
         <h1 tabIndex={-1} ref={h1Ref}>Sayfa bulunamadı</h1>
-        <p>“{resolved.slug}” adresinde bir doküman yok. Sol menüden devam edebilirsiniz.</p>
+        <p>“{resolved.kind === "not-found" ? resolved.slug : ""}” adresinde bir doküman yok. Sol menüden devam edebilirsiniz.</p>
       </div>
     );
   }
 
-  const { page } = resolved;
-  const terms = termsOfPage(page.id);
-  const related = (page.related ?? []).map(resolvePageById).filter((p) => p !== undefined);
+  const terms = termsOfPage(entry.id);
+  const related = (entry.related ?? []).map(resolvePageById).filter((p) => p !== undefined);
 
   return (
     <article>
-      {(page.meta?.badge || page.meta?.state || page.meta?.granularity) && (
+      {(entry.meta?.badge || entry.meta?.state || entry.meta?.granularity) && (
         <div className="meta-row">
-          {page.meta?.badge && <span className="badge">{page.meta.badge}</span>}
-          {page.meta?.granularity && <span className="badge">{page.meta.granularity}</span>}
-          {page.meta?.state && <span className="badge">{page.meta.state}</span>}
+          {entry.meta?.badge && <span className="badge">{entry.meta.badge}</span>}
+          {entry.meta?.granularity && <span className="badge">{entry.meta.granularity}</span>}
+          {entry.meta?.state && <span className="badge">{entry.meta.state}</span>}
         </div>
       )}
-      <h1 tabIndex={-1} ref={h1Ref}>{page.title}</h1>
-      {page.summary && <p className="lead">{page.summary}</p>}
+      <h1 tabIndex={-1} ref={h1Ref}>{entry.title}</h1>
+      {entry.summary && <p className="lead">{entry.summary}</p>}
 
       {terms.length > 0 && (
         <ul className="meta-row" aria-label="Bu sayfadaki terimler" style={{ listStyle: "none", padding: 0, margin: "0 0 var(--space-default)" }}>
@@ -58,7 +72,11 @@ export function ContentArea() {
         </ul>
       )}
 
-      <ContentRenderer blocks={page.blocks} />
+      {page ? (
+        <ContentRenderer blocks={page.blocks} />
+      ) : (
+        <p role="status" aria-busy="true" style={{ color: "var(--color-text-muted)" }}>İçerik yükleniyor…</p>
+      )}
 
       {related.length > 0 && (
         <nav className="related" aria-label="İlgili sayfalar">

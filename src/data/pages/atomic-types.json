@@ -1,0 +1,867 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-atomic-types",
+  "sourceId": "atomic-types",
+  "slug": "genel/atomic-types",
+  "title": "Atomik tipler — Kum Tanesi",
+  "summary": "DocType engine'i besleyen atomik primitive'ler. Field'ın altındaki tip katmanı.",
+  "categoryId": "genel",
+  "tags": [
+   "atomic",
+   "types",
+   "primitive"
+  ],
+  "meta": {
+   "granularity": "atom",
+   "state": "wip"
+  },
+  "related": [
+   "page-kernel-schema",
+   "page-crosscut-tr",
+   "page-crosscut-security"
+  ],
+  "blocks": [
+   {
+    "id": "block-atomic-types-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Field'ın da altındaki primitive katman. DocType engine bunları kullanarak alan üretir."
+     }
+    ]
+   },
+   {
+    "id": "block-atomic-types-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Senin tahtada "
+     },
+     {
+      "type": "strong",
+      "text": "Field, Log, Handler, Security"
+     },
+     {
+      "type": "text",
+      "text": " yazdın. Bunlar başlangıç ama yetersiz. Field'ın altında somut tip sistemi olmalı. Aşağıda kritik tiplerin tam listesi — DocType engine bu primitive'leri kullanarak alan yaratıyor."
+     }
+    ]
+   },
+   {
+    "id": "block-atomic-types-note",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Field bir 'kutu'; tip o kutunun ne tutacağını söyler."
+     }
+    ]
+   },
+   {
+    "id": "block-atomic-types-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Frappe pattern'inde DocType'ın her alanı tip referansı tutar. Bizim ek katmanımız: tip sistemi "
+     },
+     {
+      "type": "strong",
+      "text": "plugin'lerle genişletilebilir"
+     },
+     {
+      "type": "text",
+      "text": " (registry pattern)."
+     }
+    ]
+   },
+   {
+    "id": "block-atomic-types-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistemde olan biteni metin satırları halinde kayıt."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Hata teşhisi ve geriye dönük analiz için."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her olay zaman damgalı kaydedilir."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistem yazar, geliştirici okur."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kaptanın seyir defteri."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-atomic-types-h-kritik-tipler",
+    "type": "heading",
+    "level": 4,
+    "text": "Kritik tipler"
+   },
+   {
+    "id": "block-atomic-types-note-2",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu tipler olmazsa framework taşımıyor — para kaybı, distributed sorunlar."
+     }
+    ]
+   },
+   {
+    "id": "block-atomic-types-feat",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Type System",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Scalar/composite tip, validator, coercion. Field'ın altında. Her field bir type'a referans verir."
+       }
+      ]
+     },
+     {
+      "term": "ID Generator",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "UUID v7 (timestamp-ordered), ULID, snowflake, tenant-prefixed. Distributed sistemde sequence yetmez."
+       }
+      ]
+     },
+     {
+      "term": "Money / Decimal",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Float yasak (yuvarlama). "
+       },
+       {
+        "type": "code",
+        "text": "Decimal(20,4)"
+       },
+       {
+        "type": "text",
+        "text": " + currency code çifti. Muhasebede para kaybı önler."
+       }
+      ]
+     },
+     {
+      "term": "DateTime + Timezone",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "UTC store, IANA tz display. HRMS effective-dating için bitemporal (geçerlilik zamanı + kayıt zamanı)."
+       }
+      ]
+     },
+     {
+      "term": "Reference / Link",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "DocType'a foreign key. Cascade kuralı, orphan kontrolü, tenant-scope check otomatik."
+       }
+      ]
+     },
+     {
+      "term": "Counter (hot)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Like/view/follower. Backend swap edilebilir (DB → Redis → sharded). API tek interface, backend deployment'a göre."
+       }
+      ]
+     },
+     {
+      "term": "Version / ETag",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Optimistic concurrency — aynı record'u iki kullanıcı eşzamanlı edit ederse çakışma detect."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-atomic-types-h-yardimci-tipler",
+    "type": "heading",
+    "level": 4,
+    "text": "Yardımcı tipler"
+   },
+   {
+    "id": "block-atomic-types-note-3",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Kritik değil ama yokluklarında plugin geliştirici tekrar yazıyor — DRY için core'a."
+     }
+    ]
+   },
+   {
+    "id": "block-atomic-types-feat-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Hash / Checksum",
+      "definition": [
+       {
+        "type": "text",
+        "text": "SHA-256, BLAKE3. Dosya integrity, idempotency key, content-addressable storage (Drive)."
+       }
+      ]
+     },
+     {
+      "term": "Slug",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Türkçe karakter normalizasyon (ı→i, ş→s, ğ→g, ü→u, ö→o, ç→c), uniqueness scope."
+       }
+      ]
+     },
+     {
+      "term": "Phone (E.164)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Country code parsing, format, validation. "
+       },
+       {
+        "type": "code",
+        "text": "phonenumbers"
+       },
+       {
+        "type": "text",
+        "text": " Python lib. Twilio/NetGSM gönderiminde şart."
+       }
+      ]
+     },
+     {
+      "term": "Email",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Syntax + DNS MX check + disposable detection (one-time mail engelle)."
+       }
+      ]
+     },
+     {
+      "term": "URL",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Validation, canonical form, scheme allowlist (file:// gibi zararlı scheme'leri engelle)."
+       }
+      ]
+     },
+     {
+      "term": "Geo Coordinate",
+      "definition": [
+       {
+        "type": "text",
+        "text": "lat/lng + PostGIS bridge. Real estate (#1), Field Service için kritik."
+       }
+      ]
+     },
+     {
+      "term": "Address (atomic)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Country/region/city/district/street/postal yapısı + locale formatting."
+       }
+      ]
+     },
+     {
+      "term": "Color",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Hex string + picker UI. Theme, calendar event, tag."
+       }
+      ]
+     },
+     {
+      "term": "Tag",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Polymorphic label, çok-tag yapısı. Hiyerarşisiz (Taxonomy hiyerarşik)."
+       }
+      ]
+     },
+     {
+      "term": "Soft Delete",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Trash, restore, hard-delete policy. KVKK silme talepleri için altyapı."
+       }
+      ]
+     },
+     {
+      "term": "Encryption Field",
+      "definition": [
+       {
+        "type": "text",
+        "text": "PII/secret field-level encryption (AES-256-GCM), key versioning + rotation."
+       }
+      ]
+     },
+     {
+      "term": "JSON / JSONB",
+      "definition": [
+       {
+        "type": "text",
+        "text": "PostgreSQL JSONB column, schema-less ek alan, opsiyonel JSON Schema validation."
+       }
+      ]
+     },
+     {
+      "term": "Enum",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Closed set, multi-language label, ordering, default value."
+       }
+      ]
+     },
+     {
+      "term": "Range",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Date range, int4range, tsrange. PostgreSQL native, exclusion constraint ile."
+       }
+      ]
+     },
+     {
+      "term": "Vector",
+      "definition": [
+       {
+        "type": "text",
+        "text": "pgvector primitive ("
+       },
+       {
+        "type": "code",
+        "text": "vector(N)"
+       },
+       {
+        "type": "text",
+        "text": "). AI-first için kritik. Embedding store + HNSW index."
+       }
+      ]
+     },
+     {
+      "term": "Polygon",
+      "definition": [
+       {
+        "type": "text",
+        "text": "PostGIS shape. Real estate çizerek arama (polygon search), delivery zone."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-atomic-types-h-atomic-tiplerin-gercek-hayattaki-yansimasi",
+    "type": "heading",
+    "level": 3,
+    "text": "Atomic tiplerin gerçek hayattaki yansıması"
+   },
+   {
+    "id": "block-atomic-types-story",
+    "type": "useCase",
+    "title": "Vergi mükellefi (mobil)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Mobil app üzerinden masraf ekler: '149,75 TL kahve'"
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Money(TRY, Decimal) ile saklanır, KDV hesaplaması doğru, e-arşiv fatura üretiminde kuruş kaymaz."
+     }
+    ]
+   },
+   {
+    "id": "block-atomic-types-story-2",
+    "type": "useCase",
+    "title": "Yeni müşteri kaydı (SaaS)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Kayıt formu: telefon, email, TCKN"
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Phone(E.164) normalize, Email MX-check, TCKN MOD-10 + MOD-9 doğrulaması — yanlış kayıt DB'ye girmez."
+     }
+    ]
+   },
+   {
+    "id": "block-atomic-types-story-3",
+    "type": "useCase",
+    "title": "Çoklu-tenant fatura yöneticisi",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Reference field ile fatura kalemine ürün bağlar"
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Tenant-scope check, başka müşterinin ürününe link kuramaz — veri sızıntısı engellenir."
+     }
+    ]
+   },
+   {
+    "id": "block-atomic-types-story-4",
+    "type": "useCase",
+    "title": "AI-first dashboard",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Kullanıcı 'son ay kritik şikayetleri özetle' der"
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Vector(1536) ile semantik arama → ilgili kayıtlar → LLM özet, milisaniyede dönüş."
+     }
+    ]
+   },
+   {
+    "id": "block-atomic-types-h-log-handler-security-sen-yazdin-korunuyor",
+    "type": "heading",
+    "level": 4,
+    "text": "Log, Handler, Security — sen yazdın, korunuyor"
+   },
+   {
+    "id": "block-atomic-types-lesson-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistemde olan biteni metin satırları halinde kayıt."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Hata teşhisi ve geriye dönük analiz için."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her olay zaman damgalı kaydedilir."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistem yazar, geliştirici okur."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kaptanın seyir defteri."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-atomic-types-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Log"
+     },
+     {
+      "type": "text",
+      "text": " = structlog primitive, JSON output, trace_id correlation. "
+     },
+     {
+      "type": "strong",
+      "text": "Handler"
+     },
+     {
+      "type": "text",
+      "text": " = request handler factory, middleware pipeline'ın atomu. "
+     },
+     {
+      "type": "strong",
+      "text": "Security"
+     },
+     {
+      "type": "text",
+      "text": " = encryption + signing + secret read primitive'leri. Bunlar tahtada doğru yerde, korunuyor."
+     }
+    ]
+   },
+   {
+    "id": "block-atomic-types-note-4",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu üç element de atomic katmanda — gerekçeleri ile."
+     }
+    ]
+   },
+   {
+    "id": "block-atomic-types-co",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Junior'a not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Type system framework'ün omurgası. Her DocType field'ı bu atomik tiplere referans verir. Yeni bir tip eklemek istersen (örn. "
+     },
+     {
+      "type": "code",
+      "text": "IBAN"
+     },
+     {
+      "type": "text",
+      "text": " doğrulayan bir tip): type registry'e ekle, validator + coercion yaz, framework otomatik admin form widget + API serializer üretsin."
+     }
+    ]
+   },
+   {
+    "id": "block-atomic-types-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Adım adım:"
+     }
+    ]
+   },
+   {
+    "id": "block-atomic-types-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "code",
+        "text": "framework/types/iban.py"
+       },
+       {
+        "type": "text",
+        "text": " dosyası aç."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "code",
+        "text": "Type"
+       },
+       {
+        "type": "text",
+        "text": " interface'ini implement et: "
+       },
+       {
+        "type": "code",
+        "text": "validate(v)"
+       },
+       {
+        "type": "text",
+        "text": " (MOD-97), "
+       },
+       {
+        "type": "code",
+        "text": "coerce(s)"
+       },
+       {
+        "type": "text",
+        "text": " (boşluk temizle, upper), "
+       },
+       {
+        "type": "code",
+        "text": "serialize(v)"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "widget"
+       },
+       {
+        "type": "text",
+        "text": " (React IBAN input)."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "code",
+        "text": "register('iban', IBANType)"
+       },
+       {
+        "type": "text",
+        "text": "."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Plugin manifest'ine "
+       },
+       {
+        "type": "code",
+        "text": "requires: ['iban']"
+       },
+       {
+        "type": "text",
+        "text": " yaz."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "text",
+        "text": "DocType field'ında "
+       },
+       {
+        "type": "code",
+        "text": "type: 'iban'"
+       },
+       {
+        "type": "text",
+        "text": " kullan — admin formdan API'ye her şey otomatik."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-atomic-types-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-atomic-types-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Tahtada "
+     },
+     {
+      "type": "code",
+      "text": "Field, Log, Handler, Security"
+     },
+     {
+      "type": "text",
+      "text": " yazıyordu — yetersiz. Asıl katman bunların altındaki "
+     },
+     {
+      "type": "strong",
+      "text": "atomik tipler"
+     },
+     {
+      "type": "text",
+      "text": ". Her field bir type'a referans verir; validator, coercion, admin widget, API serializer hepsi type'tan türer."
+     }
+    ]
+   },
+   {
+    "id": "block-atomic-types-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-atomic-types-lesson-3",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistemin en küçük yapı taşları: 'para', 'tarih', 'telefon', 'kimlik numarası' gibi her yerde tekrar tekrar gerekecek temel bilgi türleri."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her form alanını sıfırdan tanımlamak yerine, hazır tipler seçilir. Bir kez doğru yazılmış 'para' tipi tüm ürünlerde kuruşa kadar tutarlı çalışır."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yeni form alanı eklerken 'Tip seç' menüsünden Money/Phone/Email gibi bir tip seçilir. Sistem geri kalan kuralları otomatik uygular."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her DocType tanımının alan listesinde. İK formunda da, muhasebe formunda da aynı tipler."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her yeni alan eklendiğinde."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Form tasarımcısı tip seçer; framework tipi sağlar; son kullanıcı tutarlılığı yaşar."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Marangozluk takımındaki standart vida boyları: M4, M6, M8. Her seferinde özel ölçü yapmak yerine standartlardan seçersin."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

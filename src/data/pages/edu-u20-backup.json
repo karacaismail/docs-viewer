@@ -1,0 +1,589 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-edu-u20-backup",
+  "sourceId": "edu-u20",
+  "slug": "egitim/edu-u20-backup",
+  "title": "Backup Disiplini — felaket önleme",
+  "summary": "Backup yapmak yetmez; backup'tan dönmeyi test etmediysen backup yok demektir.",
+  "categoryId": "egitim",
+  "tags": [
+   "education",
+   "backup",
+   "restore",
+   "disaster-recovery",
+   "pitr"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-scale-multiregion",
+   "page-crosscut-observability",
+   "page-sus-bitemporal"
+  ],
+  "blocks": [
+   {
+    "id": "block-edu-u20-backup-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "3-2-1 kuralı, point-in-time recovery, backup verification, geo-replication. 'Test edilmemiş backup = backup değil'."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u20-backup-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Backup'ın altın kuralı:"
+     },
+     {
+      "type": "text",
+      "text": " *'Test edilmemiş "
+     },
+     {
+      "type": "term",
+      "text": "backup",
+      "termId": "term-backup-edu-u20-backup"
+     },
+     {
+      "type": "text",
+      "text": " = backup değil.'* Aylık restore test yap; staging'e geri yükle, smoke test çalıştır. Yoksa gerçek felakette bozuk olduğunu öğrenirsin."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u20-backup-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Ransomware riski",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Saldırgan sisteme girdi, tüm veriyi şifreledi, fidye istiyor. Lokal backup ona erişilebilir mi? Erişilebilirse şifreleyebilir → fidye + tüm backup'lar gitti. "
+     },
+     {
+      "type": "strong",
+      "text": "Air-gap backup"
+     },
+     {
+      "type": "text",
+      "text": " zorunlu: ayrı hesap, yazma kısıtlı (immutable S3 bucket)."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u20-backup-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'Postgres backup stratejisi: pgBackRest günlük full + WAL archive S3'e. Hetzner FSN1 → Backblaze farklı coğrafi. Aylık restore drill script. Sentry alarm: 24 saat içinde backup yoksa.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u20-backup-h-backup-stratejisi",
+    "type": "heading",
+    "level": 4,
+    "text": "Backup stratejisi"
+   },
+   {
+    "id": "block-edu-u20-backup-table",
+    "type": "table",
+    "columns": [
+     "Hangi",
+     "Sıklık",
+     "Tutulma süresi"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Full backup"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Haftalık (Pazar gece)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "3 ay"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Incremental"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Günlük"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "1 ay"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "WAL archive"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sürekli (anlık)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "30 gün PITR"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Off-site copy"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Günlük"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "6 ay"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Air-gap immutable"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Haftalık"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "1 yıl"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u20-backup-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-edu-u20-backup-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "3-2-1 kuralı (altın standart):"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u20-backup-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "3"
+      },
+      {
+       "type": "text",
+       "text": " kopya verinin"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "2"
+      },
+      {
+       "type": "text",
+       "text": " farklı fiziksel medya (disk + S3)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "1"
+      },
+      {
+       "type": "text",
+       "text": " kopyası coğrafi olarak farklı yerde"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u20-backup-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Backup türleri:"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u20-backup-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Full backup"
+       },
+       {
+        "type": "text",
+        "text": ": Tüm DB. Haftalık."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Incremental"
+       },
+       {
+        "type": "text",
+        "text": ": Son backup'tan beri değişen. Günlük."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Differential"
+       },
+       {
+        "type": "text",
+        "text": ": Son full'dan beri değişen. Günlük."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "WAL archiving (PITR)"
+       },
+       {
+        "type": "text",
+        "text": ": Sürekli; her transaction loglanır. Postgres standart."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u20-backup-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Point-in-Time Recovery (PITR):"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u20-backup-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "'Geçen pazartesi 14:23'ten önceki haline geri dön' diyebilirsin"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Postgres WAL archive ile mümkün"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "RPO ~saniye seviye"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u20-backup-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Backup verification (zorunlu):"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u20-backup-list-3",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Backup alındı = yarısı"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Restore test edildi"
+      },
+      {
+       "type": "text",
+       "text": " = tamamı"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Aylık: restore staging'e, smoke test çalıştır"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "'Backup işliyor görünüyor' yeterli değil; gerçekten dönüldüğü kanıtlanmalı"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u20-backup-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Yaygın felaketler:"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u20-backup-list-4",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Disk arızası (en yaygın)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Yanlış DELETE (insan hatası)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Ransomware (kötü amaçlı şifreleme)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Yangın/sel/deprem (doğal afet)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Datacenter network kesintisi"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u20-backup-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-edu-u20-backup-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Verinin kopyasını alma + felaket sonrası geri dönme disiplini."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Disk, insan hatası, yangın, hack — hepsi olabilir. Backup olmadan iş biter."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Postgres pgBackRest veya pg_basebackup günlük. 2) WAL archive S3'e (PITR). 3) 3-2-1: lokal + S3 (Hetzner) + Backblaze (farklı şirket/coğrafi). 4) Aylık restore test."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "cc-obs"
+       },
+       {
+        "type": "text",
+        "text": " infra + "
+       },
+       {
+        "type": "code",
+        "text": "scale-multiregion"
+       },
+       {
+        "type": "text",
+        "text": " ile birlikte. Cron job + monitoring."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk veri girilmeden ÖNCE backup kurulu. Sonradan = unutulur."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "SRE backup script; DBA verification; on-call restore drill."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yangın söndürücüsü: var olması yetmez, çalıştığı doğrulanmalı. Bir gün lazım olunca bozuksa = yangın çıkar. Backup aynı."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u20-backup-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-edu-u20-backup-story",
+    "type": "useCase",
+    "title": "Apartman ana defteri — Murat Bey (61)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Murat Bey apartman defterini her ay xerox edip kayınvalidesi'ne veriyor. Bir gün dairesinde su sızıntısı, defter ıslandı. Kayınvalidesi'nden geri aldı."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "3-2-1 ev versiyonu: 1 asıl (apartman), 1 kopya (kayınvalide), farklı konum. Tek su baskını her şeyi silmedi."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u20-backup-story-2",
+    "type": "useCase",
+    "title": "Aşçı Hatice Teyze (62) — reçete defteri",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "30 yıllık reçete defteri kayıp oldu. Hatice Teyze 6 ay önce telefonla fotoğraflamıştı — kurtuldu."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Backup olmadan 30 yıllık birikim kayıp. Olduğu için sadece son 6 ayın yenisi eksik."
+     }
+    ]
+   }
+  ]
+ }
+}

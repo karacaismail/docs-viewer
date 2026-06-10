@@ -1,0 +1,272 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-edu-u06-tenancy",
+  "sourceId": "edu-u06",
+  "slug": "egitim/edu-u06-tenancy",
+  "title": "Multi-tenancy — bir kod, çok müşteri",
+  "summary": "Tek kod tabanı üstünde birden fazla müşteri (tenant) izole hizmet alır. Row-level vs schema vs cluster.",
+  "categoryId": "egitim",
+  "tags": [
+   "education",
+   "u06",
+   "tenancy",
+   "saas"
+  ],
+  "meta": {
+   "granularity": "buyuk-tas",
+   "state": "ok"
+  },
+  "related": [
+   "page-edu-u04-veritabani",
+   "page-edu-u07-security",
+   "page-kernel-tenancy"
+  ],
+  "blocks": [
+   {
+    "id": "block-edu-u06-tenancy-lh",
+    "type": "lessonHeader",
+    "unit": "Ünite 06",
+    "title": "Multi-tenancy — tek kod, çok müşteri",
+    "level": "orta",
+    "durationMin": 60,
+    "prereq": [
+     "edu-u04"
+    ],
+    "goals": [
+     "Multi-tenancy'nin SaaS ekonomisindeki yerini anlatabilirsin.",
+     "Row-level / schema-level / cluster-level izolasyon farkını biliyorsun.",
+     "Cross-tenant veri sızıntısının nasıl engellendiğini söyleyebilirsin.",
+     "Sub-tenant kavramını ve ne zaman gerektiğini açıklayabilirsin."
+    ]
+   },
+   {
+    "id": "block-edu-u06-tenancy-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "SaaS'ın matematiği basit: bir kod tabanı 1000 müşteriye hizmet ederse altyapı maliyeti müşteri başına 1/1000'e iner. Ama bunun bedeli sıkı "
+     },
+     {
+      "type": "strong",
+      "text": "izolasyon"
+     },
+     {
+      "type": "text",
+      "text": ": A müşterisi B müşterisinin verisini asla görmemeli."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u06-tenancy-grid",
+    "type": "cardGrid",
+    "columns": 3,
+    "cards": [
+     {
+      "title": "Row-level",
+      "tone": "good",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Aynı tabloda "
+       },
+       {
+        "type": "code",
+        "text": "tenant_id"
+       },
+       {
+        "type": "text",
+        "text": " kolonu; her sorguya WHERE eklenir. "
+       },
+       {
+        "type": "strong",
+        "text": "Bizim seçim."
+       }
+      ]
+     },
+     {
+      "title": "Schema-level",
+      "tone": "neutral",
+      "segments": [
+       {
+        "type": "text",
+        "text": "PostgreSQL'de her tenant ayrı schema. Orta yol; backup ayrı yapılabilir."
+       }
+      ]
+     },
+     {
+      "title": "Cluster-level",
+      "tone": "neutral",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Her tenant ayrı DB instance. En izole ama en pahalı."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u06-tenancy-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Tenant scope guardrail",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Cross-tenant sızıntıyı "
+     },
+     {
+      "type": "strong",
+      "text": "kod incelemesiyle"
+     },
+     {
+      "type": "text",
+      "text": " engellemeye çalışma — bir gün unutursun. Query layer her SELECT/UPDATE/DELETE'e otomatik "
+     },
+     {
+      "type": "code",
+      "text": "WHERE tenant_id = :current"
+     },
+     {
+      "type": "text",
+      "text": " ekler. İnsan müdahalesi gerektirmez."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u06-tenancy-chk",
+    "type": "checklist",
+    "title": "Bu üniteyi anladığımı nereden anlarım?",
+    "items": [
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Multi-tenancy'nin SaaS'ın ekonomik tabanı olduğunu söyleyebilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Row/Schema/Cluster izolasyon farkını biliyorum."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Query layer tenant scope'unun neden insan müdahalesinden bağımsız olması gerektiğini anlatabilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Sub-tenant'ı holding örneğiyle açıklayabilirim."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u06-tenancy-co-2",
+    "type": "callout",
+    "variant": "info",
+    "title": "Sonraki ünite",
+    "segments": [
+     {
+      "type": "ref",
+      "text": "edu-u07",
+      "refId": "edu-u07"
+     },
+     {
+      "type": "text",
+      "text": " — Yetkilendirme & Güvenlik. RBAC/ABAC, audit, encryption."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u06-tenancy-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-edu-u06-tenancy-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Ünite 06 — Multi-tenancy (çoklu kiracılık): bir sistemde birden çok şirketi yan yana yaşatma."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her şirkete ayrı sistem kurmak pahalı. Tek sistemde ayrılmış dünyalar daha verimli."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her veriye 'kiracı kimliği' eklenir; sorgular otomatik filtrelenir."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Müfredatın 6. ünitesi."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Birden çok müşteriye sistem satıyorsanız."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "SaaS geliştirenler."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "AVM'deki dükkânlar: aynı bina, ayrı sahipler."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

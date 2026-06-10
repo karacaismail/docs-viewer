@@ -1,0 +1,648 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-s-dropshipping",
+  "sourceId": "s-dropshipping",
+  "slug": "urunler/s-dropshipping",
+  "title": "Dropshipping — stoksuz satış capability'si",
+  "summary": "Satıcı stok tutmaz; sipariş tedarikçiye iletilir, doğrudan müşteriye sevk edilir. s-commerce'in additif yetenek katmanı.",
+  "categoryId": "urunler",
+  "tags": [
+   "core-operations",
+   "ecommerce",
+   "dropship",
+   "supplier",
+   "fulfillment",
+   "capability"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-s-ecommerce-models",
+   "page-stack-commerce",
+   "page-s-procurement",
+   "page-s-tms",
+   "page-s-purchase"
+  ],
+  "blocks": [
+   {
+    "id": "block-s-dropshipping-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Tedarikçi-direkt sevkiyat. s-commerce + s-procurement + s-tms üstüne capability flag. Stok tutmadan satış."
+     }
+    ]
+   },
+   {
+    "id": "block-s-dropshipping-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Dropship = düşük sermaye + yüksek risk."
+     },
+     {
+      "type": "text",
+      "text": " Stok yok ama kalite kontrol da yok. Capability açmak kolay, başarı tedarikçi seçimine bağlı."
+     }
+    ]
+   },
+   {
+    "id": "block-s-dropshipping-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Marj erimesi tuzağı",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Tedarikçi fiyatı %20 arttırdı, sen eski fiyatlı 500 siparişi taahhüt ettin. = "
+     },
+     {
+      "type": "strong",
+      "text": "kayıpla teslimat"
+     },
+     {
+      "type": "text",
+      "text": ". Çözüm: "
+     },
+     {
+      "type": "code",
+      "text": "price_lock"
+     },
+     {
+      "type": "text",
+      "text": " + sipariş anında PO tutarı doğrula. Mismatch → otomatik iptal + müşteriye bildir."
+     }
+    ]
+   },
+   {
+    "id": "block-s-dropshipping-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'Product DocType'a mode ENUM (stocked, dropship, hybrid) + supplier_id FK. Order webhook handler: dropship ise auto-PO oluştur. Supplier API client: stock feed günlük + order webhook. Reverse logistics workflow tablosu.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-s-dropshipping-h-sorumluluk-paylasimi",
+    "type": "heading",
+    "level": 4,
+    "text": "Sorumluluk paylaşımı"
+   },
+   {
+    "id": "block-s-dropshipping-table",
+    "type": "table",
+    "columns": [
+     "Konu",
+     "Satıcı",
+     "Tedarikçi"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Sipariş alma"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Müşteri ilişkisi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Stok tutma"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Paketleme"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Sevkiyat"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "İade kabul"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ (initial)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ (varsa stok)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Marj/fiyat"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Belirleyici"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kalite şikâyeti"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ (görünür yüz)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ (kök sebep)"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-s-dropshipping-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-s-dropshipping-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Dropshipping mekanizması:"
+     }
+    ]
+   },
+   {
+    "id": "block-s-dropshipping-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Müşteri satıcı sitesinden sipariş verir (B2C/B2B)"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Satıcı sistemi siparişi "
+       },
+       {
+        "type": "strong",
+        "text": "otomatik"
+       },
+       {
+        "type": "text",
+        "text": " tedarikçiye iletir (API/webhook)"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Tedarikçi paketler, satıcı markasıyla doğrudan müşteriye gönderir"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Satıcı sadece müşteri ilişkisini + farkı yönetir"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-s-dropshipping-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Capability flag: `dropship`"
+     }
+    ]
+   },
+   {
+    "id": "block-s-dropshipping-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Açıldığında:"
+     }
+    ]
+   },
+   {
+    "id": "block-s-dropshipping-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Ürün kartına "
+      },
+      {
+       "type": "code",
+       "text": "is_dropship"
+      },
+      {
+       "type": "text",
+       "text": " boolean + "
+      },
+      {
+       "type": "code",
+       "text": "supplier_id"
+      },
+      {
+       "type": "text",
+       "text": " FK eklenir"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Stok takibi opsiyonel olur (tedarikçi stok feed'i veya 'sınırsız' varsayım)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Sipariş oluştuğunda otomatik PO (purchase order) tedarikçiye gider"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Tracking number tedarikçiden gelir, müşteriye otomatik bildirilir"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-s-dropshipping-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Tedarikçi entegrasyonu:"
+     }
+    ]
+   },
+   {
+    "id": "block-s-dropshipping-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "CSV/Excel sync (basic) — stok + fiyat günlük"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "API entegrasyonu (advanced) — Oberlo, Spocket, AliExpress"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Webhook (premium) — stok değişimi anlık"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-s-dropshipping-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Tehlikeler:"
+     }
+    ]
+   },
+   {
+    "id": "block-s-dropshipping-list-3",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Çift sipariş"
+      },
+      {
+       "type": "text",
+       "text": ": aynı ürün hem stoklu hem dropship → karışıklık. Çözüm: ürünün "
+      },
+      {
+       "type": "strong",
+       "text": "mode"
+      },
+      {
+       "type": "text",
+       "text": " field'ı tek değer (stocked / dropship / hybrid)."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Kalite kontrol"
+      },
+      {
+       "type": "text",
+       "text": ": tedarikçi geç gönderir, müşteri sana şikâyet eder. Çözüm: tedarikçi SLA tablosu + monitoring."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Marj erimesi"
+      },
+      {
+       "type": "text",
+       "text": ": tedarikçi fiyatı arttırırsa eski sipariş zararla teslim olur. Çözüm: dinamik fiyatlama + price lock."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "İade akışı"
+      },
+      {
+       "type": "text",
+       "text": ": müşteri iade ister, tedarikçiye mi sana mı dönsün? Reverse logistics policy."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-s-dropshipping-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-s-dropshipping-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Stok tutmadan satış yapma yeteneği — sipariş otomatik tedarikçiye, tedarikçi müşteriye sevk eder."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Düşük sermaye + geniş katalog. Ama kalite kontrol + iade akışı + marj erimesi gerçek risk."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Ürün model field: stocked/dropship/hybrid. 2) Supplier API entegrasyonu (PO + tracking + stock feed). 3) Reverse logistics policy. 4) Tedarikçi SLA monitoring."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "s-dropshipping"
+       },
+       {
+        "type": "text",
+        "text": " capability + "
+       },
+       {
+        "type": "code",
+        "text": "s-procurement"
+       },
+       {
+        "type": "text",
+        "text": " (PO) + "
+       },
+       {
+        "type": "code",
+        "text": "s-tms"
+       },
+       {
+        "type": "text",
+        "text": " (kargo tracking) entegrasyonu."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk dropship ürün eklenmeden ÖNCE supplier + SLA + iade policy hazır olsun. Sonradan kaotik."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Satınalma ekibi tedarikçi bulur; backend dev API entegrasyonu; CS team iade akışı."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Galerici: galeride bir tek araba yok, ama 100 araba modeli kataloğunda. Müşteri seçer, galerici otoparkta saklayandan getirtir. Risk: 'kataloğa baktı, hoşuna gitti, geldi gördü farklı çıktı' — kalite kontrol problemi."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-s-dropshipping-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-s-dropshipping-story",
+    "type": "useCase",
+    "title": "Genç esnaf Selim Bey (62'lik abisi 35) — online butik",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Selim Bey teknik ürün satıyor. Stok için yer + sermaye yok. Dropshipping ile katalogda 5000 ürün, hiçbirinden stoğu yok."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "code",
+      "text": "dropship"
+     },
+     {
+      "type": "text",
+      "text": " capability açık. Sipariş geldi → AliExpress'e API ile PO → tedarikçi gönderdi → tracking otomatik müşteriye. Selim Bey sadece marj + müşteri hizmeti yönetir."
+     }
+    ]
+   },
+   {
+    "id": "block-s-dropshipping-story-2",
+    "type": "useCase",
+    "title": "Bakkal Hatice Teyze (62) — hibrit: stoklu + dropship",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Hatice Teyze günlük gıdaları stokta tutar (B2C+stocked). Ama spesiyal ürünler (örn. yurt dışı baharat) dropship — tedarikçiden direkt geliyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Ürün bazında mode field: süt = stocked, baharat = dropship. Aynı sistem, aynı sipariş — sadece arka tarafta farklı akış."
+     }
+    ]
+   }
+  ]
+ }
+}

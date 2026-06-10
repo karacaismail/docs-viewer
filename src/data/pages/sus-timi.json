@@ -1,0 +1,202 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-sus-timi",
+  "sourceId": "sus-timi",
+  "slug": "sus/sus-timi",
+  "title": "DocType → TIMI stabil arayüz",
+  "summary": "IBM i (1988-) TIMI sayesinde 35+ yıl 25 farklı işlemci nesli üzerinde aynı uygulamayı çalıştırdı. Soyutlama = uzun-ömür.",
+  "categoryId": "sus",
+  "tags": [
+   "sustainability",
+   "ibm-i",
+   "abstraction",
+   "doctype"
+  ],
+  "meta": {},
+  "related": [
+   "page-kernel-schema"
+  ],
+  "blocks": [
+   {
+    "id": "block-sus-timi-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Uygulama fiziksel substrata değil; stabil bir ara katmana (DocType) konuşur. Substrat değişse uygulama dokunulmaz."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-timi-co",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Soltis'in sözü",
+    "segments": [
+     {
+      "type": "text",
+      "text": "*\"During its lifetime, the IBM i has now had something like 25 different processor technologies implemented, 25 different implementations – something that's almost impossible with other platforms.\"* — Dr. Frank Soltis, AS/400 baş mimarı (35. yıl)."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-timi-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Bu projeye uygulama:"
+     },
+     {
+      "type": "text",
+      "text": " DocType yalnızca metadata değil; "
+     },
+     {
+      "type": "strong",
+      "text": "stabil sözleşme"
+     },
+     {
+      "type": "text",
+      "text": " olarak resmileştir. Versiyonlu, snapshot'lı, substrattan ayrılmış. Altta Postgres → başka DB → WASM olsa da DocType API değişmez."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-timi-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-sus-timi-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "DocType, fiziksel veritabanından, REST formatından, depolama altyapısından bağımsız bir \"ara katman\" olarak tanımlanır. Uygulamalar DocType sözleşmesine yazar; altta PostgreSQL → başka DB → WASM olsa bile uygulama çalışmaya devam eder."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "50 yılda donanım/yazılım altyapısı 10 kez değişir. Eğer uygulama doğrudan PostgreSQL'e (veya doğrudan REST formatına) yazıyorsa her geçişte yeniden yazılır. Stabil ara katman = bir kez yaz, ömür boyu çalış."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "DocType tanımı (alanlar, validators, hook'lar) — fiziksel implementasyondan ayrılır. Altta substrat (Postgres) değişirse: yeni substrat için DocType uygulayıcısı yazılır, uygulamalar dokunulmaz."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "framework/kernel/schema/ — DocType sözleşme + substrat-bağımsız spec."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mimar ilk DocType tanımını yazdığı andan itibaren — disiplin baştan kurulmazsa sonradan zor."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mimar TIMI arayüzünü çizer; substrat ekibi PostgreSQL implementor yazar; uygulama geliştiricisi sadece DocType API'sini bilir; 30 yıl sonra başka substrat ekibi yeni implementor yazar — uygulamalar dokunulmaz."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Telefon sistemi: 1960'larda mekanik santral, 1990'larda dijital santral, 2010'larda VoIP. Telefon konuşması (sözleşme) değişmedi: \"Alo, ben Ali\" hâlâ aynı çalışıyor. Substrat 3 kez değişti, kullanıcı dokunmadı."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-sus-timi-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-sus-timi-story",
+    "type": "useCase",
+    "title": "Bankamatik kart sistemi 1990-2025",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "1990'larda manyetik şerit, 2000'lerde temaslı çip, 2015'ten sonra temassız NFC. Müşteri 35 yıl boyunca \"kartı tak, şifre gir\" akışını yaşıyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Sözleşme: \"4 hane şifre + kart kimliği\". Substrat 3 nesil değişti; sözleşme değişmedi. Yazılım TIMI = aynı sözleşme, substrat evrilir."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-timi-story-2",
+    "type": "useCase",
+    "title": "Müzik dinleyicisi Mustafa Bey, 50 yıllık plak koleksiyonu",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "1965 plak, 1985 kaset, 2000 CD, 2020 dijital. Mustafa Bey aynı şarkıyı 50 yıldır dinliyor — \"melodi\" sözleşmesi sabit, fiziksel taşıyıcı 4 kez değişti."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Plak dijital şarkıya yeniden masterlanır; sözleşme (melodi) korunur. DocType tam böyle: substrat ne olursa olsun anlam aynı kalır."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-timi-story-3",
+    "type": "useCase",
+    "title": "Apartman aidat sistemi 1980-2025",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "1980'lerde Hasan Bey defter tuttu; 1995'te Excel'e geçildi; 2010'da web sistemi; 2025'te mobil uygulama. \"Aidat = aylık ödenen tutar\" tanımı 45 yıl sabit kaldı."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Defter→Excel→web→mobile geçişlerinde her seferinde \"aidat\" kavramı korundu. Sözleşme stabil, taşıyıcı evrildi. DocType bu disiplinin yazılım karşılığı."
+     }
+    ]
+   }
+  ]
+ }
+}

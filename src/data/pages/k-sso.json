@@ -1,0 +1,527 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-k-sso",
+  "sourceId": "k-sso",
+  "slug": "kernel/k-sso",
+  "title": "SSO + Federation — kurumsal kimlik girişi",
+  "summary": "Enterprise müşterisi 'Google'la / Okta'yla giriş' ister. SAML, OAuth, OpenID Connect, MFA, passkey.",
+  "categoryId": "kernel",
+  "tags": [
+   "layer0",
+   "sso",
+   "saml",
+   "oauth",
+   "mfa",
+   "passkey"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-kernel-identity",
+   "page-crosscut-security",
+   "page-cc-privacy"
+  ],
+  "blocks": [
+   {
+    "id": "block-k-sso-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "SAML 2.0 (kurumsal), OAuth 2.0/OIDC (modern), MFA (TOTP, WebAuthn passkey), enterprise SSO (Okta, Auth0)."
+     }
+    ]
+   },
+   {
+    "id": "block-k-sso-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "SSO = enterprise sales unlock."
+     },
+     {
+      "type": "text",
+      "text": " Pre-revenue: OAuth (Google/Microsoft). Enterprise: SAML zorunlu."
+     }
+    ]
+   },
+   {
+    "id": "block-k-sso-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "SMS MFA tehlikesi",
+    "segments": [
+     {
+      "type": "text",
+      "text": "SIM swap saldırısı = saldırgan SMS'leri alır. "
+     },
+     {
+      "type": "strong",
+      "text": "TOTP veya WebAuthn = SMS'ten daha güvenli."
+     }
+    ]
+   },
+   {
+    "id": "block-k-sso-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'Authentik veya WorkOS ile SSO entegrasyonu. Email domain'ine göre IdP seç. JWT + refresh token. MFA TOTP. WebAuthn passkey opsiyonel.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-k-sso-h-protokol-secimi",
+    "type": "heading",
+    "level": 4,
+    "text": "Protokol seçimi"
+   },
+   {
+    "id": "block-k-sso-table",
+    "type": "table",
+    "columns": [
+     "Senaryo",
+     "Protokol",
+     "Sağlayıcı"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Bireysel kullanıcı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "OAuth 2.0"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Google/Apple SDK"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Pre-revenue startup"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "OIDC"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Clerk/Auth0/WorkOS"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Enterprise kurum"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "SAML 2.0"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Okta/Entra"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Self-hosted"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "OIDC + SAML"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Keycloak/Authentik"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-k-sso-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-k-sso-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "3 SSO protokolü:"
+     }
+    ]
+   },
+   {
+    "id": "block-k-sso-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "SAML 2.0"
+       },
+       {
+        "type": "text",
+        "text": " — XML tabanlı, eski ama enterprise standardı."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "OAuth 2.0"
+       },
+       {
+        "type": "text",
+        "text": " — Sadece authorization."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "OpenID Connect (OIDC)"
+       },
+       {
+        "type": "text",
+        "text": " — OAuth üstüne identity. Modern + basit."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-k-sso-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Self-hosted seçenekleri:"
+     }
+    ]
+   },
+   {
+    "id": "block-k-sso-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Keycloak"
+      },
+      {
+       "type": "text",
+       "text": ": Java, ağır ama enterprise-grade"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Authentik"
+      },
+      {
+       "type": "text",
+       "text": ": Modern Python, Keycloak alternatifi"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Ory Hydra+Kratos"
+      },
+      {
+       "type": "text",
+       "text": ": Go, headless"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-k-sso-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Managed:"
+     }
+    ]
+   },
+   {
+    "id": "block-k-sso-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Auth0"
+      },
+      {
+       "type": "text",
+       "text": ", "
+      },
+      {
+       "type": "strong",
+       "text": "Clerk"
+      },
+      {
+       "type": "text",
+       "text": ", "
+      },
+      {
+       "type": "strong",
+       "text": "WorkOS"
+      },
+      {
+       "type": "text",
+       "text": " (enterprise SSO as a service)"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-k-sso-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "MFA seçenekleri:"
+     }
+    ]
+   },
+   {
+    "id": "block-k-sso-list-3",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "SMS"
+      },
+      {
+       "type": "text",
+       "text": ": Düşük güvenlik (SIM swap saldırısı)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "TOTP"
+      },
+      {
+       "type": "text",
+       "text": " (Google Authenticator): İyi"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "WebAuthn / Passkey"
+      },
+      {
+       "type": "text",
+       "text": " (parmak izi, Face ID): En güvenli, modern"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Hardware key"
+      },
+      {
+       "type": "text",
+       "text": " (YubiKey): En yüksek"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-k-sso-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Modern hedef: parolasız + passkey."
+     }
+    ]
+   },
+   {
+    "id": "block-k-sso-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-k-sso-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tek kez kimlik doğrulama ile çoklu sisteme erişim + ikinci faktör güvenlik."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Enterprise satış SSO olmadan imkânsız. MFA olmadan parola sızıntısı = tüm hesap."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Modern: WorkOS veya Auth0. 2) Self-hosted: Keycloak/Authentik. 3) MFA TOTP minimum."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "k-sso"
+       },
+       {
+        "type": "text",
+        "text": " cluster. "
+       },
+       {
+        "type": "code",
+        "text": "k-identity"
+       },
+       {
+        "type": "text",
+        "text": " ile birlikte."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk enterprise lead'den önce."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Backend developer entegrasyon; security team MFA politika."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Hastane personel kartı: bir kart tüm bölümlere yetki."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-k-sso-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-k-sso-story",
+    "type": "useCase",
+    "title": "Apartman çok kapılı geçiş — Murat Bey (61)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Ana kapı + havuz + otopark farklı anahtarlar."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "SSO ile bir kart, tüm kapılara izin."
+     }
+    ]
+   },
+   {
+    "id": "block-k-sso-story-2",
+    "type": "useCase",
+    "title": "Ayşe Teyze (63) — parolasız giriş",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Bankaya parmak izi ile giriyor; parola yok."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "WebAuthn passkey: parmak izi = anahtar."
+     }
+    ]
+   }
+  ]
+ }
+}

@@ -4,7 +4,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { RouterProvider, createRouter, createMemoryHistory } from "@tanstack/react-router";
 import { registerCoreBlocks } from "../src/components/content/registerBlocks";
 import { rootRoute, docRoute } from "../src/app/router";
-import { navigation, pages } from "../src/engine";
+import { navigation, pagesIndex, loadPageBlocks } from "../src/engine";
 
 beforeAll(() => {
   registerCoreBlocks();
@@ -40,15 +40,19 @@ describe("uygulama smoke", () => {
     });
   });
 
-  it("kernel kategorisinden bir sayfa block'larıyla render olur", async () => {
-    const kernelPage = pages.find((p) => p.categoryId === "kernel" && p.blocks.length > 5);
-    expect(kernelPage).toBeTruthy();
-    const [section, page] = kernelPage!.slug.split("/");
+  it("kernel kategorisinden bir sayfa lazy gövdesiyle render olur", async () => {
+    const entry = pagesIndex.find((p) => p.categoryId === "kernel");
+    expect(entry).toBeTruthy();
+    const full = await loadPageBlocks(entry!.id.slice(5));
+    expect(full!.blocks.length).toBeGreaterThan(3);
+    const [section, page] = entry!.slug.split("/");
     renderAt(`/docs/${section}/${page}`);
     await waitFor(() => {
-      expect(screen.getByRole("heading", { level: 1, name: kernelPage!.title })).toBeTruthy();
+      expect(screen.getByRole("heading", { level: 1, name: entry!.title })).toBeTruthy();
     });
-    // Özet callout'u (enrich.info -> ilk block) DOM'da
-    expect(document.getElementById(kernelPage!.blocks[0].id)).toBeTruthy();
+    // Lazy gövde geldi: ilk block DOM'da (özet callout'u)
+    await waitFor(() => {
+      expect(document.getElementById(full!.blocks[0].id)).toBeTruthy();
+    });
   });
 });

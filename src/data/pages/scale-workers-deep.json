@@ -1,0 +1,498 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-scale-workers-deep",
+  "sourceId": "scale-workers-deep",
+  "slug": "scale/scale-workers-deep",
+  "title": "Background Jobs — cron, delay, recurring, priority",
+  "summary": "'Şimdi yapma, 3 saat sonra' veya 'her sabah 6'da'. Scheduler katmanı + retry + priority + DLQ.",
+  "categoryId": "scale",
+  "tags": [
+   "scale",
+   "scheduler",
+   "cron",
+   "background-jobs",
+   "bull"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-scale-workers",
+   "page-scale-saga",
+   "page-sus-durable",
+   "page-scale-outbox"
+  ],
+  "blocks": [
+   {
+    "id": "block-scale-workers-deep-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "BullMQ veya DBOS (Postgres-native). Cron syntax, delayed jobs, recurring, priority queue, exponential retry, DLQ."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-workers-deep-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Background jobs = async sistem omurgası."
+     },
+     {
+      "type": "text",
+      "text": " Worker olmadan synchronous = yavaş + kırılgan."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-workers-deep-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Idempotency olmadan retry",
+    "segments": [
+     {
+      "type": "text",
+      "text": "'sipariş için email gönder' job, retry sonrası "
+     },
+     {
+      "type": "strong",
+      "text": "çift email"
+     },
+     {
+      "type": "text",
+      "text": ". Çözüm: "
+     },
+     {
+      "type": "code",
+      "text": "processed_jobs"
+     },
+     {
+      "type": "text",
+      "text": " tablosu, ON CONFLICT DO NOTHING."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-workers-deep-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'DBOS ile durable worker: order_created → send_email job (HIGH priority, idempotency_key = order_id). Cron: 0 6 * * * daily_report. Retry: 5 attempt exponential. Failed → DLQ + Slack alarm.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-workers-deep-h-job-tipi-secim",
+    "type": "heading",
+    "level": 4,
+    "text": "Job tipi seçim"
+   },
+   {
+    "id": "block-scale-workers-deep-table",
+    "type": "table",
+    "columns": [
+     "İhtiyaç",
+     "Tip",
+     "Örnek"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Anlık async"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Immediate"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Email after order"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "X süre sonra"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Delayed"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "1h after cart abandon"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Tekrarlayan"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Cron"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Daily report 06:00"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Belli tarih"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Scheduled"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Black Friday 00:00"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Multi-step"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Saga/Durable"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Order → pay → ship"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-workers-deep-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-scale-workers-deep-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "4 job türü:"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-workers-deep-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Immediate"
+       },
+       {
+        "type": "text",
+        "text": " — hemen çalış"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Delayed"
+       },
+       {
+        "type": "text",
+        "text": " — X süre sonra"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Recurring (cron)"
+       },
+       {
+        "type": "text",
+        "text": " — sabit aralık"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Scheduled"
+       },
+       {
+        "type": "text",
+        "text": " — belli tarih"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-scale-workers-deep-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Cron syntax:"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-workers-deep-code",
+    "type": "codeBlock",
+    "language": "text",
+    "code": "* * * * *  → her dakika\n0 6 * * *  → her gün 06:00\n0 0 * * 0  → her Pazar\n0 0 1 * *  → her ayın 1'i"
+   },
+   {
+    "id": "block-scale-workers-deep-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Job priority:"
+     },
+     {
+      "type": "text",
+      "text": " High (kullanıcı bekliyor) > Normal (arka plan) > Low (toplu)."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-workers-deep-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Retry strategy:"
+     },
+     {
+      "type": "text",
+      "text": " exponential backoff 1s, 2s, 4s, 8s, vazgeç → DLQ."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-workers-deep-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Implementation:"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-workers-deep-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "BullMQ"
+      },
+      {
+       "type": "text",
+       "text": " (Redis): yaygın"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "DBOS"
+      },
+      {
+       "type": "text",
+       "text": " (Postgres durable execution): mevcut karara uygun — preferred"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Temporal"
+      },
+      {
+       "type": "text",
+       "text": ": workflow orchestration"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-workers-deep-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-scale-workers-deep-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Anlık olmayan işleri güvenilir çalıştırma altyapısı."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Synchronous yapamazsın: email 5 sn, kullanıcı bekletme. Cron olmayan recurring imkânsız."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) DBOS veya BullMQ. 2) Priority. 3) Exponential backoff. 4) DLQ + alarm."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "scale-workers"
+       },
+       {
+        "type": "text",
+        "text": " cluster."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk async iş öncesi queue hazır."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Backend developer worker; SRE pool; on-call DLQ."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Belediye çöp kamyonu: çöp kutusu dolduğunda (immediate), her Salı sabah (cron)."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-scale-workers-deep-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-scale-workers-deep-story",
+    "type": "useCase",
+    "title": "Apartman temizlik programı — Murat Bey (61)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Haftalık temizlik: 'Pzt elektrik, Çar lavabo, Cuma genel'."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Bu cron job: belli zamanlarda otomatik tekrar."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-workers-deep-story-2",
+    "type": "useCase",
+    "title": "Berber Mehmet Usta (60) — randevu hatırlatma",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Müşteriye 'yarın 10:00 randevun' 1 gün önce SMS atıyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Scheduled job: randevu - 24 saat = SMS gönder."
+     }
+    ]
+   }
+  ]
+ }
+}

@@ -1,0 +1,585 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-edu-u18-perf",
+  "sourceId": "edu-u18",
+  "slug": "egitim/edu-u18-perf",
+  "title": "Performans Ölçümü — yavaşı bulup düzeltmek",
+  "summary": "Sezgi ile 'yavaş' demek yetmez; profiling + p95 latency ile ölç, EXPLAIN ile DB'yi anla, N+1'i kovala.",
+  "categoryId": "egitim",
+  "tags": [
+   "education",
+   "performance",
+   "profiling",
+   "n-plus-one",
+   "p99",
+   "explain"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-scale-cache",
+   "page-crosscut-observability",
+   "page-edu-u14-cache-ratelimit"
+  ],
+  "blocks": [
+   {
+    "id": "block-edu-u18-perf-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "p50/p95/p99 percentile, slow query log, EXPLAIN ANALYZE, N+1 query, flame graph, load test."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u18-perf-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Performansın altın kuralı:"
+     },
+     {
+      "type": "text",
+      "text": " *'p99 < 2 sn, "
+     },
+     {
+      "type": "term",
+      "text": "p95",
+      "termId": "term-p95-edu-u18-perf"
+     },
+     {
+      "type": "text",
+      "text": " < 500ms, p50 < 100ms.'* Bu hedefe ulaşmadan production'a çıkma. p99'da takip kullanıcı kaybedersin."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u18-perf-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "N+1: en gizli performans katili",
+    "segments": [
+     {
+      "type": "text",
+      "text": "ORM (Prisma) "
+     },
+     {
+      "type": "code",
+      "text": "customer.orders"
+     },
+     {
+      "type": "text",
+      "text": " yazarsın; arka planda 100 ayrı SELECT. EXPLAIN ANALYZE'da görmezsin; sadece slow log'da fark edilir. Çözüm: "
+     },
+     {
+      "type": "code",
+      "text": "include: { orders: true }"
+     },
+     {
+      "type": "text",
+      "text": " veya raw JOIN."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u18-perf-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'Bu endpoint'i optimize et: EXPLAIN ANALYZE çıktısı kullan, Seq Scan varsa index ekle, N+1 varsa include kullan, k6 ile 100 RPS load test, hedef p95 < 300ms.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u18-perf-h-performans-butcesi",
+    "type": "heading",
+    "level": 4,
+    "text": "Performans bütçesi"
+   },
+   {
+    "id": "block-edu-u18-perf-table",
+    "type": "table",
+    "columns": [
+     "Metrik",
+     "Yeşil",
+     "Sarı",
+     "Kırmızı"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "API p95 latency"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 300ms"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "300-500ms"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "> 500ms"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "API p99 latency"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 1s"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "1-2s"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "> 2s"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "DB query p95"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 50ms"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "50-200ms"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "> 200ms"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Frontend FCP"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 1.5s"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "1.5-3s"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "> 3s"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Frontend LCP"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 2.5s"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "2.5-4s"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "> 4s"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u18-perf-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-edu-u18-perf-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Performans ölçümünün altın kuralı:"
+     },
+     {
+      "type": "text",
+      "text": " *'Ölçmeden optimize etme.'* Sezgi yanıltır."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u18-perf-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Percentile latency:"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u18-perf-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "p50 (median)"
+      },
+      {
+       "type": "text",
+       "text": ": Kullanıcının yarısı bu kadar hızlı görür. 200ms = ortalama."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "p95"
+      },
+      {
+       "type": "text",
+       "text": ": 95'i bu kadar hızlı. 500ms = pahalı işlemler."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "p99"
+      },
+      {
+       "type": "text",
+       "text": ": 99'u bu kadar hızlı. 2 saniye = en yavaş %1. "
+      },
+      {
+       "type": "strong",
+       "text": "Müşteri burada şikâyet eder."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u18-perf-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Slow query log"
+     },
+     {
+      "type": "text",
+      "text": " (PostgreSQL):"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u18-perf-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "code",
+       "text": "log_min_duration_statement = 500ms"
+      },
+      {
+       "type": "text",
+       "text": " — 500ms+ sorgular log'a"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Haftalık inceleme: en yavaş 10 sorguyu çöz"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u18-perf-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "EXPLAIN ANALYZE:"
+     },
+     {
+      "type": "text",
+      "text": " Sorgunun gerçek planını görür. "
+     },
+     {
+      "type": "strong",
+      "text": "Seq Scan"
+     },
+     {
+      "type": "text",
+      "text": " = full table; "
+     },
+     {
+      "type": "strong",
+      "text": "Index Scan"
+     },
+     {
+      "type": "text",
+      "text": " = hızlı."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u18-perf-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "N+1 query problem:"
+     },
+     {
+      "type": "text",
+      "text": " En klasik bug."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u18-perf-code",
+    "type": "codeBlock",
+    "language": "sql",
+    "code": "SELECT * FROM order; -- 1 sorgu, 100 satır\n-- her sipariş için ayrı sorgu:\nSELECT * FROM customer WHERE id = ?; -- 100 sorgu"
+   },
+   {
+    "id": "block-edu-u18-perf-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Toplam: "
+     },
+     {
+      "type": "strong",
+      "text": "101 sorgu"
+     },
+     {
+      "type": "text",
+      "text": " = 5 sn. Doğrusu: JOIN veya eager-load = "
+     },
+     {
+      "type": "strong",
+      "text": "1 sorgu"
+     },
+     {
+      "type": "text",
+      "text": " = 50ms."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u18-perf-p-8",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Flame graph:"
+     },
+     {
+      "type": "text",
+      "text": " Hangi fonksiyon ne kadar süre aldı — görsel. py-spy, node --prof."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u18-perf-p-9",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Load test:"
+     },
+     {
+      "type": "text",
+      "text": " k6 veya Artillery ile '1000 eş zamanlı kullanıcı' simülasyonu."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u18-perf-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-edu-u18-perf-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistemin hızını ölçme, yavaşı bulma, çözme."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "'Yavaş' sezgi ile söylenir; ölçmeden çözüm rasgele. Yanlış optimize 1 hafta boşa."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) p95/p99 latency dashboard (Grafana). 2) Slow query log (500ms+). 3) EXPLAIN ANALYZE ile sorgu planı. 4) N+1 → JOIN veya eager load. 5) Load test release öncesi."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "cc-obs"
+       },
+       {
+        "type": "text",
+        "text": " infra'sı + Grafana dashboard. Slow query log Postgres'te. Profiling dev'de."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Müşteri şikâyetinden ÖNCE proaktif izleme. p95 > 500ms alarm."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "SRE altyapı; backend developer sorgu optimize; frontend developer bundle size."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Doktor tansiyon ölçüyor. 'İyi hissediyorum' yetmez; tansiyon yüksekse müdahale şart. Performans = sistemin tansiyonu."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u18-perf-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-edu-u18-perf-story",
+    "type": "useCase",
+    "title": "Hatice Teyze (62) market kasası",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Hatice Teyze müşterisi 'kasada hep bekliyorum' diye şikâyet etti. Hatice 'ben hızlıyım' diyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Ölç: 100 müşterinin %95'i 30 sn'de, ama %5'i 5 dakika bekliyor (poşet doldurma + kart sorunu). p95 değil, p99 problemi. Kart okuyucusu yenilenince düzeldi."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u18-perf-story-2",
+    "type": "useCase",
+    "title": "Berber Mehmet Usta (60) — sıra",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Mehmet Usta 'müşteri bekliyor' diye iş çıkışı şikâyetleri aldı. Defteri açtı: 10 randevu için 12 saat. Ortalama uygun; ama 2 müşteri 1 saat beklemiş (öncesi gecikti)."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Ortalama yanıltır. Maksimum bekleme süresi gerçek sorun. p95 = 30 dk, p99 = 1 saat."
+     }
+    ]
+   }
+  ]
+ }
+}

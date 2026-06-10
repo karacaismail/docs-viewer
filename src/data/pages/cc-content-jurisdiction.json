@@ -1,0 +1,1560 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-cc-content-jurisdiction",
+  "sourceId": "cc-content-jurisdiction",
+  "slug": "crosscut/cc-content-jurisdiction",
+  "title": "İçerik & Ürün Jurisdiction Kuralları — Sansür, Yaş, Birim, Voltaj, Takvim",
+  "summary": "Ülke bazlı içerik kısıtları (Nazi sembolü DE, alkol IR), yaş kısıtlı içerik, birim/beden standardı (EU 42 / US 9), voltaj/fiş, AB e-fatura formatları, takvim sistemleri.",
+  "categoryId": "crosscut",
+  "tags": [
+   "crosscut",
+   "content",
+   "jurisdiction",
+   "censorship",
+   "age",
+   "unit",
+   "voltage",
+   "calendar",
+   "e-invoice",
+   "lawful-intercept"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-cc-jurisdiction-resolver",
+   "page-cc-compliance-matrix",
+   "page-crosscut-tr",
+   "page-stack-commerce",
+   "page-s-tax-compliance",
+   "page-fe-cdn"
+  ],
+  "blocks": [
+   {
+    "id": "block-cc-content-jurisdiction-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Ülke bazlı içerik/ürün kuralları + geo-blocking + AB e-fatura formatları + niş takvim sistemleri + lawful intercept yasal talep akışı."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Amazon'un 'görünmez' codebase ayrımının ürün/içerik tarafı."
+     },
+     {
+      "type": "text",
+      "text": " Sansür, yaş, birim, voltaj, e-fatura, takvim, geo-blocking — hepsi config-driven, kodda hard-code değil."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "AB e-fatura tek format DEĞİL",
+    "segments": [
+     {
+      "type": "text",
+      "text": "İtalya SDI XML, Almanya XRechnung, Fransa Factur-X (PDF/A-3 + XML), İspanya Facturae. "
+     },
+     {
+      "type": "strong",
+      "text": "PDF fatura yetmez."
+     },
+     {
+      "type": "text",
+      "text": " Ülke başına adapter. TR UBL-TR ayrı."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-co-2",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Birim dönüştürmede kanonik sakla",
+    "segments": [
+     {
+      "type": "text",
+      "text": "DB'de "
+     },
+     {
+      "type": "strong",
+      "text": "kanonik"
+     },
+     {
+      "type": "text",
+      "text": " (SI birimi, EU bedeni) sakla. Display'de jurisdiction'a göre dönüştür. Stored EU 42 → US 9 / UK 8 runtime'da. Çift saklama YASAK."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'content_filter_rules tablosu: jurisdiction × category × action ('hide','restrict','flag'). Resolver sonrası katalog query'i bu tablo ile join + filter. age_gate capability ürün için min_age. business_calendar tablosu: jurisdiction × date × type (holiday/weekend). e_invoice_adapter strategy: IT/DE/FR/ES/TR ayrı implementasyon, common interface.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-h-urun-uygunlugu-ulke-kisitlari",
+    "type": "heading",
+    "level": 4,
+    "text": "Ürün uygunluğu — ülke kısıtları"
+   },
+   {
+    "id": "block-cc-content-jurisdiction-table",
+    "type": "table",
+    "columns": [
+     "Ülke",
+     "Yasak / kısıtlı",
+     "Aksiyon"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "DE"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Nazi sembol, içerik"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Katalog filtre + arama engelle"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "CN"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Politik, VPN, dini"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Geo-block + moderasyon"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "SA/UAE"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Alkol, LGBT, domuz"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Filtre + gizle"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "IR"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hizmet yasağı (OFAC)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tam blok"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "FR"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Bazı kart oyunları"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Restricted"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "TR"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "BTK kararları"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "URL erişim engeli"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-h-ab-e-fatura-formatlari",
+    "type": "heading",
+    "level": 4,
+    "text": "AB e-fatura formatları"
+   },
+   {
+    "id": "block-cc-content-jurisdiction-table-2",
+    "type": "table",
+    "columns": [
+     "Ülke",
+     "Format",
+     "Notlar"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "İtalya"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "SDI (FatturaPA XML)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "SdI platformuna gönderim zorunlu 2019+"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Almanya"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "XRechnung (CIUS)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Public sector 2020, B2B 2025+"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Fransa"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Factur-X (PDF/A-3 + XML)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "2026 zorunlu"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "İspanya"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Facturae XML"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Public sector zorunlu"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "TR"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "UBL-TR XML (GİB)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tüm B2B zorunlu"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-cc-content-jurisdiction-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Bu cluster Amazon/eBay'in 'görünmez' codebase ayrımının ürün/içerik tarafı."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-h",
+    "type": "heading",
+    "level": 2,
+    "text": "1. Ürün Uygunluğu (Sansür / Yasak)"
+   },
+   {
+    "id": "block-cc-content-jurisdiction-table-3",
+    "type": "table",
+    "columns": [
+     "Ülke",
+     "Yasak/kısıtlı",
+     "Aksiyon"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "strong",
+        "text": "DE"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Nazi sembolleri, Hitler kitapları"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Katalogdan filtrele + arama engelleme"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "CN"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Politik içerik, VPN, Falun Gong"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Geo-blocking + content moderation"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "SA/UAE"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Alkol, domuz eti, LGBT içerik"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Filtre + ürün gizleme"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "IR/Sanctions"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hizmet yasağı (OFAC/MASAK)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tam blok ("
+       },
+       {
+        "type": "code",
+        "text": "cc-compliance-matrix"
+       },
+       {
+        "type": "text",
+        "text": ")"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "FR"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Açık artırma kart oyunları + reklam"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Restricted"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "TR"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Belirli yayınlar (BTK kararları)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "URL bazlı erişim engeli"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Mimari:"
+     },
+     {
+      "type": "text",
+      "text": " Resolver → jurisdiction → "
+     },
+     {
+      "type": "code",
+      "text": "content_filter_rules"
+     },
+     {
+      "type": "text",
+      "text": " config → katalog/arama/UI dinamik filtre."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-h-2",
+    "type": "heading",
+    "level": 2,
+    "text": "2. Yaş Kısıtlı İçerik"
+   },
+   {
+    "id": "block-cc-content-jurisdiction-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Alkol/Tütün"
+      },
+      {
+       "type": "text",
+       "text": ": TR 18, ABD eyalete göre 21 (alkol)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Kumar"
+      },
+      {
+       "type": "text",
+       "text": ": TR yasak, AB lisanslı, ABD eyalete göre"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Cinsel içerik"
+      },
+      {
+       "type": "text",
+       "text": ": AB+ABD age verification (2023 sonrası bazı eyaletlerde KYC)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Reşit olmayan koruma"
+      },
+      {
+       "type": "text",
+       "text": ": COPPA (ABD <13), GDPR digital consent age (13-16 ülkeye göre)"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Mimari: "
+     },
+     {
+      "type": "code",
+      "text": "age_gate"
+     },
+     {
+      "type": "text",
+      "text": " capability + "
+     },
+     {
+      "type": "code",
+      "text": "min_age"
+     },
+     {
+      "type": "text",
+      "text": " per ürün/kategori + jurisdiction'a göre devre."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-h-3",
+    "type": "heading",
+    "level": 2,
+    "text": "3. Birim, Beden, Voltaj"
+   },
+   {
+    "id": "block-cc-content-jurisdiction-table-4",
+    "type": "table",
+    "columns": [
+     "Konu",
+     "TR/AB",
+     "ABD",
+     "UK"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Ayakkabı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "EU 42"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "US 9"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "UK 8"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Giyim"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "M/L veya 42"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "M/L veya 8"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "M/L veya 10"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Sıcaklık"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "°C"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "°F"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "°C"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Mesafe"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "km"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "mile"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "mile"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Ağırlık"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "kg"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "lb"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "kg"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Voltaj"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "220V Tip F"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "110V Tip A/B"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "240V Tip G"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kağıt"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "A4"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Letter"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "A4"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "UCUM"
+     },
+     {
+      "type": "text",
+      "text": " (Unified Code for Units of Measure) referans standardı."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Çözüm:"
+     },
+     {
+      "type": "text",
+      "text": " Ürün için 2 değer sakla: kanonik (SI/EU 42) + display'de jurisdiction'a göre dönüştür."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-h-4",
+    "type": "heading",
+    "level": 2,
+    "text": "4. AB E-Fatura Formatları (her ülke farklı)"
+   },
+   {
+    "id": "block-cc-content-jurisdiction-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AB'de e-fatura zorunlu ama format ülkeye göre farklı:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-table-5",
+    "type": "table",
+    "columns": [
+     "Ülke",
+     "Format",
+     "Notlar"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "strong",
+        "text": "İtalya"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "SDI (FatturaPA XML)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "SdI platformuna gönderim zorunlu"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Almanya"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "XRechnung (CIUS)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Public sector zorunlu 2020, B2B 2025+"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Fransa"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Factur-X (PDF/A-3 + XML)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "2026 zorunlu"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "İspanya"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Facturae XML"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Public sector zorunlu"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "TR"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "UBL-TR XML (GİB)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tüm B2B zorunlu (cc-tr)"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-p-8",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Mimari: "
+     },
+     {
+      "type": "code",
+      "text": "e_invoice_adapter"
+     },
+     {
+      "type": "text",
+      "text": " per jurisdiction. Tek 'PDF fatura' yetmez."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-h-5",
+    "type": "heading",
+    "level": 2,
+    "text": "5. Niş Takvim Sistemleri"
+   },
+   {
+    "id": "block-cc-content-jurisdiction-table-6",
+    "type": "table",
+    "columns": [
+     "Sistem",
+     "Kullanım",
+     "Yıl"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Gregoryen"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Global standart"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "2026"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Hicri"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Suudi Arabistan resmi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "1448 H"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Buddhist"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tayland resmi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "2569 BE"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Japon imparator dönemi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Japonya iş dünyası"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Reiwa 8 (令和8年)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Persian (Jalali)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "İran resmi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "1404"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-p-9",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Çözüm:"
+     },
+     {
+      "type": "text",
+      "text": " Her zaman ISO 8601 sakla (Gregoryen UTC). Display'de jurisdiction'a göre çevir. Icu locale calendar specifier."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-h-6",
+    "type": "heading",
+    "level": 2,
+    "text": "6. Tatil / İş Günü Takvimleri"
+   },
+   {
+    "id": "block-cc-content-jurisdiction-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "TR: resmi tatiller + Ramazan/Bayram (her yıl Hicri'ye göre değişir)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "AB: ülke + bölge (Bavyera Katolik tatil farklı)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Suudi/UAE: "
+      },
+      {
+       "type": "strong",
+       "text": "Cuma-Cumartesi haftasonu"
+      },
+      {
+       "type": "text",
+       "text": " (2022 öncesi); şimdi Suudi Cumartesi-Pazar geçti"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "İsrail: Cumartesi Şabat, Cuma yarım gün"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-p-10",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Mimari:"
+     },
+     {
+      "type": "text",
+      "text": " "
+     },
+     {
+      "type": "code",
+      "text": "business_calendar"
+     },
+     {
+      "type": "text",
+      "text": " per jurisdiction tablosu. *'3 iş günü içinde teslimat'* hesabı bu tablodan."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-h-7",
+    "type": "heading",
+    "level": 2,
+    "text": "7. Geo-Blocking (CDN/Edge)"
+   },
+   {
+    "id": "block-cc-content-jurisdiction-p-11",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Yasal sebeplerle bazı içerik bazı bölgelere servis edilemez:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-list-3",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "AB GDPR sıkı → bazı analitik widget bloklan"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Çin Great Firewall → Google/Facebook bloke (yerel CDN gerek)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Rusya → sosyal medya parçaları bloke"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-p-12",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Cloudflare/Fastly geo-rules + edge worker'da jurisdiction kontrolü."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-h-8",
+    "type": "heading",
+    "level": 2,
+    "text": "8. Lawful Intercept / Yasal Talep"
+   },
+   {
+    "id": "block-cc-content-jurisdiction-p-13",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Yasal talep türleri:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-list-4",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Mahkeme kararı (subpoena/court order): kullanıcı verisi ver"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Lawful intercept (CALEA ABD, TR BTK): yetkili devlet kuruluşuna anlık erişim"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Sanctions enforcement (OFAC blok): hesap dondurma"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Takedown (DMCA, DSA): içerik kaldırma"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-p-14",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Mimari süreç:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Tek giriş kapısı"
+       },
+       {
+        "type": "text",
+        "text": ": legal@yourapp + structured form"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Doğrulama"
+       },
+       {
+        "type": "text",
+        "text": ": talep gerçek mi? (örn. mahkeme damgası, IP whitelist)"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Scope check"
+       },
+       {
+        "type": "text",
+        "text": ": hangi kullanıcı, hangi veri"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Approval workflow"
+       },
+       {
+        "type": "text",
+        "text": ": legal counsel + CEO 4-göz"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Export"
+       },
+       {
+        "type": "text",
+        "text": ": structured data (DSAR pipeline tekrar kullanılır)"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Audit log"
+       },
+       {
+        "type": "text",
+        "text": ": kim ne zaman ne aktardı (5 yıl saklama)"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Kullanıcıya bildirim"
+       },
+       {
+        "type": "text",
+        "text": ": yasal olarak izin verilirse"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-cc-content-jurisdiction-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Ülke bazlı içerik kısıtları (sansür, yaş, birim, voltaj), AB e-fatura formatları, takvim sistemleri, geo-blocking, lawful intercept akışı."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Resolver locale + jurisdiction çözer ama 'ne göstereceği' başka katman. Bu cluster içerik/ürün-tarafı kuralları."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) content_filter_rules per jurisdiction (config-as-data). 2) age_gate capability. 3) Birim canonical + display dönüştürücü (UCUM). 4) e_invoice_adapter per AB ülkesi. 5) business_calendar tatil tablosu. 6) lawful_intercept_workflow."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "cc-content-jurisdiction"
+       },
+       {
+        "type": "text",
+        "text": " cluster + "
+       },
+       {
+        "type": "code",
+        "text": "cc-jurisdiction-resolver"
+       },
+       {
+        "type": "text",
+        "text": " (jurisdiction çözer) + "
+       },
+       {
+        "type": "code",
+        "text": "cc-compliance-matrix"
+       },
+       {
+        "type": "text",
+        "text": " (sanctions, KVKK)."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk ek ülke açılımından ÖNCE. AB açıldıysan e-fatura, DE açıldıysan content filter zorunlu."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Hukuk team kural yazımı; ürün ekibi katalog filtre; backend dev adapter; legal counsel lawful intercept."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Gümrük: ülkeye giriş yaparken kabul edilmeyen şeyler var (alkol Suudi, et Türkiye gibi bazı yerler), birim farklı (gallon vs litre), ödeme farklı (Suudi Riyal vs Euro). Sistem kuralları gümrük gibi: ülkeye göre değişir."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-cc-content-jurisdiction-story",
+    "type": "useCase",
+    "title": "E-ticaret yöneticisi Murat Bey (61) — DE açılım",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Murat Bey kitap satıyor, Almanya pazarına açıldı. 'Mein Kampf' edisyonu katalogda. Alman kullanıcı şikâyet etti, BfV (Federal Anayasa Koruma) sorgu açtı."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Content filter rules: DE jurisdiction'da Nazi içerik (Mein Kampf, semboller) katalogdan filtrelenir. Resolver jurisdiction'a göre dinamik filtre. Suç duyurusu önlendi."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-story-2",
+    "type": "useCase",
+    "title": "Ayşe Teyze (63) — Suudi'de Ramazan",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Ayşe Teyze global SaaS kullanıcısı. Ramazan'da iftar saatlerinde bildirim almak istemiyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "business_calendar: Suudi jurisdiction'da Ramazan tablosu (Hicri 1448). Iftar saati 19:23. quiet_hours dinamik. Bildirim 21:00'dan sonra."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-content-jurisdiction-story-3",
+    "type": "useCase",
+    "title": "Hukuk müşaviri (45) — mahkeme kararı",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Mahkeme kararı geldi: 'Şu kullanıcının son 6 ay verisini ver'. Manuel pipeline = haftalar."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "DSAR pipeline + lawful_intercept_workflow: legal counsel onay → script tetiklenir → ZIP export → mahkemeye güvenli teslim. 48 saatte tamam, audit log 5 yıl."
+     }
+    ]
+   }
+  ]
+ }
+}

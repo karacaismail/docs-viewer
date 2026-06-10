@@ -1,0 +1,978 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-edu-u02-veri-tip",
+  "sourceId": "edu-u02",
+  "slug": "egitim/edu-u02-veri-tip",
+  "title": "Veri ve Tipler — atomik öncesi temel",
+  "summary": "Bit'ten Decimal'e, harften UTF-8'e — bilgisayar verileri nasıl saklar, neden Decimal float'tan üstün?",
+  "categoryId": "egitim",
+  "tags": [
+   "education",
+   "u02",
+   "veri",
+   "tip"
+  ],
+  "meta": {
+   "granularity": "buyuk-tas",
+   "state": "ok"
+  },
+  "related": [
+   "page-edu-u01-yazilim",
+   "page-edu-u03-doctype",
+   "page-atomic-types"
+  ],
+  "blocks": [
+   {
+    "id": "block-edu-u02-veri-tip-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bit'ten Decimal'e, harften UTF-8'e — bilgisayar verileri nasıl saklar, neden Decimal float'tan üstün?"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02-veri-tip-lh",
+    "type": "lessonHeader",
+    "unit": "Ünite 02",
+    "title": "Veri ve Tipler — bilgisayar neyi nasıl saklar?",
+    "level": "baslangic",
+    "durationMin": 60,
+    "prereq": [
+     "edu-u01"
+    ],
+    "goals": [
+     "Bit/byte/karakter/string farkını anlatabilirsin.",
+     "Neden parayı asla float ile tutmadığımızı söyleyebilirsin.",
+     "Tip sistemi, validator, coercion kavramlarını projenin gerçek alanlarına uygulayabilirsin.",
+     "UTF-8'in neden 'sş ğ ç ü ö' için zorunlu olduğunu açıklayabilirsin."
+    ]
+   },
+   {
+    "id": "block-edu-u02-veri-tip-h-kavramlar-bu-unitede-gececek-tum-terimler",
+    "type": "heading",
+    "level": 4,
+    "text": "Kavramlar — bu ünitede geçecek tüm terimler"
+   },
+   {
+    "id": "block-edu-u02-veri-tip-h-anlatim-1-byte-tan-money-e",
+    "type": "heading",
+    "level": 4,
+    "text": "Anlatım — 1 byte'tan Money'e"
+   },
+   {
+    "id": "block-edu-u02-veri-tip-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bilgisayarın altında "
+     },
+     {
+      "type": "strong",
+      "text": "bit"
+     },
+     {
+      "type": "text",
+      "text": " (0 veya 1) var. 8 "
+     },
+     {
+      "type": "term",
+      "text": "bit",
+      "termId": "term-bit-edu-u02-veri-tip"
+     },
+     {
+      "type": "text",
+      "text": " = 1 "
+     },
+     {
+      "type": "strong",
+      "text": "byte"
+     },
+     {
+      "type": "text",
+      "text": ", 0-255 arası bir sayı tutar. Bu sayıyı 'karakter' olarak yorumlamak için bir "
+     },
+     {
+      "type": "strong",
+      "text": "kodlama"
+     },
+     {
+      "type": "text",
+      "text": " lazım: eskiden "
+     },
+     {
+      "type": "term",
+      "text": "ASCII",
+      "termId": "term-ascii-edu-u02-veri-tip"
+     },
+     {
+      "type": "text",
+      "text": " (128 karakter, sadece İngilizce), bugün "
+     },
+     {
+      "type": "strong",
+      "text": "UTF-8"
+     },
+     {
+      "type": "text",
+      "text": " (tüm diller)."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02-veri-tip-note",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "'ş' UTF-8'de 2 byte tutar; ASCII'de yoktur. Yanlış kodlama → 'Ş' yerine '?' veya 'Å'."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02-veri-tip-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Programcının gördüğü seviye: "
+     },
+     {
+      "type": "strong",
+      "text": "tipler"
+     },
+     {
+      "type": "text",
+      "text": ". "
+     },
+     {
+      "type": "code",
+      "text": "Integer"
+     },
+     {
+      "type": "text",
+      "text": " tam sayı, "
+     },
+     {
+      "type": "code",
+      "text": "Boolean"
+     },
+     {
+      "type": "text",
+      "text": " evet/hayır, "
+     },
+     {
+      "type": "code",
+      "text": "String"
+     },
+     {
+      "type": "text",
+      "text": " metin, "
+     },
+     {
+      "type": "code",
+      "text": "Float"
+     },
+     {
+      "type": "text",
+      "text": " ondalık (yaklaşık), "
+     },
+     {
+      "type": "code",
+      "text": "Decimal"
+     },
+     {
+      "type": "text",
+      "text": " ondalık (tam-doğru). Her DB kolonu bir tipe bağlıdır; tip ne kadar yer kaplayacağını, hangi işlemlere izin vereceğini söyler."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02-veri-tip-note-2",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Tip = sözleşme: 'bu alan sadece X tutar, ben Y işlemine izin veririm'."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02-veri-tip-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Neden parayı float ile tutmuyoruz?",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Float bilimseldir, yaklaşıktır. Aşağıdaki testi terminalde yap (Python): "
+     },
+     {
+      "type": "code",
+      "text": "0.1 + 0.2"
+     },
+     {
+      "type": "text",
+      "text": ". Çıktı: "
+     },
+     {
+      "type": "code",
+      "text": "0.30000000000000004"
+     },
+     {
+      "type": "text",
+      "text": ". Bu küçük tortu 1 milyon işlem sonra binlerce kuruş kaybeder. Mali denetimde sebebini bulamazsın.\n\n"
+     },
+     {
+      "type": "strong",
+      "text": "Çözüm:"
+     },
+     {
+      "type": "text",
+      "text": " "
+     },
+     {
+      "type": "code",
+      "text": "Decimal(20, 4)"
+     },
+     {
+      "type": "text",
+      "text": " — 20 hane toplam, 4 ondalık. Para birimi ("
+     },
+     {
+      "type": "code",
+      "text": "TRY"
+     },
+     {
+      "type": "text",
+      "text": "/"
+     },
+     {
+      "type": "code",
+      "text": "USD"
+     },
+     {
+      "type": "text",
+      "text": ") ayrı kolon. Aritmetik sadece aynı currency içinde."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02-veri-tip-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Şartlı durum:"
+     },
+     {
+      "type": "text",
+      "text": " sadece *istatistik/grafik* için "
+     },
+     {
+      "type": "term",
+      "text": "float",
+      "termId": "term-float-edu-u02-veri-tip"
+     },
+     {
+      "type": "text",
+      "text": " kabul edilir. Mali kayıt, fatura, defter — daima "
+     },
+     {
+      "type": "term",
+      "text": "Decimal",
+      "termId": "term-decimal-edu-u02-veri-tip"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02-veri-tip-story",
+    "type": "useCase",
+    "title": "Muhasebeci",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "1 yıl boyunca 200k fatura kalemi işliyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Float ile 0.01 TL'lik kayma birike birike ay sonunda 87 TL fark; Decimal ile tam 0."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02-veri-tip-h-scalar-vs-composite-projenin-gozunden",
+    "type": "heading",
+    "level": 4,
+    "text": "Scalar vs Composite — projenin gözünden"
+   },
+   {
+    "id": "block-edu-u02-veri-tip-grid",
+    "type": "cardGrid",
+    "columns": 2,
+    "cards": [
+     {
+      "icon": "ph-circle",
+      "title": "Scalar (tekil)",
+      "tone": "neutral",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Int"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "strong",
+        "text": "String"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "strong",
+        "text": "Bool"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "strong",
+        "text": "DateTime"
+       },
+       {
+        "type": "text",
+        "text": ". DB'de tek kolon, frontend'de tek input.\nÖrnek: "
+       },
+       {
+        "type": "code",
+        "text": "is_active: bool"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "count: int"
+       },
+       {
+        "type": "text",
+        "text": "."
+       }
+      ]
+     },
+     {
+      "icon": "ph-circles-three",
+      "title": "Composite (birleşik)",
+      "tone": "good",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Money"
+       },
+       {
+        "type": "text",
+        "text": " = (Decimal, currency). "
+       },
+       {
+        "type": "strong",
+        "text": "Address"
+       },
+       {
+        "type": "text",
+        "text": " = (country, city, street, postal). "
+       },
+       {
+        "type": "strong",
+        "text": "Phone"
+       },
+       {
+        "type": "text",
+        "text": " = (E.164 string + ülke kodu).\nDB'de 2+ kolon ama domain için tek kavram."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02-veri-tip-h-validator-coercion-dogru-veri-nasil-olur",
+    "type": "heading",
+    "level": 4,
+    "text": "Validator + Coercion: 'doğru veri' nasıl olur?"
+   },
+   {
+    "id": "block-edu-u02-veri-tip-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "Kullanıcı '1.299,50 TL' yazar",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Form input'ta serbest yazıyor. Backend bunu Decimal olarak saklamak ister."
+       }
+      ]
+     },
+     {
+      "title": "Coercion devreye girer",
+      "segments": [
+       {
+        "type": "code",
+        "text": "Money.coerce('1.299,50 TL', locale='tr-TR')"
+       },
+       {
+        "type": "text",
+        "text": " → "
+       },
+       {
+        "type": "code",
+        "text": "(Decimal('1299.50'), 'TRY')"
+       },
+       {
+        "type": "text",
+        "text": ". Boşluk, ayraç, currency string parse edilir."
+       }
+      ]
+     },
+     {
+      "title": "Validator çalışır",
+      "segments": [
+       {
+        "type": "code",
+        "text": "Money.validate(value)"
+       },
+       {
+        "type": "text",
+        "text": ": Decimal mı? currency code geçerli mi (ISO 4217)? hassasiyet kuralına uyuyor mu? Geçmezse 400 Bad Request."
+       }
+      ]
+     },
+     {
+      "title": "DB'ye INSERT",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Yalnızca "
+       },
+       {
+        "type": "strong",
+        "text": "canonical form"
+       },
+       {
+        "type": "text",
+        "text": " saklanır: "
+       },
+       {
+        "type": "code",
+        "text": "amount=1299.5000, currency='TRY'"
+       },
+       {
+        "type": "text",
+        "text": ". Görüntüleme tekrar locale'a göre yapılır."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02-veri-tip-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Mimari aydınlanma",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Validator + Coercion sayesinde "
+     },
+     {
+      "type": "strong",
+      "text": "DB'deki veri her zaman canonical"
+     },
+     {
+      "type": "text",
+      "text": ". Frontend ne formatla gelirse gelsin, backend tek doğru biçimi görür. Bu, tüm raporlama/aggregate sorguların 'çalışır' olmasının kilididir."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02-veri-tip-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Tuzak:"
+     },
+     {
+      "type": "text",
+      "text": " "
+     },
+     {
+      "type": "term",
+      "text": "Validator",
+      "termId": "term-validator-edu-u02-veri-tip"
+     },
+     {
+      "type": "text",
+      "text": "/"
+     },
+     {
+      "type": "term",
+      "text": "coercion",
+      "termId": "term-coercion-edu-u02-veri-tip"
+     },
+     {
+      "type": "text",
+      "text": "'ı her form için ayrı yazmak. Çözüm: tip seviyesine taşı — Money tipi tanımlandığında validator+coercion onunla gelir. Plugin geliştirici 'Bunu nasıl doğrularım?' diye düşünmez."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02-veri-tip-h-turkce-karakter-utf-8-slug-tuzagi",
+    "type": "heading",
+    "level": 4,
+    "text": "Türkçe karakter, UTF-8, 'slug' tuzağı"
+   },
+   {
+    "id": "block-edu-u02-veri-tip-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "DB ve uygulama her yerde "
+     },
+     {
+      "type": "strong",
+      "text": "UTF-8"
+     },
+     {
+      "type": "text",
+      "text": " olmalı. PostgreSQL "
+     },
+     {
+      "type": "code",
+      "text": "CREATE DATABASE … ENCODING 'UTF8'"
+     },
+     {
+      "type": "text",
+      "text": " ile kurulur. Aksi halde 'Şoför Aranıyor' → '?of?r Aran?yor'."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02-veri-tip-note-3",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Modern her şey varsayılan UTF-8; sorun çıkarsa eski bir migration/locale'dir."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02-veri-tip-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "URL'de"
+     },
+     {
+      "type": "text",
+      "text": " Türkçe karakter kullanmıyoruz (CDN cache, link paylaşımı için). 'Şoför Aranıyor' → slug "
+     },
+     {
+      "type": "code",
+      "text": "sofor-araniyor"
+     },
+     {
+      "type": "text",
+      "text": ". Bizim "
+     },
+     {
+      "type": "strong",
+      "text": "Slug"
+     },
+     {
+      "type": "text",
+      "text": " "
+     },
+     {
+      "type": "term",
+      "text": "primitive",
+      "termId": "term-primitive-edu-u02-veri-tip"
+     },
+     {
+      "type": "text",
+      "text": "'i bu dönüşümü tek yerden yapar — herkes aynı kuralı kullansın."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02-veri-tip-note-4",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "ı→i, ş→s, ğ→g, ü→u, ö→o, ç→c; boşluk → '-'."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02-veri-tip-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sık kullanılan verinin yakın bir yerde tutulması."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her seferinde uzaktan çekmek yavaşlar."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bellekte yedek; süresi dolunca yenilenir."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistem otomatik."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tezgâh üstündeki ekmek — depodan her seferinde almak yerine."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02-veri-tip-story-2",
+    "type": "useCase",
+    "title": "CMS editor",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Yazı başlığı 'İş İlanı: Şoför Aranıyor'."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Slug otomatik "
+     },
+     {
+      "type": "code",
+      "text": "is-ilani-sofor-araniyor"
+     },
+     {
+      "type": "text",
+      "text": "; URL'ler tutarlı."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02-veri-tip-chk",
+    "type": "checklist",
+    "title": "Bu üniteyi anladığımı nereden anlarım?",
+    "items": [
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Bit, byte, karakter, string, integer, float, decimal kelimelerini Türkçe karşılıklarıyla biliyorum."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Parayı float ile tutmamamızın sebebini anlatabilirim (örnek: 0.1+0.2)."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Scalar ve composite tip arasındaki farkı projeden 2 örnekle gösterebilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Validator ve coercion'ın hangi sırada çalıştığını söyleyebilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "UTF-8'in neden Türkçe için zorunlu olduğunu açıklayabilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Bir framework yeni bir Money tipi tanımladığında nelerin otomatik geldiğini sayabilirim. — validator + coercion + form widget + API serializer + DB kolon tipi"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02-veri-tip-h-mini-proje-zorunlu-degil",
+    "type": "heading",
+    "level": 4,
+    "text": "Mini-proje (zorunlu değil)"
+   },
+   {
+    "id": "block-edu-u02-veri-tip-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Defterine bir 'Personel' DocType'ı tasarla. Şu alanlar için tip seç ve "
+     },
+     {
+      "type": "strong",
+      "text": "neden"
+     },
+     {
+      "type": "text",
+      "text": " kısa not düş: ad-soyad, doğum tarihi, TCKN, telefon, brüt maaş, departman, aktif mi."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02-veri-tip-p-8",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Önerilen cevap:"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02-veri-tip-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "ad-soyad → String"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "doğum tarihi → Date (DateTime değil — saat lüzumsuz)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "TCKN → String (Int değil — başında sıfır olabilir, MOD-10/MOD-9 validator)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "telefon → Phone (E.164 primitive)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "brüt maaş → Money(TRY, Decimal(20,4))"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "departman → Reference(Department) — FK + tenant scope"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "aktif mi → Boolean"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u02-veri-tip-co-3",
+    "type": "callout",
+    "variant": "info",
+    "title": "Sonraki ünite",
+    "segments": [
+     {
+      "type": "ref",
+      "text": "edu-u03",
+      "refId": "edu-u03"
+     },
+     {
+      "type": "text",
+      "text": " — DocType ile Model. Bu üniteden öğrendiğin tipleri bir kayıt tipine nasıl yerleştireceğini göreceksin: framework otomatik ne üretir, neyi sen söylersin."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02-veri-tip-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-edu-u02-veri-tip-p-9",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bit'ten Decimal'e, harften "
+     },
+     {
+      "type": "term",
+      "text": "UTF-8",
+      "termId": "term-utf-8-edu-u02-veri-tip"
+     },
+     {
+      "type": "text",
+      "text": "'e — bilgisayar verileri nasıl saklar, neden Decimal float'tan üstün?"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02-veri-tip-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-edu-u02-veri-tip-lesson-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Ünite 02 — Veri ve Tipler. Bit, byte, sayı, metin, tarih gibi temel veri türleri."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bilgisayar 'Ali' ile '50'yi nasıl ayırt eder? Tip kavramı bunu çözer."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her tip için: ne işe yarar, ne zaman kullanılır, hata durumları."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Müfredatın 2. ünitesi — 01'i bitirdikten sonra."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Form alanları, veritabanı sütunları öğrenmeden önce."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici olmak isteyen herkes bu temeli bilmeli."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Postaneden gelen paketlerin etiketi: 'kırılır', 'soğuk zincir' — etiket olmadan yanlış kamyona biner."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

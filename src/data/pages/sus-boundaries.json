@@ -1,0 +1,309 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-sus-boundaries",
+  "sourceId": "sus-boundaries",
+  "slug": "sus/sus-boundaries",
+  "title": "Makine-zorlamalı modül sınırı (CI kapısı)",
+  "summary": "Shopify Packwerk: 2.8M satırlık monolit modüler kalmasını CI'da PR reddiyle sağlıyor.",
+  "categoryId": "sus",
+  "tags": [
+   "sustainability",
+   "ci",
+   "shopify",
+   "boundaries"
+  ],
+  "meta": {},
+  "related": [
+   "page-philosophy",
+   "page-anti-patterns"
+  ],
+  "blocks": [
+   {
+    "id": "block-sus-boundaries-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Sınırı insan değil makine zorlamalı; aksi halde \"sosyal sözleşme\" çürür."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-boundaries-co",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Shopify deneyimi",
+    "segments": [
+     {
+      "type": "text",
+      "text": "*\"We have 48 packages with 30 boundary enforcements within those packages\"* — Shopify Engineering. 2.8M satırlık Rails monolit 12+ yıldır modüler kalmasının tek sebebi: makine."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-boundaries-img",
+    "type": "image",
+    "src": "/assets/sus-boundaries.svg",
+    "alt": "CI sınır kapısı — Modül A public API'sini kullanabilir; internal'a dokunan PR makine tarafından bloke",
+    "caption": "Yeşil ok = public API erişimi geçer; kırmızı kesik ok = internal erişim — CI tarafından reddedilir."
+   },
+   {
+    "id": "block-sus-boundaries-note",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "import-linter CI kapısı görsel"
+     }
+    ]
+   },
+   {
+    "id": "block-sus-boundaries-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sınır insan değil makine tarafından zorlatılmalı."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sosyal anlaşma çürür; CI hatırlatması her PR'da otomatik koşar."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "import-linter contract'ı tanımlanır; lint-imports CI'da koşar; ihlal varsa fail."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mimar contract'ı yazar; CI sistemı uygular; geliştirici uyar."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Stadyumdaki turnike: bilet yanlışsa makine geçirmez; görevliye yalvarmak işe yaramaz."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-sus-boundaries-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Bu projede:"
+     },
+     {
+      "type": "text",
+      "text": " "
+     },
+     {
+      "type": "code",
+      "text": "import-linter"
+     },
+     {
+      "type": "text",
+      "text": " ile kernel < scale < core < modules katman zinciri zorlatılır. Modüller birbirinin internal'ına dokunamaz (privacy contract). PR ihlali olursa CI fail; birleştirilemez. Doküman bunu zaten anıyor — somutlaştırılması yapılacak iş."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-boundaries-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Capability flag = boundary disiplini",
+    "segments": [
+     {
+      "type": "text",
+      "text": "E-ticaret modelleri (b2c/b2b/marketplace/dropship/subscription/social) capability flag olarak ayrı boundary'lerdir. Her capability kendi modül sınırına sahip; cross-capability iletişim event bus üstünden. Bir capability kırılırsa diğeri çalışır → sus-boundaries'in stack ürünlerine yansıması. s-ecommerce-models bu disiplinin en zengin örneği."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-boundaries-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-sus-boundaries-lesson-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Modüler monolit, modüller arası sınırın PR birleştirme öncesi otomatik kontrol edilmesiyle modüler kalır. Sınırı ihlal eden kod birleştirilmez."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sosyal anlaşma (\"şu modüle dokunma\") zamanla çürür: yeni gelen geliştirici bilmez, baskıda kısayol bulur. Tek koruma: makine."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Python tarafında "
+       },
+       {
+        "type": "code",
+        "text": "import-linter"
+       },
+       {
+        "type": "text",
+        "text": " (forbidden/independence/layers contract), TypeScript tarafında "
+       },
+       {
+        "type": "code",
+        "text": "@typescript-eslint"
+       },
+       {
+        "type": "text",
+        "text": " özel kural. CI'da "
+       },
+       {
+        "type": "code",
+        "text": "lint-imports"
+       },
+       {
+        "type": "text",
+        "text": " koşar; ihlal varsa exit code 1 → PR bloke."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": ".github/workflows/boundaries.yml + .importlinter dosyası kök dizinde."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk Layer 2 modülü yazılmadan önce — sonra eklemek geç olur (refactor maliyeti)."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mimar contract'ı yazar; CI uygular; her geliştirici uyar; yeni gelen 1 dakikada öğrenir (sınırı CI hatırlatır)."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Stadyumdaki turnike sistemi: bilet yanlış kombineyse turnike geçmez. Görevliye \"izin verir misin\" diye yalvarsan bile makine açmaz. Modül sınırı turnike."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-sus-boundaries-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-sus-boundaries-story",
+    "type": "useCase",
+    "title": "Marangoz Murat Bey, atölye düzeni",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Atölyenin bir köşesinde \"keskin alet rafı\" var — sadece eldivenli giriş. 30 yıllık usta Hasan görünmez bariyer koymadıkça stajyerler defalarca girer."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Murat Bey fiziksel turnike kuruyor: eldiven sensörü algılamazsa raf kilitli. Stajyer girmek isteyince makine engelliyor. \"Söz veriyorum dikkatli olacağım\" deyince usta tartışıyor; makine tartışmıyor. Modül sınırı = fiziksel turnike."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-boundaries-story-2",
+    "type": "useCase",
+    "title": "Hastane temizlik şefi Cemil Bey",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Yoğun bakım koridoruna girmeden önce el dezenfekte zorunlu. Eskiden \"hatırlayın\" denerek tabela asılıyordu; 6 ayda alışkanlık dağıldı."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Otomatik dispenser tabelaya kondu: el konmadan kapı açılmıyor. Tartışma yok, hatırlatma yok. CI sınır kapısı tam aynı: tartışma değil, otomatik engel."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-boundaries-story-3",
+    "type": "useCase",
+    "title": "Restoran şefi Ayhan Bey, malzeme deposu",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Et bölümü ayrı dolapta, balık ayrı, sebze ayrı. Yeni stajyer karıştırırsa cross-contamination olur. Sözle anlatıldığı gün unutuyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Her dolabın kart okuyucusu var: et kartı sadece et dolabını açar, balık kartı sadece balık. Stajyer yanlış dolaba girmek istese kart geçmez. Modülün API sınırı = kart okuyucu."
+     }
+    ]
+   }
+  ]
+ }
+}

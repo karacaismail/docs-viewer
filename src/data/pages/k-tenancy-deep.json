@@ -1,0 +1,497 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-k-tenancy-deep",
+  "sourceId": "k-tenancy-deep",
+  "slug": "kernel/k-tenancy-deep",
+  "title": "Sharding — büyük ölçek için yatay bölme",
+  "summary": "100M satırlık tek tablo yavaşladığında, tenant başına ayrı schema/DB. Shard key seçimi + cross-shard query problemi.",
+  "categoryId": "kernel",
+  "tags": [
+   "layer0",
+   "sharding",
+   "scaling",
+   "multi-tenant",
+   "postgres"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-kernel-tenancy",
+   "page-scale-multiregion",
+   "page-cc-privacy"
+  ],
+  "blocks": [
+   {
+    "id": "block-k-tenancy-deep-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Pool model (tek shard), bridge (schema-per-tenant), silo (DB-per-tenant). Shard key seçimi, cross-shard query."
+     }
+    ]
+   },
+   {
+    "id": "block-k-tenancy-deep-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Sharding = son çare."
+     },
+     {
+      "type": "text",
+      "text": " Önce cache, index, read replica. Erken shard = teknik borç."
+     }
+    ]
+   },
+   {
+    "id": "block-k-tenancy-deep-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Erken sharding tuzağı",
+    "segments": [
+     {
+      "type": "text",
+      "text": "1000 satırlı sistem shard'lanırsa tüm query 10x karmaşık. "
+     },
+     {
+      "type": "strong",
+      "text": "Pool model + cache 10K tenant'a yeter."
+     }
+    ]
+   },
+   {
+    "id": "block-k-tenancy-deep-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'k-tenancy şimdi pool model. Migration plan: 100K tenant aşılırsa bridge. Shard key tenant_id.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-k-tenancy-deep-h-tenancy-model-karar",
+    "type": "heading",
+    "level": 4,
+    "text": "Tenancy model karar"
+   },
+   {
+    "id": "block-k-tenancy-deep-table",
+    "type": "table",
+    "columns": [
+     "Model",
+     "Tenant sayısı",
+     "Karmaşıklık",
+     "İzolasyon"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Pool"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 10K"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Düşük"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Logical (tenant_id)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Bridge"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "10K-100K"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Orta"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Schema-level"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Silo"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Enterprise"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yüksek"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tam (ayrı DB)"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-k-tenancy-deep-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-k-tenancy-deep-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Tenancy 3 model:"
+     }
+    ]
+   },
+   {
+    "id": "block-k-tenancy-deep-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Pool model"
+       },
+       {
+        "type": "text",
+        "text": " (mevcut k-tenancy): Tek shard, tenant_id kolonu. "
+       },
+       {
+        "type": "strong",
+        "text": "100-10K tenant için ideal."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Bridge model"
+       },
+       {
+        "type": "text",
+        "text": ": Schema-per-tenant. 100-1000 tenant için."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Silo model"
+       },
+       {
+        "type": "text",
+        "text": ": DB-per-tenant. Enterprise için."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-k-tenancy-deep-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Ne zaman shard?"
+     }
+    ]
+   },
+   {
+    "id": "block-k-tenancy-deep-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Tek tablo 100M+ satır"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "p95 > 500ms"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Storage > 1 TB"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Backup > 4 saat"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-k-tenancy-deep-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Shard key seçimi:"
+     }
+    ]
+   },
+   {
+    "id": "block-k-tenancy-deep-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "tenant_id"
+      },
+      {
+       "type": "text",
+       "text": ": Doğal; ama hot shard riski"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "user_id"
+      },
+      {
+       "type": "text",
+       "text": ": Eşit dağılım; cross-shard query olur"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "time-based"
+      },
+      {
+       "type": "text",
+       "text": ": Eski veri ayrı (cold storage)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "hash(id)"
+      },
+      {
+       "type": "text",
+       "text": ": Eşit ama tahmin edilebilirlik kayıp"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-k-tenancy-deep-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Cross-shard query problemi:"
+     }
+    ]
+   },
+   {
+    "id": "block-k-tenancy-deep-code",
+    "type": "codeBlock",
+    "language": "sql",
+    "code": "SELECT * FROM order ORDER BY created_at DESC LIMIT 10;"
+   },
+   {
+    "id": "block-k-tenancy-deep-list-3",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Tek shard: 1 sorgu, 10ms"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "10 shard: 10 sorgu paralel + merge = 50ms"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-k-tenancy-deep-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-k-tenancy-deep-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Fizyolojik sınıra ulaşıldığında veriyi tenant'lara göre bölme."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Pool 10K tenant yeter. Üstünde shard'lamadan çare yok."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Önce: pool + index + cache. 2) 100K satır/tenant aşılırsa: bridge. 3) Enterprise: silo. 4) Shard key tenant_id."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "k-tenancy"
+       },
+       {
+        "type": "text",
+        "text": " derinleştirme."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "100M+ satır VE p95 > 500ms VE index optimize edilmişse."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Senior DBA + mimar karar; backend dual-write."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kütüphane: 10K kitap tek raf, 1M için Dewey decimal, 100M için katlı bina."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-k-tenancy-deep-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-k-tenancy-deep-story",
+    "type": "useCase",
+    "title": "Apartman 8'den 80 daireye — Murat Bey (61)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Tek defter yetiyordu, sonra 80 daire için karman çorman."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "10 defter (her kata 1) = sharding."
+     }
+    ]
+   },
+   {
+    "id": "block-k-tenancy-deep-story-2",
+    "type": "useCase",
+    "title": "Manav Selim Bey (62) — 5 şube",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Tek kasada karışırdı; her şubeye ayrı kasa."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "DB-per-tenant (silo)."
+     }
+    ]
+   }
+  ]
+ }
+}

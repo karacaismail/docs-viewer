@@ -1,0 +1,631 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-edu-u02b-para-tarih",
+  "sourceId": "edu-u02b",
+  "slug": "egitim/edu-u02b-para-tarih",
+  "title": "Para, Tarih ve Zaman Dilimi — gizli karmaşıklık",
+  "summary": "Yazılımda iki şey en çok yanlış kurulur: para tipi ve zaman. Yüzeyde basit, derinde tuzak.",
+  "categoryId": "egitim",
+  "tags": [
+   "education",
+   "money",
+   "datetime",
+   "timezone",
+   "decimal"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-atomic-types",
+   "page-edu-u02-veri-tip",
+   "page-edu-u04-veritabani"
+  ],
+  "blocks": [
+   {
+    "id": "block-edu-u02b-para-tarih-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Para'da Decimal kullan, asla float değil. Zamanda her şeyi UTC sakla, sadece gösterirken yerel saate çevir."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02b-para-tarih-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Şu iki cümleyi ezberle:"
+     },
+     {
+      "type": "text",
+      "text": " *Para "
+     },
+     {
+      "type": "term",
+      "text": "Decimal",
+      "termId": "term-decimal-edu-u02b-para-tarih"
+     },
+     {
+      "type": "text",
+      "text": "'dir, "
+     },
+     {
+      "type": "term",
+      "text": "float",
+      "termId": "term-float-edu-u02b-para-tarih"
+     },
+     {
+      "type": "text",
+      "text": " değil.* *Zaman "
+     },
+     {
+      "type": "term",
+      "text": "UTC",
+      "termId": "term-utc-edu-u02b-para-tarih"
+     },
+     {
+      "type": "text",
+      "text": "'dir, yerel saat değil.* Bu iki kural projeyi ilk yıl baş ağrısının %40'ından kurtarır."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02b-para-tarih-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "En klasik hata",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Programcı 'kolay olsun' diye fiyat alanını "
+     },
+     {
+      "type": "code",
+      "text": "float"
+     },
+     {
+      "type": "text",
+      "text": " yapar. 100 satışta 30 kuruş gizli kayıp = ayda 9 TL. 1000 müşterili sistemde yılda 108.000 TL. "
+     },
+     {
+      "type": "strong",
+      "text": "Decimal kullan."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02b-para-tarih-co-2",
+    "type": "callout",
+    "variant": "info",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a 'fatura tablosu yap' demek yetmez. Şöyle yaz: *'fatura tablosu yap, tutar "
+     },
+     {
+      "type": "code",
+      "text": "numeric(18,2)"
+     },
+     {
+      "type": "text",
+      "text": ", para birimi "
+     },
+     {
+      "type": "code",
+      "text": "char(3)"
+     },
+     {
+      "type": "text",
+      "text": ", tarih "
+     },
+     {
+      "type": "code",
+      "text": "timestamptz"
+     },
+     {
+      "type": "text",
+      "text": ", Prisma şeması ile.'* Eksik söylersen float verir."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02b-para-tarih-h-para-pratik-kontrol-listesi",
+    "type": "heading",
+    "level": 4,
+    "text": "Para — pratik kontrol listesi"
+   },
+   {
+    "id": "block-edu-u02b-para-tarih-table",
+    "type": "table",
+    "columns": [
+     "Soru",
+     "Doğru cevap",
+     "Yanlış cevap"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kolon tipi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "numeric(18,2) veya Decimal"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "float, real, double"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Yuvarlama yönü"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ROUND_HALF_UP (yukarı)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Belirsiz (DB'ye bırak)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Para birimi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Ayrı kolon: char(3) ISO 4217"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tutarın yanına 'TL' yapıştır"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Çoklu kur"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kur tarihi + kur tablosu"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Anlık kur ile çevir, geçmişe bakma"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u02b-para-tarih-h-zaman-pratik-kontrol-listesi",
+    "type": "heading",
+    "level": 4,
+    "text": "Zaman — pratik kontrol listesi"
+   },
+   {
+    "id": "block-edu-u02b-para-tarih-table-2",
+    "type": "table",
+    "columns": [
+     "Soru",
+     "Doğru cevap",
+     "Yanlış cevap"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Sunucu saati"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "UTC"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yerel (İstanbul) saat"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "DB kolon tipi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "timestamptz"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "timestamp (tz'siz)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kullanıcıya gösterim"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yerel saate çevir (frontend'de)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "UTC göster, 'kafan karıştıysa hesapla'"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Tatil takvimi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Ayrı tablo: tarih + tatil_adı + ülke"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kod içinde sabit liste"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u02b-para-tarih-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Frontend formatı",
+    "segments": [
+     {
+      "type": "text",
+      "text": "TR'de para '1.234,56 TL', tarih '06.06.2026'. Sistem ISO 8601'de saklar ('2026-06-06'), gösterimde "
+     },
+     {
+      "type": "code",
+      "text": "Intl.DateTimeFormat('tr-TR')"
+     },
+     {
+      "type": "text",
+      "text": " ve "
+     },
+     {
+      "type": "code",
+      "text": "Intl.NumberFormat('tr-TR')"
+     },
+     {
+      "type": "text",
+      "text": " kullan."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02b-para-tarih-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-edu-u02b-para-tarih-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Para tuzakları:"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02b-para-tarih-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "code",
+       "text": "0.1 + 0.2 = 0.30000000000000004"
+      },
+      {
+       "type": "text",
+       "text": " (float aritmetiği yıllık ciroyu kuruş kuruş kaybeder)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Kuruş yuvarlama yönü (yukarı/aşağı/banker's) — vergi farkı doğurur"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Çoklu kur: aynı tablo'da TL, USD, EUR — hangi kur, hangi tarihte?"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u02b-para-tarih-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Zaman tuzakları:"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02b-para-tarih-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "code",
+       "text": "datetime"
+      },
+      {
+       "type": "text",
+       "text": " (saat dilimsiz) vs "
+      },
+      {
+       "type": "code",
+       "text": "datetimetz"
+      },
+      {
+       "type": "text",
+       "text": " (zaman dilimli) — PostgreSQL'de iki ayrı tip"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "DST (gün ışığı tasarrufu): Mart'ta saat 03:00 yok, Ekim'de 03:00 iki kez var"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Ramazan/Bayram: TR tatil takvimi her yıl değişir; iş günü hesabı zor"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Sipariş 23:55'te girildi, ödeme 00:05'te tamamlandı → hangi gün?"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u02b-para-tarih-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-edu-u02b-para-tarih-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Para Decimal tipinde, zaman UTC'de saklanır. Yerel saat sadece kullanıcıya gösterilirken çevrilir."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Float para = gizli kayıp. Yerel saat veri = saatler arası karmaşa, DST'de tamamen kırılır."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Veritabanı kolonu "
+       },
+       {
+        "type": "code",
+        "text": "numeric(18,2)"
+       },
+       {
+        "type": "text",
+        "text": " veya "
+       },
+       {
+        "type": "code",
+        "text": "numeric(18,4)"
+       },
+       {
+        "type": "text",
+        "text": " yap. Tarih kolonu "
+       },
+       {
+        "type": "code",
+        "text": "timestamptz"
+       },
+       {
+        "type": "text",
+        "text": " (PostgreSQL'de zaman dilimli) yap. Sunucu saati UTC."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "atomic-types"
+       },
+       {
+        "type": "text",
+        "text": " modülünde Money + DateTime tipleri tanımlı. Tüm Layer-1 ve Layer-2 bu tipleri kullanır."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Para tutan veya tarih tutan "
+       },
+       {
+        "type": "strong",
+        "text": "her"
+       },
+       {
+        "type": "text",
+        "text": " alan için. İstisna yok."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici tip seçer; veritabanı yöneticisi kolonu doğrular; muhasebeci rapor okur."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Para float = kantarda 'yaklaşık 1 kilo' demek; market kabul etmez. Tarih yerel = randevuya 'akşam' demek; saati yazmadan kimse gelmez. Kesin tip + UTC = kantarın hassas olması + saatin sayısal olması."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02b-para-tarih-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-edu-u02b-para-tarih-story",
+    "type": "useCase",
+    "title": "Bakkal Hasan Amca (64) — kasa toplamı",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Gün sonu kasada toplam 4250.30 TL var. Hasan Amca defterine yazdı. Yazılımdaki rakam 4250.27 yazıyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Programcı float kullanmış. 3 kuruş açık göründü. Ayda 30 kuruş, yılda 3.60 TL... ama 100 dükkâna kurulan sistemde yılda 360 TL gizli kayıp. Decimal'e geçilince fark kapandı."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02b-para-tarih-story-2",
+    "type": "useCase",
+    "title": "Apartman yöneticisi Zeynep Hanım (61) — aidat",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "4500 TL aidat 8 daireye bölünecek: 562.50 TL. Sistem '562.4999...' diye basıyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Programcı Decimal kullanmamış. Banker's rounding (yukarı/aşağı yuvarlama kuralı) belirlemediği için biri 562.50, biri 562.49 ödüyor — kavga çıkıyor. Decimal + ROUND_HALF_UP eklenince sorun bitti."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u02b-para-tarih-story-3",
+    "type": "useCase",
+    "title": "Otel rezervasyonu yapan Yusuf Bey (66)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "İngiltere'den Antalya'ya gece varış 23:50 olarak kayıtlı. Otel kayıt sistemine 'erken giriş' yazıyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "İngiltere'de saat 20:50, TR'de 23:50 — sistem İngiltere saatine kayıtlı. Müşteri 'gece yarısı geleceğim, oda hazır olsun' diyor; otel '20:50 erken, sorun yok' diyor. Aynı an iki ayrı saat. UTC'ye çevrildiğinde herkes anlaştı."
+     }
+    ]
+   }
+  ]
+ }
+}

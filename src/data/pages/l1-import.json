@@ -1,0 +1,494 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-l1-import",
+  "sourceId": "l1-import",
+  "slug": "layer1/l1-import",
+  "title": "Veri İçe Aktarma — CSV upload + validate + dry-run",
+  "summary": "Müşteri 10K satırlık CSV yükledi. Hatalı satırı rapor et, geçenleri al, hatalıları reddet. Dry-run önizleme zorunlu.",
+  "categoryId": "layer1",
+  "tags": [
+   "layer1",
+   "import",
+   "csv",
+   "validation",
+   "dry-run"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-l1-export",
+   "page-layer1-file",
+   "page-scale-workers-deep"
+  ],
+  "blocks": [
+   {
+    "id": "block-l1-import-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "CSV/Excel upload, schema validation (Zod), dry-run preview, partial commit (geçenleri al), error report."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-import-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Import = onboarding'in en kritik adımı."
+     },
+     {
+      "type": "text",
+      "text": " Eski sistemden geçişin %80'i veri taşıma. Dry-run + clear error message olmadan müşteri vazgeçer."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-import-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "All-or-nothing tuzağı",
+    "segments": [
+     {
+      "type": "text",
+      "text": "5000 satırda 1 hata → tüm import iptal. "
+     },
+     {
+      "type": "strong",
+      "text": "Best-effort + hata raporu"
+     },
+     {
+      "type": "text",
+      "text": " UX dostu."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-import-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'POST /import endpoint: CSV upload S3'e. Worker: parse + Zod validate her satır. Dry-run preview JSON: {valid: N, invalid: M, errors: [...]}. UI onay sonrası real import (transaction bulk insert). Hata CSV: row, column, error.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-l1-import-h-import-strateji-tablosu",
+    "type": "heading",
+    "level": 4,
+    "text": "Import strateji tablosu"
+   },
+   {
+    "id": "block-l1-import-table",
+    "type": "table",
+    "columns": [
+     "Satır",
+     "Mod",
+     "Yer",
+     "UX"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "<1000"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sync"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "API request"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hemen sonuç"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "1K-100K"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Async worker"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Background job"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "'X dk içinde email'"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "100K+"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Chunked + paralel"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "DBOS durable"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Progress bar"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-l1-import-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-l1-import-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Import workflow (5 adım):"
+     }
+    ]
+   },
+   {
+    "id": "block-l1-import-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Upload"
+       },
+       {
+        "type": "text",
+        "text": " — CSV/Excel → S3 (presigned URL)"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Parse"
+       },
+       {
+        "type": "text",
+        "text": " — Parser ile satır satır oku (csv-parse, sheetjs)"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Validate"
+       },
+       {
+        "type": "text",
+        "text": " — Her satırı Zod schema ile kontrol"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Dry-run preview"
+       },
+       {
+        "type": "text",
+        "text": " — UI'da göster: 'X satır geçer, Y satır hatalı, Z satır şüpheli'"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Commit"
+       },
+       {
+        "type": "text",
+        "text": " — Kullanıcı onaylarsa: transaction içinde insert"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-l1-import-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Dry-run zorunlu sebep:"
+     },
+     {
+      "type": "text",
+      "text": " Kullanıcı yanlış kolon eşlemesi yapabilir; import bittikten sonra 10K satır geri almak imkânsız."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-import-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Partial commit options:"
+     }
+    ]
+   },
+   {
+    "id": "block-l1-import-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "All-or-nothing"
+      },
+      {
+       "type": "text",
+       "text": ": 1 satır hatalı → tüm import iptal (güvenli)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Best-effort"
+      },
+      {
+       "type": "text",
+       "text": ": Geçenleri al, hatalıları rapor et (UX dostu)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Threshold"
+      },
+      {
+       "type": "text",
+       "text": ": %5'ten fazla hata → iptal (otomatik)"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-l1-import-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Performance:"
+     }
+    ]
+   },
+   {
+    "id": "block-l1-import-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "10K satır: in-memory parse → bulk insert (saniyeler)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "100K satır: streaming + batch insert (her 1000'de bir)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "1M satır: chunk dosya, paralel worker (DBOS)"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-l1-import-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-l1-import-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Müşterinin dosyadaki verisini sisteme güvenle aktarma + hatalı satıyı raporlama."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Manuel veri girişi = günler. Import = dakikalar."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Upload → S3. 2) Parser. 3) Zod validation. 4) Dry-run UI. 5) Onayda transaction bulk insert."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "l1-import"
+       },
+       {
+        "type": "text",
+        "text": " cluster + "
+       },
+       {
+        "type": "code",
+        "text": "scale-workers-deep"
+       },
+       {
+        "type": "text",
+        "text": " background."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Müşteri onboard ederken (legacy system geçişi)."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Backend developer parser + validator; frontend developer mapping UI."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Belediye nüfus kaydı: önce form doldur (CSV), memur kontrol (validate), defter (insert)."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-l1-import-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-l1-import-story",
+    "type": "useCase",
+    "title": "Murat Bey (61) eski yöneticiden devir",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Murat Bey eski yöneticiden 50 daire bilgisi Excel olarak aldı."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Upload → dry-run: '47 satır geçer, 3 satır eksik telefon'. Murat Bey 3 eksiği tamamladı, tekrar yükledi, hepsi geçti."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-import-story-2",
+    "type": "useCase",
+    "title": "Hatice Teyze (62) market müşteri kartları",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "30 yıllık karton müşteri kartlarını Excel'e yazdı. 500 kart."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Import 5 sn sürdü, 12 kart'ta telefon yanlış format. Hata raporu indirip Excel'de düzeltti, tekrar yükledi."
+     }
+    ]
+   }
+  ]
+ }
+}

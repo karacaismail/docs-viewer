@@ -1,0 +1,534 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-edu-u09-plugin",
+  "sourceId": "edu-u09",
+  "slug": "egitim/edu-u09-plugin",
+  "title": "Plugin Mimarisi",
+  "summary": "Manifest, registry, hook, semver, marketplace, contract test, sandboxing.",
+  "categoryId": "egitim",
+  "tags": [
+   "education",
+   "u09",
+   "plugin",
+   "marketplace",
+   "extensibility"
+  ],
+  "meta": {
+   "granularity": "buyuk-tas",
+   "state": "ok"
+  },
+  "related": [
+   "page-edu-u03-doctype",
+   "page-edu-u08-eventbus",
+   "page-edu-u10-deploy",
+   "page-kernel-plugin"
+  ],
+  "blocks": [
+   {
+    "id": "block-edu-u09-plugin-lh",
+    "type": "lessonHeader",
+    "unit": "Ünite 09",
+    "title": "Plugin Mimarisi — çekirdeği bozmadan davranış ekle",
+    "level": "ileri",
+    "durationMin": 70,
+    "prereq": [
+     "edu-u03",
+     "edu-u08"
+    ],
+    "goals": [
+     "Plugin manifest'inin yapısını ve neden gerektiğini bilirsin.",
+     "Plugin registry'nin çakışma çözümündeki rolünü anlatabilirsin.",
+     "Hook noktalarına nasıl abone olunduğunu söyleyebilirsin.",
+     "Semver'in marketplace'teki anlamını biliyorsun.",
+     "Sandboxing'in plugin güvenliği için neden zorunlu olduğunu söyleyebilirsin.",
+     "WordPress/Drupal/Frappe örneklerini ortak ilkelere bağlayabilirsin."
+    ]
+   },
+   {
+    "id": "block-edu-u09-plugin-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "WordPress, Drupal, Frappe ve Salesforce'un ortak başarısı: "
+     },
+     {
+      "type": "strong",
+      "text": "çekirdek küçük + plugin sistemi açık"
+     },
+     {
+      "type": "text",
+      "text": ". Sen yeni özellik için çekirdeğe dokunmuyorsun; "
+     },
+     {
+      "type": "term",
+      "text": "manifest",
+      "termId": "term-manifest-edu-u09-plugin"
+     },
+     {
+      "type": "text",
+      "text": " + "
+     },
+     {
+      "type": "term",
+      "text": "hook",
+      "termId": "term-hook-edu-u09-plugin"
+     },
+     {
+      "type": "text",
+      "text": " yazıyorsun. Bu sayede 'community ekonomisi' kurulur — binlerce 3rd-party "
+     },
+     {
+      "type": "term",
+      "text": "plugin",
+      "termId": "term-plugin-edu-u09-plugin"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u09-plugin-feat",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Manifest",
+      "definition": [
+       {
+        "type": "text",
+        "text": "name, version, requires, hooks, doctypes, permissions."
+       }
+      ]
+     },
+     {
+      "term": "Registry",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Hangi plugin yüklü, hangi sürüm, hangi tenant'ta aktif."
+       }
+      ]
+     },
+     {
+      "term": "Hook noktaları",
+      "definition": [
+       {
+        "type": "text",
+        "text": "before_insert, validate, on_submit, on_change."
+       }
+      ]
+     },
+     {
+      "term": "Lifecycle hooks",
+      "definition": [
+       {
+        "type": "text",
+        "text": "install, activate, deactivate, uninstall."
+       }
+      ]
+     },
+     {
+      "term": "Permission scope",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Plugin'in hangi DocType'lara, hangi event'lere, hangi API'lere erişebileceği."
+       }
+      ]
+     },
+     {
+      "term": "Contract test",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Plugin API'sini bozmayacağını garanti eden test seti."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u09-plugin-h-bir-plugin-in-yasam-dongusu",
+    "type": "heading",
+    "level": 3,
+    "text": "Bir plugin'in yaşam döngüsü"
+   },
+   {
+    "id": "block-edu-u09-plugin-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "1. Install",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Plugin paketi (zip/git) yüklenir. Manifest doğrulanır (semver match, izinler izinli mi)."
+       }
+      ]
+     },
+     {
+      "title": "2. Migration",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Plugin'in kendi DocType/tablo migration'ları çalışır. Çekirdek migration framework'u kullanır."
+       }
+      ]
+     },
+     {
+      "title": "3. Activate",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Registry'ye eklenir. Plugin'in hook'ları subscribe edilir. activate_hook çalışır (örn: default ayarlar)."
+       }
+      ]
+     },
+     {
+      "title": "4. Run",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Plugin trafiğe açık. Her event'te ilgili hook'lar çalışır. Performans + error monitor altında."
+       }
+      ]
+     },
+     {
+      "title": "5. Deactivate",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Hook'lar unsubscribe. Veri durur (silinmez). Tekrar aktive edilebilir."
+       }
+      ]
+     },
+     {
+      "title": "6. Uninstall",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Plugin tamamen kaldırılır. uninstall_hook → migrate down → veri silinir/arşivlenir."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u09-plugin-co",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Filter vs Action — pratik örnek",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Filter"
+     },
+     {
+      "type": "text",
+      "text": ": "
+     },
+     {
+      "type": "code",
+      "text": "apply_filter('order_total', $total)"
+     },
+     {
+      "type": "text",
+      "text": " → her plugin total'ı modifiye edebilir (kupon plugin %10 düşer). "
+     },
+     {
+      "type": "strong",
+      "text": "Action"
+     },
+     {
+      "type": "text",
+      "text": ": "
+     },
+     {
+      "type": "code",
+      "text": "do_action('order_placed', $order)"
+     },
+     {
+      "type": "text",
+      "text": " → her plugin tepki verir (email plugin gönderir, analytics plugin loglar). İkisi de hook ama farklı semantik."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u09-plugin-co-2",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Plugin güvenliği",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Plugin'i tam yetkiyle çalıştırma! Permission scope (kullanıcı izniyle): 'Bu plugin Order tablosuna OKUR' → user onaylar → o izinle çalışır. Diğer tablolara erişim 403. WordPress'in yaşadığı 'sql injection plugin' tarihi öğretici."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u09-plugin-co-3",
+    "type": "callout",
+    "variant": "tr",
+    "title": "Semver kuralı",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "MAJOR"
+     },
+     {
+      "type": "text",
+      "text": " = breaking change (API silindi/değişti) — kullanıcı manuel migration. "
+     },
+     {
+      "type": "strong",
+      "text": "MINOR"
+     },
+     {
+      "type": "text",
+      "text": " = yeni feature (geriye uyumlu) — otomatik güncelleme OK. "
+     },
+     {
+      "type": "strong",
+      "text": "PATCH"
+     },
+     {
+      "type": "text",
+      "text": " = bug fix — otomatik güncelleme. Marketplace "
+     },
+     {
+      "type": "code",
+      "text": "^1.2.0"
+     },
+     {
+      "type": "text",
+      "text": " deyince '>= 1.2.0 ama < 2.0.0' anlar."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u09-plugin-h-uc-perspektiften-plugin",
+    "type": "heading",
+    "level": 3,
+    "text": "Üç perspektiften plugin"
+   },
+   {
+    "id": "block-edu-u09-plugin-story",
+    "type": "useCase",
+    "title": "Plugin geliştirici",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "E-fatura entegrasyonu plugin'i yazıyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "manifest.yaml + hooks.py yazar; çekirdek koduna dokunmaz. Marketplace'e push, semver 1.0.0. Müşteriler tek tık ile kurar."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u09-plugin-story-2",
+    "type": "useCase",
+    "title": "Sistem yöneticisi",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Yeni plugin kurmadan önce güvenlik denetimi."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Manifest'i okur: hangi DocType'lara erişiyor, hangi API'leri çağırıyor. Permission scope verir. Test ortamında dener → prod."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u09-plugin-story-3",
+    "type": "useCase",
+    "title": "Çekirdek mimar",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Yeni Order hook'u eklemek istiyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Contract test ekler — eski plugin'lerin hâlâ çalıştığını CI'da garantiler. Semver MINOR bump (yeni feature, geriye uyumlu)."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u09-plugin-chk",
+    "type": "checklist",
+    "title": "Kontrol listesi",
+    "items": [
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Manifest'in 5 zorunlu alanını sayabilirim. — name, version, requires, hooks, doctypes"
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Plugin registry'nin çakışmayı nasıl çözdüğünü biliyorum."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Hook'a abone olmayı 'before_save' örneğiyle anlatabilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Filter ile action hook farkını ayırt edebilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Semver MAJOR/MINOR/PATCH ayrımını söyleyebilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Plugin lifecycle (install→uninstall) 6 adımını sayabilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Permission scope = sandboxing temeli olduğunu biliyorum."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Contract test'in çekirdek güncellemesinde rolünü anlatabilirim."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u09-plugin-co-4",
+    "type": "callout",
+    "variant": "info",
+    "title": "Sonraki ünite",
+    "segments": [
+     {
+      "type": "ref",
+      "text": "edu-u10",
+      "refId": "edu-u10"
+     },
+     {
+      "type": "text",
+      "text": " — Deploy & Operations. Production'a güvenli geçiş + monitoring."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u09-plugin-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-edu-u09-plugin-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Ünite 09 — Eklenti Mimarisi. Ana koda dokunmadan yeni özellikler ekleme."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her özel ihtiyaç için ana kodu değiştirmek riski yüksek. Eklenti güvenli yol."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Eklenti yazarı 'tanıtım kartı' yazar; sistem kartı okuyup eklentiyi listeye ekler."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Müfredatın 9. ünitesi."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistem standart özelliklere ek bir ihtiyaç çıkarınca."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Plugin geliştiricileri."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mutfak robotunun aksesuarları."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

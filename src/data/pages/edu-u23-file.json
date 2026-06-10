@@ -1,0 +1,631 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-edu-u23-file",
+  "sourceId": "edu-u23",
+  "slug": "egitim/edu-u23-file",
+  "title": "Dosya İşleme — yükleme, optimize, virüs taraması",
+  "summary": "Kullanıcı 100MB dosya yükledi; sunucu çöktü. Antivirus taramadın, kötü dosya geldi. Presigned URL + ClamAV = çözüm.",
+  "categoryId": "egitim",
+  "tags": [
+   "education",
+   "file-upload",
+   "s3",
+   "clamav",
+   "image-optimization"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-layer1-file",
+   "page-scale-webhook",
+   "page-crosscut-security"
+  ],
+  "blocks": [
+   {
+    "id": "block-edu-u23-file-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Presigned URL (direkt S3), MIME validation, size limit, antivirus (ClamAV), image resize (sharp), video encoding (FFmpeg)."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u23-file-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Dosya yükleme = en risky özellik."
+     },
+     {
+      "type": "text",
+      "text": " Boyut, içerik tipi, virus, depolama — hepsi tuzak. "
+     },
+     {
+      "type": "term",
+      "text": "Presigned URL",
+      "termId": "term-presigned-url-edu-u23-file"
+     },
+     {
+      "type": "text",
+      "text": " + worker chain ile temiz çözüm."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u23-file-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Backend-through upload tuzağı",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Kullanıcı 500MB yükledi → backend RAM'e alır → çökme. Birden fazla eşzamanlı yükleme = OOM. "
+     },
+     {
+      "type": "strong",
+      "text": "Presigned URL direkt-from-browser-to-S3 ile backend RAM'i kullanmaz."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u23-file-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'File upload: presigned PUT URL endpoint, max 50MB image/*, 15dk valid. S3 webhook → backend metadata kaydet → ClamAV scan job → sharp resize 800px thumbnail → image_status = ready. Failed scan = file delete + log.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u23-file-h-upload-chain-worker-adimlari",
+    "type": "heading",
+    "level": 4,
+    "text": "Upload chain — worker adımları"
+   },
+   {
+    "id": "block-edu-u23-file-table",
+    "type": "table",
+    "columns": [
+     "Adım",
+     "İş",
+     "Süre"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "1. Presigned URL"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Backend URL üretir"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 100ms"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "2. Direct upload"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Browser → S3"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Dosya boyutuna göre"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "3. Webhook"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "S3 → backend 'upload done'"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Anında"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "4. Metadata"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Backend DB'ye kaydet"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 50ms"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "5. Antivirus"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ClamAV scan"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "5-60 sn"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "6. Optimize"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "sharp resize/convert"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "1-10 sn"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "7. Ready"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Frontend bildir (SSE)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Anında"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u23-file-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-edu-u23-file-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Direkt-from-browser-to-S3 (presigned URL):"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u23-file-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Klasik (kötü): browser → backend → S3. Backend 100MB'ı RAM'e alır, S3'e yollar. RAM şişer, yavaş."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u23-file-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Modern (iyi): backend "
+     },
+     {
+      "type": "code",
+      "text": "presigned PUT URL"
+     },
+     {
+      "type": "text",
+      "text": " üretir → browser direkt S3'e yükler → backend sadece metadata kaydeder."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u23-file-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Validation katmanları:"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u23-file-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Frontend"
+       },
+       {
+        "type": "text",
+        "text": " (UX): boyut + MIME type bildiri"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Presigned URL"
+       },
+       {
+        "type": "text",
+        "text": " kısıtlama: max 50MB, sadece image/*"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Backend webhook"
+       },
+       {
+        "type": "text",
+        "text": ": S3 'upload bitti' der; backend metadata kaydeder + virus scan tetikler"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Antivirus"
+       },
+       {
+        "type": "text",
+        "text": ": ClamAV ile dosyayı tarayıp clean değilse silmek"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u23-file-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "MIME validation:"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u23-file-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Frontend'in dediği MIME'a güvenme; backend "
+      },
+      {
+       "type": "code",
+       "text": "file --mime-type"
+      },
+      {
+       "type": "text",
+       "text": " çalıştır"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Filename extension'a güvenme; saldırgan "
+      },
+      {
+       "type": "code",
+       "text": "evil.png.exe"
+      },
+      {
+       "type": "text",
+       "text": " yazar"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u23-file-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Image optimization (sharp):"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u23-file-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Yüklenen 5MB JPEG → 200KB WebP + 800px thumbnail"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Disk + bandwidth %90 tasarruf"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Worker tarafında, async"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u23-file-p-8",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Video encoding (FFmpeg):"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u23-file-list-3",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Kullanıcı 1GB MP4 yükledi → 360p/720p/1080p HLS chunks"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Adaptive bitrate streaming için zorunlu"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Pahalı: dedicated worker pool"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u23-file-p-9",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Storage tier:"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u23-file-list-4",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Hot (S3 Standard): son 30 gün"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Warm (S3 IA): 30-90 gün"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Cold (S3 Glacier): 90+ gün — saniyeler içinde erişim değil"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u23-file-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-edu-u23-file-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kullanıcı dosya yüklemesi + optimize + güvenlik + arşivleme."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Dosya yüklerken sunucu çökmesin, virus geçmesin, alan bol kullanılmasın."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Presigned URL ile direkt S3'e. 2) MIME + size validation. 3) ClamAV antivirus. 4) sharp ile image optimize. 5) Storage tier policy."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "l1-file"
+       },
+       {
+        "type": "text",
+        "text": " cluster + S3-compatible storage (Hetzner Object Storage veya Backblaze B2)."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk file upload özelliği eklenirken disiplin hazır."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Backend developer worker yazar; DevOps S3 + ClamAV kurar; security team antivirus güncel tutar."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Eşya yükleme: kantar (size), ne olduğunu yazma (MIME), gümrükte tarama (antivirus), dolaba yerleştirme (storage tier)."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u23-file-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-edu-u23-file-story",
+    "type": "useCase",
+    "title": "Berber Mehmet Usta (60) — randevu defteri fotoğrafı",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Mehmet Usta müşteri saç fotoğraflarını telefonla çekip arşivliyor. Defter dolu, telefon dolu. Hangi müşteri hangi tarihte? Arama imkânsız."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Sistem: foto upload → S3 → image optimize 800px thumbnail → metadata (müşteri, tarih) ile arama. Telefon ağı kullanmaz."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u23-file-story-2",
+    "type": "useCase",
+    "title": "Apartman belge arşivi — Murat Bey (61)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Murat Bey apartman karar tutanaklarını PDF olarak topluyor. 50 PDF, hangisi hangi yıla?"
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Yüklerken: metadata (yıl, konu, katılımcılar). S3'te saklama. Arama: 'su deposu' kelimesi geçen tutanaklar. PDF text extraction (Tika) + search index."
+     }
+    ]
+   }
+  ]
+ }
+}

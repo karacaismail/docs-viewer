@@ -1,0 +1,663 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-edu-u14-cache-ratelimit",
+  "sourceId": "edu-u14",
+  "slug": "egitim/edu-u14-cache-ratelimit",
+  "title": "Cache ve Rate Limit — hız ve adalet",
+  "summary": "Cache = aynı işi 2 kez yapma. Rate limit = bir kullanıcı tüm kapasiteyi tüketmesin.",
+  "categoryId": "egitim",
+  "tags": [
+   "education",
+   "cache",
+   "rate-limit",
+   "redis",
+   "throttling"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-scale-cache",
+   "page-scale-ratelimit",
+   "page-scale-counter",
+   "page-crosscut-security"
+  ],
+  "blocks": [
+   {
+    "id": "block-edu-u14-cache-ratelimit-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Cache-aside pattern, invalidation (en zor 2 problem), token bucket, müşteri quota, DDoS koruması."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u14-cache-ratelimit-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "İki ayrı dert, iki ayrı çözüm:"
+     },
+     {
+      "type": "text",
+      "text": " *Yavaş mı?* → "
+     },
+     {
+      "type": "term",
+      "text": "Cache",
+      "termId": "term-cache-edu-u14-cache-ratelimit"
+     },
+     {
+      "type": "text",
+      "text": ". *Bir kullanıcı kapasiteyi tüketiyor mu?* → "
+     },
+     {
+      "type": "term",
+      "text": "Rate limit",
+      "termId": "term-rate-limit-edu-u14-cache-ratelimit"
+     },
+     {
+      "type": "text",
+      "text": ". İkisi de Layer-1 öncesi middleware. İkisi de Redis'i sever."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u14-cache-ratelimit-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "En klasik tuzak: invalidation",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Cache'i koydun, hız 10x. Bir gün müşteri 'eski fiyatı görüyorum!' diye şikâyet. DB güncellendi, cache eski. Çözüm: yazma anında ilgili cache key'lerini sil. "
+     },
+     {
+      "type": "strong",
+      "text": "Cache koymak kolay; doğru invalidate etmek zor."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u14-cache-ratelimit-co-2",
+    "type": "callout",
+    "variant": "info",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a şöyle yaz: *'GET /customer/:id endpoint'inde Redis cache ekle. Key: "
+     },
+     {
+      "type": "code",
+      "text": "cust:${id}"
+     },
+     {
+      "type": "text",
+      "text": ", TTL 300sn. Cache miss'te DB sorgula + cache'e yaz. PUT/PATCH /customer/:id ile değişince "
+     },
+     {
+      "type": "code",
+      "text": "cust:${id}"
+     },
+     {
+      "type": "text",
+      "text": " key'ini sil (invalidate). Rate limit: 100 req/min IP başına.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u14-cache-ratelimit-h-cache-pattern-karsilastirma",
+    "type": "heading",
+    "level": 4,
+    "text": "Cache pattern karşılaştırma"
+   },
+   {
+    "id": "block-edu-u14-cache-ratelimit-table",
+    "type": "table",
+    "columns": [
+     "Pattern",
+     "Okuma",
+     "Yazma",
+     "Risk"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Cache-aside"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Önce cache, yoksa DB+cache"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Direkt DB (cache invalidate)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Race condition (nadiren)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Write-through"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Cache'ten oku"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "DB+cache aynı anda"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yazma yavaşlar"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Write-behind"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Cache'ten oku"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Cache'e yaz, DB'ye sonra"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Veri kaybı (cache patlarsa)"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u14-cache-ratelimit-h-rate-limit-pattern-karsilastirma",
+    "type": "heading",
+    "level": 4,
+    "text": "Rate limit pattern karşılaştırma"
+   },
+   {
+    "id": "block-edu-u14-cache-ratelimit-table-2",
+    "type": "table",
+    "columns": [
+     "Pattern",
+     "Anlık burst?",
+     "Hassasiyet",
+     "Maliyet"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Token bucket"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ Evet"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Orta"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Düşük"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Leaky bucket"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✗ Hayır"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yüksek"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Düşük"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Sliding window"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kısmen"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yüksek"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yüksek (her istek hesap)"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u14-cache-ratelimit-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Quota tier örneği",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Ücretsiz"
+     },
+     {
+      "type": "text",
+      "text": ": 100 istek/saat. "
+     },
+     {
+      "type": "strong",
+      "text": "Pro"
+     },
+     {
+      "type": "text",
+      "text": ": 10K/saat. "
+     },
+     {
+      "type": "strong",
+      "text": "Enterprise"
+     },
+     {
+      "type": "text",
+      "text": ": limitsiz. Saatlik counter Redis'te tutulur; saat dönünce sıfırlanır. Kullanıcı limit'e yaklaştığında 'X / 10000 kullanıldı' header'ı dönder — bildirici."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u14-cache-ratelimit-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-edu-u14-cache-ratelimit-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Cache nedir?"
+     },
+     {
+      "type": "text",
+      "text": " Aynı veriyi tekrar hesaplamak yerine hızlı bir yerde sakla. İlk istek 200ms, sonraki 5ms."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u14-cache-ratelimit-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "3 pattern:"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u14-cache-ratelimit-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Cache-aside"
+       },
+       {
+        "type": "text",
+        "text": " (en yaygın): Kod önce cache'e bakar, yoksa DB'den çeker + cache'e yazar."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Write-through"
+       },
+       {
+        "type": "text",
+        "text": ": Yazma anında hem DB hem cache'e yaz."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Write-behind"
+       },
+       {
+        "type": "text",
+        "text": ": Cache'e yaz, DB'ye yavaş yavaş yaz (riskli; data loss)."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u14-cache-ratelimit-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Invalidation = bilgisayar biliminin 2 zor probleminden 1'i."
+     },
+     {
+      "type": "text",
+      "text": " Cache eski veri tutar; DB güncellenirse cache geçersiz olur. Çözümler: "
+     },
+     {
+      "type": "term",
+      "text": "TTL",
+      "termId": "term-ttl-edu-u14-cache-ratelimit"
+     },
+     {
+      "type": "text",
+      "text": " (zaman aşımı), event-based "
+     },
+     {
+      "type": "term",
+      "text": "invalidation",
+      "termId": "term-invalidation-edu-u14-cache-ratelimit"
+     },
+     {
+      "type": "text",
+      "text": " (DB güncellendi → cache temizle)."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u14-cache-ratelimit-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Rate limit:"
+     },
+     {
+      "type": "text",
+      "text": " Bir kullanıcı/IP saniyede 100'den fazla istek atamasın. Yöntem:"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u14-cache-ratelimit-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Token bucket"
+      },
+      {
+       "type": "text",
+       "text": " (en yaygın): Saniyede X token yenilenir, her istek 1 token tüketir; token bittiyse 429 dön."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Leaky bucket"
+      },
+      {
+       "type": "text",
+       "text": ": Sabit hızda işle, gelen aşırı isteği at."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Sliding window"
+      },
+      {
+       "type": "text",
+       "text": ": Son 60 saniyede kaç istek geldi."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u14-cache-ratelimit-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Quota"
+     },
+     {
+      "type": "text",
+      "text": " (tier'a göre): Ücretsiz: 100/saat, Pro: 10K/saat, Enterprise: limitsiz."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u14-cache-ratelimit-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-edu-u14-cache-ratelimit-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Cache: aynı işi 2 kez yapmamak için hızlı hafızada sakla. Rate limit: bir kullanıcının kapasiteyi tek başına tüketmesini engelle."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Cache olmadan sistem 1000 eşzamanlı kullanıcıya dayanamaz. Rate limit olmadan bir kötü niyetli kullanıcı sistemi yıkar."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Sık okunan, az değişen veriyi Redis'e cache'le. TTL: 60sn-1 saat arası. 2) Değişince invalidate et. 3) Her API endpoint'inde rate limit middleware. 4) Token bucket: kullanıcı/IP başına saniyede 10 token, max 100 burst."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Cache: "
+       },
+       {
+        "type": "code",
+        "text": "scale-cache"
+       },
+       {
+        "type": "text",
+        "text": " cluster. Rate limit: "
+       },
+       {
+        "type": "code",
+        "text": "scale-ratelimit"
+       },
+       {
+        "type": "text",
+        "text": " cluster. Her ikisi de Layer-1 öncesi middleware'da çalışır."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Cache: aynı sorguya günde 100+ istek varsa. Rate limit: public endpoint her zaman; internal API en az."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "SRE/mimar TTL kuralını koyar; geliştirici cache key'i seçer; pazarlama quota tier'ı belirler."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Cache = sık çıkardığın eşyayı dolaba değil masaya koyma. Rate limit = sınıfta 'her öğrenci 5 dk söz hakkı' kuralı."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u14-cache-ratelimit-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-edu-u14-cache-ratelimit-story",
+    "type": "useCase",
+    "title": "Bakkal Hatice Teyze (62) — sık satılan ürünler",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Sigara, ekmek, su — günde 100 kez aynı fiyat sorulur. Hatice Teyze her seferinde defteri açıp arıyordu. Sonra masaya 'sigara: 50 TL, ekmek: 7 TL, su: 5 TL' kâğıdı yapıştırdı."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Bu cache. Fiyat değişince kâğıdı günceller (invalidation). Yoksa kullanıcı eski fiyatı duyar = sorun."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u14-cache-ratelimit-story-2",
+    "type": "useCase",
+    "title": "Apartman çamaşırhanesi — Murat Bey (61)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "8 daireli binanın ortak çamaşır makinesi var. Murat Bey 'günde 3 saat herkese hak' diye yazdı kapıya. Yoksa bir daire 24 saat tutardı."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Bu rate limit. Adil + makine yıpranmaz. Yoksa bir aile sistemi tek başına kullanır = diğerleri mahrum."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u14-cache-ratelimit-story-3",
+    "type": "useCase",
+    "title": "Berber randevu defteri — Mehmet Usta (60)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Mehmet Usta günde max 12 müşteri kabul ediyor. 'Bugün dolu, yarına yaz' diyor. Aynı müşteriye günde 3 kez gelmesini de yasakladı."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Rate limit (günde 12) + quota (müşteri başına 1). Dış sistem API'leri böyle: 'saatte 100, müşteri başına 10'."
+     }
+    ]
+   }
+  ]
+ }
+}

@@ -1,0 +1,618 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-edu-u22-email-sms",
+  "sourceId": "edu-u22",
+  "slug": "egitim/edu-u22-email-sms",
+  "title": "Email + SMS — bildirim güvenirliği",
+  "summary": "Email gönderdin diye geldi sanma. SPF/DKIM/DMARC yoksa spam'a düşer. SMS: cep operatörü engelleyebilir.",
+  "categoryId": "egitim",
+  "tags": [
+   "education",
+   "email",
+   "sms",
+   "deliverability",
+   "spf",
+   "dkim",
+   "dmarc"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-layer1-notification",
+   "page-crosscut-observability",
+   "page-crosscut-security"
+  ],
+  "blocks": [
+   {
+    "id": "block-edu-u22-email-sms-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "SMTP vs SES/SendGrid, SPF/DKIM/DMARC, bounce/complaint handling, SMS provider seçimi, multi-channel fallback."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u22-email-sms-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Email = en az güvenilir kanal."
+     },
+     {
+      "type": "text",
+      "text": " Gönderdin diye ulaştı sanma. "
+     },
+     {
+      "type": "term",
+      "text": "SPF",
+      "termId": "term-spf-edu-u22-email-sms"
+     },
+     {
+      "type": "text",
+      "text": "/"
+     },
+     {
+      "type": "term",
+      "text": "DKIM",
+      "termId": "term-dkim-edu-u22-email-sms"
+     },
+     {
+      "type": "text",
+      "text": "/"
+     },
+     {
+      "type": "term",
+      "text": "DMARC",
+      "termId": "term-dmarc-edu-u22-email-sms"
+     },
+     {
+      "type": "text",
+      "text": " + "
+     },
+     {
+      "type": "term",
+      "text": "bounce",
+      "termId": "term-bounce-edu-u22-email-sms"
+     },
+     {
+      "type": "text",
+      "text": " handling olmadan transactional email kullanılamaz."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u22-email-sms-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Self-hosted SMTP tuzağı",
+    "segments": [
+     {
+      "type": "text",
+      "text": "'Postfix kurarım, ücretsiz' der. Yeni IP = 0 reputation = spam'a düşer. Reputation kazanmak 6 ay + sabır. "
+     },
+     {
+      "type": "strong",
+      "text": "SES/SendGrid kullan, IP reputation hazır."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u22-email-sms-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'Email worker: SES kullan, from address verified domain, SPF/DKIM/DMARC DNS kayıtlı varsayım. Bounce webhook → users.email_status = bounced. Open/click tracking. Idempotency: aynı (user, template, day) tekrar gönderme.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u22-email-sms-h-deliverability-kontrol-listesi",
+    "type": "heading",
+    "level": 4,
+    "text": "Deliverability kontrol listesi"
+   },
+   {
+    "id": "block-edu-u22-email-sms-table",
+    "type": "table",
+    "columns": [
+     "Kontrol",
+     "Komut/Yer",
+     "Beklenen"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "SPF"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "dig TXT yourdomain.com"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "v=spf1 include:..."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "DKIM"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "dig TXT selector._domainkey.yourdomain.com"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "v=DKIM1; k=rsa;..."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "DMARC"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "dig TXT _dmarc.yourdomain.com"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "v=DMARC1; p=quarantine;..."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Bounce webhook"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "SES/SendGrid dashboard"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Endpoint yapılandırılmış"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Suppression list"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "users tablo"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "email_status kolonu"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Reputation"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "mail-tester.com"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "10/10"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u22-email-sms-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-edu-u22-email-sms-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Email gönderim seçenekleri:"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u22-email-sms-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Self-hosted SMTP"
+       },
+       {
+        "type": "text",
+        "text": ": Postfix kurarsın → IP reputation zayıf → spam'a düşer. "
+       },
+       {
+        "type": "strong",
+        "text": "YASAK"
+       },
+       {
+        "type": "text",
+        "text": " modern sistemde."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "SES (AWS)"
+       },
+       {
+        "type": "text",
+        "text": ": Ucuz ($0.10/1000), reputation iyi. EU region için Hetzner ile uyumlu."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "SendGrid/Mailgun/Postmark"
+       },
+       {
+        "type": "text",
+        "text": ": Pahalı ama temiz reputation + analytics."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u22-email-sms-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Deliverability triple (zorunlu DNS):"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u22-email-sms-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "SPF"
+      },
+      {
+       "type": "text",
+       "text": " (Sender Policy Framework): 'Bu domain'in gönderebileceği sunucu listesi'. "
+      },
+      {
+       "type": "code",
+       "text": "v=spf1 include:_spf.mailgun.org -all"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "DKIM"
+      },
+      {
+       "type": "text",
+       "text": " (DomainKeys Identified Mail): Her email'e cryptographic imza. Sahteciliği önler."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "DMARC"
+      },
+      {
+       "type": "text",
+       "text": ": SPF + DKIM uyumsuz olursa ne yap? Reject mi, quarantine mi?"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u22-email-sms-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu üçü yoksa Gmail/Outlook %80 spam'a yollar."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u22-email-sms-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Bounce + Complaint handling:"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u22-email-sms-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Hard bounce"
+      },
+      {
+       "type": "text",
+       "text": " (kalıcı): Suppression list — bir daha gönderme"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Soft bounce"
+      },
+      {
+       "type": "text",
+       "text": " (geçici): 24 saat sonra retry"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Complaint"
+      },
+      {
+       "type": "text",
+       "text": " (spam işareti): O kullanıcıya bir daha mail gönderme; AWS senin reputation'unu düşürür"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u22-email-sms-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "SMS sağlayıcı:"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u22-email-sms-list-3",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Twilio"
+      },
+      {
+       "type": "text",
+       "text": ": Uluslararası, pahalı"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Netgsm/İletimerkezi"
+      },
+      {
+       "type": "text",
+       "text": ": TR yerel, ucuz, operatör dostu"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "MessageBird"
+      },
+      {
+       "type": "text",
+       "text": ": Avrupa"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u22-email-sms-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Multi-channel fallback:"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u22-email-sms-code",
+    "type": "codeBlock",
+    "language": "text",
+    "code": "1. Push notification → kullanıcı app'i açtı mı?\n2. Email → 5 dk içinde tıklandı mı?\n3. SMS → kritik bildirim (ödeme, randevu) için son şans"
+   },
+   {
+    "id": "block-edu-u22-email-sms-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-edu-u22-email-sms-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Email ve SMS bildirimleri güvenilir gönderme + ulaşıldığını doğrulama."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Email gönderdin = ulaştığı belli değil. SPF/DKIM/DMARC olmadan spam'a düşer. Multi-channel olmadan kritik bildirim kaybolur."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) SES veya SendGrid + SPF/DKIM/DMARC DNS. 2) Bounce/complaint webhook → suppression list. 3) Multi-channel: push → email → SMS. 4) Open/click tracking (analytics)."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "l1-notification"
+       },
+       {
+        "type": "text",
+        "text": " cluster. Worker'lar event'ten tetiklenir."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk transactional email (password reset, fatura) öncesi deliverability hazır."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "DevOps DNS kayıtlarını ekler; backend developer worker yazar; CRM team şikâyet oranını izler."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kargo: gönderildi (ship), yolda (in_transit), teslim edildi (delivered), iade (bounce). Email aynı 4 durum."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u22-email-sms-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-edu-u22-email-sms-story",
+    "type": "useCase",
+    "title": "Postacı Yusuf Bey (66) — eski usul mektup",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Yusuf Bey emekli postacı. Mektup elden teslim edilir; alıcı yoksa kapı kâğıdı bırakır, tekrar dener. 3 deneme sonu posta kutusuna."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Bu deliverability: mektup 'gönderildi' demek 'teslim edildi' demek değil. Sistem aynı: gönderim = ?, teslim = bounce kontrolü ile."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u22-email-sms-story-2",
+    "type": "useCase",
+    "title": "Hatice Teyze (62) — randevu hatırlatma",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Doktor randevusunu unuttu, geç geldi. Klinik telefon edemedi (numara değişmiş), SMS attılar — gitmedi (operatör spam filtresi)."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Multi-channel fallback: önce push, sonra email, sonra SMS. Tek kanala bel bağlama."
+     }
+    ]
+   }
+  ]
+ }
+}

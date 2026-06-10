@@ -1,0 +1,531 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-scale-cache",
+  "sourceId": "scale-cache",
+  "slug": "scale/scale-cache",
+  "title": "Caching katmanı — pattern + invalidation",
+  "summary": "Yavaş veri kaynağına aynı soruyu 2. kez sormama tekniği. Doğru cache 10x hız, yanlış cache eski veri.",
+  "categoryId": "scale",
+  "tags": [
+   "scale",
+   "cache",
+   "redis",
+   "invalidation",
+   "performance"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-scale-counter",
+   "page-scale-projections",
+   "page-crosscut-observability"
+  ],
+  "blocks": [
+   {
+    "id": "block-scale-cache-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Cache-aside (en yaygın), write-through, write-behind. Redis varsayılan. Invalidation: TTL + event-based."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-cache-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Cache'in altın kuralı:"
+     },
+     {
+      "type": "text",
+      "text": " *'Verinin tazelenme süresi cache TTL'inden uzun olmalı.'* Fiyat saniyede değişiyorsa cache koyma; günde bir değişiyorsa 1 saat TTL güvenli."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-cache-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Cache stampede tuzağı",
+    "segments": [
+     {
+      "type": "text",
+      "text": "10.000 kullanıcı aynı sayfaya bakıyor. TTL bitti. 10.000 istek aynı anda DB'ye → DB çöker. Çözüm: "
+     },
+     {
+      "type": "strong",
+      "text": "distributed lock"
+     },
+     {
+      "type": "text",
+      "text": " (1 istek DB'ye gider, diğerleri bekler) veya "
+     },
+     {
+      "type": "strong",
+      "text": "stale-while-revalidate"
+     },
+     {
+      "type": "text",
+      "text": " (eski cache'i kullan, arka planda yenile)."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-cache-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'Product katalog için Redis cache. Key: "
+     },
+     {
+      "type": "code",
+      "text": "product:${slug}:v1"
+     },
+     {
+      "type": "text",
+      "text": ". TTL 1 saat. Cache-aside pattern. Stampede koruması için singleflight (aynı key 2. kez aynı anda hesaplanmaz). PUT/PATCH product'ta invalidate.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-cache-h-cache-stratejisi-veri-tipi",
+    "type": "heading",
+    "level": 4,
+    "text": "Cache stratejisi → veri tipi"
+   },
+   {
+    "id": "block-scale-cache-table",
+    "type": "table",
+    "columns": [
+     "Veri",
+     "Strateji",
+     "TTL",
+     "Invalidation"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Ürün katalog"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Cache-aside Redis"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "1 saat"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Event-based + TTL"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kullanıcı profili"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Cache-aside Redis"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "5 dakika"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yazma anında"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Yetki/Rol"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "App memory LRU"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "60 sn"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Event-based"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Static asset"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "CDN edge"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "30 gün"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hash-based URL"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Anlık fiyat"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "CACHE YOK"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-cache-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-scale-cache-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Cache stratejisi karar ağacı:"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-cache-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Sık okunur + nadiren değişir → "
+      },
+      {
+       "type": "strong",
+       "text": "Redis + TTL 1-24 saat"
+      },
+      {
+       "type": "text",
+       "text": " (örn. ürün katalog)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Sık okunur + sık değişir → "
+      },
+      {
+       "type": "strong",
+       "text": "Redis + event-based invalidate"
+      },
+      {
+       "type": "text",
+       "text": " (örn. kullanıcı profili)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Her kullanıcıya farklı + büyük → "
+      },
+      {
+       "type": "strong",
+       "text": "Application memory + LRU"
+      },
+      {
+       "type": "text",
+       "text": " (örn. yetki cache'i)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Static asset → "
+      },
+      {
+       "type": "strong",
+       "text": "CDN edge cache"
+      },
+      {
+       "type": "text",
+       "text": " (örn. resim, JS bundle)"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-cache-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Cache key disiplini:"
+     },
+     {
+      "type": "text",
+      "text": " "
+     },
+     {
+      "type": "code",
+      "text": "<entity>:<id>:<version>"
+     },
+     {
+      "type": "text",
+      "text": " — "
+     },
+     {
+      "type": "code",
+      "text": "customer:42:v1"
+     },
+     {
+      "type": "text",
+      "text": ". Version eklersen şema değişince eski cache otomatik invalidate."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-cache-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Tehlikeler:"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-cache-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Cache stampede"
+      },
+      {
+       "type": "text",
+       "text": " (thundering herd): TTL bitince 1000 istek aynı anda DB'ye gider. Çözüm: distributed lock veya stale-while-revalidate."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Cache poisoning"
+      },
+      {
+       "type": "text",
+       "text": ": Yanlış veri cache'e girdiyse 1 saat öyle kalır. Çözüm: write-through veya event-based invalidate."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Stale read"
+      },
+      {
+       "type": "text",
+       "text": ": Eski veri kullanıcıya gider. Kabul edilebilir mi? Fiyat: HAYIR. Mesai saati: EVET."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-cache-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-scale-cache-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yavaş veri kaynağına aynı soruyu tekrar sormamak için hızlı bir yerde (Redis) kopya tutma sistemi."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "DB sorgusu 100ms, Redis 1ms = 100x hız. 1000 eşzamanlı kullanıcı için olmazsa olmaz."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Cache-aside default. 2) Key: "
+       },
+       {
+        "type": "code",
+        "text": "entity:id:version"
+       },
+       {
+        "type": "text",
+        "text": ". 3) TTL 60sn-1 saat (veri taze kalma süresine göre). 4) Yazma anında ilgili key'i sil. 5) Stampede için stale-while-revalidate."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Layer-1 öncesi middleware veya repository layer. Redis cluster Hetzner'da Postgres ile yan yana."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Aynı veri günde 10+ kez sorulursa cache kur. Profil, katalog, yetki bilgisi tipik."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici cache key seçer; SRE TTL+invalidation kuralını ayarlar."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sözlük açmadan kelime bilmek = cache hit. Bilmiyorsan sözlüğe bakıp aklında tutmak = cache miss + cache fill."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-scale-cache-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-scale-cache-story",
+    "type": "useCase",
+    "title": "Bakkal Hatice Teyze (62) — fiyat kâğıdı",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Sık satılan 10 ürünün fiyatını kâğıda yazıp masaya yapıştırdı. Müşteri sorduğunda kâğıda bakıyor, hızlı. Fiyat artınca yeni kâğıt yapıştırıyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Bu cache-aside + manual invalidate. Hızlı + eski fiyat gösterilmez (kâğıt güncellenir)."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-cache-story-2",
+    "type": "useCase",
+    "title": "Apartman yöneticisi Murat Bey (61) — dairelerin ödeme durumu",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Murat Bey defterde 'kim ödedi, kim ödemedi' bilgisini tutuyordu. Her sorduğunda defter açıyor. Sonra kapıya kısa bir tablo astı: 'Eylül aidatı durumu'. Tablo özet; detay deftere."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Bu cache: özet kâğıt = cache, defter = DB. Yeni ödeme geldiğinde tabloyu güncellemek lazım — invalidation."
+     }
+    ]
+   }
+  ]
+ }
+}

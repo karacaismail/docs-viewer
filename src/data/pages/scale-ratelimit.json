@@ -1,0 +1,514 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-scale-ratelimit",
+  "sourceId": "scale-ratelimit",
+  "slug": "scale/scale-ratelimit",
+  "title": "Rate Limit + Quota",
+  "summary": "Kötü niyetli veya hatalı istemcinin sistemi tüketmesini engelle. Müşteri başına saatlik kontingen + IP başına saniyelik tavan.",
+  "categoryId": "scale",
+  "tags": [
+   "scale",
+   "rate-limit",
+   "quota",
+   "ddos",
+   "throttling"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-scale-cache",
+   "page-crosscut-security",
+   "page-edu-u14-cache-ratelimit",
+   "page-kernel-tenancy"
+  ],
+  "blocks": [
+   {
+    "id": "block-scale-ratelimit-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Token bucket (varsayılan), sliding window (kritik için), leaky bucket (akış kontrolü). Tier'lı quota: ücretsiz/pro/enterprise."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-ratelimit-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Rate limit = adalet aracı."
+     },
+     {
+      "type": "text",
+      "text": " Tek kullanıcı tüm kapasiteyi tüketmesin. Sistemi koruma + iyi müşteriye hız garantisi."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-ratelimit-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "DDoS tek başına yeterli değil",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Cloudflare DDoS'u keser ama 'meşru' bir bot saatte 100K istek atabilir = sistemi yer. Uygulama içi rate limit + quota gerek. "
+     },
+     {
+      "type": "strong",
+      "text": "İki katmanlı koruma."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-ratelimit-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'Express middleware: token bucket Redis ile. IP başına 100 req/dk + müşteri başına tier'a göre (free: 1K/saat, pro: 10K/saat). 429 dönerken X-RateLimit-* header'ları + Retry-After.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-ratelimit-h-tier-limit-matrisi",
+    "type": "heading",
+    "level": 4,
+    "text": "Tier × limit matrisi"
+   },
+   {
+    "id": "block-scale-ratelimit-table",
+    "type": "table",
+    "columns": [
+     "Tier",
+     "Saatlik",
+     "Saniyelik burst",
+     "Endpoint exception"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Anonymous IP"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "60"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "5"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Login: 5/dk"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Free"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "1.000"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "20"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Export: 1/saat"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Pro"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "10.000"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "100"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Export: 10/saat"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Enterprise"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sınırsız + sözleşme"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "500"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Custom"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-ratelimit-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-scale-ratelimit-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "3 katmanlı koruma:"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-ratelimit-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "IP başına saniyelik tavan"
+       },
+       {
+        "type": "text",
+        "text": " (Cloudflare/Nginx): DDoS, bot tarama"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Müşteri başına saatlik kontingen"
+       },
+       {
+        "type": "text",
+        "text": " (uygulama içi): tier'a göre 100/10K/sınırsız"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Endpoint başına özel limit"
+       },
+       {
+        "type": "text",
+        "text": " (ağır operasyonlar): export 1/dakika, login 5/dakika"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-scale-ratelimit-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Token bucket — varsayılan:"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-ratelimit-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Saniyede X token yenilenir"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Burst kapasitesi: kovada max Y token"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Her istek 1 token harcar"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Token yoksa 429 + "
+      },
+      {
+       "type": "code",
+       "text": "Retry-After: 30"
+      },
+      {
+       "type": "text",
+       "text": " header"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-ratelimit-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Response header'ları (standart):"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-ratelimit-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "code",
+       "text": "X-RateLimit-Limit: 100"
+      }
+     ],
+     [
+      {
+       "type": "code",
+       "text": "X-RateLimit-Remaining: 87"
+      }
+     ],
+     [
+      {
+       "type": "code",
+       "text": "X-RateLimit-Reset: 1717683600"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-ratelimit-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Quota üst limit nasıl ayarlanır:"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-ratelimit-list-3",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Ücretsiz: 100 req/saat (deneme amaçlı)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Pro: 10K req/saat (küçük işletme)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Enterprise: sınırsız + adil kullanım sözleşmesi"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-ratelimit-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-scale-ratelimit-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir istemcinin (IP, kullanıcı, müşteri) belli sürede kaç istek atabileceğine sınır koyma sistemi."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir kötü niyetli kullanıcı sistemi yıkabilir. Bir hatalı bot loop'a girip 1M istek atabilir. Limit olmadan koruma yok."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) IP başına Nginx/Cloudflare seviyesinde DDoS koruması. 2) Uygulama içi token bucket + Redis sayaç. 3) Tier'a göre quota. 4) 429 + Retry-After header."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "scale-ratelimit"
+       },
+       {
+        "type": "text",
+        "text": " middleware Layer-1 öncesi. Redis sayaç tutar. Tier bilgisi "
+       },
+       {
+        "type": "code",
+        "text": "k-tenancy"
+       },
+       {
+        "type": "text",
+        "text": "'den gelir."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her public endpoint için zorunlu. Internal API'lerde DDoS değil ama bot koruması."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "SRE varsayılan limit koyar; ürün ekibi tier kuralını tanımlar; on-call 429 alarmlarına bakar."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Otoyol ödeme gişesi: saniyede 5 araba geçebilir. 100 araba gelirse kuyruk olur, yine 5'er 5'er geçer. Trafik daralmaz."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-scale-ratelimit-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-scale-ratelimit-story",
+    "type": "useCase",
+    "title": "Apartman çamaşırhanesi — Murat Bey (61)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "8 daireli binanın ortak makinesi. Murat Bey 'günde 3 saat hak' tablosu astı."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Bu quota. Adil + makine yıpranmaz. Token bucket: her gün 3 token verilir, her kullanım 1 harcar."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-ratelimit-story-2",
+    "type": "useCase",
+    "title": "Köy fırını — Hatice Teyze (62)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Hatice Teyze köyün fırınını işletiyor. Bayramda herkes ekmek ister; bir günde 100 sipariş. Sıraya kural koydu: 'Ailebaşına max 5 ekmek, sıraya 30 dk fasıla'."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Quota (5 ekmek/aile) + rate limit (30 dk fasıla). Yoksa 1 aile 50 alır, diğerleri mahrum."
+     }
+    ]
+   }
+  ]
+ }
+}

@@ -1,0 +1,610 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-l1-search-deep",
+  "sourceId": "l1-search-deep",
+  "slug": "layer1/l1-search-deep",
+  "title": "Arama Derinleştirme — autocomplete, faceted, did-you-mean",
+  "summary": "BM25 + vector yeterli değil. Modern arama: typeahead, kategori filtreleri, yazım düzeltme, kullanıcı sorgu analitiği.",
+  "categoryId": "layer1",
+  "tags": [
+   "layer1",
+   "search",
+   "autocomplete",
+   "faceted",
+   "analytics"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-layer1-search",
+   "page-scale-gis",
+   "page-scale-cache"
+  ],
+  "blocks": [
+   {
+    "id": "block-l1-search-deep-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Autocomplete (typeahead), faceted search (filtre kategoriler), spell check + did-you-mean, search analytics, spatial search."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-search-deep-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Arama = sitenin keşif aracı."
+     },
+     {
+      "type": "text",
+      "text": " BM25 tek başına yetmez; autocomplete + faceted + did-you-mean modern beklenti."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-search-deep-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "'Sıfır sonuç' analitiği unutulur",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Kullanıcı 'X' aradı, sonuç yok. Bu bilgiyi log'lamazsan ürün ekibi 'X eklemek gerek' fırsatını kaçırır. "
+     },
+     {
+      "type": "strong",
+      "text": "search_queries.results_count = 0 → günlük rapor."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-search-deep-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'Meilisearch entegrasyonu. /search endpoint: q + facets + filter. Frontend: input debounce 150ms + Combobox + facet sidebar. Search log tablosu (query, results_count, clicked_position). Did-you-mean: pg_trgm similarity().'*"
+     }
+    ]
+   },
+   {
+    "id": "block-l1-search-deep-h-arama-ozelligi-matrisi",
+    "type": "heading",
+    "level": 4,
+    "text": "Arama özelliği matrisi"
+   },
+   {
+    "id": "block-l1-search-deep-table",
+    "type": "table",
+    "columns": [
+     "Özellik",
+     "Postgres FTS",
+     "Meilisearch",
+     "Elasticsearch"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Autocomplete"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "pg_trgm + GIN"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ Built-in"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ Suggester"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Faceted"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Manuel aggregation"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ Built-in"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ Aggregations"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Did-you-mean"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "pg_trgm similarity"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Vector search"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "pgvector"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ (yeni)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ kNN"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Spatial"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "PostGIS"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sınırlı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ geo_distance"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Ölçek"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "100K dokuman"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "10M"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "100M+"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Self-host kolaylık"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ Postgres içinde"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Çok kolay"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Ağır"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-l1-search-deep-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-l1-search-deep-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Modern arama 5 bileşen:"
+     }
+    ]
+   },
+   {
+    "id": "block-l1-search-deep-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Autocomplete (typeahead)"
+       },
+       {
+        "type": "text",
+        "text": " — kullanıcı yazarken öneri - 2-3 harf sonra başlar - Debounce 150ms (her tuş için istek atma) - Önceki sorgular cache'lenir - Yapı: Trie (PostgreSQL pg_trgm + GIN index) veya Elasticsearch suggester"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-l1-search-deep-steps-2",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Faceted search (kategori filtreler)"
+       },
+       {
+        "type": "text",
+        "text": " — sol panelde 'Marka: Apple (24), Samsung (18)' - Sayım önbelleğe alınır (her arama sonrası) - Çoklu seçim AND/OR - Yapı: aggregations (Elasticsearch / OpenSearch)"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-l1-search-deep-steps-3",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Spell check + did-you-mean"
+       },
+       {
+        "type": "text",
+        "text": " — 'eklma' → 'elma mı demek istediniz?' - Levenshtein distance (max 2 hata) - PostgreSQL: pg_trgm similarity() - Phonetic (TR için): metaphone TR varyantı"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-l1-search-deep-steps-4",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Search analytics"
+       },
+       {
+        "type": "text",
+        "text": " — kullanıcı neyi aradı, neyi bulamadı - Her arama log'la: query, results_count, click_position - 'Sıfır sonuç' aramalar = içerik boşluğu (ürün eklemen gereken) - 'Yüksek tıklama' = popüler"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-l1-search-deep-steps-5",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Spatial search"
+       },
+       {
+        "type": "text",
+        "text": " — 'yakın eczane' (PostGIS ile birlikte) - ST_DWithin + arama filtresi"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-l1-search-deep-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Implementation seçimi:"
+     }
+    ]
+   },
+   {
+    "id": "block-l1-search-deep-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Küçük (<100K dokuman)"
+      },
+      {
+       "type": "text",
+       "text": ": Postgres full-text search + pg_trgm yeter"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Orta (100K-10M)"
+      },
+      {
+       "type": "text",
+       "text": ": Meilisearch (kolay, hızlı, ücretsiz self-host)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Büyük (10M+)"
+      },
+      {
+       "type": "text",
+       "text": ": OpenSearch/Elasticsearch (klasik, ağır)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Vector search"
+      },
+      {
+       "type": "text",
+       "text": ": pgvector (Postgres extension) veya Weaviate"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-l1-search-deep-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Modüler monolith için:"
+     },
+     {
+      "type": "text",
+      "text": " Meilisearch + pgvector hibrit pattern. Şu an cluster framework'te küçük ölçekte Postgres BM25 + vector yeterli."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-search-deep-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-l1-search-deep-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Klasik kelime eşleşmesi üstüne modern arama özellikleri: typeahead, faceted, did-you-mean, analytics."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kullanıcı aradığını bulamazsa siteyi terk eder. %30 e-ticaret cirosu doğrudan aramaya bağlı."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Meilisearch self-host. 2) Faceted aggregation. 3) pg_trgm similarity did-you-mean. 4) Search log tablosu. 5) PostGIS spatial."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "l1-search"
+       },
+       {
+        "type": "text",
+        "text": " cluster + "
+       },
+       {
+        "type": "code",
+        "text": "l1-search-deep"
+       },
+       {
+        "type": "text",
+        "text": " derinleştirme. Meilisearch service Docker'da."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk 1000 üründen sonra arama olmadan yetmez. Baştan altyapı hazır."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Backend developer index + sync; frontend developer typeahead UI; ürün ekibi analytics dashboard."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kütüphaneci: 'tarih' diyorsun, 'hangi dönem, hangi ülke, hangi yazar?' diye sorup raf raf gezdiriyor. Sadece konu vermek yetmez; filtre + öneri."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-l1-search-deep-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-l1-search-deep-story",
+    "type": "useCase",
+    "title": "Bakkal Hatice Teyze (62) — müşteri sorgusu",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Müşteri 'şeker' diyor. Hatice Teyze 'tane şeker mi, kesme şeker mi, esmer şeker mi?' diye soruyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Bu faceted search: ana terim + alt kategoriler. Müşteri seçim yaparak daraltır."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-search-deep-story-2",
+    "type": "useCase",
+    "title": "Berber Mehmet Usta (60) — yanlış adres",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Müşteri 'Çamlık' diye yazdı haritada; yer bulunamadı. Asıl 'Çamlıca' idi."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Did-you-mean: 'Çamlıca demek istediniz mi?' → 1 harf farkı, otomatik öneri."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-search-deep-story-3",
+    "type": "useCase",
+    "title": "Apartman yöneticisi Murat Bey (61) — kayıp eşya",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Sakini 'mavi şemsiye gördünüz mü?' diye sordu. Murat Bey defteri arar; 'şemsiye'yle başlayan tüm kayıtları listeler."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Autocomplete + arama: 'şem' yazınca 'şemsiye, şempanze' önerisi."
+     }
+    ]
+   }
+  ]
+ }
+}

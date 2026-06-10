@@ -1,0 +1,807 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-deploy-yap",
+  "sourceId": "deploy-yap",
+  "slug": "build/deploy-yap",
+  "title": "Deploy — yap otomasyonu",
+  "summary": "Tek komut: 'yap' → commit + push + Actions + Pages deploy. Mac → GitHub → canlı site.",
+  "categoryId": "build",
+  "tags": [
+   "deploy",
+   "ci",
+   "cd",
+   "github-pages",
+   "automation"
+  ],
+  "meta": {
+   "granularity": "buyuk-tas",
+   "state": "ok"
+  },
+  "related": [
+   "page-build-sequence",
+   "page-anti-patterns"
+  ],
+  "blocks": [
+   {
+    "id": "block-deploy-yap-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Git komutu yazmadan deploy: 'yap \"mesaj\"' tek satırla commit + push + GitHub Actions tetiklenir."
+     }
+    ]
+   },
+   {
+    "id": "block-deploy-yap-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Tek cümle:"
+     },
+     {
+      "type": "text",
+      "text": " kodu hazırla, "
+     },
+     {
+      "type": "code",
+      "text": "yap"
+     },
+     {
+      "type": "text",
+      "text": " de, gerisini sistem halletsin. Sen git komutu girmiyorsun; commit, push, test ve Pages deploy'u otomatik akıyor."
+     }
+    ]
+   },
+   {
+    "id": "block-deploy-yap-note",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Manuel git komutu = 0. Her şey 'yap' fonksiyonu içinde."
+     }
+    ]
+   },
+   {
+    "id": "block-deploy-yap-h-zihinsel-model",
+    "type": "heading",
+    "level": 4,
+    "text": "Zihinsel model"
+   },
+   {
+    "id": "block-deploy-yap-note-2",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Mac → 'yap' → push → Actions → Pages → canlı"
+     }
+    ]
+   },
+   {
+    "id": "block-deploy-yap-code",
+    "type": "codeBlock",
+    "language": "text",
+    "code": "Cowork kodu üretir  →  sen \"yap\" dersin  →  yap commit + push yapar\n                                              ↓\n                              GitHub Actions: test + build + Pages deploy\n                                              ↓\n                                  site canlı: kullanıcı-adın.github.io/repo/"
+   },
+   {
+    "id": "block-deploy-yap-feat",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "yap (shell function)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mac "
+       },
+       {
+        "type": "code",
+        "text": "~/.config/yap.zsh"
+       },
+       {
+        "type": "text",
+        "text": ". Commit + push, ilk kurulumda repo + Pages açar."
+       }
+      ]
+     },
+     {
+      "term": "GitHub Actions",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Repo içindeki "
+       },
+       {
+        "type": "code",
+        "text": ".github/workflows/"
+       },
+       {
+        "type": "text",
+        "text": ". Testleri ve deploy'u GitHub çalıştırır."
+       }
+      ]
+     },
+     {
+      "term": "deploy-pages.yml",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Build → upload-pages-artifact → deploy-pages. Vite + Node 22."
+       }
+      ]
+     },
+     {
+      "term": "ci.yml (opsiyonel)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "lint + typecheck + test + build. PR ve main push'ta."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-deploy-yap-h-gunluk-komut-referansi",
+    "type": "heading",
+    "level": 4,
+    "text": "Günlük komut referansı"
+   },
+   {
+    "id": "block-deploy-yap-table",
+    "type": "table",
+    "columns": [
+     "Komut",
+     "Ne yapar"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "code",
+        "text": "yap"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Commit (otomatik mesaj) + push"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "code",
+        "text": "yap \"mesaj\""
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Commit (verilen mesaj) + push"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "code",
+        "text": "gh run watch"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Son çalışmayı canlı izle"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "code",
+        "text": "gh run list -L 5"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Son 5 Actions çalışması"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "code",
+        "text": "gh run view --log-failed"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hatalı adımın logu"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "code",
+        "text": "gh repo view --web"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Repo'yu tarayıcıda aç"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "code",
+        "text": "gh browse"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Repo sayfasını aç"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-deploy-yap-h-frontend-projesi-icin-2-zorunlu-dosya",
+    "type": "heading",
+    "level": 4,
+    "text": "Frontend projesi için 2 zorunlu dosya"
+   },
+   {
+    "id": "block-deploy-yap-note-3",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "yap repo'yu açar; site oluşması için aşağıdaki ikisi yoksa Pages boş kalır."
+     }
+    ]
+   },
+   {
+    "id": "block-deploy-yap-code-2",
+    "type": "codeBlock",
+    "title": ".github/workflows/deploy-pages.yml",
+    "language": "yaml",
+    "code": "name: Deploy to GitHub Pages\non:\n  push:\n    branches: [main]\n  workflow_dispatch:\npermissions:\n  contents: read\n  pages: write\n  id-token: write\nconcurrency:\n  group: pages\n  cancel-in-progress: true\njobs:\n  build:\n    runs-on: ubuntu-latest\n    defaults:\n      run:\n        working-directory: web        # app kök dizindeyse bu satırı sil\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: 22\n      - run: npm install --no-audit --no-fund\n      - name: Build\n        run: npm run build\n        env:\n          VITE_BASE: /${{ github.event.repository.name }}/\n      - name: SPA 404 fallback\n        run: cp dist/index.html dist/404.html\n      - uses: actions/upload-pages-artifact@v3\n        with:\n          path: web/dist               # app kök dizindeyse: dist\n  deploy:\n    needs: build\n    runs-on: ubuntu-latest\n    environment:\n      name: github-pages\n      url: ${{ steps.deployment.outputs.page_url }}\n    steps:\n      - id: deployment\n        uses: actions/deploy-pages@v4"
+   },
+   {
+    "id": "block-deploy-yap-note-4",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Build + deploy iki ayrı job. Concurrency 'pages' tek kuyruk."
+     }
+    ]
+   },
+   {
+    "id": "block-deploy-yap-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Neden configure-pages adımı yok?"
+     },
+     {
+      "type": "text",
+      "text": " Workflow'un dahili token'ı Pages'i ilk kez açamaz; "
+     },
+     {
+      "type": "code",
+      "text": "yap"
+     },
+     {
+      "type": "text",
+      "text": " bunu senin kişisel token'ınla yapıyor."
+     }
+    ]
+   },
+   {
+    "id": "block-deploy-yap-code-3",
+    "type": "codeBlock",
+    "title": "vite.config.ts — base path",
+    "language": "typescript",
+    "code": "base: process.env.VITE_BASE || \"/\",\n\n// SPA router (react-router vb.) için:\nconst basename = import.meta.env.BASE_URL.replace(/\\/$/, \"\") || \"/\";"
+   },
+   {
+    "id": "block-deploy-yap-note-5",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Alt-dizin (org.github.io/repo) için zorunlu; lokal dev'de '/' kalır."
+     }
+    ]
+   },
+   {
+    "id": "block-deploy-yap-h-sorun-giderme",
+    "type": "heading",
+    "level": 4,
+    "text": "Sorun giderme"
+   },
+   {
+    "id": "block-deploy-yap-feat-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": ".git/index.lock File exists",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yarıda kalmış git işleminden kilit. "
+       },
+       {
+        "type": "code",
+        "text": "rm -f .git/index.lock && yap \"...\""
+       }
+      ]
+     },
+     {
+      "term": "Site 404 — Pages site here yok",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Pages açılmamış. "
+       },
+       {
+        "type": "code",
+        "text": "gh api -X POST repos/<user>/<repo>/pages -f build_type=workflow && gh workflow run deploy-pages.yml"
+       }
+      ]
+     },
+     {
+      "term": "Resource not accessible by integration",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Workflow token'ı Pages'i ilk kez açamaz. Yukarıdaki "
+       },
+       {
+        "type": "code",
+        "text": "gh api"
+       },
+       {
+        "type": "text",
+        "text": " komutuyla bir kez aç."
+       }
+      ]
+     },
+     {
+      "term": "Free plan + private repo → Pages yok",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Free'de Pages sadece public. "
+       },
+       {
+        "type": "code",
+        "text": "gh repo edit <r> --visibility public --accept-visibility-change-consequences"
+       }
+      ]
+     },
+     {
+      "term": "Heredoc/quote bozulması",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Çok satırlı fonksiyonu terminale yapıştırma. Dosyadan source et."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-deploy-yap-h-sifirdan-makine-kurulumu",
+    "type": "heading",
+    "level": 4,
+    "text": "Sıfırdan makine kurulumu"
+   },
+   {
+    "id": "block-deploy-yap-code-4",
+    "type": "codeBlock",
+    "title": "Yeni Mac / 2 yıl sonra",
+    "language": "bash",
+    "code": "# 1) GitHub CLI + giriş\nbrew install gh\ngh auth login                                  # GitHub.com > HTTPS > tarayıcı\n\n# 2) SSH anahtarı (yoksa) + GitHub'a ekle + git'i SSH'a çevir\nssh-keygen -t ed25519 -C \"mac\"                 # zaten varsa atla\ngh auth refresh -s admin:public_key\ngh ssh-key add ~/.ssh/id_ed25519.pub -t \"mac\"\ngit config --global url.\"git@github.com:\".insteadOf \"https://github.com/\"\n\n# 3) git kimlik + sağlıklı varsayılanlar\ngit config --global user.name  \"ismail Karaca\"\ngit config --global user.email \"karacai@yandex.com\"\ngit config --global init.defaultBranch main\ngit config --global push.autoSetupRemote true\n\n# 4) yap fonksiyonunu kur\nmkdir -p ~/.config\ncp <yap.zsh-yolu> ~/.config/yap.zsh\ngrep -q 'source ~/.config/yap.zsh' ~/.zshrc || echo 'source ~/.config/yap.zsh' >> ~/.zshrc\nsource ~/.zshrc && type yap"
+   },
+   {
+    "id": "block-deploy-yap-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Sınırlar",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Free plan"
+     },
+     {
+      "type": "text",
+      "text": ": yayında olan repo public olmalı. Geliştirmede public, sonra Pro + private. "
+     },
+     {
+      "type": "strong",
+      "text": "Cowork sandbox"
+     },
+     {
+      "type": "text",
+      "text": " "
+     },
+     {
+      "type": "code",
+      "text": "git push"
+     },
+     {
+      "type": "text",
+      "text": " yapamaz; push her zaman Mac'teki "
+     },
+     {
+      "type": "code",
+      "text": "yap"
+     },
+     {
+      "type": "text",
+      "text": " ile. "
+     },
+     {
+      "type": "strong",
+      "text": "Backend"
+     },
+     {
+      "type": "text",
+      "text": " (Hetzner/Debian) için "
+     },
+     {
+      "type": "code",
+      "text": "ci.yml"
+     },
+     {
+      "type": "text",
+      "text": " testleri yeterli; deploy ayrı bir workflow (SSH/rsync veya Docker) gerektirir — ihtiyaç olunca kurulur."
+     }
+    ]
+   },
+   {
+    "id": "block-deploy-yap-note-6",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "3 bilinçli sınır: Pages free=public, push sadece Mac'ten, backend deploy ayrı."
+     }
+    ]
+   },
+   {
+    "id": "block-deploy-yap-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Hetzner backend deploy"
+     },
+     {
+      "type": "text",
+      "text": " için önerilen pattern: "
+     },
+     {
+      "type": "code",
+      "text": ".github/workflows/deploy-backend.yml"
+     },
+     {
+      "type": "text",
+      "text": " → docker build + docker push (registry'ye) + SSH'tan "
+     },
+     {
+      "type": "code",
+      "text": "docker compose pull && up"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-deploy-yap-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Almanya merkezli ucuz sunucu kiralama firması."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "AWS pahalı; Hetzner uygun."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Web panelinden sunucu seçilir."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistem yöneticisi."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bina kiralama."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-deploy-yap-h-akis",
+    "type": "heading",
+    "level": 3,
+    "text": "Akış"
+   },
+   {
+    "id": "block-deploy-yap-story",
+    "type": "useCase",
+    "title": "Geliştirici (mevcut proje)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Cowork dosya günceller. Mac terminale geçer."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "code",
+      "text": "yap \"feat: enrichment ekledi\""
+     },
+     {
+      "type": "text",
+      "text": " → 5 saniye sonra Actions yeşilse "
+     },
+     {
+      "type": "code",
+      "text": "gh run watch"
+     },
+     {
+      "type": "text",
+      "text": " ile izler."
+     }
+    ]
+   },
+   {
+    "id": "block-deploy-yap-story-2",
+    "type": "useCase",
+    "title": "Geliştirici (yeni proje)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Yeni klasör açar, deploy-pages.yml + ci.yml var."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Sadece "
+     },
+     {
+      "type": "code",
+      "text": "yap"
+     },
+     {
+      "type": "text",
+      "text": ". Fonksiyon: git init + repo open + Pages on + push."
+     }
+    ]
+   },
+   {
+    "id": "block-deploy-yap-story-3",
+    "type": "useCase",
+    "title": "Yeni Mac kurulumu",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Eski Mac kayboldu, yeni makine geldi."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "8 satırlık kurulum (brew gh + ssh + yap.zsh source) → 'yap' yine çalışır."
+     }
+    ]
+   },
+   {
+    "id": "block-deploy-yap-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-deploy-yap-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Mac'te bir shell fonksiyonu ("
+     },
+     {
+      "type": "code",
+      "text": "~/.config/yap.zsh"
+     },
+     {
+      "type": "text",
+      "text": ") + GitHub Actions workflow'ları + Pages. Frontend için "
+     },
+     {
+      "type": "code",
+      "text": "deploy-pages.yml"
+     },
+     {
+      "type": "text",
+      "text": ", backend için sadece test. Backend canlıya geçiş Hetzner/Debian'a ayrı pipeline (henüz kurulu değil)."
+     }
+    ]
+   },
+   {
+    "id": "block-deploy-yap-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-deploy-yap-lesson-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yazılımı geliştiricinin bilgisayarından sunucuya taşıma adım adım rehberi."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici bilgisayarında kalan kod kimseye fayda etmez."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Git'e gönder → GitHub Actions test eder → sunucuya iter → eski sürüm kapanır, yeni açılır."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Hetzner sunucu + GitHub Actions."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her yeni özellik tamamlandığında."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici kodu hazırlar; DevOps pipeline'ı kurar."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Restoranın yeni menüsü: önce mutfakta dene, sonra şubeler aynı reçeteye geçer."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-deploy-yap-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-deploy-yap-story-4",
+    "type": "useCase",
+    "title": "Geliştirici (Cowork ile çalışan)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Cowork kod ürettikten sonra terminale döner."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "code",
+      "text": "yap"
+     },
+     {
+      "type": "text",
+      "text": " der; commit + push + Pages deploy otomatik akar. Tarayıcıya "
+     },
+     {
+      "type": "code",
+      "text": "https://kullanıcı.github.io/repo/"
+     },
+     {
+      "type": "text",
+      "text": " ile bakar."
+     }
+    ]
+   }
+  ]
+ }
+}

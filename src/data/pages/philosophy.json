@@ -1,0 +1,996 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-philosophy",
+  "sourceId": "philosophy",
+  "slug": "genel/philosophy",
+  "title": "Felsefe ve ana prensipler",
+  "summary": "",
+  "categoryId": "genel",
+  "tags": [
+   "philosophy",
+   "principles",
+   "ddd",
+   "monolith"
+  ],
+  "meta": {},
+  "related": [],
+  "blocks": [
+   {
+    "id": "block-philosophy-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu projenin uyduğu temel kurallar ve neden böyle kararlar verdiğimiz."
+     }
+    ]
+   },
+   {
+    "id": "block-philosophy-h-1-1-moduler-monolit-mikroservis-degil",
+    "type": "heading",
+    "level": 3,
+    "text": "1.1 Modüler monolit, mikroservis değil"
+   },
+   {
+    "id": "block-philosophy-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Shopify'ın \"majestic monolith\"i 2.8M+ satırlık tek Rails uygulaması; Black Friday'de saniyede 80K request'i tek deploy unit ile karşıladı. Bizim hedefimiz aynı: "
+     },
+     {
+      "type": "strong",
+      "text": "tek deploy unit, çoklu bounded context, sıkı modül sınırı"
+     },
+     {
+      "type": "text",
+      "text": ". Mikroservise sadece zorlandığında (extraction trigger) geç."
+     }
+    ]
+   },
+   {
+    "id": "block-philosophy-img",
+    "type": "image",
+    "src": "/assets/philosophy-compass.svg",
+    "alt": "Yedi ana prensip — projenin uyduğu kararlar pusulası",
+    "caption": "Yedi ana prensip: modüler monolit, metadata-driven, AI-first, polyglot, scale-kernel, Türkiye uyumu, açık gerilimler."
+   },
+   {
+    "id": "block-philosophy-note",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Projenin uyduğu 7 temel karar — yan yana özet."
+     }
+    ]
+   },
+   {
+    "id": "block-philosophy-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Projenin uyduğu 7 ana karar bir bakışta görülsün diye yan yana sıralanmış kartlar halinde gösterilir."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tasarım toplantısında 'pusulamız ne?' sorusu sorulduğunda hızlıca bakılacak görsel referans."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her kart bir prensip + tek cümle özet. Detay için cluster içindeki bölüme dön."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mimar bu kararları yazar; ekip uygular."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Aile değerleri panosu: salonun duvarında, herkes geçtikçe görür."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-philosophy-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Refactor ucuz."
+      },
+      {
+       "type": "text",
+       "text": " Bounded context sınırını yanlış çizdin? Tek PR'da değiştir. Mikroservis olsa Kafka schema migration + 2 servis deploy + downstream konsumer."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Local development tek komut."
+      },
+      {
+       "type": "text",
+       "text": " "
+      },
+      {
+       "type": "code",
+       "text": "uvicorn app:app"
+      },
+      {
+       "type": "text",
+       "text": " — her şey çalışır. Mikroservis olsa Docker Compose'da 12 servis."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Distributed transaction yok."
+      },
+      {
+       "type": "text",
+       "text": " İki aggregate aynı process'te; saga in-process orchestration ile çok daha basit."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Observability ucuz."
+      },
+      {
+       "type": "text",
+       "text": " Tek log stream, tek trace, tek metric source."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-philosophy-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Şartı: "
+     },
+     {
+      "type": "strong",
+      "text": "modül sınırı yazılım disipliniyle korunmalı"
+     },
+     {
+      "type": "text",
+      "text": ". Shopify Packwerk ile yapıyor (Ruby static analysis cross-component call'ları flag'liyor). Sen Python'da "
+     },
+     {
+      "type": "code",
+      "text": "importlinter"
+     },
+     {
+      "type": "text",
+      "text": " + custom plugin ile aynı disiplini sağla — CI'da modül A modül B'nin internal'ına dokunursa fail."
+     }
+    ]
+   },
+   {
+    "id": "block-philosophy-h-1-2-metadata-driven-schema",
+    "type": "heading",
+    "level": 3,
+    "text": "1.2 Metadata-driven schema"
+   },
+   {
+    "id": "block-philosophy-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Frappe DocType, Salesforce Object, Strapi Content-Type — üçü de aynı fikrin farklı isimleri: *şema kodda değil, metadatada*. Bir "
+     },
+     {
+      "type": "code",
+      "text": "Customer"
+     },
+     {
+      "type": "text",
+      "text": " tipi tanımlamak için Python class yazmak yerine, sistem tablosuna satır eklersin. Framework gerisini otomatik:"
+     }
+    ]
+   },
+   {
+    "id": "block-philosophy-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "PostgreSQL tablosu otomatik (fiziksel tablo, JSON column değil — JOIN performansı için kritik)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "REST + GraphQL endpoint otomatik."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Admin form + list view otomatik render."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Permission engine satırları otomatik tanır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Search index otomatik beslenir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Audit log otomatik dinler."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Hook noktaları ("
+      },
+      {
+       "type": "code",
+       "text": "before_save"
+      },
+      {
+       "type": "text",
+       "text": ", "
+      },
+      {
+       "type": "code",
+       "text": "after_insert"
+      },
+      {
+       "type": "text",
+       "text": ") otomatik vardır."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-philosophy-h-1-3-ai-first-ne-demek-ne-demek-degil",
+    "type": "heading",
+    "level": 3,
+    "text": "1.3 AI-first ne demek, ne demek değil"
+   },
+   {
+    "id": "block-philosophy-grid",
+    "type": "cardGrid",
+    "columns": 2,
+    "cards": [
+     {
+      "icon": "ph-check",
+      "title": "AI-first BUDUR",
+      "tone": "good",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Vector store kernel-adjacent primitive (pgvector default).\nHer DocType save'inde otomatik embedding (opt-in projection).\nHybrid search (BM25 + vector RRF) Search domain'inde native.\nMCP server her bounded context'te otomatik expose.\nOtomatik kategorize/anomali/tahmin event bus üstüne projection.\nAgent orchestration kernel-adjacent (Pydantic AI tarzı type-safe)."
+       }
+      ]
+     },
+     {
+      "icon": "ph-x",
+      "title": "AI-first BU DEĞİLDİR",
+      "tone": "bad",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Bir yere ChatGPT integration ekleyip slogan basmak.\nMüşteri destek bot'u eklemek (bu feature, mimari değil).\nHer ürüne aynı LLM prompt'u dayatmak.\nAI'ı bir module sanmak (gerçekte: primitives kernel-adjacent, applications module)."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-philosophy-h-1-4-polyglot-hook-gercek-senaryo",
+    "type": "heading",
+    "level": 3,
+    "text": "1.4 Polyglot hook — gerçek senaryo"
+   },
+   {
+    "id": "block-philosophy-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Python core, TS opsiyon. Yazılım sektörünün önemli bir kısmı TS yazıyor; modülünü TS yazmak isteyen geliştiriciyi kaybetmemen lazım. Üç runtime stratejisi (her birinin yeri farklı):"
+     }
+    ]
+   },
+   {
+    "id": "block-philosophy-list-3",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Embedded JS (shared hosting):"
+      },
+      {
+       "type": "text",
+       "text": " PythonMonkey (SpiderMonkey, Distributive Inc., 2024-2026 aktif) veya STPyV8 (Cloudflare fork). Network round-trip yok. Trusted hook için."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Sidecar Node/Deno (production default):"
+      },
+      {
+       "type": "text",
+       "text": " Node sürecine gRPC ile bağlan. Dapr modeli. İzole, bağımsız scale, debuggable."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "WASM/Extism (untrusted marketplace plugin):"
+      },
+      {
+       "type": "text",
+       "text": " Capability sandbox. \"Bu plugin sadece şu DocType'ı okuyabilir, network yok\" diye kısıtla."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-philosophy-h-1-5-scale-primitives-kernel-de-scale-policy-module-de",
+    "type": "heading",
+    "level": 3,
+    "text": "1.5 Scale primitives kernel'de, scale policy module'de"
+   },
+   {
+    "id": "block-philosophy-list-4",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Primitive (kernel):"
+      },
+      {
+       "type": "text",
+       "text": " Event bus, outbox, hot counter, projection. Hepsi *nasıl ölçeklenirim* sorusunun cevabını taşır."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Policy (module):"
+      },
+      {
+       "type": "text",
+       "text": " Sosyal medya feed'inin push/pull/hybrid kararı, celebrity threshold (~10K follower), reservation expiration timing. Hepsi *iş kuralı*."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-philosophy-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Sosyal medya turunda konuşulan fan-out tartışması bu prensibin somutu. Twitter'ın timeline'ı kernel'e gömülmez; kernel *fan-out worker primitive*i sağlar, "
+     },
+     {
+      "type": "ref",
+      "text": "s-social",
+      "refId": "s-social"
+     },
+     {
+      "type": "text",
+      "text": " module timeline politikasını yazar. 13 üründe feed yok; kernel onları taşımaz."
+     }
+    ]
+   },
+   {
+    "id": "block-philosophy-h-1-6-turkiye-uyumu-birinci-sinif",
+    "type": "heading",
+    "level": 3,
+    "text": "1.6 Türkiye uyumu birinci sınıf"
+   },
+   {
+    "id": "block-philosophy-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Hetzner'de host edeceksin (Linux Debian, AMD EPYC). Müşterilerin TR'de. Yani e-Fatura, e-Defter, SGK, KVKK *add-on plugin değil, kernel-adjacent*. Aksi halde her ürünün muhasebe modülü tekerleği yeniden icat eder. Yaklaşım: "
+     },
+     {
+      "type": "strong",
+      "text": "e-Belge Provider"
+     },
+     {
+      "type": "text",
+      "text": " ve "
+     },
+     {
+      "type": "strong",
+      "text": "Tax Authority Adapter"
+     },
+     {
+      "type": "text",
+      "text": " Layer 1 in-tree olarak otur. Driver pattern — Foriba/Sovos, İzibiz, Uyumsoft, KolayBi', Logo plug edilebilir."
+     }
+    ]
+   },
+   {
+    "id": "block-philosophy-lesson-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Satılan ürün/hizmetin yasal belgesi."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Vergi ve muhasebe için zorunlu."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistem otomatik üretir, e-fatura ile GİB'e gider."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Muhasebe yönetir."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bakkaldan aldığın fiş — ama daha resmi."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-philosophy-h-1-7-dogru-catismalar",
+    "type": "heading",
+    "level": 3,
+    "text": "1.7 Doğru çatışmalar"
+   },
+   {
+    "id": "block-philosophy-table",
+    "type": "table",
+    "columns": [
+     "Gerilim",
+     "Bir uç",
+     "Diğer uç",
+     "Bizim seçim"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kernel boyutu"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Minimal (WordPress)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Battery-included (Drupal eski)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Minimal kernel + in-tree Layer 1"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Storage backend"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "PostgreSQL-only"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Polyglot persistence"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "PostgreSQL-first, Redis/ES projection"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Frontend"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Coupled (server-render)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Headless API"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Headless default (Next.js yasak)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Authz"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Application-level"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Query-layer-fused"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Query-layer-fused + OpenFGA"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Tenancy"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Schema-per-tenant"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Shared schema + RLS"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Shared + PostgreSQL RLS"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Plugin runtime"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Native-only"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "WASM-only"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Üç runtime (embedded + sidecar + WASM)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Scale path"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Vertical"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Horizontal mikroservis"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Modüler monolit + horizontal worker"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-philosophy-co",
+    "type": "callout",
+    "variant": "info",
+    "title": "⚙️ Felsefenin makinesı",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Yukarıda 7 ana ilke yazıldı — modüler monolit, metadata-driven, AI-first, polyglot, scale-primitive, Türkiye uyumu, açık gerilimler. Ama "
+     },
+     {
+      "type": "strong",
+      "text": "ilke = yazı = sosyal söz"
+     },
+     {
+      "type": "text",
+      "text": "; sosyal söz çürür.\n\nİlkeyi yaşatan "
+     },
+     {
+      "type": "strong",
+      "text": "makinedir"
+     },
+     {
+      "type": "text",
+      "text": ": CI sınır kapısı, BC sözleşme guard'ı, codemod döngüsü. Bu makineler "
+     },
+     {
+      "type": "ref",
+      "text": "sus-overview",
+      "refId": "sus-overview"
+     },
+     {
+      "type": "text",
+      "text": " grubunda işlenir. \"Modüler monolit\" ilkesinin kanıtlayıcısı "
+     },
+     {
+      "type": "ref",
+      "text": "sus-boundaries",
+      "refId": "sus-boundaries"
+     },
+     {
+      "type": "text",
+      "text": "; \"AI-first\" ilkesinin güvenlik katmanı "
+     },
+     {
+      "type": "ref",
+      "text": "sus-actions",
+      "refId": "sus-actions"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-philosophy-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "70+ ürün katalogu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Modüler monolith felsefesi 9 ürün kategorisini taşır: Çekirdek Op, Finans, Tedarik, HR, Müşteri, İçerik, Veri-Zeka, Platform, Dikey TR. Tek kernel + tek event bus + tek auth. Her ürün ayrı satılabilir; ortak altyapı paylaşır."
+     }
+    ]
+   },
+   {
+    "id": "block-philosophy-co-3",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Composition > Transition",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Felsefenin pratik tezahürü"
+     },
+     {
+      "type": "text",
+      "text": ": Müşteri (tenant) bir mod'dan diğerine geçmiyor — yetenek ekliyor. *'B2C'den B2B'ye geçiş'* ifadesi mimari olarak yanlış; *'B2B yeteneğini aç'* doğru. Yıkıcı migration yerine eklemeli capability flag. Enum YASAK, flag tablosu (tenant_capabilities) standart. Bu disiplin tüm 70+ ürüne uygulanır: e-ticaret 14 modeli + dropship/subscription/social + marketplace gibi hibritler aynı tenant'ta yan yana yaşar. Detaylar: s-ecommerce-models."
+     }
+    ]
+   },
+   {
+    "id": "block-philosophy-co-4",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Config-as-Data — politika katmanı koddan ayrı",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Kıtalararası SaaS için politika kuralları (KVKK, GDPR, vergi oranı, çerez consent, sanctions) "
+     },
+     {
+      "type": "strong",
+      "text": "kodda değil versiyonlanmış config'te"
+     },
+     {
+      "type": "text",
+      "text": ". Kod deploy'u olmadan kural değiştirme — Amazon'un görünmez sihri. cc-jurisdiction-resolver bu disiplinin merkezi: 6 eksen + decision_trace audit + deny-by-default fallback. Capability flag composition felsefesiyle hizalı."
+     }
+    ]
+   },
+   {
+    "id": "block-philosophy-co-5",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Kurmak ≠ işletmek (Resolver gizli %50'si)",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bir resolver 'çalışıyor' demek prod-ready değil. "
+     },
+     {
+      "type": "strong",
+      "text": "5 katman operasyonel disiplin"
+     },
+     {
+      "type": "text",
+      "text": " zorunlu: backfill stratejisi, 3-katmanlı cache, failure mode (deny-by-default), 4-göz config governance, decision-trace audit. Bu disiplin yoksa: cache miss → eski kural ile cevap = yasal ihlal. Config typo → milyon dolar ceza. Resolver çöktü → sessiz kabul = ihlal. Felsefe: "
+     },
+     {
+      "type": "strong",
+      "text": "'Bilmiyorsan en kısıtlayıcıya uy.'"
+     }
+    ]
+   },
+   {
+    "id": "block-philosophy-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-philosophy-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Felsefe ve ana prensipler — bu cluster, projenin meta grubunda yer alır."
+     }
+    ]
+   },
+   {
+    "id": "block-philosophy-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-philosophy-lesson-3",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bu projenin uyduğu temel kurallar ve neden böyle kararlar verdiğimiz. Birkaç madde değil; her gün bakılacak pusula."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yazılım kararlarında her sefer 'niye böyle yaptık' sorusunu cevaplayabilelim diye. Pusula olmazsa her kişi farklı yöne gider, sistem çorba olur."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "7 ilke vardır: tek parça yazılım (modüler monolit), kod yerine tanım kartı (metadata-driven), yapay zekayı baştan içeride tutmak, ihtiyaç olunca diğer dillere kapı açmak, ölçek araçlarını çekirdekte tutmak, Türkiye uyumunu birinci sınıf yapmak, gerilimleri açıkça yazmak."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her tasarım toplantısında bu pusula açılır, kararlar buna göre verilir."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yeni özellik tasarlanırken, kod gözden geçirmede, yeni ekip üyesi eğitiminde."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mimar pusulayı yazar, tüm geliştirici ekibi uygular, son kullanıcı tutarlılığı yaşar."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir aile şirketinin değerler panosu: 'müşteri her şeyden önce gelir, kalite asla taviz vermez'. Duvardaki bu tabela, gözünün önündedir."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-philosophy-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-philosophy-story",
+    "type": "useCase",
+    "title": "Yeni evli çift, ev kurma süreci",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Yeni bir eve taşındılar. Mobilyaları neye göre alacaklarına karar verme aşamasındalar — bir kerede mi tam alsınlar yoksa zamanla mı genişlesin?"
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Bu projenin felsefesi de aynı: modüler monolit. Önce çekirdek mobilya (yatak, sandalye, masa); sonra ihtiyaç çıkınca eklenir. Tek seferde her şeyi alıp boğulmak yerine, sade temel + ekleme kapasitesi."
+     }
+    ]
+   },
+   {
+    "id": "block-philosophy-story-2",
+    "type": "useCase",
+    "title": "Birkaç şube açan kahveci",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Önce tek bir küçük dükkân, sonra ikinci şube, üçüncü şube... Her şubede aynı kalite kahve, aynı menü, ama farklı müşteri kitlesi."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Sistemdeki 'modüler monolit' fikri buna benzer: tek mutfak (çekirdek altyapı), birden çok şube (15 ürün). Her şube farklı işliyor ama altta aynı kahve makineleri var."
+     }
+    ]
+   },
+   {
+    "id": "block-philosophy-story-3",
+    "type": "useCase",
+    "title": "Vapur kaptanı, fırtınada manevra",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Vapur birden fazla yöne dönmek zorunda; her komutta motor, dümen, çapa farklı tepki vermeli. Önceden yazılı manevra defterine bakar."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Bu proje de bir defter taşır — 7 ana prensip yazılı, her tartışmada açılır. 'Mikroservis kullanalım mı?' diye birisi sorduğunda kaptan deftere bakar: 'Hayır, modüler monolit. Çünkü şu nedenle.'"
+     }
+    ]
+   }
+  ]
+ }
+}

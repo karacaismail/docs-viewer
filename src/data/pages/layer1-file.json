@@ -1,0 +1,266 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-layer1-file",
+  "sourceId": "l1-file",
+  "slug": "layer1/layer1-file",
+  "title": "File & Storage",
+  "summary": "Driver pattern: Local/S3/R2/Azure/GCS. Versioning, signed URL, lifecycle.",
+  "categoryId": "layer1",
+  "tags": [
+   "file",
+   "storage",
+   "s3",
+   "blob"
+  ],
+  "meta": {
+   "badge": "Layer 1 — In-tree"
+  },
+  "related": [],
+  "blocks": [
+   {
+    "id": "block-layer1-file-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Driver pattern: Local/S3/R2/Azure/GCS. Versioning, signed URL, lifecycle."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-file-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Driver pattern arkasında dosya yönetimi. Topluluk module'ü File backend'ini Local'den S3'e, S3'ten R2'ye değiştirebilir — core kodu değişmez."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-file-code",
+    "type": "codeBlock",
+    "title": "Storage driver interface",
+    "language": "python",
+    "code": "class StorageDriver(Protocol):\n    async def put(self, key: str, file: BinaryIO, content_type: str) -> str: ...\n    async def get(self, key: str) -> BinaryIO: ...\n    async def delete(self, key: str) -> None: ...\n    async def signed_url(self, key: str, expires_in: int = 3600) -> str: ...\n    async def copy(self, src: str, dst: str) -> None: ...\n    async def head(self, key: str) -> dict: ...  # metadata\n\n# Implementations:\n# LocalDiskDriver, S3Driver, R2Driver, AzureBlobDriver, GCSDriver, MinIODriver"
+   },
+   {
+    "id": "block-layer1-file-h-file-pipeline",
+    "type": "heading",
+    "level": 4,
+    "text": "File pipeline"
+   },
+   {
+    "id": "block-layer1-file-list",
+    "type": "list",
+    "ordered": true,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Upload → temp blob storage'a yaz."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "MIME validation, virus scan (ClamAV opsiyonel)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Image: thumbnail variants (64, 256, 1024). Video: HLS transcode."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Final blob → CDN'e push."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "FileMetadata DocType'ında satır."
+      }
+     ],
+     [
+      {
+       "type": "code",
+       "text": "FileUploaded"
+      },
+      {
+       "type": "text",
+       "text": " event publish (AI moderation, search index dinler)."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-layer1-file-h-versioning",
+    "type": "heading",
+    "level": 4,
+    "text": "Versioning"
+   },
+   {
+    "id": "block-layer1-file-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Her file için sürüm zinciri. "
+     },
+     {
+      "type": "code",
+      "text": "file_version"
+     },
+     {
+      "type": "text",
+      "text": " tablosu — content hash, kim yükledi, ne zaman, immutable. Rollback opsiyonu. Drive ürünü için bunun üstüne CRDT + block-level delta."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-file-h-lifecycle-ttl",
+    "type": "heading",
+    "level": 4,
+    "text": "Lifecycle / TTL"
+   },
+   {
+    "id": "block-layer1-file-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Temp uploads 24 saat, abandoned cart asset 7 gün, archive 90 gün sonra cold storage'a (Glacier/R2 archive). Object storage lifecycle policy ile veya scheduled worker ile."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-file-h-drive-7-icin-ek-katman",
+    "type": "heading",
+    "level": 4,
+    "text": "Drive (#7) için ek katman"
+   },
+   {
+    "id": "block-layer1-file-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Drive ürününde Layer 1 file motoru yetmez, üstüne "
+     },
+     {
+      "type": "strong",
+      "text": "Block Storage"
+     },
+     {
+      "type": "text",
+      "text": " (content-addressable, FastCDC chunking, dedup) Layer 2 module olarak. Frappe Drive seviyesi yetmiyor (basit re-upload), Seafile seviyesi gerek. "
+     },
+     {
+      "type": "ref",
+      "text": "s-drive",
+      "refId": "s-drive"
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-file-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-layer1-file-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Driver pattern: Local/S3/R2/Azure/GCS. Versioning, signed URL, lifecycle."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-file-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-layer1-file-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Dosya yükleme, saklama ve gösterme altyapısı: belgeler, fotoğraflar, videolar — hepsi tek bir merkezi yerden yönetilir."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her modülün ayrı dosya sistemi olursa yedekleme, izin, sıkıştırma her yerde farklı çalışır. Tek merkez = tek standart."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kullanıcı dosya seçer → sistem doğrular (boyut, tür) → bulut deposuna yükler → kayıt veritabanına işlenir."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her formdaki 'dosya ekle' alanı, her ekran görüntüsü, her PDF."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kullanıcı dosya yüklediği her an."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Son kullanıcı yükler; geliştirici hazır API'yi çağırır; sistem yöneticisi depo kotası ayarlar."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Apartmanın ortak deposu: her dairenin eşyası burada saklanır, tek anahtar yönetimi, tek güvenlik."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

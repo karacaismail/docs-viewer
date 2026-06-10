@@ -1,0 +1,464 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-scale-timeseries",
+  "sourceId": "scale-timeseries",
+  "slug": "scale/scale-timeseries",
+  "title": "Time-Series — IoT, metrik, sensör verisi",
+  "summary": "Saniyede 100K sensör verisi = klasik PostgreSQL yetmez. TimescaleDB + downsampling + retention policy.",
+  "categoryId": "scale",
+  "tags": [
+   "scale",
+   "timeseries",
+   "timescaledb",
+   "iot",
+   "metrics"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-scale-cache",
+   "page-crosscut-observability"
+  ],
+  "blocks": [
+   {
+    "id": "block-scale-timeseries-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "TimescaleDB hyper-tables, continuous aggregation, downsampling, retention policy, chunk_time_interval."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-timeseries-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Time-series = ayrı bir veri sınıfı."
+     },
+     {
+      "type": "text",
+      "text": " Append-heavy, time-indexed. Klasik OLTP DB optimize değil; TimescaleDB var olduğu için ayrı DB gerekmez."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-timeseries-co",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'TimescaleDB extension yükle. metric tablosu hyper-table, chunk_time_interval 1 day. Continuous aggregation: 1m, 1h, 1d. Compression 7 gün sonra. Retention 90 gün.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-timeseries-h-retention-policy-ornegi",
+    "type": "heading",
+    "level": 4,
+    "text": "Retention policy örneği"
+   },
+   {
+    "id": "block-scale-timeseries-table",
+    "type": "table",
+    "columns": [
+     "Yaş",
+     "Granularity",
+     "Compression",
+     "Tutulma"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "0-7 gün"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Raw (1 sn)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hayır"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sıcak"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "7-30 gün"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Raw"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Evet (%90)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sıcak"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "30-90 gün"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "1 dakika downsample"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Evet"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Soğuk"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "90-365 gün"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "1 saat downsample"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Evet"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Arşiv"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "365+ gün"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Silinir"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Geriye yok"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-timeseries-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-scale-timeseries-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Time-series ne?"
+     },
+     {
+      "type": "text",
+      "text": " Zamana göre indekslenmiş, append-heavy veri: sensör ölçümleri, sistem metrikleri, kullanıcı analitiği."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-timeseries-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Klasik PostgreSQL ne zaman yetmez?"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-timeseries-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "> 1B satır → INSERT yavaşlar, sorgu yıkılır"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Compression yok → disk patlama"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Time-based partition manuel yönetim"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-timeseries-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "TimescaleDB çözümü:"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-timeseries-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Hyper-table"
+      },
+      {
+       "type": "text",
+       "text": ": zaman bazlı otomatik chunk'lara böl"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Continuous aggregation"
+      },
+      {
+       "type": "text",
+       "text": ": 'son 1 saat ortalaması' otomatik güncel"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Compression"
+      },
+      {
+       "type": "text",
+       "text": ": %90 disk tasarrufu eski chunk'lar için"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Retention policy"
+      },
+      {
+       "type": "text",
+       "text": ": 90 gün sonra otomatik DROP"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-timeseries-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Mevcut framework için:"
+     },
+     {
+      "type": "text",
+      "text": " Sensör/metrik var mı? Yok → bu cluster opsiyonel. Var → TimescaleDB extension Postgres'e ekle."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-timeseries-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-scale-timeseries-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Zamana göre çok yoğun veri akışını verimli saklama + sorgulama altyapısı."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Klasik tablo 1B+ satıra dayanmaz."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) TimescaleDB extension. 2) Hyper-table day chunk. 3) Continuous aggregation. 4) Retention policy."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sensör/metrik veri için. "
+       },
+       {
+        "type": "code",
+        "text": "scale-timeseries"
+       },
+       {
+        "type": "text",
+        "text": " cluster."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sensör verisi gelecekse baştan. Olmayacaksa eklenmesin."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "DBA TimescaleDB kurulumu; backend developer hyper-table tasarımı."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Meteoroloji: her dakika sıcaklık ölçer ama 1 yıl sonra 'şubat ortalaması' yeter. Eski detay sıkıştır."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-scale-timeseries-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-scale-timeseries-story",
+    "type": "useCase",
+    "title": "Apartman elektrik sayacı — Murat Bey (61)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Murat Bey her ay sayaç okuyor; tek değer. Akıllı sayaçta dakika başı okuma. Her daire için ayda 43K kayıt × 8 daire = 350K."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "TimescaleDB ile hyper-table: günlük chunk, 90 gün sonra compress, 1 yıl sonra DROP."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-timeseries-story-2",
+    "type": "useCase",
+    "title": "Hava istasyonu — Hatice Teyze (62) tarla",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Tarlasındaki hava istasyonu sıcaklık + nem ölçer dakikada bir."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "30 gün ham, sonra saatlik ortalamaya downsample, 1 yıl sonra günlük."
+     }
+    ]
+   }
+  ]
+ }
+}

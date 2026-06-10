@@ -1,0 +1,392 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-crosscut-observability",
+  "sourceId": "cc-obs",
+  "slug": "crosscut/crosscut-observability",
+  "title": "Observability + Performance + DR",
+  "summary": "Logging, metrics, tracing, alerting, backup, restore.",
+  "categoryId": "crosscut",
+  "tags": [
+   "observability",
+   "performance",
+   "backup"
+  ],
+  "meta": {},
+  "related": [],
+  "blocks": [
+   {
+    "id": "block-crosscut-observability-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Logging, metrics, tracing, alerting, backup, restore."
+     }
+    ]
+   },
+   {
+    "id": "block-crosscut-observability-h-observability",
+    "type": "heading",
+    "level": 4,
+    "text": "Observability"
+   },
+   {
+    "id": "block-crosscut-observability-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Logging"
+      },
+      {
+       "type": "text",
+       "text": ": structlog (Python), JSON format, trace_id correlation, Loki/ELK."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Metrics"
+      },
+      {
+       "type": "text",
+       "text": ": Prometheus + Grafana. RED method (Rate, Errors, Duration)."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Tracing"
+      },
+      {
+       "type": "text",
+       "text": ": OpenTelemetry, Jaeger/Tempo. Per-request trace, multi-tenant tagging."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Error tracking"
+      },
+      {
+       "type": "text",
+       "text": ": Sentry. Source map, breadcrumb."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Real User Monitoring (RUM)"
+      },
+      {
+       "type": "text",
+       "text": ": Datadog RUM, Sentry Performance."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Alerting"
+      },
+      {
+       "type": "text",
+       "text": ": PagerDuty / Opsgenie / Slack."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Status page"
+      },
+      {
+       "type": "text",
+       "text": ": statuspage.io / Cachet self-host."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-crosscut-observability-h-performance-budget",
+    "type": "heading",
+    "level": 4,
+    "text": "Performance Budget"
+   },
+   {
+    "id": "block-crosscut-observability-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "API p50 < 50ms, p95 < 200ms, p99 < 500ms."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Page render TTFB < 200ms, LCP < 2.5s."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "DB query budget per endpoint: max 10 queries (N+1 prevention)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Cache hit rate > 80%."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Background job throughput per worker > 100 job/s."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-crosscut-observability-h-backup-dr",
+    "type": "heading",
+    "level": 4,
+    "text": "Backup & DR"
+   },
+   {
+    "id": "block-crosscut-observability-list-3",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "PostgreSQL: pg_basebackup + WAL archiving (Barman, pgBackRest)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "RPO < 5 dakika, RTO < 1 saat."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Cross-region replica (Hetzner FSN1 → HEL1)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Backup encryption (at-rest)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Restore drill: ayda 1 test."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Tenant-aware backup: UpdraftPlus pattern, müşteri kendi backup'ını alabilir."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-crosscut-observability-div",
+    "type": "divider"
+   },
+   {
+    "id": "block-crosscut-observability-h-landx-bakisi-o01-observability-slo-monitoring",
+    "type": "heading",
+    "level": 4,
+    "text": "LandX bakışı: O01 Observability & SLO Monitoring"
+   },
+   {
+    "id": "block-crosscut-observability-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "LandX "
+     },
+     {
+      "type": "strong",
+      "text": "O01 — Observability & SLO Monitoring"
+     },
+     {
+      "type": "text",
+      "text": " (Faz 3 · P0 · Platform Ops Squad) bu cluster'ın logs/metrics/traces bölümünü SLO + error budget + on-call routing + "
+     },
+     {
+      "type": "strong",
+      "text": "AI anomaly detection"
+     },
+     {
+      "type": "text",
+      "text": " ile tamamlar. *MTTR <30dk, SLO breach precision >%95, alerts/incident <5.*"
+     }
+    ]
+   },
+   {
+    "id": "block-crosscut-observability-list-4",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Unified observability"
+      },
+      {
+       "type": "text",
+       "text": " — Logs + Metrics + Traces tek pane"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "SLO Definition"
+      },
+      {
+       "type": "text",
+       "text": " — service başına SLI + SLO + error budget"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Error Budget Tracking"
+      },
+      {
+       "type": "text",
+       "text": " — kalan budget, burn rate alerting"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Alerting + On-call Routing"
+      },
+      {
+       "type": "text",
+       "text": " — PagerDuty/Opsgenie + escalation policy"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "AI Anomaly Detection"
+      },
+      {
+       "type": "text",
+       "text": " — pattern recognition, root cause hypothesis"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-crosscut-observability-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-crosscut-observability-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Logging, metrics, tracing, alerting, backup, restore."
+     }
+    ]
+   },
+   {
+    "id": "block-crosscut-observability-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-crosscut-observability-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistemin gözlemlenebilirliği: hız ölçümü, hata sayısı, kullanıcı sayısı — hepsinin grafikler halinde takibi."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sorun çıkmadan fark etmek için göstergeler lazım. 'Yavaşlıyor' diye şikayet gelene kadar beklemek geç olur."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistem her isteği zaman damgalı kaydeder → gözlemleme aracı (Grafana) grafiklere döker → eşik aşılınca alarm."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Operasyon panelinde — sürekli açık ekran."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sürekli; alarm çalınca acil."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Operatör izler; geliştirici grafiklerden hatayı bulur; üst yönetim haftalık özet okur."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir santralde basınç saatleri: sürekli izlenir, sınırı aşınca alarm çalar."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

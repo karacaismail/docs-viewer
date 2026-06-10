@@ -1,0 +1,635 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-edu-u12-migration",
+  "sourceId": "edu-u12",
+  "slug": "egitim/edu-u12-migration",
+  "title": "Migration Disiplini — şema evrimi",
+  "summary": "Çalışan üretimde tablo değiştirmek = bisikletin lastiğini yolda değiştirmek. Yöntem var: expand/contract.",
+  "categoryId": "egitim",
+  "tags": [
+   "education",
+   "migration",
+   "schema",
+   "zero-downtime",
+   "backfill"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-sus-bitemporal",
+   "page-sus-versioning",
+   "page-edu-u04-veritabani",
+   "page-layer1-misc"
+  ],
+  "blocks": [
+   {
+    "id": "block-edu-u12-migration-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Forward-only mu rollback'li mi, expand/contract, zero-downtime, backfill, migration testing."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u12-migration-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Migration disiplinin özü:"
+     },
+     {
+      "type": "text",
+      "text": " *'Eski hala çalışırken yeniyi ekle. Yeni çalıştığını doğrula. Sonra eskiyi sil.'* Bu üç adım kullanıcıya hiç hissettirmez. Tek seferlik 'reform' = kesinti = hata."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u12-migration-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "En klasik felaket",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Migration: "
+     },
+     {
+      "type": "code",
+      "text": "ALTER TABLE order ADD COLUMN status TEXT NOT NULL"
+     },
+     {
+      "type": "text",
+      "text": ". Eski 1M satırda status yok. Migration başlar, transaction tablo kilitler, 10 dakika kullanıcı sipariş veremez. Çözüm: "
+     },
+     {
+      "type": "strong",
+      "text": "NOT NULL'u en son ekle"
+     },
+     {
+      "type": "text",
+      "text": ", önce NULLABLE + backfill."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u12-migration-co-2",
+    "type": "callout",
+    "variant": "info",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a şöyle yaz: *'Order tablosuna status kolonu ekle. Expand/contract pattern ile: önce NULLABLE migration; sonra batch backfill script (1000'er); sonra NOT NULL migration. Üç ayrı Prisma migration dosyası.'* Tek seferde NOT NULL üretirse üretim çöker."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u12-migration-h-sema-degisikligi-adim-sayisi",
+    "type": "heading",
+    "level": 4,
+    "text": "Şema değişikliği → adım sayısı"
+   },
+   {
+    "id": "block-edu-u12-migration-table",
+    "type": "table",
+    "columns": [
+     "Değişiklik",
+     "Tek adım?",
+     "Doğru yol"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Yeni NULLABLE kolon"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ Tek adım"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ALTER TABLE ADD COLUMN ... NULL"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Yeni NOT NULL kolon"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✗ 3 adım"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "NULL ekle → backfill → NOT NULL'a çevir"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kolon adı değiştirme"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✗ 4 adım"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yeni kolon ekle → kod ikisini de yaz → backfill → eskiyi sil"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kolon tipi değiştirme"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✗ 4 adım"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yeni tipte kolon → kod ikisini de yaz → backfill → eskiyi sil"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Tablo silme"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✗ 2 adım"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Önce kod kullanmayı bıraksın → 1 hafta bekle → DROP"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u12-migration-h-backfill-buyuk-tablo-icin",
+    "type": "heading",
+    "level": 4,
+    "text": "Backfill — büyük tablo için"
+   },
+   {
+    "id": "block-edu-u12-migration-table-2",
+    "type": "table",
+    "columns": [
+     "Adım",
+     "Pratik",
+     "Sebep"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Batch boyutu"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "1000-5000 satır"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tek transaction tablo kilitlemez"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "İki batch arası"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "100-500ms bekle"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Replication slot bunalmasın"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "İlerleme takibi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "status kolonu veya ayrı tablo"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yarıda kalırsa kaldığı yerden devam"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Yeniden çalıştırılabilir"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "INSERT ON CONFLICT DO UPDATE"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Aynı batch 2 kez çalışsa bile sorun yok"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u12-migration-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Migration testing",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Üretim verisinin anonimleştirilmiş kopyasını staging'e yükle. Migration'ı orada çalıştır. "
+     },
+     {
+      "type": "strong",
+      "text": "Süresini ölç."
+     },
+     {
+      "type": "text",
+      "text": " 10 dakikadan uzunsa batch boyutunu küçült. 'Hızlı bittiğine sevin' = üretimde sürpriz."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u12-migration-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-edu-u12-migration-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Temel kural:"
+     },
+     {
+      "type": "text",
+      "text": " Üretimde çalışan tabloda "
+     },
+     {
+      "type": "strong",
+      "text": "dramatik değişiklik yok"
+     },
+     {
+      "type": "text",
+      "text": ". Adım adım, geri-uyumlu."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u12-migration-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Expand/Contract pattern (Stripe + GitHub):"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u12-migration-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Expand"
+       },
+       {
+        "type": "text",
+        "text": ": Yeni kolonu/tabloyu ekle (eski hala çalışır)"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Migrate"
+       },
+       {
+        "type": "text",
+        "text": ": Veriyi yavaş yavaş yeniye kopyala (backfill)"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Switch"
+       },
+       {
+        "type": "text",
+        "text": ": Kod yeni kolonu okumaya başla"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Contract"
+       },
+       {
+        "type": "text",
+        "text": ": Eski kolonu sil"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u12-migration-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Her adım ayrı deployment. Geri dönmek mümkün. Kullanıcı görmez."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u12-migration-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Forward-only"
+     },
+     {
+      "type": "text",
+      "text": ": Modern yaklaşım. Rollback yerine 'ileri git ve düzelt'. Sebep: rollback'in kendisi de tehlikeli olabilir (ileride yazılmış veri ne olacak?)."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u12-migration-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Backfill"
+     },
+     {
+      "type": "text",
+      "text": ": Yeni kolonu eski satırlar için doldurma. Büyük tabloda batch'lerle (her seferinde 1000 satır) yapılır. Yoksa tablo kilitlenir."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u12-migration-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Migration testing"
+     },
+     {
+      "type": "text",
+      "text": ": Üretim verisinin kopyası üzerinde önceden çalıştır. 'Test'te geçti, üretimde patladı' = tehlikeli."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u12-migration-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-edu-u12-migration-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Veritabanı yapısını üretimde kullanıcıyı bilgilendirmeden, kesinti yaratmadan değiştirme tekniği."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "SaaS'ta tek günlük kesinti müşteri kaybettirir. Yanlış migration veri kaybettirir. Doğru migration disiplini olmadan üretime özellik göndermek imkânsız."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Expand: yeni kolon NULLABLE ekle. 2) Kod hem eskiyi hem yeniyi yazsın. 3) Backfill batch ile. 4) Kod yeniyi okumaya başlasın. 5) Contract: eskiyi sil. "
+       },
+       {
+        "type": "strong",
+        "text": "Her adım ayrı PR, ayrı deploy."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "prisma migrate"
+       },
+       {
+        "type": "text",
+        "text": " veya benzeri tool. Migration dosyaları sıralı: "
+       },
+       {
+        "type": "code",
+        "text": "20260101000000_add_phone.sql"
+       },
+       {
+        "type": "text",
+        "text": ". Üretim öncesi staging'de test edilir."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her şema değişikliği için. NOT NULL ekleme, kolon yeniden adlandırma, tip değiştirme — hepsi expand/contract gerektirir."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici migration yazar; DBA (varsa) gözden geçirir; SRE üretimde çalıştırır; on-call izler."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Köprü inşaatı: trafik durmadan yeni köprü inşa edilir, açılır, eski köprü sonra kapatılır. Bir günlük 'köprü kapalı' yok."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u12-migration-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-edu-u12-migration-story",
+    "type": "useCase",
+    "title": "Apartman duvarına yeni kolon eklenmesi",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Bina 30 yıllık. Asansör eklemek isteniyor. Kapı kapı dolaşıp 'evden çıkın' diyebilirler mi? Hayır."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Önce yeni şaft inşa et (expand). Asansör kuruldu, test edildi. Sonra eski merdiven duvarı dekoratif kapla (contract). Kimse 1 gün bile evden çıkmadı. Migration aynısı."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u12-migration-story-2",
+    "type": "useCase",
+    "title": "Bakkal Cengiz Bey (60) — yeni POS",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Cengiz Bey yeni POS aldı. Eski yazar kasayı hemen söküp atmadı; 2 hafta yeni POS'u öğrenirken eskisi yedek olarak yanında durdu. İkinci hafta sonu eski kasayı sattı."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Bu expand/contract: yeni sistem ekle, eski hala çalışsın, yeni öğrenildikten sonra eskiyi kaldır. Tek günde POS değişimi yapsaydı, 'ya yeni bozulursa?' korkusuyla iş aksardı."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u12-migration-story-3",
+    "type": "useCase",
+    "title": "Otel rezervasyon kartı — telefon kolonu eklenmesi",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Otel 10.000 müşteri kartına 'telefon' kolonu eklemek istiyor. Tek "
+     },
+     {
+      "type": "code",
+      "text": "ALTER TABLE"
+     },
+     {
+      "type": "text",
+      "text": " ile NOT NULL eklerse: eski 10K kayıt 'telefon yok' → migration patlar, otel çalışmaz."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Expand: telefon kolonu NULLABLE eklendi. Backfill: 1000'er kayıt batch'i, telefonu olmayanlara '-' default. Switch: form 'telefon zorunlu' kontrolü, eski kayıtlar düzenlenirken doldurulur. Contract: 6 ay sonra NOT NULL'a çevril."
+     }
+    ]
+   }
+  ]
+ }
+}

@@ -1,12 +1,17 @@
 // İçerik doğrulama kapısı (05 §2.4) — üretilmiş gerçek veri tüm şemalardan geçer;
-// kırık referans build'i kırar.
+// kırık referans build'i kırar. Lazy mimari: index + page-başına dosyalar (14 #15).
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { NavigationSchema, PagesFileSchema, GlossarySchema, SearchIndexSchema } from "../src/schemas";
+import { NavigationSchema, PagesIndexFileSchema, PageFileSchema, GlossarySchema, SearchIndexSchema } from "../src/schemas";
 import { validateStaticData } from "../src/engine/validateStaticData";
 import navigation from "../src/data/navigation.json";
-import pagesFile from "../src/data/pages.json";
+import pagesIndex from "../src/data/pages-index.json";
 import glossary from "../src/data/glossary.json";
 import searchIndex from "../src/data/search-index.json";
+
+const PAGES_DIR = "src/data/pages";
+const pageFiles = readdirSync(PAGES_DIR).filter((f) => f.endsWith(".json"));
 
 describe("içerik doğrulama kapısı", () => {
   it("navigation.json şemadan geçer", () => {
@@ -15,31 +20,52 @@ describe("içerik doğrulama kapısı", () => {
     expect(r.success).toBe(true);
   });
 
-  it("pages.json şemadan geçer (197 page, 16 block type)", () => {
-    const r = PagesFileSchema.safeParse(pagesFile);
+  it("pages-index.json şemadan geçer (197 entry)", () => {
+    const r = PagesIndexFileSchema.safeParse(pagesIndex);
     if (!r.success) console.error(r.error.issues.slice(0, 5));
     expect(r.success).toBe(true);
     expect(r.success && r.data.pages.length).toBe(197);
   });
 
-  it("glossary.json şemadan geçer", () => {
-    const r = GlossarySchema.safeParse(glossary);
-    if (!r.success) console.error(r.error.issues.slice(0, 5));
-    expect(r.success).toBe(true);
+  it("197 page dosyasının tamamı şemadan geçer; block ID'ler page içinde benzersiz (03 §4)", () => {
+    expect(pageFiles.length).toBe(197);
+    for (const f of pageFiles) {
+      const data = JSON.parse(readFileSync(join(PAGES_DIR, f), "utf8"));
+      const r = PageFileSchema.safeParse(data);
+      if (!r.success) console.error(f, r.error.issues.slice(0, 3));
+      expect(r.success, f).toBe(true);
+      if (r.success) {
+        const ids = r.data.page.blocks.map((b) => b.id);
+        expect(new Set(ids).size, f).toBe(ids.length);
+      }
+    }
   });
 
-  it("search-index.json şemadan geçer", () => {
+  it("index ile page dosyaları birebir eşleşir", () => {
+    const indexIds = new Set((pagesIndex as { pages: { id: string }[] }).pages.map((p) => p.id));
+    for (const f of pageFiles) {
+      const stem = f.replace(/\.json$/, "");
+      expect(indexIds.has(`page-${stem}`), f).toBe(true);
+    }
+  });
+
+  it("glossary.json (core) ve search-index.json şemadan geçer", () => {
+    expect(GlossarySchema.safeParse(glossary).success).toBe(true);
     expect(SearchIndexSchema.safeParse(searchIndex).success).toBe(true);
   });
 
-  it("çapraz referans bütünlüğü: navigation/glossary -> pages", () => {
-    expect(validateStaticData(navigation, pagesFile, glossary)).toEqual([]);
+  it("glossary-detail.json şemadan geçer ve her core kaydın detail'i var", async () => {
+    const { GlossaryDetailFileSchema } = await import("../src/schemas");
+    const detail = JSON.parse(readFileSync("src/data/glossary-detail.json", "utf8"));
+    const r = GlossaryDetailFileSchema.safeParse(detail);
+    if (!r.success) console.error(r.error.issues.slice(0, 3));
+    expect(r.success).toBe(true);
+    const detailIds = new Set(Object.keys((detail as { details: Record<string, unknown> }).details));
+    for (const t of (glossary as { terms: { id: string }[] }).terms)
+      expect(detailIds.has(t.id), t.id).toBe(true);
   });
 
-  it("block ID'leri page içinde benzersiz (03 §4)", () => {
-    for (const p of (pagesFile as { pages: { id: string; blocks: { id: string }[] }[] }).pages) {
-      const ids = p.blocks.map((b) => b.id);
-      expect(new Set(ids).size, p.id).toBe(ids.length);
-    }
+  it("çapraz referans bütünlüğü: navigation/glossary -> pages-index", () => {
+    expect(validateStaticData(navigation, pagesIndex, glossary)).toEqual([]);
   });
 });

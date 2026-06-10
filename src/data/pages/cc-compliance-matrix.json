@@ -1,0 +1,1215 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-cc-compliance-matrix",
+  "sourceId": "cc-compliance-matrix",
+  "slug": "crosscut/cc-compliance-matrix",
+  "title": "Compliance Matrisi — KVKK, GDPR, CCPA, LGPD, PCI-DSS + Sanctions + DSAR",
+  "summary": "Yargı bölgesi başına uyumluluk: hangi kanun, hangi gereksinim. Sanctions screening (OFAC/EU). DSAR pipeline. Erasure çatışması (sil-vs-sakla).",
+  "categoryId": "crosscut",
+  "tags": [
+   "crosscut",
+   "compliance",
+   "kvkk",
+   "gdpr",
+   "ccpa",
+   "lgpd",
+   "pci-dss",
+   "sanctions",
+   "dsar",
+   "erasure"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "wip"
+  },
+  "related": [
+   "page-cc-jurisdiction-resolver",
+   "page-cc-privacy",
+   "page-crosscut-tr",
+   "page-crosscut-security",
+   "page-layer1-audit",
+   "page-cc-fx-ledger"
+  ],
+  "blocks": [
+   {
+    "id": "block-cc-compliance-matrix-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Compliance kanunları matrisi + sanctions list screening + DSAR (data subject access request) pipeline + erasure-vs-retention çatışma çözümü."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-compliance-matrix-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Compliance ≠ tek kanun."
+     },
+     {
+      "type": "text",
+      "text": " Aynı kullanıcı 3 kanuna tabi olabilir (KVKK + GDPR + PCI-DSS). En sıkı uygulanır. Resolver bunu çözer; config-as-data."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-compliance-matrix-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "KVKK 'sil' vs VUK 'sakla' çözümü",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Kişisel veriyi anonimleştir"
+     },
+     {
+      "type": "text",
+      "text": " (hash/mask), "
+     },
+     {
+      "type": "strong",
+      "text": "finansal kaydı tut"
+     },
+     {
+      "type": "text",
+      "text": " (10 yıl). KVKK ve VUK aynı anda karşılanır. Tam silme yasal değil; uyumlu da değil."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-compliance-matrix-co-2",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Sanctions match → REDDET",
+    "segments": [
+     {
+      "type": "text",
+      "text": "OFAC/EU/UN/MASAK match = işlem otomatik bloke + uyum sorumlusu bildirim. Her şeyden önce. Resolver pre-check katmanı."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-compliance-matrix-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'Compliance config tablosu: jurisdiction × kural seti (consent age, retention years, data residency region). Sanctions screening: Refinitiv API veya OFAC direct download + nightly sync. DSAR n8n workflow: trigger → user_id ile 30 tablo SELECT → Stripe export + SendGrid export → ZIP + presigned URL. Anonymization function: kişisel kolonları hash/mask, finansal tabloya dokunma.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-compliance-matrix-h-compliance-matrisi",
+    "type": "heading",
+    "level": 4,
+    "text": "Compliance matrisi"
+   },
+   {
+    "id": "block-cc-compliance-matrix-table",
+    "type": "table",
+    "columns": [
+     "Kanun",
+     "Bölge",
+     "Ana gereksinim",
+     "Ceza"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "KVKK"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "TR"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Açık rıza + VERBİS + yurt dışı kısıt"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Ciroya bağlı + suç duyurusu"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "GDPR"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "AB/AEA"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yasal dayanak + 72h ihlal"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yıllık cironun %4'üne kadar"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "CCPA/CPRA"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kaliforniya"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Do not sell + opt-out"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Ihlal başına ücret"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "LGPD"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Brezilya"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "GDPR benzeri"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Ciro %2"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "PCI-DSS"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Global"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kart verisi koruma"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kart işleme yasağı"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "HIPAA"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ABD"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sağlık veri"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "$50K-1.5M / ihlal"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-compliance-matrix-h-erasure-catisma-matrisi",
+    "type": "heading",
+    "level": 4,
+    "text": "Erasure çatışma matrisi"
+   },
+   {
+    "id": "block-cc-compliance-matrix-table-2",
+    "type": "table",
+    "columns": [
+     "Veri",
+     "KVKK",
+     "VUK/SPK",
+     "Çözüm"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Ad, telefon, email"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sil"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Anonymize (hash)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Adres, IP"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sil"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Anonymize veya sil"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Fatura"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sil"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "10 yıl sakla"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Fatura tut, user anonymize"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Vergi belgesi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sil"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "10 yıl sakla"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Aynı"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Sözleşme"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sil"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "10 yıl sakla"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Aynı"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-compliance-matrix-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-cc-compliance-matrix-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Compliance kanunları (yargı bölgesi başına):"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-compliance-matrix-table-3",
+    "type": "table",
+    "columns": [
+     "Kanun",
+     "Bölge",
+     "Ana gereksinim"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "strong",
+        "text": "KVKK"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Türkiye"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Açık rıza, VERBİS kaydı, yurt dışı veri aktarım kısıtı, aydınlatma metni"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "GDPR"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "AB/AEA"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yasal dayanak, taşınabilirlik, unutulma hakkı, DPO, 72 saat ihlal bildirimi"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "CCPA/CPRA"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kaliforniya"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "'Do not sell' opt-out, erişim, silme"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "LGPD"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Brezilya"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "GDPR benzeri yapı"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "PCI-DSS"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Global"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kart verisi işliyorsan zorunlu"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "HIPAA"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ABD"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sağlık verisi (ABD'de health SaaS)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "PIPEDA"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kanada"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kanada PII"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-compliance-matrix-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Kritik nokta:"
+     },
+     {
+      "type": "text",
+      "text": " KVKK uyumu ≠ GDPR uyumu. AB müşterisi varsa "
+     },
+     {
+      "type": "strong",
+      "text": "ikisini de"
+     },
+     {
+      "type": "text",
+      "text": " karşılaman gerekir."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-compliance-matrix-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Data residency (veri ikametgâhı):"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-compliance-matrix-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "KVKK md.9: TR vatandaşı verisi yurt dışı aktarımı için Kurul izni/taahhütname"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "GDPR md.44+: AB dışına aktarım için adequacy decision veya SCC"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Rusya 152-FZ: Rus vatandaşı verisi Rusya'da"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Çin PIPL: Çin vatandaşı verisi Çin'de (kritik durumda)"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-compliance-matrix-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Hetzner Almanya kullanıyorsan"
+     },
+     {
+      "type": "text",
+      "text": ": GDPR adequacy bölgesi (AB içi) ✓. TR vatandaşı verisi için Kurul'a taahhütname gerekir."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-compliance-matrix-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Sanctions screening (OFAC/EU/UN):"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-compliance-matrix-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "OFAC SDN list"
+      },
+      {
+       "type": "text",
+       "text": " (ABD) — yaptırımlı kişi/şirket/ülke"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "EU Consolidated List"
+      },
+      {
+       "type": "text",
+       "text": " — AB yaptırımları"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "UN Sanctions List"
+      },
+      {
+       "type": "text",
+       "text": " — BM yaptırımları"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "TR MASAK"
+      },
+      {
+       "type": "text",
+       "text": " — TR yaptırımlı/şüpheli liste"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-compliance-matrix-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Signup + checkout + büyük ödeme öncesi liste-eşleştirme zorunlu. Match = işlem REDDEDİLİR + MASAK/FinCEN bildirimi."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-compliance-matrix-p-8",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "DSAR (Data Subject Access Request):"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-compliance-matrix-p-9",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Kullanıcı 'tüm verimi ver' veya 'verimi sil' diyor. GDPR 30 gün, KVKK 30 gün."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-compliance-matrix-code",
+    "type": "codeBlock",
+    "language": "text",
+    "code": "1. Talep alındı (CS team / portal)\n   ↓\n2. Kimlik doğrulama (KYC, hesap sahibi mi?)\n   ↓\n3. Pipeline tetiklenir (n8n)\n   - Tüm DB tablolarından user_id ile select\n   - File storage'tan user ile ilgili dosyalar\n   - Logs'tan user_id geçen satırlar\n   - 3rd party (Stripe, SendGrid, Sentry) export API\n   ↓\n4. ZIP olarak hazırlanır (JSON + CSV + PDF fatura)\n   ↓\n5. Kullanıcıya güvenli download link (24 saat)\n   ↓\n6. decision_trace audit log"
+   },
+   {
+    "id": "block-cc-compliance-matrix-p-10",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Erasure çatışması — KVKK 'sil' vs VUK 'sakla':"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-compliance-matrix-table-4",
+    "type": "table",
+    "columns": [
+     "Veri türü",
+     "KVKK der",
+     "VUK/SPK der",
+     "Çözüm"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Ad, telefon, email"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sil"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "Anonimleştir"
+       },
+       {
+        "type": "text",
+        "text": " (hash)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Adres, IP"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sil"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "-"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Anonimleştir veya sil"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Fatura kayıtları"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sil"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "10 yıl sakla"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Fatura tut, kişisel veriyi anonymize"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Vergi belgesi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sil"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "10 yıl sakla"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Aynı"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Sözleşme"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sil"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "10 yıl sakla"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Aynı"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Banking transaction"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sil"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "10 yıl sakla"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Aynı"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-compliance-matrix-p-11",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Çözüm pattern:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-compliance-matrix-code-2",
+    "type": "codeBlock",
+    "language": "sql",
+    "code": "-- Personal data table\nUPDATE user SET\n  email = 'erased_' || md5(email) || '@deleted.local',\n  name = 'Erased User',\n  phone = NULL,\n  address = NULL,\n  erased_at = now()\nWHERE id = $1;\n\n-- Financial table — TUT, sadece referansla\n-- invoice.user_id kalır, kişisel veri user tablosundan anonimleştirilmiş"
+   },
+   {
+    "id": "block-cc-compliance-matrix-p-12",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Yaş doğrulama:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-compliance-matrix-list-3",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "COPPA (ABD): < 13 yaş ebeveyn rızası"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "GDPR: 'digital consent age' üye ülkeye göre 13-16 (Almanya 16, İspanya 14)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "KVKK: 18 (medeni hukuk)"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-compliance-matrix-p-13",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Çerez rızası:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-compliance-matrix-list-4",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "AB ePrivacy + GDPR: "
+      },
+      {
+       "type": "strong",
+       "text": "opt-in, granular"
+      },
+      {
+       "type": "text",
+       "text": " consent banner zorunlu (Cookiebot, Osano)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "KVKK: aydınlatma metni + saklama"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "ABD CCPA: çoğu eyalette opt-out yeterli"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-compliance-matrix-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-cc-compliance-matrix-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yargı bölgesi başına compliance gereksinimlerinin matrisi + sanctions screening + DSAR pipeline + erasure çatışma çözümü."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yasal ihlal cezaları çok yüksek (GDPR %4 ciro, KVKK üst sınırı yüksek). Tek yanlış config = milyon dolar."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Compliance config (cc-jurisdiction-resolver ile) versiyonlu. 2) Sanctions API entegrasyonu signup + checkout. 3) DSAR pipeline (n8n + DB exports). 4) Erasure = anonymize (kişisel) + retain (finansal). 5) Audit log her aksiyon için."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "cc-compliance-matrix"
+       },
+       {
+        "type": "text",
+        "text": " cluster + "
+       },
+       {
+        "type": "code",
+        "text": "cc-jurisdiction-resolver"
+       },
+       {
+        "type": "text",
+        "text": " (policy set) + "
+       },
+       {
+        "type": "code",
+        "text": "cc-privacy"
+       },
+       {
+        "type": "text",
+        "text": " (KVKK/GDPR temel) + "
+       },
+       {
+        "type": "code",
+        "text": "cc-tr"
+       },
+       {
+        "type": "text",
+        "text": " (TR uyum)."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk kullanıcı kaydından ÖNCE. Sonradan = milyon dolar refactor."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Hukuk ekibi kural yazımı; backend dev pipeline + sanctions API; compliance officer audit."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Havaalanı pasaport kontrolü: her ülke kuralı farklı (vize, ESTA, e-vize), ama tek 'kontrol noktası' var. Resolver = pasaport kontrol; compliance matrix = ülke kuralları kitabı; sanctions = yasaklı kişi listesi."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-cc-compliance-matrix-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-cc-compliance-matrix-story",
+    "type": "useCase",
+    "title": "Mali müşavir Hasan Bey (58) — DSAR talebi",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Hasan Bey'in müşterisinden DSAR talebi: 'Son 5 yılda tüm verimi gönder, sonra sil.' 50 müşterinin birikmiş verisi var; manuel yapsa hafta sürer."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "DSAR pipeline: n8n tetiklenir, 30 tablodan + Stripe + SendGrid'ten user_id ile veri toplar, ZIP üretir, güvenli link gönderir. Sonrasında erasure: kişisel veri anonymize, fatura kayıtları korunur (10 yıl VUK). 30 dakika içinde tamam. decision_trace audit."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-compliance-matrix-story-2",
+    "type": "useCase",
+    "title": "Uluslararası ticaret Yusuf Bey (66) — sanctions check",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Yeni müşteri kayıt oldu: 'Acme Trading, Tehran, Iran'. Yusuf Bey sevkiyat öncesi OFAC kontrol etmek istiyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Sanctions screening API (Refinitiv World-Check veya OFAC API direct). 'Iran' = yaptırımlı ülke + 'Acme Trading' = SDN match. Müşteri kaydı otomatik "
+     },
+     {
+      "type": "strong",
+      "text": "bloklanır"
+     },
+     {
+      "type": "text",
+      "text": ", CS team görür, MASAK bildirim akışı tetiklenir."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-compliance-matrix-story-3",
+    "type": "useCase",
+    "title": "E-ticaret işleten Murat Bey (61) — KVKK + VUK çatışması",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Müşteri 'verimi sil' dedi. Murat Bey 'sil' tıklarsa fatura kayıtları siliniyor → VUK 10 yıl saklama emrediyor → vergi denetiminde kanıtsız."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Anonymization pattern: kişisel kolonlar (ad, telefon, email, adres) hash/mask. Fatura tablosu user_id ile bağlı kalır, kişisel veri user tablosunda anonymize. KVKK 'sil' karşılanır (erişilemez), VUK 'sakla' karşılanır (defter sağlam)."
+     }
+    ]
+   }
+  ]
+ }
+}

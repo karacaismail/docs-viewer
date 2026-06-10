@@ -1,0 +1,906 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-cc-notification-consent",
+  "sourceId": "cc-notification-consent",
+  "slug": "crosscut/cc-notification-consent",
+  "title": "Bildirim & Consent — Transactional vs Marketing, SMS Regülasyon",
+  "summary": "Bildirim tipini doğru sınıflandır: transactional her zaman serbest, marketing AB'de opt-in. SMS sender ID kuralları (DLT/10DLC). Quiet hours locale-aware.",
+  "categoryId": "crosscut",
+  "tags": [
+   "crosscut",
+   "notification",
+   "consent",
+   "gdpr",
+   "marketing",
+   "transactional",
+   "sms",
+   "quiet-hours"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-cc-jurisdiction-resolver",
+   "page-cc-compliance-matrix",
+   "page-layer1-notification",
+   "page-edu-u22-email-sms",
+   "page-stack-marketing",
+   "page-l1-quiet-hours"
+  ],
+  "blocks": [
+   {
+    "id": "block-cc-notification-consent-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bildirim tipi sınıflandırması (transactional/marketing/system) + consent kuralı + SMS regülasyon (DLT Hindistan, 10DLC ABD, sender ID AB) + quiet hours."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-notification-consent-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Bildirim tipi yanlış sınıflandırma = yasal ihlal."
+     },
+     {
+      "type": "text",
+      "text": " Sipariş onayı içinde 'kampanya' linki = marketing'i transactional gibi göstermek. AB'de ceza."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-notification-consent-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "İYS — TR ticari ileti",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Türkiye'de ticari email/SMS için İYS (İleti Yönetim Sistemi) kayıt "
+     },
+     {
+      "type": "strong",
+      "text": "ZORUNLU"
+     },
+     {
+      "type": "text",
+      "text": ". Aksi ihlal başına ₺3000. Pazarlama yapıyorsan İYS hesap aç, onayları sisteme yükle."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-notification-consent-co-2",
+    "type": "callout",
+    "variant": "warning",
+    "title": "SMS sender ID ülke kuralları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Hindistan DLT, ABD 10DLC, AB sender ID kayıt — her ülke ayrı süreç. Twilio/Vonage dashboard'tan ülke başına başvuru. Onaysız SMS bloklanır + reputation kaybı."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-notification-consent-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'Notification dispatcher: type enum (transactional/system/marketing/behavioral). Marketing type için user_consent kontrolü zorunlu — yoksa skip + audit log. SMS provider client: country-aware sender ID seçimi (DLT/10DLC). Quiet hours check: user.timezone'da 22:00-08:00 ise marketing skip (transactional bypass).'*"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-notification-consent-h-bildirim-tipi-consent-kurali",
+    "type": "heading",
+    "level": 4,
+    "text": "Bildirim tipi → consent kuralı"
+   },
+   {
+    "id": "block-cc-notification-consent-table",
+    "type": "table",
+    "columns": [
+     "Tip",
+     "Örnek",
+     "Consent",
+     "Quiet hours bypass"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Transactional"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sipariş onayı, OTP"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Gerekmez"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Bypass (gece de gider)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "System"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kart yetkisiz kullanım"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Gerekmez"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Bypass"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Marketing"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kampanya, indirim"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "AB opt-in zorunlu"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Skip (gece atma)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Behavioral"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sepet hatırlatma"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Marketing sayılır"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Skip"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-notification-consent-h-sms-regulasyon-ulke-matrisi",
+    "type": "heading",
+    "level": 4,
+    "text": "SMS regülasyon ülke matrisi"
+   },
+   {
+    "id": "block-cc-notification-consent-table-2",
+    "type": "table",
+    "columns": [
+     "Ülke",
+     "Sistem",
+     "Sender ID",
+     "Marketing"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "TR"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "İYS + BTK"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Operatör kayıt"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Opt-in"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "AB"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ePrivacy"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sender ID kayıt"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Opt-in"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "ABD"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "A2P 10DLC"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Brand + campaign onaylı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Opt-out kabul"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Hindistan"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "DLT (TRAI)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "DLT kayıt + template"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Opt-in"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Brezilya"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Anatel"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Anatel kayıt"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Opt-in"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-notification-consent-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-cc-notification-consent-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Bildirim sınıflandırması (kritik):"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-notification-consent-table-3",
+    "type": "table",
+    "columns": [
+     "Tip",
+     "Tanım",
+     "Consent?"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Transactional"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sipariş onayı, fatura, parola sıfırlama, randevu hatırlatma"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Her zaman serbest (yasal değil, hizmet için)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "System"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Güvenlik (kartı yetkisiz kullanım), kritik servis bildirimi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Her zaman serbest"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Marketing"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kampanya, indirim, yeni ürün"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "AB'de opt-in zorunlu"
+       },
+       {
+        "type": "text",
+        "text": " (PECR + GDPR)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Behavioral"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "'Sepetinde ürün kaldı', 'sepet hatırlatma'"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "Marketing sayılır"
+       },
+       {
+        "type": "text",
+        "text": " (AB) — opt-in"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-notification-consent-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "En klasik hata:"
+     },
+     {
+      "type": "text",
+      "text": " marketing'i transactional gibi göstermek (örn. 'sipariş onayı' içinde 'şuna da bak!' linkleri). Yasal ihlal. Ayrı email ayrı consent."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-notification-consent-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Consent tablosu:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-notification-consent-code",
+    "type": "codeBlock",
+    "language": "sql",
+    "code": "CREATE TABLE user_consent (\n  user_id INT,\n  consent_type TEXT,         -- 'email_marketing', 'sms_marketing', 'push_marketing', 'cookies_analytics', 'cookies_advertising'\n  granted BOOL,\n  granted_at TIMESTAMPTZ,\n  source TEXT,               -- 'signup_form', 'banner', 'profile_update'\n  version INT,               -- hangi ToS/policy versiyonu kabul edildi\n  PRIMARY KEY (user_id, consent_type)\n);"
+   },
+   {
+    "id": "block-cc-notification-consent-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "ToS versiyonlama (GDPR/KVKK kanıtı):"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-notification-consent-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Kullanıcı v3 ToS kabul etti, sen v4'e geçtin → kim hangi versiyonu kabul etti kaydı:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-notification-consent-code-2",
+    "type": "codeBlock",
+    "language": "sql",
+    "code": "CREATE TABLE tos_acceptance (\n  user_id INT,\n  tos_version TEXT,\n  accepted_at TIMESTAMPTZ,\n  ip_address INET,           -- delil\n  user_agent TEXT\n);"
+   },
+   {
+    "id": "block-cc-notification-consent-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "v4'e geçince kullanıcılara 'yeni ToS' modal göster + kayıt al."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-notification-consent-p-8",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "SMS regülasyon (ülkeye göre kritik fark):"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-notification-consent-table-4",
+    "type": "table",
+    "columns": [
+     "Ülke",
+     "Gereksinim"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "strong",
+        "text": "TR"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "BTK + GSM operatör kayıt (sender ID)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "AB"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sender ID kayıt + opt-in marketing"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "ABD"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "A2P 10DLC kayıt (2023+) — onaylı brand + campaign"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Hindistan"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "DLT (Distributed Ledger Technology) kayıt — TRAI zorunlu"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Brezilya"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Anatel kayıt"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-notification-consent-p-9",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Aynı SMS kodu her ülkede çalışmaz. Sender ID 'ACME' Hindistan'da kayıtlı değilse SMS reddedilir."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-notification-consent-p-10",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Quiet hours (sessiz saatler):"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-notification-consent-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Push/SMS gece 22:00-08:00 göndermeyin (yasal değil ama best practice + ban riski)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Locale-aware"
+      },
+      {
+       "type": "text",
+       "text": ": kullanıcının timezone'unda, sunucununkinde değil"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Critical bypass (security alert, payment failed) sessiz saatte de gider"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Bildirim önceliği: critical > transactional > marketing"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-notification-consent-p-11",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Email deliverability:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-notification-consent-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "CAN-SPAM"
+      },
+      {
+       "type": "text",
+       "text": " (ABD): unsubscribe link zorunlu, gönderici adres"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "AB ePrivacy"
+      },
+      {
+       "type": "text",
+       "text": ": opt-in + unsubscribe + sender consent kanıtı"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "TR KVKK"
+      },
+      {
+       "type": "text",
+       "text": ": ETK (Elektronik Ticaret Kanunu) + İYS (İleti Yönetim Sistemi) kayıt"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-notification-consent-p-12",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "İYS Türkiye için zorunlu:"
+     },
+     {
+      "type": "text",
+      "text": " ticari elektronik ileti gönderiyorsan İYS'de kayıt + onay vermek zorundasın. Aksi: ihlal başına ₺3000."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-notification-consent-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-cc-notification-consent-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bildirim tipi sınıflandırma + consent kuralı + ülke bazlı SMS regülasyon + quiet hours."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yanlış sınıflandırma yasal ihlal. Yanlış SMS kayıt = bildirim hiç gitmez. Quiet hours = kullanıcı uykusunu bozma + ban riski."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Bildirim tipi enum (transactional/system/marketing/behavioral). 2) Consent tablosu type başına. 3) ToS versiyonlama + audit. 4) SMS provider (Twilio/Vonage) ülke kaydı. 5) Quiet hours timezone-aware."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "cc-notification-consent"
+       },
+       {
+        "type": "text",
+        "text": " + "
+       },
+       {
+        "type": "code",
+        "text": "cc-jurisdiction-resolver"
+       },
+       {
+        "type": "text",
+        "text": " (locale/jurisdiction) + "
+       },
+       {
+        "type": "code",
+        "text": "l1-notification"
+       },
+       {
+        "type": "text",
+        "text": " + "
+       },
+       {
+        "type": "code",
+        "text": "s-marketing"
+       },
+       {
+        "type": "text",
+        "text": "."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk email gönderilmeden ÖNCE."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Pazarlama ekibi consent kategorileri; backend dev type-based dispatch; legal team ToS versiyonlama."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Posta hizmeti: ısmarlama gönderiler (kargo, fatura — alıcının isteği) her zaman teslim edilir. Reklam broşürleri (postacıdan istenmemiş) için 'reklam istemiyorum' kutusu var. İkisini ayrı yetkilendirme."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-cc-notification-consent-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-cc-notification-consent-story",
+    "type": "useCase",
+    "title": "E-ticaret işleten Selim Bey (62) — yanlış email karması",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Selim Bey sipariş onayı emailine 'bu ay özel indirim!' kupon koydu. Bir kullanıcı şikâyet etti: 'Pazarlama izni vermedim.'"
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "İhlal. Çözüm: sipariş onayı = pure transactional; pazarlama = ayrı email + opt-in kullanıcılara. İki ayrı send (deliverability + uyum açısından gerek)."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-notification-consent-story-2",
+    "type": "useCase",
+    "title": "Murat Bey (61) — SMS Hindistan'a açılım",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Murat Bey ürününü Hindistan pazarına açtı. Sipariş onayı SMS gönderdi: 'Sipariş alındı'. Hiçbir SMS gitmedi."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "DLT kayıt yok. Hindistan'da TRAI zorunlu: Murat Bey'in markası + 'sipariş alındı' template'i DLT'de kayıtlı olmalı. Twilio dashboard'tan başvuru + 2 hafta onay."
+     }
+    ]
+   }
+  ]
+ }
+}

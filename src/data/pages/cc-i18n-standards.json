@@ -1,0 +1,1299 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-cc-i18n-standards",
+  "sourceId": "cc-i18n-standards",
+  "slug": "crosscut/cc-i18n-standards",
+  "title": "i18n Teknik Standartları — BCP 47, CLDR, ICU, RTL",
+  "summary": "Locale kodlama (BCP 47), ISO standartları, Unicode CLDR, ICU MessageFormat, RTL, Türkçe i/ı collation tuzağı, pseudo-localization.",
+  "categoryId": "crosscut",
+  "tags": [
+   "crosscut",
+   "i18n",
+   "l10n",
+   "bcp-47",
+   "cldr",
+   "icu",
+   "rtl",
+   "collation"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-cc-jurisdiction-resolver",
+   "page-layer1-misc",
+   "page-cc-i18n-deep",
+   "page-edu-u15-ux-60-plus",
+   "page-crosscut-tr"
+  ],
+  "blocks": [
+   {
+    "id": "block-cc-i18n-standards-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "BCP 47 dil etiketleri, ISO 639/3166/15924, Unicode CLDR (altın kaynak), ICU MessageFormat pluralization, RTL bidi, NFC normalization, Türkçe locale tuzakları."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "i18n'in %80'i 'çeviri' değil:"
+     },
+     {
+      "type": "text",
+      "text": " pluralization (gramer formları), format (tarih/sayı/para), RTL (layout), collation (sıralama), normalization (karakter eşitliği). Bunlar olmadan 'çevrildi' eksiklik."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Türkçe i/ı locale tuzağı",
+    "segments": [
+     {
+      "type": "code",
+      "text": "'TITLE'.toLowerCase()"
+     },
+     {
+      "type": "text",
+      "text": " farklı locale'de farklı sonuç verir. Türkçe locale'de "
+     },
+     {
+      "type": "code",
+      "text": "'tıtle'"
+     },
+     {
+      "type": "text",
+      "text": " üretir (i → ı). Email validation, search, ID karşılaştırma bu yüzden kırılır. "
+     },
+     {
+      "type": "strong",
+      "text": "Her yerde `toLocaleLowerCase('en-US')` veya bilinçli locale."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-co-2",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Cümle birleştirme YASAK",
+    "segments": [
+     {
+      "type": "code",
+      "text": "'Found ' + count + ' items'"
+     },
+     {
+      "type": "text",
+      "text": " farklı gramerli dillerde çevrilmez. İcerik = anahtar-değer çiftleri. ICU MessageFormat ile "
+     },
+     {
+      "type": "code",
+      "text": "{count, plural, ...}"
+     },
+     {
+      "type": "text",
+      "text": " syntax'ı."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'i18next + i18next-icu setup. Tüm UI string'i t() ile sarılı. ICU plural syntax. Intl.NumberFormat / DateTimeFormat / ListFormat locale ile. CSS logical properties (margin-inline-start). Pseudo-localization vitest setup. Tolgee TMS Docker compose self-host. Fallback chain: locale > base > source.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-h-bcp-47-ornekleri",
+    "type": "heading",
+    "level": 4,
+    "text": "BCP 47 örnekleri"
+   },
+   {
+    "id": "block-cc-i18n-standards-table",
+    "type": "table",
+    "columns": [
+     "Tag",
+     "Anlam",
+     "Kullanım"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "tr"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Türkçe (jenerik)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yetmez — bölge belirt"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "tr-TR"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Türkçe (Türkiye)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Doğru"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "tr-CY"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Türkçe (Kıbrıs)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Para birimi EUR, TR ≠"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "zh-Hans-CN"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Basitleştirilmiş Çince (ÇHC)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yazı sistemi + ülke"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "zh-Hant-HK"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Geleneksel Çince (Hong Kong)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yazı + ülke farklı"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "en-GB"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "İngilizce (UK)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tarih DD/MM/YYYY"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "en-US"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "İngilizce (ABD)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tarih MM/DD/YYYY"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-h-pluralization-dil-basina-form-sayisi",
+    "type": "heading",
+    "level": 4,
+    "text": "Pluralization — dil başına form sayısı"
+   },
+   {
+    "id": "block-cc-i18n-standards-table-2",
+    "type": "table",
+    "columns": [
+     "Dil",
+     "Plural form sayısı",
+     "Kategoriler"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Türkçe"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "1"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "other"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "İngilizce"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "2"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "one, other"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Lehçe"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "3"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "one, few, many"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Rusça"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "4"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "one, few, many, other"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "İrlandaca"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "5"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "one, two, few, many, other"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Arapça"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "6"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "zero, one, two, few, many, other"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-cc-i18n-standards-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "1. Locale kodlama — BCP 47:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "code",
+       "text": "tr-TR"
+      },
+      {
+       "type": "text",
+       "text": " (Türkçe / Türkiye), "
+      },
+      {
+       "type": "code",
+       "text": "en-US"
+      },
+      {
+       "type": "text",
+       "text": ", "
+      },
+      {
+       "type": "code",
+       "text": "pt-BR"
+      },
+      {
+       "type": "text",
+       "text": ", "
+      },
+      {
+       "type": "code",
+       "text": "zh-Hant-HK"
+      },
+      {
+       "type": "text",
+       "text": " (Geleneksel Çince / Hong Kong)"
+      }
+     ],
+     [
+      {
+       "type": "code",
+       "text": "tr"
+      },
+      {
+       "type": "text",
+       "text": " tek başına yetmez — bölge varyantları kritik (pt-PT ≠ pt-BR)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "ISO 639"
+      },
+      {
+       "type": "text",
+       "text": ": dil (tr, en, zh)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "ISO 3166-1"
+      },
+      {
+       "type": "text",
+       "text": ": ülke (TR, US, BR)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "ISO 15924"
+      },
+      {
+       "type": "text",
+       "text": ": yazı sistemi (Latn, Hant, Cyrl)"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "2. Unicode CLDR (altın kaynak):"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Tarih/saat formatları, sayı formatları"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Çoğul kuralları (plural rules)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Para birimi sembolleri + konumları"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Sıralama (collation) kuralları"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Tüm major framework'ler CLDR'a dayanır (ICU, Intl API, glibc)"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "3. Pluralization — ICU MessageFormat:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "CLDR plural kategorileri: "
+     },
+     {
+      "type": "code",
+      "text": "zero"
+     },
+     {
+      "type": "text",
+      "text": " / "
+     },
+     {
+      "type": "code",
+      "text": "one"
+     },
+     {
+      "type": "text",
+      "text": " / "
+     },
+     {
+      "type": "code",
+      "text": "two"
+     },
+     {
+      "type": "text",
+      "text": " / "
+     },
+     {
+      "type": "code",
+      "text": "few"
+     },
+     {
+      "type": "text",
+      "text": " / "
+     },
+     {
+      "type": "code",
+      "text": "many"
+     },
+     {
+      "type": "text",
+      "text": " / "
+     },
+     {
+      "type": "code",
+      "text": "other"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-list-3",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "İngilizce: 2 form (one/other) — '1 apple' / '5 apples'"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Türkçe: 1 form (other) — '1 elma' / '5 elma'"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Rusça: 4 form (one/few/many/other) — gramer kuralı karmaşık"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Arapça: 6 form (zero/one/two/few/many/other)"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-code",
+    "type": "codeBlock",
+    "language": "text",
+    "code": "{count, plural,\n  =0 {hiç ürün yok}\n  one {1 ürün}\n  other {# ürün}\n}"
+   },
+   {
+    "id": "block-cc-i18n-standards-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Cümle parçası birleştirme (concatenation) YASAK: "
+     },
+     {
+      "type": "code",
+      "text": "'Found ' + count + ' items'"
+     },
+     {
+      "type": "text",
+      "text": " → çevrilmez, gramer kayar."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "4. RTL (Right-to-Left) — Arapça/İbranice:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-list-4",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "code",
+       "text": "<html dir='rtl'>"
+      },
+      {
+       "type": "text",
+       "text": " set"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "CSS "
+      },
+      {
+       "type": "strong",
+       "text": "logical properties"
+      },
+      {
+       "type": "text",
+       "text": " ZORUNLU: "
+      },
+      {
+       "type": "code",
+       "text": "margin-inline-start"
+      },
+      {
+       "type": "text",
+       "text": " (margin-left değil), "
+      },
+      {
+       "type": "code",
+       "text": "padding-inline-end"
+      },
+      {
+       "type": "text",
+       "text": ", "
+      },
+      {
+       "type": "code",
+       "text": "text-align: start"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Icon flip: "
+      },
+      {
+       "type": "code",
+       "text": "transform: scaleX(-1)"
+      },
+      {
+       "type": "text",
+       "text": " for arrow icons"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Bidi text: Unicode bidi algoritması, mixed-direction string"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-p-8",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "5. Karakter & kodlama:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-list-5",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "UTF-8 her yerde, BOM yok"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "NFC (Normalization Form C)"
+      },
+      {
+       "type": "text",
+       "text": " zorunlu — özellikle birleşik karakterler (Türkçe İ/ı, akzanlı harfler)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Türkçe locale tuzağı"
+      },
+      {
+       "type": "text",
+       "text": ": "
+      },
+      {
+       "type": "code",
+       "text": "'TITLE'.toLowerCase()"
+      },
+      {
+       "type": "text",
+       "text": " → İngilizce default'ta "
+      },
+      {
+       "type": "code",
+       "text": "'title'"
+      },
+      {
+       "type": "text",
+       "text": "; Türkçe locale'de "
+      },
+      {
+       "type": "code",
+       "text": "'tıtle'"
+      },
+      {
+       "type": "text",
+       "text": " (i → ı). Locale-aware: "
+      },
+      {
+       "type": "code",
+       "text": "'TITLE'.toLocaleLowerCase('tr-TR')"
+      },
+      {
+       "type": "text",
+       "text": " → "
+      },
+      {
+       "type": "code",
+       "text": "'tıtle'"
+      },
+      {
+       "type": "text",
+       "text": ". Veritabanı sıralaması da aynı tuzak."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-p-9",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "6. Yerel format (Intl API):"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-list-6",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Tarih: "
+      },
+      {
+       "type": "code",
+       "text": "new Intl.DateTimeFormat('tr-TR').format(date)"
+      },
+      {
+       "type": "text",
+       "text": " → '06.06.2026'"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Sayı: "
+      },
+      {
+       "type": "code",
+       "text": "new Intl.NumberFormat('tr-TR').format(1234567.89)"
+      },
+      {
+       "type": "text",
+       "text": " → '1.234.567,89'"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Para: "
+      },
+      {
+       "type": "code",
+       "text": "new Intl.NumberFormat('tr-TR', {style:'currency', currency:'TRY'}).format(x)"
+      },
+      {
+       "type": "text",
+       "text": " → '1.234,56 ₺'"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Liste: "
+      },
+      {
+       "type": "code",
+       "text": "new Intl.ListFormat('tr-TR').format(['elma','armut','şeftali'])"
+      },
+      {
+       "type": "text",
+       "text": " → 'elma, armut ve şeftali'"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-p-10",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "7. SEO i18n:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-list-7",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "code",
+       "text": "<link rel='alternate' hreflang='tr-TR' href='...'>"
+      },
+      {
+       "type": "text",
+       "text": " — Google'a 'bu sayfanın TR versiyonu' sinyali"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "URL stratejisi: ccTLD (acme.de) > subdirectory (acme.com/de/) > subdomain (de.acme.com)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Subdirectory genelde en pragmatik"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-p-11",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "8. Pseudo-localization:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-list-8",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Test aşamasında metni genişlet + Unicode varyant: "
+      },
+      {
+       "type": "code",
+       "text": "'Save'"
+      },
+      {
+       "type": "text",
+       "text": " → "
+      },
+      {
+       "type": "code",
+       "text": "'[Šåvé éééé]'"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Layout taşmalarını yakalar (Almanca İngilizce'den ~%35 uzun)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Hardcoded string'i ortaya çıkarır (pseudo dile çevrilmez = unutulmuş)"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-p-12",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "9. TMS (Translation Management System):"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-list-9",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Çeviriler koddan AYRI, runtime'da yüklenebilir"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Tolgee"
+      },
+      {
+       "type": "text",
+       "text": " (self-host, modern) — preference"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Crowdin, Lokalise (commercial)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Deploy gerektirmeden çeviri güncelleme"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-p-13",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "10. Çeviri eskime / fallback:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-p-14",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Kaynak metin değişti, çeviriler eskidi → ne göster?"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-list-10",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Fallback en sonda: tr-TR > tr > en > kaynak metin"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Eskimiş çeviri tagging: "
+      },
+      {
+       "type": "code",
+       "text": "last_synced_at < source_updated_at"
+      },
+      {
+       "type": "text",
+       "text": " → 'eskimiş' işaret"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "UI: 'Bu çeviri yenileniyor' badge veya İngilizce fallback (yarısı Türkçe yarısı İngilizce ekran = state problem)"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-cc-i18n-standards-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Uluslararası dil/yerel desteğin teknik standartları — BCP 47 kodlama, CLDR veri, ICU pluralization, RTL bidi, locale-aware operations."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "'Çeviri' = i18n'in %20'si. Geri kalan %80: pluralization, format, RTL, collation, normalization. Bunlar olmadan 'çevrildi' yanılsama."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) i18next + i18next-icu library. 2) Intl API her yerde (tarih/sayı/para). 3) Tolgee TMS self-host. 4) CSS logical properties zorunlu. 5) Pseudo-localization CI test. 6) Locale-aware case + collation."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "cc-i18n-standards"
+       },
+       {
+        "type": "text",
+        "text": " cluster + "
+       },
+       {
+        "type": "code",
+        "text": "l1-misc"
+       },
+       {
+        "type": "text",
+        "text": " i18n temel + "
+       },
+       {
+        "type": "code",
+        "text": "cc-jurisdiction-resolver"
+       },
+       {
+        "type": "text",
+        "text": " locale eksen."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk ek dil eklenmeden ÖNCE. Sonradan refactor = tüm string'leri sarmak."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Frontend dev i18next + Intl; çevirmen TMS'de; QA pseudo-localization."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yemek tarifi çevirisi: malzeme adlarını çevirmek yetmez; ölçü birimi (cup → ml), pişirme zamanı (180°F → 82°C), gramer (1 yumurta, 2 yumurta) hepsi yerelleşir. 'Tek tek değil topyekûn'."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-cc-i18n-standards-story",
+    "type": "useCase",
+    "title": "Geliştirici Murat Bey (61'lik abisi 32) — Türkçe i/ı bug",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Murat Bey email validation yazdı: "
+     },
+     {
+      "type": "code",
+      "text": "email.toLowerCase().includes('@')"
+     },
+     {
+      "type": "text",
+      "text": ". Türkçe locale'li Linux sunucuda 'IBRAHIM@X.COM' → 'ıbrahım@x.com' oldu, "
+     },
+     {
+      "type": "code",
+      "text": "@"
+     },
+     {
+      "type": "text",
+      "text": " aranırken script Türkçe-locale-aware sıralamada bozuldu."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "code",
+      "text": "email.toLocaleLowerCase('en-US')"
+     },
+     {
+      "type": "text",
+      "text": " ile sabitlenir. Veya "
+     },
+     {
+      "type": "code",
+      "text": "email.toLowerCase()"
+     },
+     {
+      "type": "text",
+      "text": " öncesi locale='C' set edilir. Türkçe locale her zaman bilinçli kullanılır."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-story-2",
+    "type": "useCase",
+    "title": "Pazarlama Ayşe Hanım (45) — eskimiş çeviri",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Site Türkçe yayında, İngilizce yeni özellik eklendi, çeviri henüz yapılmadı. Türk kullanıcı yeni butonu İngilizce gördü, kafası karıştı."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Tolgee TMS + fallback chain (tr > en > source). Ayrıca 'çeviri eskidi' badge dev için. CS team uyarı: 'çeviri ekibi 24 saat içinde tamamlar'."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-standards-story-3",
+    "type": "useCase",
+    "title": "Uluslararası satış müdürü Hasan Bey (58) — RTL Arapça",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Suudi Arabistan'a açılım. Web sitesi Arapça çevirisi yapıldı — ama ikonlar (geri ok, kalem) hâlâ soldan-sağa, layout bozuk."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "CSS logical properties + "
+     },
+     {
+      "type": "code",
+      "text": "dir='rtl'"
+     },
+     {
+      "type": "text",
+      "text": " + arrow ikonları "
+     },
+     {
+      "type": "code",
+      "text": "transform: scaleX(-1)"
+     },
+     {
+      "type": "text",
+      "text": ". Pseudo-localization test'inde yakalanırdı."
+     }
+    ]
+   }
+  ]
+ }
+}

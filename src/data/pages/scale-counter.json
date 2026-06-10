@@ -1,0 +1,274 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-scale-counter",
+  "sourceId": "scale-counter",
+  "slug": "scale/scale-counter",
+  "title": "Hot Counter",
+  "summary": "Like, view, follower. Backend swappable.",
+  "categoryId": "scale",
+  "tags": [
+   "counter",
+   "hot",
+   "redis",
+   "scale"
+  ],
+  "meta": {
+   "badge": "Scale primitive #3"
+  },
+  "related": [],
+  "blocks": [
+   {
+    "id": "block-scale-counter-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Like, view, follower. Backend swappable."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-counter-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Like sayacı, view sayacı, follower sayacı, stok-on-hand. Milyonlarca eşzamanlı update. Klasik "
+     },
+     {
+      "type": "code",
+      "text": "UPDATE post SET likes = likes + 1 WHERE id = ?"
+     },
+     {
+      "type": "text",
+      "text": " SQL'inde lock contention, throughput çöker."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-counter-h-api",
+    "type": "heading",
+    "level": 4,
+    "text": "API"
+   },
+   {
+    "id": "block-scale-counter-code",
+    "type": "codeBlock",
+    "language": "python",
+    "code": "counter.increment(\"post:123:likes\", by=1)\ncounter.read(\"post:123:likes\")  # approximate, eventual\ncounter.batch_read([\"post:123:likes\", \"post:456:likes\"])"
+   },
+   {
+    "id": "block-scale-counter-h-backend-strateji-deployment-a-gore",
+    "type": "heading",
+    "level": 4,
+    "text": "Backend strateji deployment'a göre"
+   },
+   {
+    "id": "block-scale-counter-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Shared hosting:"
+      },
+      {
+       "type": "text",
+       "text": " "
+      },
+      {
+       "type": "code",
+       "text": "UPDATE posts SET likes = likes + 1 WHERE id = ?"
+      },
+      {
+       "type": "text",
+       "text": ". Yeterli."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Orta ölçek:"
+      },
+      {
+       "type": "text",
+       "text": " Redis "
+      },
+      {
+       "type": "code",
+       "text": "INCR"
+      },
+      {
+       "type": "text",
+       "text": ", periodic flush DB'ye (10 saniyede 1)."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Büyük ölçek:"
+      },
+      {
+       "type": "text",
+       "text": " sharded counter — "
+      },
+      {
+       "type": "code",
+       "text": "likes:post:123:shard_0"
+      },
+      {
+       "type": "text",
+       "text": ", "
+      },
+      {
+       "type": "code",
+       "text": "shard_1"
+      },
+      {
+       "type": "text",
+       "text": " ... "
+      },
+      {
+       "type": "code",
+       "text": "shard_15"
+      },
+      {
+       "type": "text",
+       "text": ". Read'de SUM. Approximate, kesinlik feda."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-counter-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "API tek interface. Module geliştirici backend'i bilmez. Twitter/X bu pattern'i kullanır."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-counter-h-sharded-counter-pseudo-kod",
+    "type": "heading",
+    "level": 4,
+    "text": "Sharded counter — pseudo kod"
+   },
+   {
+    "id": "block-scale-counter-code-2",
+    "type": "codeBlock",
+    "language": "python",
+    "code": "SHARD_COUNT = 16\n\nasync def increment(key: str, by: int = 1):\n    shard = random.randint(0, SHARD_COUNT - 1)\n    await redis.incrby(f\"{key}:shard:{shard}\", by)\n\nasync def read(key: str) -> int:\n    pipe = redis.pipeline()\n    for s in range(SHARD_COUNT):\n        pipe.get(f\"{key}:shard:{s}\")\n    values = await pipe.execute()\n    return sum(int(v or 0) for v in values)"
+   },
+   {
+    "id": "block-scale-counter-co",
+    "type": "callout",
+    "variant": "info",
+    "title": "ACID vs approximate",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Stok'taki \"miktar = hareketlerin toplamı\" disiplini muhasebe için doğrudur (ACID). Sosyal medya counter'ı için yanlış pattern — okuma amplifikasyonu, eventual consistency tolere edilir. İki ekosistem aynı framework'te yaşayacaksa counter abstraction core'da olmalı."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-counter-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-scale-counter-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Like, view, follower. Backend swappable."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-counter-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-scale-counter-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Çok hızlı artan sayaçları (görüntülenme, beğeni, sipariş sayısı) bozulmadan tutan özel sayım sistemi."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1000 kişi aynı anda 'beğen' butonuna basarsa normal sayaç birkaç tıklamayı kaybedebilir. Özel sayaç bu kaybı önler."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sayaç ana veritabanında durmaz; bellekte hızla çalışan ayrı bir sistemde tutulur. Belli aralıklarla ana veriye senkronize edilir."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sosyal modülün beğeni sayaçları, e-ticaret modülünün stok sayaçları."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Saniyede yüzlerce artış olabilecek her sayaçta."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici sayaç tipini seçer; sistem geri kalanı yapar; son kullanıcı 'anında güncellenen' sayıları görür."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir stadyumun turnike sayacı: her geçişi gerçek zamanlı sayar. Maç bitince ana defter tek seferde güncellenir."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

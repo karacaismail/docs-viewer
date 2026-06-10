@@ -1,0 +1,556 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-scale-realtime",
+  "sourceId": "scale-realtime",
+  "slug": "scale/scale-realtime",
+  "title": "Real-time Backend — WebSocket + SSE",
+  "summary": "Sunucu istemciye 'kendiliğinden' mesaj yollar — kullanıcı yenilemeden bildirim, chat, canlı veri.",
+  "categoryId": "scale",
+  "tags": [
+   "scale",
+   "realtime",
+   "websocket",
+   "sse",
+   "pubsub"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-layer1-notification",
+   "page-fe-ai-realtime",
+   "page-kernel-bus",
+   "page-scale-cache"
+  ],
+  "blocks": [
+   {
+    "id": "block-scale-realtime-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "WebSocket (iki yön), SSE (sunucudan istemciye). Pub/sub kanal yönetimi (Redis veya NATS). 1M concurrent için scaling."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-realtime-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Sunucu push gerekirse:"
+     },
+     {
+      "type": "text",
+      "text": " *Bildirim için SSE, chat için WebSocket.* Long polling sadece eski uyumluluk için."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-realtime-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Connection sayısı tehlikesi",
+    "segments": [
+     {
+      "type": "text",
+      "text": "1 Node.js pod max 50K WebSocket. 1M concurrent = 20 pod gerek. Sticky session veya Redis ile state paylaşımı kurmadan ölçeklenmez."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-realtime-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'Notification için SSE endpoint /events/sse, JWT auth. Redis pub/sub: kanal "
+     },
+     {
+      "type": "code",
+      "text": "user:${userId}:notifications"
+     },
+     {
+      "type": "text",
+      "text": ". Reconnect logic frontend tarafında. Heartbeat 30sn.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-realtime-h-karsilastirma",
+    "type": "heading",
+    "level": 4,
+    "text": "Karşılaştırma"
+   },
+   {
+    "id": "block-scale-realtime-table",
+    "type": "table",
+    "columns": [
+     "",
+     "Long polling",
+     "SSE",
+     "WebSocket"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Yön"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "İstemci başlatır"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sunucu → istemci"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "İki yönlü"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Protokol"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "HTTP"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "HTTP/HTTP2"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "WS protocol"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Tarayıcı uyumu"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tümü"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Modern"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Modern"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Proxy/firewall"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ İyi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ İyi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✗ Bazen sorun"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kaynak"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yüksek"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Düşük"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Orta"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kullanım"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Eski fallback"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Bildirim, feed"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Chat, oyun"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-realtime-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-scale-realtime-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "3 seçenek:"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-realtime-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Long polling"
+       },
+       {
+        "type": "text",
+        "text": ": İstemci 30 sn bekleyen istek atar. En basit; en kaynak yiyici."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "SSE (Server-Sent Events)"
+       },
+       {
+        "type": "text",
+        "text": ": Tek yönlü, sunucudan istemciye. HTTP üstünde. Bildirim için ideal."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "WebSocket"
+       },
+       {
+        "type": "text",
+        "text": ": İki yönlü, kalıcı bağlantı. Chat, canlı oyun, ortak düzenleme için."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-scale-realtime-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Seçim:"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-realtime-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Bildirim/feed → SSE (basit, HTTP/2 ile çoklayabilir)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Chat/oyun/işbirlikçi düzenleme → WebSocket"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Eski tarayıcı/proxy → Long polling fallback"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-realtime-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Pub/sub mimarisi:"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-realtime-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Mesaj geldiğinde event yayılır (Redis pub/sub veya NATS)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Realtime gateway'ler kanal başına subscriber listesini tutar"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Mesaj geldiğinde ilgili WebSocket'lere broadcast"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-realtime-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "1M concurrent connection için:"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-realtime-list-3",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Tek Node.js: ~50K WebSocket connection (Linux ulimit ayarı)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "1M için 20 gateway pod + connection load balancer"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Sticky session veya Redis ile state paylaşımı"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-realtime-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-scale-realtime-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sunucudan kullanıcıya anlık mesaj göndermek için kalıcı bağlantı mekanizması."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Klasik HTTP istemci başlatır; canlı bildirim, chat, paylaşımlı düzenleme için sunucu da başlatabilmeli."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Bildirim için SSE. 2) Chat/oyun için WebSocket. 3) Pub/sub için Redis veya NATS. 4) 50K+ concurrent için pod ölçeklendir."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "scale-realtime"
+       },
+       {
+        "type": "text",
+        "text": " cluster + "
+       },
+       {
+        "type": "code",
+        "text": "fe-ai-rt"
+       },
+       {
+        "type": "text",
+        "text": " (frontend tarafı). l1-notification ile entegre."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Chat, bildirim, dashboard live update, paylaşımlı editör."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Backend mühendisi gateway kurar; frontend reconnect logic yazar; SRE limit ayarı."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mektup = HTTP istek-cevap. Telefon = WebSocket (iki yön). Radyo yayını = SSE (tek yön, sunucudan)."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-scale-realtime-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-scale-realtime-story",
+    "type": "useCase",
+    "title": "Mahalle telefon zinciri — Ayşe Teyze (63)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Mahalle hanımları haber yaymak için telefon zinciri kullanırdı. Ayşe Teyze birini arar, o sıradakini arar..."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Bu pub/sub: bir mesaj çok sayıda kişiye yayılır. WebSocket = mahallenin walkie-talkie'si: yayın açık, herkes duyar."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-realtime-story-2",
+    "type": "useCase",
+    "title": "TV haberleri — Yusuf Bey (66)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Yusuf Bey TV'yi açar, sunucu yayın yapar. Yusuf cevap vermez; sadece dinler."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Bu SSE: tek-yönlü, sunucudan istemciye. Bildirim için ideal — kullanıcı cevap vermek zorunda değil."
+     }
+    ]
+   }
+  ]
+ }
+}

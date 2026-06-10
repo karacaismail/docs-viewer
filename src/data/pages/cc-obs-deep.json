@@ -1,0 +1,457 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-cc-obs-deep",
+  "sourceId": "cc-obs-deep",
+  "slug": "crosscut/cc-obs-deep",
+  "title": "Health Check + Readiness/Liveness Probes",
+  "summary": "/health, /ready, /live — Kubernetes ve LB'nin sistemi 'şu an çalışıyor mu?' sorusunu cevaplaması.",
+  "categoryId": "crosscut",
+  "tags": [
+   "crosscut",
+   "health",
+   "probes",
+   "k8s",
+   "liveness",
+   "readiness"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-crosscut-observability",
+   "page-scale-multiregion"
+  ],
+  "blocks": [
+   {
+    "id": "block-cc-obs-deep-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "/health (genel), /ready (trafik kabul), /live (yeniden başlat). DB ping + dış servis ping. Kubernetes probe."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-obs-deep-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "3 probe = 3 farklı soru."
+     },
+     {
+      "type": "text",
+      "text": " /live ve /ready karıştırılır; sonuç: gereksiz restart."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-obs-deep-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Probe içinde ağır iş tuzağı",
+    "segments": [
+     {
+      "type": "text",
+      "text": "/health'da "
+     },
+     {
+      "type": "code",
+      "text": "SELECT * FROM order"
+     },
+     {
+      "type": "text",
+      "text": " = DB yıkılır. "
+     },
+     {
+      "type": "strong",
+      "text": "SELECT 1 yeter + Redis PING."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-obs-deep-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'Express endpoint /live (200 OK), /ready (DB ping + Redis ping → 503 if fail), /health (detaylı JSON). Kubernetes yaml probe.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-obs-deep-h-probe-turu",
+    "type": "heading",
+    "level": 4,
+    "text": "Probe türü"
+   },
+   {
+    "id": "block-cc-obs-deep-table",
+    "type": "table",
+    "columns": [
+     "Endpoint",
+     "Kim kullanır",
+     "Ne kontrol",
+     "Fail = ne olur"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "/live"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kubernetes"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Process alive"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Pod restart"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "/ready"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Load Balancer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Servis veriyor"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Trafik göndermez"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "/health"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Dashboard"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Detay"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Alarm"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "/metrics"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Prometheus"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Metrik scrape"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Grafana"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-obs-deep-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-cc-obs-deep-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "3 farklı endpoint:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-obs-deep-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "/health"
+       },
+       {
+        "type": "text",
+        "text": " — genel durum (UI dashboard)"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "/ready"
+       },
+       {
+        "type": "text",
+        "text": " — trafik kabul (Load balancer)"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "/live"
+       },
+       {
+        "type": "text",
+        "text": " — alive check (Kubernetes)"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-cc-obs-deep-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Farklar:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-obs-deep-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "/ready FAIL = LB trafik göndermez (geçici)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "/live FAIL = Kubernetes pod öldürür (kalıcı)"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-obs-deep-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Kontroller:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-obs-deep-code",
+    "type": "codeBlock",
+    "language": "javascript",
+    "code": "GET /health\n{\n  status: 'ok',\n  checks: {\n    database: { status: 'ok', latency_ms: 5 },\n    redis: { status: 'ok', latency_ms: 2 },\n    stripe: { status: 'degraded', latency_ms: 800 }\n  },\n  version: '2.4.1',\n  uptime_seconds: 3600\n}"
+   },
+   {
+    "id": "block-cc-obs-deep-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Tehlike:"
+     },
+     {
+      "type": "text",
+      "text": " /health'da ağır iş = DB yıkılır. "
+     },
+     {
+      "type": "strong",
+      "text": "SELECT 1 yeter."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-obs-deep-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-cc-obs-deep-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistemin sağlığını otomatik kontrol eden endpoint'ler."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "30 pod'lu sistemde otomasyon zorunlu."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) /live - process alive. 2) /ready - bağımlılıklar. 3) /health - detaylı. 4) Kubernetes probe."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "cc-obs"
+       },
+       {
+        "type": "text",
+        "text": " cluster."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk pod deploy öncesi."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Backend developer endpoint; SRE probe konfig."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Hastane: hasta canlı mı (live) + hazır mı (ready) + tedavi planı tamam mı (health)."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-cc-obs-deep-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-cc-obs-deep-story",
+    "type": "useCase",
+    "title": "Apartman güvenlik nöbetçisi — Murat Bey (61)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Nöbetçilere 'iyi misin?' diye soruyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Liveness probe: cevap yok = vardiya değiştir."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-obs-deep-story-2",
+    "type": "useCase",
+    "title": "Berber Mehmet Usta (60) — dükkân kontrolü",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Açılıştan önce lavabo, ışık, kasa kontrol eder."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Readiness probe: tüm bağımlılıklar OK = trafik kabul."
+     }
+    ]
+   }
+  ]
+ }
+}

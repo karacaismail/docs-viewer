@@ -5,12 +5,19 @@ import { resolveTerm, termsOfPage } from "../src/engine/resolveTerms";
 import { navigation } from "../src/engine/loadStaticData";
 
 describe("resolvePage", () => {
-  it("bilinen slug'ı çözer", () => {
+  it("bilinen slug'ı index entry'ye çözer (sync, metadata)", () => {
     const first = navigation.categories[0].groups[0].items[0];
     const [section, page] = first.slug.split("/");
     const r = resolvePage(section, page);
     expect(r.kind).toBe("found");
-    if (r.kind === "found") expect(r.page.id).toBe(first.pageId);
+    if (r.kind === "found") expect(r.entry.id).toBe(first.pageId);
+  });
+
+  it("gövde lazy yüklenir ve block taşır (14 #15)", async () => {
+    const { loadPageBlocks } = await import("../src/engine/loadStaticData");
+    const p = await loadPageBlocks("kernel-authz");
+    expect(p?.blocks.length).toBeGreaterThan(3);
+    expect(await loadPageBlocks("olmayan-stem")).toBeUndefined();
   });
 
   it("bilinmeyen slug fallback model döner — exception değil (08 §4)", () => {

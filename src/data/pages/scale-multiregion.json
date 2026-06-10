@@ -1,0 +1,536 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-scale-multiregion",
+  "sourceId": "scale-multiregion",
+  "slug": "scale/scale-multiregion",
+  "title": "Multi-region + Disaster Recovery",
+  "summary": "Tek veri merkezi = tek nokta arıza. İki bölge = iş sürekliliği. KVKK + GDPR veri-yerelleştirme zorunluluğu da var.",
+  "categoryId": "scale",
+  "tags": [
+   "scale",
+   "multi-region",
+   "disaster-recovery",
+   "replication",
+   "gdpr"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-crosscut-observability",
+   "page-kernel-tenancy",
+   "page-crosscut-tr",
+   "page-cc-privacy"
+  ],
+  "blocks": [
+   {
+    "id": "block-scale-multiregion-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Aktif-pasif (cold standby) vs aktif-aktif. Read replica başlangıç için yeter. Conflict resolution (CRDT) ileri seviye."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-multiregion-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "DR olmayan SaaS = saatli bomba."
+     },
+     {
+      "type": "text",
+      "text": " Tek datacenter'da yangın, sel, network kesintisi 'olmaz' diye varsayılamaz — istatistiksel olarak 10 yılda olur. Hedef RTO/RPO'yu belirleyip ona göre tier seç."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-multiregion-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "KVKK Madde 9 zorlama",
+    "segments": [
+     {
+      "type": "text",
+      "text": "TR vatandaşı kişisel verisi yurt dışına aktarılamaz (istisnalar var). Hetzner FSN1 (Almanya) = yurt dışı. TR tenant'lar için ayrı bölge gerek. "
+     },
+     {
+      "type": "strong",
+      "text": "Mimari hazır olmalı, sonradan değiştirmek aylar alır."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-multiregion-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'Postgres streaming replication kur: master FSN1, replica HEL1. systemd timer ile her gün backup verify (point-in-time recovery test). Healthcheck endpoint + DNS failover script.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-multiregion-h-dr-tier-secimi",
+    "type": "heading",
+    "level": 4,
+    "text": "DR Tier seçimi"
+   },
+   {
+    "id": "block-scale-multiregion-table",
+    "type": "table",
+    "columns": [
+     "Tier",
+     "RPO",
+     "RTO",
+     "Maliyet",
+     "Kim için"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Tier 1"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "24 saat"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "8+ saat"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "€"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Pre-revenue startup"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Tier 2"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "6 saat"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "2-4 saat"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "€€"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 100 müşteri SaaS"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Tier 3"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 1 dk"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 15 dk"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "€€€"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "100-1000 müşteri SaaS — mevcut hedef"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Tier 4"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "~0"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 1 dk"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "€€€€€"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Bankacılık, kritik altyapı"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-multiregion-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-scale-multiregion-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Disaster Recovery seviyeleri:"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-multiregion-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "DR Tier 0"
+      },
+      {
+       "type": "text",
+       "text": ": Hiçbir şey yok. Veri kaybı garantili."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "DR Tier 1"
+      },
+      {
+       "type": "text",
+       "text": ": Günlük backup off-site. RPO 24 saat."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "DR Tier 2"
+      },
+      {
+       "type": "text",
+       "text": ": Saatlik snapshot + 6 saatlik replica. RPO 6 saat."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "DR Tier 3 (mevcut hedef)"
+      },
+      {
+       "type": "text",
+       "text": ": Postgres streaming replication. RPO ~1 dk, RTO 15 dk."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "DR Tier 4"
+      },
+      {
+       "type": "text",
+       "text": ": Aktif-aktif iki bölge. RPO ~0, RTO 0."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-multiregion-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "KVKK + GDPR veri yerelleştirme:"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-multiregion-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "TR vatandaşının verisi TR sınırları içinde işlenmeli (KVKK Madde 9)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "AB vatandaşının verisi AB içinde (GDPR Madde 44+)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Hetzner Finlandiya datacenter = AB; TR için ayrı sağlayıcı (Türk Telekom, Vodafone)"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-scale-multiregion-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Multi-region pattern'ler:"
+     }
+    ]
+   },
+   {
+    "id": "block-scale-multiregion-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Read replica"
+       },
+       {
+        "type": "text",
+        "text": ": TR ana, AB read-only replica. Yazma TR'ye gider."
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Tenant-bound region"
+       },
+       {
+        "type": "text",
+        "text": ": TR tenant TR DB'sinde, AB tenant AB DB'sinde"
+       }
+      ]
+     },
+     {
+      "title": "",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Active-active CRDT"
+       },
+       {
+        "type": "text",
+        "text": ": İki bölgede yazma, conflict resolution otomatik"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-scale-multiregion-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Başlangıç için 1+2 yeter. CRDT (yapay konuşmalar) ileri seviye, $$$."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-multiregion-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-scale-multiregion-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistemi birden fazla coğrafi bölgede çalıştırmak — yedeklilik + yasal uyumluluk için."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tek datacenter = tek nokta arıza. Yangın, sel, network kesintisi tüm sistemi durdurur. Hedef RTO/RPO için çoklu bölge zorunlu."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) DR Tier 3 başlangıç: Hetzner FSN1 (master) + HEL1 (replica). 2) Streaming replication açık. 3) Healthcheck + DNS failover. 4) İleride: tenant-bound region."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "scale-multiregion"
+       },
+       {
+        "type": "text",
+        "text": " mimari kararları. "
+       },
+       {
+        "type": "code",
+        "text": "k-tenancy"
+       },
+       {
+        "type": "text",
+        "text": " ile birlikte tenant'a göre region routing."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "100+ müşteri veya ARR > $100K olunca DR Tier 3 zorunlu. KVKK var = tenant region routing hemen."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "SRE replication kurar; ürün ekibi region selection UX'i tasarlar; hukuk KVKK/GDPR maddelerini doğrular."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tek banka şubesi yetersiz. Her ilde şube + ortak bilgisayar sistemi = tek şube yansa diğeri devam eder."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-scale-multiregion-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-scale-multiregion-story",
+    "type": "useCase",
+    "title": "Banka şubesi sistemleri — yangın",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Bir bankanın merkez şubesinde yangın çıktı, sistem odası yandı. Müşteriler ATM'lerden para çekemiyor. 3 saat sonra yedek datacenter devreye girdi."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "DR Tier 3 ile 15 dk içinde dönülürdü. 3 saat = milyonlarca lira kayıp + güven kaybı. "
+     },
+     {
+      "type": "strong",
+      "text": "Yangın bekleme; bugün hazırla."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-multiregion-story-2",
+    "type": "useCase",
+    "title": "E-ticaret sitesi — KVKK denetimi",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "TR'de e-ticaret sitesi, kullanıcı verisi AB'deki sunucuda. KVKK denetiminde 'TR vatandaşı verisi TR'de mi?' sorusu. Hayır cevabı = ceza."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Multi-region tenant-bound: TR kullanıcısı TR DB'sine, kayıt anında ülkeye göre routing. KVKK uyumu."
+     }
+    ]
+   }
+  ]
+ }
+}

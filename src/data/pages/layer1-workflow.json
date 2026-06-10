@@ -1,0 +1,352 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-layer1-workflow",
+  "sourceId": "l1-workflow",
+  "slug": "layer1/layer1-workflow",
+  "title": "Workflow + ECA",
+  "summary": "State machine + approval chain + Event-Condition-Action.",
+  "categoryId": "layer1",
+  "tags": [
+   "workflow",
+   "state-machine",
+   "approval",
+   "eca"
+  ],
+  "meta": {
+   "badge": "Layer 1 — In-tree"
+  },
+  "related": [],
+  "blocks": [
+   {
+    "id": "block-layer1-workflow-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "State machine + approval chain + Event-Condition-Action."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-workflow-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bir DocType'ın izlediği durumlar ve durumlar arası geçiş kuralları. 13 üründe lazım. Frappe core'da var, Drupal'da contrib, sen core'da tut."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-workflow-code",
+    "type": "codeBlock",
+    "title": "Workflow tanımı",
+    "language": "yaml",
+    "code": "workflow: PurchaseOrderApproval\n  doctype: PurchaseOrder\n  states:\n    - draft (next: pending_approval)\n    - pending_approval (next: approved | rejected)\n    - approved (next: sent)\n    - sent (next: received | cancelled)\n    - received (next: closed)\n    - closed (terminal)\n    - rejected (terminal)\n  transitions:\n    - from: draft, to: pending_approval, action: submit, allowed_roles: [requester]\n    - from: pending_approval, to: approved, action: approve, allowed_roles: [manager], condition: amount < 10000\n    - from: pending_approval, to: approved, action: approve, allowed_roles: [cfo], condition: amount >= 10000\n    - from: pending_approval, to: rejected, action: reject, allowed_roles: [manager, cfo]\n\neca_rules:\n  - on: doctype:PurchaseOrder.field:amount > 50000\n    condition: status == 'draft'\n    action: assign_to_role(cfo); notify(cfo, 'high_value_po')"
+   },
+   {
+    "id": "block-layer1-workflow-h-icerir",
+    "type": "heading",
+    "level": 4,
+    "text": "İçerir"
+   },
+   {
+    "id": "block-layer1-workflow-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "State machine tanımı (deklaratif)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Transition rule + permission (kim hangi geçişi yapabilir)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Approval chain (manager + finance birlikte)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Timeout / escalation (3 gün onay yoksa CFO'ya eskale)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Branching (tutara göre farklı approver)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Audit trail (her geçiş kim/ne zaman)"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-layer1-workflow-h-ornekler",
+    "type": "heading",
+    "level": 4,
+    "text": "Örnekler"
+   },
+   {
+    "id": "block-layer1-workflow-uc",
+    "type": "useCase",
+    "title": "HR izin onayı (#9)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Çalışan talep → direct manager onay → HR onay → kabul. 14 gün üstüyse genel müdür eklenir."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-workflow-uc-2",
+    "type": "useCase",
+    "title": "E-fatura akışı (#10)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Fatura draft → finance review → manager approve → GİB'e gönder → onaylı."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-workflow-uc-3",
+    "type": "useCase",
+    "title": "PR review (#11)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "draft PR → CI green → review request → 2 approval → merge."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-workflow-uc-4",
+    "type": "useCase",
+    "title": "İlan moderasyonu (#1)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "kullanıcı submit → AI ön-tarama → flagged: insan moderatöre → onay/red."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-workflow-uc-5",
+    "type": "useCase",
+    "title": "Refund akışı",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "müşteri talep → AI auto-approve veya insan inceleme → tahsilat iadesi."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-workflow-div",
+    "type": "divider"
+   },
+   {
+    "id": "block-layer1-workflow-h-landx-bakisi-s04-workflow-state-machine",
+    "type": "heading",
+    "level": 4,
+    "text": "LandX bakışı: S04 Workflow & State Machine"
+   },
+   {
+    "id": "block-layer1-workflow-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "LandX "
+     },
+     {
+      "type": "strong",
+      "text": "S04 — Workflow & State Machine"
+     },
+     {
+      "type": "text",
+      "text": " (Faz 3 · P1 · Application Squad) bu cluster'ın doğal devamı: DocType yaşam döngüsü için deklaratif state machine. Her transition: guard, action, side-effect, audit. "
+     },
+     {
+      "type": "strong",
+      "text": "Agent transition'ı tetikleyebilir"
+     },
+     {
+      "type": "text",
+      "text": " — scope izinliyse (A03 capability scope kontrolü)."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-workflow-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Deklaratif state + transition tanımı"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Guard (önkoşul) + Action (yan etki) + Audit (her geçiş kaydı)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Agent tetikleyici desteği — "
+      },
+      {
+       "type": "code",
+       "text": "triggered_by: agent"
+      },
+      {
+       "type": "text",
+       "text": " audit metadata'sında"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Workflow run state — checkpoint/resume LandX A09 (Agent Orchestration) ile entegre"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-layer1-workflow-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-layer1-workflow-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "State machine + approval chain + Event-Condition-Action."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-workflow-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-layer1-workflow-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İşin adımlarını otomatik olarak yöneten akış sistemi: 'önce onay, sonra ödeme, sonra kargo' gibi sıraları sistem takip eder."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Manuel takipte adımlar atlanır veya unutulur. Otomatik akış her adımı sırayla tetikler, durumu görselleştirir."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yönetici akışı tasarlar (adımları, kimin onaylayacağını, ne kadar sürede). Sistem akışı çalıştırır, her adım için bildirim atar."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İzin onayı, fatura onayı, müşteri başvurusu, sözleşme yenileme — adımlı her süreçte."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Süreç başlatıldığında."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yönetici tasarlar; çalışanlar adımlarını yapar; sistem akışı yürütür."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Devlet dairesinde belge alma sırası: ilk gişe başvuru, ikinci gişe imza, üçüncü gişe ödeme. Sıra atlanamaz, her gişe önceki tamamlanınca aktif olur."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-workflow-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-layer1-workflow-story",
+    "type": "useCase",
+    "title": "CFO (mali onay)",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "500K TL'lik satınalma talebi gelir."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "State machine: pending_approval; approval chain manager → CFO; CFO onay → state=approved."
+     }
+    ]
+   }
+  ]
+ }
+}

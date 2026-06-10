@@ -1,0 +1,1294 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-cc-jurisdiction-resolver",
+  "sourceId": "cc-jurisdiction-resolver",
+  "slug": "crosscut/cc-jurisdiction-resolver",
+  "title": "Jurisdiction / Policy Resolver — 6-Eksen Orthogonal Model",
+  "summary": "Locale ≠ Jurisdiction ≠ Currency ≠ Tax ≠ Timezone ≠ Data residency. Amazon/eBay 'codebase değiştirmez' — politika/config katmanını koddan ayırır. Bu cluster o ayrımın somut mimarisi.",
+  "categoryId": "crosscut",
+  "tags": [
+   "crosscut",
+   "jurisdiction",
+   "policy",
+   "compliance",
+   "i18n",
+   "resolver",
+   "capability",
+   "architecture"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "wip"
+  },
+  "related": [
+   "page-cc-i18n-deep",
+   "page-cc-privacy",
+   "page-crosscut-tr",
+   "page-crosscut-security",
+   "page-crosscut-observability",
+   "page-kernel-authz",
+   "page-sus-versioning",
+   "page-layer1-audit",
+   "page-cc-resolver-ops",
+   "page-cc-identity-models"
+  ],
+  "blocks": [
+   {
+    "id": "block-cc-jurisdiction-resolver-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "6 bağımsız eksen + Policy Resolver servisi. Request → eksenler çözümlenir → yürürlükteki kural seti hesaplanır → UI + iş mantığı + billing + bildirim hep o setten beslenir. Kurallar config'te (kod deploy'suz)."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Asıl mimari ders:"
+     },
+     {
+      "type": "text",
+      "text": " Amazon/eBay 'codebase değiştirmiyor' — politika katmanını koddan ayırıyor. Türkiye'de KVKK, AB'de GDPR, ABD'de CCPA — hepsi config + resolver, "
+     },
+     {
+      "type": "strong",
+      "text": "tek codebase"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Klasik HATA — locale'a bağlama",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Tüm uluslararasılaştırma "
+     },
+     {
+      "type": "code",
+      "text": "locale"
+     },
+     {
+      "type": "text",
+      "text": " değişkenine bağlanırsa: Türkiye'de yaşayan Almanca konuşan kullanıcı için "
+     },
+     {
+      "type": "code",
+      "text": "de-TR"
+     },
+     {
+      "type": "text",
+      "text": " locale uydurmak gerekir. Felaket. "
+     },
+     {
+      "type": "strong",
+      "text": "6 eksen bağımsız (orthogonal)"
+     },
+     {
+      "type": "text",
+      "text": " modellenmeli."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-img",
+    "type": "image",
+    "src": "/assets/jurisdiction-6-axes.svg",
+    "alt": "6 bağımsız uluslararasılaştırma ekseni diyagramı",
+    "caption": "6-eksen modeli: Locale ⊥ Jurisdiction ⊥ Currency ⊥ Tax ⊥ Timezone ⊥ Data Residency — birbirinden bağımsız çözülür"
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-h-6-eksen-ve-neye-bagli",
+    "type": "heading",
+    "level": 4,
+    "text": "6 eksen ve neye bağlı"
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-table",
+    "type": "table",
+    "columns": [
+     "Eksen",
+     "Neye bağlı",
+     "Çözüm kaynağı"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Locale (dil)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kullanıcı tercihi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "URL > user_pref > Accept-Language > default"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Jurisdiction (hukuk)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "İkamet + hizmet yeri"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "user.country + service_country"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Currency (para)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hesap/ödeme ülkesi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "account.currency veya payment.currency"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Tax region (vergi)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Teslimat/hizmet yeri"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "delivery_address.country + service_type"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Timezone (saat)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Fiziksel konum (IANA)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "user.tz veya IP geolocation fallback"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Data residency (veri)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yasal zorunluluk"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "jurisdiction → izinli storage bölgesi"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-h-catisma-cozum-matrisi-precedence",
+    "type": "heading",
+    "level": 4,
+    "text": "Çatışma çözüm matrisi (precedence)"
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-table-2",
+    "type": "table",
+    "columns": [
+     "Çatışma",
+     "Çözüm",
+     "Mimari etki"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "KVKK 'sil' vs VUK 'sakla'"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Anonimleştir + finansal kaydı tut"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Soft-delete + anonymize ayrı"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "CCPA opt-out vs GDPR opt-in"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "En sıkı uygulanır (opt-in)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Consent default = false"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "TR hesap + EUR ödeme"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Ledger = hesap currency"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Dual ledger (functional + reporting)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Sanctions list match"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "REDDET (her şeyden önce)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Pre-check middleware"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Resolver çöktü"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Deny-by-default (en sıkı)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Fallback policy zorunlu"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "DST geçişi cron job"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Server UTC; kullanıcı TZ display"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Server zamanı asla local değil"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-h-policy-resolver-akisi-request-basina",
+    "type": "heading",
+    "level": 4,
+    "text": "Policy Resolver akışı (request başına)"
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-table-3",
+    "type": "table",
+    "columns": [
+     "Adım",
+     "İş",
+     "Süre"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "1. Locale resolve"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "URL > pref > header > default"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 1ms"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "2. Jurisdiction resolve"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "user + service + delivery country"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 1ms"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "3. Currency resolve"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "account veya payment currency"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 1ms"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "4. Tax resolve"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "delivery + service type → tax region"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 1ms"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "5. Timezone resolve"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "user.tz veya geo fallback"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 1ms"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "6. Residency resolve"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "jurisdiction → storage region"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 1ms"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "7. Policy lookup"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Config from cache (per-jurisdiction)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "< 5ms"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "8. Decision trace"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "DB insert (async batch)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "async"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'JurisdictionResolver service: 6 ayrı resolver function (locale, jurisdiction, currency, tax, tz, residency). Her biri test edilebilir saf fonksiyon. Compose ile policy seti üretir. jurisdiction_policy tablosu versiyonlu config-as-data (effective_from/to). decision_trace audit. Cache: per-user 5dk TTL, per-jurisdiction config 1 saat + event-based invalidate. Failure mode: deny-by-default fallback policy.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-co-3",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Resolver çöktüğünde",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Deny-by-default = en sıkı kural seti uygulanır (max consent, max data protection, min data collection). Sessiz kabul = yasal ihlal. "
+     },
+     {
+      "type": "strong",
+      "text": "Resolver health-check + alarm zorunlu"
+     },
+     {
+      "type": "text",
+      "text": " (cc-obs-deep)."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-h-openfga-entegrasyonu-jurisdiction-aware-authz",
+    "type": "heading",
+    "level": 4,
+    "text": "OpenFGA entegrasyonu (jurisdiction-aware authz)"
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "code",
+      "text": "user.jurisdiction = 'EU' AND action = 'export_personal_data'"
+     },
+     {
+      "type": "text",
+      "text": " → izin verilen tek format JSON+CSV (data portability GDPR md.20). "
+     },
+     {
+      "type": "code",
+      "text": "user.jurisdiction = 'TR' AND action = 'delete_account'"
+     },
+     {
+      "type": "text",
+      "text": " → aydınlatma metni göster + 30 gün soft-delete + anonimize. Aynı OpenFGA modeli RBAC için zaten kurulu; jurisdiction-relation eklemek = ek bir authorization model."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-co-4",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Resolver işletmek = ayrı bir disiplin",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Resolver kurmak teknik; "
+     },
+     {
+      "type": "strong",
+      "text": "işletmek"
+     },
+     {
+      "type": "text",
+      "text": " ayrı: backfill stratejisi (mevcut 50K kullanıcı), 3-katmanlı cache (hot path), failure mode (deny-by-default), 4-göz config governance (yanlış config = milyon dolar ceza), decision-trace observability (5 yıl saklama). Detaylar: "
+     },
+     {
+      "type": "code",
+      "text": "cc-resolver-ops"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-co-5",
+    "type": "callout",
+    "variant": "info",
+    "title": "Kimlik modelleri — global tasarım",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Resolver 6-eksen çözer ama kullanıcı verisi (isim, telefon, adres, vergi-no) "
+     },
+     {
+      "type": "strong",
+      "text": "ülke-aware"
+     },
+     {
+      "type": "text",
+      "text": " modellenmediyse 2. ülkede çöker. firstName/lastName YASAK; tek fullName + opsiyonel given/family. E.164 telefon + libphonenumber. i18n-postal-address. VAT VIES API. Detaylar: "
+     },
+     {
+      "type": "code",
+      "text": "cc-identity-models"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Mimari içgörü (asıl ders):"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Amazon Türkiye'de KVKK, AB'de GDPR, ABD'de CCPA'ya göre 'codebase değiştirmiyor'. "
+     },
+     {
+      "type": "strong",
+      "text": "Politika/konfigürasyon katmanını koddan ayırıyor."
+     },
+     {
+      "type": "text",
+      "text": " Bu cluster o ayrımın mimarisidir."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Klasik HATA:"
+     },
+     {
+      "type": "text",
+      "text": " Tüm uluslararasılaştırmayı "
+     },
+     {
+      "type": "code",
+      "text": "locale"
+     },
+     {
+      "type": "text",
+      "text": " değişkenine bağlamak. Sonuç: Türkiye'de yaşayan Almanca konuşan kullanıcı için "
+     },
+     {
+      "type": "code",
+      "text": "de-TR"
+     },
+     {
+      "type": "text",
+      "text": " locale uydurmak — felaket."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "6 BAĞIMSIZ EKSEN:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-table-4",
+    "type": "table",
+    "columns": [
+     "Eksen",
+     "Neye bağlı",
+     "Örnek çatışma"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Locale"
+       },
+       {
+        "type": "text",
+        "text": " (dil)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kullanıcı tercihi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Türk, İngilizce arayüz ister"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Jurisdiction"
+       },
+       {
+        "type": "text",
+        "text": " (hukuk)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "İkamet + hizmet yeri"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "İngilizce kullanır, KVKK'ya tabi"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Currency"
+       },
+       {
+        "type": "text",
+        "text": " (para)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hesap/ödeme ülkesi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "TR hesap, EUR ödeme"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Tax region"
+       },
+       {
+        "type": "text",
+        "text": " (vergi)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Teslimat/hizmet yeri"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "EUR öder, Almanya teslimat → DE KDV"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Timezone"
+       },
+       {
+        "type": "text",
+        "text": " (saat)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Fiziksel konum (IANA)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Almanya'da yaşayan Türk → Europe/Berlin"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Data residency"
+       },
+       {
+        "type": "text",
+        "text": " (veri)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yasal zorunluluk"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "TR vatandaşı verisi TR'de tutulmalı (KVKK md.9)"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu 6 eksenin "
+     },
+     {
+      "type": "strong",
+      "text": "kombinasyonu"
+     },
+     {
+      "type": "text",
+      "text": " = yürürlükteki kural seti. Tek eksene bağlamak = bütün varsayımlar yıkılır."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-p-8",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Policy Resolver servisi (özet akış):"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-code",
+    "type": "codeBlock",
+    "language": "text",
+    "code": "request geldi\n  ↓\n1. Locale çözümle: URL (/tr/) > user_pref (DB) > Accept-Language > default\n2. Jurisdiction çözümle: user.country + service_country + delivery_country\n3. Currency çözümle: account.currency veya payment.currency\n4. Tax region çözümle: delivery_address.country + service_type\n5. Timezone çözümle: user.tz veya IP geolocation fallback\n6. Data residency çözümle: jurisdiction → izinli storage bölgesi\n  ↓\nPolicy Set oluştur (versiyonlu config'ten)\n  ↓\nKararı decision_trace tablosuna yaz (audit için)\n  ↓\nUI + business logic + billing + notification → set'i tüket"
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-p-9",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Çatışma çözüm matrisi (precedence):"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-table-5",
+    "type": "table",
+    "columns": [
+     "Çatışma",
+     "Çözüm"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "KVKK 'sil' vs Vergi Usul Kanunu 'sakla'"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "Anonimleştir + finansal kaydı tut"
+       },
+       {
+        "type": "text",
+        "text": " (kişisel veri silinir, fatura kalır)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "ABD CCPA opt-out vs AB GDPR opt-in"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "En sıkı"
+       },
+       {
+        "type": "text",
+        "text": " uygulanır (opt-in zorunlu olur)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Currency conflict (TR account + EUR payment)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hesap currency = ledger, payment currency = işlem; FX lock kuralı"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Sanctions list match"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "REDDET"
+       },
+       {
+        "type": "text",
+        "text": " — diğer her şey önemsiz"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Resolver çöktü"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "En sıkı varsayılana düş"
+       },
+       {
+        "type": "text",
+        "text": " (deny-by-default)"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-p-10",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Config-as-data (versiyonlu policy store):"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-code-2",
+    "type": "codeBlock",
+    "language": "sql",
+    "code": "CREATE TABLE jurisdiction_policy (\n  policy_id BIGSERIAL,\n  jurisdiction_code TEXT,         -- 'TR', 'EU', 'DE', 'US-CA'\n  version INT,                    -- versiyonlu, geri dönülebilir\n  effective_from TIMESTAMPTZ,\n  effective_to TIMESTAMPTZ,\n  policy_json JSONB,              -- consent_age, tax_inclusive, currency, retention_years, ...\n  created_by INT,\n  approved_by INT,                -- 4-göz onayı\n  PRIMARY KEY (policy_id)\n);\n\nCREATE TABLE decision_trace (\n  request_id UUID,\n  user_id INT,\n  resolved_locale TEXT,\n  resolved_jurisdiction TEXT,\n  resolved_currency CHAR(3),\n  resolved_tax_region TEXT,\n  resolved_timezone TEXT,\n  resolved_data_residency TEXT,\n  applied_policy_id BIGINT,       -- hangi versiyonlu kural seti uygulandı\n  decided_at TIMESTAMPTZ DEFAULT now()\n);"
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-p-11",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Operasyonel sertleştirme:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Cache"
+      },
+      {
+       "type": "text",
+       "text": ": resolver hot path. Per-user → kısa TTL (5 dk). Per-jurisdiction config → uzun TTL + event-based invalidation (config değişti → cache flush)."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Failure mode"
+      },
+      {
+       "type": "text",
+       "text": ": resolver veya config eksikse → "
+      },
+      {
+       "type": "strong",
+       "text": "deny-by-default"
+      },
+      {
+       "type": "text",
+       "text": " (en sıkı kural uygulanır). Sessiz kabul YASAK."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Audit"
+      },
+      {
+       "type": "text",
+       "text": ": her decision'ı decision_trace'a yaz. 'Neden bu kullanıcıya EUR + DE KDV uygulandı' sorusunun cevabı."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Config yetkisi"
+      },
+      {
+       "type": "text",
+       "text": ": OpenFGA ile config-write yetkisi 4-göz onayına bağlı. Yanlış config = yasal ihlal."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kıtalararası SaaS için 6 bağımsız ekseni (locale, jurisdiction, currency, tax, timezone, data-residency) çözen ve yürürlükteki kural setini hesaplayan policy resolver servisi."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tek-locale yaklaşımı 'codebase her ülkede farklı' demek; doğru mimari 'config her ülkede farklı, kod aynı'. Amazon/eBay'in görünmez sihri."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) 6 eksen ayrı resolve. 2) Versiyonlu policy_json config tablosu. 3) decision_trace audit. 4) Çatışma matrisi (precedence). 5) Cache + deny-by-default fallback. 6) 4-göz config onayı."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "cc-jurisdiction-resolver"
+       },
+       {
+        "type": "text",
+        "text": " cluster + Layer-1 öncesi middleware. Her request bu resolver'dan geçer."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk ikinci-ülke kullanıcısından ÖNCE. Sonradan refactor 1000x pahalı. Pre-revenue startup için bile baştan."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mimar 6 eksen tasarım; backend dev resolver implementasyonu; hukuk ekibi kural yazımı; SRE config dağıtımı."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Apartman site yönetimi: kapı (giriş kontrolü), su (currency), elektrik (tax), gaz (timezone), internet (data residency), site sözleşmesi (locale). Her biri ayrı altyapı; biri kesilirse diğeri çalışır. 'Her şey tek hat' demek = tek arıza her şeyi durdurur."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-story",
+    "type": "useCase",
+    "title": "Ayşe Teyze (63) — Almanya'da yaşayan emekli",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Ayşe Teyze 30 yıldır Almanya'da yaşıyor, hâlâ Türkçe ana dili. Türkiye'deki torunlara hediye sipariş ediyor (TR adres), kart bilgisi Alman bankası (EUR), arayüzü Türkçe istiyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "6 eksen ayrı çözümlenir: locale=tr, jurisdiction=DE (Ayşe Teyze AB sakini), currency=EUR (Alman kart), tax=TR (TR teslimat), tz=Europe/Berlin, data=EU (GDPR sıkı). Tek-locale yaklaşımı bu kombinasyonu kuramaz."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-story-2",
+    "type": "useCase",
+    "title": "Mali müşavir Hasan Bey (58) — KVKK + Vergi çatışması",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Hasan Bey'in müşterisi 'verimi sil' diye talep etti. Hasan Bey 'sil' tıklarsa → faturalar siliniyor, vergi denetimi kanıtsız kalıyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Çatışma çözümü: kişisel veri (ad, telefon, email, adres) "
+     },
+     {
+      "type": "strong",
+      "text": "anonimleştirilir"
+     },
+     {
+      "type": "text",
+      "text": " (TC kimlik hash, ad 'silindi'). Fatura kaydı (tutar, KDV, tarih) "
+     },
+     {
+      "type": "strong",
+      "text": "saklanır"
+     },
+     {
+      "type": "text",
+      "text": " (10 yıl). Hem KVKK hem VUK karşılanır."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-jurisdiction-resolver-story-3",
+    "type": "useCase",
+    "title": "Genç esnaf Murat Bey (61'lik abisi 40) — sanctions check",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Murat Bey ihracat yapıyor. Yeni bir müşteri sipariş verdi: İran'a teslimat."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Resolver: jurisdiction=US + ödeme USD ⇒ OFAC sanctions check tetiklenir. Müşteri sanctions list'te → "
+     },
+     {
+      "type": "strong",
+      "text": "sipariş otomatik REDDEDİLİR"
+     },
+     {
+      "type": "text",
+      "text": ". Resolver decision_trace'a 'sanctioned_country=IR, OFAC_match=true' yazar; CS team görür."
+     }
+    ]
+   }
+  ]
+ }
+}

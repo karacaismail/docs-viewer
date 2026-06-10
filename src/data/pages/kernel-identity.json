@@ -1,0 +1,761 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-kernel-identity",
+  "sourceId": "k-identity",
+  "slug": "kernel/kernel-identity",
+  "title": "Identity",
+  "summary": "Her request'in başında 'kim bu' sorusunu cevaplayan mekanizma. Login/signup'tan çok daha fazlası.",
+  "categoryId": "kernel",
+  "tags": [
+   "identity",
+   "auth",
+   "session",
+   "kernel"
+  ],
+  "meta": {
+   "badge": "Layer 0 — Kernel #2"
+  },
+  "related": [],
+  "blocks": [
+   {
+    "id": "block-kernel-identity-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "'Sen kimsin?' sorusunu cevaplayan kapı bekçisi: giriş, çıkış, parola, oturum."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-identity-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Her request'in başında "
+     },
+     {
+      "type": "strong",
+      "text": "kim bu"
+     },
+     {
+      "type": "text",
+      "text": " sorusunu cevaplayan ana mekanizma. Diğer her module authentication olmadan ne hook çağırabilir, ne event işleyebilir."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-identity-h-domain-modeli",
+    "type": "heading",
+    "level": 4,
+    "text": "Domain modeli"
+   },
+   {
+    "id": "block-kernel-identity-code",
+    "type": "codeBlock",
+    "language": "yaml",
+    "code": "User                  # email, password_hash (Argon2id), status, locale, timezone\nSession               # session_id, user_id, ip, user_agent, expires_at\nToken                 # personal access token, OAuth token, refresh token\nTwoFactorMethod       # TOTP secret, WebAuthn credential, SMS phone\nSSOConnection         # OIDC provider, SAML IdP, OAuth app config\nImpersonationLog      # admin_user, target_user, started_at, ended_at, reason\nPasswordReset         # token, user_id, expires_at, used_at\nServiceAccount        # machine identity, scoped credentials"
+   },
+   {
+    "id": "block-kernel-identity-h-yetenekler",
+    "type": "heading",
+    "level": 4,
+    "text": "Yetenekler"
+   },
+   {
+    "id": "block-kernel-identity-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Şifre auth"
+      },
+      {
+       "type": "text",
+       "text": " — Argon2id (RFC 9106), cost 19MiB/2 iter/1 lane."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Session"
+      },
+      {
+       "type": "text",
+       "text": " — server-side Redis session (cookie ID), JWT opsiyonel (stateless API için)."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "OAuth/OIDC"
+      },
+      {
+       "type": "text",
+       "text": " — Google, Microsoft Entra ID, Apple, GitHub, generic OIDC."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "SAML 2.0"
+      },
+      {
+       "type": "text",
+       "text": " — enterprise SSO (Okta, Auth0, Azure AD)."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "2FA"
+      },
+      {
+       "type": "text",
+       "text": " — TOTP (RFC 6238), WebAuthn (FIDO2 passkey), backup codes, SMS fallback."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Magic link"
+      },
+      {
+       "type": "text",
+       "text": " — passwordless email login."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Personal Access Token (PAT)"
+      },
+      {
+       "type": "text",
+       "text": " — developer API key, scoped."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Service account"
+      },
+      {
+       "type": "text",
+       "text": " — server-to-server, key rotation, scoped."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Impersonation"
+      },
+      {
+       "type": "text",
+       "text": " — admin başka kullanıcı olarak giriş, audit log'a \"X impersonated Y at HH:MM\"."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Password reset"
+      },
+      {
+       "type": "text",
+       "text": " — token tek-kullanımlık, 30 dk TTL, brute force koruması."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Account recovery"
+      },
+      {
+       "type": "text",
+       "text": " — backup email, social recovery (FIDO2 + recovery phrase)."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Rate limit"
+      },
+      {
+       "type": "text",
+       "text": " — failed login backoff (1 → 2 → 4 → 8 saniye), IP-bazlı, account-bazlı."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Device management"
+      },
+      {
+       "type": "text",
+       "text": " — \"şu cihazlar oturum açık\" listesi, remote logout."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Anonymization (KVKK)"
+      },
+      {
+       "type": "text",
+       "text": " — hesap silindi flag, email/name/phone null, ID korunur."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-kernel-identity-h-kod-kontrati",
+    "type": "heading",
+    "level": 4,
+    "text": "Kod kontratı"
+   },
+   {
+    "id": "block-kernel-identity-code-2",
+    "type": "codeBlock",
+    "language": "python",
+    "code": "from framework.identity import current_user, require_auth\n\n@require_auth\nasync def my_endpoint(request: Request):\n    user = current_user()        # User aggregate\n    user.is_authenticated        # bool\n    user.has_role(\"manager\")     # RBAC check\n    user.tenant_id               # Tenancy context\n    user.locale                  # \"tr-TR\"\n    user.timezone                # \"Europe/Istanbul\"\n\n# Service account context (cron, webhook)\nwith framework.identity.system_context(service=\"payroll_runner\"):\n    process_payroll_for(tenant_id)"
+   },
+   {
+    "id": "block-kernel-identity-h-sso-senaryosu-gercek-dunya",
+    "type": "heading",
+    "level": 4,
+    "text": "SSO senaryosu — gerçek dünya"
+   },
+   {
+    "id": "block-kernel-identity-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bir B2B SaaS müşterin (Acme Inc.) tüm çalışanlarını sadece Acme'nin Google Workspace ile login etsin istiyor. Acme admin'i, Acme tenant'ı için \"SSO Required: Google Workspace, domain: acme.com\" diye ayar yapar. Bundan sonra acme.com kullanıcısı normal şifre login yapamaz — Google'a redirect. Bu özellik kernel'de var, module yazmıyorsun."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-identity-h-turkiye-ozel-e-devlet-m-imza",
+    "type": "heading",
+    "level": 4,
+    "text": "Türkiye özel — e-Devlet, m-imza"
+   },
+   {
+    "id": "block-kernel-identity-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "İleride banka/finans ürünleri için "
+     },
+     {
+      "type": "strong",
+      "text": "e-Devlet kapısı OAuth"
+     },
+     {
+      "type": "text",
+      "text": " ve "
+     },
+     {
+      "type": "strong",
+      "text": "m-imza (mobil imza)"
+     },
+     {
+      "type": "text",
+      "text": " identity entegrasyonu gerek. Bunlar adapter olarak Identity'nin altına. Çoğunlukla TÜRKKEP üstünden çalışır."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-identity-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Başkasının kimliğini güvenle kullanmaya yarayan standart yöntem."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Google ile gir, Facebook ile gir — parola paylaşmadan."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Token (geçici geçiş kartı) alıp sisteme sunarsın."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Üçüncü taraflar entegre eder."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Otele girerken kimlik göstermek yerine kart vermek."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-identity-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Junior tuzağı — \"kendim yazarım\"",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Auth yazmak = bcrypt cost ayarı, timing-safe karşılaştırma, password reset token tek-kullanımlık, session fixation koruması, CSRF token, OAuth state parameter doğrulama, JWT secret rotation, brute force backoff, account lockout policy. 3 hafta yazılır, içinde 4 güvenlik açığı kalır. Core'da olmasının sebebi: "
+     },
+     {
+      "type": "strong",
+      "text": "her ürün ihtiyaç duyar, yanlış yazılınca felaket"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-identity-lesson-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Başkasının kimliğini güvenle kullanmaya yarayan standart yöntem."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Google ile gir, Facebook ile gir — parola paylaşmadan."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Token (geçici geçiş kartı) alıp sisteme sunarsın."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Üçüncü taraflar entegre eder."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Otele girerken kimlik göstermek yerine kart vermek."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-identity-div",
+    "type": "divider"
+   },
+   {
+    "id": "block-kernel-identity-h-landx-bakisi-i02-user-identity-core-i03-authentication-sessions",
+    "type": "heading",
+    "level": 4,
+    "text": "LandX bakışı: I02 User & Identity Core + I03 Authentication & Sessions"
+   },
+   {
+    "id": "block-kernel-identity-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "LandX "
+     },
+     {
+      "type": "strong",
+      "text": "I02 — User & Identity Core"
+     },
+     {
+      "type": "text",
+      "text": " kritik bir disiplin getirir: bireysel, kurumsal, "
+     },
+     {
+      "type": "strong",
+      "text": "agent"
+     },
+     {
+      "type": "text",
+      "text": ", system kullanıcı tek polymorphic identity modelinde, "
+     },
+     {
+      "type": "code",
+      "text": "principal_type"
+     },
+     {
+      "type": "text",
+      "text": " alanı ile ayrılır. Agent ≠ human. Her agent için ek alanlar: "
+     },
+     {
+      "type": "code",
+      "text": "agent_kind"
+     },
+     {
+      "type": "text",
+      "text": " (conversational/workflow/cron/embedded), "
+     },
+     {
+      "type": "code",
+      "text": "model_provider"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "code",
+      "text": "default_model"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "code",
+      "text": "system_prompt_id"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "code",
+      "text": "on_behalf_of_user_id"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "code",
+      "text": "capability_set_id"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-identity-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "LandX "
+     },
+     {
+      "type": "strong",
+      "text": "I03 — Authentication & Sessions"
+     },
+     {
+      "type": "text",
+      "text": " dört credential tipi tanımlar: Password, Passkey/WebAuthn, API Key, "
+     },
+     {
+      "type": "strong",
+      "text": "Agent Token"
+     },
+     {
+      "type": "text",
+      "text": ". Agent token'ı human session'lardan farklı:"
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-identity-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "code",
+       "text": "ttl_seconds"
+      },
+      {
+       "type": "text",
+       "text": " zorunlu (agent token kısa ömürlü)"
+      }
+     ],
+     [
+      {
+       "type": "code",
+       "text": "max_tool_calls"
+      },
+      {
+       "type": "text",
+       "text": " limit (kötüye kullanım sınırı)"
+      }
+     ],
+     [
+      {
+       "type": "code",
+       "text": "capability_scope_ids"
+      },
+      {
+       "type": "text",
+       "text": " (hangi capability pack)"
+      }
+     ],
+     [
+      {
+       "type": "code",
+       "text": "on_behalf_of_user_id"
+      },
+      {
+       "type": "text",
+       "text": " (kim adına çalışıyor)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Audit zorunlu ("
+      },
+      {
+       "type": "code",
+       "text": "audited"
+      },
+      {
+       "type": "text",
+       "text": " flag)"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-kernel-identity-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "I02 KPI",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kullanıcı arama p95 <300ms, principal type resolution %100, merge/split conflict <%0.1"
+       }
+      ]
+     },
+     {
+      "term": "I03 KPI",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Login latency p95 <800ms, brute-force başarı 0, agent token TTL ihlali 0"
+       }
+      ]
+     },
+     {
+      "term": "Risk-based Auth (I03)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "device fingerprint, geo_anomaly (AI), velocity_anomaly (AI), recommended_action (allow/step_up/block)"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-identity-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-kernel-identity-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Her request'in başında 'kim bu' sorusunu cevaplayan mekanizma. Login/signup'tan çok daha fazlası."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-identity-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-kernel-identity-lesson-3",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "'Sen kimsin?' sorusunu cevaplayan kapı bekçisi: kullanıcı sisteme nasıl girer, parolasını nasıl korur, oturumu ne kadar açık kalır."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her sistemde 'kim ne yapıyor' bilinmeli. Bekçi olmazsa içeriye herkes girer, sorumluluk dağılır."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kullanıcı e-posta + parola girer → bekçi doğrular → bir oturum (geçici giriş kartı) verir. Bu kart her tıklamada sessizce kontrol edilir."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sisteme giriş ekranı, parola sıfırlama, 'beni hatırla' kutusu, çoklu cihazda otomatik giriş."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sisteme her girdiğinizde, parola değiştirdiğinizde, bir aydan eski oturum tazelendiğinde."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Son kullanıcı giriş yapar; sistem yöneticisi kuralları belirler (parola karmaşıklığı, oturum süresi)."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Apartman girişindeki güvenlik: kartınızı turnikeye okutursunuz, geçersiniz. Kart geçmezse içeri giremezsiniz. Apartman yönetimi kartınızı kaybederseniz yenisini verir."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-identity-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-kernel-identity-story",
+    "type": "useCase",
+    "title": "Site giriş güvenliği — apartman kartı sistemi",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "8 katlı sitede her dairenin 2 kartı var. Sakin geç gelirse kart turnikeye okutulur, geçer. Komşu daireye girilemez (farklı kart)."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Yazılımda kimlik (Identity) tam bu mantık: e-posta + parola = senin 'kartın'. Sisteme giriş yaptın, kart geçerli sürece sayfalarda gezersin. Kart süresi bittiğinde tekrar giriş yapman gerekir."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-identity-story-2",
+    "type": "useCase",
+    "title": "Banka müşterisi — internet bankacılığı oturum süresi",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Ev sahibesi Saliha Hanım banka uygulamasını açtı, 10 dakika dolaşmadı; uygulama 'oturum sonlandı, tekrar giriş yap' diyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Yazılımda da aynı kural: belirli süre hareketsizlikten sonra sistem 'tekrar kim olduğunu söyle' diye sorar. Cüzdan açıkken telefon çalsa, bırakırsa para alınmasın diye."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-identity-story-3",
+    "type": "useCase",
+    "title": "Kafe Wi-Fi parolası",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Kafede müşteri Wi-Fi'ye bağlanırken garson 'günün parolasını' söyler. Müşteri parolayı girer, kafenin internetinden faydalanır."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Sistemde de 'sen kimsin' sorusu önce e-posta + parola ile yanıtlanır. Doğruysa içeri alınır. Yanlışsa 'bir daha dene'. Garson rolü = sistemin bekçisi."
+     }
+    ]
+   }
+  ]
+ }
+}

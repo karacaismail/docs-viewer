@@ -1,0 +1,1068 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-edu-u05-api",
+  "sourceId": "edu-u05",
+  "slug": "egitim/edu-u05-api",
+  "title": "API: REST ve GraphQL — pratik anlatım",
+  "summary": "HTTP istek-cevap, method, status code, JSON, REST kuralları, GraphQL fark, idempotent, versioning.",
+  "categoryId": "egitim",
+  "tags": [
+   "education",
+   "u05",
+   "api",
+   "rest",
+   "graphql"
+  ],
+  "meta": {
+   "granularity": "buyuk-tas",
+   "state": "ok"
+  },
+  "related": [
+   "page-edu-u04-veritabani",
+   "page-kernel-schema",
+   "page-scale-outbox"
+  ],
+  "blocks": [
+   {
+    "id": "block-edu-u05-api-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "HTTP istek-cevap, method, status code, JSON, REST kuralları, GraphQL fark, idempotent, versioning."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u05-api-lh",
+    "type": "lessonHeader",
+    "unit": "Ünite 05",
+    "title": "API — uygulamalar arası konuşma",
+    "level": "orta",
+    "durationMin": 70,
+    "prereq": [
+     "edu-u03",
+     "edu-u04"
+    ],
+    "goals": [
+     "HTTP method (GET/POST/PUT/PATCH/DELETE) farklarını ve hangi durumda kullanılacağını biliyorsun.",
+     "REST ve GraphQL'in temel farkını bir örnekle anlatabilirsin.",
+     "Idempotent kavramını ve neden retry için kritik olduğunu söyleyebilirsin.",
+     "Status code 200/201/400/401/403/404/409/422/500 anlamını biliyorsun."
+    ]
+   },
+   {
+    "id": "block-edu-u05-api-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İki sistemin nasıl konuşacağını tanımlayan kurallar dizisi."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Modern yazılım = çok parçanın haberleşmesi."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir sistem istek atar, karşısındaki cevap döner."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici çağırır."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Telefon görüşmesinin kuralı."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u05-api-h-kavramlar",
+    "type": "heading",
+    "level": 4,
+    "text": "Kavramlar"
+   },
+   {
+    "id": "block-edu-u05-api-h-anlatim-http-method-ve-url",
+    "type": "heading",
+    "level": 4,
+    "text": "Anlatım — HTTP method ve URL"
+   },
+   {
+    "id": "block-edu-u05-api-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "term",
+      "text": "REST",
+      "termId": "term-rest-edu-u05-api"
+     },
+     {
+      "type": "text",
+      "text": "'in mantığı çok basit: "
+     },
+     {
+      "type": "strong",
+      "text": "URL bir kaynak, method bir eylem"
+     },
+     {
+      "type": "text",
+      "text": ". Aynı URL'e farklı "
+     },
+     {
+      "type": "term",
+      "text": "method",
+      "termId": "term-method-edu-u05-api"
+     },
+     {
+      "type": "text",
+      "text": "'lar farklı sonuç verir."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u05-api-note",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "URL = isim, method = fiil."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u05-api-lesson-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İnternet üzerinde sistemlerin konuşması için yaygın yöntem."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Standart olduğu için her dilde anlaşılır."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "HTTP üzerinden GET/POST/PUT/DELETE."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tüm geliştiriciler bilmek zorunda."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Standart posta hizmeti."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u05-api-table",
+    "type": "table",
+    "columns": [
+     "Method",
+     "URL",
+     "Anlamı",
+     "Idempotent?"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "GET"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "/api/orders"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sipariş listesi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Evet"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "GET"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "/api/orders/42"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "42 nolu siparişi getir"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Evet"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "POST"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "/api/orders"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yeni sipariş oluştur"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hayır (idempotency key ile evet)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "PUT"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "/api/orders/42"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "42'yi tamamen değiştir"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Evet"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "PATCH"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "/api/orders/42"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "42'nin bazı alanlarını değiştir"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hayır (varsayılan)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "DELETE"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "/api/orders/42"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "42'yi sil"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Evet"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u05-api-h-status-code-frontend-ne-gorecegini-bundan-bilir",
+    "type": "heading",
+    "level": 4,
+    "text": "Status code — frontend ne göreceğini bundan bilir"
+   },
+   {
+    "id": "block-edu-u05-api-feat",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "200 OK",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İstek başarılı, cevap geliyor."
+       }
+      ]
+     },
+     {
+      "term": "201 Created",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kaynak oluşturuldu (POST sonrası). "
+       },
+       {
+        "type": "code",
+        "text": "Location"
+       },
+       {
+        "type": "text",
+        "text": " header'ında yeni URL."
+       }
+      ]
+     },
+     {
+      "term": "204 No Content",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Başarılı ama gövde yok (DELETE sonrası genelde)."
+       }
+      ]
+     },
+     {
+      "term": "400 Bad Request",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İstemci hatası: payload yanlış, eksik alan."
+       }
+      ]
+     },
+     {
+      "term": "401 Unauthorized",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Giriş yapmamışsın. (İsim yanıltıcı: aslında 'authentication' yok.)"
+       }
+      ]
+     },
+     {
+      "term": "403 Forbidden",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Giriş yaptın ama yetki yok. (RBAC kontrol)."
+       }
+      ]
+     },
+     {
+      "term": "404 Not Found",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kaynak yok."
+       }
+      ]
+     },
+     {
+      "term": "409 Conflict",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Çakışma: versiyon eski, başkası yazmış (optimistic concurrency)."
+       }
+      ]
+     },
+     {
+      "term": "422 Unprocessable Entity",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Validation hatası — bir alan yanlış format."
+       }
+      ]
+     },
+     {
+      "term": "429 Too Many Requests",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Rate limit aşıldı; "
+       },
+       {
+        "type": "code",
+        "text": "Retry-After"
+       },
+       {
+        "type": "text",
+        "text": " header'ında ne zaman dönmen gerektiği."
+       }
+      ]
+     },
+     {
+      "term": "500 Internal Server Error",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sunucu hatası. (Loglara bakman gerek; istemci bir şey yapamaz.)"
+       }
+      ]
+     },
+     {
+      "term": "503 Service Unavailable",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geçici düşüş; retry güvenli."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u05-api-h-rest-vs-graphql-pratik-fark",
+    "type": "heading",
+    "level": 4,
+    "text": "REST vs GraphQL — pratik fark"
+   },
+   {
+    "id": "block-edu-u05-api-lesson-3",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İnternet üzerinde sistemlerin konuşması için yaygın yöntem."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Standart olduğu için her dilde anlaşılır."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "HTTP üzerinden GET/POST/PUT/DELETE."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tüm geliştiriciler bilmek zorunda."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Standart posta hizmeti."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u05-api-grid",
+    "type": "cardGrid",
+    "columns": 2,
+    "cards": [
+     {
+      "icon": "ph-arrows-clockwise",
+      "title": "REST",
+      "tone": "neutral",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Çok endpoint, sabit response."
+       },
+       {
+        "type": "text",
+        "text": " "
+       },
+       {
+        "type": "code",
+        "text": "/api/users/42"
+       },
+       {
+        "type": "text",
+        "text": " → tüm user alanları. Mobile için fazla veri çekersin (over-fetching)."
+       }
+      ]
+     },
+     {
+      "icon": "ph-graph",
+      "title": "GraphQL",
+      "tone": "good",
+      "segments": [
+       {
+        "type": "strong",
+        "text": "Tek endpoint, esnek response."
+       },
+       {
+        "type": "text",
+        "text": " "
+       },
+       {
+        "type": "code",
+        "text": "query { user(id:42) { name, email } }"
+       },
+       {
+        "type": "text",
+        "text": " — sadece istediğini al. Mobile için ideal."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u05-api-co",
+    "type": "callout",
+    "variant": "tip",
+    "title": "İkisi de var",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bizim framework DocType tanımlandığında "
+     },
+     {
+      "type": "strong",
+      "text": "hem REST hem GraphQL"
+     },
+     {
+      "type": "text",
+      "text": " otomatik üretir. Sen seçmiyorsun — kullanım pattern'ine göre frontend hangisini istiyorsa onu kullanır."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u05-api-lesson-4",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İnternet üzerinde sistemlerin konuşması için yaygın yöntem."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Standart olduğu için her dilde anlaşılır."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "HTTP üzerinden GET/POST/PUT/DELETE."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tüm geliştiriciler bilmek zorunda."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Standart posta hizmeti."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u05-api-h-idempotent-idempotency-key-bir-kart-neden-iki-kez-cekilmez",
+    "type": "heading",
+    "level": 4,
+    "text": "Idempotent + Idempotency Key — bir kart neden iki kez çekilmez?"
+   },
+   {
+    "id": "block-edu-u05-api-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "Mobil app POST atıyor",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Kullanıcı 'Öde' butonuna basar. Frontend "
+       },
+       {
+        "type": "code",
+        "text": "Idempotency-Key: ABC-123"
+       },
+       {
+        "type": "text",
+        "text": " header'ı ile POST /payments."
+       }
+      ]
+     },
+     {
+      "title": "Ağ koptu",
+      "segments": [
+       {
+        "type": "text",
+        "text": "App cevap alamadı. Otomatik retry: aynı body, aynı key ile tekrar POST."
+       }
+      ]
+     },
+     {
+      "title": "Sunucu key'i tanır",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Daha önce ABC-123 ile çekilmişti; tekrar çekmez. İlk istekteki cevabı "
+       },
+       {
+        "type": "strong",
+        "text": "aynen"
+       },
+       {
+        "type": "text",
+        "text": " döner."
+       }
+      ]
+     },
+     {
+      "title": "Müşteri tek çekildi",
+      "segments": [
+       {
+        "type": "text",
+        "text": "İki retry, tek transaction. Kart şirketinden olumlu cevap, kullanıcıdan tek tahsilat."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u05-api-code",
+    "type": "codeBlock",
+    "title": "Gerçek bir istek/cevap",
+    "language": "http",
+    "code": "POST /api/orders HTTP/1.1\nHost: api.example.com\nAuthorization: Bearer eyJhbGciOi...\nContent-Type: application/json\nIdempotency-Key: 7f3a-2b9e-...\n\n{\n  \"customer_id\": \"cust_42\",\n  \"items\": [\n    {\"product_id\": \"P1\", \"qty\": 2}\n  ]\n}\n\n--- response ---\nHTTP/1.1 201 Created\nLocation: /api/orders/SO-2026-0001\nETag: \"v1\"\nContent-Type: application/json\n\n{\n  \"id\": \"SO-2026-0001\",\n  \"status\": \"draft\",\n  \"total\": {\"amount\": \"199.90\", \"currency\": \"TRY\"}\n}"
+   },
+   {
+    "id": "block-edu-u05-api-chk",
+    "type": "checklist",
+    "title": "Bu üniteyi anladığımı nereden anlarım?",
+    "items": [
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "GET/POST/PUT/PATCH/DELETE her birinin ne işe yaradığını söyleyebilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Hangi method'ların idempotent olduğunu ve neden POST'a idempotency key eklediğimizi anlatabilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "200/201/400/401/403/404/409/422/429/500 status code'larını cümle ile açıklayabilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "REST ile GraphQL'in temel farkını bir endpoint örneğiyle anlatabilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "CORS'un neden var olduğunu (browser security) biliyorum."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u05-api-h-mini-proje",
+    "type": "heading",
+    "level": 4,
+    "text": "Mini-proje"
+   },
+   {
+    "id": "block-edu-u05-api-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bir 'Görev' DocType'ın için 5 "
+     },
+     {
+      "type": "term",
+      "text": "endpoint",
+      "termId": "term-endpoint-edu-u05-api"
+     },
+     {
+      "type": "text",
+      "text": "'in (list, get, create, update, delete) "
+     },
+     {
+      "type": "term",
+      "text": "HTTP",
+      "termId": "term-http-edu-u05-api"
+     },
+     {
+      "type": "text",
+      "text": " method + URL + örnek payload + olası "
+     },
+     {
+      "type": "term",
+      "text": "status code",
+      "termId": "term-status-code-edu-u05-api"
+     },
+     {
+      "type": "text",
+      "text": "'ları yaz. Her endpoint'in "
+     },
+     {
+      "type": "term",
+      "text": "idempotent",
+      "termId": "term-idempotent-edu-u05-api"
+     },
+     {
+      "type": "text",
+      "text": " olup olmadığını işaretle."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u05-api-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Bonus:"
+     },
+     {
+      "type": "text",
+      "text": " "
+     },
+     {
+      "type": "code",
+      "text": "POST /api/tasks/{id}/complete"
+     },
+     {
+      "type": "text",
+      "text": " — bu özel bir action endpoint'i. Method/URL kuralını esnetmek gerek. RESTPure'cüler "
+     },
+     {
+      "type": "code",
+      "text": "PATCH /api/tasks/{id}"
+     },
+     {
+      "type": "text",
+      "text": " ile "
+     },
+     {
+      "type": "code",
+      "text": "status: done"
+     },
+     {
+      "type": "text",
+      "text": " döner; pratikçiler özel action endpoint'i koyar."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u05-api-co-2",
+    "type": "callout",
+    "variant": "info",
+    "title": "Sonraki adımlar",
+    "segments": [
+     {
+      "type": "text",
+      "text": "İlk 5 ünite hazır. Devamı (06-10) yakında eklenecek: Multi-tenancy, Yetkilendirme & Güvenlik, Event Bus, Plugin Mimarisi, Deploy. Şimdilik ilgilendiğin spesifik konu için mimari döküman cluster'larına geç: "
+     },
+     {
+      "type": "ref",
+      "text": "k-schema",
+      "refId": "k-schema"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "ref",
+      "text": "k-tenancy",
+      "refId": "k-tenancy"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "ref",
+      "text": "scale-outbox",
+      "refId": "scale-outbox"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u05-api-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-edu-u05-api-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "HTTP istek-cevap, method, status code, "
+     },
+     {
+      "type": "term",
+      "text": "JSON",
+      "termId": "term-json-edu-u05-api"
+     },
+     {
+      "type": "text",
+      "text": ", REST kuralları, "
+     },
+     {
+      "type": "term",
+      "text": "GraphQL",
+      "termId": "term-graphql-edu-u05-api"
+     },
+     {
+      "type": "text",
+      "text": " fark, idempotent, "
+     },
+     {
+      "type": "term",
+      "text": "versioning",
+      "termId": "term-versioning-edu-u05-api"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u05-api-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-edu-u05-api-lesson-5",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Ünite 05 — API (uygulama programlama arayüzü): REST ve GraphQL. İki sistemin nasıl konuşturduğu."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Modern yazılım = birçok parçanın konuşması. Konuşma kuralı = API."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İstek-yanıt mantığı + HTTP yöntemleri + JSON formatı."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Müfredatın 5. ünitesi — veritabanından sonra."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mobil + web + dış servis entegrasyonu yapacaksanız."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tüm geliştiriciler."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Telefon konuşmasının kuralı: önce 'alo' der, sırayla konuşur, 'görüşürüz' der."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

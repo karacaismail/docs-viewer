@@ -1,0 +1,537 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-edu-u16-test",
+  "sourceId": "edu-u16",
+  "slug": "egitim/edu-u16-test",
+  "title": "Test Piramidi — kodun hata yapmadığını kanıtlamak",
+  "summary": "Üst seviye: az ve yavaş e2e. Orta: integration. Tabandaki çoğunluk: unit. Tersi piramit = çöker.",
+  "categoryId": "egitim",
+  "tags": [
+   "education",
+   "testing",
+   "pyramid",
+   "unit",
+   "integration",
+   "e2e"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-edu-u11-hata-yonetimi",
+   "page-crosscut-observability",
+   "page-sus-conformance"
+  ],
+  "blocks": [
+   {
+    "id": "block-edu-u16-test-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Unit (en çok, en hızlı), integration (orta), e2e (az, en yavaş). Mock vs stub farkı. Snapshot test ne işe yarar."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u16-test-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Test piramidinin özü:"
+     },
+     {
+      "type": "text",
+      "text": " *çok ve hızlı küçük testler altta, az ve yavaş "
+     },
+     {
+      "type": "term",
+      "text": "e2e",
+      "termId": "term-e2e-edu-u16-test"
+     },
+     {
+      "type": "text",
+      "text": " üstte.* Ters çevirirsen suite 30 dk sürer, kimse çalıştırmaz, bug üretime gider."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u16-test-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Ters piramit tuzağı",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Yeni başlayan ekip 'her şeyi e2e ile test edelim' der. 200 e2e test = 45 dk suite. Kimse çalıştırmaz. Bug fark edilmez. "
+     },
+     {
+      "type": "strong",
+      "text": "Önce unit, sonra integration, en üstte e2e."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u16-test-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'Order service için: 1) Unit test her fonksiyon için (mock'lı DB). 2) Integration test POST /orders endpoint (gerçek test DB). 3) E2e Playwright: kullanıcı login → ürün seç → ödeme. Coverage %80 hedef.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u16-test-h-test-turu-ne-zaman",
+    "type": "heading",
+    "level": 4,
+    "text": "Test türü → ne zaman"
+   },
+   {
+    "id": "block-edu-u16-test-table",
+    "type": "table",
+    "columns": [
+     "Tür",
+     "Hız",
+     "Sayı",
+     "Ne test eder?"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Unit"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "<100ms"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "%70 (yüzlerce)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Saf fonksiyon"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Integration"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "saniye"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "%20 (onlarca)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "API endpoint + DB"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "E2E"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "dakika"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "%10 (5-15)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kullanıcı akışı"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Visual regression"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "saniye"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Component başına"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "UI değişimi"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Load test"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "dakikalar"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Release öncesi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Performans"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u16-test-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-edu-u16-test-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Test piramidi (Mike Cohn, 2009):"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u16-test-code",
+    "type": "codeBlock",
+    "language": "text",
+    "code": "    /\\\n   /  \\   e2e   (%10) — yavaş, gerçek tarayıcı/cihaz\n  /----\\\n /      \\  integration (%20) — gerçek DB, gerçek HTTP\n/--------\\\n           unit (%70) — mock'lı, milisaniye"
+   },
+   {
+    "id": "block-edu-u16-test-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Neden ters piramit kötü?"
+     },
+     {
+      "type": "text",
+      "text": "\nE2e çok = tek bug → 100 test fail → kaynak yanlış yere bakar. Yavaş suite = developer test çalıştırmaz."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u16-test-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Unit test = saf fonksiyon testi"
+     },
+     {
+      "type": "text",
+      "text": ": Database, network, file system YOK. Vitest/Jest ile <100ms."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u16-test-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Integration test = parça birleşim"
+     },
+     {
+      "type": "text",
+      "text": ": Gerçek DB (test database), gerçek HTTP server. Saniye seviyesi."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u16-test-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "E2e test = kullanıcı yolu"
+     },
+     {
+      "type": "text",
+      "text": ": Playwright ile gerçek tarayıcı, gerçek form doldurma. Dakika seviyesi."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u16-test-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Mock vs Stub:"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u16-test-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Stub"
+      },
+      {
+       "type": "text",
+       "text": ": Sahte cevap döner ("
+      },
+      {
+       "type": "code",
+       "text": "stripe.charge"
+      },
+      {
+       "type": "text",
+       "text": " 'success' döner)."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Mock"
+      },
+      {
+       "type": "text",
+       "text": ": Çağrı yapıldığını da doğrular ("
+      },
+      {
+       "type": "code",
+       "text": "stripe.charge"
+      },
+      {
+       "type": "text",
+       "text": " 1 kez 100 TL ile çağrıldı mı?)."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u16-test-p-8",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Snapshot test"
+     },
+     {
+      "type": "text",
+      "text": ": 'Bu output bir kez doğru kaydedildi; bir daha değişmemeli' garantisi."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u16-test-p-9",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Coverage hedefleri (60+ junior altı için makul):"
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u16-test-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Unit: %80"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Integration: kritik flow %100"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "E2e: 5-10 happy path"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u16-test-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-edu-u16-test-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yazılımın doğru çalıştığını kanıtlayan otomatik kontrol mekanizması. 3 katman: küçük birim (unit) → birleşim (integration) → kullanıcı yolu (e2e)."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Test yoksa her değişiklik 'çalışıyor mu?' belirsizliği. Test varsa 5 saniyede 1000 senaryo kontrol edilir."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Her yeni fonksiyon için unit test. 2) Kritik API endpoint'i için integration test. 3) Happy path için e2e. 4) Coverage hedefini CI'da zorla."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Vitest (unit + integration), Playwright (e2e). CI'da her PR'da çalışır."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Test ÖNCE yaz (TDD) veya kodla birlikte. Sonradan yazılan test = yazılmıyor."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici kendi testini yazar; tech lead coverage hedefini koyar; CI zorlar."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Restoran: aşçı malzemeyi tek tek kontrol eder (unit), yemeği tabakta tadar (integration), garson servis öncesi son bakar (e2e)."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u16-test-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-edu-u16-test-story",
+    "type": "useCase",
+    "title": "Aşçı Hatice Teyze (62) — yeni baklava reçetesi",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Yeni reçetede 5 adım var: hamur, şerbet, ceviz, fırın, soğutma. Her adımı tek tek tadıyor (unit test). Sonra hep birlikte deniyor (integration). Sonra eşi+çocuklar yiyiyor (e2e)."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Sadece sonu denese tek tat. Adım adım tat olmasa hata nerede bilmez. Üç katman birlikte."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u16-test-story-2",
+    "type": "useCase",
+    "title": "Berber Mehmet Usta (60) — yeni saç sistemi",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Yeni saç tekniği öğrendi. Önce kuklası üzerinde denedi (unit). Sonra çırakta denedi (integration). Sonra normal müşteride (e2e)."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Direkt müşteride denese hata felaketti. Aşamalı test = güvenli ilerleyiş."
+     }
+    ]
+   }
+  ]
+ }
+}

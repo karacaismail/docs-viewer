@@ -1,0 +1,1823 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-kernel-schema",
+  "sourceId": "k-schema",
+  "slug": "kernel/kernel-schema",
+  "title": "Schema / Metadata Engine (DocType)",
+  "summary": "Framework'ün kalbi. Frappe DocType, Salesforce Object, Strapi Content-Type — aynı fikir.",
+  "categoryId": "kernel",
+  "tags": [
+   "doctype",
+   "metadata",
+   "schema",
+   "kernel"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "critical",
+   "badge": "Layer 0 — Kernel #1"
+  },
+  "related": [],
+  "blocks": [
+   {
+    "id": "block-kernel-schema-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Sistemin omurgası: yeni veri tipleri (Müşteri, Fatura, vb.) kod yazılmadan, tanım kartı doldurularak eklenir."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu framework'ün "
+     },
+     {
+      "type": "strong",
+      "text": "kalbi"
+     },
+     {
+      "type": "text",
+      "text": ". Frappe DocType, Odoo Model, Salesforce Object, Strapi Content-Type — hepsi aynı fikrin farklı isimleri: *şema kodda değil, metadatada*."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-note",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Eşdeğerler: Frappe DocType, Odoo Model, Salesforce Object, Strapi Content-Type."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-h-domain-modeli",
+    "type": "heading",
+    "level": 4,
+    "text": "Domain modeli"
+   },
+   {
+    "id": "block-kernel-schema-img",
+    "type": "image",
+    "src": "/assets/k-schema-doctype.svg",
+    "alt": "DocType tanım kartından 5 otomatik çıktı: tablo, API, form, audit, hook",
+    "caption": "Tek bir DocType tanımı 5 farklı çıktıyı kendiliğinden üretir."
+   },
+   {
+    "id": "block-kernel-schema-note-2",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "DocType tanım kartı + otomatik üretilen 5 çıktı."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir DocType tanımladığında sistemin neleri otomatik ürettiğini gösteren akış şeması."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "'Kart doldurma' yönteminin gücünü görmek, kod yazmak yerine tanım yazmanın hızını kavramak için."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sol tarafta tek tanım kartı, sağ tarafta beş otomatik çıktı: tablo, API, form, audit, hook."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yönetici görür ve kullanmaya karar verir; geliştirici altyapıyı kurar."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir matbaaya tek bir tasarım vermek, ondan kartvizit + afiş + zarf + bayrak + etiket basılması gibi."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Metadata kaydı şu beş tablodan oluşur (kavramsal, Frappe pattern):"
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-code",
+    "type": "codeBlock",
+    "title": "Schema engine — metadata tablolar",
+    "language": "sql",
+    "code": "doctype                # DocType definition (name, label, naming, permissions, options)\ndoctype_field          # Per-field metadata (fieldname, fieldtype, options, required, in_list_view, fetch_from)\ndoctype_permission     # Role-based default permissions (role, read, write, create, delete, submit, cancel, ifowner)\ncustom_field           # Tenant-specific extra field (extends doctype_field at runtime)\nproperty_setter        # Tenant-specific override of any field property"
+   },
+   {
+    "id": "block-kernel-schema-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bir "
+     },
+     {
+      "type": "code",
+      "text": "Customer"
+     },
+     {
+      "type": "text",
+      "text": " tipi tanımladığında framework şunları otomatik üretir:"
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-list",
+    "type": "list",
+    "ordered": true,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "PostgreSQL'de "
+      },
+      {
+       "type": "code",
+       "text": "tabCustomer"
+      },
+      {
+       "type": "text",
+       "text": " tablosu — fiziksel tablo, alanlar fiziksel kolon (JSON polymorphism değil, JOIN performansı için kritik)."
+      }
+     ],
+     [
+      {
+       "type": "code",
+       "text": "GET /api/resource/Customer"
+      },
+      {
+       "type": "text",
+       "text": ", "
+      },
+      {
+       "type": "code",
+       "text": "POST /api/resource/Customer"
+      },
+      {
+       "type": "text",
+       "text": ", "
+      },
+      {
+       "type": "code",
+       "text": "PUT/DELETE"
+      },
+      {
+       "type": "text",
+       "text": " REST endpoint'leri."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "GraphQL schema'sında "
+      },
+      {
+       "type": "code",
+       "text": "type Customer"
+      },
+      {
+       "type": "text",
+       "text": " + "
+      },
+      {
+       "type": "code",
+       "text": "query Customer(id)"
+      },
+      {
+       "type": "text",
+       "text": " + "
+      },
+      {
+       "type": "code",
+       "text": "customers(filter)"
+      },
+      {
+       "type": "text",
+       "text": " + mutation'lar."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Admin paneli — list view, form view, kanban, calendar, gantt (DocType metadata hangi view destekli olduğunu söyler)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Permission engine — "
+      },
+      {
+       "type": "code",
+       "text": "doctype_permission"
+      },
+      {
+       "type": "text",
+       "text": " satırlarını okur, query layer'a otomatik WHERE injektsiyonu."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Search indexer — yeni satır eklenince event publish eder, Search projection güncellenir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Audit logger — alan değişikliklerini "
+      },
+      {
+       "type": "code",
+       "text": "tabVersion"
+      },
+      {
+       "type": "text",
+       "text": "'a yazar (diff)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Hook noktaları — "
+      },
+      {
+       "type": "code",
+       "text": "before_insert"
+      },
+      {
+       "type": "text",
+       "text": ", "
+      },
+      {
+       "type": "code",
+       "text": "validate"
+      },
+      {
+       "type": "text",
+       "text": ", "
+      },
+      {
+       "type": "code",
+       "text": "before_save"
+      },
+      {
+       "type": "text",
+       "text": ", "
+      },
+      {
+       "type": "code",
+       "text": "after_save"
+      },
+      {
+       "type": "text",
+       "text": ", "
+      },
+      {
+       "type": "code",
+       "text": "on_submit"
+      },
+      {
+       "type": "text",
+       "text": ", "
+      },
+      {
+       "type": "code",
+       "text": "on_cancel"
+      },
+      {
+       "type": "text",
+       "text": ", "
+      },
+      {
+       "type": "code",
+       "text": "on_trash"
+      },
+      {
+       "type": "text",
+       "text": ", "
+      },
+      {
+       "type": "code",
+       "text": "after_delete"
+      },
+      {
+       "type": "text",
+       "text": ", "
+      },
+      {
+       "type": "code",
+       "text": "on_change"
+      },
+      {
+       "type": "text",
+       "text": "."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-kernel-schema-h-field-tipleri-gercekten-gerekecek-liste",
+    "type": "heading",
+    "level": 4,
+    "text": "Field tipleri — gerçekten gerekecek liste"
+   },
+   {
+    "id": "block-kernel-schema-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Frappe ~30 fieldtype destekler. Sen başlangıç için şunlar lazım:"
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-table",
+    "type": "table",
+    "columns": [
+     "Fieldtype",
+     "Kullanım"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Data"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kısa string (max 140 char)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Text / Long Text"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Uzun string — indeksli/indeksli değil"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "HTML / Markdown"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Rich content"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Int / Float / Decimal"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sayısal — para için Decimal şart"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Currency"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Decimal + currency code"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Percent"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Decimal, % display"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Date / Datetime / Time"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "UTC store"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Duration"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Saniye olarak int, \"2h 30m\" display"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Check"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Boolean"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Select"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Closed enum, sabit liste"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Link"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Başka DocType'a FK"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Dynamic Link"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "DocType + Name çiftiyle polymorphic FK"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Table"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Child table — bir parent kayda bağlı satırlar (Order line items)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Table MultiSelect"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Many-to-many tag-like"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Attach / Attach Image"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "File storage'a referans"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Color"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hex string + picker UI"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Geolocation"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "lat/lng + map picker"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Code"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Syntax-highlighted (SQL, JS, Python)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "JSON"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "JSONB column, schema-less"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Password"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Encrypted, never displayed plain"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Signature"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Base64 PNG signature"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Barcode / QR"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "String + render"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Rating"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "0..5 star"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Read Only"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Display-only computed"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Heading / Section Break / Column Break"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Layout, kolon değil"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Vector"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "pgvector(N) — embeddings, AI-first için"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-kernel-schema-h-naming-series-frappe-pattern",
+    "type": "heading",
+    "level": 4,
+    "text": "Naming series — Frappe pattern"
+   },
+   {
+    "id": "block-kernel-schema-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "UUID"
+      },
+      {
+       "type": "text",
+       "text": " — varsayılan, dağıtık-safe."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "field:fieldname"
+      },
+      {
+       "type": "text",
+       "text": " — başka alanın değeri (örn. "
+      },
+      {
+       "type": "code",
+       "text": "field:email"
+      },
+      {
+       "type": "text",
+       "text": ")."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "naming_series:"
+      },
+      {
+       "type": "text",
+       "text": " — "
+      },
+      {
+       "type": "code",
+       "text": "SO-{####}"
+      },
+      {
+       "type": "text",
+       "text": ", "
+      },
+      {
+       "type": "code",
+       "text": "INV-2026-{####}"
+      },
+      {
+       "type": "text",
+       "text": " gibi. Yıllık reset destekli."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "autoincrement"
+      },
+      {
+       "type": "text",
+       "text": " — sequence (legacy)."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "format:"
+      },
+      {
+       "type": "text",
+       "text": " — Jinja template ("
+      },
+      {
+       "type": "code",
+       "text": "{customer_code}-{YYYY}-{####}"
+      },
+      {
+       "type": "text",
+       "text": ")."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "hash"
+      },
+      {
+       "type": "text",
+       "text": " — random short hash."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-kernel-schema-h-junior-a-aciklama-gercek-dunya",
+    "type": "heading",
+    "level": 4,
+    "text": "Junior'a açıklama — gerçek dünya"
+   },
+   {
+    "id": "block-kernel-schema-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bir restoran POS yazılımı yapıyorsun. MenuItem DocType'ı:"
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-code-2",
+    "type": "codeBlock",
+    "title": "DocType: MenuItem",
+    "language": "yaml",
+    "code": "doctype: MenuItem\nnaming: format:MNU-{####}\nfields:\n  - name: title (Data, required)\n  - description (Long Text)\n  - price (Currency, required)\n  - category (Link to MenuCategory)\n  - photo (Attach Image)\n  - allergens (Table MultiSelect)\n  - spice_level (Select: mild, medium, hot, extra hot)\n  - is_active (Check, default 1)\npermissions:\n  - role: Manager → read,write,create,delete\n  - role: Cashier → read"
+   },
+   {
+    "id": "block-kernel-schema-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Restoran A \"Türk mutfağı\" kategorisinde "
+     },
+     {
+      "type": "strong",
+      "text": "is_vegan"
+     },
+     {
+      "type": "text",
+      "text": " alanı istiyor. Sen koda dokunmuyorsun. Admin paneli → DocType: MenuItem → Custom Field ekle: "
+     },
+     {
+      "type": "code",
+      "text": "is_vegan"
+     },
+     {
+      "type": "text",
+      "text": " (Check). Tenant-spesifik "
+     },
+     {
+      "type": "code",
+      "text": "custom_field"
+     },
+     {
+      "type": "text",
+      "text": " satırı eklenir. Sonraki form render'da alan görünür, API payload'da görünür, audit log değişikliği yakalar. *Migration yok, deploy yok*."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-h-submittable-doctype",
+    "type": "heading",
+    "level": 4,
+    "text": "Submittable DocType"
+   },
+   {
+    "id": "block-kernel-schema-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bazı kayıtlar \"draft → submitted → cancelled\" mantığında yaşar (fatura, sipariş, journal entry). Frappe'de "
+     },
+     {
+      "type": "code",
+      "text": "is_submittable: 1"
+     },
+     {
+      "type": "text",
+      "text": " diyince DocType'a "
+     },
+     {
+      "type": "code",
+      "text": "docstatus"
+     },
+     {
+      "type": "text",
+      "text": " alanı eklenir (0=draft, 1=submitted, 2=cancelled). Submit edildikten sonra belli alanlar değiştirilemez (financial integrity). Sadece "
+     },
+     {
+      "type": "code",
+      "text": "on_update_after_submit"
+     },
+     {
+      "type": "text",
+      "text": " hook'unda belirli alanlar açıkça izinli."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-lesson-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Müşterinin satın aldığı ürün ve hizmet kaydı."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her satışın takip edilmesi için."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sepet → ödeme → sipariş kodu."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Müşteri açar; sistem işler."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Restoranda garsona söylenen sipariş fişi."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-h-child-table-table-fieldtype",
+    "type": "heading",
+    "level": 4,
+    "text": "Child Table (Table fieldtype)"
+   },
+   {
+    "id": "block-kernel-schema-p-8",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Order → OrderLine ilişkisi. Frappe pattern: child DocType, "
+     },
+     {
+      "type": "code",
+      "text": "istable: 1"
+     },
+     {
+      "type": "text",
+      "text": " ile işaretli, parent'a "
+     },
+     {
+      "type": "code",
+      "text": "parent"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "code",
+      "text": "parenttype"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "code",
+      "text": "parentfield"
+     },
+     {
+      "type": "text",
+      "text": " alanlarıyla bağlı. Lifecycle parent'a bağlı (parent silinince child silinir)."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-h-niye-core",
+    "type": "heading",
+    "level": 4,
+    "text": "Niye CORE"
+   },
+   {
+    "id": "block-kernel-schema-p-9",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "ref",
+      "text": "k-identity",
+      "refId": "k-identity"
+     },
+     {
+      "type": "text",
+      "text": " de DocType (User), "
+     },
+     {
+      "type": "ref",
+      "text": "k-authz",
+      "refId": "k-authz"
+     },
+     {
+      "type": "text",
+      "text": " de DocType (Role, Permission), "
+     },
+     {
+      "type": "ref",
+      "text": "k-tenancy",
+      "refId": "k-tenancy"
+     },
+     {
+      "type": "text",
+      "text": " de DocType, "
+     },
+     {
+      "type": "ref",
+      "text": "l1-workflow",
+      "refId": "l1-workflow"
+     },
+     {
+      "type": "text",
+      "text": " de DocType. Hepsi kendini schema engine üstüne tanımlar. Çıkarırsan framework yok."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Tuzak — JSON column polymorphism",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Junior çoğunlukla şöyle başlar: tek bir "
+     },
+     {
+      "type": "code",
+      "text": "records"
+     },
+     {
+      "type": "text",
+      "text": " tablosu, "
+     },
+     {
+      "type": "code",
+      "text": "data JSONB"
+     },
+     {
+      "type": "text",
+      "text": " kolonu, \"her şey JSON\". WordPress'in "
+     },
+     {
+      "type": "code",
+      "text": "wp_postmeta"
+     },
+     {
+      "type": "text",
+      "text": " pattern'i bu — felaket. Çünkü WHERE/ORDER BY/JOIN performansı çöker, index'leme zor, type safety yok.\n\nFrappe doğru yolu seçti: "
+     },
+     {
+      "type": "strong",
+      "text": "her DocType kendi fiziksel tablo"
+     },
+     {
+      "type": "text",
+      "text": ". Sen de aynı yap; JSON sadece schema-less ek alan için."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-note-3",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "JSON-her-şey = WP postmeta — WHERE/ORDER/JOIN ölür."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-p-10",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "JSONB güzel, ama "
+     },
+     {
+      "type": "strong",
+      "text": "birincil"
+     },
+     {
+      "type": "text",
+      "text": " veri için değil — ek (extension) için. Birincil alanlar fiziksel kolon olmalı: B-tree index, foreign key constraint, type safety."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-co-2",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Tuzak — eksik shipping (Drupal 7 öyküsü)",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Drupal 7 Entity API'yi yarım shipping etti. Topluluk eksiği kapatmak için contrib "
+     },
+     {
+      "type": "code",
+      "text": "Entity"
+     },
+     {
+      "type": "text",
+      "text": " modülü yazdı. D8'e geçişte herkes manuel migration yaptı, 5 yıl acı. Sen schema engine'i "
+     },
+     {
+      "type": "strong",
+      "text": "tam bitir"
+     },
+     {
+      "type": "text",
+      "text": "; child table, naming series, custom field, property setter, hooks, permission query injection — hepsi gün-1 hazır."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-div",
+    "type": "divider"
+   },
+   {
+    "id": "block-kernel-schema-h-landx-bakisi-k02-doctype-engine-k03-migration",
+    "type": "heading",
+    "level": 4,
+    "text": "LandX bakışı: K02 DocType Engine + K03 Migration"
+   },
+   {
+    "id": "block-kernel-schema-p-11",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "LandX kataloğunda K02 — *DocType Engine (Schema Runtime)*: deklaratif DocType tanımı → runtime'da DB tablosu, REST endpoint, validation, admin UI "
+     },
+     {
+      "type": "strong",
+      "text": "ve MCP tool spec'i"
+     },
+     {
+      "type": "text",
+      "text": " otomatik üretilir. Bu cluster'daki schema engine + LandX K02 birebir aynı fikrin iki tarafı; ek olarak LandX "
+     },
+     {
+      "type": "strong",
+      "text": "agent-aware"
+     },
+     {
+      "type": "text",
+      "text": " kısmı vurgular: her DocType'ın MCP tool olarak otomatik expose edilmesi."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "K02 KPI",
+      "definition": [
+       {
+        "type": "text",
+        "text": "DocType definition → çalışır API <60sn, schema introspection LLM tool description için %100 kapsama, declarative migration eşleşmesi >%99"
+       }
+      ]
+     },
+     {
+      "term": "K02 capabilities",
+      "definition": [
+       {
+        "type": "text",
+        "text": "DocType Definition · Runtime Schema Operations (Schema Introspection json_schema/openapi/mcp_tool_spec/graphql) · Relations & FK · Soft Delete & Versioning"
+       }
+      ]
+     },
+     {
+      "term": "Agent-aware alanlar",
+      "definition": [
+       {
+        "type": "code",
+        "text": "ai_description"
+       },
+       {
+        "type": "text",
+        "text": " (LLM tool param açıklaması), "
+       },
+       {
+        "type": "code",
+        "text": "validation_rule"
+       },
+       {
+        "type": "text",
+        "text": " (regex/cel), "
+       },
+       {
+        "type": "code",
+        "text": "introspection_format"
+       },
+       {
+        "type": "text",
+        "text": " (mcp_tool_spec dahil)"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-p-12",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "LandX K03 — *Migration & Versioning Engine* (Faz 2 · P0): Plugin sürüm geçişlerinde DB schema migration, data migration, rollback. Frappe migrate'in "
+     },
+     {
+      "type": "strong",
+      "text": "AI-augmented eşdeğeri"
+     },
+     {
+      "type": "text",
+      "text": ". *AI-suggested migration plan acceptance >%80* hedefi koyar."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-kv-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "K03 capabilities",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Migration Plan (AI-generated) · Migration Execution · Schema Diff (compatibility_score) · Data Migration (ETL Step + DLQ)"
+       }
+      ]
+     },
+     {
+      "term": "Agent-aware alanlar",
+      "definition": [
+       {
+        "type": "code",
+        "text": "ai_generated"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "breaking_changes"
+       },
+       {
+        "type": "text",
+        "text": " (AI), "
+       },
+       {
+        "type": "code",
+        "text": "compatibility_score"
+       },
+       {
+        "type": "text",
+        "text": " (AI, 0-100), "
+       },
+       {
+        "type": "code",
+        "text": "data_loss_assessment"
+       },
+       {
+        "type": "text",
+        "text": " (AI + audit)"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "🎯 Hedef seviye: TIMI stabil arayüz",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu cluster DocType'ın "
+     },
+     {
+      "type": "strong",
+      "text": "mevcut metadata-driven"
+     },
+     {
+      "type": "text",
+      "text": " seviyesini anlatır: kod yazmadan tablo + form + API. "
+     },
+     {
+      "type": "strong",
+      "text": "Hedef seviye"
+     },
+     {
+      "type": "text",
+      "text": " ise farklıdır — DocType'ın "
+     },
+     {
+      "type": "strong",
+      "text": "stabil, substrat-bağımsız, versiyonlu sözleşme arayüzü"
+     },
+     {
+      "type": "text",
+      "text": " olması: altta PostgreSQL → başka DB → WASM olsa bile DocType API'si değişmesin.\n\nIBM i (1988-) TIMI sayesinde 35 yıl boyunca 25 farklı işlemci nesli üzerinde aynı uygulamayı çalıştırdı. Aynı disiplini DocType'a uygulamak için bkz. "
+     },
+     {
+      "type": "ref",
+      "text": "sus-timi",
+      "refId": "sus-timi"
+     },
+     {
+      "type": "text",
+      "text": ".\n\n"
+     },
+     {
+      "type": "strong",
+      "text": "Bugün → yarın geçişi:"
+     },
+     {
+      "type": "text",
+      "text": " sürüm snapshot'ları ("
+     },
+     {
+      "type": "code",
+      "text": "doctype_contract/*.json"
+     },
+     {
+      "type": "text",
+      "text": "), substrat-bağımsızlık, geriye-uyumluluk testleri eklenmeli."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-co-4",
+    "type": "callout",
+    "variant": "danger",
+    "title": "DocType ≠ tek Document tablo + type switching",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Yaygın yanlış anlama:"
+     },
+     {
+      "type": "text",
+      "text": " *'DocType = single Document entity'sine docType field + "
+     },
+     {
+      "type": "code",
+      "text": "if (type == X)"
+     },
+     {
+      "type": "text",
+      "text": " switch.'* Bu "
+     },
+     {
+      "type": "strong",
+      "text": "anemic domain"
+     },
+     {
+      "type": "text",
+      "text": " anti-pattern'idir ve "
+     },
+     {
+      "type": "strong",
+      "text": "bu projede YAPILMAZ"
+     },
+     {
+      "type": "text",
+      "text": ".\n\n"
+     },
+     {
+      "type": "strong",
+      "text": "Gerçek mimari (Frappe/Salesforce pattern):"
+     },
+     {
+      "type": "text",
+      "text": "\n\n- Her DocType "
+     },
+     {
+      "type": "strong",
+      "text": "kendi tablosunu"
+     },
+     {
+      "type": "text",
+      "text": " üretir runtime'da ("
+     },
+     {
+      "type": "code",
+      "text": "tabInvoice"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "code",
+      "text": "tabContract"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "code",
+      "text": "tabReceipt"
+     },
+     {
+      "type": "text",
+      "text": ")\n- Her DocType "
+     },
+     {
+      "type": "strong",
+      "text": "kendi controller'ını"
+     },
+     {
+      "type": "text",
+      "text": " ve "
+     },
+     {
+      "type": "strong",
+      "text": "hook'unu"
+     },
+     {
+      "type": "text",
+      "text": " çağırır (Strategy pattern — "
+     },
+     {
+      "type": "code",
+      "text": "InvoicePolicy"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "code",
+      "text": "ContractPolicy"
+     },
+     {
+      "type": "text",
+      "text": ")\n- Davranış kuralı tipe bağlıysa "
+     },
+     {
+      "type": "strong",
+      "text": "policy plugin"
+     },
+     {
+      "type": "text",
+      "text": " olarak — kodda değil metadata'dan çağrılır\n- Davranış değişmiyorsa "
+     },
+     {
+      "type": "strong",
+      "text": "value object"
+     },
+     {
+      "type": "text",
+      "text": " olarak "
+     },
+     {
+      "type": "code",
+      "text": "DocCategory"
+     },
+     {
+      "type": "text",
+      "text": "\n\nKlasik DDD'nin 3 yaklaşımı (ayrı aggregate / Strategy / value object) bu projede "
+     },
+     {
+      "type": "strong",
+      "text": "runtime metadata karşılıkları"
+     },
+     {
+      "type": "text",
+      "text": " olarak yaşar. Tek-tablo + type-switching DEĞİL."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-co-5",
+    "type": "callout",
+    "variant": "info",
+    "title": "DDD purist eleştirisine pozisyon",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Eleştiri:"
+     },
+     {
+      "type": "text",
+      "text": " *'DocType DDD'ye aykırı — Invoice, Contract, Receipt ayrı aggregate olmalı, tek modele zorlamak yanlış.'*\n\n"
+     },
+     {
+      "type": "strong",
+      "text": "Pozisyon:"
+     },
+     {
+      "type": "text",
+      "text": " Eleştiri "
+     },
+     {
+      "type": "strong",
+      "text": "klasik DDD purist çerçevesinde haklı"
+     },
+     {
+      "type": "text",
+      "text": ". Ama bu proje saf DDD değil — açıkça "
+     },
+     {
+      "type": "strong",
+      "text": "meta-framework"
+     },
+     {
+      "type": "text",
+      "text": " (Frappe/Drupal/Salesforce sınıfı). Fark kritik:\n\n- "
+     },
+     {
+      "type": "strong",
+      "text": "Saf DDD"
+     },
+     {
+      "type": "text",
+      "text": ": aggregate'ler tasarım zamanında sabit; yeni tip = yeni class\n- "
+     },
+     {
+      "type": "strong",
+      "text": "Meta-framework"
+     },
+     {
+      "type": "text",
+      "text": ": aggregate'ler "
+     },
+     {
+      "type": "strong",
+      "text": "runtime'da metadata'dan generate edilir"
+     },
+     {
+      "type": "text",
+      "text": "; business user yeni 'tip' tanımlayabilmeli (low-code)\n- "
+     },
+     {
+      "type": "strong",
+      "text": "Multi-tenant + custom DocType"
+     },
+     {
+      "type": "text",
+      "text": ": her tenant kendi Invoice varyantını tanımlayabilir (Salesforce Custom Object pattern)\n\nFrappe DocType "
+     },
+     {
+      "type": "strong",
+      "text": "tek tablo + type switching DEĞİL"
+     },
+     {
+      "type": "text",
+      "text": " — her DocType kendi tablosunu/UI'sini/handler'ını generate eder. Bu = "
+     },
+     {
+      "type": "strong",
+      "text": "runtime'da Strategy + aggregate-per-type"
+     },
+     {
+      "type": "text",
+      "text": ". Eleştiri 'doctype' kelimesini "
+     },
+     {
+      "type": "strong",
+      "text": "straw-man"
+     },
+     {
+      "type": "text",
+      "text": " olarak okuyor; gerçek mimari onun önerdiği 3 yaklaşımın metadata-driven karşılığıdır."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-kernel-schema-p-13",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bir DocType tanımladığın anda DB tablosu, REST endpoint, GraphQL tipi, admin form, audit logger, search indexer otomatik üretilir. Migration yok, deploy yok."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-kernel-schema-lesson-3",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistemin omurgası: yeni bir veri tipi (Müşteri, Fatura, Sipariş) tanımlamak için kod yazmak yerine bir 'tanım kartı' (DocType) doldurulur. Sistem bu karta bakar, gerisini kendi halleder."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her özel müşteri ihtiyacı için programcı çağırmak yavaş ve pahalı. Tanım kartı yöntemi sayesinde yönetici 'Yeni bir Şikayet kaydı tipi istiyorum' deyince yarım saatte hazır olur."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yönetici panelinde 'Yeni DocType' butonuna basar → alan isimlerini (konu, açıklama, öncelik) yazar → kaydeder. Sistem bunun için veritabanı tablosu, form ekranı, arama, log kaydı — hepsini kendiliğinden üretir."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yönetici panelinde 'Veri tipleri' menüsünde. Her tip için sonsuz kayıt eklenebilir."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yeni bir işlem türü iş süreçlerine girince. Örnek: muhasebe modülünüze 'Avans Talebi' diye yeni bir kavram eklemek istediğinizde."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistem yöneticisi tanımlar; geliştirici devreye girmek zorunda kalmaz; son kullanıcı yeni tipi bir form olarak görür."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir mağaza zincirinin merkez ofisinin tüm şubelere yolladığı 'yeni ürün kartı': isim, fiyat, kategori, fotoğraf alanları belli. Tüm şubeler bu karta göre raf düzenler, satış yapar."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-kernel-schema-story",
+    "type": "useCase",
+    "title": "Veteriner Aslı Hanım",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Klinikte hayvan kayıtları tutuyor. Hasta defterinde her hayvan için ad, ırk, sahibi, son aşı gibi alanlar var. Şimdi 'köpek pansiyonu' hizmeti de eklemek istiyor — yeni alanlar lazım: 'kaç günlük rezervasyon', 'beslenme notları', 'fobi/alerji'."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "DocType yöntemiyle yönetici paneline girer → 'Pansiyon Konaklaması' adlı yeni kart oluşturur → alanları yazar → kaydet. Sistem otomatik üretir: ekran, tablo, kayıt listesi. Programcı çağırmaya gerek yok."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-story-2",
+    "type": "useCase",
+    "title": "Okul sekreteri Fatma Hanım",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Velilerden gelen 'devamsızlık formu', 'beslenme talep formu', 'gezi izin formu' her dönem farklı şeyler. Müdür her seferinde matbaaya yeni form bastırıyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Okulun sistemine DocType'lar tanımlanır: her form bir kart şablonu. Yeni form ihtiyacı çıkınca sekreter kendisi 'Yardım Kampanyası Formu' diye yeni kart açar. Velinin telefonundan dolduruluyor; matbaa masrafı bitti."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-schema-story-3",
+    "type": "useCase",
+    "title": "Site yöneticisi Hüseyin Bey",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "60 daireli sitede 'şikayet bildirimi', 'tamir talebi', 'rezervasyon (otopark/sosyal alan)' ayrı ayrı dosyalanır. Hangisi hangi klasörde sorusu kafa karıştırır."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Sistemde her tip için ayrı DocType: Şikayet, Tamir, Rezervasyon. Kullanıcı kendi telefonundan açar; yönetici tek panelde hepsini görür, hangi sırada hangi iş — bellidir."
+     }
+    ]
+   }
+  ]
+ }
+}

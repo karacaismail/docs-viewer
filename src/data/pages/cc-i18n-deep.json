@@ -1,0 +1,573 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-cc-i18n-deep",
+  "sourceId": "cc-i18n-deep",
+  "slug": "crosscut/cc-i18n-deep",
+  "title": "i18n Derinleştirme — pluralization, RTL, lokal format",
+  "summary": "Çoğul kuralları diller arası farklı. RTL için layout reverse. Tarih/sayı format yerelleştirme.",
+  "categoryId": "crosscut",
+  "tags": [
+   "crosscut",
+   "i18n",
+   "l10n",
+   "rtl",
+   "pluralization"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-layer1-misc",
+   "page-crosscut-tr",
+   "page-fe-core-ui"
+  ],
+  "blocks": [
+   {
+    "id": "block-cc-i18n-deep-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "ICU MessageFormat (pluralization), RTL CSS, Intl.* yerelleştirme, locale-aware sort, fallback chain."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-deep-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "i18n derinliği basitçe 'çeviri' değil."
+     },
+     {
+      "type": "text",
+      "text": " Pluralization, RTL, format yerelleştirmesi — hepsi ayrı sorun. Kullanmıyorsan bile başlangıçtan t() pattern doğru."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-deep-co",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'react-i18next + i18next-icu. Tüm UI string t() ile sarılı. Pluralization ICU format. CSS logical properties (margin-inline-start). Intl.NumberFormat + Intl.DateTimeFormat locale ile.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-deep-h-locale-checklist",
+    "type": "heading",
+    "level": 4,
+    "text": "Locale checklist"
+   },
+   {
+    "id": "block-cc-i18n-deep-table",
+    "type": "table",
+    "columns": [
+     "Item",
+     "Doğru",
+     "Yanlış"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Tarih format"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Intl.DateTimeFormat"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "new Date().toLocaleString() (default)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Sayı format"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Intl.NumberFormat"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Manuel comma/dot"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Pluralization"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ICU MessageFormat"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "'1 item(s)'"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "RTL"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "CSS logical properties"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "margin-left/right (sabit)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Locale detect"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "navigator.languages"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "navigator.language tek"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-i18n-deep-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-cc-i18n-deep-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Pluralization:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-deep-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "TR: '1 elma' / '2 elma' — tek bir form"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "EN: '1 apple' / '2 apples' — iki form"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "RU: '1 яблоко' / '2 яблока' / '5 яблок' — üç form"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "AR: 0, 1, 2, few, many, other — altı form!"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-i18n-deep-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Çözüm: ICU MessageFormat:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-deep-code",
+    "type": "codeBlock",
+    "language": "text",
+    "code": "{count, plural,\n  =0 {hiç elma yok}\n  one {1 elma var}\n  other {# elma var}\n}"
+   },
+   {
+    "id": "block-cc-i18n-deep-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Library: "
+     },
+     {
+      "type": "code",
+      "text": "react-i18next"
+     },
+     {
+      "type": "text",
+      "text": " + "
+     },
+     {
+      "type": "code",
+      "text": "i18next-icu"
+     },
+     {
+      "type": "text",
+      "text": " veya "
+     },
+     {
+      "type": "code",
+      "text": "format.js"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-deep-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "RTL (Right-to-Left):"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-deep-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Arapça, İbranice, Farsça"
+      }
+     ],
+     [
+      {
+       "type": "code",
+       "text": "<html dir=\"rtl\">"
+      },
+      {
+       "type": "text",
+       "text": " set"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "CSS "
+      },
+      {
+       "type": "code",
+       "text": "text-align: start"
+      },
+      {
+       "type": "text",
+       "text": " (left değil)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Logical properties: "
+      },
+      {
+       "type": "code",
+       "text": "margin-inline-start"
+      },
+      {
+       "type": "text",
+       "text": " (margin-left değil)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Icon flip: "
+      },
+      {
+       "type": "code",
+       "text": "transform: scaleX(-1)"
+      },
+      {
+       "type": "text",
+       "text": " arrow icons için"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-i18n-deep-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Yerel format:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-deep-code-2",
+    "type": "codeBlock",
+    "language": "javascript",
+    "code": "new Intl.NumberFormat('tr-TR').format(1234567.89) // '1.234.567,89'\nnew Intl.DateTimeFormat('ar-EG').format(date) // arapça takvim"
+   },
+   {
+    "id": "block-cc-i18n-deep-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Locale fallback chain:"
+     },
+     {
+      "type": "text",
+      "text": " "
+     },
+     {
+      "type": "code",
+      "text": "tr-TR"
+     },
+     {
+      "type": "text",
+      "text": " → "
+     },
+     {
+      "type": "code",
+      "text": "tr"
+     },
+     {
+      "type": "text",
+      "text": " → "
+     },
+     {
+      "type": "code",
+      "text": "en"
+     },
+     {
+      "type": "text",
+      "text": " (default)."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-deep-p-8",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Static analysis:"
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-deep-list-3",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Tüm UI string'leri t() ile sarılı mı?"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Hard-coded date format yok mu?"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Number format Intl.NumberFormat mı?"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-cc-i18n-deep-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-cc-i18n-deep-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yazılımı dünya dillerine + yerel kültürlere uyumlu hale getirme."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Çoğul kuralı yanlış = 'sizin 1 elmalar var' garip. RTL layout yok = Arap müşteri kullanamaz."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) react-i18next + ICU. 2) Tüm string t() ile. 3) Intl.* yerel format. 4) CSS logical properties RTL."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "cc-i18n-deep"
+       },
+       {
+        "type": "text",
+        "text": " cluster + "
+       },
+       {
+        "type": "code",
+        "text": "l1-misc"
+       },
+       {
+        "type": "text",
+        "text": " i18n temel."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk ek dil eklenmeden önce altyapı hazır."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Frontend developer i18n; translator çeviri; product team locale önceliği."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Otel: tüm tabela 4 dilde, kahvaltı saatleri yerel saatte, fiyat yerel kurda."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-deep-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-cc-i18n-deep-story",
+    "type": "useCase",
+    "title": "Hatice Teyze (62) — yabancı menü",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Hatice Teyze otelde menüye bakıyor; 'apple' yazıyor. Anlamadı."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "i18n: dil seçici → tr → 'elma'. Çeviri olmadan kullanılamaz."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-i18n-deep-story-2",
+    "type": "useCase",
+    "title": "Murat Bey (61) — Excel tarih",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Murat Bey Excel'de '6/3/2026' yazıyor; Amerikan formatında — '6 Mart' mı '3 Haziran' mı?"
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Yerel format: TR'de '03.06.2026' = 3 Haziran. Belirsizlik bitti."
+     }
+    ]
+   }
+  ]
+ }
+}

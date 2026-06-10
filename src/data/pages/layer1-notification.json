@@ -1,0 +1,449 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-layer1-notification",
+  "sourceId": "l1-notification",
+  "slug": "layer1/layer1-notification",
+  "title": "Notification",
+  "summary": "Channel-agnostic. Email, SMS, push, in-app, Slack, webhook.",
+  "categoryId": "layer1",
+  "tags": [
+   "notification",
+   "email",
+   "sms",
+   "push"
+  ],
+  "meta": {
+   "badge": "Layer 1 — In-tree"
+  },
+  "related": [],
+  "blocks": [
+   {
+    "id": "block-layer1-notification-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Channel-agnostic. Email, SMS, push, in-app, Slack, webhook."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-notification-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Channel-agnostic abstraction. Module geliştirici sadece "
+     },
+     {
+      "type": "code",
+      "text": "notify(user, template, data)"
+     },
+     {
+      "type": "text",
+      "text": " yazar. Framework channel preference'ına göre route eder."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-notification-h-pipeline",
+    "type": "heading",
+    "level": 4,
+    "text": "Pipeline"
+   },
+   {
+    "id": "block-layer1-notification-list",
+    "type": "list",
+    "ordered": true,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Template render (Jinja, i18n-aware — kullanıcı locale'i)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "User preference check (kullanıcı bu tipte bildirim istiyor mu)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Throttling (saatte 1'den fazla aynı bildirim atma)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Batching (12 kişi beğendi → tek bildirim)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Channel routing (push varsa push, yoksa email)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Queue + retry."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Delivery tracking."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-layer1-notification-h-kanallar",
+    "type": "heading",
+    "level": 4,
+    "text": "Kanallar"
+   },
+   {
+    "id": "block-layer1-notification-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Email"
+      },
+      {
+       "type": "text",
+       "text": " (transactional + marketing ayrımı, SES/SendGrid/Postmark driver)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "SMS"
+      },
+      {
+       "type": "text",
+       "text": " (NetGSM, Turkcell SMS, Vatan, Twilio driver) + ETK izin yönetimi"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Push notification"
+      },
+      {
+       "type": "text",
+       "text": " (iOS APNs, Android FCM, web push VAPID)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "In-app notification"
+      },
+      {
+       "type": "text",
+       "text": " (bell icon, read/unread state)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Slack / Teams / Discord"
+      },
+      {
+       "type": "text",
+       "text": " webhook"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Generic webhook"
+      },
+      {
+       "type": "text",
+       "text": " (B2B müşteri kendi sistemine alır)"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-layer1-notification-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Anti-pattern — her module kendi SMTP'sini kursun",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Junior her modüle "
+     },
+     {
+      "type": "code",
+      "text": "smtplib.SMTP(\"smtp.gmail.com\", 587)"
+     },
+     {
+      "type": "text",
+      "text": " yazarsa: config dağınık, throttling yok, queue yok, retry yok, unsubscribe link inconsistent. "
+     },
+     {
+      "type": "strong",
+      "text": "Notification core'a koymak = tek pipeline'dan geçer = compliance kolay."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-notification-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sırayla yapılacak işleri bekleten kuyruk."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Aynı anda 1000 iş gelirse hepsi birden çalışmasın diye."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "FIFO (önce gelen önce çıkar)."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistem yönetir."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bankamatik sırası."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-notification-co-2",
+    "type": "callout",
+    "variant": "tr",
+    "title": "TR: ETK izin yönetimi",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Elektronik Ticaret Kanunu uyarınca SMS/Email ticari iletişimde alıcının onayı zorunlu. "
+     },
+     {
+      "type": "strong",
+      "text": "İYS (İleti Yönetim Sistemi)"
+     },
+     {
+      "type": "text",
+      "text": " entegrasyonu — opt-in kayıtları İYS'ye gönderilir, gönderim öncesi kontrol. Notification module bunu otomatik yapmalı."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-notification-div",
+    "type": "divider"
+   },
+   {
+    "id": "block-layer1-notification-h-landx-bakisi-s05-notification-center",
+    "type": "heading",
+    "level": 4,
+    "text": "LandX bakışı: S05 Notification Center"
+   },
+   {
+    "id": "block-layer1-notification-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "LandX "
+     },
+     {
+      "type": "strong",
+      "text": "S05 — Notification Center"
+     },
+     {
+      "type": "text",
+      "text": " (Faz 3 · P1 · Application Squad) bu cluster ile birebir örtüşür ama ek olarak "
+     },
+     {
+      "type": "strong",
+      "text": "agent ping"
+     },
+     {
+      "type": "text",
+      "text": " kanalını birinci sınıf yapar: agent'lar birbirine notification gönderebilir. *Email delivery rate >%98, in-app render p95 <500ms.*"
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-notification-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Kanallar",
+      "definition": [
+       {
+        "type": "text",
+        "text": "in-app, email, SMS, push, webhook, "
+       },
+       {
+        "type": "strong",
+        "text": "agent ping"
+       }
+      ]
+     },
+     {
+      "term": "Pipeline",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Template management, user preferences, digest, throttle"
+       }
+      ]
+     },
+     {
+      "term": "Agent kanalı",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Agent'lar arası mesajlaşma — "
+       },
+       {
+        "type": "code",
+        "text": "topic_pattern"
+       },
+       {
+        "type": "text",
+        "text": " subscriber pattern'i ile workflow event'lere bağlanır"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-notification-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-layer1-notification-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Channel-agnostic. Email, SMS, push, in-app, Slack, webhook."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-notification-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-layer1-notification-lesson-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kullanıcılara bildirim göndermek için tek bir altyapı: e-posta, SMS, telefon bildirimi, sistem içi mesaj — hepsi aynı kapıdan geçer."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her modül kendi bildirim sistemini kursa, ayarlar dağılır. Bir kullanıcı 50 farklı yerden e-posta alır. Tek merkez = tek tercih ekranı."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Modül 'şu kullanıcıya şunu duyur' der → bildirim modülü kullanıcının tercih ettiği kanaldan iletir."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Telefondaki uygulama bildirimleri, sistem içi 'çan' ikonu, e-posta gelen kutusu."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Önemli bir olay olduğunda — sipariş alındı, ödeme alındı, izin onaylandı."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici 'duyur' diyor; sistem doğru kanalı seçiyor; kullanıcı tek tercih ekranından hepsini ayarlıyor."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir okuldaki anons memuru: öğretmenler 'şunu duyur' der, memur uygun şekilde (hoparlör, panodaki not, telefon) iletir."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

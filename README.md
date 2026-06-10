@@ -24,6 +24,6 @@ npm run preview     # build önizleme
 ## Bilinen sınırlar (v0.1)
 
 - 83 görsel varlık kayıp (`tools/migrate/report.md`); ImageBlock metin fallback gösterir — `public/assets/` doldurulunca otomatik düzelir
-- `content` chunk'ı (~389KB gzip) eager yüklenir; page-başına lazy yükleme iyileştirme adayı
+- Eager JS ~212KB gzip (size-limit kapısı 250KB); page gövdeleri ve glossary detayı lazy chunk'larda
 - Paragraph içi term segment bağlama editöryel iş (12A); terimler şimdilik sayfa üstü chip + panel ile erişilebilir
 - Playwright e2e + axe CI katmanı kurulmadı (05 §2.5) — jsdom smoke testleri mevcut

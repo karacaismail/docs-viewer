@@ -1,26 +1,27 @@
-// Slug -> page; bulunamazsa fallback model (08 §4 — UI hata yönetimi yazmaz)
-import { pages } from "./loadStaticData";
-import type { Page } from "../schemas";
+// Slug -> index entry (sync, metadata); gövde loadPageBlocks ile lazy gelir.
+// Bulunamazsa fallback model (08 §4 — UI hata yönetimi yazmaz).
+import { pagesIndex } from "./loadStaticData";
+import type { PageIndexEntry } from "../schemas";
 
 export type ResolvedPage =
-  | { kind: "found"; page: Page }
+  | { kind: "found"; entry: PageIndexEntry }
   | { kind: "not-found"; slug: string };
 
-const bySlug = new Map(pages.map((p) => [p.slug, p]));
-const byId = new Map(pages.map((p) => [p.id, p]));
-const byOldId = new Map(pages.filter((p) => p.sourceId).map((p) => [p.sourceId as string, p]));
+const bySlug = new Map(pagesIndex.map((p) => [p.slug, p]));
+const byId = new Map(pagesIndex.map((p) => [p.id, p]));
+const byOldId = new Map(pagesIndex.filter((p) => p.sourceId).map((p) => [p.sourceId as string, p]));
 
 export function resolvePage(section: string, pageSlug: string): ResolvedPage {
-  const page = bySlug.get(`${section}/${pageSlug}`);
-  return page ? { kind: "found", page } : { kind: "not-found", slug: `${section}/${pageSlug}` };
+  const entry = bySlug.get(`${section}/${pageSlug}`);
+  return entry ? { kind: "found", entry } : { kind: "not-found", slug: `${section}/${pageSlug}` };
 }
 
-export function resolvePageById(pageId: string): Page | undefined {
+export function resolvePageById(pageId: string): PageIndexEntry | undefined {
   return byId.get(pageId);
 }
 
 // {{ref:x}} çözümü — eski cluster id veya stem -> slug; çözülemezse undefined (düz metne düşer)
 export function resolveRef(refId: string): { slug: string; title: string } | undefined {
-  const page = byOldId.get(refId) ?? byId.get(`page-${refId}`);
-  return page ? { slug: page.slug, title: page.title } : undefined;
+  const entry = byOldId.get(refId) ?? byId.get(`page-${refId}`);
+  return entry ? { slug: entry.slug, title: entry.title } : undefined;
 }

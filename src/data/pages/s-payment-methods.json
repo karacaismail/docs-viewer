@@ -1,0 +1,1079 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-s-payment-methods",
+  "sourceId": "s-payment-methods",
+  "slug": "urunler/s-payment-methods",
+  "title": "Yerel Ödeme Yöntemleri — SEPA, iDEAL, Pix, UPI, BKM Taksit, PSD2 SCA",
+  "summary": "Ülke bazlı ödeme matrisi: AB'de SEPA + PSD2 zorunlu, TR'de taksit kritik, Almanya iDEAL'ye yakın, Brezilya Pix, Hindistan UPI. Tek 'kredi kartı' = ölü dönüşüm.",
+  "categoryId": "urunler",
+  "tags": [
+   "core-operations",
+   "payment",
+   "sepa",
+   "ideal",
+   "pix",
+   "upi",
+   "bkm",
+   "psd2",
+   "sca",
+   "installment"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-s-billing",
+   "page-stack-commerce",
+   "page-cc-jurisdiction-resolver",
+   "page-cc-fx-ledger",
+   "page-cc-compliance-matrix",
+   "page-scale-webhook"
+  ],
+  "blocks": [
+   {
+    "id": "block-s-payment-methods-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Ülke bazlı yerel ödeme yöntemleri matrisi, PSD2 SCA (AB), TR taksit zorunluğu, gateway seçimi (Stripe/Iyzico/Paddle/MercadoPago/Razorpay)."
+     }
+    ]
+   },
+   {
+    "id": "block-s-payment-methods-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "'Stripe + kredi kartı her ülkede yeter' = ölü dönüşüm."
+     },
+     {
+      "type": "text",
+      "text": " Yerel ödeme yöntemi sunmazsan TR'de taksit, AB'de SEPA, BR'de Pix isteyen müşteriyi kaybedersin."
+     }
+    ]
+   },
+   {
+    "id": "block-s-payment-methods-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "PSD2 SCA — AB zorunlu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AB/AEA'da 2019'dan beri Strong Customer Authentication zorunlu. Ödeme öncesi 2 faktörlü doğrulama (3DS2). Olmadan ödeme "
+     },
+     {
+      "type": "strong",
+      "text": "reddedilir"
+     },
+     {
+      "type": "text",
+      "text": ". ABD'de yok — checkout akışı farklı."
+     }
+    ]
+   },
+   {
+    "id": "block-s-payment-methods-co-2",
+    "type": "callout",
+    "variant": "danger",
+    "title": "TR taksit = checkout UI ana parçası",
+    "segments": [
+     {
+      "type": "text",
+      "text": "TR'de taksit seçimi olmayan checkout = dönüşüm %50 düşer. BKM Express, 3-12 taksit, banka bonus puanları kritik. AB'de gösterirsen kafa karışır — "
+     },
+     {
+      "type": "strong",
+      "text": "locale'a değil jurisdiction'a bağla"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-s-payment-methods-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'tenant_capabilities.payment_methods JSONB: enabled_methods per jurisdiction. Resolver jurisdiction'a göre. Gateway router: Iyzico (TR), Stripe (AB), MercadoPago (BR), Razorpay (IN). PSD2 SCA için Stripe Payment Intents (3DS2 otomatik). Webhook idempotency processed_payments tablosu.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-s-payment-methods-h-ulke-yontem-matrisi",
+    "type": "heading",
+    "level": 4,
+    "text": "Ülke × yöntem matrisi"
+   },
+   {
+    "id": "block-s-payment-methods-table",
+    "type": "table",
+    "columns": [
+     "Pazar",
+     "Ana yöntem",
+     "Gateway",
+     "SCA"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "TR"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "BKM Express + 3-12 taksit"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Iyzico, PayTR"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Bankaya göre (3DS1/2)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "AB (DE)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "SEPA + Giropay + PayPal"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Stripe, Adyen"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "PSD2 SCA zorunlu"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "AB (NL)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "iDEAL"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Stripe, Adyen"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "PSD2 SCA zorunlu"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "GB"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kart + Open Banking"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Stripe, Adyen"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "SCA zorunlu (post-Brexit AB pattern)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "ABD"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kart + Apple/Google Pay"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Stripe"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "SCA yok"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "BR"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Pix + Boleto + kart"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "MercadoPago"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yok (Pix authentic by design)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "IN"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "UPI + kart"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Razorpay"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yerel doğrulama"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "JP"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Konbini + kart"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Stripe Japan, GMO"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yok"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "CN"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Alipay + WeChat"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Alipay direct, Stripe via partner"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yerel"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-s-payment-methods-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-s-payment-methods-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Klasik tuzak:"
+     },
+     {
+      "type": "text",
+      "text": " *'Stripe + kredi kartı yetiyor, her ülkede çalışır.'* Yanlış. Yerel ödeme yöntemi olmayan checkout = "
+     },
+     {
+      "type": "strong",
+      "text": "%30-60 dönüşüm kaybı"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-s-payment-methods-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Ülke matrisi — yaygın yerel yöntemler:"
+     }
+    ]
+   },
+   {
+    "id": "block-s-payment-methods-table-2",
+    "type": "table",
+    "columns": [
+     "Ülke",
+     "Ana yerel yöntemler",
+     "Kredi kartı pazar payı"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "TR"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "BKM POS (taksit)"
+       },
+       {
+        "type": "text",
+        "text": ", Iyzico, PayTR, BKM Express"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "%75 — ama taksit YOK = dönüşüm yarıya iner"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "DE"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "SEPA Direct Debit"
+       },
+       {
+        "type": "text",
+        "text": ", Giropay, PayPal, Klarna"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "%30 — kart az kullanılır"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "NL"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "iDEAL"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "%85 iDEAL pazarda; kart düşük"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "FR"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "Carte Bancaire"
+       },
+       {
+        "type": "text",
+        "text": ", SEPA"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "%60 yerel CB; uluslararası kart ayrı"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "GB"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kart, Open Banking, Apple/Google Pay"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kart yüksek"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "BR"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "Pix"
+       },
+       {
+        "type": "text",
+        "text": " (anlık), "
+       },
+       {
+        "type": "strong",
+        "text": "Boleto"
+       },
+       {
+        "type": "text",
+        "text": " (banka dekontu), kart"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Pix %40, kart %35, Boleto %15"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "IN"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "UPI"
+       },
+       {
+        "type": "text",
+        "text": " (anlık), kart, net banking"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "UPI %50+; kart düşük"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "ID"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "GoPay, OVO, Dana"
+       },
+       {
+        "type": "text",
+        "text": " (e-wallet)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "E-wallet yüksek; kart düşük"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "CN"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "Alipay, WeChat Pay"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yabancı kart neredeyse yok"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "JP"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "Konbini"
+       },
+       {
+        "type": "text",
+        "text": " (market ödeme), kart"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kart + konbini hibrit"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-s-payment-methods-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "PSD2 / SCA (Strong Customer Authentication):"
+     }
+    ]
+   },
+   {
+    "id": "block-s-payment-methods-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "AB/AEA zorunlu"
+      },
+      {
+       "type": "text",
+       "text": " (PSD2, 2019): ödeme öncesi 2 faktörlü doğrulama (3DS2)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Faktörler: knowledge (parola) + possession (telefon) + inherence (parmak izi)"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "İstisnalar: TRA (Transaction Risk Analysis), düşük tutar (€30 altı), trusted beneficiary"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "ABD'de yok; checkout akışı farklı"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-s-payment-methods-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "TR taksit — kritik UI farkı:"
+     }
+    ]
+   },
+   {
+    "id": "block-s-payment-methods-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "TR'de checkout'ta "
+     },
+     {
+      "type": "strong",
+      "text": "taksit seçimi zorunlu"
+     },
+     {
+      "type": "text",
+      "text": " (3, 6, 9, 12 ay). Banka başına farklı taksit imkânı (Garanti Bonus, Akbank Axess, Maximum, World, Paraf). BKM Express ile taksit ayarı otomatik gelir."
+     }
+    ]
+   },
+   {
+    "id": "block-s-payment-methods-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AB'de taksit yok — gösterirsen kafa karıştırır. Locale'e değil "
+     },
+     {
+      "type": "strong",
+      "text": "jurisdiction"
+     },
+     {
+      "type": "text",
+      "text": "'a bağla."
+     }
+    ]
+   },
+   {
+    "id": "block-s-payment-methods-p-8",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Capability flag: `payment_methods`"
+     },
+     {
+      "type": "text",
+      "text": " — tenant tier'ına göre hangi yöntemler aktif."
+     }
+    ]
+   },
+   {
+    "id": "block-s-payment-methods-p-9",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Gateway seçimi:"
+     }
+    ]
+   },
+   {
+    "id": "block-s-payment-methods-table-3",
+    "type": "table",
+    "columns": [
+     "Pazar",
+     "Önerilen",
+     "Sebep"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "TR"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Iyzico, PayTR"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "BKM + taksit yerelleştirilmiş"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "AB"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Stripe, Adyen"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "SEPA + PSD2 SCA + multi-currency"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Global SaaS"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Stripe + Paddle (MoR)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Vergi yükü Paddle'da"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "BR"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "MercadoPago"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Pix + Boleto entegre"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "IN"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Razorpay"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "UPI native"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Hibrit"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Iyzico + Stripe + MercadoPago"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Pazar başına en iyi"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-s-payment-methods-p-10",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Wallet & ekstra:"
+     },
+     {
+      "type": "text",
+      "text": " Apple Pay (iOS), Google Pay (Android), Samsung Pay (TR yaygın), PayPal (global ama TR'de düşük)."
+     }
+    ]
+   },
+   {
+    "id": "block-s-payment-methods-p-11",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Crypto:"
+     },
+     {
+      "type": "text",
+      "text": " B2C nadir, B2B niş. Coinbase Commerce, BitPay. KVKK + MASAK uyumu kritik (TR'de banka onayı zor)."
+     }
+    ]
+   },
+   {
+    "id": "block-s-payment-methods-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-s-payment-methods-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Ülke başına yerel ödeme yöntemleri matrisi + PSD2 SCA + TR taksit + gateway seçimi."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "'Kredi kartı yeter' yanılgısı = ülke başına %30-60 dönüşüm kaybı. Müşteri Pix istiyor, sen kart sunuyorsun = kayıp."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Resolver jurisdiction'a göre payment_methods capability. 2) Gateway: TR Iyzico, AB Stripe, BR MercadoPago, IN Razorpay. 3) PSD2 SCA AB'de zorunlu. 4) TR taksit UI zorunlu, AB'de yok."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "s-payment-methods"
+       },
+       {
+        "type": "text",
+        "text": " cluster + "
+       },
+       {
+        "type": "code",
+        "text": "s-billing"
+       },
+       {
+        "type": "text",
+        "text": " (recurring) + "
+       },
+       {
+        "type": "code",
+        "text": "cc-jurisdiction-resolver"
+       },
+       {
+        "type": "text",
+        "text": " (locale'e değil jurisdiction'a bağla)."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk ödeme alınmadan ÖNCE pazar bazlı stratejisi netleşmeli."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Backend dev gateway entegre; finance team komisyon hesabı; ürün ekibi pazar başına UI."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yurt dışı seyahatte cüzdan: TR'de kart + nakit, Avrupa'da SEPA + kart, Japonya'da nakit + Suica kartı. Tek tip cüzdan = ya kabul edilmez ya pahalı. Yerelleştir."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-s-payment-methods-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-s-payment-methods-story",
+    "type": "useCase",
+    "title": "Bakkal Hatice Teyze (62) — TR taksit",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Hatice Teyze e-ticareti açtı, Stripe entegre etti, kart bilgileri checkout. Müşteri 'taksit yok mu?' diye soruyor, vazgeçiyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Iyzico'ya geçti, BKM Express + 6 taksit eklendi. Dönüşüm %35'ten %52'ye çıktı."
+     }
+    ]
+   },
+   {
+    "id": "block-s-payment-methods-story-2",
+    "type": "useCase",
+    "title": "Genç esnaf Selim Bey (62'lik abisi 32) — AB açılım",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Selim Bey Almanya'ya açıldı. Kart ödemesi reddediliyor — PSD2 SCA gerek."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Stripe 3DS2 entegrasyonu açıldı; Giropay + SEPA eklendi. Alman müşterinin %60'ı SEPA seçti — kart komisyon yüksek olduğu için tercih ediyorlar."
+     }
+    ]
+   },
+   {
+    "id": "block-s-payment-methods-story-3",
+    "type": "useCase",
+    "title": "Ayşe Hanım — Brezilya pazarı",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "AB'den başarılı SaaS, Brezilya'ya açıldı, sadece kart kabul ediyor. Müşteriler 'Pix yok mu?' diye soruyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "MercadoPago entegre + Pix + Boleto. Brezilya'da dönüşüm 3x arttı; Pix anlık ödeme, Boleto banka dekontu (zaman gerektirir ama hâlâ önemli)."
+     }
+    ]
+   }
+  ]
+ }
+}

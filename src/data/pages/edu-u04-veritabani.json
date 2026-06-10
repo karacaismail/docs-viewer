@@ -1,0 +1,758 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-edu-u04-veritabani",
+  "sourceId": "edu-u04",
+  "slug": "egitim/edu-u04-veritabani",
+  "title": "Veritabanı Temelleri — DocType'tan önce",
+  "summary": "PostgreSQL, tablo, kolon, indeks, FK, transaction, ACID, normalize/denormalize.",
+  "categoryId": "egitim",
+  "tags": [
+   "education",
+   "u04",
+   "veritabani",
+   "postgresql"
+  ],
+  "meta": {
+   "granularity": "buyuk-tas",
+   "state": "ok"
+  },
+  "related": [
+   "page-edu-u03-doctype",
+   "page-edu-u05-api",
+   "page-kernel-schema"
+  ],
+  "blocks": [
+   {
+    "id": "block-edu-u04-veritabani-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "PostgreSQL, tablo, kolon, indeks, FK, transaction, ACID, normalize/denormalize."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04-veritabani-lh",
+    "type": "lessonHeader",
+    "unit": "Ünite 04",
+    "title": "Veritabanı temelleri — DocType'ın altında ne var?",
+    "level": "orta",
+    "durationMin": 80,
+    "prereq": [
+     "edu-u02",
+     "edu-u03"
+    ],
+    "goals": [
+     "PostgreSQL tablo/kolon/indeks/FK kavramlarını anlatabilirsin.",
+     "Transaction ve ACID'i bir gerçek hayat örneğiyle açıklayabilirsin.",
+     "Normalize vs denormalize'ın neden ikisinin de yeri olduğunu söyleyebilirsin.",
+     "Bir DocType'ın hangi tablo + indekslere dönüştüğünü tahmin edebilirsin."
+    ]
+   },
+   {
+    "id": "block-edu-u04-veritabani-h-kavramlar",
+    "type": "heading",
+    "level": 4,
+    "text": "Kavramlar"
+   },
+   {
+    "id": "block-edu-u04-veritabani-h-anlatim-tablo-satir-kolon",
+    "type": "heading",
+    "level": 4,
+    "text": "Anlatım — tablo, satır, kolon"
+   },
+   {
+    "id": "block-edu-u04-veritabani-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "PostgreSQL"
+     },
+     {
+      "type": "text",
+      "text": " ilişkisel bir veritabanıdır. Bir "
+     },
+     {
+      "type": "strong",
+      "text": "tablo"
+     },
+     {
+      "type": "text",
+      "text": " Excel sayfası gibidir: kolonlar (alanlar) sabit, satırlar (kayıtlar) ekleyebilirsin. Fark: tip katıdır ("
+     },
+     {
+      "type": "code",
+      "text": "age"
+     },
+     {
+      "type": "text",
+      "text": " kolonu int ise string giremezsin) ve satırlar arasında "
+     },
+     {
+      "type": "strong",
+      "text": "ilişki"
+     },
+     {
+      "type": "text",
+      "text": " kurabilirsin."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04-veritabani-note",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "DocType = tablo. Field = kolon. Bir belge = satır."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04-veritabani-code",
+    "type": "codeBlock",
+    "title": "Üniteden öğrendiklerinin SQL hali",
+    "language": "sql",
+    "code": "CREATE TABLE musteri_sikayeti (\n  id           uuid PRIMARY KEY,\n  konu         text NOT NULL,\n  aciklama     text NOT NULL,\n  oncelik      text NOT NULL DEFAULT 'orta',\n  atanan_id    uuid REFERENCES users(id),   -- Foreign Key\n  musteri_id   uuid NOT NULL REFERENCES customers(id),\n  created_at   timestamptz NOT NULL DEFAULT now(),\n  updated_at   timestamptz NOT NULL DEFAULT now(),\n  tenant_id    uuid NOT NULL,\n  version      int NOT NULL DEFAULT 1       -- optimistic concurrency\n);\n\n-- İndeksler (sık aranan kolonlar)\nCREATE INDEX musteri_sikayeti_musteri_idx ON musteri_sikayeti(musteri_id);\nCREATE INDEX musteri_sikayeti_atanan_idx  ON musteri_sikayeti(atanan_id);\nCREATE INDEX musteri_sikayeti_tenant_idx  ON musteri_sikayeti(tenant_id, created_at DESC);"
+   },
+   {
+    "id": "block-edu-u04-veritabani-h-indeks-neden-bu-kadar-onemli",
+    "type": "heading",
+    "level": 4,
+    "text": "İndeks — neden bu kadar önemli?"
+   },
+   {
+    "id": "block-edu-u04-veritabani-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "100k satırlık tabloda "
+     },
+     {
+      "type": "code",
+      "text": "WHERE musteri_id='X'"
+     },
+     {
+      "type": "text",
+      "text": " sorgusu: indekssiz "
+     },
+     {
+      "type": "term",
+      "text": "tablo",
+      "termId": "term-tablo-edu-u04-veritabani"
+     },
+     {
+      "type": "text",
+      "text": " baştan sona tarar (~100k "
+     },
+     {
+      "type": "term",
+      "text": "satır",
+      "termId": "term-satir-edu-u04-veritabani"
+     },
+     {
+      "type": "text",
+      "text": " okur). "
+     },
+     {
+      "type": "term",
+      "text": "İndeks",
+      "termId": "term-indeks-edu-u04-veritabani"
+     },
+     {
+      "type": "text",
+      "text": " ile "
+     },
+     {
+      "type": "term",
+      "text": "B-tree",
+      "termId": "term-b-tree-edu-u04-veritabani"
+     },
+     {
+      "type": "text",
+      "text": "'den hedefe gider (~17 okuma, log₂ 100000)."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04-veritabani-note-2",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Olmazsa O(N), olursa O(log N). 1000× hız farkı."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04-veritabani-story",
+    "type": "useCase",
+    "title": "Junior geliştirici",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Yeni endpoint slow; 5 saniye dönüyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "EXPLAIN ANALYZE → 'Seq Scan' görür; doğru kolona index ekler → 50ms."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04-veritabani-co",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Index ne zaman EKLENMEZ?",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Her kolona index eklemek: yazma yavaşlar (her INSERT/UPDATE indexi de günceller). Sadece "
+     },
+     {
+      "type": "strong",
+      "text": "sık WHERE/ORDER/JOIN"
+     },
+     {
+      "type": "text",
+      "text": " edilen kolonlara index. Yazma-ağır tablolarda az index."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04-veritabani-h-foreign-key-iliski-ve-integrity",
+    "type": "heading",
+    "level": 4,
+    "text": "Foreign Key — ilişki ve integrity"
+   },
+   {
+    "id": "block-edu-u04-veritabani-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "FK kurulur",
+      "segments": [
+       {
+        "type": "code",
+        "text": "musteri_id uuid REFERENCES customers(id)"
+       },
+       {
+        "type": "text",
+        "text": " — bu kolon "
+       },
+       {
+        "type": "code",
+        "text": "customers"
+       },
+       {
+        "type": "text",
+        "text": " tablosundaki bir id olmak ZORUNDA."
+       }
+      ]
+     },
+     {
+      "title": "Var olmayan ID engellenir",
+      "segments": [
+       {
+        "type": "code",
+        "text": "INSERT … musteri_id='yok'"
+       },
+       {
+        "type": "text",
+        "text": " → hata. Yetim kayıt engellenmiş olur."
+       }
+      ]
+     },
+     {
+      "title": "Silme davranışı seçilir",
+      "segments": [
+       {
+        "type": "code",
+        "text": "ON DELETE CASCADE"
+       },
+       {
+        "type": "text",
+        "text": " (müşteri silinince şikayetleri de sil), "
+       },
+       {
+        "type": "code",
+        "text": "SET NULL"
+       },
+       {
+        "type": "text",
+        "text": " (atananı boşalt), "
+       },
+       {
+        "type": "code",
+        "text": "RESTRICT"
+       },
+       {
+        "type": "text",
+        "text": " (şikayet varsa sil-me)."
+       }
+      ]
+     },
+     {
+      "title": "Tenant-scope check",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Bizim framework FK üstüne "
+       },
+       {
+        "type": "strong",
+        "text": "otomatik"
+       },
+       {
+        "type": "text",
+        "text": " ekler: link tenant A'dan tenant B'ye gidemez — güvenlik."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04-veritabani-h-transaction-acid-para-transferinde",
+    "type": "heading",
+    "level": 4,
+    "text": "Transaction + ACID — para transferinde"
+   },
+   {
+    "id": "block-edu-u04-veritabani-code-2",
+    "type": "codeBlock",
+    "title": "Atomic transaction",
+    "language": "sql",
+    "code": "BEGIN;\n  UPDATE accounts SET balance = balance - 100 WHERE id = 'A';\n  UPDATE accounts SET balance = balance + 100 WHERE id = 'B';\nCOMMIT;\n\n-- Eğer 2. UPDATE'te hata olursa:\nROLLBACK;  -- 1. UPDATE de geri alınır."
+   },
+   {
+    "id": "block-edu-u04-veritabani-grid",
+    "type": "cardGrid",
+    "columns": 2,
+    "cards": [
+     {
+      "icon": "ph-atom",
+      "title": "Atomicity",
+      "tone": "good",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Ya hepsi başarılı, ya hiçbiri uygulanmadı."
+       }
+      ]
+     },
+     {
+      "icon": "ph-equals",
+      "title": "Consistency",
+      "tone": "good",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Transaction sonrası DB tutarlı (FK + check kurallar korunur)."
+       }
+      ]
+     },
+     {
+      "icon": "ph-shield-check",
+      "title": "Isolation",
+      "tone": "good",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Eşzamanlı transaction'lar birbirini bozmaz."
+       }
+      ]
+     },
+     {
+      "icon": "ph-hard-drives",
+      "title": "Durability",
+      "tone": "good",
+      "segments": [
+       {
+        "type": "text",
+        "text": "COMMIT sonrası elektrik kesilse bile veri korunur."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04-veritabani-co-2",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Tuzak — dual write",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bazen 'DB'ye yaz, sonra Kafka'ya yaz' istersin. Eğer 2. yazma başarısız olursa: DB ile mesaj sistemi tutarsız kalır. Çözüm: "
+     },
+     {
+      "type": "strong",
+      "text": "Transactional Outbox"
+     },
+     {
+      "type": "text",
+      "text": " — DB içinde bir kuyruk satırı, ayrı bir worker bunu publisher'a iter."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04-veritabani-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu paterni ileri ünitelerde göreceğiz — şimdilik 'iki sistemin atomik tutulması zordur, outbox şart' kalsın."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04-veritabani-h-normalize-vs-denormalize",
+    "type": "heading",
+    "level": 4,
+    "text": "Normalize vs Denormalize"
+   },
+   {
+    "id": "block-edu-u04-veritabani-table",
+    "type": "table",
+    "columns": [
+     "Yaklaşım",
+     "Ne yapar",
+     "Ne zaman",
+     "Risk"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Normalize (3NF)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Veriyi tekrarsız tablolara böler"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yazma-ağır, mali sistemler"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Çoklu JOIN, okuma yavaşlar"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Denormalize"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Performans için kopyalar"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Okuma-ağır dashboard, raporlar"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tutarsızlık (kaynak değişir, kopya kalır)"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u04-veritabani-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Bizim kararımız:"
+     },
+     {
+      "type": "text",
+      "text": " ana veri "
+     },
+     {
+      "type": "term",
+      "text": "normalize",
+      "termId": "term-normalize-edu-u04-veritabani"
+     },
+     {
+      "type": "text",
+      "text": " (DocType tabloları). Okuma için "
+     },
+     {
+      "type": "strong",
+      "text": "CQRS projections"
+     },
+     {
+      "type": "text",
+      "text": " ("
+     },
+     {
+      "type": "term",
+      "text": "denormalize",
+      "termId": "term-denormalize-edu-u04-veritabani"
+     },
+     {
+      "type": "text",
+      "text": ") — bunlar event'ten otomatik update edilir, tutarsızlık riski kontrol altında."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04-veritabani-chk",
+    "type": "checklist",
+    "title": "Bu üniteyi anladığımı nereden anlarım?",
+    "items": [
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Tablo, kolon, satır, primary key, foreign key kavramlarını söyleyebilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "İndeksin neden önemli olduğunu ve neden 'her kolona index' yanlış olduğunu açıklayabilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "ACID'in 4 harfini ve her birinin garantisini bilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Transaction'ı para transferi örneğiyle anlatabilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Normalize vs denormalize ayrımını ve neden ikisini de kullandığımızı söyleyebilirim."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Migration'ın ne işe yaradığını biliyorum. — Yeni kolon, yeni index — production'a güvenli."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04-veritabani-h-mini-proje",
+    "type": "heading",
+    "level": 4,
+    "text": "Mini-proje"
+   },
+   {
+    "id": "block-edu-u04-veritabani-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Ünite 03'te yazdığın 'Görev' DocType'ını SQL CREATE TABLE olarak yaz. Hangi kolonlara indeks ekleyeceğini ve neden seçtiğini not düş. Bonus: comments child table için ayrı tablo ve FK göster."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04-veritabani-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Beklenen indeks:"
+     },
+     {
+      "type": "text",
+      "text": " atanan_id (kim bana atanmış sorgusu), proje_id (proje görevleri), durum (todo/doing filter), tenant_id+created_at (her tenant için son görevler)."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04-veritabani-co-3",
+    "type": "callout",
+    "variant": "info",
+    "title": "Sonraki ünite",
+    "segments": [
+     {
+      "type": "ref",
+      "text": "edu-u05",
+      "refId": "edu-u05"
+     },
+     {
+      "type": "text",
+      "text": " — API: REST ve GraphQL. DocType'ın üst katmanına çıkıyoruz: HTTP istek-cevap, JSON, endpoint, idempotency."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04-veritabani-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-edu-u04-veritabani-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "term",
+      "text": "PostgreSQL",
+      "termId": "term-postgresql-edu-u04-veritabani"
+     },
+     {
+      "type": "text",
+      "text": ", tablo, "
+     },
+     {
+      "type": "term",
+      "text": "kolon",
+      "termId": "term-kolon-edu-u04-veritabani"
+     },
+     {
+      "type": "text",
+      "text": ", indeks, FK, "
+     },
+     {
+      "type": "term",
+      "text": "transaction",
+      "termId": "term-transaction-edu-u04-veritabani"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "term",
+      "text": "ACID",
+      "termId": "term-acid-edu-u04-veritabani"
+     },
+     {
+      "type": "text",
+      "text": ", normalize/denormalize."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u04-veritabani-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-edu-u04-veritabani-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Ünite 04 — Veritabanı Temelleri. PostgreSQL, kolon, indeks, ilişki, işlem (transaction), normalize/denormalize kavramları."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Verinin nereye, nasıl saklandığını bilmeden yazılım yapılmaz."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tablo → satır → sütun mantığı + ilişkiler ile derinleşir."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Müfredatın 4. ünitesi — DocType'tan sonra."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Veri saklama gerektiren her özellik için."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tüm geliştiriciler — veritabanı her yerdedir."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Devlet arşivi: klasörler, dolaplar, kim hangi belgeyi alabilir kuralları."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

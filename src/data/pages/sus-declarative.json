@@ -1,0 +1,196 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-sus-declarative",
+  "sourceId": "sus-declarative",
+  "slug": "sus/sus-declarative",
+  "title": "Declarative resource'tan türetme",
+  "summary": "Ash Framework (Elixir): tek resource tanımından DB+API+authz+state machine türetilir. \"Model your domain, derive the rest.\"",
+  "categoryId": "sus",
+  "tags": [
+   "sustainability",
+   "ash",
+   "edgedb",
+   "convex",
+   "declarative",
+   "dx"
+  ],
+  "meta": {},
+  "related": [
+   "page-kernel-schema"
+  ],
+  "blocks": [
+   {
+    "id": "block-sus-declarative-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Geliştirici amacı yazar (\"bu DocType şu alanları taşır\"); sistem geri kalanı (tablo, API, form, doğrulama) otomatik üretir."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-declarative-co",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Ash mottosu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "*\"Model your domain, derive the rest.\"* — Resource tek doğruluk; DB şeması, REST+GraphQL, authz policy, state machine, background job hep buradan türetilir."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-declarative-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "DocType'ın olması gereken hâli:"
+     },
+     {
+      "type": "text",
+      "text": " Ash gibi \"resource → her şey türetilir\" disiplinine yükselt + EdgeDB gibi \"DB-üretimli, introspectable migration\" + Convex gibi TS-first AI-codegen. Üçü birleşince AI bile sistemin tamamını okuyup yüksek doğrulukla kod üretebilir."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-declarative-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-sus-declarative-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tek bir declarative (bildirici) kaynaktan — DocType'tan — sistemin geri kalanı otomatik türetilir: veritabanı tablosu, REST API, GraphQL schema, authz kuralları, state machine, arka plan işleri, admin formu."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Aynı bilgi 7 yerde tekrarlanırsa (DB sütunu + API tanımı + form alanı + validation kuralı + permission + test + dokümantasyon) ilk hata zincirin tamamını bozar. Tek kaynaktan türetme = sıfır kopya, sıfır sürüklenme."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "DocType deklaratif olarak yazılır (alanlar, tipler, ilişkiler, izinler). Üst katmanlar bu tanımı okuyup kendi parçalarını üretir. Geliştirici DB migration yazmaz; sistem üretir. API tanımı yazmaz; sistem türetir."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "framework/kernel/schema/ — DocType tanımı tek doğruluk; üst katmanlar buradan üretir."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her yeni iş kavramı eklendiğinde — \"yeni alan\" demek tek satır eklemek demek."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mimar DocType yazar; sistem geri kalanı üretir; geliştirici sadece özel iş mantığını ekler."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir terzi: müşterinin ölçü kâğıdı (declarative) elinde — boy, kol, bel. Bu tek kâğıttan kalıp çıkar, kumaş kes, dik, paketle. Aynı bilgiyi 7 kez yazsa yanlış kesim olur. Ölçü kâğıdı tek doğruluk; geri kalanı türev."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-sus-declarative-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-sus-declarative-story",
+    "type": "useCase",
+    "title": "Pastacı Selma Hanım, pasta sipariş kartı",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Müşteri telefon ediyor: \"oğlumun 5. yaş günü, 6 kişilik, çikolatalı, üstünde araba figürü\". Selma Hanım tek sipariş kartına yazar."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Tek karttan: alışveriş listesi (un, kakao, figür), pişirme programı, paketleme planı, fatura, teslim notu. Aynı bilgi 6 ayrı belge — hepsi sipariş kartından türev. Müşteri \"figürü değiştir\" derse Selma Hanım sadece kartı düzeltir; alt-belgeler yeniden basılır."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-declarative-story-2",
+    "type": "useCase",
+    "title": "Otel resepsiyonu rezervasyon formu",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Misafir \"3 gece, çift kişilik, deniz manzaralı\" diyor. Tek form: ödeme tahsilat planı, oda hazırlama emri, kahvaltı sayımı, check-out notu."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Form tek doğruluk; departmanlar buradan kendi işini türetir. Misafir \"4 gece olsun\" derse form güncellenir; tüm departmanların kayıtları yeniden hesaplanır. DocType'tan türetme aynı."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-declarative-story-3",
+    "type": "useCase",
+    "title": "Diyetisyen Pınar Hanım, hasta beslenme planı",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Hastanın profili — yaş, kilo, alerji, hedef — tek formda. Bu formdan günlük menü, alışveriş listesi, takip tablosu, sonraki randevu önerisi türetilir."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Profil değişirse (\"alerji listesine zeytin eklendi\") tüm türev belgeler otomatik güncellenir. Tek kaynak + sıfır kopya."
+     }
+    ]
+   }
+  ]
+ }
+}

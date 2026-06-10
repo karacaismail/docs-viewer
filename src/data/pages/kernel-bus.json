@@ -1,0 +1,1115 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-kernel-bus",
+  "sourceId": "k-bus",
+  "slug": "kernel/kernel-bus",
+  "title": "Event Bus + Polyglot Runtime Bridge",
+  "summary": "Module'lerin loose-coupled konuştuğu omurga. Aynı kod, üç ölçek.",
+  "categoryId": "kernel",
+  "tags": [
+   "events",
+   "polyglot",
+   "bus",
+   "kernel"
+  ],
+  "meta": {
+   "badge": "Layer 0 — Kernel #5"
+  },
+  "related": [],
+  "blocks": [
+   {
+    "id": "block-kernel-bus-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bir modülün 'şu oldu' duyurusunu diğerlerinin duyabilmesi için kurulan anons sistemi."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-bus-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Module'lerin loose-coupled konuştuğu omurga. "
+     },
+     {
+      "type": "strong",
+      "text": "Aynı kod, üç ölçek"
+     },
+     {
+      "type": "text",
+      "text": ": in-process → Redis Streams → Kafka, module değişmeden."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-bus-h-domain-modeli-event-nedir",
+    "type": "heading",
+    "level": 4,
+    "text": "Domain modeli — event nedir"
+   },
+   {
+    "id": "block-kernel-bus-img",
+    "type": "image",
+    "src": "/assets/k-bus-flow.svg",
+    "alt": "Olay yayını — sipariş duyurusu üç modülü bağımsız tetikler",
+    "caption": "Sipariş modülü tek duyuru atar; muhasebe, kargo ve stok modülleri bağımsızca tepki verir."
+   },
+   {
+    "id": "block-kernel-bus-note",
+    "type": "callout",
+    "variant": "info",
+    "title": "Not",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Olay yayını gerçek örneği: tek duyuru, üç tepki."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-bus-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "'OrderPlaced' duyurusunun üç farklı modüle bağımsız ulaştığı somut akış şeması."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Modüllerin neden birbirini doğrudan çağırmaması gerektiğini örnek üzerinden göstermek."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sipariş modülü → Event Bus → Muhasebe + Kargo + Stok. Her biri bağımsız işler."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Modül geliştiricisi öğrenir; mimar bu pattern'i tasarlar."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Okuldaki anons hoparlörü: 'son ders bitti' anonsu — öğretmen, müdür, servis şoförü ayrı ayrı tepki verir."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-bus-code",
+    "type": "codeBlock",
+    "language": "yaml",
+    "code": "Event {\n  id: uuid                # idempotency key\n  type: \"OrderPlaced\"     # event type\n  aggregate_id: \"order-123\"\n  aggregate_type: \"Order\"\n  tenant_id: uuid\n  occurred_at: timestamptz\n  occurred_by: user_id\n  version: 1\n  payload: jsonb          # event data\n  trace_id: text          # distributed tracing\n}"
+   },
+   {
+    "id": "block-kernel-bus-h-iki-ayri-kavram-karistirma",
+    "type": "heading",
+    "level": 4,
+    "text": "İki ayrı kavram — karıştırma"
+   },
+   {
+    "id": "block-kernel-bus-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Domain Event"
+      },
+      {
+       "type": "text",
+       "text": " — \"bir şey oldu, sistem state'i değişti\": "
+      },
+      {
+       "type": "code",
+       "text": "OrderPlaced"
+      },
+      {
+       "type": "text",
+       "text": ", "
+      },
+      {
+       "type": "code",
+       "text": "CustomerCreated"
+      },
+      {
+       "type": "text",
+       "text": ", "
+      },
+      {
+       "type": "code",
+       "text": "PaymentReceived"
+      },
+      {
+       "type": "text",
+       "text": ". Past tense, immutable."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Command"
+      },
+      {
+       "type": "text",
+       "text": " — \"şu işi yap\": "
+      },
+      {
+       "type": "code",
+       "text": "PlaceOrder"
+      },
+      {
+       "type": "text",
+       "text": ", "
+      },
+      {
+       "type": "code",
+       "text": "CreateCustomer"
+      },
+      {
+       "type": "text",
+       "text": ". Future tense, validated, can fail."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-kernel-bus-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Event bus'ta sadece event akar. Command'ları doğrudan handler çağırır (genelde "
+     },
+     {
+      "type": "code",
+      "text": "Aggregate.do_something()"
+     },
+     {
+      "type": "text",
+      "text": " method'u). Event Sourcing dünyasına gitmeden bunu net tut."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-bus-h-klasik-anti-pattern-tight-coupling",
+    "type": "heading",
+    "level": 4,
+    "text": "Klasik anti-pattern — tight coupling"
+   },
+   {
+    "id": "block-kernel-bus-code-2",
+    "type": "codeBlock",
+    "title": "Yanlış",
+    "language": "python",
+    "code": "# Order module\ndef place_order(order):\n    save(order)\n    inventory.decrement_stock(order.items)      # tight coupling\n    notification.send_email(order.customer)     # tight coupling\n    loyalty.add_points(order.customer, order.total)  # tight coupling\n    analytics.track(\"order_placed\", order)      # tight coupling"
+   },
+   {
+    "id": "block-kernel-bus-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Yarın 5. module geldiğinde Order'a 5. satır eklersin. Order artık 5 module'ün varlığını biliyor. Modülerlik yok."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-bus-code-3",
+    "type": "codeBlock",
+    "title": "Doğru — event publish",
+    "language": "python",
+    "code": "# Order module\ndef place_order(order):\n    save(order)\n    bus.publish(OrderPlaced(order_id=order.id, items=order.items, customer=order.customer))\n    # Order module bu kadarını bilir. Kim dinliyor, umurunda değil.\n\n# Inventory module (ayrı dosya, ayrı geliştirici, ayrı deploy)\n@bus.on(OrderPlaced)\ndef decrement_stock(event):\n    for item in event.items:\n        stock.decrement(item.sku, item.qty)\n\n# Notification, Loyalty, Analytics module'leri de aynı şekilde subscribe eder"
+   },
+   {
+    "id": "block-kernel-bus-h-uc-transport-tek-interface",
+    "type": "heading",
+    "level": 4,
+    "text": "Üç transport, tek interface"
+   },
+   {
+    "id": "block-kernel-bus-code-4",
+    "type": "codeBlock",
+    "language": "python",
+    "code": "from framework.events import publish, subscribe\n\n# Publish\nawait publish(OrderPlaced(order_id=\"123\", total=199.00))\n\n# Subscribe\n@subscribe(OrderPlaced)\nasync def decrement_stock(event: OrderPlaced):\n    for item in event.items:\n        await stock.decrement(item.sku, item.qty)"
+   },
+   {
+    "id": "block-kernel-bus-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Backend deployment profile'a göre seçilir:"
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-bus-list-2",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Shared hosting:"
+      },
+      {
+       "type": "text",
+       "text": " "
+      },
+      {
+       "type": "code",
+       "text": "InProcessBus"
+      },
+      {
+       "type": "text",
+       "text": " — async loop, tek process."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Orta ölçek:"
+      },
+      {
+       "type": "text",
+       "text": " "
+      },
+      {
+       "type": "code",
+       "text": "RedisStreamsBus"
+      },
+      {
+       "type": "text",
+       "text": " — persistence, consumer groups, replay."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Büyük ölçek:"
+      },
+      {
+       "type": "text",
+       "text": " "
+      },
+      {
+       "type": "code",
+       "text": "KafkaBus"
+      },
+      {
+       "type": "text",
+       "text": " — partition, retention, replay, multi-consumer."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-kernel-bus-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Module kodu "
+     },
+     {
+      "type": "code",
+      "text": "publish"
+     },
+     {
+      "type": "text",
+      "text": "/"
+     },
+     {
+      "type": "code",
+      "text": "subscribe"
+     },
+     {
+      "type": "text",
+      "text": "'dan başkasını bilmiyor. Config flag: "
+     },
+     {
+      "type": "code",
+      "text": "EVENT_BUS=redis"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-bus-h-polyglot-runtime-python-typescript",
+    "type": "heading",
+    "level": 4,
+    "text": "Polyglot runtime — Python + TypeScript"
+   },
+   {
+    "id": "block-kernel-bus-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Geliştirici hook'u Python "
+     },
+     {
+      "type": "strong",
+      "text": "veya"
+     },
+     {
+      "type": "text",
+      "text": " TypeScript yazsın. Hook contract aynı:"
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-bus-code-5",
+    "type": "codeBlock",
+    "title": "hooks/order.ts",
+    "language": "typescript",
+    "code": "import type { Order, HookContext } from \"@framework/sdk\";\n\nexport const onBeforeSave = async (doc: Order, ctx: HookContext) => {\n  if (doc.total < 0) throw new Error(\"Total negatif olamaz\");\n  doc.totalWithTax = await ctx.tax.calculate(doc.total, doc.taxRegion);\n};\n\nexport const onSubmit = async (doc: Order, ctx: HookContext) => {\n  await ctx.events.publish({ type: \"OrderSubmitted\", orderId: doc.id });\n};"
+   },
+   {
+    "id": "block-kernel-bus-code-6",
+    "type": "codeBlock",
+    "title": "hooks/order.py",
+    "language": "python",
+    "code": "from framework.sdk import HookContext, Order\n\nasync def on_before_save(doc: Order, ctx: HookContext):\n    if doc.total < 0:\n        raise ValueError(\"Total negatif olamaz\")\n    doc.total_with_tax = await ctx.tax.calculate(doc.total, doc.tax_region)\n\nasync def on_submit(doc: Order, ctx: HookContext):\n    await ctx.events.publish({\"type\": \"OrderSubmitted\", \"order_id\": doc.id})"
+   },
+   {
+    "id": "block-kernel-bus-h-uc-runtime-stratejisi",
+    "type": "heading",
+    "level": 4,
+    "text": "Üç runtime stratejisi"
+   },
+   {
+    "id": "block-kernel-bus-list-3",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Embedded JS (shared hosting)"
+      },
+      {
+       "type": "text",
+       "text": " — PythonMonkey (SpiderMonkey, Distributive Inc., aktif), STPyV8 (Cloudflare). Tek process, network yok, latency düşük. Trusted hook için."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Sidecar Node/Deno (production default)"
+      },
+      {
+       "type": "text",
+       "text": " — Node sürecine gRPC ile bağlan, MCP-style. Bağımsız ölçeklenir, debuggable, isolation güçlü."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "WASM/Extism (untrusted plugin)"
+      },
+      {
+       "type": "text",
+       "text": " — capability sandbox. \"Bu plugin sadece şu DocType'ı okuyabilir, network yok\" diye kısıtla."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-kernel-bus-h-aggregate-boundary-kurali-ddd-kritik",
+    "type": "heading",
+    "level": 4,
+    "text": "Aggregate boundary kuralı — DDD kritik"
+   },
+   {
+    "id": "block-kernel-bus-p-7",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "TS hook Python aggregate'i üzerinde açık transaction tutamaz. Distributed transaction (2PC) çağı geçti — yavaş, fragile, gerçekte kullanılmıyor. Doğru pattern'ler:"
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-bus-list-4",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Synchronous hook = pure function."
+      },
+      {
+       "type": "text",
+       "text": " Python core transaction açar, TS hook'a aggregate kopyasını verir, hook decision/mutation döner, Python core commit eder. Frappe "
+      },
+      {
+       "type": "code",
+       "text": "doc_events"
+      },
+      {
+       "type": "text",
+       "text": " pattern'i."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Cross-aggregate effect = outbox + saga."
+      },
+      {
+       "type": "text",
+       "text": " Hook farklı aggregate'i etkileyecekse, transaction'da olmaz. "
+      },
+      {
+       "type": "ref",
+       "text": "scale-outbox",
+       "refId": "scale-outbox"
+      },
+      {
+       "type": "text",
+       "text": "'a event yazılır, ayrı consumer asenkron işler, başarısızlıkta compensating action."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-kernel-bus-h-event-versioning",
+    "type": "heading",
+    "level": 4,
+    "text": "Event versioning"
+   },
+   {
+    "id": "block-kernel-bus-p-8",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Event'ler kontrat. Versiyon değişimi backward-compat zorunlu:"
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-bus-list-5",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Yeni alan eklemek = OK (optional)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Alan silmek = breaking. Yeni event tipi yarat ("
+      },
+      {
+       "type": "code",
+       "text": "OrderPlacedV2"
+      },
+      {
+       "type": "text",
+       "text": ")."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Anlam değişikliği = breaking. Yeni tip."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Event store retention (replay için) varsa migration script gerekir."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-kernel-bus-h-gercek-dunya-paralel",
+    "type": "heading",
+    "level": 4,
+    "text": "Gerçek dünya paralel"
+   },
+   {
+    "id": "block-kernel-bus-uc",
+    "type": "useCase",
+    "title": "Slack",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "mesaj postlandığında Slack içinde event firee eder. Bot'lar (Linear, GitHub, Datadog) subscribe eder. Slack core'da \"Linear\" diye bir kavram yok."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-bus-uc-2",
+    "type": "useCase",
+    "title": "Stripe webhook",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Stripe internal event bus'ını dışarıya açar. "
+     },
+     {
+      "type": "code",
+      "text": "payment_intent.succeeded"
+     },
+     {
+      "type": "text",
+      "text": " event'i webhook olarak senin endpoint'ine düşer."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-bus-uc-3",
+    "type": "useCase",
+    "title": "AWS S3 → Lambda",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "S3'e dosya konunca "
+     },
+     {
+      "type": "code",
+      "text": "ObjectCreated"
+     },
+     {
+      "type": "text",
+      "text": " event'i otomatik Lambda'yı tetikler. Bulutta event bus pattern'inin canonical örneği."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-bus-uc-4",
+    "type": "useCase",
+    "title": "E-ticaret (#3)",
+    "scenario": [
+     {
+      "type": "code",
+      "text": "OrderPlaced"
+     },
+     {
+      "type": "text",
+      "text": " → Stock decrement + Email + Loyalty + Recommendation update + Tax record + Analytics. Hepsi paralel, hiçbiri Order'ı bilmez."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-bus-uc-5",
+    "type": "useCase",
+    "title": "Sosyal medya (#14)",
+    "scenario": [
+     {
+      "type": "code",
+      "text": "PostCreated"
+     },
+     {
+      "type": "text",
+      "text": " → Fan-out + Search index + Moderation queue + Trend update. Fan-out 100M push olabilir; ana transaction içinde olamaz, async."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-bus-div",
+    "type": "divider"
+   },
+   {
+    "id": "block-kernel-bus-h-landx-bakisi-k04-hook-event-bus",
+    "type": "heading",
+    "level": 4,
+    "text": "LandX bakışı: K04 Hook & Event Bus"
+   },
+   {
+    "id": "block-kernel-bus-p-9",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "LandX "
+     },
+     {
+      "type": "strong",
+      "text": "K04 — Hook & Event Bus"
+     },
+     {
+      "type": "text",
+      "text": " (Faz 1 · P0 · Kernel Squad) Drupal hook'larının "
+     },
+     {
+      "type": "strong",
+      "text": "async + agent-aware eşdeğeri"
+     },
+     {
+      "type": "text",
+      "text": ". Sync hook + async event ayrımı net. *Event delivery p95 <50ms, hook timeout <%0.1, dead-letter recovery >%95.*"
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-bus-feat",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Hook Registry",
+      "definition": [
+       {
+        "type": "code",
+        "text": "hook_name"
+       },
+       {
+        "type": "text",
+        "text": " (before_save, after_create vb.) + "
+       },
+       {
+        "type": "code",
+        "text": "plugin_id"
+       },
+       {
+        "type": "text",
+        "text": " + "
+       },
+       {
+        "type": "code",
+        "text": "doctype_target"
+       },
+       {
+        "type": "text",
+        "text": " + "
+       },
+       {
+        "type": "code",
+        "text": "priority"
+       },
+       {
+        "type": "text",
+        "text": " + "
+       },
+       {
+        "type": "code",
+        "text": "blocking"
+       },
+       {
+        "type": "text",
+        "text": " (sync/async) + "
+       },
+       {
+        "type": "code",
+        "text": "max_runtime_ms"
+       }
+      ]
+     },
+     {
+      "term": "Hook Çalıştırma",
+      "definition": [
+       {
+        "type": "code",
+        "text": "invocation_id"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "triggered_by"
+       },
+       {
+        "type": "text",
+        "text": " (event/api/"
+       },
+       {
+        "type": "strong",
+        "text": "agent"
+       },
+       {
+        "type": "text",
+        "text": "/cron), "
+       },
+       {
+        "type": "code",
+        "text": "payload"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "duration_ms"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "error"
+       },
+       {
+        "type": "text",
+        "text": " — tüm tetikleyiciler arasında agent first-class"
+       }
+      ]
+     },
+     {
+      "term": "Event Yayını",
+      "definition": [
+       {
+        "type": "code",
+        "text": "event_id"
+       },
+       {
+        "type": "text",
+        "text": " (idempotent + mcp), "
+       },
+       {
+        "type": "code",
+        "text": "topic"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "payload"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "emitted_by"
+       },
+       {
+        "type": "text",
+        "text": " (user_id/agent_id/system), "
+       },
+       {
+        "type": "code",
+        "text": "delivery_mode"
+       },
+       {
+        "type": "text",
+        "text": " (at_least_once/at_most_once/exactly_once)"
+       }
+      ]
+     },
+     {
+      "term": "Subscriber & Delivery",
+      "definition": [
+       {
+        "type": "code",
+        "text": "topic_pattern"
+       },
+       {
+        "type": "text",
+        "text": " (wildcard), "
+       },
+       {
+        "type": "code",
+        "text": "delivery_status"
+       },
+       {
+        "type": "text",
+        "text": " (pending/delivered/failed/dead), "
+       },
+       {
+        "type": "code",
+        "text": "retry_count"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "dead_letter_at"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "ack_at"
+       }
+      ]
+     },
+     {
+      "term": "Transactional Outbox",
+      "definition": [
+       {
+        "type": "code",
+        "text": "outbox_id"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "source_transaction_id"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "event_payload"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "published_at"
+       },
+       {
+        "type": "text",
+        "text": " — DocType save ile aynı transaction"
+       }
+      ]
+     },
+     {
+      "term": "Saga Orchestration",
+      "definition": [
+       {
+        "type": "code",
+        "text": "saga_id"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "saga_type"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "step_count"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "compensation_log"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "status"
+       },
+       {
+        "type": "text",
+        "text": " (running/compensating/succeeded/failed)"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-bus-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-kernel-bus-p-10",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Module'lerin loose-coupled konuştuğu omurga. Aynı kod, üç ölçek."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-bus-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-kernel-bus-lesson-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir modülün 'şu oldu' duyurusunu diğer modüllerin duyabilmesi için kurulan iç anons sistemi. Mesajları taşıyan bir hat."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Modüller birbirini doğrudan çağırırsa hepsi birbirine bağımlı hale gelir. Anons sistemi sayesinde bağımsız kalır, sadece duydukları zaman tepki verirler."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sipariş modülü 'sipariş açıldı' diye anons yayınlar → muhasebe modülü duyar, fatura üretir → kargo modülü duyar, gönderi açar → stok modülü duyar, ürünü düşer. Her biri kendi başına."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistemin arka planında çalışır; kullanıcı görmez ama olayların zincirleme tetiklenmesi bu sayede olur."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir modülde önemli bir şey olduğunda (sipariş, ödeme, iptal, onay)."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geliştirici 'duyacak modülleri' kaydeder; sistem mesajı taşır; son kullanıcı her şeyin otomatik aktığını görür."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir okuldaki anons hoparlörü: 'son ders bitti' anonsu çıkar; öğretmen sınıfı toplar, müdür kapıyı açar, servis şoförü motoru çalıştırır. Hiçbiri diğerini aramadı — anonsu duydu."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-bus-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-kernel-bus-story",
+    "type": "useCase",
+    "title": "Çiçekçi dükkânı sahibi Selma Hanım",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Internet siparişi alıyor. Sipariş gelince üç şey olmalı: muhasebede fatura kesilmeli, atölyede buket hazırlanmalı, kargo şirketine teslim notu gitmeli. Şu an tek tek hatırlamak zorunda."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Sistemde sipariş alındığı an 'Yeni Sipariş' diye duyuru çıkar. Üç ayrı modül — muhasebe, üretim, kargo — duyuruyu duyup kendi işini başlatır. Selma Hanım tek tek 'haberin oldu mu' diye dolaşmaz."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-bus-story-2",
+    "type": "useCase",
+    "title": "Camide müezzin",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Hoparlörden 'iftar 5 dakika sonra' anonsu yapılır. Cemaat duyar (oturur), aşçı duyar (yemekleri çıkarır), gönüllüler duyar (su dağıtmaya başlar). Müezzin kişiye tek tek söylemez."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Yazılımdaki olay yayını da tam böyle: bir modül 'X oldu' der; ilgilenenler kendi tepkilerini verir. Mesajı taşıyan görünmez ama herkese ulaştıran sistem."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-bus-story-3",
+    "type": "useCase",
+    "title": "Düğün organizatörü Mahmut Bey",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Gelin damat 'fotoğrafları çekildi' deyince: orkestra, ikinci dans için hazırlanır; aşçı, ana yemek servisine başlar; oyun ekibi, çocuk masasını harekete geçirir."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Mahmut Bey herkese 'şimdi sıra sizde' diye gezmiyor — tek bir duyuru, çoklu otomatik tepki. Yazılımda da modüller bağımsız ama uyumlu — anons sayesinde."
+     }
+    ]
+   }
+  ]
+ }
+}

@@ -1,0 +1,237 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-sus-bc-policy",
+  "sourceId": "sus-bc-policy",
+  "slug": "sus/sus-bc-policy",
+  "title": "Sözleşme kapısı — \"Don't break userspace\"",
+  "summary": "Linus Torvalds 1 numaralı kuralı: bir değişiklik kullanıcı programını kırıyorsa, hata **çekirdektedir**; patch geri alınır.",
+  "categoryId": "sus",
+  "tags": [
+   "sustainability",
+   "contract",
+   "linux",
+   "policy"
+  ],
+  "meta": {},
+  "related": [
+   "page-anti-patterns",
+   "page-philosophy"
+  ],
+  "blocks": [
+   {
+    "id": "block-sus-bc-policy-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Sözleşme verilen yüzeyi (API, şema, plugin arayüzü) hiçbir koşulda kırma; kırıcı patch'i CI reddeder."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-bc-policy-co",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Linus'tan alıntı",
+    "segments": [
+     {
+      "type": "text",
+      "text": "*\"We do not break userspace. The kernel exists to serve userspace. If a change breaks a user-space program, the change is wrong — even if the kernel was technically buggy before.\"* — 30 yıllık Linux disiplini bu cümleyle özetlenir."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-bc-policy-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Bu projeye nasıl uygulanır:"
+     },
+     {
+      "type": "text",
+      "text": " Kutsal sözleşme yüzeyi 3'tür — DocType şeması, plugin API'si, AI-aksiyon yüzeyi. Bu üçünden birini kıran PR CI'da otomatik reddedilir. Geri uyumlu değişiklik istiyorsan yeni sürüm tarihi açar, eski sürümü dönüşüm katmanıyla yaşatırsın (bkz. sus-versioning)."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-bc-policy-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Politika dosyası",
+      "definition": [
+       {
+        "type": "text",
+        "text": "framework/contracts/POLICY.md"
+       }
+      ]
+     },
+     {
+      "term": "CI kapısı",
+      "definition": [
+       {
+        "type": "text",
+        "text": ".github/workflows/contract-guard.yml"
+       }
+      ]
+     },
+     {
+      "term": "Sözleşme snapshot",
+      "definition": [
+       {
+        "type": "text",
+        "text": "framework/contracts/doctype_contract/*.json"
+       }
+      ]
+     },
+     {
+      "term": "İlk eşik",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk dış plugin / entegratör doğduğunda devreye"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-sus-bc-policy-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-sus-bc-policy-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistem dışarıya verdiği sözü — API, veri formatı, plugin arayüzü — hiç ama hiç kırmaz. Eğer yeni bir değişiklik kırarsa, hata yeni değişiklikte olduğu kabul edilir ve geri alınır."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir kez dışarıya söz verdiysen (bu API 10 yıl sonra da böyle çalışacak), bu sözün bozulması güveni yok eder. Dış geliştirici bir daha senin sistemini seçmez."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yazılı politika + makine: \"BC kapısı\" diye bir CI testi var; her PR sözleşme dosyasını kontrol eder. Eski testler geçmiyorsa PR bloke olur. Linus 30 yıldır aynı disiplini uyguluyor."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Çekirdek API yüzeyi, DocType sözleşme dosyaları, plugin manifest formatı — her sözleşmeleştirilen yüzey."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk dış entegratör veya plugin yazıldığı an. O an sözleşme doğmuş demektir; artık geriye yol yok."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mimar politikayı yazar; CI makinesi zorlatır; PR sahibi (geliştirici) uyar; dış entegratör 10 yıl sonra hâlâ çalışan sistem bulur."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bakkal Ahmet Amca'nın veresiye defteri: 1985'te yazdığı sayfa silinmez, üzeri çizilmez. Yeni alışveriş yeni satır. 40 yıl sonra Ahmet Amca'nın oğlu defteri açıp \"1985'te Salih Bey ne aldıydı\" sorusunu yanıtlayabilir. Sayfa silinseydi tarih kayıp olurdu."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-sus-bc-policy-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-sus-bc-policy-story",
+    "type": "useCase",
+    "title": "Nalbur Mustafa Bey, 1980'den beri aynı kasa",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Müşteri 1995'te aldığı 50'lik soba borusunu getiriyor, eşi lazım. Mustafa Bey raftaki torbaları açıyor — boyutlar aynı kalmış 30 yıldır."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Üretici firma boyutu değiştirseydi (52'lik yapsaydı) 1995'te alan müşteri bir daha gelmezdi. Sözleşme = standart boyut. Yazılımda API yüzeyi tam böyle: bir kez vaat ettin, asla değiştirme."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-bc-policy-story-2",
+    "type": "useCase",
+    "title": "Eczacı Bilge Hanım, reçete numarası",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "1990'da hastanenin verdiği reçete numarası 8 hane. Bilge Hanım her reçeteyi bilgisayara o numarayla işliyor. SGK 2025'te \"artık 10 hane olsun\" diye değişiklik istese eski 35 yılın kaydı kaybolur."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Çözüm: 8 hane sözleşme, eski reçeteler hep 8 hane okunur; yeni reçeteler 10 hane ama kayıt sisteminde \"sürüm\" alanı var. Eski sözleşme yaşar, yeni sözleşme eklenir. Stripe yöntemi tam bu."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-bc-policy-story-3",
+    "type": "useCase",
+    "title": "Çiçekçi Selma Hanım, müşteri kayıtları",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "20 yıllık müşterisi var: \"abla, geçen sene oğlumun mezuniyetine yolladığın buketin aynısını\" diyor. Selma Hanım 2005'te kullandığı kayıt formunda buket içeriğini buluyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Kayıt formatı değişseydi — eskiden 5 alan, şimdi 8 alan — eskileri okuyamazdı. Format sözleşmesi: eski hep okunabilir; yeni alanlar eklenebilir ama eski silinmez. Eski kart 20 yıl sonra da açılır."
+     }
+    ]
+   }
+  ]
+ }
+}

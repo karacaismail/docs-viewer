@@ -1,0 +1,471 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-fe-cdn",
+  "sourceId": "fe-cdn",
+  "slug": "frontend/fe-cdn",
+  "title": "CDN Strategy — sınırın uçtaki dağıtım",
+  "summary": "Static asset kullanıcıya en yakın edge sunucudan servisle. Bunny veya Cloudflare; cache invalidation.",
+  "categoryId": "frontend",
+  "tags": [
+   "frontend",
+   "cdn",
+   "cloudflare",
+   "bunny",
+   "cache-invalidation"
+  ],
+  "meta": {
+   "granularity": "orta-tas",
+   "state": "wip"
+  },
+  "related": [
+   "page-fe-deploy-ota",
+   "page-layer1-file",
+   "page-scale-cache"
+  ],
+  "blocks": [
+   {
+    "id": "block-fe-cdn-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Cloudflare/Bunny/Fastly edge cache, signed URL, image optimize at edge, cache invalidation, hash-based versioning."
+     }
+    ]
+   },
+   {
+    "id": "block-fe-cdn-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "CDN olmadan modern frontend = yavaş."
+     },
+     {
+      "type": "text",
+      "text": " Cloudflare free tier startup için yeter."
+     }
+    ]
+   },
+   {
+    "id": "block-fe-cdn-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Cache invalidation = en zor problem",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Hash-based versioning bunu büyük ölçüde çözer; manuel PURGE son çare."
+     }
+    ]
+   },
+   {
+    "id": "block-fe-cdn-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan'a: *'Vite build hash-based filename. Cloudflare config: max-age=31536000 immutable. Image upload S3, CDN edge transform.'*"
+     }
+    ]
+   },
+   {
+    "id": "block-fe-cdn-h-cdn-secim-matrisi",
+    "type": "heading",
+    "level": 4,
+    "text": "CDN seçim matrisi"
+   },
+   {
+    "id": "block-fe-cdn-table",
+    "type": "table",
+    "columns": [
+     "CDN",
+     "Fiyat",
+     "Free tier",
+     "WAF",
+     "Image"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Cloudflare"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "$"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Var"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Polish (paid)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Bunny"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "$"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yok"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✗"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓ Optimizer"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Fastly"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "$$$"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yok"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "CloudFront"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "$$"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yok"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "✓"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Lambda@Edge"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-fe-cdn-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-fe-cdn-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "CDN ne?"
+     },
+     {
+      "type": "text",
+      "text": " Statik dosyaları dünyaya yayılmış edge sunucularda cache'leyen ağ. İstanbul kullanıcı İstanbul edge'inden alır."
+     }
+    ]
+   },
+   {
+    "id": "block-fe-cdn-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "CDN seçimi:"
+     }
+    ]
+   },
+   {
+    "id": "block-fe-cdn-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Cloudflare"
+      },
+      {
+       "type": "text",
+       "text": ": Free tier var, WAF + DDoS dahil"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Bunny CDN"
+      },
+      {
+       "type": "text",
+       "text": ": Çok ucuz ($0.005/GB)"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Fastly"
+      },
+      {
+       "type": "text",
+       "text": ": Pahalı, premium"
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "AWS CloudFront"
+      },
+      {
+       "type": "text",
+       "text": ": AWS ekosistem"
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-fe-cdn-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Cache header'ları:"
+     }
+    ]
+   },
+   {
+    "id": "block-fe-cdn-code",
+    "type": "codeBlock",
+    "language": "text",
+    "code": "Cache-Control: public, max-age=31536000, immutable"
+   },
+   {
+    "id": "block-fe-cdn-p-5",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Hash-based versioning:"
+     }
+    ]
+   },
+   {
+    "id": "block-fe-cdn-code-2",
+    "type": "codeBlock",
+    "language": "text",
+    "code": "app.a3f9b2c.js  ← hash dosya adında\napp.b8e1d4a.js  ← yeni build, yeni hash"
+   },
+   {
+    "id": "block-fe-cdn-p-6",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Image optimization at edge:"
+     }
+    ]
+   },
+   {
+    "id": "block-fe-cdn-code-3",
+    "type": "codeBlock",
+    "language": "text",
+    "code": "original.jpg → bunny.cdn/?width=400&quality=75 → optimized.webp"
+   },
+   {
+    "id": "block-fe-cdn-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-fe-cdn-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Statik dosyaları edge sunucularda cache'leyip yakın yerden servisle."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "5ms vs 50ms = 10x hız."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1) Cloudflare veya Bunny. 2) Hash-based versioning. 3) Cache-Control doğru. 4) Image optimize at edge."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "code",
+        "text": "fe-deploy"
+       },
+       {
+        "type": "text",
+        "text": " ile birlikte."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk production deploy öncesi."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "DevOps CDN ayarı; frontend developer header."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Posta: tek merkez yerine 50 ilde dağıtım."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-fe-cdn-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-fe-cdn-story",
+    "type": "useCase",
+    "title": "Hatice Teyze (62) — semt fırın",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Semt fırınından her sabah ekmek alıyor."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Bu CDN: yakın olan kazanır."
+     }
+    ]
+   },
+   {
+    "id": "block-fe-cdn-story-2",
+    "type": "useCase",
+    "title": "Murat Bey (61) — apartman su deposu",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Tek depo + uzun boru yerine her daire için yedek depo."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Edge cache: tek origin + yakın yedek."
+     }
+    ]
+   }
+  ]
+ }
+}
