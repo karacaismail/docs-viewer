@@ -15,7 +15,7 @@ npm run preview     # build önizleme
 
 ## Mimari özet
 
-- **İçerik**: `content-source/` (197 cluster JSON) → migration → `src/data/{navigation,pages,glossary,search-index}.json` (generated, elle düzenlenmez)
+- **İçerik**: `content-source/` (214 cluster JSON: 197 özgün + 17 aday katalog kaydı) → migration → `src/data/ (navigation, pages-index + pages/, glossary core/detail, search-index)` (generated, elle düzenlenmez)
 - **Engine** (`src/engine/`): load → validate(dev) → resolve; block registry; foldTurkish; anchor scroll
 - **UI**: React 19 + TanStack Router + Radix; 16 block bileşeni registry üzerinden; tek dark tema (`src/styles/tokens.css` — 09A değerleri)
 - **Search**: MiniSearch, lazy index, `processTerm=foldTurkish` (13A), sonuç → page + block anchor + highlight

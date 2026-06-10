@@ -86,6 +86,21 @@ ${txt(620, 416, "Ortak altyapı: ürün kernel'e dokunmaz", { size: 13, fill: C.
   return svg(`${title} — kategori ve katman pozisyonu`, body);
 }
 
+// ---- Şablon A2: paket kartı (cards/ — aday stack/dist/modül; 15 §4) ----
+function packageCard(stem, title, kindLabel, accentColor) {
+  const lines = wrap(title, 26);
+  const t = lines.map((l, i) => txt(400, 170 + i * 36, l, { size: 26, weight: 500 })).join("");
+  return svg(
+    `${title} — ${kindLabel} kartı`,
+    `${box(60, 70, 680, 310, C.elevated, accentColor)}
+${txt(400, 115, kindLabel, { size: 15, fill: accentColor, weight: 700 })}
+${t}
+${box(280, 290, 240, 50, C.surface, C.borderSubtle, 6)}
+${txt(400, 321, "ADAY KATALOG KAYDI", { size: 13, fill: C.muted })}
+${txt(400, 416, "Kapsam ve katman pozisyonu sayfa içeriğinde", { size: 13, fill: C.muted })}`,
+  );
+}
+
 // ---- Şablon B: adlandırılmış diyagramlar ----
 const named = {
   "overview-layers.svg": () => {
@@ -348,6 +363,12 @@ for (const [src, meta] of [...images.entries()].sort()) {
   if (rel.startsWith("stack/")) {
     const stem = rel.replace("stack/s-", "").replace(".svg", "");
     content = productCard(stem, meta.title);
+  } else if (rel.startsWith("cards/")) {
+    const stem = rel.slice(6, -4);
+    if (stem.startsWith("s-")) content = productCard(stem.slice(2), meta.title);
+    else if (stem.startsWith("dist-"))
+      content = packageCard(stem, meta.title, "DISTRIBUTION — SEKTÖR PAKETİ", C.tr);
+    else content = packageCard(stem, meta.title, "YATAY STACK — PAKET ÜRÜN", C.accent);
   } else if (named[rel]) {
     content = named[rel]();
   } else {
