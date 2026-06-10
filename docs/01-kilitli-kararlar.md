@@ -12,7 +12,7 @@ Bu doküman, doc viewer projesinin tartışmaya kapalı kararlarını tek yerde 
 | Search engine | MiniSearch | In-memory, client-side, statik JSON index ile uyumlu |
 | Search davranışı | Sonuç, ilgili block anchor'a indirir | Sayfa değil block hedeflenir; uzun sayfalarda konum kaybı önlenir |
 | Syntax highlighting | Shiki — `codeToTokens` ile token tabanlı render | HTML string render yasağıyla birlikte highlighting sağlayan tek güvenli yol |
-| UI primitives | Radix Primitives + Tailwind CSS + custom design system | Erişilebilirlik davranışları (focus trap, dismiss) hazır; görsel katman token'lardan |
+| UI primitives | Radix Primitives + saf token CSS (custom design system) | Erişilebilirlik davranışları (focus trap, dismiss) hazır; görsel katman token'lardan. Tailwind ADR-0004 ile çıkarıldı (`01D-adr-0004-token-css.md`) |
 | Validation | Zod — schema tek kaynak, tipler `z.infer` ile türetilir | Elle tip yazımı biter; bozuk veri build'i kırar |
 | Test | Vitest + Testing Library + Playwright | Test-first süreç; bkz. `05-test-plani.md` |
 | İçerik dili | Türkçe cümle yapısı, teknik jargon orijinal İngilizce | Kullanıcı hem açıklamayı anlar hem gerçek terimle tanışır |
@@ -20,6 +20,8 @@ Bu doküman, doc viewer projesinin tartışmaya kapalı kararlarını tek yerde 
 | Min. viewport | 320px, mobile-first | Yatay scroll üretmeden çalışmak kabul kriteridir |
 | Repo konumu | Bağımsız private repo `docs-viewer`; monorepo'ya katılım ertelendi | ADR-0001 (`01A-adr-0001-repo-konumu.md`) — revizyon tetikleyicisi tanımlı |
 | Storybook | İlk kapsam dışı | ADR-0002 (`01B-adr-0002-storybook.md`) — kontrat testleri semantiği zaten kanıtlıyor; tetikleyiciler tanımlı |
+| Yayın modeli | Public repo + GitHub Pages | ADR-0003 (`01C-adr-0003-yayin-modeli.md`) — ADR-0001'in deploy/görünürlük maddelerinin kullanıcı kararıyla revizyonu |
+| Glossary zenginleştirme yeri | Overlay dosyası (`glossary-enrichment.json`) | ADR-0005 (`01E-adr-0005-glossary-overlay.md`) — kaynak clusters pristine kalır |
 | Min. text size | Efektif taban 1rem (`mobile-first-pattern.md` ZORUNLU kuralı; master prompt'un 0.9rem tabanını sağlar ve sıkılaştırır) | 60+ kullanıcı okunabilirliği; uzlaşma: 09A §1 |
 
 ## Yasaklar

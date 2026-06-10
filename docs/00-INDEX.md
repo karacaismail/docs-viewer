@@ -11,6 +11,9 @@ Bu set, `mimari/` klasöründeki mevcut içeriğin (≈198 cluster JSON + mimari
 | 01 | `01-kilitli-kararlar.md` | Kilitli mimari kararlar, yasaklar, gerekçeler | Zemin |
 | 01A | `01A-adr-0001-repo-konumu.md` | ADR-0001: bağımsız `docs-viewer` repo kararı + setin ADR şablonu | Zemin |
 | 01B | `01B-adr-0002-storybook.md` | ADR-0002: Storybook ilk kapsam dışı — gerekçe ve revizyon tetikleyicileri | Zemin |
+| 01C | `01C-adr-0003-yayin-modeli.md` | ADR-0003: public repo + GitHub Pages — ADR-0001 deploy/görünürlük revizyonu | Zemin |
+| 01D | `01D-adr-0004-token-css.md` | ADR-0004: Tailwind yerine saf token CSS | Zemin |
+| 01E | `01E-adr-0005-glossary-overlay.md` | ADR-0005: glossary zenginleştirme overlay dosyası | Zemin |
 | 02 | `02-icerik-envanteri.md` | Mevcut kaynak dosyaların envanteri ve kaderi | Zemin |
 | 03 | `03-navigation-ia.md` | Rail 1 / Rail 2 bilgi mimarisi, slug ve ID sözleşmeleri | Zemin |
 | 04 | `04-veri-modeli.md` | navigation / pages / glossary / search-index JSON sözleşmeleri | Zemin |

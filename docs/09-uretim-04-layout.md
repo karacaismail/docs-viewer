@@ -20,7 +20,7 @@ App
 
 ## Token Altyapısı
 
-`src/styles/tokens.css` CSS custom property setini tanımlar; renkler component içinde verilmez. Somut değerler (palet, type scale, spacing, z-index, Shiki teması) ölçülmüş kontrast oranlarıyla birlikte `09A-token-degerleri.md`'de tanımlıdır ve bu yönergenin bağlayıcı ekidir. Token alanları master prompt §14 listesidir: `color.bg.*`, `color.border.*`, `color.text.*`, `color.accent.*`, `color.focus.ring`, `color.feedback.*`, `space.*`, `radius.*`, `shadow.overlay`, `zIndex.{drawer,tooltip,modal}`. Tailwind konfigürasyonu bu custom property'lere bağlanır; Tailwind palet renkleri doğrudan kullanılmaz. Tipografi tabanı 0.9rem altına inmez; mobile'da component içi spacing `space.compact`, section ritmi `space.section` ile korunur.
+`src/styles/tokens.css` CSS custom property setini tanımlar; renkler component içinde verilmez. Somut değerler (palet, type scale, spacing, z-index, Shiki teması) ölçülmüş kontrast oranlarıyla birlikte `09A-token-degerleri.md`'de tanımlıdır ve bu yönergenin bağlayıcı ekidir. Token alanları master prompt §14 listesidir: `color.bg.*`, `color.border.*`, `color.text.*`, `color.accent.*`, `color.focus.ring`, `color.feedback.*`, `space.*`, `radius.*`, `shadow.overlay`, `zIndex.{drawer,tooltip,modal}`. Görsel katman saf token CSS'tir — Tailwind ADR-0004 ile çıkarıldı (`01D-adr-0004-token-css.md`); 'token dışı renk yok' kuralı aynen yürürlüktedir. Tipografi tabanı 0.9rem altına inmez; mobile'da component içi spacing `space.compact`, section ritmi `space.section` ile korunur.
 
 ## Davranış Kuralları
 
