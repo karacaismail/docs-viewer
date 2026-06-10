@@ -1,0 +1,199 @@
+{
+  "id": "s-social",
+  "title": "Social Stack",
+  "subtitle": "Twitter, Threads, Instagram, Facebook muadili. Scale primitives sınavı.",
+  "cluster": "content-collaboration",
+  "layer": "l2",
+  "order": 7,
+  "icon": "ph-users-three",
+  "badge": "Layer 2 Stack #7",
+  "tags": [
+    "social",
+    "feed",
+    "fanout",
+    "scale"
+  ],
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "Sosyal medya (#15) ana stack. Asıl ürün ölçekte teslimat: model basit, fan-out + ranking + moderation zor. Scale primitives ({{ref:scale-outbox}}, {{ref:scale-counter}}, {{ref:scale-workers}}) gerçek sınavı burada.",
+      "enrich": {
+        "lesson": {
+          "ne": "Satışa sunulan eşya veya hizmet.",
+          "nicin": "İşletmenin gelir kaynağı.",
+          "nasil": "Katalogda fotoğraf + fiyat + stok bilgisi.",
+          "kim": "Üretici/satıcı yönetir.",
+          "analoji": "Bakkalın rafındaki her eşya."
+        }
+      }
+    },
+    {
+      "type": "image",
+      "src": "/assets/stack/s-social.svg",
+      "alt": "Social Stack ürünü — kategori, muadiller ve katman pozisyonu",
+      "caption": "Social Stack kategori şeması · pazar muadilleri + AI/TR ipuçları"
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Module'ler"
+    },
+    {
+      "type": "feature-list",
+      "items": [
+        {
+          "name": "Social Graph",
+          "desc": "Follow/friend, asimetrik + simetrik, block, mute",
+          "critical": true,
+          "enrich": {
+            "info": "Follow/friend, asimetrik + simetrik, block, mute"
+          }
+        },
+        {
+          "name": "Post / UGC",
+          "desc": "Gönderi, reply (thread), quote, repost",
+          "enrich": {
+            "info": "Gönderi, reply (thread), quote, repost"
+          }
+        },
+        {
+          "name": "Feed / Timeline",
+          "desc": "Fan-out (push/pull/hybrid, ~10K celebrity threshold), ranking",
+          "critical": true,
+          "enrich": {
+            "info": "Fan-out (push/pull/hybrid, ~10K celebrity threshold), ranking",
+            "terms": [
+              {
+                "term": "Fan-out",
+                "abbrev_tr": "Dağıtım yelpazesi",
+                "meaning": "Bir post'u N takipçinin feed'ine dağıtma stratejisi (push/pull/hybrid).",
+                "why": "Twitter ölçeğinde maliyet/perf farkı 1000× olabilir."
+              }
+            ]
+          }
+        },
+        {
+          "name": "Engagement",
+          "desc": "Like, reaction, repost, reply, bookmark — hot counter",
+          "enrich": {
+            "info": "Like, reaction, repost, reply, bookmark — hot counter"
+          }
+        },
+        {
+          "name": "Direct Messaging",
+          "desc": "Realtime DM, group chat, presence, read receipt",
+          "enrich": {
+            "info": "Realtime DM, group chat, presence, read receipt",
+            "terms": [
+              {
+                "term": "Presence",
+                "abbrev_tr": "Varlık (online/offline)",
+                "meaning": "Kullanıcının o an aktif olup olmadığı bilgisi.",
+                "why": "Sohbet/topluluk UX'inin temel parçası."
+              },
+              {
+                "term": "Read receipt",
+                "abbrev_tr": "Okundu bildirimi",
+                "meaning": "Mesajın okunup okunmadığı durumu.",
+                "why": "Modern messenger UX standardı."
+              },
+              {
+                "term": "Realtime",
+                "abbrev_tr": "Anlık (canlı)",
+                "meaning": "Server-Sent Events veya WebSocket ile push güncelleme.",
+                "why": "Chat, dashboard, notification için."
+              }
+            ]
+          }
+        },
+        {
+          "name": "Trends & Discovery",
+          "desc": "Hashtag, trending topics, explore",
+          "enrich": {
+            "info": "Hashtag, trending topics, explore"
+          }
+        },
+        {
+          "name": "Privacy & Audience",
+          "desc": "Public/followers/friends/close-friends/private",
+          "enrich": {
+            "info": "Public/followers/friends/close-friends/private"
+          }
+        },
+        {
+          "name": "Stories / Ephemeral",
+          "desc": "24h auto-expire",
+          "enrich": {
+            "info": "24h auto-expire"
+          }
+        },
+        {
+          "name": "Groups & Communities",
+          "desc": "Topluluk, sayfa, etkinlik",
+          "enrich": {
+            "info": "Topluluk, sayfa, etkinlik"
+          }
+        },
+        {
+          "name": "Live & Spaces",
+          "desc": "Canlı video, ses odası",
+          "enrich": {
+            "info": "Canlı video, ses odası"
+          }
+        },
+        {
+          "name": "Creator & Monetization",
+          "desc": "Bahşiş, abonelik, ad revenue share",
+          "enrich": {
+            "info": "Bahşiş, abonelik, ad revenue share"
+          }
+        },
+        {
+          "name": "Moderation / T&S",
+          "desc": "AI ön-filtre + human review queue",
+          "critical": true,
+          "enrich": {
+            "info": "AI ön-filtre + human review queue"
+          }
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Fan-out — kernel primitive, module policy"
+    },
+    {
+      "type": "paragraph",
+      "text": "Asıl prensip: kernel **primitive**'leri sağlar (event bus, outbox, async worker, hot counter, projection); Feed module **policy**'yi yazar (push vs pull, celebrity threshold, hybrid merge). Twitter ~10K follower cutoff'u commonly cited.",
+      "enrich": {}
+    },
+    {
+      "type": "callout",
+      "variant": "warning",
+      "label": "Tuzak — ölçek-blindness",
+      "body": "Domain modeli trivial (gönderi/takip/beğeni). Asıl iş fan-out + ranking + moderation hacmi. Ölçeği teslimat detayı sayarsan yüksek trafikte çökersin. Bu üründe **ölçek = domain**."
+    }
+  ],
+  "enrich": {
+    "info": "Twitter, Threads, Instagram, Facebook muadili. Scale primitives sınavı.",
+    "detail": "Twitter, Threads, Instagram, Facebook muadili. Scale primitives sınavı.",
+    "terms": [
+      {
+        "term": "Cluster",
+        "abbrev_tr": "Konu kümesi",
+        "meaning": "Bu döküman birimi — kendi başına okunabilir mimari konu.",
+        "why": "Tek dosyada tek bağımsız konu prensibi."
+      }
+    ],
+    "lesson": {
+      "ne": "Sosyal medya modülü: kullanıcıların paylaşım yapabildiği, beğenebildiği, yorum yapabildiği akış tabanlı sistemler.",
+      "nicin": "Birçok ürünün (eğitim, ticaret, hizmet) kullanıcı topluluğu var. Etkileşim kurabilmek için akış altyapısı lazım.",
+      "nasil": "Kullanıcı yazı/foto paylaşır → akışta gözükür → diğer kullanıcılar beğenir, yorum yapar → bildirim gelir.",
+      "nerede": "Topluluk sayfaları, ürün tanıtım gönderileri, müşteri yorum akışları.",
+      "ne_zaman": "Kullanıcı topluluğu oluştuktan sonra.",
+      "kim": "Kullanıcı paylaşır; moderatör denetler; sistem akışı yönetir.",
+      "analoji": "Mahalle kahvesi muhabbeti: birisi konu açar, herkes katılır, ortak hafıza oluşur."
+    }
+  }
+}

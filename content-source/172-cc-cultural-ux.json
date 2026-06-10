@@ -1,0 +1,251 @@
+{
+  "id": "cc-cultural-ux",
+  "title": "Kültürel UX — Renk, Jest, Font Fallback, Ekran Okuyucu Dili",
+  "subtitle": "Renk anlamı (kırmızı CN uğur / EU uyarı), jest/manken seçimi, font stack (Latin+Arabic+CJK+Devanagari), RTL ikon yönü, lang attribute screen reader.",
+  "cluster": "crosscut",
+  "order": 17,
+  "icon": "ph-paint-brush",
+  "granularity": "orta-tas",
+  "state": "wip",
+  "tags": [
+    "crosscut",
+    "ux",
+    "culture",
+    "font",
+    "a11y",
+    "rtl",
+    "screen-reader",
+    "semiotics"
+  ],
+  "enrich": {
+    "info": "Kültürel anlam (renk, jest), font fallback stratejisi (Unicode coverage), RTL ikon yönü, ekran okuyucu lang attribute disiplini.",
+    "detail": "**Bu cluster i18n'in 'estetik + a11y' boyutu — teknik standartlardan ayrı.**\n\n## 1. Renk Anlamları (kültürel semiyotik)\n\n| Renk | Batı / Latin | Çin / Doğu Asya | Hindistan | Ortadoğu |\n|---|---|---|---|---|\n| **Kırmızı** | Tehlike, uyarı, dur | **Uğur, mutluluk, evlilik** | Saflık, evlilik | Kan, dikkat |\n| **Beyaz** | Saflık, evlilik | **Yas, ölüm** | Yas | Saflık, barış |\n| **Yeşil** | Doğa, başarı (gain) | Sağlıksızlık | Doğa, başarı | **İslam, kutsallık** |\n| **Sarı** | Dikkat, ucuz | İmparatorluk | Kutsal | Yas |\n| **Mor** | Lüks, kraliyet | Yas (Brezilya) | Yas | - |\n| **Siyah** | Modernite, lüks | Kötü, ölüm | Negatif | Resmi |\n\n**Mimari:** UI palet'i değiştir mecbur değil — ama **anlamı bağla**. 'success = yeşil', 'error = kırmızı' Batı default; Çin için ayarlanabilir tema. Renk **mesaj iletmek için tek araç DEĞİL** (a11y prensibi: icon + renk + metin).\n\n## 2. Jest, Manken, Görsel Uygunluk\n\n- 👍 (thumbs up): Batı 'iyi'; Ortadoğu/Yunanistan/Iran **kaba/küfür**\n- 👌 (OK gesture): Batı 'tamam'; Brezilya **kaba**; Almanya nötr\n- 🤞 (parmaklar çapraz): Batı 'şans'; Vietnam **kaba**\n- ✋ (el): Yunan **küfür**\n- ☝ (işaret parmağı): Asya **kaba**\n\n**Manken/model:** Suudi'de kadın yüzü açık görseli yasak; Batı'da çeşitlilik beklenir (diversity). Görsel asset jurisdiction-aware seçilir.\n\n## 3. Font Fallback Stratejisi\n\n**Tek font tüm yazı sistemlerini kapsamaz.** Unicode coverage:\n\n| Yazı sistemi | Örnek font | Boyut |\n|---|---|---|\n| Latin | Inter, Roboto | ~150 KB |\n| Arabic | Noto Sans Arabic | ~120 KB |\n| Hebrew | Noto Sans Hebrew | ~80 KB |\n| CJK (Çince, Japonca, Korece) | Noto Sans CJK | **~5 MB** (büyük!) |\n| Devanagari (Hintçe) | Noto Sans Devanagari | ~150 KB |\n| Cyrillic | Inter (built-in) | ~150 KB |\n\n**Strateji:**\n\n```css\nfont-family:\n  'Inter',                    /* Latin + Cyrillic */\n  'Noto Sans Arabic',         /* Arabic, Hebrew */\n  'Noto Sans CJK',            /* Çince, Japonca, Korece */\n  'Noto Sans Devanagari',     /* Hintçe */\n  system-ui, sans-serif;\n```\n\n**Lazy load:** sadece o sayfada gerekli fontu yükle. Kullanıcı locale=hi-IN ise CJK indirme.\n\n**CSS `unicode-range`:**\n```css\n@font-face {\n  font-family: 'Inter';\n  unicode-range: U+0000-00FF, U+0131, U+0152-0153;  /* Latin */\n  ...\n}\n```\n\n## 4. RTL — Sadece Metin Değil\n\n**Aynalanan elemanlar:**\n\n- Geri ok ← → → (ikon flip)\n- Slider yönü (min sol → max sağ → tersine döner)\n- Breadcrumb: A › B › C → C ‹ B ‹ A\n- Progress bar: dolma yönü tersine\n- Drawer (yan menü): sağdan açılır\n\n**CSS logical properties** (margin-inline-start, padding-block-end) zorunlu. `margin-left` HARDCODE = RTL'de bozulur.\n\n## 5. Ekran Okuyucu `lang` Attribute\n\nScreen reader (NVDA, JAWS, VoiceOver) telaffuz için sayfanın **gerçek dilini** bilir.\n\n**Yanlış:**\n```html\n<html lang='en'>\n<body>\n  <p>Merhaba dünya</p>  <!-- screen reader Türkçe'yi İngilizce telaffuz eder -->\n</body>\n```\n\n**Doğru:**\n```html\n<html lang='tr'>\n<body>\n  <p>Merhaba dünya</p>\n  <p lang='en'>Hello world</p>  <!-- karışık dilli içerik için -->\n</body>\n```\n\n**Disiplin:** her sayfada `<html lang>` doğru set + farklı dilli içerik için `lang` attribute. WCAG 3.1.1 (A) + 3.1.2 (AA) zorunlu.\n\n## 6. Metin Genişlemesi (Locale-aware Layout)\n\nDil bazlı genişleme oranı:\n\n| Dil | Genişleme | Etki |\n|---|---|---|\n| İngilizce (baseline) | %100 | - |\n| Almanca | **%135** | Buton/label taşar |\n| Fransızca | %120 | Hafif taşar |\n| İspanyolca | %125 | Orta |\n| Çince/Japonca | **%50** | Boşluk fazla |\n| Türkçe | %110 | Hafif uzun |\n\n**Mimari:** UI bileşenleri **width: auto** + **max-width** kullanmalı. Sabit `width: 200px` button = Almanca'da bozuk. Pseudo-localization test'i ile yakala.",
+    "terms": [
+      {
+        "term": "Cultural Semiotics",
+        "abbrev_tr": "Kültürel anlam",
+        "meaning": "Renk/sembol/jest farklı kültürlerde farklı anlam.",
+        "why": "Kırmızı CN uğur, EU uyarı. Tek tasarım her yere uymaz."
+      },
+      {
+        "term": "Font Fallback Stack",
+        "abbrev_tr": "Font yedek zinciri",
+        "meaning": "CSS font-family'de birden çok font sırayla; ilki yoksa sonraki kullanılır.",
+        "why": "Tek font tüm Unicode'u kapsamaz; CJK 5 MB, lazy load gerek."
+      },
+      {
+        "term": "unicode-range",
+        "abbrev_tr": "Unicode aralığı",
+        "meaning": "@font-face'te font hangi karakter aralığı için yükleneceğini belirtir.",
+        "why": "Performans: sadece sayfada geçen karakter için font yüklenir."
+      },
+      {
+        "term": "lang attribute",
+        "abbrev_tr": "HTML lang etiketi",
+        "meaning": "`<html lang='tr'>` veya inline `<p lang='en'>`.",
+        "why": "Screen reader doğru telaffuz; WCAG 3.1.1 zorunlu."
+      },
+      {
+        "term": "CSS Logical Properties",
+        "abbrev_tr": "Mantıksal CSS",
+        "meaning": "margin-inline-start, padding-block-end gibi yön-bağımsız.",
+        "why": "RTL'de margin-left/right ters çevirmek YASAK; logical otomatik."
+      },
+      {
+        "term": "Pseudo-localization",
+        "abbrev_tr": "Sahte yerelleştirme",
+        "meaning": "Metni Unicode varyantla uzatıp layout test.",
+        "why": "Almanca'nın %35 uzunluğunu önceden simüle."
+      }
+    ],
+    "stories": [
+      {
+        "persona": "Ürün tasarımcı Selin Hanım (38) — CN açılım",
+        "context": "Tasarım sisteminde 'success = yeşil', 'error = kırmızı'. CN pazara açıldığında 'yeni yıl indirim' banner'ı yeşil yaptılar — yerel ekip 'kırmızı olsa daha uğurlu' dedi.",
+        "outcome": "Tema sistemine **cultural variant** eklendi: jurisdiction CN ise primary accent = kırmızı (uğur). Mesaj iletme **icon + metin + renk** üçü birlikte (a11y + kültürel)."
+      },
+      {
+        "persona": "Geliştirici Murat Bey (61'lik abisi 30) — font fallback",
+        "context": "Web sitesi Türkçe + İngilizce yayında. Hindistan kullanıcı 'टेस्ट' (Devanagari) yorum yazdı; sayfada kutu karakterler (Tofu) görünüyor.",
+        "outcome": "Font stack güncellendi: Inter + Noto Sans Devanagari + Noto Sans CJK lazy load. unicode-range ile sadece gerekli karakter setleri yüklenir. Tofu sorunu çözüldü."
+      },
+      {
+        "persona": "A11y consultant Ayşe Hanım (50) — screen reader",
+        "context": "WCAG audit: site `<html lang='en'>` ama Türkçe içerik. Screen reader 'Merhaba'yı 'mer-haba' diye telaffuz ediyor.",
+        "outcome": "`<html lang='tr'>` set + dinamik dil değişiminde JS update + farklı dilli içerik için inline `lang` attribute. WCAG 3.1.1 (A) compliance."
+      }
+    ],
+    "lesson": {
+      "ne": "i18n'in kültür + a11y boyutu: renk anlamı, jest, font fallback, RTL ikon yönü, screen reader lang attribute.",
+      "nicin": "Teknik standart (BCP 47, ICU) yetmez — kültürel/algısal anlam ayrı. Yanlış renk = yanlış mesaj; yanlış font = okunamayan içerik; yanlış lang = yanlış telaffuz.",
+      "nasil": "1) Cultural theme variant per jurisdiction. 2) Mesaj icon+text+renk üçü birlikte. 3) Font stack + unicode-range + lazy load. 4) CSS logical properties RTL. 5) `<html lang>` dinamik + inline lang çoklu dil.",
+      "nerede": "`cc-cultural-ux` cluster + `cc-i18n-standards` (teknik) + `cc-a11y-backend` (EAA). Frontend bileşen kütüphanesinde uygulanır.",
+      "ne_zaman": "İlk ek dil/kültür eklenmeden ÖNCE font + lang disiplini. Cultural theme ek pazar açılımında.",
+      "kim": "Designer kültürel renk + manken; frontend dev font stack + lang attribute; a11y consultant denetim.",
+      "analoji": "Yemek davetinde misafire göre menü: vejetaryen, alerjisi var, dini kısıt. Aynı yemeği herkese koymak ayıp. Yazılım UI = misafir davası: herkese 'aynı menü' kültürel saldırı; yerel adaptasyon = saygı."
+    }
+  },
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "**i18n'in görünmez %20'si:** kültür + a11y. Renk yanlış mesaj iletebilir, font yoksa metin kutu çıkar, lang attribute yanlışsa screen reader saçma telaffuz eder."
+    },
+    {
+      "type": "callout",
+      "variant": "critical",
+      "label": "Mesaj iletme — icon + text + renk üçü",
+      "body": "Renk tek başına mesaj iletmesin. Kırmızı = error Batı'da; CN'de uğur. **Icon + metin + renk birlikte** = hem kültürel hem a11y (renk körü). WCAG 1.4.1 zorunlu."
+    },
+    {
+      "type": "callout",
+      "variant": "critical",
+      "label": "`<html lang>` her zaman doğru",
+      "body": "Screen reader telaffuz için kritik. WCAG 3.1.1 (A). `<html lang='en'>` ama Türkçe içerik = saçma telaffuz. Dinamik dil değişiminde JS update + inline `<p lang='en'>` karışık içerik için."
+    },
+    {
+      "type": "callout",
+      "variant": "tip",
+      "label": "Vibecoding ipucu",
+      "body": "AI ajan'a: *'CSS font-family stack: Inter + Noto Sans Arabic + Noto Sans CJK + Noto Sans Devanagari, system-ui fallback. @font-face unicode-range ile partial loading. Tema sistemi cultural variant: jurisdiction CN için primary kırmızı. document.documentElement.lang = locale dinamik set. Renk ile birlikte icon + text mesaj.'*"
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Renk kültürel anlam — pazar matrisi"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Renk",
+        "Batı",
+        "CN/Doğu Asya",
+        "Hindistan",
+        "Ortadoğu"
+      ],
+      "rows": [
+        [
+          "Kırmızı",
+          "Tehlike",
+          "UĞUR, mutluluk",
+          "Saflık",
+          "Kan, dikkat"
+        ],
+        [
+          "Beyaz",
+          "Saflık",
+          "YAS, ölüm",
+          "Yas",
+          "Saflık"
+        ],
+        [
+          "Yeşil",
+          "Doğa",
+          "Sağlıksızlık",
+          "Doğa",
+          "KUTSAL (İslam)"
+        ],
+        [
+          "Sarı",
+          "Dikkat",
+          "İmparatorluk",
+          "Kutsal",
+          "Yas"
+        ],
+        [
+          "Mor",
+          "Lüks",
+          "Yas",
+          "Yas",
+          "-"
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Font fallback — Unicode coverage"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Yazı sistemi",
+        "Font",
+        "Boyut",
+        "Lazy?"
+      ],
+      "rows": [
+        [
+          "Latin + Cyrillic",
+          "Inter",
+          "~150 KB",
+          "Default"
+        ],
+        [
+          "Arabic + Hebrew",
+          "Noto Sans Arabic",
+          "~120 KB",
+          "Lazy (locale=ar/he)"
+        ],
+        [
+          "CJK",
+          "Noto Sans CJK",
+          "~5 MB",
+          "Mutlak lazy"
+        ],
+        [
+          "Devanagari",
+          "Noto Sans Devanagari",
+          "~150 KB",
+          "Lazy (locale=hi)"
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Metin genişlemesi dil bazlı"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Dil",
+        "Genişleme",
+        "UI etkisi"
+      ],
+      "rows": [
+        [
+          "İngilizce",
+          "%100",
+          "Baseline"
+        ],
+        [
+          "Almanca",
+          "%135",
+          "Buton/label taşar"
+        ],
+        [
+          "Fransızca",
+          "%120",
+          "Hafif taşar"
+        ],
+        [
+          "Türkçe",
+          "%110",
+          "Az uzun"
+        ],
+        [
+          "Çince/Japonca",
+          "%50",
+          "Boşluk fazla"
+        ]
+      ]
+    }
+  ],
+  "related": [
+    "cc-i18n-standards",
+    "cc-a11y-backend",
+    "cc-jurisdiction-resolver",
+    "fe-core-ui",
+    "fe-mobile"
+  ]
+}

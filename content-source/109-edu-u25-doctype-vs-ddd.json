@@ -1,0 +1,154 @@
+{
+  "id": "edu-u25",
+  "title": "DocType vs Klasik DDD — Anemic Domain Tuzağı",
+  "subtitle": "Klasik DDD'de Invoice/Contract/Receipt ayrı aggregate. Meta-framework'te DocType **runtime metadata Strategy'si**. İkisini karıştırma — tek-tablo + if-else YASAK.",
+  "cluster": "edu",
+  "order": 28,
+  "icon": "ph-stack",
+  "granularity": "orta-tas",
+  "state": "wip",
+  "tags": [
+    "education",
+    "ddd",
+    "doctype",
+    "strategy",
+    "aggregate",
+    "anti-pattern"
+  ],
+  "enrich": {
+    "info": "DocType ≠ tek Document tablo + type switching. Metadata-driven Strategy + tablo-per-tip + policy plugin. Klasik DDD'nin 3 yaklaşımı runtime karşılığı.",
+    "detail": "**Bu ünite ne anlatıyor:**\n\nProjenin merkez kavramı 'DocType' yaygın bir DDD eleştirisinin hedefi:\n\n*'DocType DDD'ye aykırı! Tek Document entity + if (type==X) switch = anemic domain.'*\n\nBu eleştiri **klasik DDD çerçevesinde haklı**. Ama bu projeye **doğru uygulanmazsa kafa karıştırır**.\n\n**60+ için günlük benzetme:**\n\nKitapçıda 3 farklı belge türü var: fatura, sözleşme, makbuz.\n\n**Yanlış yaklaşım (anemic domain):** *Tek 'belge defteri' var; her satıra 'tür' yazılır; satırı işleyen memur her satırda 'türü ne?' diye if-else yapar.* Sonuç: defter çorba, yeni tür eklemek tüm if-else'leri güncellemek.\n\n**Doğru yaklaşım (klasik DDD):** *Fatura defteri ayrı, sözleşme defteri ayrı, makbuz defteri ayrı. Her birinin kendi memuru, kendi kuralı.*\n\n**Bu projenin yaklaşımı (meta-framework):** *Kitapçı sahibi bilgisayardan 'yeni defter türü tanımla' der; sistem yeni defterin kurallarını, sayfalarını, memurunu **otomatik üretir**. Sonuç: klasik DDD'nin 3 defter ayrımı gerçekleşir, ama defter sayısı önceden kodda yazılmaz.*\n\n**Klasik DDD'nin 3 yaklaşımı — meta-framework karşılığı:**\n\n| Klasik DDD | Meta-framework | Ne zaman |\n|---|---|---|\n| Ayrı aggregate (Invoice, Contract) | DocType tablo-per-tip generation | Tipler farklı kural + farklı yaşam döngüsü |\n| Strategy pattern (DocumentPolicy) | Policy plugin metadata'dan | Aynı kavram + tipe göre davranış |\n| Value object (DocumentType) | DocCategory enum | Sadece etiket/filtre, davranış değişmez |\n\n**Tek tablo + type switching YASAK** — projede yapılmaz. Klasik DDD'nin haklı eleştirisi bu pattern'i hedefler; biz onu hedeflemiyoruz.\n\n**Frappe DocType nasıl çalışıyor (gerçek):**\n\n1. Admin paneli 'yeni DocType' der: Invoice + alanlar (date, amount, customer)\n2. Sistem `tabInvoice` tablosunu **otomatik üretir** (DDL execute)\n3. CRUD API'leri **otomatik açılır** (REST + GraphQL)\n4. Admin form **otomatik render edilir** (alan tiplerine göre)\n5. Davranış kuralı varsa `invoice_controller.py` Python dosyası yüklenir (Strategy pattern)\n\nSonuç: 1 DocType = 1 tablo + 1 controller + 1 UI. **Tek-tablo + if-else DEĞİL.**\n\n**Senin projende ne uygulanır?**\n\n- Stack ürünleri (Invoice, Order, Subscription) için **ayrı aggregate** (klasik DDD #1)\n- Aynı stack içinde tipler için **DocType tablo-per-tip + policy plugin** (DDD #2 metadata-driven)\n- Filtreleme/raporlama için **DocCategory value object** (DDD #3)\n\nÜçü birlikte yaşar. Tek-tablo + type-switching anti-pattern YASAK.",
+    "terms": [
+      {
+        "term": "Anemic Domain Model",
+        "abbrev_tr": "Anemik domain modeli",
+        "meaning": "Behavior'ı service katmanına atılmış, sadece veri tutan domain.",
+        "why": "DDD anti-pattern'i. 'Tek tablo + if-else' bu modele götürür."
+      },
+      {
+        "term": "Aggregate",
+        "abbrev_tr": "Toplaşık (DDD)",
+        "meaning": "Bir konuyla ilgili entity'ler + invariant kuralları + tek transaction sınırı.",
+        "why": "Invoice, Contract — kendi kuralları olan ayrı aggregate'ler."
+      },
+      {
+        "term": "Strategy Pattern",
+        "abbrev_tr": "Strateji deseni",
+        "meaning": "Davranışı interface'e koyup runtime'da farklı implementasyon enjekte etme.",
+        "why": "if-else yerine polymorphic dispatch."
+      },
+      {
+        "term": "Type Switching",
+        "abbrev_tr": "Tip yoklaması",
+        "meaning": "`if (type == X) doA else if (type == Y) doB`.",
+        "why": "Anti-pattern. Yeni tip eklemek tüm switch'leri günceller."
+      },
+      {
+        "term": "Metadata-driven",
+        "abbrev_tr": "Veri-tanımlı",
+        "meaning": "Davranış kuralları kodda değil DB'de saklanır; runtime'da yüklenir.",
+        "why": "Frappe/Salesforce pattern'i. Low-code'un teknik temeli."
+      },
+      {
+        "term": "Tablo-per-tip",
+        "abbrev_tr": "Tip başına tablo",
+        "meaning": "Her DocType kendi DB tablosunu generate eder.",
+        "why": "Single Table Inheritance'tan kaçınma; DDD ayrı aggregate'a yakın."
+      }
+    ],
+    "stories": [
+      {
+        "persona": "Kitapçı Hatice Teyze (62) — 3 defter",
+        "context": "Hatice Teyze 30 yıllık kırtasiyeci. Fatura defteri, sipariş defteri, sözleşme defteri ayrı ayrı tutuyor. Yeni 'iade defteri' eklemek istediğinde diğerleri etkilenmiyor.",
+        "outcome": "Bu klasik DDD ayrı aggregate yaklaşımı. Hatice Teyze tek deftere her şeyi yazsa, sayfa karıştırma + 'bu satır fatura mı sipariş mi' soruları başlar. Ayrı defterler = ayrı kurallar = sağlam sistem."
+      },
+      {
+        "persona": "Apartman yöneticisi Murat Bey (61) — yeni evrak türü",
+        "context": "Murat Bey apartman kararları, su faturaları, sakin sözleşmeleri için ayrı klasörler tutuyor. Yeni 'asansör bakım sözleşmesi' türü eklenmesi gerekiyor.",
+        "outcome": "Sistem-de (meta-framework): admin paneline gir, 'asansör bakım' DocType tanımla. Sistem yeni klasör + form + kuralları otomatik üretir. Mevcut 3 evrak türü etkilenmez."
+      },
+      {
+        "persona": "Geliştirici Selim Bey (62'lik abisi 32) — anti-pattern uyarısı",
+        "context": "Selim Bey 'Document' tablosu yapayım, doc_type field koyayım, handler'da if-else dallandırayım' diye düşünüyordu.",
+        "outcome": "Eleştiri: anemic domain. Doğrusu — DocType engine ile **tablo-per-tip generation** + tipler arası farklı kural varsa **policy plugin Strategy** kullan. if-else YASAK."
+      }
+    ],
+    "lesson": {
+      "ne": "DocType ≠ tek tablo + type switching. Klasik DDD'nin 3 yaklaşımı (ayrı aggregate / Strategy / value object) runtime metadata olarak yaşar.",
+      "nicin": "Tek tablo + if-else = anemic domain anti-pattern. Yeni tip eklemek mevcut kodu kırar. DocType doğru kurulursa: Strategy + tablo-per-tip + policy plugin.",
+      "nasil": "1) DocType admin paneli (k-schema). 2) Her DocType kendi DB tablosu (DDL generation). 3) Kuralı varsa policy plugin (Strategy). 4) Sadece etiketse value object enum.",
+      "nerede": "`k-schema` cluster — engine. `s-studio` — low-code arayüz. Bu cluster — pedagoji.",
+      "ne_zaman": "İlk DocType tanımından ÖNCE bu disiplin net olmalı.",
+      "kim": "Mimar DocType pattern karar; geliştirici policy plugin yazımı; admin user runtime'da yeni tip tanımı.",
+      "analoji": "Kitapçı: 1 defter + 'bu satır fatura' notu = karmaşa (anemic). Ayrı defterler = klasik DDD. Bilgisayardan 'yeni defter türü tanımla' = meta-framework. Üçü de farklı yaklaşım; en kötü 1. Bu proje 3."
+    }
+  },
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "**Eleştiri çıktı:** *'DocType DDD'ye aykırı, anemic domain üretir.'* **Cevap:** klasik DDD çerçevesinde haklı — ama bu proje meta-framework. DocType **tek tablo + if-else DEĞİL**; runtime'da Strategy + tablo-per-tip + policy plugin."
+    },
+    {
+      "type": "callout",
+      "variant": "critical",
+      "label": "Tek tablo + type switching YASAK",
+      "body": "`if (type == 'invoice') doA else if (type == 'contract') doB` anti-pattern. Bu projede YAPILMAZ. Doğru pattern: **DocType engine tablo-per-tip generate eder** + **davranış kuralı varsa policy plugin Strategy** + **sadece etiketse value object enum**."
+    },
+    {
+      "type": "callout",
+      "variant": "info",
+      "label": "Klasik DDD 3 yaklaşımı — meta-framework karşılığı",
+      "body": "DDD'nin 3 doğru yaklaşımı bu projede **runtime metadata olarak** yaşar:\n\n1. **Ayrı aggregate** (Invoice, Contract ayrı) → **DocType tablo-per-tip generation**\n2. **Strategy pattern** (DocumentPolicy) → **Policy plugin metadata'dan yüklenir**\n3. **Value object** (DocumentType) → **DocCategory enum**\n\nÜçü birlikte yaşar. Her durumda doğru pattern uygulanır."
+    },
+    {
+      "type": "callout",
+      "variant": "tip",
+      "label": "Vibecoding ipucu",
+      "body": "AI ajan'a: *'Yeni DocType tanımlanırsa: tabXxx tablosu DDL ile generate edilir, controller/policy class auto-discover (Strategy), CRUD API + admin form auto-render. if/else type-switching YASAK. Tipe göre davranış varsa DocPolicy interface implementasyonu (e.g. InvoicePolicy implements DocPolicy).'*"
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "3 yaklaşım — ne zaman hangisi"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Durum",
+        "Yaklaşım",
+        "Karşılık"
+      ],
+      "rows": [
+        [
+          "Farklı kurallar + farklı yaşam",
+          "Ayrı aggregate",
+          "DocType tablo-per-tip"
+        ],
+        [
+          "Aynı kavram + tipe göre davranış",
+          "Strategy pattern",
+          "Policy plugin (metadata'dan)"
+        ],
+        [
+          "Sadece etiket / filtre",
+          "Value object",
+          "DocCategory enum"
+        ],
+        [
+          "Tek tablo + type switching",
+          "ANTI-PATTERN",
+          "YASAK ❌"
+        ]
+      ]
+    }
+  ],
+  "related": [
+    "k-schema",
+    "s-studio",
+    "sus-declarative",
+    "sus-timi",
+    "philosophy",
+    "edu-u04",
+    "edu-u04b"
+  ]
+}

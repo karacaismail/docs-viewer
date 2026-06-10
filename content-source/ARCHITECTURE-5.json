@@ -1,0 +1,287 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "meta": {
+    "name": "AI-First SaaS Meta-Framework",
+    "paradigm": "DDD Modüler Monolit",
+    "granularity_model": "Jeolojik metafor: Büyük Taş > Orta Taş > Küçük Taş > Kum Tanesi > Atom",
+    "stack": {
+      "backend": ["Python 3.12", "FastAPI", "SQLAlchemy 2.0", "Alembic"],
+      "data": ["PostgreSQL", "pgvector", "Redis"],
+      "frontend": ["Flowbite React", "TypeScript", "SCSS"],
+      "excluded": ["Next.js", "Supabase", "Prisma Python"]
+    },
+    "config_driven": {
+      "source": ["JSON", "YAML"],
+      "pipeline": "Config (JSON/YAML) -> Org.Engine.py -> Components -> Table/Form/CRUD -> Pages"
+    }
+  },
+
+  "granularity_layers": {
+
+    "buyuk_tas": {
+      "label": "Büyük Taş (Pages)",
+      "description": "En üst seviye sayfa kompozisyonları; config-driven üretim hattının çıktısı",
+      "generation_pipeline": [
+        "Prompt",
+        "JSON / YAML (config)",
+        "Org.Engine.py (orchestration engine)",
+        "Components",
+        "Table / Form / CRUD",
+        "Pages"
+      ],
+      "page_types": [
+        "eCommerce Products",
+        "İş İlanları",
+        "Blog",
+        "Card",
+        "Table",
+        "Slider"
+      ],
+      "deployment_scope": {
+        "dev_company": "Dev / Şirket ayrımı",
+        "backup": true
+      }
+    },
+
+    "orta_tas": {
+      "label": "Orta Taş",
+      "description": "Sayfaları besleyen yapısal/davranışsal bileşen kümeleri",
+      "clusters": {
+        "i18n": {
+          "concern": "Uluslararasılaştırma / yerelleştirme katmanı"
+        },
+        "composition": [
+          "Table / Form (Progressive Form)",
+          "Block",
+          "Section"
+        ],
+        "eca_rules": {
+          "concern": "Event-Condition-Action kural motoru tetikleyici tanımları"
+        },
+        "data_lifecycle": [
+          "Import / Export",
+          "Onboarding",
+          "Schedule"
+        ],
+        "notification": {
+          "channels": ["Email", "SMS", "Push", "In-app"]
+        },
+        "search": {
+          "capabilities": [
+            "Mapping Generator",
+            "Indexing",
+            "Reindex",
+            "Query",
+            "Facets"
+          ],
+          "engines": {
+            "relational": ["PostgreSQL tsvector", "pgvector"],
+            "dedicated": ["Meilisearch", "Typesense", "OpenSearch", "ELK"],
+            "ai_first_semantic": ["Pinecone", "Qdrant"]
+          }
+        },
+        "identity": {
+          "note": "Auth kümesi ile Küçük Taş katmanında detaylandırılır"
+        },
+        "calendar": {
+          "concern": "Takvim / zamanlama bileşeni"
+        },
+        "file_upload": {
+          "pipeline": ["S3", "ClamAV", "Optimization"],
+          "constraints": ["Limit"]
+        }
+      }
+    },
+
+    "kucuk_tas": {
+      "label": "Küçük Taş",
+      "description": "Çekirdek altyapı yetenekleri ve cross-cutting concern'ler",
+      "clusters": {
+        "taxonomy": { "concern": "Sınıflandırma / kategorizasyon sistemi" },
+        "task_orchestration": {
+          "kernel_task_manager": ["Cron", "Worker", "Agent"]
+        },
+        "domain": {
+          "concerns": ["DNS", "SSL", "TLS", "Wildcard"]
+        },
+        "tenancy": {
+          "models": ["Multi Tenant", "Single Tenant", "Hybrid Tenant"]
+        },
+        "workflow": {
+          "concerns": [
+            "Process",
+            "State Machine",
+            "Audit Trail",
+            "Approval Chain"
+          ]
+        },
+        "addresses": { "concern": "Adres modellemesi" },
+        "cache": { "concern": "Önbellekleme katmanı" },
+        "rate_limit": { "concern": "İstek hız sınırlama" },
+        "auth": {
+          "concerns": [
+            "Session / Token",
+            "Identity",
+            "Impersonation",
+            "Şifreleme",
+            "Verification / Recovery",
+            "Middleware"
+          ],
+          "authorization": {
+            "models": ["ReBAC", "ABAC"]
+          }
+        },
+        "file_storage": {
+          "concerns": ["MIME", "Local / S3", "CRUD"],
+          "authorization": ["ReBAC", "ABAC"]
+        }
+      }
+    },
+
+    "kum_tanesi": {
+      "label": "Kum Tanesi",
+      "description": "En küçük atomik primitive'ler ve dahili motor parçaları",
+      "primitives": [
+        "Field",
+        "Log",
+        "Handler",
+        "Security",
+        "Counter",
+        "Geo Coordinate",
+        "Color"
+      ],
+      "engines": [
+        "ECA Engine",
+        "Kernel Task Engine",
+        "Workflow Engine",
+        "Migration Engine"
+      ],
+      "messaging": {
+        "event_bus": true,
+        "module_descriptor": "module.manifest.yml"
+      },
+      "process_flow": {
+        "note": "D (Develop) / ? (Doc?) / FP ikonlaştırılmış akış",
+        "transitions": ["F-B (Frontend-Backend)", "B-F (Backend-Frontend)"]
+      },
+      "services": {
+        "dns": ["PowerDNS", "Cloudflare", "Route 53 (Amazon)"],
+        "ai_providers": true,
+        "observability": ["ELK", "Sentry"],
+        "cache_cluster": ["Redis Cluster"],
+        "storage": ["S3 (Amazon)"],
+        "email": ["Mailgun", "Sendgrid", "SES (Amazon)", "Postfix"]
+      }
+    },
+
+    "atom": {
+      "label": "Atom",
+      "description": "Ortam (environment) tanımları, deployment stratejisi ve devops primitive'leri",
+      "environments": {
+        "Dev": "Dev",
+        "ALPHA": "Outsource",
+        "BETA": "Karaca",
+        "RC": "Customer",
+        "PROD": null,
+        "ROLLBACK": null
+      },
+      "branching_strategy": {
+        "model": "Trunk Based",
+        "testing": "A/B Test"
+      },
+      "devops_primitives": [
+        "Backup / Restore",
+        "CI/CD",
+        "Migration",
+        "Build",
+        "Cron Job"
+      ]
+    }
+  },
+
+  "module_structure": {
+    "description": "Frappe/ERPNext benzeri çekirdek + uygulama katmanlama",
+    "layers": {
+      "kernel": "Çekirdek runtime",
+      "core": "Ortak çekirdek hizmetler",
+      "contrib_modules": "Topluluk / eklenti modülleri",
+      "apps": [
+        {
+          "name": "APP 1",
+          "has_own_core": true
+        },
+        {
+          "name": "APP 2",
+          "depends_on": ["APP 1", "shared modules"]
+        }
+      ]
+    }
+  },
+
+  "ruleset": {
+    "label": "RULES",
+    "feature_gate_checklist": [
+      "Feature tanımı",
+      "Hangi güvenlik önlemleri?",
+      "Test",
+      "Code optimizasyonu",
+      "Güvenlik optimizasyonu",
+      "WCAG 2.2 erişilebilirlik",
+      "Performans optimizasyonu",
+      "Mobile Apps",
+      "Swarm / Kubernetes orkestrasyon",
+      "ECA"
+    ],
+    "mobile_apps": {
+      "targets": ["Dev", "Customer Panel", "Front Pages (Ali)"],
+      "delivery": {
+        "pwa": "APK",
+        "react_expo": "IPA"
+      },
+      "i18n": ["Language Switcher", "Multi Language"]
+    },
+    "security_standard": "OWASP (n. güvenlik standartları)"
+  },
+
+  "test_strategy": {
+    "label": "Test First (geliştirmeden önce)",
+    "order": ["Test planı", "DB Schema", "Development"],
+    "artifacts": ["Test.md", "skill"],
+    "levels": ["e2e", "unit"],
+    "techniques": ["Smoke", "Burney", "Monkey", "Playwright", "Loop"],
+    "qa": {
+      "approach": "Autonomous QA Agent"
+    }
+  },
+
+  "execution_dag": {
+    "label": "WBS DAG (Work Breakdown Structure)",
+    "steps": [
+      { "step": 1, "task": "Environment / Atom katmanı kurulumu" },
+      { "step": 2, "task": "Dev Panel prototip" },
+      { "step": 3, "task": "Panelde neler içermeli (kapsam tanımı)" },
+      { "step": 4, "task": "Panel frontend (master component)" },
+      { "step": 5, "task": "Rules tanımı" },
+      { "step": 6, "task": "Backend" },
+      { "step": 7, "task": "AI / LLM API entegrasyonu -> Front Pages" }
+    ],
+    "expansion_path": "Front Pages -> Admin Frontend -> genişleme",
+    "structure_note": "İş kırılım yapısı (Work Breakdown Structure) DAG olarak modellenir"
+  },
+
+  "team": {
+    "label": "Temsilcilik / Görev Listesi",
+    "members": {
+      "Ismail": { "role": "Backup / Lead" },
+      "Ali Turgut": {
+        "scope": ["Auto Language Switcher", "PWA/APK", "React Expo/IPA", "Multi Language", "Front Pages"]
+      },
+      "Karaca": { "scope": "BETA environment" }
+    }
+  },
+
+  "milestones": {
+    "dates": ["21/07", "06/10", "10/11"],
+    "notes": ["DUNS (Apple/Google enrollment)", "Claude Turksab Yönetim"]
+  }
+}

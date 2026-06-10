@@ -1,0 +1,158 @@
+{
+  "id": "edu-u24",
+  "title": "Uluslararasılaştırma — 6 Eksen ve Görünmez Kurallar",
+  "subtitle": "Kıtalararası SaaS = locale değil, 6 ayrı eksen. Amazon Türkiye'de KVKK, AB'de GDPR'a göre 'codebase değiştirmez' — config değiştirir.",
+  "cluster": "edu",
+  "order": 27,
+  "icon": "ph-globe-hemisphere-east",
+  "granularity": "orta-tas",
+  "state": "wip",
+  "tags": [
+    "education",
+    "i18n",
+    "jurisdiction",
+    "compliance",
+    "kvkk",
+    "gdpr",
+    "global"
+  ],
+  "enrich": {
+    "info": "i18n 'çeviri değil'. 6 bağımsız eksen: locale (dil), jurisdiction (hukuk), currency (para), tax (vergi), timezone (saat), data residency (veri yeri).",
+    "detail": "**Sıradaki ünite ne anlatıyor:**\n\nUluslararası SaaS yapmak 'çeviri' DEĞİL. 6 ayrı eksen var, hepsi bağımsız:\n\n1. **Locale** — kullanıcı hangi dilde okuyor?\n2. **Jurisdiction** — kullanıcı hangi ülke hukukuna tabi?\n3. **Currency** — hangi parayla ödüyor?\n4. **Tax region** — vergi hangi ülkeye?\n5. **Timezone** — saat hangi ülkede?\n6. **Data residency** — verisi hangi sunucuda fiziksel duracak?\n\nKlasik hata: hepsini 'dil ayarı'na bağlamak. Sonuç: Almanya'da yaşayan Türk için 'de-TR' diye absürt bir locale uydurmak.\n\nDoğru yaklaşım: **Policy Resolver** servisi. Her request'te 6 eksen çözülür, kural seti hesaplanır.\n\n**60+ için günlük örnekler:**\n\n- 'Çeviri yapıldı' ≠ 'uluslararasılaşıldı'. Çoğul kuralları, tarih formatı, para birimi sembolü, ölçü birimi (kilo/lb), saat dilimi — hepsi yerelleşir.\n- Türkçe i/ı tuzağı: 'IBRAHIM' → 'ibrahim' beklersin ama Türkçe locale'de 'ıbrahım' olur. Email validation kırılır.\n- Almanca İngilizce'den %35 uzun — buton tasarımı sabit genişlikse Almanca'da taşar.\n- Arapça sağdan sola yazılır — tüm layout aynalanır, ikonlar (geri ok) ters çevrilir.\n- KVKK 'sil' der; Vergi Usul Kanunu '10 yıl sakla' der. **Çatışma çözümü**: kişisel veri anonimleştir, fatura kaydı tut.",
+    "terms": [
+      {
+        "term": "Locale",
+        "abbrev_tr": "Yerel ayar",
+        "meaning": "Kullanıcının dil + bölge tercihi (tr-TR, en-US).",
+        "why": "BCP 47 standardı. Sadece 'dil' değil; bölge varyantları kritik."
+      },
+      {
+        "term": "Jurisdiction",
+        "abbrev_tr": "Hukuki yargı bölgesi",
+        "meaning": "Kullanıcıya hangi ülkenin hukuku uygulanır.",
+        "why": "AB'deki Türk: KVKK + GDPR ikisi de geçerli."
+      },
+      {
+        "term": "Functional Currency",
+        "abbrev_tr": "İşletme para birimi",
+        "meaning": "Şirketin gerçek iş yaptığı para — TR şirketi için TL.",
+        "why": "İşlem parası farklı olabilir (sipariş EUR); ledger functional currency'de tutulur."
+      },
+      {
+        "term": "Data Residency",
+        "abbrev_tr": "Veri ikametgâhı",
+        "meaning": "Veri fiziksel olarak hangi ülkenin sunucusunda.",
+        "why": "KVKK md.9 (TR), GDPR md.44+ (AB) — yurt dışı aktarım kısıtları."
+      },
+      {
+        "term": "DSAR",
+        "abbrev_of": "Data Subject Access Request",
+        "abbrev_tr": "Veri erişim talebi",
+        "meaning": "Kullanıcının 'tüm verimi ver/sil' talebi.",
+        "why": "GDPR + KVKK 30 gün cevap zorunlu; manuel = ölçeklenmez."
+      }
+    ],
+    "stories": [
+      {
+        "persona": "Ayşe Teyze (63) — Almanya'da yaşayan emekli",
+        "context": "30 yıldır Almanya'da. Türkiye'deki torunlarına hediye sipariş ediyor. Site Türkçe ister (locale=tr), kart Alman bankası (currency=EUR), teslimat Türkiye (tax=TR), kendi saatinde bildirim (tz=Berlin).",
+        "outcome": "Tek locale 'de-TR' uydurmak imkansız. 6 eksen ayrı çözülür: locale=tr, jurisdiction=DE, currency=EUR, tax=TR, tz=Berlin, residency=EU. Her biri ayrı kural."
+      },
+      {
+        "persona": "Mali müşavir Hasan Bey (58) — KVKK + Vergi çatışması",
+        "context": "Müşteri 'verimi sil' dedi. Hasan Bey 'sil' tıklarsa faturalar siliniyor; vergi denetiminde kanıtsız kalıyor.",
+        "outcome": "Çatışma çözümü: kişisel veri (ad, telefon, email) anonimleştirilir (hash); fatura kaydı (tutar, KDV) saklanır. Hem KVKK 'sil' hem VUK 'sakla' karşılanır."
+      }
+    ],
+    "lesson": {
+      "ne": "Uluslararası SaaS için 6 bağımsız ekseni (dil, hukuk, para, vergi, saat, veri yeri) anlama + her birinin neye bağlı olduğunu bilme.",
+      "nicin": "Tek-locale yaklaşımı 2. ülkede yıkılır. Bu kavramı baştan anlarsan mimarın doğru kurar.",
+      "nasil": "1) 6 ekseni ayrı çöz. 2) Politika kuralları config'te, kodda değil. 3) Çatışmaları precedence matris ile çöz (KVKK vs VUK gibi). 4) Resolver servisi.",
+      "nerede": "`cc-jurisdiction-resolver` cluster — mimari detay; bu cluster pedagoji.",
+      "ne_zaman": "İlk uluslararası kullanıcıdan ÖNCE.",
+      "kim": "Mimar 6 eksen tasarım; hukuk ekibi kural; developer config implementasyon.",
+      "analoji": "Apartman site yönetimi: kapı (giriş izin), su (sayaç), elektrik (tarife), gaz (boyu), internet (sağlayıcı), site sözleşmesi (kural). Her biri ayrı altyapı; biri kesilirse diğeri çalışır. Tek-hat yaklaşımı = tek arıza her şeyi durdurur."
+    }
+  },
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "**Uluslararası SaaS = 6 bağımsız eksen.** Hepsini 'dil ayarı'na bağlamak en yaygın hata. Amazon Türkiye'de KVKK, AB'de GDPR'a göre çalışır — codebase aynı, **config farklı**."
+    },
+    {
+      "type": "callout",
+      "variant": "info",
+      "label": "6 eksen — günlük örnekle",
+      "body": "Almanya'da yaşayan Türk Ayşe Teyze:\n- **Locale**: tr (arayüz Türkçe)\n- **Jurisdiction**: DE (AB sakini, GDPR)\n- **Currency**: EUR (Alman kart)\n- **Tax**: TR (Türkiye teslimat)\n- **Timezone**: Europe/Berlin (saati Almanya'da)\n- **Data residency**: EU (verisi Avrupa'da)\n\n6 farklı eksen, 6 farklı değer. Tek-locale = imkânsız."
+    },
+    {
+      "type": "callout",
+      "variant": "critical",
+      "label": "KVKK 'sil' vs VUK 'sakla'",
+      "body": "Müşteri 'verimi sil' der; Vergi Usul Kanunu '10 yıl fatura sakla' der. **Çözüm**: kişisel veriyi anonimleştir (hash), finansal kaydı tut. İkisi de karşılanır."
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Görünmez kurallar (çoğunlukla atlanan)"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Konu",
+        "Görünmez kural",
+        "Sebep"
+      ],
+      "rows": [
+        [
+          "Sayı formatı",
+          "'1.234,56' (TR) vs '1,234.56' (US)",
+          "CLDR locale"
+        ],
+        [
+          "Tarih",
+          "'06.06.2026' (TR) vs '06/06/2026' (US)",
+          "Belirsizlik kaynağı"
+        ],
+        [
+          "Para",
+          "'1.234,56 ₺' vs '$1,234.56'",
+          "Sembol konumu"
+        ],
+        [
+          "Türkçe i/ı",
+          "'I' lowercase Türkçe'de 'ı'",
+          "Email/search kırar"
+        ],
+        [
+          "Almanca uzun",
+          "'Geschwindigkeitsbegrenzung'",
+          "Button taşması"
+        ],
+        [
+          "RTL",
+          "Arapça sağdan sola",
+          "Layout aynalı"
+        ],
+        [
+          "Tatil",
+          "Cuma-Cumartesi haftasonu (Ortadoğu)",
+          "3 iş günü hesabı"
+        ],
+        [
+          "E.164 telefon",
+          "+90 532 vs +49 30",
+          "'10 hane' varsayımı yanlış"
+        ]
+      ]
+    }
+  ],
+  "related": [
+    "cc-jurisdiction-resolver",
+    "cc-i18n-standards",
+    "cc-compliance-matrix",
+    "cc-fx-ledger",
+    "cc-notification-consent",
+    "edu-u15"
+  ]
+}

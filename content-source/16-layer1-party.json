@@ -1,0 +1,113 @@
+{
+  "id": "l1-party",
+  "title": "Party / Contact",
+  "subtitle": "Customer/Supplier/Employee yazma — Party yaz. Generic core, role module.",
+  "cluster": "layer1",
+  "layer": "l1",
+  "order": 1,
+  "icon": "ph-users-three",
+  "badge": "Layer 1 — In-tree",
+  "tags": [
+    "party",
+    "contact",
+    "person",
+    "organization"
+  ],
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "Frappe pattern: generic `Contact`/`Address` core'da, *Party Type* (Customer rolü) module'de. Bu ürünün de 13 üründe gerekli ortak primitive'i."
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Yapı"
+    },
+    {
+      "type": "code",
+      "lang": "yaml",
+      "content": "doctype: Party              # Person veya Organization\n  fields:\n    party_type: Select [Person, Organization]\n    name: Data\n    primary_contact: Link Contact\n    primary_address: Link Address\n    locale, timezone, currency\n\ndoctype: Contact\n  fields:\n    party: Link Party\n    email, phone, website\n    is_primary: Check\n\ndoctype: Address\n  fields:\n    party: Link Party\n    country, region, city, district, street, postal_code\n    geo: Geolocation\n    type: Select [billing, shipping, ...]\n\ndoctype: PartyRole          # Module katmanında (commerce, hr modülünde)\n  fields:\n    party: Link Party\n    role_type: Select [customer, supplier, employee, lead]\n    role_data: JSON         # role-specific fields"
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Örnekler — aynı party, farklı role"
+    },
+    {
+      "type": "examples",
+      "items": [
+        {
+          "label": "Real estate (#1)",
+          "text": "Party = aynı kişi hem alıcı (buyer role), hem satıcı (seller role), hem danışman (agent role) olabilir. Üç ayrı tablo değil, tek Party + üç role.",
+          "enrich": {
+            "info": "Party = aynı kişi hem alıcı (buyer role), hem satıcı (seller role), hem danışman (agent role) olabilir. Üç ayrı tablo değil, tek Party + üç "
+          }
+        },
+        {
+          "label": "Hastane",
+          "text": "Party = doktor, hemşire, hasta, refakatçi. Doktor aynı zamanda hasta olabilir. Tek Party.",
+          "enrich": {
+            "info": "Party = doktor, hemşire, hasta, refakatçi. Doktor aynı zamanda hasta olabilir. Tek Party."
+          }
+        },
+        {
+          "label": "Üniversite",
+          "text": "öğrenci mezun olunca aynı Party, role değişir (alumni). LinkedIn benzeri network kurabilirsin.",
+          "enrich": {
+            "info": "öğrenci mezun olunca aynı Party, role değişir (alumni). LinkedIn benzeri network kurabilirsin."
+          }
+        },
+        {
+          "label": "E-ticaret B2B (#2)",
+          "text": "bir şirket hem alıcı hem satıcı olabilir (distributor pattern). Tek Organization, dual role.",
+          "enrich": {
+            "info": "bir şirket hem alıcı hem satıcı olabilir (distributor pattern). Tek Organization, dual role."
+          }
+        },
+        {
+          "label": "CRM",
+          "text": "lead → contact → customer dönüşümü. Aynı Party, role evrimi. Yeni tablo değil.",
+          "enrich": {
+            "info": "lead → contact → customer dönüşümü. Aynı Party, role evrimi. Yeni tablo değil."
+          }
+        }
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "warning",
+      "label": "Tuzak — \"Customer\" core'a koyma",
+      "body": "{{ref:s-social}} medyada \"Customer\" yok. {{ref:s-cms}} CMS'te yok. {{ref:s-lms}} LMS'te yok. Eğer Customer'ı core'a koyarsan bu 3 ürün için ölü kavram taşımış olursun. Generic kısım (Person/Org/Contact/Address) core, \"Customer\" rolü module'de.",
+      "enrich": {
+        "lesson": {
+          "ne": "Satışa sunulan eşya veya hizmet.",
+          "nicin": "İşletmenin gelir kaynağı.",
+          "nasil": "Katalogda fotoğraf + fiyat + stok bilgisi.",
+          "kim": "Üretici/satıcı yönetir.",
+          "analoji": "Bakkalın rafındaki her eşya."
+        }
+      }
+    }
+  ],
+  "enrich": {
+    "info": "Sistemdeki bütün 'taraf' kayıtları: müşteri, tedarikçi, çalışan, ortak — hepsi tek bir adres defterinde.",
+    "detail": "Customer/Supplier/Employee yazma — Party yaz. Generic core, role module.",
+    "terms": [
+      {
+        "term": "Party",
+        "abbrev_tr": "Taraf",
+        "meaning": "Person + Organization üst tipi (Customer, Vendor, Employee aynı tabandan).",
+        "why": "Aynı kişi hem müşteri hem tedarikçi olabilir; tek kayıt."
+      }
+    ],
+    "lesson": {
+      "ne": "Sistemdeki bütün 'taraf' kayıtları: müşteri, tedarikçi, çalışan, ortak — hepsi tek bir adres defterinde toplanır.",
+      "nicin": "Aynı kişi hem müşteri hem tedarikçi olabilir. Her modül ayrı tablo tutarsa bilgi karışır, telefon güncellense bir yerde günceller, diğerinde eski kalır.",
+      "nasil": "Tek bir 'Party' tablosu vardır. Üzerine 'rol' bilgisi eklenir: bu satır hem müşteri hem tedarikçi. Tek adres, tek telefon, tek e-posta — değiştirince her yerde güncellenir.",
+      "nerede": "Tüm modüllerin (satış, satın alma, İK) kişi/kurum gösterdiği yer Party tablosuna bakar.",
+      "ne_zaman": "Yeni bir müşteri veya tedarikçi kaydı geldiğinde önce 'bu kişi sistemde var mı' kontrol edilir; varsa rol eklenir.",
+      "kim": "Sistem yöneticisi kayıt politikasını belirler; her modül kendi sorumluluğunu Party üstünde işler.",
+      "analoji": "Ailenin tek bir telefon rehberi: anne, baba, kardeş — hepsi aynı defterde. Her ihtiyaca ayrı defter tutsan, yeni telefonu birinde günceller diğerinde unutursun."
+    }
+  }
+}

@@ -1,0 +1,234 @@
+{
+  "id": "cc-identity-models",
+  "title": "Global Kimlik Modelleri — Ad, Telefon, Adres, Vergi No",
+  "subtitle": "firstName/lastName ölümcül varsayım. E.164 telefon, ülke-aware adres, VAT ID VIES doğrulama, TC kimlik, cinsiyet non-binary. Klasik 'ABD merkezli' tasarım hataları.",
+  "cluster": "crosscut",
+  "order": 14,
+  "icon": "ph-identification-card",
+  "granularity": "orta-tas",
+  "state": "wip",
+  "tags": [
+    "crosscut",
+    "identity",
+    "address",
+    "phone",
+    "vat",
+    "e164",
+    "vies",
+    "i18n"
+  ],
+  "enrich": {
+    "info": "İsim modeli (tek fullName), telefon E.164, ülke-aware adres formatı, VAT ID VIES, TC kimlik 11-hane + algoritma, cinsiyet alanı opsiyonel + non-binary.",
+    "detail": "**En klasik 'ABD merkezli' tasarım hatalarının düzeltilmesi:**\n\n**1. İsim modeli — firstName/lastName YANLIŞ**\n\nGlobal kültürlerde:\n- **Tek isim** (Endonezya, Madagaskar): 'Sukarno', 'Suharto' — soyad yok\n- **Soyad önce** (Çin, Macaristan, Japonya): 'Wang Wei', 'Kovács István'\n- **Patronymic** (Rusya, İzlanda): 'Anna Sergeyevna Petrova' — orta isim baba adı\n- **Çoklu soyad** (İspanya): 'García Márquez' — anne + baba soyadı\n- **Onur unvanı** (Tayland, Endonezya): 'H.E.', 'Dato\\''\n\n**Doğru model:**\n```sql\nCREATE TABLE person (\n  id BIGSERIAL,\n  full_name TEXT NOT NULL,                -- ham, kullanıcının yazdığı\n  display_name TEXT,                      -- kısa (UI'de gösterim)\n  given_name TEXT,                        -- opsiyonel (Latin alfabeli kültürler için)\n  family_name TEXT,                       -- opsiyonel\n  name_order ENUM('given_family','family_given','single','custom') DEFAULT 'given_family',\n  honorific_prefix TEXT,                  -- 'Dr.', 'Prof.', 'H.E.'\n  honorific_suffix TEXT,                  -- 'Jr.', 'PhD'\n  preferred_pronouns TEXT,                -- opsiyonel ('he/him', 'she/her', 'they/them')\n  ...\n);\n```\n\n**2. Telefon — E.164 zorunlu**\n\nE.164 = uluslararası telefon formatı: `+[ülke kodu][numara]`, max 15 hane.\n\n- TR: `+905321234567`\n- ABD: `+14155551234`\n- Almanya: `+493012345678`\n\n'10 haneli telefon' varsayımı = YANLIŞ. Doğrulama ülke bazlı (libphonenumber kütüphanesi).\n\n```sql\nCREATE TABLE contact_phone (\n  id BIGSERIAL,\n  person_id BIGINT,\n  phone_e164 TEXT NOT NULL CHECK (phone_e164 ~ '^\\+[1-9][0-9]{1,14}$'),\n  country_code CHAR(2),                   -- ISO 3166 'TR', 'US' (libphonenumber parse)\n  type ENUM('mobile','landline','voip','toll_free'),\n  verified_at TIMESTAMPTZ,\n  ...\n);\n```\n\n**3. Adres — ülke-aware format**\n\n| Ülke | Sıralama | Posta kodu | State/İl |\n|---|---|---|---|\n| TR | Sokak → Mahalle → İlçe → Şehir → PK | 5 hane (zorunlu değil) | İl zorunlu |\n| US | Street → City → State → ZIP | 5+4 hane | State zorunlu |\n| GB | Line1 → Line2 → Town → County → Postcode | Karmaşık (AB12 3CD) | County opsiyonel |\n| JP | Postcode → Prefecture → City → Block → Building | 7 hane | Ters sıralı |\n| IE | Eircode (2015+) veya yok | Yeni sistem | Opsiyonel |\n| HK | Floor → Building → Street → District | Posta kodu YOK | District |\n\n**Doğru model:**\n```sql\nCREATE TABLE postal_address (\n  id BIGSERIAL,\n  country_code CHAR(2) NOT NULL,          -- ISO 3166\n  -- Ham alanlar (her ülke için kullanılır)\n  line_1 TEXT,                            -- sokak/cadde\n  line_2 TEXT,                            -- mahalle/apartman\n  city TEXT,                              -- şehir/town\n  region TEXT,                            -- il/state/prefecture/county\n  postal_code TEXT,                       -- nullable (HK, IE)\n  -- Ekstra metadata\n  formatted TEXT,                         -- ülkeye göre tek-string format (UI'de)\n  raw_input JSONB,                        -- kullanıcının girdiği tüm alanlar (audit)\n  ...\n);\n```\n\nKütüphane: **i18n-postal-address** (Node), **google-libaddressinput** (multi-platform). Her ülkenin format şemasını CLDR'den çeker.\n\n**4. Vergi/Kimlik numarası**\n\n| Tür | Format | Doğrulama |\n|---|---|---|\n| **TC Kimlik** | 11 hane | Algoritma (mod 10 + mod 11) + opsiyonel NVI API |\n| **AB VAT ID** | Ülke prefix + 8-12 hane | **VIES API** (vies.ec.europa.eu) — real-time doğrulama |\n| **ABD EIN** | XX-XXXXXXX | IRS lookup (sınırlı) |\n| **ABD SSN** | XXX-XX-XXXX | KVKK risk — saklamamayı tercih |\n| **Brezilya CPF** | XXX.XXX.XXX-XX | Algoritma + Receita Federal |\n| **Brezilya CNPJ** | XX.XXX.XXX/XXXX-XX | Algoritma + RF |\n\n**B2B için VIES kritik:** AB içi B2B fatura kesiyorsan, müşterinin VAT ID'sini VIES ile doğrulamak zorundasın. Geçersiz VAT ID = reverse charge uygulayamazsın = AB ülkesinin KDV oranıyla faturalamak zorundasın.\n\n```sql\nCREATE TABLE tax_id (\n  id BIGSERIAL,\n  party_id BIGINT,\n  country_code CHAR(2),\n  tax_id_type TEXT,                       -- 'TC_KIMLIK', 'EU_VAT', 'US_EIN', 'BR_CPF'\n  tax_id_value TEXT,\n  verified_at TIMESTAMPTZ,\n  verification_source TEXT,               -- 'VIES', 'NVI', 'manual'\n  verification_response JSONB,\n  ...\n);\n```\n\n**5. Cinsiyet alanı — non-binary + opsiyonel**\n\n- **Almanya**: yasal olarak 'männlich', 'weiblich', 'divers' (üçüncü seçenek)\n- **Çoğu yargı bölgesi**: opsiyonel\n- **KVKK**: özel nitelikli kişisel veri — zorunlu yapma\n\n```sql\nCREATE TYPE gender_t AS ENUM ('male','female','non_binary','prefer_not_to_say','other');\n\nCREATE TABLE person_demographics (\n  person_id BIGINT,\n  gender gender_t,                        -- nullable + opsiyonel\n  gender_other TEXT,                      -- 'other' seçilirse serbest metin\n  legal_gender TEXT,                      -- yasal cinsiyet (vergi/sigorta için)\n  pronouns TEXT,                          -- ('he/him', 'she/her', 'they/them')\n  ...\n);\n```\n\n**6. Doğum tarihi + yaş doğrulama (KVKK)**\n\n- Tam doğum tarihi yerine **yaş aralığı** (örn. 18-25, 26-35) yeterli olabilir → veri minimizasyonu prensibi\n- Yasal yaş kontrolü için (alkol, sigara, kumar): sadece **18+ flag**, tarihi sakla; tarihi GÖSTERME\n- COPPA/GDPR: < 13/16 yaş ebeveyn rızası (ülke bazlı `digital_consent_age`)",
+    "terms": [
+      {
+        "term": "E.164",
+        "abbrev_tr": "Uluslararası telefon standardı",
+        "meaning": "+[ülke kodu][numara], max 15 hane.",
+        "why": "ITU standardı; 10-hane varsayımı yanlış."
+      },
+      {
+        "term": "VIES",
+        "abbrev_of": "VAT Information Exchange System",
+        "abbrev_tr": "AB VAT doğrulama",
+        "meaning": "AB VAT ID'lerini real-time doğrulayan ücretsiz servis.",
+        "why": "AB B2B fatura için zorunlu; reverse charge bunsuz uygulanamaz."
+      },
+      {
+        "term": "libphonenumber",
+        "abbrev_tr": "Google telefon kütüphanesi",
+        "meaning": "Telefon parse/validate/format için standart.",
+        "why": "ITU-T E.164 + her ülkenin local kuralları."
+      },
+      {
+        "term": "fullName modeli",
+        "abbrev_tr": "Tek alanlı isim",
+        "meaning": "firstName/lastName yerine tek `full_name` + opsiyonel given/family.",
+        "why": "Tek isim, soyad önce, patronymic — birden fazla kültürel yapıyı kapsar."
+      },
+      {
+        "term": "i18n-postal-address",
+        "abbrev_tr": "Ülke-aware adres kütüphanesi",
+        "meaning": "Her ülke için adres formatı + alan sırası.",
+        "why": "Japonya ters sıralı; HK posta kodu yok; ABD ZIP+4 — hepsi farklı."
+      },
+      {
+        "term": "Veri minimizasyonu",
+        "abbrev_tr": "GDPR principle",
+        "meaning": "İş için gerekli olmayan veriyi toplama.",
+        "why": "Tam doğum tarihi yerine yaş aralığı → düşük risk + uyum."
+      }
+    ],
+    "stories": [
+      {
+        "persona": "Mali müşavir Hasan Bey (58) — AB B2B fatura",
+        "context": "Hasan Bey'in TR şirketi Almanya'daki bir firmaya yazılım hizmeti veriyor. Reverse charge uygulamak için Alman firmanın VAT ID'sini bilmek lazım — sadece 'DE123456789' yetmez, geçerli mi?",
+        "outcome": "VIES API çağrısı: VAT ID + şirket adı + adres döner. Geçerli → reverse charge uygulanır (KDV yok). Geçersiz → Almanya KDV oranıyla fatura (%19) kesilir. Manuel kontrol = zaman kaybı + hata."
+      },
+      {
+        "persona": "Pazarlama Ayşe Hanım (45) — adres formu",
+        "context": "Site Türkçe-Almanca yayında. Adres formu 'first name, last name, street, city, state, ZIP'. Alman kullanıcı 'state' alanına şaşırıyor (Almanya'da yok); Japon kullanıcı sıralamayı ters bekliyor.",
+        "outcome": "i18n-postal-address kütüphanesi: country_code seçiminden sonra form alanları dinamik. Alman için 'Land' alanı, Japon için ters sıra, Türk için 'il/ilçe/mahalle'. Tek codebase, ülke-aware form."
+      },
+      {
+        "persona": "Geliştirici Murat Bey (61'lik abisi 32) — isim problemi",
+        "context": "Indonesia'lı kullanıcı kayıt: isim 'Sukarno'. Form 'first name + last name' zorunlu yapıyor. Kullanıcı 'last name'i boş bırakıyor, kayıt başarısız.",
+        "outcome": "fullName tek alan + opsiyonel given/family. Sukarno = full_name='Sukarno', name_order='single'. Sorunsuz kayıt. Display name 'Sukarno' UI'de göründüğü gibi."
+      }
+    ],
+    "lesson": {
+      "ne": "Global SaaS için kimlik veri modelleri — isim, adres, telefon, vergi numarası, cinsiyet. ABD-merkezli varsayımları kırma.",
+      "nicin": "firstName/lastName, '10 hane telefon', 'state zorunlu' = 2. ülkede çöker. Baştan global modellersen sonradan refactor yok.",
+      "nasil": "1) fullName tek alan + opsiyonel given/family. 2) E.164 + libphonenumber. 3) i18n-postal-address. 4) VAT VIES API. 5) Cinsiyet opsiyonel + non-binary. 6) Veri minimizasyonu (yaş aralığı).",
+      "nerede": "`cc-identity-models` cluster + `l1-party` DocType ile entegre.",
+      "ne_zaman": "İlk kullanıcı kaydından ÖNCE. Sonradan migration ağrılı.",
+      "kim": "Backend dev şema; frontend dev ülke-aware form; hukuk team yasal cinsiyet/yaş kuralları.",
+      "frontend": {
+        "yer": "country_code seçimi sonrası form alanları dinamik render. libphonenumber telefon UI.",
+        "gereklilik": "Ülke değişikliğinde form yeniden çizilir; daha önce girilen veri saklanır (raw_input).",
+        "ornek": "Adres formu Material-UI veya Flowbite Address Form component'ı, country_code prop'una göre."
+      },
+      "backend": {
+        "yer": "Validation Zod + libphonenumber + libaddressinput + VIES client. tax_id verification job.",
+        "gereklilik": "Çift yazma: structured fields + raw_input JSONB. raw_input audit + reversibility için.",
+        "ornek": "`POST /address`: country_code'a göre validate, ardından bir parser ile line_1/line_2/city/region/postal_code'a böl, raw_input'u JSONB olarak da sakla."
+      },
+      "analoji": "Pasaport ofisi: her ülkenin pasaport formatı farklı (TR çipli, AB elektronik, Hindistan basılı), ama dünya genelinde 'pasaport' kavramı standart. ICAO yapısı tek; içerik ülke-aware. Kimlik veri modeli aynı: ortak iskelet + ülke-aware özelleştirme."
+    }
+  },
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "**Klasik ABD-merkezli hata:** firstName/lastName, 10-hane telefon, state+ZIP zorunlu. Bu varsayımlar 2. ülkede çöker. Global model = ortak iskelet + ülke-aware özelleştirme."
+    },
+    {
+      "type": "callout",
+      "variant": "critical",
+      "label": "firstName/lastName YASAK",
+      "body": "Endonezya tek isim (Sukarno), Çin soyad önce (Wang Wei), Rusya patronymic (Anna Sergeyevna Petrova), İspanya çoklu soyad (García Márquez). **Çözüm:** tek `full_name` alanı + opsiyonel `given_name`/`family_name` + `name_order` enum."
+    },
+    {
+      "type": "callout",
+      "variant": "critical",
+      "label": "VAT ID için VIES — B2B zorunlu",
+      "body": "AB içi B2B fatura kesiyorsan müşterinin VAT ID'sini **VIES API** ile doğrulamak ZORUNLU. Geçersiz VAT = reverse charge yok = sen ülkenin KDV oranıyla faturalarsın (DE %19, FR %20). Otomasyon: vies.ec.europa.eu — ücretsiz API."
+    },
+    {
+      "type": "callout",
+      "variant": "tip",
+      "label": "Vibecoding ipucu",
+      "body": "AI ajan'a: *'Person tablosu: full_name + opsiyonel given_name/family_name + name_order enum + honorific_prefix/suffix + preferred_pronouns. ContactPhone: phone_e164 + country_code (libphonenumber parse). PostalAddress: country_code + line_1/2 + city + region + postal_code nullable + formatted + raw_input JSONB. TaxId: tax_id_type enum + tax_id_value + VIES verification job. Cinsiyet opsiyonel + non_binary enum.'*"
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Adres formatı — ülke örnekleri"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Ülke",
+        "Sıralama",
+        "Posta kodu",
+        "Region zorunlu?"
+      ],
+      "rows": [
+        [
+          "TR",
+          "Sokak → Mahalle → İlçe → Şehir → PK",
+          "5 hane",
+          "İl zorunlu"
+        ],
+        [
+          "US",
+          "Street → City → State → ZIP",
+          "5 / 9 hane",
+          "State zorunlu"
+        ],
+        [
+          "GB",
+          "Line1 → Town → County → Postcode",
+          "AB12 3CD",
+          "County opsiyonel"
+        ],
+        [
+          "JP",
+          "Postcode → Prefecture → City → Block",
+          "7 hane (zorunlu)",
+          "Ters sıralı"
+        ],
+        [
+          "IE",
+          "Eircode (2015+) veya yok",
+          "Yeni sistem",
+          "Opsiyonel"
+        ],
+        [
+          "HK",
+          "Floor → Building → Street → District",
+          "YOK",
+          "District"
+        ],
+        [
+          "DE",
+          "Straße → PLZ → Stadt",
+          "5 hane",
+          "Land opsiyonel"
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Vergi/kimlik numarası matrisi"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Tür",
+        "Format",
+        "Doğrulama"
+      ],
+      "rows": [
+        [
+          "TC Kimlik",
+          "11 hane + algoritma",
+          "Mod kontrolü + NVI API"
+        ],
+        [
+          "AB VAT",
+          "Ülke prefix + 8-12 hane",
+          "VIES API real-time"
+        ],
+        [
+          "ABD EIN",
+          "XX-XXXXXXX",
+          "IRS lookup sınırlı"
+        ],
+        [
+          "ABD SSN",
+          "XXX-XX-XXXX",
+          "Saklamamayı tercih et"
+        ],
+        [
+          "BR CPF",
+          "XXX.XXX.XXX-XX",
+          "Algoritma + Receita Federal"
+        ],
+        [
+          "BR CNPJ",
+          "XX.XXX.XXX/XXXX-XX",
+          "Algoritma + RF"
+        ]
+      ]
+    }
+  ],
+  "related": [
+    "cc-jurisdiction-resolver",
+    "cc-i18n-standards",
+    "cc-compliance-matrix",
+    "l1-party",
+    "edu-u02b",
+    "edu-u04b"
+  ]
+}

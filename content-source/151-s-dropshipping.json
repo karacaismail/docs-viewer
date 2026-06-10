@@ -1,0 +1,149 @@
+{
+  "id": "s-dropshipping",
+  "title": "Dropshipping — stoksuz satış capability'si",
+  "subtitle": "Satıcı stok tutmaz; sipariş tedarikçiye iletilir, doğrudan müşteriye sevk edilir. s-commerce'in additif yetenek katmanı.",
+  "cluster": "core-operations",
+  "order": 9,
+  "icon": "ph-truck-trailer",
+  "granularity": "orta-tas",
+  "state": "wip",
+  "tags": [
+    "core-operations",
+    "ecommerce",
+    "dropship",
+    "supplier",
+    "fulfillment",
+    "capability"
+  ],
+  "enrich": {
+    "info": "Tedarikçi-direkt sevkiyat. s-commerce + s-procurement + s-tms üstüne capability flag. Stok tutmadan satış.",
+    "detail": "**Dropshipping mekanizması:**\n\n1. Müşteri satıcı sitesinden sipariş verir (B2C/B2B)\n2. Satıcı sistemi siparişi **otomatik** tedarikçiye iletir (API/webhook)\n3. Tedarikçi paketler, satıcı markasıyla doğrudan müşteriye gönderir\n4. Satıcı sadece müşteri ilişkisini + farkı yönetir\n\n**Capability flag: `dropship`**\n\nAçıldığında:\n- Ürün kartına `is_dropship` boolean + `supplier_id` FK eklenir\n- Stok takibi opsiyonel olur (tedarikçi stok feed'i veya 'sınırsız' varsayım)\n- Sipariş oluştuğunda otomatik PO (purchase order) tedarikçiye gider\n- Tracking number tedarikçiden gelir, müşteriye otomatik bildirilir\n\n**Tedarikçi entegrasyonu:**\n- CSV/Excel sync (basic) — stok + fiyat günlük\n- API entegrasyonu (advanced) — Oberlo, Spocket, AliExpress\n- Webhook (premium) — stok değişimi anlık\n\n**Tehlikeler:**\n- **Çift sipariş**: aynı ürün hem stoklu hem dropship → karışıklık. Çözüm: ürünün **mode** field'ı tek değer (stocked / dropship / hybrid).\n- **Kalite kontrol**: tedarikçi geç gönderir, müşteri sana şikâyet eder. Çözüm: tedarikçi SLA tablosu + monitoring.\n- **Marj erimesi**: tedarikçi fiyatı arttırırsa eski sipariş zararla teslim olur. Çözüm: dinamik fiyatlama + price lock.\n- **İade akışı**: müşteri iade ister, tedarikçiye mi sana mı dönsün? Reverse logistics policy.",
+    "terms": [
+      {
+        "term": "Dropshipping",
+        "abbrev_tr": "Stoksuz satış",
+        "meaning": "Satıcı stok tutmaz; sipariş tedarikçi tarafından doğrudan sevk edilir.",
+        "why": "Düşük sermaye + geniş katalog; karşılığında marj az + kalite kontrolsüz."
+      },
+      {
+        "term": "Purchase Order (PO)",
+        "abbrev_tr": "Satınalma siparişi",
+        "meaning": "Satıcının tedarikçiye otomatik gönderdiği sipariş.",
+        "why": "Dropship'te müşteri siparişi → otomatik PO → tedarikçi."
+      },
+      {
+        "term": "Reverse Logistics",
+        "abbrev_tr": "Ters lojistik",
+        "meaning": "İade akışı: kim alır, kim para iade eder.",
+        "why": "Dropship'te en zor parça; net policy şart."
+      },
+      {
+        "term": "Supplier SLA",
+        "abbrev_tr": "Tedarikçi seviye anlaşması",
+        "meaning": "Tedarikçinin teslimat süresi, kalite garantisi.",
+        "why": "SLA olmadan tedarikçi yavaş gönderir, müşteri suçu satıcıya yükler."
+      }
+    ],
+    "stories": [
+      {
+        "persona": "Genç esnaf Selim Bey (62'lik abisi 35) — online butik",
+        "context": "Selim Bey teknik ürün satıyor. Stok için yer + sermaye yok. Dropshipping ile katalogda 5000 ürün, hiçbirinden stoğu yok.",
+        "outcome": "`dropship` capability açık. Sipariş geldi → AliExpress'e API ile PO → tedarikçi gönderdi → tracking otomatik müşteriye. Selim Bey sadece marj + müşteri hizmeti yönetir."
+      },
+      {
+        "persona": "Bakkal Hatice Teyze (62) — hibrit: stoklu + dropship",
+        "context": "Hatice Teyze günlük gıdaları stokta tutar (B2C+stocked). Ama spesiyal ürünler (örn. yurt dışı baharat) dropship — tedarikçiden direkt geliyor.",
+        "outcome": "Ürün bazında mode field: süt = stocked, baharat = dropship. Aynı sistem, aynı sipariş — sadece arka tarafta farklı akış."
+      }
+    ],
+    "lesson": {
+      "ne": "Stok tutmadan satış yapma yeteneği — sipariş otomatik tedarikçiye, tedarikçi müşteriye sevk eder.",
+      "nicin": "Düşük sermaye + geniş katalog. Ama kalite kontrol + iade akışı + marj erimesi gerçek risk.",
+      "nasil": "1) Ürün model field: stocked/dropship/hybrid. 2) Supplier API entegrasyonu (PO + tracking + stock feed). 3) Reverse logistics policy. 4) Tedarikçi SLA monitoring.",
+      "nerede": "`s-dropshipping` capability + `s-procurement` (PO) + `s-tms` (kargo tracking) entegrasyonu.",
+      "ne_zaman": "İlk dropship ürün eklenmeden ÖNCE supplier + SLA + iade policy hazır olsun. Sonradan kaotik.",
+      "kim": "Satınalma ekibi tedarikçi bulur; backend dev API entegrasyonu; CS team iade akışı.",
+      "analoji": "Galerici: galeride bir tek araba yok, ama 100 araba modeli kataloğunda. Müşteri seçer, galerici otoparkta saklayandan getirtir. Risk: 'kataloğa baktı, hoşuna gitti, geldi gördü farklı çıktı' — kalite kontrol problemi."
+    }
+  },
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "**Dropship = düşük sermaye + yüksek risk.** Stok yok ama kalite kontrol da yok. Capability açmak kolay, başarı tedarikçi seçimine bağlı."
+    },
+    {
+      "type": "callout",
+      "variant": "warning",
+      "label": "Marj erimesi tuzağı",
+      "body": "Tedarikçi fiyatı %20 arttırdı, sen eski fiyatlı 500 siparişi taahhüt ettin. = **kayıpla teslimat**. Çözüm: `price_lock` + sipariş anında PO tutarı doğrula. Mismatch → otomatik iptal + müşteriye bildir."
+    },
+    {
+      "type": "callout",
+      "variant": "tip",
+      "label": "Vibecoding ipucu",
+      "body": "AI ajan'a: *'Product DocType'a mode ENUM (stocked, dropship, hybrid) + supplier_id FK. Order webhook handler: dropship ise auto-PO oluştur. Supplier API client: stock feed günlük + order webhook. Reverse logistics workflow tablosu.'*"
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Sorumluluk paylaşımı"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Konu",
+        "Satıcı",
+        "Tedarikçi"
+      ],
+      "rows": [
+        [
+          "Sipariş alma",
+          "✓",
+          "-"
+        ],
+        [
+          "Müşteri ilişkisi",
+          "✓",
+          "-"
+        ],
+        [
+          "Stok tutma",
+          "-",
+          "✓"
+        ],
+        [
+          "Paketleme",
+          "-",
+          "✓"
+        ],
+        [
+          "Sevkiyat",
+          "-",
+          "✓"
+        ],
+        [
+          "İade kabul",
+          "✓ (initial)",
+          "✓ (varsa stok)"
+        ],
+        [
+          "Marj/fiyat",
+          "✓",
+          "Belirleyici"
+        ],
+        [
+          "Kalite şikâyeti",
+          "✓ (görünür yüz)",
+          "✓ (kök sebep)"
+        ]
+      ]
+    }
+  ],
+  "related": [
+    "s-ecommerce-models",
+    "s-commerce",
+    "s-procurement",
+    "s-tms",
+    "s-purchase"
+  ]
+}

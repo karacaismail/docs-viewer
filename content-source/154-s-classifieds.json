@@ -1,0 +1,300 @@
+{
+  "id": "s-classifieds",
+  "title": "Classifieds — Lead-Gen Marketplace (İlan / Eşleştirme Platformu)",
+  "subtitle": "Sahibinden, arsam.net pattern: platform alıcı + satıcıyı eşleştirir; ödeme/teslimat platform DIŞINDA. E-ticaret DEĞİLDİR — listings + matching layer.",
+  "cluster": "core-operations",
+  "order": 12,
+  "icon": "ph-magnifying-glass-plus",
+  "granularity": "kaya",
+  "state": "wip",
+  "tags": [
+    "core-operations",
+    "classifieds",
+    "listings",
+    "lead-gen",
+    "marketplace",
+    "sahibinden",
+    "arsam",
+    "matching"
+  ],
+  "enrich": {
+    "info": "Classifieds = ilan + eşleştirme. Transaction depth: lead-gen (içeride sadece iletişim açar). Gelir: ilan ücreti + doping + üyelik + reklam. GMV/komisyon YOK.",
+    "detail": "**Classifieds ≠ E-ticaret — yapısal ayrım:**\n\n| | Classifieds | E-Ticaret |\n|---|---|---|\n| Transaction depth | **Lead-gen** (sadece eşleştirme) | **Full** (sepet → ödeme → kargo → iade) |\n| Gelir modeli | Listing fee + doping + üyelik + reklam | GMV komisyonu (%2-15) |\n| Çekirdek varlık | **Listing/Ad** (ilan) | **Order/Cart** (sipariş) |\n| Ölçüm | Ad count, lead count, time-to-match | GMV, AOV (avg order value), dönüşüm |\n| Ödeme | Platform dışı (yüz yüze) | Platform içi (Stripe/Iyzico) |\n| Kargo/teslimat | Yok veya opsiyonel | Zorunlu süreç |\n| İade | Yok | Zorunlu (CSR, return label) |\n\n**Çekirdek DocType'lar:**\n\n- **Listing** (ilan): başlık, açıklama, fiyat (orientation), foto, lokasyon, kategori, sahip\n- **Lead** (ilgilenme): hangi listing'e kim baktı, kim aradı, kim mesaj attı\n- **Match** (eşleştirme): listing × interested_user; iletişim açıldı mı?\n- **Listing Promotion** (doping): hangi listing kaç gün üst sırada, ödendi mi?\n- **Membership/Package**: bireysel ücretsiz, kurumsal aylık paket (X ilan + öne çıkar)\n\n**Aktör tipleri (classifieds çoklu modelli):**\n\n- **C2C**: bireysel kullanıcı ikinci el (en büyük hacim — Sahibinden ana model)\n- **B2C**: galeri, emlakçı, mağaza → bireysel alıcı\n- **B2B**: kurumsal (iş makinesi, toptan)\n- **D2C**: doğrudan üretici ilan verebilir\n\nMimari açıdan: aynı `Listing` DocType, `listing.owner_kind` (consumer/business/manufacturer) field'ı ile model türetilir — `s-ecommerce-models`'deki sell-side/buy-side patterniyle uyumlu.\n\n**Gelir modelleri (komisyon yok!):**\n\n1. **Listing fee**: ilan başına ücret (₺0 — ₺50 aralığı; bireysel ücretsiz, kurumsal ücretli)\n2. **Doping/Boost**: belirli gün üst sırada gösterim (₺5-100/gün)\n3. **Featured/Highlight**: renk + rozet + premium badge\n4. **Üyelik paketi**: aylık X ilan hakkı + doping kredisi (galerici ₺500-2000/ay)\n5. **Reklam**: banner, sponsored listing (Google Ads tarzı)\n6. **Verification/Trust badge**: doğrulanmış galerici, profesyonel etiket (ücretli)\n7. **Data/Analytics**: kurumsala 'sektör nabzı' raporu satışı\n\n**Trust + güvenlik (classifieds'in kritik problemi):**\n\n- Sahte ilan (scam) tespit — AI moderation + insan onay\n- Phishing'e karşı dahili messaging (telefon numarası gizleme)\n- Buluşma güvenliği (önerilen halka açık nokta, ortak güven puanı)\n- Sahte hesap engelleme (KYC, telefon doğrulama)\n- Şikâyet / dispute resolution akışı\n\n**Opsiyonel: 'Güvenli e-ticaret' katmanı (hybrid mode):**\n\nSahibinden gibi bazı platformlar son yıllarda 'kapıda ödeme' veya 'escrow' ekledi — transaction depth'i artırma denemesi. Mimari: `s-classifieds` capability'sine opsiyonel `secure-payment` flag eklenir; çekirdek listings + matching aynı kalır.",
+    "terms": [
+      {
+        "term": "Classifieds",
+        "abbrev_tr": "İlan platformu",
+        "meaning": "Alıcı + satıcıyı eşleştiren, ama işlemi içermeyen platform.",
+        "why": "E-ticaretle karıştırılır; mimari farkı bilmek = doğru DocType + gelir modeli."
+      },
+      {
+        "term": "Lead-gen",
+        "abbrev_of": "Lead Generation",
+        "abbrev_tr": "Müşteri adayı üretme",
+        "meaning": "Platform iletişim açar; satış kararı + ödeme platform dışında.",
+        "why": "Transaction depth = lead-gen; full değil. Mimariyi kökten değiştirir."
+      },
+      {
+        "term": "Listing / Ad",
+        "abbrev_tr": "İlan",
+        "meaning": "Satışa veya kiraya sunulan eşya/hizmet/mülk kaydı.",
+        "why": "Classifieds çekirdek DocType'ı; Order DEĞİL."
+      },
+      {
+        "term": "Doping / Boost",
+        "abbrev_tr": "Öne çıkarma",
+        "meaning": "Ödeme karşılığı ilan üst sırada gösterilir.",
+        "why": "Classifieds gelirinin %30-50'si buradan. E-ticaret komisyonunun yerini alır."
+      },
+      {
+        "term": "Lead",
+        "abbrev_tr": "İlgilenme/temas",
+        "meaning": "İlana bakan, arayan, mesaj atan kullanıcı.",
+        "why": "E-ticaret'te sipariş; classifieds'te lead = ana ölçü."
+      },
+      {
+        "term": "Trust / Verification",
+        "abbrev_tr": "Güven / doğrulama",
+        "meaning": "Galerici/emlakçı kimlik doğrulama, scam koruması.",
+        "why": "Classifieds = düşük güven; mimari trust katmanı şart, yoksa kullanıcı kaçar."
+      },
+      {
+        "term": "GMV / Komisyon",
+        "abbrev_tr": "İşlem hacmi / komisyon",
+        "meaning": "E-ticarette gelir; classifieds'te YOK.",
+        "why": "Bu farkı bilmemek gelir modelini yanlış kurar."
+      }
+    ],
+    "stories": [
+      {
+        "persona": "Manav Selim Bey (62) — eski kamyonet satışı",
+        "context": "Selim Bey 15 yıllık kamyonetini satmak istiyor. Trendyol'a girse araba listesi yok; Sahibinden'e girer, ilan açar, ücretsiz veya 2 hafta boyunca doping ile öne çıkar.",
+        "outcome": "İlan = listing. Lead = arayan + mesaj atan. Selim Bey alıcıyla buluşur, parayı eline alır. Platform sadece eşleştirdi; ödemeden komisyon almadı. Selim Bey doping için ₺50 ödedi — platformun geliri buradan."
+      },
+      {
+        "persona": "Emlakçı Murat Bey (61) — galerici paket",
+        "context": "Murat Bey 30 dairesi olan emlak ofisi. Tek tek ilan açıp doping ödemek yorucu. Aylık paket alıyor: 100 ilan hakkı + 50 doping kredisi + kurumsal rozet.",
+        "outcome": "Üyelik paketi (membership) = en kârlı gelir. Murat Bey ₺2000/ay öder; karşılığında 30 daire için listing + doping + trust badge. Komisyon yok; sabit ücret."
+      },
+      {
+        "persona": "Ayşe Teyze (63) — sahte ilan korkusu",
+        "context": "Ayşe Teyze ev kiralamak istiyor. Sahibinden'de gördüğü 'şehir merkezi 5000 TL' ilanı çağırdı — kapora isteyen sahte hesap. Şikâyet etti.",
+        "outcome": "Trust katmanı: ilan moderation AI + kullanıcı şikâyet → ilan kaldırma. Sahibinden 2024'te 50K sahte ilan kaldırdı; classifieds'in en kritik mimari yatırımı."
+      }
+    ],
+    "lesson": {
+      "ne": "İlan + eşleştirme platformu — Sahibinden, arsam.net tipi. E-ticaret DEĞİL; transaction depth = lead-gen (içeride sadece iletişim açar).",
+      "nicin": "E-ticaret mimarisi kurarsan (Cart, Order, Checkout, Komisyon) classifieds'e fit etmez. Listing + Lead + Doping + Membership DocType'ları gerek.",
+      "nasil": "1) Listing DocType (title, desc, price-ish, photos, location, owner_kind). 2) Lead tablosu (listing × user, contact_opened_at). 3) Doping/Boost capability. 4) Membership packages. 5) Trust + moderation katmanı (KYC, AI moderation).",
+      "nerede": "`s-classifieds` cluster + `l1-search` (faceted) + `l1-notification` (lead alerts) + `cc-security` (trust).",
+      "ne_zaman": "Sahibinden-tarzı veya niş classifieds (arsam.net emlak, niche araba/hobi) için Faz 4-5.",
+      "kim": "Backend dev listings + matching engine; AI/ML team moderation; CS team dispute; ürün ekibi gelir modeli (paket fiyatı).",
+      "frontend": {
+        "yer": "İlan arama (faceted), ilan detay, ilan ver formu, mesajlaşma, doping ödeme.",
+        "gereklilik": "Telefon gizleme (call masking), in-app messaging, trust badge'leri görünür.",
+        "ornek": "Listing card: foto + başlık + fiyat + lokasyon + 'kurumsal' rozet (varsa) + 'doping' işareti (üst sıra)."
+      },
+      "backend": {
+        "yer": "`Listing` DocType + `Lead` + `Promotion`. Moderation worker (AI + insan). Stripe integration sadece doping/membership için (komisyon değil).",
+        "gereklilik": "PII gizleme: telefon/email kullanıcıya gösterilmeden önce auth check; relay messaging.",
+        "ornek": "`POST /listing/:id/contact` → relay messaging başlat; satıcı telefonu görmez; mesajlaşma platform içinde."
+      },
+      "analoji": "Mahalle ilan panosu (eski usul) + emlakçı vitrin: panoya ilan asarsın, alıcı görür, telefon eder, satıcıyla buluşur. Pano sahibine asma ücreti verirsin (listing fee); büyük punto/renkli istiyorsan ek ücret (doping). Pano satışı yapmaz, sadece görünür kılar. Sahibinden = dijital pano."
+    }
+  },
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "**Mimari karar (önemli):** Classifieds e-ticaret değil. Trendyol mantığıyla yola çıkarsan Sahibinden modelini KURAMAZSIN. Çekirdek DocType `Order` değil, `Listing`. Gelir komisyondan değil, listing fee + doping + üyelikten."
+    },
+    {
+      "type": "callout",
+      "variant": "critical",
+      "label": "Transaction depth = YENİ EKSEN",
+      "body": "Mevcut capability matrisi (sell-side × buy-side) yetmez. **3. eksen: transaction depth.** İki uç:\n\n- **Lead-gen**: platform eşleştirir, ödeme/teslimat dışarıda (Sahibinden, arsam.net)\n- **Full-transaction**: sepet + ödeme + kargo + iade içeride (Trendyol)\n\nAynı satıcı tipi (örn. B2C) iki farklı dünyada yaşayabilir. Capability flag: `transaction_depth = 'lead_gen' | 'full' | 'hybrid'`."
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Classifieds vs E-Ticaret — yapısal fark"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Boyut",
+        "Classifieds (Sahibinden, arsam)",
+        "E-Ticaret (Trendyol)"
+      ],
+      "rows": [
+        [
+          "Çekirdek DocType",
+          "Listing / Ad",
+          "Order / Cart"
+        ],
+        [
+          "Transaction depth",
+          "Lead-gen (sadece eşleştirme)",
+          "Full (sepet → ödeme → kargo)"
+        ],
+        [
+          "Gelir modeli",
+          "Listing fee + doping + üyelik + reklam",
+          "GMV komisyonu (%2-15)"
+        ],
+        [
+          "Ana KPI",
+          "Ad count, lead count, time-to-match",
+          "GMV, AOV, dönüşüm oranı"
+        ],
+        [
+          "Ödeme",
+          "Platform DIŞI (yüz yüze)",
+          "Platform içi (Stripe/Iyzico)"
+        ],
+        [
+          "Teslimat",
+          "Yok / kullanıcılar arası",
+          "Kargo + tracking + iade"
+        ],
+        [
+          "İade",
+          "Yok",
+          "Zorunlu süreç + return label"
+        ],
+        [
+          "Güvenlik odağı",
+          "Sahte ilan, scam, KYC",
+          "Sahte kart, chargeback"
+        ],
+        [
+          "Buluşma noktası",
+          "Telefon + yüz yüze",
+          "Web checkout"
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Classifieds gelir modeli (komisyon YOK)"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Gelir kanalı",
+        "Açıklama",
+        "Tipik ücret (TR)"
+      ],
+      "rows": [
+        [
+          "Listing fee",
+          "İlan başına ücret",
+          "₺0 (bireysel) — ₺50 (kurumsal kategori)"
+        ],
+        [
+          "Doping / Boost",
+          "Üst sırada belirli gün",
+          "₺5 — ₺100 / gün"
+        ],
+        [
+          "Featured / Highlight",
+          "Renk + rozet + premium badge",
+          "₺20 — ₺200 / ilan"
+        ],
+        [
+          "Üyelik paketi",
+          "Aylık X ilan + doping kredisi",
+          "₺500 — ₺5000 / ay (kurumsal)"
+        ],
+        [
+          "Reklam",
+          "Banner, sponsored listing",
+          "CPM/CPC"
+        ],
+        [
+          "Trust / Verification",
+          "Doğrulanmış galerici rozeti",
+          "₺100 — ₺500 / yıl"
+        ],
+        [
+          "Data / Analytics",
+          "'Sektör nabzı' raporu (kurumsal)",
+          "₺1000+ / rapor"
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Çekirdek DocType'lar (Listing-centric)"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "DocType",
+        "Alan örnekleri",
+        "İlişki"
+      ],
+      "rows": [
+        [
+          "Listing",
+          "title, description, price_ish, photos[], location, category_id, owner_kind, status",
+          "owner_id → party"
+        ],
+        [
+          "Lead",
+          "listing_id, user_id, contact_type (view/call/msg), opened_at",
+          "listing_id, user_id"
+        ],
+        [
+          "Promotion",
+          "listing_id, type (boost/highlight), start, end, paid_amount",
+          "listing_id"
+        ],
+        [
+          "Membership",
+          "tenant_id (satıcı), package_id, monthly_fee, listing_quota, doping_credit",
+          "tenant_id"
+        ],
+        [
+          "Moderation",
+          "listing_id, ai_score, human_decision, status, reason",
+          "listing_id"
+        ],
+        [
+          "Message",
+          "from_user, to_user, listing_id, body, relay (telefon gizli)",
+          "-"
+        ]
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "tip",
+      "label": "Vibecoding ipucu",
+      "body": "AI ajan'a: *'Listing DocType: yukarıdaki alanlar + faceted search index. Lead tablosu: kontak açıldığında insert. Doping/Promotion: cron her saat aktif boost'ları görünürlüğe çevir. Moderation worker: yeni ilan → AI score → otomatik kabul (>0.8) veya insan kuyruğu. Relay messaging: telefon/email backend'de tutulur; UI'de göstermez.'*"
+    },
+    {
+      "type": "callout",
+      "variant": "info",
+      "label": "Hybrid mode (Sahibinden 'Güvenli e-ticaret')",
+      "body": "Bazı classifieds platformlar son yıllarda 'kapıda ödeme', 'escrow', 'güvenli checkout' ekledi — transaction depth'i lead-gen'den hybrid'e çıkarma denemesi. Mimari: çekirdek listing + matching aynı kalır; opsiyonel `secure-payment` capability flag eklenir. Komisyon hâlâ ana gelir değil; ek hizmet ücreti."
+    },
+    {
+      "type": "callout",
+      "variant": "warning",
+      "label": "En klasik mimari hata",
+      "body": "E-ticaret framework'ünü classifieds'e zorlamak: Cart, Order, Checkout, Komisyon. Sonuç: 'Sepetim' butonu işe yaramaz, ürün stoğu kavramı yok, kargo seçme adımı kullanıcıyı kaybeder. **Classifieds için Listing-first mimari** + opsiyonel hybrid katmanı zorunlu."
+    }
+  ],
+  "related": [
+    "s-ecommerce-models",
+    "s-commerce",
+    "s-marketplace",
+    "s-property",
+    "l1-search",
+    "l1-notification",
+    "cc-security",
+    "l1-party"
+  ]
+}

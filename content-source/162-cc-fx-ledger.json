@@ -1,0 +1,176 @@
+{
+  "id": "cc-fx-ledger",
+  "title": "FX & Ledger — Çok Para Birimli Muhasebe",
+  "subtitle": "Kur ne zaman kilitlenir (sipariş/fatura/tahsilat), functional vs reporting currency (IAS 21), refund'da hangi vergi oranı.",
+  "cluster": "crosscut",
+  "order": 11,
+  "icon": "ph-currency-circle-dollar",
+  "granularity": "orta-tas",
+  "state": "wip",
+  "tags": [
+    "crosscut",
+    "fx",
+    "ledger",
+    "accounting",
+    "ias-21",
+    "multi-currency",
+    "revenue-recognition"
+  ],
+  "enrich": {
+    "info": "FX lock kuralları, dual ledger (functional + reporting), revenue recognition (ASC 606 / IFRS 15), refund'da vergi oranı.",
+    "detail": "**Mimari karar (önemli):**\n\nÇok para birimli SaaS sonradan eklenemez — **baştan modellenmeli**. Sebep: kur ne zaman kilitlendiği, hangi para birimi 'gerçek' vs 'raporlama' — bu kararlar ledger'ın temeli.\n\n**FX lock — kur ne zaman kilitlenir?**\n\n3 farklı an, 3 farklı sonuç:\n\n1. **Sipariş anında**: müşteri için fiyat netlenir; satıcı için kur riski (kur düşerse zarar)\n2. **Fatura anında**: fatura kesimine kadar belirsizlik; uluslararası B2B'de yaygın\n3. **Tahsilat anında**: en geç; satıcı için max kur riski; muhasebe açısından açık\n\nDoğru cevap: **iş modeline göre**. B2C e-ticaret = sipariş anı. B2B abonelik = fatura anı. Konsinye satış = tahsilat anı.\n\n**Dual ledger — IAS 21 (functional vs reporting):**\n\n- **Functional currency**: işletmenin esas iş yaptığı para — TR şirketi için TL\n- **Reporting currency**: konsolidasyon için kullanılan — group company USD/EUR olabilir\n- **Transaction currency**: işlemin gerçekleştiği — sipariş EUR\n\nHer kayıt **3 boyutta saklanır**:\n```sql\nCREATE TABLE ledger_entry (\n  id BIGSERIAL,\n  transaction_currency CHAR(3),    -- 'EUR'\n  transaction_amount NUMERIC(18,2),\n  functional_currency CHAR(3),     -- 'TRY'\n  functional_amount NUMERIC(18,2),\n  reporting_currency CHAR(3),      -- 'USD'\n  reporting_amount NUMERIC(18,2),\n  fx_lock_at TIMESTAMPTZ,          -- kur ne zaman alındı\n  fx_rate_to_functional NUMERIC(20,8),\n  fx_rate_to_reporting NUMERIC(20,8),\n  ...\n);\n```\n\nFX gain/loss otomatik hesaplanır: fonksiyonel para tutarı (sipariş anı) - fonksiyonel para tutarı (tahsilat anı).\n\n**Revenue Recognition (ASC 606 / IFRS 15):**\n\nGelir ne zaman 'tanınır'? Tahsilat değil, hizmet ifa edildiğinde.\n\n- Tek seferlik satış: teslimat anında\n- 12 aylık abonelik: aylık 1/12\n- 3 yıllık enterprise lisans: 36 aya yayılır\n- Setup fee + recurring: setup ayrı, recurring ayrı\n\n**Refund'da vergi oranı — hangi an?**\n\nKDV oranı %18 iken sipariş alındı. 6 ay sonra refund. Aradaki sürede KDV %20 oldu. Hangi oran?\n\n**Doğru cevap**: **orijinal sipariş tarihindeki oran**. Refund'ı sipariş tarihine 'tersine' işle. Yeni oranla refund = vergi defterinde uyumsuzluk.\n\n**Çatışma çözümü (gerçek hayat):**\n\n| Durum | Yaklaşım |\n|---|---|\n| Sipariş EUR, refund EUR | Aynı para birimi, FX yok |\n| Sipariş EUR, refund TL talebi | Sipariş anı kuru üzerinden hesaplan; FX gain/loss kayıt |\n| KDV oranı değişti, refund eski tarihli | Eski oran (sipariş tarihi) |\n| Sipariş bir önceki muhasebe döneminde | Önceki dönem fatura iptali; cari döneme kayıt etmemek için 'credit note' |",
+    "terms": [
+      {
+        "term": "FX Lock",
+        "abbrev_tr": "Kur kilidi",
+        "meaning": "Bir işlemin hangi anda kura tabi olduğu (sipariş/fatura/tahsilat).",
+        "why": "3 farklı an = 3 farklı muhasebe sonucu. Karar mimari."
+      },
+      {
+        "term": "Functional Currency",
+        "abbrev_of": "IAS 21",
+        "abbrev_tr": "İşletme para birimi",
+        "meaning": "Şirketin esas iş yaptığı para birimi.",
+        "why": "Tüm yabancı işlemler buna çevrilir; FX gain/loss buradan hesaplanır."
+      },
+      {
+        "term": "Reporting Currency",
+        "abbrev_tr": "Raporlama para birimi",
+        "meaning": "Konsolide finansal raporlar için kullanılan.",
+        "why": "Holding company USD'de raporlar; TR'deki şirket TL functional, USD reporting."
+      },
+      {
+        "term": "Revenue Recognition",
+        "abbrev_of": "ASC 606 / IFRS 15",
+        "abbrev_tr": "Gelir tanıma",
+        "meaning": "Gelirin ne zaman 'kazanılmış' sayılacağı muhasebe kuralı.",
+        "why": "12 aylık abonelik tek seferde tanınmaz; aylık 1/12."
+      },
+      {
+        "term": "Credit Note",
+        "abbrev_tr": "İade dekontu",
+        "meaning": "Eski fatura iptali için yeni belge — geri dönmüş işlem.",
+        "why": "Önceki muhasebe dönemine dokunmadan iade kaydı."
+      },
+      {
+        "term": "FX Gain/Loss",
+        "abbrev_tr": "Kur kazanç/kaybı",
+        "meaning": "İki an arası kur farkından doğan kazanç veya zarar.",
+        "why": "Functional para açısından zorunlu kayıt."
+      }
+    ],
+    "stories": [
+      {
+        "persona": "Mali müşavir Hasan Bey (58) — EUR sipariş + TL fatura",
+        "context": "Müşteri 100 EUR sipariş verdi (sipariş anı kur: 34 TL = 3400 TL). 1 ay sonra ödedi (tahsilat kuru: 36 TL = 3600 TL). Fatura hangi tutarda?",
+        "outcome": "Functional currency TL ise: fatura 100 EUR = 3400 TL (sipariş anı kuru). Tahsilat 3600 TL = 200 TL FX gain. Üç kayıt: order (3400), invoice (3400), payment (3600) + fx_gain (200)."
+      },
+      {
+        "persona": "E-ticaret işleten Selim Bey (62) — refund'da KDV",
+        "context": "Mart'ta 100 TL ürün sattı (KDV %18, fatura 118 TL). Eylül'de iade istendi; KDV bu arada %20'ye çıktı.",
+        "outcome": "Refund eski oran üzerinden: 118 TL geri öder (KDV 18 TL). Yeni oranla 120 TL ödese vergi defterinde uyumsuzluk + denetimde sorun."
+      }
+    ],
+    "lesson": {
+      "ne": "Çok para birimli muhasebe altyapısı: FX lock kuralı, dual ledger, revenue recognition, refund'da vergi tarihi.",
+      "nicin": "Bunlar sonradan eklenemez. Tek-currency varsayımı ile başlayan sistem ikinci ülkede yıkılır.",
+      "nasil": "1) Ledger 3-currency saklar (transaction + functional + reporting). 2) FX lock kuralı iş modeline göre (sipariş/fatura/tahsilat). 3) IAS 21 functional currency seçimi. 4) ASC 606 revenue recognition periyodik. 5) Refund'da sipariş tarihi kuru + oranı.",
+      "nerede": "`cc-fx-ledger` cluster + `s-accounting` + `s-billing` + `s-revenue-recognition` entegrasyon.",
+      "ne_zaman": "İlk yabancı para işleminden ÖNCE. Pre-revenue startup için bile başta.",
+      "kim": "Backend dev ledger şema; mali müşavir IAS/ASC danışmanlık; finance team functional currency kararı.",
+      "analoji": "İki kuyumcu: biri altın gramı ile çalışır (functional = gr), USD-altın kurunu günlük takip eder (transaction = USD). Müşteri USD ödese de defterde altın olarak saklanır; günlük değerleme farkı 'kar/zarar'."
+    }
+  },
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "**Çok para birimli SaaS sonradan eklenemez.** Ledger'ın temel kararıdır: hangi para birimi 'gerçek' (functional), hangisi 'raporlama' (reporting), hangi an kur kilitlenir."
+    },
+    {
+      "type": "callout",
+      "variant": "critical",
+      "label": "FX lock 3 ayrı an",
+      "body": "Sipariş anı / fatura anı / tahsilat anı — 3 farklı an, 3 farklı muhasebe sonucu. İş modeline göre seç:\n\n- **B2C e-ticaret**: sipariş anı (müşteri net fiyat görsün)\n- **B2B abonelik**: fatura anı\n- **Konsinye/proje**: tahsilat anı"
+    },
+    {
+      "type": "callout",
+      "variant": "critical",
+      "label": "Refund'da KDV oranı = sipariş tarihi",
+      "body": "KDV %18 iken sipariş alındı, 6 ay sonra refund, KDV %20. **Refund eski oranla** (%18). Yeni oran kullanırsan vergi defterinde uyumsuzluk → denetimde sorun."
+    },
+    {
+      "type": "callout",
+      "variant": "tip",
+      "label": "Vibecoding ipucu",
+      "body": "AI ajan'a: *'ledger_entry tablosu: transaction_currency + transaction_amount, functional_currency + functional_amount, reporting_currency + reporting_amount. fx_lock_at, fx_rate_to_functional, fx_rate_to_reporting kolonları. Sipariş anında lock varsayılan. FX gain/loss hesaplama job (her gece). Refund handler: orijinal order'ın fx_rate + tax_rate'ini kullan.'*"
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "3-currency ledger şeması"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Kolon",
+        "Tip",
+        "Anlam"
+      ],
+      "rows": [
+        [
+          "transaction_currency",
+          "CHAR(3)",
+          "İşlem para birimi (örn. EUR)"
+        ],
+        [
+          "transaction_amount",
+          "NUMERIC(18,2)",
+          "İşlem tutarı"
+        ],
+        [
+          "functional_currency",
+          "CHAR(3)",
+          "İşletme para birimi (örn. TRY)"
+        ],
+        [
+          "functional_amount",
+          "NUMERIC(18,2)",
+          "Functional para tutarı"
+        ],
+        [
+          "reporting_currency",
+          "CHAR(3)",
+          "Grup raporlama (örn. USD)"
+        ],
+        [
+          "reporting_amount",
+          "NUMERIC(18,2)",
+          "Reporting para tutarı"
+        ],
+        [
+          "fx_lock_at",
+          "TIMESTAMPTZ",
+          "Kur kilitleme anı"
+        ],
+        [
+          "fx_rate_to_functional",
+          "NUMERIC(20,8)",
+          "Functional'a kur"
+        ],
+        [
+          "fx_rate_to_reporting",
+          "NUMERIC(20,8)",
+          "Reporting'e kur"
+        ]
+      ]
+    }
+  ],
+  "related": [
+    "cc-jurisdiction-resolver",
+    "s-accounting",
+    "s-billing",
+    "s-revenue-recognition",
+    "edu-u02b",
+    "edu-u21"
+  ]
+}

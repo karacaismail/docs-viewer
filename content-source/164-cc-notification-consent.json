@@ -1,0 +1,204 @@
+{
+  "id": "cc-notification-consent",
+  "title": "Bildirim & Consent — Transactional vs Marketing, SMS Regülasyon",
+  "subtitle": "Bildirim tipini doğru sınıflandır: transactional her zaman serbest, marketing AB'de opt-in. SMS sender ID kuralları (DLT/10DLC). Quiet hours locale-aware.",
+  "cluster": "crosscut",
+  "order": 13,
+  "icon": "ph-bell-ringing",
+  "granularity": "orta-tas",
+  "state": "wip",
+  "tags": [
+    "crosscut",
+    "notification",
+    "consent",
+    "gdpr",
+    "marketing",
+    "transactional",
+    "sms",
+    "quiet-hours"
+  ],
+  "enrich": {
+    "info": "Bildirim tipi sınıflandırması (transactional/marketing/system) + consent kuralı + SMS regülasyon (DLT Hindistan, 10DLC ABD, sender ID AB) + quiet hours.",
+    "detail": "**Bildirim sınıflandırması (kritik):**\n\n| Tip | Tanım | Consent? |\n|---|---|---|\n| **Transactional** | Sipariş onayı, fatura, parola sıfırlama, randevu hatırlatma | Her zaman serbest (yasal değil, hizmet için) |\n| **System** | Güvenlik (kartı yetkisiz kullanım), kritik servis bildirimi | Her zaman serbest |\n| **Marketing** | Kampanya, indirim, yeni ürün | **AB'de opt-in zorunlu** (PECR + GDPR) |\n| **Behavioral** | 'Sepetinde ürün kaldı', 'sepet hatırlatma' | **Marketing sayılır** (AB) — opt-in |\n\n**En klasik hata:** marketing'i transactional gibi göstermek (örn. 'sipariş onayı' içinde 'şuna da bak!' linkleri). Yasal ihlal. Ayrı email ayrı consent.\n\n**Consent tablosu:**\n\n```sql\nCREATE TABLE user_consent (\n  user_id INT,\n  consent_type TEXT,         -- 'email_marketing', 'sms_marketing', 'push_marketing', 'cookies_analytics', 'cookies_advertising'\n  granted BOOL,\n  granted_at TIMESTAMPTZ,\n  source TEXT,               -- 'signup_form', 'banner', 'profile_update'\n  version INT,               -- hangi ToS/policy versiyonu kabul edildi\n  PRIMARY KEY (user_id, consent_type)\n);\n```\n\n**ToS versiyonlama (GDPR/KVKK kanıtı):**\n\nKullanıcı v3 ToS kabul etti, sen v4'e geçtin → kim hangi versiyonu kabul etti kaydı:\n\n```sql\nCREATE TABLE tos_acceptance (\n  user_id INT,\n  tos_version TEXT,\n  accepted_at TIMESTAMPTZ,\n  ip_address INET,           -- delil\n  user_agent TEXT\n);\n```\n\nv4'e geçince kullanıcılara 'yeni ToS' modal göster + kayıt al.\n\n**SMS regülasyon (ülkeye göre kritik fark):**\n\n| Ülke | Gereksinim |\n|---|---|\n| **TR** | BTK + GSM operatör kayıt (sender ID) |\n| **AB** | Sender ID kayıt + opt-in marketing |\n| **ABD** | A2P 10DLC kayıt (2023+) — onaylı brand + campaign |\n| **Hindistan** | DLT (Distributed Ledger Technology) kayıt — TRAI zorunlu |\n| **Brezilya** | Anatel kayıt |\n\nAynı SMS kodu her ülkede çalışmaz. Sender ID 'ACME' Hindistan'da kayıtlı değilse SMS reddedilir.\n\n**Quiet hours (sessiz saatler):**\n\n- Push/SMS gece 22:00-08:00 göndermeyin (yasal değil ama best practice + ban riski)\n- **Locale-aware**: kullanıcının timezone'unda, sunucununkinde değil\n- Critical bypass (security alert, payment failed) sessiz saatte de gider\n- Bildirim önceliği: critical > transactional > marketing\n\n**Email deliverability:**\n\n- **CAN-SPAM** (ABD): unsubscribe link zorunlu, gönderici adres\n- **AB ePrivacy**: opt-in + unsubscribe + sender consent kanıtı\n- **TR KVKK**: ETK (Elektronik Ticaret Kanunu) + İYS (İleti Yönetim Sistemi) kayıt\n\n**İYS Türkiye için zorunlu:** ticari elektronik ileti gönderiyorsan İYS'de kayıt + onay vermek zorundasın. Aksi: ihlal başına ₺3000.",
+    "terms": [
+      {
+        "term": "Transactional Email",
+        "abbrev_tr": "İşlemsel email",
+        "meaning": "Hizmetin gerektirdiği bildirim (sipariş, fatura, OTP).",
+        "why": "Consent gerekmiyor; hizmet sunuyorsun."
+      },
+      {
+        "term": "Marketing Email",
+        "abbrev_tr": "Pazarlama emaili",
+        "meaning": "Kampanya, ürün önerisi.",
+        "why": "AB'de opt-in ZORUNLU; izinsiz = ceza."
+      },
+      {
+        "term": "Opt-in / Opt-out",
+        "abbrev_tr": "İzin verme / çekilme",
+        "meaning": "Açık kabul (opt-in) vs varsayılan açık + çıkış hakkı (opt-out).",
+        "why": "AB opt-in; ABD opt-out yeterli; KVKK opt-in (aydınlatma + onay)."
+      },
+      {
+        "term": "DLT",
+        "abbrev_of": "Distributed Ledger Technology (Hindistan TRAI)",
+        "abbrev_tr": "Hindistan SMS kayıt",
+        "meaning": "Hindistan'da SMS sender + content template kayıt zorunluluğu.",
+        "why": "Kayıt olmadan SMS reddedilir."
+      },
+      {
+        "term": "10DLC",
+        "abbrev_of": "10-Digit Long Code",
+        "abbrev_tr": "ABD A2P SMS kayıt",
+        "meaning": "ABD'de 2023'ten itibaren brand + campaign onaylı 10 haneli SMS.",
+        "why": "Onaysız mesajlar bloklanır."
+      },
+      {
+        "term": "İYS",
+        "abbrev_of": "İleti Yönetim Sistemi",
+        "abbrev_tr": "TR ticari ileti kayıt",
+        "meaning": "TR'de ticari email/SMS için zorunlu kayıt sistemi (ETK).",
+        "why": "Aksi: ihlal başına ₺3000 ceza."
+      }
+    ],
+    "stories": [
+      {
+        "persona": "E-ticaret işleten Selim Bey (62) — yanlış email karması",
+        "context": "Selim Bey sipariş onayı emailine 'bu ay özel indirim!' kupon koydu. Bir kullanıcı şikâyet etti: 'Pazarlama izni vermedim.'",
+        "outcome": "İhlal. Çözüm: sipariş onayı = pure transactional; pazarlama = ayrı email + opt-in kullanıcılara. İki ayrı send (deliverability + uyum açısından gerek)."
+      },
+      {
+        "persona": "Murat Bey (61) — SMS Hindistan'a açılım",
+        "context": "Murat Bey ürününü Hindistan pazarına açtı. Sipariş onayı SMS gönderdi: 'Sipariş alındı'. Hiçbir SMS gitmedi.",
+        "outcome": "DLT kayıt yok. Hindistan'da TRAI zorunlu: Murat Bey'in markası + 'sipariş alındı' template'i DLT'de kayıtlı olmalı. Twilio dashboard'tan başvuru + 2 hafta onay."
+      }
+    ],
+    "lesson": {
+      "ne": "Bildirim tipi sınıflandırma + consent kuralı + ülke bazlı SMS regülasyon + quiet hours.",
+      "nicin": "Yanlış sınıflandırma yasal ihlal. Yanlış SMS kayıt = bildirim hiç gitmez. Quiet hours = kullanıcı uykusunu bozma + ban riski.",
+      "nasil": "1) Bildirim tipi enum (transactional/system/marketing/behavioral). 2) Consent tablosu type başına. 3) ToS versiyonlama + audit. 4) SMS provider (Twilio/Vonage) ülke kaydı. 5) Quiet hours timezone-aware.",
+      "nerede": "`cc-notification-consent` + `cc-jurisdiction-resolver` (locale/jurisdiction) + `l1-notification` + `s-marketing`.",
+      "ne_zaman": "İlk email gönderilmeden ÖNCE.",
+      "kim": "Pazarlama ekibi consent kategorileri; backend dev type-based dispatch; legal team ToS versiyonlama.",
+      "analoji": "Posta hizmeti: ısmarlama gönderiler (kargo, fatura — alıcının isteği) her zaman teslim edilir. Reklam broşürleri (postacıdan istenmemiş) için 'reklam istemiyorum' kutusu var. İkisini ayrı yetkilendirme."
+    }
+  },
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "**Bildirim tipi yanlış sınıflandırma = yasal ihlal.** Sipariş onayı içinde 'kampanya' linki = marketing'i transactional gibi göstermek. AB'de ceza."
+    },
+    {
+      "type": "callout",
+      "variant": "critical",
+      "label": "İYS — TR ticari ileti",
+      "body": "Türkiye'de ticari email/SMS için İYS (İleti Yönetim Sistemi) kayıt **ZORUNLU**. Aksi ihlal başına ₺3000. Pazarlama yapıyorsan İYS hesap aç, onayları sisteme yükle."
+    },
+    {
+      "type": "callout",
+      "variant": "warning",
+      "label": "SMS sender ID ülke kuralları",
+      "body": "Hindistan DLT, ABD 10DLC, AB sender ID kayıt — her ülke ayrı süreç. Twilio/Vonage dashboard'tan ülke başına başvuru. Onaysız SMS bloklanır + reputation kaybı."
+    },
+    {
+      "type": "callout",
+      "variant": "tip",
+      "label": "Vibecoding ipucu",
+      "body": "AI ajan'a: *'Notification dispatcher: type enum (transactional/system/marketing/behavioral). Marketing type için user_consent kontrolü zorunlu — yoksa skip + audit log. SMS provider client: country-aware sender ID seçimi (DLT/10DLC). Quiet hours check: user.timezone'da 22:00-08:00 ise marketing skip (transactional bypass).'*"
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Bildirim tipi → consent kuralı"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Tip",
+        "Örnek",
+        "Consent",
+        "Quiet hours bypass"
+      ],
+      "rows": [
+        [
+          "Transactional",
+          "Sipariş onayı, OTP",
+          "Gerekmez",
+          "Bypass (gece de gider)"
+        ],
+        [
+          "System",
+          "Kart yetkisiz kullanım",
+          "Gerekmez",
+          "Bypass"
+        ],
+        [
+          "Marketing",
+          "Kampanya, indirim",
+          "AB opt-in zorunlu",
+          "Skip (gece atma)"
+        ],
+        [
+          "Behavioral",
+          "Sepet hatırlatma",
+          "Marketing sayılır",
+          "Skip"
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "SMS regülasyon ülke matrisi"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Ülke",
+        "Sistem",
+        "Sender ID",
+        "Marketing"
+      ],
+      "rows": [
+        [
+          "TR",
+          "İYS + BTK",
+          "Operatör kayıt",
+          "Opt-in"
+        ],
+        [
+          "AB",
+          "ePrivacy",
+          "Sender ID kayıt",
+          "Opt-in"
+        ],
+        [
+          "ABD",
+          "A2P 10DLC",
+          "Brand + campaign onaylı",
+          "Opt-out kabul"
+        ],
+        [
+          "Hindistan",
+          "DLT (TRAI)",
+          "DLT kayıt + template",
+          "Opt-in"
+        ],
+        [
+          "Brezilya",
+          "Anatel",
+          "Anatel kayıt",
+          "Opt-in"
+        ]
+      ]
+    }
+  ],
+  "related": [
+    "cc-jurisdiction-resolver",
+    "cc-compliance-matrix",
+    "l1-notification",
+    "edu-u22-email-sms",
+    "s-marketing",
+    "l1-quiet-hours"
+  ]
+}

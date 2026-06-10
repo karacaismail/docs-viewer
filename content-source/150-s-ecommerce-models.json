@@ -1,0 +1,365 @@
+{
+  "id": "s-ecommerce-models",
+  "title": "E-Ticaret İş Modelleri — Capability Flag Mimarisi",
+  "subtitle": "B2C, B2B, C2C, B2B2B, B2B2C, C2B, D2C, B2G, C2G, G2C, B2E, P2P, M2C, O2O — hepsi capability flag. Tenant 'B2C'den geçmez; 'B2B yeteneğini açar'.",
+  "cluster": "core-operations",
+  "order": 2,
+  "icon": "ph-arrows-clockwise",
+  "granularity": "kaya",
+  "state": "wip",
+  "tags": [
+    "core-operations",
+    "ecommerce",
+    "b2c",
+    "b2b",
+    "c2c",
+    "b2b2b",
+    "b2b2c",
+    "capability-flag",
+    "architecture"
+  ],
+  "enrich": {
+    "info": "Tüm e-ticaret modelleri 2-eksen matrisinden türer: sell-side aktör × buy-side aktör. Enum değil — capability flag. Composition, transition değil.",
+    "detail": "**Felsefe (mimari karar):**\n\n*'Müşteri B2C'den B2B'ye geçmez. Müşteri B2B yeteneğini açar.'*\n\nBu fark mimari yıkım/migration yerine **additif konfigürasyon** demek. 50 yıllık sürdürülebilirlik hedefiyle birebir örtüşür. Şema değişmez; capability flag açılır.\n\n**2-eksen matrisi (modellerin türetildiği yer):**\n\n- **Sell-side aktör tipi**: Business / Consumer / Manufacturer / Government / Employee / Peer\n- **Buy-side aktör tipi**: Business / Consumer / Manufacturer / Government / Employee / Peer\n\nBu iki eksenin 6×6 kombinasyonu → 36 olası model. Pazarda 14'ü yaygın isimle bilinir; geri kalan 22'si niş ama mimari aynı çalışır.\n\n**14 yaygın model:**\n\n| Model | Sell-side | Buy-side | Örnek |\n|---|---|---|---|\n| **B2C** | Business | Consumer | Trendyol, Hepsiburada |\n| **B2B** | Business | Business | Alibaba, SAP Ariba |\n| **C2C** | Consumer | Consumer | Sahibinden, eBay |\n| **B2B2B** | Business | Business (aracılı) | Distribütör/bayi zinciri |\n| **B2B2C** | Business | B (→ C) | Marka → bayi → son müşteri (pazaryeri satıcı) |\n| **C2B** | Consumer | Business | Freelancer, influencer |\n| **D2C** | Manufacturer | Consumer | Aracısız marka satışı |\n| **B2G** | Business | Government | Kamu ihalesi, e-devlet tedarik |\n| **C2G** | Consumer | Government | Vergi, harç, ceza ödeme |\n| **G2C / G2B** | Government | C/B | E-devlet kullanıcı/işletme servisleri |\n| **B2E** | Business | Employee | Kafeterya, yan haklar, kurumsal iç satış |\n| **P2P** | Peer | Peer | Blockchain/kripto, aracısız değiş-tokuş |\n| **M2C / M2B** | Manufacturer | C/B | B2B2C'nin ilk halkasını ayırt etmek |\n| **O2O** | Business (online) | Consumer (offline) | Click & collect, mağazadan teslim |\n\n**Hibrit/dikey modeller (paralel capability):**\n\n- **Marketplace** (multi-vendor): tek mağaza → çok-satıcılı pazaryerine kompozisyon\n- **Dropshipping**: stoksuz satış, tedarikçi-direkt sevkiyat\n- **Subscription commerce**: tekrarlı satış (recurring billing)\n- **Social commerce**: sosyal medya kanalı üstünden satış\n- **Headless / API-first**: sunum katmanından ayrık çekirdek\n\n**Capability flag patterni (uygulama):**\n\n```sql\nCREATE TABLE tenant_capabilities (\n  tenant_id INT,\n  capability TEXT,        -- 'b2c', 'b2b', 'marketplace', 'dropship', 'subscription'\n  enabled BOOL DEFAULT false,\n  enabled_at TIMESTAMPTZ,\n  PRIMARY KEY (tenant_id, capability)\n);\n```\n\nMüşteri 'B2B aç' dediğinde:\n- Yeni capability row eklenir (`INSERT (tenant_id, 'b2b', true)`)\n- Mevcut tablolar değişmez\n- B2B'ye özgü alanlar (vergi no, fatura adresi, kredi limiti) **opsiyonel** kolon olarak zaten var; sadece UI'de görünür\n- Mevcut B2C siparişleri bozulmaz\n\n**Aktör tablosu** (party DocType'tan türer):\n\n```sql\nparty (id, name, kind ENUM('business','consumer','manufacturer','government','employee','peer'), ...)\norder (id, sell_party_id, buy_party_id, model TEXT, ...)\n```\n\n`order.model` derived field (computed): `sell_party.kind || '2' || buy_party.kind` → 'B2C', 'B2B', vs. otomatik.",
+    "terms": [
+      {
+        "term": "Capability Flag",
+        "abbrev_tr": "Yetenek bayrağı",
+        "meaning": "Tenant başına açılabilir/kapatılabilir yetenek (b2c, b2b, marketplace, dropship).",
+        "why": "Tek tenant aynı anda hem B2C hem B2B çalışabilir; enum tek seçim zorlar, flag çoklu açar."
+      },
+      {
+        "term": "Sell-side / Buy-side",
+        "abbrev_tr": "Satıcı tarafı / Alıcı tarafı",
+        "meaning": "Bir e-ticaret işleminin iki ucu — kim satıyor, kim alıyor.",
+        "why": "Bu iki ekseni ayrı tutarsan tüm model isimlerinden bağımsız mimari kurarsın."
+      },
+      {
+        "term": "Additif Konfigürasyon",
+        "abbrev_tr": "Eklemeli yapılandırma",
+        "meaning": "Mevcut yapıyı bozmadan yeni özellik ekleme. Yıkıcı migration yerine.",
+        "why": "50 yıllık sürdürülebilirlik için: ekle, asla değiştirme/kaldırma."
+      },
+      {
+        "term": "Composition vs Transition",
+        "abbrev_tr": "Kompozisyon vs geçiş",
+        "meaning": "'B2C'den B2B'ye geçiş' YANLIŞ — 'B2B yeteneği eklemek' DOĞRU.",
+        "why": "Geçiş = veri yıkımı; kompozisyon = yan yana koyma. İkinci sürdürülebilir."
+      },
+      {
+        "term": "D2C",
+        "abbrev_of": "Direct to Consumer",
+        "abbrev_tr": "Üreticiden tüketiciye",
+        "meaning": "Marka kendi ürününü aracısız satar.",
+        "why": "Geleneksel B2B2C zincirini kısaltır → daha yüksek marj + müşteri verisine sahiplik."
+      },
+      {
+        "term": "Marketplace",
+        "abbrev_tr": "Pazaryeri (çok-satıcılı)",
+        "meaning": "Tek platform, birden fazla satıcı; platform aracılık eder.",
+        "why": "Tek-mağaza → marketplace dönüşümü en kritik kompozisyon."
+      },
+      {
+        "term": "O2O",
+        "abbrev_of": "Online to Offline",
+        "abbrev_tr": "Online'dan offline'a",
+        "meaning": "Click & collect, mağazadan teslim, online randevu + fiziksel hizmet.",
+        "why": "Pandemi sonrası restoran/perakende için zorunlu."
+      }
+    ],
+    "stories": [
+      {
+        "persona": "Bakkal Hatice Teyze (62) — online satış başlangıcı",
+        "context": "Hatice Teyze mahallede 30 yıllık bakkal. Pandemide WhatsApp'tan sipariş aldı. Şimdi gerçek bir online satış kurmak istiyor: önce mahalleye paket servisi (B2C), sonra civar marketlere toptan satış (B2B), bir gün belki başka bakkalları da pazaryerine alacak (marketplace).",
+        "outcome": "Bu sistemde tek bir hesap. Önce **b2c capability** açılır — site, sepet, ödeme. 6 ay sonra **b2b capability** açılır — toptan müşteri kartı + vergi no + kredi limiti aynı sistemde. Bir sonraki sene **marketplace capability** — başka satıcılar Hatice Teyze'nin sitesinde mağaza açar, komisyon alır. **Tek migration yok, hep eklemeli.**"
+      },
+      {
+        "persona": "Manav Selim Bey (62) — birden fazla model aynı anda",
+        "context": "Selim Bey haftalık halden alış (B2B alıcı tarafı), mahallede perakende satış (B2C satıcı tarafı), turistlere döviz hesabıyla satış (?). Sistem her birini ayrı yazılım istiyordu, vazgeçti.",
+        "outcome": "Capability flag ile: Selim Bey **alış-tarafında B2B**, **satış-tarafında B2C + O2O (mağazadan teslim) + Social (Instagram'dan sipariş)**. Hepsi tek tablo, tek müşteri kartı, tek stok. Aktör tipi ve capability flag birlikte modeller türetir."
+      },
+      {
+        "persona": "Yusuf Bey (66) — kamu ihalesi (B2G)",
+        "context": "Yusuf Bey emekli, küçük temizlik ürünleri toptanı işletiyor. Belediyenin temizlik malzeme ihalesini aldı. Normal satış sisteminde fatura kesmek farklı — B2G fatura formatı, e-İhale entegrasyonu, ödeme 60 gün vadeli.",
+        "outcome": "**b2g capability** açılır → aynı sistemden B2G siparişi: fatura otomatik kamu formatında, ödeme termini 60 gün varsayılan, e-İhale ID kaydedilir. Mevcut B2C siparişleri etkilenmez."
+      }
+    ],
+    "lesson": {
+      "ne": "E-ticaret iş modelleri (B2C, B2B, marketplace vs.) ayrı yazılımlar değil — tek altyapıda capability flag olarak açılan yetenekler.",
+      "nicin": "Müşteri büyürken model değişir (B2C → +B2B → +marketplace). Geleneksel yaklaşım yeni yazılım kurar veya migration yapar; ikisi de pahalı + risk. Capability flag = sıfır migration, sıfır risk.",
+      "nasil": "1) Sell-side ve Buy-side aktör tipini DocType'ta tut. 2) Capability flag tablosu tenant başına. 3) UI feature flag ile koşullu görünüm. 4) Model adı (B2B, B2C vs.) view layer'da derived/hesaplanan alan.",
+      "nerede": "`s-ecommerce-models` cluster — felsefe + matris. `s-commerce` cluster — uygulama. `k-tenancy` — capability tablosu.",
+      "ne_zaman": "İlk e-ticaret tenant'ı oluşturulmadan ÖNCE bu mimari karar. Sonradan refactor 1000x pahalı.",
+      "kim": "Mimar capability listesi tanımlar; backend developer flag tabloyu kurar; ürün ekibi hangi yetenek hangi tier'da satılır karar.",
+      "frontend": {
+        "yer": "Tenant settings → 'Yetenekler' sayfası. Açma/kapama toggle.",
+        "gereklilik": "Bir capability açık değilse ilgili menü/sayfa görünmez. Kapatınca veri silinmez, gizlenir.",
+        "ornek": "`if (tenant.capabilities.b2b) showB2BMenu()` — feature flag pattern."
+      },
+      "backend": {
+        "yer": "Middleware capability check: B2B endpoint'ine istek geldiğinde `tenant.capabilities.b2b === true` mi?",
+        "gereklilik": "Yetkisiz capability'ye 404 (varlık inkârı) veya 403 (yasaklama) — ürün kararı.",
+        "ornek": "`if (!ctx.tenant.capabilities.includes('b2b')) throw new ForbiddenError()`."
+      },
+      "analoji": "Apartman dairesi: 1+1 olarak başlar, sahibi balkon kapatır (yetenek+), bodrumu mağaza yapar (yetenek+), sonra çatıya teras (yetenek+). Daire tipini değiştirmedi; **yetenekler ekledi**. Her ekleme öncekini yıkmadan yapıldı."
+    }
+  },
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "**Mimari karar:** *'B2C'den B2B'ye geçiş'* anlatımı yanlış. Doğrusu *'B2B yeteneğini açma'*. Bu fark veri modelinde yıkıcı migration yerine **eklemeli capability flag** demek. 50 yıllık sürdürülebilirlik hedefine birebir hizmet eder."
+    },
+    {
+      "type": "callout",
+      "variant": "critical",
+      "label": "Composition > Transition",
+      "body": "Müşteri model değiştirmiyor — yetenek ekliyor. Aynı tenant aynı anda hem B2C hem D2C hem marketplace olabilir. Enum tek seçim zorlar; capability flag çoklu açar. **Mimari kararı baştan al, sonradan dönmek imkânsız.**"
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "2-eksen matrisi — modellerin kaynağı"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Sell-side ↓ / Buy-side →",
+        "Consumer (C)",
+        "Business (B)",
+        "Government (G)",
+        "Employee (E)",
+        "Peer (P)"
+      ],
+      "rows": [
+        [
+          "Business",
+          "B2C",
+          "B2B",
+          "B2G",
+          "B2E",
+          "-"
+        ],
+        [
+          "Consumer",
+          "-",
+          "C2B",
+          "C2G",
+          "-",
+          "-"
+        ],
+        [
+          "Manufacturer",
+          "M2C / D2C",
+          "M2B",
+          "-",
+          "-",
+          "-"
+        ],
+        [
+          "Government",
+          "G2C",
+          "G2B",
+          "-",
+          "-",
+          "-"
+        ],
+        [
+          "Peer",
+          "-",
+          "-",
+          "-",
+          "-",
+          "P2P"
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "14 yaygın model — capability flag karşılığı"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Model",
+        "Sell-side",
+        "Buy-side",
+        "Capability flag",
+        "Örnek"
+      ],
+      "rows": [
+        [
+          "B2C",
+          "Business",
+          "Consumer",
+          "b2c",
+          "Trendyol, Hepsiburada"
+        ],
+        [
+          "B2B",
+          "Business",
+          "Business",
+          "b2b",
+          "Alibaba, SAP Ariba"
+        ],
+        [
+          "C2C",
+          "Consumer",
+          "Consumer",
+          "c2c",
+          "Sahibinden, eBay"
+        ],
+        [
+          "B2B2B",
+          "B (aracı)",
+          "B",
+          "b2b + reseller",
+          "Distribütör / bayi zinciri"
+        ],
+        [
+          "B2B2C",
+          "B → B → C",
+          "Consumer",
+          "b2b + b2c + reseller",
+          "Marka → bayi → son kullanıcı"
+        ],
+        [
+          "C2B",
+          "Consumer",
+          "Business",
+          "c2b",
+          "Freelancer, influencer"
+        ],
+        [
+          "D2C",
+          "Manufacturer",
+          "Consumer",
+          "d2c",
+          "Aracısız marka satışı"
+        ],
+        [
+          "B2G",
+          "Business",
+          "Government",
+          "b2g",
+          "Kamu ihalesi, e-devlet tedarik"
+        ],
+        [
+          "C2G",
+          "Consumer",
+          "Government",
+          "c2g",
+          "Vergi, harç, ceza ödeme"
+        ],
+        [
+          "G2C / G2B",
+          "Government",
+          "C / B",
+          "g2c / g2b",
+          "E-devlet servisleri"
+        ],
+        [
+          "B2E",
+          "Business",
+          "Employee",
+          "b2e",
+          "Kafeterya, yan haklar"
+        ],
+        [
+          "P2P",
+          "Peer",
+          "Peer",
+          "p2p",
+          "Kripto, aracısız değiş-tokuş"
+        ],
+        [
+          "M2C / M2B",
+          "Manufacturer",
+          "C / B",
+          "d2c",
+          "B2B2C'nin ilk halkası"
+        ],
+        [
+          "O2O",
+          "B (online)",
+          "C (offline)",
+          "b2c + o2o",
+          "Click & collect, mağazadan teslim"
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Hibrit / dikey capability'ler"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Capability",
+        "Açıldığında",
+        "Bağımlılık"
+      ],
+      "rows": [
+        [
+          "marketplace",
+          "Multi-vendor mağaza — komisyon, satıcı dashboard, ödeme split",
+          "b2c veya b2b"
+        ],
+        [
+          "dropship",
+          "Stoksuz satış — tedarikçi direkt sevkiyat",
+          "b2c veya b2b"
+        ],
+        [
+          "subscription",
+          "Recurring billing — abonelik kutusu, MRR",
+          "s-billing"
+        ],
+        [
+          "social",
+          "Instagram/TikTok kanal satışı + checkout",
+          "b2c"
+        ],
+        [
+          "headless",
+          "Storefront yok; sadece API + SDK",
+          "Hiçbiri"
+        ],
+        [
+          "o2o",
+          "Click & collect, mağazadan teslim",
+          "b2c + fiziksel mağaza"
+        ]
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "tip",
+      "label": "Vibecoding ipucu",
+      "body": "AI ajan'a: *'tenant_capabilities tablo: tenant_id, capability TEXT, enabled BOOL, enabled_at. Order DocType'a sell_party_kind + buy_party_kind kolonu (ENUM business/consumer/manufacturer/government/employee/peer). Order.model derived field: kind1 + 2 + kind2. Capability check middleware her endpoint öncesi.'*"
+    },
+    {
+      "type": "callout",
+      "variant": "info",
+      "label": "Roadmap önerisi",
+      "body": "**Faz 2:** b2c + b2b + d2c capability'leri (en yaygın). **Faz 3:** marketplace + subscription + o2o. **Faz 4:** b2g (TR e-İhale entegrasyonu) + b2e (kurumsal kafeterya). **Faz 5+:** p2p, niş kombinasyonlar."
+    },
+    {
+      "type": "callout",
+      "variant": "critical",
+      "label": "Transaction Depth — 3. eksen",
+      "body": "2-eksen matrisi (sell-side × buy-side) yetmez. **3. eksen: transaction depth.**\n\n- **Lead-gen mode** — platform sadece eşleştirir; ödeme/teslimat platform DIŞINDA (Sahibinden, arsam.net, classifieds)\n- **Full-transaction mode** — sepet + ödeme + kargo + iade içeride (Trendyol, Hepsiburada)\n- **Hybrid mode** — çekirdek lead-gen + opsiyonel secure-payment katmanı\n\nAynı satıcı tipi (B2C) iki farklı dünyada yaşayabilir. Capability flag: `transaction_depth = 'lead_gen' | 'full' | 'hybrid'`. Bu eksen DocType seçiminden gelir modeline kadar her şeyi etkiler. Detaylar: `s-classifieds`."
+    }
+  ],
+  "related": [
+    "s-commerce",
+    "s-marketplace",
+    "s-billing",
+    "k-tenancy",
+    "l1-party",
+    "philosophy",
+    "sus-boundaries",
+    "s-classifieds"
+  ]
+}

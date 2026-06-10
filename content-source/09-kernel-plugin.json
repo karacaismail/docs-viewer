@@ -1,0 +1,322 @@
+{
+  "id": "k-plugin",
+  "title": "Plugin Registry + Manifest",
+  "subtitle": "Framework olmanın can damarı. Plugin yazılabiliyorsa platform, yazılamıyorsa uygulama.",
+  "cluster": "layer0",
+  "layer": "kernel",
+  "order": 6,
+  "icon": "ph-puzzle-piece",
+  "badge": "Layer 0 — Kernel #6",
+  "tags": [
+    "plugin",
+    "manifest",
+    "extension",
+    "kernel"
+  ],
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "Framework olmanın can damarı. Plugin yazılabiliyorsa platform, yazılamıyorsa uygulama. Tahtanda bu yoktu — eklemek zorundayız."
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Plugin manifest — kanonik format"
+    },
+    {
+      "type": "paragraph",
+      "text": "Frappe `hooks.py`, Odoo `__manifest__.py`, WordPress plugin header, Strapi `strapi-server.js` — hepsi aynı fikrin farklı versiyonu. Bizim format (Python + TS uyumlu, YAML):"
+    },
+    {
+      "type": "code",
+      "lang": "yaml",
+      "title": "plugin.yaml",
+      "content": "name: my_inventory_extension\nversion: 1.2.3\napi_version: \"1.0\"        # framework API contract version\npublisher: acme-corp\nlicense: LGPL-3.0\ndescription: \"Custom inventory extensions for Acme\"\n\ndepends:\n  - framework: \"^1.0.0\"\n  - commerce: \"^2.1.0\"\n  - accounting: \"^1.5.0\"\n\npermissions:\n  - read: [Customer, SalesOrder]\n  - write: [SalesOrder]\n  - publish_event: [OrderShipped]\n\nhooks:\n  doc_events:\n    SalesOrder:\n      before_save: handlers/sales_order.py::before_save\n      on_submit: handlers/sales_order.ts::onSubmit\n  schedule:\n    daily: tasks/cleanup.py::daily_cleanup\n    cron:\n      - schedule: \"0 */6 * * *\"\n        handler: tasks/sync.py::sync_partners\n\ndoctypes:           # DocType'ları bu plugin tanımlar\n  - definitions/custom_field.json\n\nfixtures:           # Initial data (seed)\n  - fixtures/categories.json\n\ntranslations:\n  - translations/tr.po\n  - translations/en.po\n\nui:\n  pages:\n    - path: /inventory/dashboard\n      component: pages/Dashboard.tsx\n  menu:\n    - title: \"Acme Inventory\"\n      icon: ph-package\n      route: /inventory"
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Dependency resolution"
+    },
+    {
+      "type": "paragraph",
+      "text": "Odoo'nun `depends` listesi: install sırasında topological sort. A plugin'i B'ye bağlıysa, B önce yüklenir. Cycle detection — framework boot'ta hata verir, install fail."
+    },
+    {
+      "type": "paragraph",
+      "text": "Semantic versioning — Backstage pattern'i: extension point'ler tek tek versiyonlanır, deprecation per-hook. `commerce: \"^2.1.0\"` = \"2.1.0 ile uyumlu, 3.0.0 değil\"."
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Plugin lifecycle hooks"
+    },
+    {
+      "type": "list",
+      "items": [
+        "`before_install` — install öncesi check (lisans, dependency).",
+        "`after_install` — schema migration, fixtures, default config.",
+        "`before_uninstall` — cleanup uyarısı.",
+        "`after_uninstall` — data export/anonymize seçeneği.",
+        "`before_migrate` — version upgrade öncesi.",
+        "`after_migrate` — version upgrade sonrası.",
+        "`clear_cache` — cache invalidation."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Hook kategorileri — Frappe esinli"
+    },
+    {
+      "type": "paragraph",
+      "text": "Frappe ~30 hook kategorisi destekler. Sen başlangıç için:"
+    },
+    {
+      "type": "table",
+      "compact": true,
+      "headers": [
+        "Kategori",
+        "Hook tipi",
+        "Örnek"
+      ],
+      "rows": [
+        [
+          "Document lifecycle",
+          "doc_events",
+          "before_save, validate, on_submit, on_cancel, after_delete"
+        ],
+        [
+          "Schedule",
+          "scheduler_events",
+          "hourly, daily, weekly, monthly, cron"
+        ],
+        [
+          "Permission",
+          "permission_query_conditions, has_permission",
+          "SELECT WHERE injection"
+        ],
+        [
+          "Override",
+          "override_doctype_class, override_method",
+          "Default davranışı değiştir"
+        ],
+        [
+          "UI",
+          "app_include_js/css, doctype_js, page",
+          "Form behavior, page routes"
+        ],
+        [
+          "Boot/data",
+          "boot_session, fixtures, setup_wizard",
+          "İlk kurulum, seed"
+        ],
+        [
+          "Web",
+          "website_route_rules, redirects, home_page",
+          "Public site routes"
+        ],
+        [
+          "Mail/Notification",
+          "notification_config, sender_field",
+          "Email pipeline"
+        ],
+        [
+          "Auth",
+          "auth_hooks",
+          "Custom auth providers"
+        ],
+        [
+          "Jinja/Template",
+          "jinja_methods, jinja_filters",
+          "Template extension"
+        ],
+        [
+          "Migration",
+          "before_migrate, after_migrate",
+          "Schema upgrade"
+        ],
+        [
+          "Search",
+          "search_routes, global_search",
+          "Search extension"
+        ],
+        [
+          "Workflow",
+          "workflow_action_handlers",
+          "Custom transition actions"
+        ],
+        [
+          "API",
+          "api_routes, override_whitelisted_methods",
+          "REST/RPC endpoints"
+        ],
+        [
+          "Realtime",
+          "realtime_handlers",
+          "WebSocket channels"
+        ],
+        [
+          "AI",
+          "ai_tools, ai_agents",
+          "MCP tools, agent definitions"
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Marketplace"
+    },
+    {
+      "type": "paragraph",
+      "text": "VS Code Marketplace + Shopify App Store muadili. Publisher kayıt olur, plugin yükler, review (security scan + manual). Tenant admin App Store'a girer, install eder. Install:",
+      "enrich": {}
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        "Manifest indir, schema migration uygula.",
+        "Fixtures yükle (seed data).",
+        "Hook'ları register et.",
+        "Permission'lar tenant admin onayına sun (\"şu DocType'ları okuyacak\").",
+        "`after_install` çalıştır."
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "warning",
+      "label": "Tuzak — global mutable state",
+      "body": "Junior plugin'i çoğunlukla \"framework'ün global'ine yamala\" diye düşünür. Yasak. Hook registry üzerinden bağlanır. Strapi'nin \"admin extension\" sorununu yaratan budur: \"plugin update'i extension'larımı kırıyor\". Hook contract'ı semver ile koru."
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "icon": "ph-grid-four",
+      "text": "LandX bakışı: K01 Plugin Lifecycle + K05 Service Container"
+    },
+    {
+      "type": "paragraph",
+      "text": "LandX **K01 — Plugin Lifecycle Manager** (Faz 1 · P0) plugin manifest'in tam alanlarını verir: `slug` (globally unique), `version` (semver), `license` (MIT/Apache-2.0/Proprietary/Commercial), `signed` (boolean), `signature_authority`, `compatibility_matrix` (kernel sürüm aralığı). *Plugin install p95 <30sn, dependency conflict otomatik tespiti %100, downtime-free upgrade >%95.*"
+    },
+    {
+      "type": "feature-list",
+      "items": [
+        {
+          "name": "Plugin Capability Beyanı",
+          "desc": "`declared_doctypes`, `declared_hooks`, **`declared_tools`** (MCP tool'ları), `declared_routes`, `required_capabilities` (başka plugin'lerden ihtiyaç), `optional_capabilities`",
+          "enrich": {
+            "info": "`declared_doctypes`, `declared_hooks`, **`declared_tools`** (MCP tool'ları), `declared_routes`, `required_capabilities` (başka plugin'lerden"
+          }
+        },
+        {
+          "name": "Install Workflow",
+          "desc": "`install_id` (idempotent + mcp), `strategy` (atomic/staged/canary), `dry_run` (plan üret), `install_log` (streaming), `rollback_token`",
+          "enrich": {
+            "info": "`install_id` (idempotent + mcp), `strategy` (atomic/staged/canary), `dry_run` (plan üret), `install_log` (streaming), `rollback_token`"
+          }
+        },
+        {
+          "name": "Upgrade & Migration",
+          "desc": "`migration_plan` (AI-generated), `breaking_changes` (AI), `downtime_estimate_sec` (AI)",
+          "enrich": {
+            "info": "`migration_plan` (AI-generated), `breaking_changes` (AI), `downtime_estimate_sec` (AI)"
+          }
+        },
+        {
+          "name": "Dependency Graph",
+          "desc": "Cycle detection, `resolution_strategy` (strict/optimistic/forced), `resolution_plan_explanation` (AI), `Conflict Detection` (AI auto-resolution suggestion)",
+          "enrich": {
+            "info": "Cycle detection, `resolution_strategy` (strict/optimistic/forced), `resolution_plan_explanation` (AI), `Conflict Detection` (AI auto-resolut"
+          }
+        },
+        {
+          "name": "Plugin Registry",
+          "desc": "`Local Registry` (sync, trusted_publishers, verification_policy), `Health Probe` (liveness/readiness, error_rate_5m)",
+          "enrich": {
+            "info": "`Local Registry` (sync, trusted_publishers, verification_policy), `Health Probe` (liveness/readiness, error_rate_5m)"
+          }
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "LandX **K05 — Service Container & Configuration** (Faz 2 · P1) dependency injection + hierarchical config + feature flags + secrets — hepsini tek modüle taşır. *Config read p99 <5ms, feature flag toggle propagation <2sn, secret rotation downtime 0.*"
+    },
+    {
+      "type": "kv-row",
+      "pairs": [
+        {
+          "key": "Service Registry",
+          "value": "`name`, `interface` (protokol/abstract), `implementation`, `scope` (singleton/transient/scoped/tenant_scoped)"
+        },
+        {
+          "key": "Configuration Hierarchy",
+          "value": "global → tenant → user → agent → session — `Hierarchical Lookup` ile `source_scope` döner"
+        },
+        {
+          "key": "Feature Flag",
+          "value": "`rollout_strategy` (boolean/percentage/cohort/rule), `rule_expression`, `Flag Evaluation` per subject"
+        },
+        {
+          "key": "Secrets Resolution",
+          "value": "`provider` (vault/aws_sm/gcp_sm/local), `rotation_policy`, `last_rotated_at`"
+        }
+      ]
+    }
+  ],
+  "enrich": {
+    "info": "Sistemin ana koduna dokunmadan yeni özellikler eklemenizi sağlayan eklenti listesi.",
+    "detail": "Framework olmanın can damarı. Plugin yazılabiliyorsa platform, yazılamıyorsa uygulama.",
+    "terms": [
+      {
+        "term": "Plugin",
+        "abbrev_tr": "Eklenti",
+        "meaning": "Çekirdek değişmeden eklenen davranış paketi.",
+        "why": "15 ürün tek çekirdeğin üstünde böyle yaşar."
+      },
+      {
+        "term": "Manifest",
+        "abbrev_tr": "Bildirim dosyası",
+        "meaning": "Plugin'in adı, sürümü, izinleri, hook'larını listeleyen dosya.",
+        "why": "Çekirdek manifest'e bakarak plugin'i yükler."
+      },
+      {
+        "term": "Registry",
+        "abbrev_tr": "Sicil",
+        "meaning": "Yüklü plugin'lerin merkezi listesi.",
+        "why": "Çakışma, sürüm, bağımlılık çözümü."
+      }
+    ],
+    "lesson": {
+      "ne": "Sistemin ana koduna dokunmadan yeni özellikler eklemenizi sağlayan eklenti listesi. Telefonun uygulama mağazasına benzer.",
+      "nicin": "Her müşterinin ihtiyacı farklı. Birine 'kargo entegrasyonu', diğerine 'e-fatura' lazım. Eklenti olmasaydı her müşteriye ayrı sistem yazardık.",
+      "nasil": "Eklenti yazarı bir 'tanıtım kartı' (manifest) hazırlar. Sistem bu kartı okur, eklentiyi listesine ekler. Kullanıcı 'kur' butonuna bastığında eklenti devreye girer.",
+      "nerede": "Yönetici panelinde 'Eklentiler' menüsü. Açıp kapatabilir, ayarlarını değiştirebilirsiniz.",
+      "ne_zaman": "Yeni bir iş ihtiyacı doğduğunda. Sistem yazarına bağımlı kalmadan, hazır eklentilerden seçersiniz.",
+      "kim": "Üçüncü taraf yazarlar yazar; sistem yöneticisi kurar; son kullanıcı yeni özelliği menüde görür.",
+      "analoji": "Mutfak robotunun aksesuarları: aynı motor, farklı uçlar. Bugün doğrayıcı taktınız, yarın blender. Robot değişmez; iş değişir."
+    },
+    "stories": [
+      {
+        "persona": "Çiçekçi Selma Hanım — sipariş takip eklentisi",
+        "context": "Mahalleye çiçek dağıtırken WhatsApp'tan gelen siparişleri Excel'e aktarıyor; kargo şirketinin web sitesine ayrıca giriyor. Tek tek vakit alıyor.",
+        "outcome": "Yazılım pazarından 'WhatsApp Sipariş Eklentisi' kurar; WhatsApp mesajları otomatik sipariş kartına dönüşür. Sonra 'Aras Kargo Eklentisi' kurar; tek tuşla kargo açılır. Kod yazmadan yeni yetenekler."
+      },
+      {
+        "persona": "Eczane Bilge Hanım — SGK reçete eklentisi",
+        "context": "Reçeteleri SGK sistemine ayrıca giriyor; hem eczane defterine hem SGK ekranına aynı bilgiyi iki kez yazıyor.",
+        "outcome": "'SGK Reçete Köprü' eklentisini pazaryerinden kurar. Eczanesindeki reçete kaydı SGK'ya otomatik geçer. Yazılımcı çağırma maliyeti sıfır; aylık eklenti ücreti ödeniyor."
+      },
+      {
+        "persona": "Apartman yöneticisi Zeynep Hanım — KKB borç sorgu eklentisi",
+        "context": "Yeni kiracı geliyor; sicilini sormak istiyor ama KKB'ye ayrı abone değil; ayrıca işlem ücretli ve zor.",
+        "outcome": "Yönetim yazılımına 'KKB Hızlı Sorgu' eklentisi kurar. Kiracı kartında tek butonla rapor görünür. İhtiyaç bittiğinde eklenti kapatılır; abonelik durur."
+      }
+    ]
+  }
+}

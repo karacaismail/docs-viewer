@@ -1,0 +1,206 @@
+{
+  "id": "s-payment-methods",
+  "title": "Yerel Ödeme Yöntemleri — SEPA, iDEAL, Pix, UPI, BKM Taksit, PSD2 SCA",
+  "subtitle": "Ülke bazlı ödeme matrisi: AB'de SEPA + PSD2 zorunlu, TR'de taksit kritik, Almanya iDEAL'ye yakın, Brezilya Pix, Hindistan UPI. Tek 'kredi kartı' = ölü dönüşüm.",
+  "cluster": "core-operations",
+  "order": 13,
+  "icon": "ph-credit-card",
+  "granularity": "orta-tas",
+  "state": "wip",
+  "tags": [
+    "core-operations",
+    "payment",
+    "sepa",
+    "ideal",
+    "pix",
+    "upi",
+    "bkm",
+    "psd2",
+    "sca",
+    "installment"
+  ],
+  "enrich": {
+    "info": "Ülke bazlı yerel ödeme yöntemleri matrisi, PSD2 SCA (AB), TR taksit zorunluğu, gateway seçimi (Stripe/Iyzico/Paddle/MercadoPago/Razorpay).",
+    "detail": "**Klasik tuzak:** *'Stripe + kredi kartı yetiyor, her ülkede çalışır.'* Yanlış. Yerel ödeme yöntemi olmayan checkout = **%30-60 dönüşüm kaybı**.\n\n**Ülke matrisi — yaygın yerel yöntemler:**\n\n| Ülke | Ana yerel yöntemler | Kredi kartı pazar payı |\n|---|---|---|\n| TR | **BKM POS (taksit)**, Iyzico, PayTR, BKM Express | %75 — ama taksit YOK = dönüşüm yarıya iner |\n| DE | **SEPA Direct Debit**, Giropay, PayPal, Klarna | %30 — kart az kullanılır |\n| NL | **iDEAL** | %85 iDEAL pazarda; kart düşük |\n| FR | **Carte Bancaire**, SEPA | %60 yerel CB; uluslararası kart ayrı |\n| GB | Kart, Open Banking, Apple/Google Pay | Kart yüksek |\n| BR | **Pix** (anlık), **Boleto** (banka dekontu), kart | Pix %40, kart %35, Boleto %15 |\n| IN | **UPI** (anlık), kart, net banking | UPI %50+; kart düşük |\n| ID | **GoPay, OVO, Dana** (e-wallet) | E-wallet yüksek; kart düşük |\n| CN | **Alipay, WeChat Pay** | Yabancı kart neredeyse yok |\n| JP | **Konbini** (market ödeme), kart | Kart + konbini hibrit |\n\n**PSD2 / SCA (Strong Customer Authentication):**\n\n- **AB/AEA zorunlu** (PSD2, 2019): ödeme öncesi 2 faktörlü doğrulama (3DS2)\n- Faktörler: knowledge (parola) + possession (telefon) + inherence (parmak izi)\n- İstisnalar: TRA (Transaction Risk Analysis), düşük tutar (€30 altı), trusted beneficiary\n- ABD'de yok; checkout akışı farklı\n\n**TR taksit — kritik UI farkı:**\n\nTR'de checkout'ta **taksit seçimi zorunlu** (3, 6, 9, 12 ay). Banka başına farklı taksit imkânı (Garanti Bonus, Akbank Axess, Maximum, World, Paraf). BKM Express ile taksit ayarı otomatik gelir.\n\nAB'de taksit yok — gösterirsen kafa karıştırır. Locale'e değil **jurisdiction**'a bağla.\n\n**Capability flag: `payment_methods`** — tenant tier'ına göre hangi yöntemler aktif.\n\n**Gateway seçimi:**\n\n| Pazar | Önerilen | Sebep |\n|---|---|---|\n| TR | Iyzico, PayTR | BKM + taksit yerelleştirilmiş |\n| AB | Stripe, Adyen | SEPA + PSD2 SCA + multi-currency |\n| Global SaaS | Stripe + Paddle (MoR) | Vergi yükü Paddle'da |\n| BR | MercadoPago | Pix + Boleto entegre |\n| IN | Razorpay | UPI native |\n| Hibrit | Iyzico + Stripe + MercadoPago | Pazar başına en iyi |\n\n**Wallet & ekstra:** Apple Pay (iOS), Google Pay (Android), Samsung Pay (TR yaygın), PayPal (global ama TR'de düşük).\n\n**Crypto:** B2C nadir, B2B niş. Coinbase Commerce, BitPay. KVKK + MASAK uyumu kritik (TR'de banka onayı zor).",
+    "terms": [
+      {
+        "term": "PSD2 SCA",
+        "abbrev_of": "Payment Services Directive 2 — Strong Customer Authentication",
+        "abbrev_tr": "AB güçlü kimlik doğrulama",
+        "meaning": "AB'de ödeme öncesi 2 faktörlü doğrulama zorunlu.",
+        "why": "Olmadan AB ödemesi reddedilir. Checkout akışı kökten değişir."
+      },
+      {
+        "term": "SEPA",
+        "abbrev_of": "Single Euro Payments Area",
+        "abbrev_tr": "Avrupa tek euro alanı",
+        "meaning": "AB'de IBAN bazlı euro transfer.",
+        "why": "AB'de en yaygın B2B + büyük tutar ödeme. Kart komisyon yüksek olduğunda tercih."
+      },
+      {
+        "term": "BKM Express",
+        "abbrev_tr": "TR taksit + kart birleşik",
+        "meaning": "Tüm Türk bankaların kartı tek noktada + taksit.",
+        "why": "TR'de checkout dönüşümünün %30+ artırır."
+      },
+      {
+        "term": "Pix",
+        "abbrev_tr": "Brezilya anlık ödeme",
+        "meaning": "Anlık 24/7 banka transferi (Brezilya Merkez Bankası).",
+        "why": "Brezilya'da pazar payı %40+, Boleto'yu geçti."
+      },
+      {
+        "term": "UPI",
+        "abbrev_of": "Unified Payments Interface",
+        "abbrev_tr": "Hindistan anlık ödeme",
+        "meaning": "Hindistan'ın anlık banka transferi (NPCI).",
+        "why": "Hindistan'da pazar payı %50+. Kart çok az."
+      },
+      {
+        "term": "MoR",
+        "abbrev_of": "Merchant of Record",
+        "abbrev_tr": "Tescilli satıcı",
+        "meaning": "Paddle/FastSpring vergi + uyum yükünü alır.",
+        "why": "Küçük ekip 50 ülke vergi takip edemez; MoR çözer."
+      }
+    ],
+    "stories": [
+      {
+        "persona": "Bakkal Hatice Teyze (62) — TR taksit",
+        "context": "Hatice Teyze e-ticareti açtı, Stripe entegre etti, kart bilgileri checkout. Müşteri 'taksit yok mu?' diye soruyor, vazgeçiyor.",
+        "outcome": "Iyzico'ya geçti, BKM Express + 6 taksit eklendi. Dönüşüm %35'ten %52'ye çıktı."
+      },
+      {
+        "persona": "Genç esnaf Selim Bey (62'lik abisi 32) — AB açılım",
+        "context": "Selim Bey Almanya'ya açıldı. Kart ödemesi reddediliyor — PSD2 SCA gerek.",
+        "outcome": "Stripe 3DS2 entegrasyonu açıldı; Giropay + SEPA eklendi. Alman müşterinin %60'ı SEPA seçti — kart komisyon yüksek olduğu için tercih ediyorlar."
+      },
+      {
+        "persona": "Ayşe Hanım — Brezilya pazarı",
+        "context": "AB'den başarılı SaaS, Brezilya'ya açıldı, sadece kart kabul ediyor. Müşteriler 'Pix yok mu?' diye soruyor.",
+        "outcome": "MercadoPago entegre + Pix + Boleto. Brezilya'da dönüşüm 3x arttı; Pix anlık ödeme, Boleto banka dekontu (zaman gerektirir ama hâlâ önemli)."
+      }
+    ],
+    "lesson": {
+      "ne": "Ülke başına yerel ödeme yöntemleri matrisi + PSD2 SCA + TR taksit + gateway seçimi.",
+      "nicin": "'Kredi kartı yeter' yanılgısı = ülke başına %30-60 dönüşüm kaybı. Müşteri Pix istiyor, sen kart sunuyorsun = kayıp.",
+      "nasil": "1) Resolver jurisdiction'a göre payment_methods capability. 2) Gateway: TR Iyzico, AB Stripe, BR MercadoPago, IN Razorpay. 3) PSD2 SCA AB'de zorunlu. 4) TR taksit UI zorunlu, AB'de yok.",
+      "nerede": "`s-payment-methods` cluster + `s-billing` (recurring) + `cc-jurisdiction-resolver` (locale'e değil jurisdiction'a bağla).",
+      "ne_zaman": "İlk ödeme alınmadan ÖNCE pazar bazlı stratejisi netleşmeli.",
+      "kim": "Backend dev gateway entegre; finance team komisyon hesabı; ürün ekibi pazar başına UI.",
+      "frontend": {
+        "yer": "Checkout sayfası: jurisdiction'a göre yöntem listesi dinamik. TR'de taksit selector, AB'de yok.",
+        "gereklilik": "PSD2 SCA AB için 3DS2 redirect akışı. Pix QR kod, UPI deep link.",
+        "ornek": "`if (jurisdiction == 'TR') showInstallmentSelector() else if (jurisdiction in EU) requirePSD2()`"
+      },
+      "backend": {
+        "yer": "Gateway router: jurisdiction → gateway client. Webhook (l1-webhook-in) ödeme onayı.",
+        "gereklilik": "Idempotency key her ödeme; çift kesme YASAK.",
+        "ornek": "`processed_payments(idempotency_key, gateway, status, amount, currency)`"
+      },
+      "analoji": "Yurt dışı seyahatte cüzdan: TR'de kart + nakit, Avrupa'da SEPA + kart, Japonya'da nakit + Suica kartı. Tek tip cüzdan = ya kabul edilmez ya pahalı. Yerelleştir."
+    }
+  },
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "**'Stripe + kredi kartı her ülkede yeter' = ölü dönüşüm.** Yerel ödeme yöntemi sunmazsan TR'de taksit, AB'de SEPA, BR'de Pix isteyen müşteriyi kaybedersin."
+    },
+    {
+      "type": "callout",
+      "variant": "critical",
+      "label": "PSD2 SCA — AB zorunlu",
+      "body": "AB/AEA'da 2019'dan beri Strong Customer Authentication zorunlu. Ödeme öncesi 2 faktörlü doğrulama (3DS2). Olmadan ödeme **reddedilir**. ABD'de yok — checkout akışı farklı."
+    },
+    {
+      "type": "callout",
+      "variant": "critical",
+      "label": "TR taksit = checkout UI ana parçası",
+      "body": "TR'de taksit seçimi olmayan checkout = dönüşüm %50 düşer. BKM Express, 3-12 taksit, banka bonus puanları kritik. AB'de gösterirsen kafa karışır — **locale'a değil jurisdiction'a bağla**."
+    },
+    {
+      "type": "callout",
+      "variant": "tip",
+      "label": "Vibecoding ipucu",
+      "body": "AI ajan'a: *'tenant_capabilities.payment_methods JSONB: enabled_methods per jurisdiction. Resolver jurisdiction'a göre. Gateway router: Iyzico (TR), Stripe (AB), MercadoPago (BR), Razorpay (IN). PSD2 SCA için Stripe Payment Intents (3DS2 otomatik). Webhook idempotency processed_payments tablosu.'*"
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Ülke × yöntem matrisi"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Pazar",
+        "Ana yöntem",
+        "Gateway",
+        "SCA"
+      ],
+      "rows": [
+        [
+          "TR",
+          "BKM Express + 3-12 taksit",
+          "Iyzico, PayTR",
+          "Bankaya göre (3DS1/2)"
+        ],
+        [
+          "AB (DE)",
+          "SEPA + Giropay + PayPal",
+          "Stripe, Adyen",
+          "PSD2 SCA zorunlu"
+        ],
+        [
+          "AB (NL)",
+          "iDEAL",
+          "Stripe, Adyen",
+          "PSD2 SCA zorunlu"
+        ],
+        [
+          "GB",
+          "Kart + Open Banking",
+          "Stripe, Adyen",
+          "SCA zorunlu (post-Brexit AB pattern)"
+        ],
+        [
+          "ABD",
+          "Kart + Apple/Google Pay",
+          "Stripe",
+          "SCA yok"
+        ],
+        [
+          "BR",
+          "Pix + Boleto + kart",
+          "MercadoPago",
+          "Yok (Pix authentic by design)"
+        ],
+        [
+          "IN",
+          "UPI + kart",
+          "Razorpay",
+          "Yerel doğrulama"
+        ],
+        [
+          "JP",
+          "Konbini + kart",
+          "Stripe Japan, GMO",
+          "Yok"
+        ],
+        [
+          "CN",
+          "Alipay + WeChat",
+          "Alipay direct, Stripe via partner",
+          "Yerel"
+        ]
+      ]
+    }
+  ],
+  "related": [
+    "s-billing",
+    "s-commerce",
+    "cc-jurisdiction-resolver",
+    "cc-fx-ledger",
+    "cc-compliance-matrix",
+    "scale-webhook"
+  ]
+}

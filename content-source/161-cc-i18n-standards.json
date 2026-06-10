@@ -1,0 +1,228 @@
+{
+  "id": "cc-i18n-standards",
+  "title": "i18n Teknik Standartları — BCP 47, CLDR, ICU, RTL",
+  "subtitle": "Locale kodlama (BCP 47), ISO standartları, Unicode CLDR, ICU MessageFormat, RTL, Türkçe i/ı collation tuzağı, pseudo-localization.",
+  "cluster": "crosscut",
+  "order": 10,
+  "icon": "ph-translate",
+  "granularity": "orta-tas",
+  "state": "wip",
+  "tags": [
+    "crosscut",
+    "i18n",
+    "l10n",
+    "bcp-47",
+    "cldr",
+    "icu",
+    "rtl",
+    "collation"
+  ],
+  "enrich": {
+    "info": "BCP 47 dil etiketleri, ISO 639/3166/15924, Unicode CLDR (altın kaynak), ICU MessageFormat pluralization, RTL bidi, NFC normalization, Türkçe locale tuzakları.",
+    "detail": "**1. Locale kodlama — BCP 47:**\n\n- `tr-TR` (Türkçe / Türkiye), `en-US`, `pt-BR`, `zh-Hant-HK` (Geleneksel Çince / Hong Kong)\n- `tr` tek başına yetmez — bölge varyantları kritik (pt-PT ≠ pt-BR)\n- **ISO 639**: dil (tr, en, zh)\n- **ISO 3166-1**: ülke (TR, US, BR)\n- **ISO 15924**: yazı sistemi (Latn, Hant, Cyrl)\n\n**2. Unicode CLDR (altın kaynak):**\n\n- Tarih/saat formatları, sayı formatları\n- Çoğul kuralları (plural rules)\n- Para birimi sembolleri + konumları\n- Sıralama (collation) kuralları\n- Tüm major framework'ler CLDR'a dayanır (ICU, Intl API, glibc)\n\n**3. Pluralization — ICU MessageFormat:**\n\nCLDR plural kategorileri: `zero` / `one` / `two` / `few` / `many` / `other`\n\n- İngilizce: 2 form (one/other) — '1 apple' / '5 apples'\n- Türkçe: 1 form (other) — '1 elma' / '5 elma'\n- Rusça: 4 form (one/few/many/other) — gramer kuralı karmaşık\n- Arapça: 6 form (zero/one/two/few/many/other)\n\n```\n{count, plural,\n  =0 {hiç ürün yok}\n  one {1 ürün}\n  other {# ürün}\n}\n```\n\nCümle parçası birleştirme (concatenation) YASAK: `'Found ' + count + ' items'` → çevrilmez, gramer kayar.\n\n**4. RTL (Right-to-Left) — Arapça/İbranice:**\n\n- `<html dir='rtl'>` set\n- CSS **logical properties** ZORUNLU: `margin-inline-start` (margin-left değil), `padding-inline-end`, `text-align: start`\n- Icon flip: `transform: scaleX(-1)` for arrow icons\n- Bidi text: Unicode bidi algoritması, mixed-direction string\n\n**5. Karakter & kodlama:**\n\n- UTF-8 her yerde, BOM yok\n- **NFC (Normalization Form C)** zorunlu — özellikle birleşik karakterler (Türkçe İ/ı, akzanlı harfler)\n- **Türkçe locale tuzağı**: `'TITLE'.toLowerCase()` → İngilizce default'ta `'title'`; Türkçe locale'de `'tıtle'` (i → ı). Locale-aware: `'TITLE'.toLocaleLowerCase('tr-TR')` → `'tıtle'`. Veritabanı sıralaması da aynı tuzak.\n\n**6. Yerel format (Intl API):**\n\n- Tarih: `new Intl.DateTimeFormat('tr-TR').format(date)` → '06.06.2026'\n- Sayı: `new Intl.NumberFormat('tr-TR').format(1234567.89)` → '1.234.567,89'\n- Para: `new Intl.NumberFormat('tr-TR', {style:'currency', currency:'TRY'}).format(x)` → '1.234,56 ₺'\n- Liste: `new Intl.ListFormat('tr-TR').format(['elma','armut','şeftali'])` → 'elma, armut ve şeftali'\n\n**7. SEO i18n:**\n\n- `<link rel='alternate' hreflang='tr-TR' href='...'>` — Google'a 'bu sayfanın TR versiyonu' sinyali\n- URL stratejisi: ccTLD (acme.de) > subdirectory (acme.com/de/) > subdomain (de.acme.com)\n- Subdirectory genelde en pragmatik\n\n**8. Pseudo-localization:**\n\n- Test aşamasında metni genişlet + Unicode varyant: `'Save'` → `'[Šåvé éééé]'`\n- Layout taşmalarını yakalar (Almanca İngilizce'den ~%35 uzun)\n- Hardcoded string'i ortaya çıkarır (pseudo dile çevrilmez = unutulmuş)\n\n**9. TMS (Translation Management System):**\n\n- Çeviriler koddan AYRI, runtime'da yüklenebilir\n- **Tolgee** (self-host, modern) — preference\n- Crowdin, Lokalise (commercial)\n- Deploy gerektirmeden çeviri güncelleme\n\n**10. Çeviri eskime / fallback:**\n\nKaynak metin değişti, çeviriler eskidi → ne göster?\n\n- Fallback en sonda: tr-TR > tr > en > kaynak metin\n- Eskimiş çeviri tagging: `last_synced_at < source_updated_at` → 'eskimiş' işaret\n- UI: 'Bu çeviri yenileniyor' badge veya İngilizce fallback (yarısı Türkçe yarısı İngilizce ekran = state problem)",
+    "terms": [
+      {
+        "term": "BCP 47",
+        "abbrev_tr": "Dil etiketi standardı",
+        "meaning": "`tr-TR`, `zh-Hant-HK` gibi locale kodlama.",
+        "why": "IETF standardı. Tüm Intl API + framework'ler bunu kullanır."
+      },
+      {
+        "term": "CLDR",
+        "abbrev_of": "Common Locale Data Repository",
+        "abbrev_tr": "Unicode CLDR",
+        "meaning": "Tarih/sayı/para/plural kuralları için altın kaynak.",
+        "why": "Tek noktadan tüm dillerin format kuralları."
+      },
+      {
+        "term": "ICU MessageFormat",
+        "abbrev_tr": "ICU mesaj formatı",
+        "meaning": "Pluralization + variable interpolation standardı.",
+        "why": "Tüm gramer formlarını destekler; cümle birleştirme yasak."
+      },
+      {
+        "term": "Collation",
+        "abbrev_tr": "Sıralama kuralı",
+        "meaning": "Stringlerin alfabetik sıralama mantığı.",
+        "why": "Türkçe'de 'İstanbul' aramada 'istanbul' bulmalı — locale-aware collation."
+      },
+      {
+        "term": "NFC",
+        "abbrev_of": "Normalization Form C",
+        "abbrev_tr": "Karakter normalleştirme",
+        "meaning": "Birleşik karakterleri tek code-point haline getirme.",
+        "why": "İki farklı encoding aynı karakter'i farklı saklayabilir; karşılaştırma kırılır."
+      },
+      {
+        "term": "Logical Properties",
+        "abbrev_tr": "Mantıksal CSS özellikleri",
+        "meaning": "margin-inline-start, padding-block-end gibi yön-bağımsız CSS.",
+        "why": "RTL'de margin-left/right ters çevirmek YASAK; logical properties otomatik."
+      },
+      {
+        "term": "Pseudo-localization",
+        "abbrev_tr": "Sahte yerelleştirme",
+        "meaning": "Metni Unicode varyantla genişletip layout test etme.",
+        "why": "Almanca %35 uzun; hardcoded string'i ortaya çıkarır."
+      },
+      {
+        "term": "hreflang",
+        "abbrev_tr": "Dil-link etiketi",
+        "meaning": "Google'a 'bu sayfanın X dil versiyonu' sinyali.",
+        "why": "Yanlış yaparsan duplicate content cezası."
+      }
+    ],
+    "stories": [
+      {
+        "persona": "Geliştirici Murat Bey (61'lik abisi 32) — Türkçe i/ı bug",
+        "context": "Murat Bey email validation yazdı: `email.toLowerCase().includes('@')`. Türkçe locale'li Linux sunucuda 'IBRAHIM@X.COM' → 'ıbrahım@x.com' oldu, `@` aranırken script Türkçe-locale-aware sıralamada bozuldu.",
+        "outcome": "`email.toLocaleLowerCase('en-US')` ile sabitlenir. Veya `email.toLowerCase()` öncesi locale='C' set edilir. Türkçe locale her zaman bilinçli kullanılır."
+      },
+      {
+        "persona": "Pazarlama Ayşe Hanım (45) — eskimiş çeviri",
+        "context": "Site Türkçe yayında, İngilizce yeni özellik eklendi, çeviri henüz yapılmadı. Türk kullanıcı yeni butonu İngilizce gördü, kafası karıştı.",
+        "outcome": "Tolgee TMS + fallback chain (tr > en > source). Ayrıca 'çeviri eskidi' badge dev için. CS team uyarı: 'çeviri ekibi 24 saat içinde tamamlar'."
+      },
+      {
+        "persona": "Uluslararası satış müdürü Hasan Bey (58) — RTL Arapça",
+        "context": "Suudi Arabistan'a açılım. Web sitesi Arapça çevirisi yapıldı — ama ikonlar (geri ok, kalem) hâlâ soldan-sağa, layout bozuk.",
+        "outcome": "CSS logical properties + `dir='rtl'` + arrow ikonları `transform: scaleX(-1)`. Pseudo-localization test'inde yakalanırdı."
+      }
+    ],
+    "lesson": {
+      "ne": "Uluslararası dil/yerel desteğin teknik standartları — BCP 47 kodlama, CLDR veri, ICU pluralization, RTL bidi, locale-aware operations.",
+      "nicin": "'Çeviri' = i18n'in %20'si. Geri kalan %80: pluralization, format, RTL, collation, normalization. Bunlar olmadan 'çevrildi' yanılsama.",
+      "nasil": "1) i18next + i18next-icu library. 2) Intl API her yerde (tarih/sayı/para). 3) Tolgee TMS self-host. 4) CSS logical properties zorunlu. 5) Pseudo-localization CI test. 6) Locale-aware case + collation.",
+      "nerede": "`cc-i18n-standards` cluster + `l1-misc` i18n temel + `cc-jurisdiction-resolver` locale eksen.",
+      "ne_zaman": "İlk ek dil eklenmeden ÖNCE. Sonradan refactor = tüm string'leri sarmak.",
+      "kim": "Frontend dev i18next + Intl; çevirmen TMS'de; QA pseudo-localization.",
+      "analoji": "Yemek tarifi çevirisi: malzeme adlarını çevirmek yetmez; ölçü birimi (cup → ml), pişirme zamanı (180°F → 82°C), gramer (1 yumurta, 2 yumurta) hepsi yerelleşir. 'Tek tek değil topyekûn'."
+    }
+  },
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "**i18n'in %80'i 'çeviri' değil:** pluralization (gramer formları), format (tarih/sayı/para), RTL (layout), collation (sıralama), normalization (karakter eşitliği). Bunlar olmadan 'çevrildi' eksiklik."
+    },
+    {
+      "type": "callout",
+      "variant": "critical",
+      "label": "Türkçe i/ı locale tuzağı",
+      "body": "`'TITLE'.toLowerCase()` farklı locale'de farklı sonuç verir. Türkçe locale'de `'tıtle'` üretir (i → ı). Email validation, search, ID karşılaştırma bu yüzden kırılır. **Her yerde `toLocaleLowerCase('en-US')` veya bilinçli locale.**"
+    },
+    {
+      "type": "callout",
+      "variant": "warning",
+      "label": "Cümle birleştirme YASAK",
+      "body": "`'Found ' + count + ' items'` farklı gramerli dillerde çevrilmez. İcerik = anahtar-değer çiftleri. ICU MessageFormat ile `{count, plural, ...}` syntax'ı."
+    },
+    {
+      "type": "callout",
+      "variant": "tip",
+      "label": "Vibecoding ipucu",
+      "body": "AI ajan'a: *'i18next + i18next-icu setup. Tüm UI string'i t() ile sarılı. ICU plural syntax. Intl.NumberFormat / DateTimeFormat / ListFormat locale ile. CSS logical properties (margin-inline-start). Pseudo-localization vitest setup. Tolgee TMS Docker compose self-host. Fallback chain: locale > base > source.'*"
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "BCP 47 örnekleri"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Tag",
+        "Anlam",
+        "Kullanım"
+      ],
+      "rows": [
+        [
+          "tr",
+          "Türkçe (jenerik)",
+          "Yetmez — bölge belirt"
+        ],
+        [
+          "tr-TR",
+          "Türkçe (Türkiye)",
+          "Doğru"
+        ],
+        [
+          "tr-CY",
+          "Türkçe (Kıbrıs)",
+          "Para birimi EUR, TR ≠"
+        ],
+        [
+          "zh-Hans-CN",
+          "Basitleştirilmiş Çince (ÇHC)",
+          "Yazı sistemi + ülke"
+        ],
+        [
+          "zh-Hant-HK",
+          "Geleneksel Çince (Hong Kong)",
+          "Yazı + ülke farklı"
+        ],
+        [
+          "en-GB",
+          "İngilizce (UK)",
+          "Tarih DD/MM/YYYY"
+        ],
+        [
+          "en-US",
+          "İngilizce (ABD)",
+          "Tarih MM/DD/YYYY"
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Pluralization — dil başına form sayısı"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Dil",
+        "Plural form sayısı",
+        "Kategoriler"
+      ],
+      "rows": [
+        [
+          "Türkçe",
+          "1",
+          "other"
+        ],
+        [
+          "İngilizce",
+          "2",
+          "one, other"
+        ],
+        [
+          "Lehçe",
+          "3",
+          "one, few, many"
+        ],
+        [
+          "Rusça",
+          "4",
+          "one, few, many, other"
+        ],
+        [
+          "İrlandaca",
+          "5",
+          "one, two, few, many, other"
+        ],
+        [
+          "Arapça",
+          "6",
+          "zero, one, two, few, many, other"
+        ]
+      ]
+    }
+  ],
+  "related": [
+    "cc-jurisdiction-resolver",
+    "l1-misc",
+    "cc-i18n-deep",
+    "edu-u15",
+    "cc-tr"
+  ]
+}

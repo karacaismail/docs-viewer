@@ -1,0 +1,231 @@
+{
+  "id": "cc-compliance-matrix",
+  "title": "Compliance Matrisi — KVKK, GDPR, CCPA, LGPD, PCI-DSS + Sanctions + DSAR",
+  "subtitle": "Yargı bölgesi başına uyumluluk: hangi kanun, hangi gereksinim. Sanctions screening (OFAC/EU). DSAR pipeline. Erasure çatışması (sil-vs-sakla).",
+  "cluster": "crosscut",
+  "order": 12,
+  "icon": "ph-scales",
+  "granularity": "kaya",
+  "state": "wip",
+  "tags": [
+    "crosscut",
+    "compliance",
+    "kvkk",
+    "gdpr",
+    "ccpa",
+    "lgpd",
+    "pci-dss",
+    "sanctions",
+    "dsar",
+    "erasure"
+  ],
+  "enrich": {
+    "info": "Compliance kanunları matrisi + sanctions list screening + DSAR (data subject access request) pipeline + erasure-vs-retention çatışma çözümü.",
+    "detail": "**Compliance kanunları (yargı bölgesi başına):**\n\n| Kanun | Bölge | Ana gereksinim |\n|---|---|---|\n| **KVKK** | Türkiye | Açık rıza, VERBİS kaydı, yurt dışı veri aktarım kısıtı, aydınlatma metni |\n| **GDPR** | AB/AEA | Yasal dayanak, taşınabilirlik, unutulma hakkı, DPO, 72 saat ihlal bildirimi |\n| **CCPA/CPRA** | Kaliforniya | 'Do not sell' opt-out, erişim, silme |\n| **LGPD** | Brezilya | GDPR benzeri yapı |\n| **PCI-DSS** | Global | Kart verisi işliyorsan zorunlu |\n| **HIPAA** | ABD | Sağlık verisi (ABD'de health SaaS) |\n| **PIPEDA** | Kanada | Kanada PII |\n\n**Kritik nokta:** KVKK uyumu ≠ GDPR uyumu. AB müşterisi varsa **ikisini de** karşılaman gerekir.\n\n**Data residency (veri ikametgâhı):**\n\n- KVKK md.9: TR vatandaşı verisi yurt dışı aktarımı için Kurul izni/taahhütname\n- GDPR md.44+: AB dışına aktarım için adequacy decision veya SCC\n- Rusya 152-FZ: Rus vatandaşı verisi Rusya'da\n- Çin PIPL: Çin vatandaşı verisi Çin'de (kritik durumda)\n\n**Hetzner Almanya kullanıyorsan**: GDPR adequacy bölgesi (AB içi) ✓. TR vatandaşı verisi için Kurul'a taahhütname gerekir.\n\n**Sanctions screening (OFAC/EU/UN):**\n\n- **OFAC SDN list** (ABD) — yaptırımlı kişi/şirket/ülke\n- **EU Consolidated List** — AB yaptırımları\n- **UN Sanctions List** — BM yaptırımları\n- **TR MASAK** — TR yaptırımlı/şüpheli liste\n\nSignup + checkout + büyük ödeme öncesi liste-eşleştirme zorunlu. Match = işlem REDDEDİLİR + MASAK/FinCEN bildirimi.\n\n**DSAR (Data Subject Access Request):**\n\nKullanıcı 'tüm verimi ver' veya 'verimi sil' diyor. GDPR 30 gün, KVKK 30 gün.\n\n```\n1. Talep alındı (CS team / portal)\n   ↓\n2. Kimlik doğrulama (KYC, hesap sahibi mi?)\n   ↓\n3. Pipeline tetiklenir (n8n)\n   - Tüm DB tablolarından user_id ile select\n   - File storage'tan user ile ilgili dosyalar\n   - Logs'tan user_id geçen satırlar\n   - 3rd party (Stripe, SendGrid, Sentry) export API\n   ↓\n4. ZIP olarak hazırlanır (JSON + CSV + PDF fatura)\n   ↓\n5. Kullanıcıya güvenli download link (24 saat)\n   ↓\n6. decision_trace audit log\n```\n\n**Erasure çatışması — KVKK 'sil' vs VUK 'sakla':**\n\n| Veri türü | KVKK der | VUK/SPK der | Çözüm |\n|---|---|---|---|\n| Ad, telefon, email | Sil | - | **Anonimleştir** (hash) |\n| Adres, IP | Sil | - | Anonimleştir veya sil |\n| Fatura kayıtları | Sil | **10 yıl sakla** | Fatura tut, kişisel veriyi anonymize |\n| Vergi belgesi | Sil | 10 yıl sakla | Aynı |\n| Sözleşme | Sil | 10 yıl sakla | Aynı |\n| Banking transaction | Sil | 10 yıl sakla | Aynı |\n\n**Çözüm pattern:**\n\n```sql\n-- Personal data table\nUPDATE user SET\n  email = 'erased_' || md5(email) || '@deleted.local',\n  name = 'Erased User',\n  phone = NULL,\n  address = NULL,\n  erased_at = now()\nWHERE id = $1;\n\n-- Financial table — TUT, sadece referansla\n-- invoice.user_id kalır, kişisel veri user tablosundan anonimleştirilmiş\n```\n\n**Yaş doğrulama:**\n\n- COPPA (ABD): < 13 yaş ebeveyn rızası\n- GDPR: 'digital consent age' üye ülkeye göre 13-16 (Almanya 16, İspanya 14)\n- KVKK: 18 (medeni hukuk)\n\n**Çerez rızası:**\n\n- AB ePrivacy + GDPR: **opt-in, granular** consent banner zorunlu (Cookiebot, Osano)\n- KVKK: aydınlatma metni + saklama\n- ABD CCPA: çoğu eyalette opt-out yeterli",
+    "terms": [
+      {
+        "term": "KVKK",
+        "abbrev_of": "Kişisel Verilerin Korunması Kanunu",
+        "abbrev_tr": "KVKK",
+        "meaning": "6698 sayılı TR kanunu, 2016.",
+        "why": "TR'de uyumsuzluk = ciroya bağlı ceza + suç duyurusu."
+      },
+      {
+        "term": "GDPR",
+        "abbrev_of": "General Data Protection Regulation",
+        "abbrev_tr": "AB veri koruma",
+        "meaning": "AB 2018; yıllık cironun %4'üne kadar ceza.",
+        "why": "AB vatandaşı verisi işlenirken zorunlu."
+      },
+      {
+        "term": "DSAR",
+        "abbrev_of": "Data Subject Access Request",
+        "abbrev_tr": "Veri erişim talebi",
+        "meaning": "Kullanıcının 'tüm verimi ver/sil' talebi.",
+        "why": "GDPR 30 gün, KVKK 30 gün — pipeline + audit gerek."
+      },
+      {
+        "term": "OFAC",
+        "abbrev_of": "Office of Foreign Assets Control",
+        "abbrev_tr": "ABD yaptırım listesi",
+        "meaning": "ABD'nin yaptırımlı kişi/şirket/ülke listesi (SDN).",
+        "why": "Yaptırımlı'ya hizmet = ağır cezalar (USD ile iş yapma yasağı dahil)."
+      },
+      {
+        "term": "Anonymization",
+        "abbrev_tr": "Anonimleştirme",
+        "meaning": "Kişisel veriyi geri-çözülemez şekilde dönüştürme (hash, mask).",
+        "why": "KVKK-sil vs VUK-sakla çatışmasının çözümü."
+      },
+      {
+        "term": "Adequacy Decision",
+        "abbrev_tr": "Yeterlilik kararı",
+        "meaning": "AB'nin bir ülkeyi 'yeterli koruma sağlıyor' kabul etmesi.",
+        "why": "Adequacy varsa SCC yapmadan AB→ülke veri aktarımı serbest."
+      },
+      {
+        "term": "PCI-DSS",
+        "abbrev_of": "Payment Card Industry Data Security Standard",
+        "abbrev_tr": "Kart güvenliği",
+        "meaning": "Kart verisi işleyen herkes için zorunlu standart.",
+        "why": "Kart numarasını DB'de tutarsan PCI-DSS yükü; Stripe vault önerilir."
+      }
+    ],
+    "stories": [
+      {
+        "persona": "Mali müşavir Hasan Bey (58) — DSAR talebi",
+        "context": "Hasan Bey'in müşterisinden DSAR talebi: 'Son 5 yılda tüm verimi gönder, sonra sil.' 50 müşterinin birikmiş verisi var; manuel yapsa hafta sürer.",
+        "outcome": "DSAR pipeline: n8n tetiklenir, 30 tablodan + Stripe + SendGrid'ten user_id ile veri toplar, ZIP üretir, güvenli link gönderir. Sonrasında erasure: kişisel veri anonymize, fatura kayıtları korunur (10 yıl VUK). 30 dakika içinde tamam. decision_trace audit."
+      },
+      {
+        "persona": "Uluslararası ticaret Yusuf Bey (66) — sanctions check",
+        "context": "Yeni müşteri kayıt oldu: 'Acme Trading, Tehran, Iran'. Yusuf Bey sevkiyat öncesi OFAC kontrol etmek istiyor.",
+        "outcome": "Sanctions screening API (Refinitiv World-Check veya OFAC API direct). 'Iran' = yaptırımlı ülke + 'Acme Trading' = SDN match. Müşteri kaydı otomatik **bloklanır**, CS team görür, MASAK bildirim akışı tetiklenir."
+      },
+      {
+        "persona": "E-ticaret işleten Murat Bey (61) — KVKK + VUK çatışması",
+        "context": "Müşteri 'verimi sil' dedi. Murat Bey 'sil' tıklarsa fatura kayıtları siliniyor → VUK 10 yıl saklama emrediyor → vergi denetiminde kanıtsız.",
+        "outcome": "Anonymization pattern: kişisel kolonlar (ad, telefon, email, adres) hash/mask. Fatura tablosu user_id ile bağlı kalır, kişisel veri user tablosunda anonymize. KVKK 'sil' karşılanır (erişilemez), VUK 'sakla' karşılanır (defter sağlam)."
+      }
+    ],
+    "lesson": {
+      "ne": "Yargı bölgesi başına compliance gereksinimlerinin matrisi + sanctions screening + DSAR pipeline + erasure çatışma çözümü.",
+      "nicin": "Yasal ihlal cezaları çok yüksek (GDPR %4 ciro, KVKK üst sınırı yüksek). Tek yanlış config = milyon dolar.",
+      "nasil": "1) Compliance config (cc-jurisdiction-resolver ile) versiyonlu. 2) Sanctions API entegrasyonu signup + checkout. 3) DSAR pipeline (n8n + DB exports). 4) Erasure = anonymize (kişisel) + retain (finansal). 5) Audit log her aksiyon için.",
+      "nerede": "`cc-compliance-matrix` cluster + `cc-jurisdiction-resolver` (policy set) + `cc-privacy` (KVKK/GDPR temel) + `cc-tr` (TR uyum).",
+      "ne_zaman": "İlk kullanıcı kaydından ÖNCE. Sonradan = milyon dolar refactor.",
+      "kim": "Hukuk ekibi kural yazımı; backend dev pipeline + sanctions API; compliance officer audit.",
+      "analoji": "Havaalanı pasaport kontrolü: her ülke kuralı farklı (vize, ESTA, e-vize), ama tek 'kontrol noktası' var. Resolver = pasaport kontrol; compliance matrix = ülke kuralları kitabı; sanctions = yasaklı kişi listesi."
+    }
+  },
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "**Compliance ≠ tek kanun.** Aynı kullanıcı 3 kanuna tabi olabilir (KVKK + GDPR + PCI-DSS). En sıkı uygulanır. Resolver bunu çözer; config-as-data."
+    },
+    {
+      "type": "callout",
+      "variant": "critical",
+      "label": "KVKK 'sil' vs VUK 'sakla' çözümü",
+      "body": "**Kişisel veriyi anonimleştir** (hash/mask), **finansal kaydı tut** (10 yıl). KVKK ve VUK aynı anda karşılanır. Tam silme yasal değil; uyumlu da değil."
+    },
+    {
+      "type": "callout",
+      "variant": "critical",
+      "label": "Sanctions match → REDDET",
+      "body": "OFAC/EU/UN/MASAK match = işlem otomatik bloke + uyum sorumlusu bildirim. Her şeyden önce. Resolver pre-check katmanı."
+    },
+    {
+      "type": "callout",
+      "variant": "tip",
+      "label": "Vibecoding ipucu",
+      "body": "AI ajan'a: *'Compliance config tablosu: jurisdiction × kural seti (consent age, retention years, data residency region). Sanctions screening: Refinitiv API veya OFAC direct download + nightly sync. DSAR n8n workflow: trigger → user_id ile 30 tablo SELECT → Stripe export + SendGrid export → ZIP + presigned URL. Anonymization function: kişisel kolonları hash/mask, finansal tabloya dokunma.'*"
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Compliance matrisi"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Kanun",
+        "Bölge",
+        "Ana gereksinim",
+        "Ceza"
+      ],
+      "rows": [
+        [
+          "KVKK",
+          "TR",
+          "Açık rıza + VERBİS + yurt dışı kısıt",
+          "Ciroya bağlı + suç duyurusu"
+        ],
+        [
+          "GDPR",
+          "AB/AEA",
+          "Yasal dayanak + 72h ihlal",
+          "Yıllık cironun %4'üne kadar"
+        ],
+        [
+          "CCPA/CPRA",
+          "Kaliforniya",
+          "Do not sell + opt-out",
+          "Ihlal başına ücret"
+        ],
+        [
+          "LGPD",
+          "Brezilya",
+          "GDPR benzeri",
+          "Ciro %2"
+        ],
+        [
+          "PCI-DSS",
+          "Global",
+          "Kart verisi koruma",
+          "Kart işleme yasağı"
+        ],
+        [
+          "HIPAA",
+          "ABD",
+          "Sağlık veri",
+          "$50K-1.5M / ihlal"
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Erasure çatışma matrisi"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Veri",
+        "KVKK",
+        "VUK/SPK",
+        "Çözüm"
+      ],
+      "rows": [
+        [
+          "Ad, telefon, email",
+          "Sil",
+          "-",
+          "Anonymize (hash)"
+        ],
+        [
+          "Adres, IP",
+          "Sil",
+          "-",
+          "Anonymize veya sil"
+        ],
+        [
+          "Fatura",
+          "Sil",
+          "10 yıl sakla",
+          "Fatura tut, user anonymize"
+        ],
+        [
+          "Vergi belgesi",
+          "Sil",
+          "10 yıl sakla",
+          "Aynı"
+        ],
+        [
+          "Sözleşme",
+          "Sil",
+          "10 yıl sakla",
+          "Aynı"
+        ]
+      ]
+    }
+  ],
+  "related": [
+    "cc-jurisdiction-resolver",
+    "cc-privacy",
+    "cc-tr",
+    "cc-security",
+    "l1-audit",
+    "cc-fx-ledger"
+  ]
+}

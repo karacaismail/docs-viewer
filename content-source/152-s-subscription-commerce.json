@@ -1,0 +1,129 @@
+{
+  "id": "s-subscription-commerce",
+  "title": "Subscription Commerce — abonelik tabanlı e-ticaret",
+  "subtitle": "Müşteri tek seferlik değil, periyodik (aylık/yıllık) ürün alır. Abonelik kutusu, recurring billing, churn yönetimi.",
+  "cluster": "core-operations",
+  "order": 10,
+  "icon": "ph-repeat",
+  "granularity": "orta-tas",
+  "state": "wip",
+  "tags": [
+    "core-operations",
+    "ecommerce",
+    "subscription",
+    "recurring",
+    "capability",
+    "mrr"
+  ],
+  "enrich": {
+    "info": "Abonelik kutusu (subscription box), recurring billing, pause/skip/cancel, churn tahmin. s-billing infra üstüne.",
+    "detail": "**Subscription commerce ≠ SaaS subscription:**\n\n- **SaaS subscription** (s-billing): yazılım hizmeti — Pro plan, kullanıcı sayısı.\n- **Subscription commerce**: fiziksel/dijital ürün periyodik teslim — kahve kutusu, gıda paketi, dergi.\n\nİkisi aynı recurring billing motorunu paylaşır; iş mantığı farklı.\n\n**Tipik akışlar:**\n\n1. **Subscription box**: aylık seçilmiş ürünler kutusu (BarkBox, FabFitFun)\n2. **Replenishment**: tüketilen ürün otomatik yenileme (kahve, vitamin)\n3. **Curated subscription**: AI/insan kürasyonlu kişiselleştirilmiş\n4. **Access subscription**: indirim/öncelik üyeliği (Amazon Prime)\n\n**Kritik özellikler:**\n\n- **Pause / Skip**: ay atlama (müşteri tatilde)\n- **Swap**: bu ay başka ürün al\n- **Loyalty**: 3 ay üst üste = bonus ürün\n- **Address rotation**: ofise mi eve mi (B2B subscription)\n- **Dunning**: ödeme alınamazsa retry + email + askıya alma\n\n**Capability flag: `subscription`** açıldığında:\n\n- Ürün kartına `subscribable` boolean + `interval` (haftalık/aylık/yıllık)\n- Order'a `subscription_id` + `cycle_number`\n- Recurring scheduler (s-workers-deep + s-billing entegre)\n- Customer portal: pause, skip, cancel buttons",
+    "terms": [
+      {
+        "term": "Subscription Box",
+        "abbrev_tr": "Abonelik kutusu",
+        "meaning": "Aylık seçilmiş ürünler paketi.",
+        "why": "BarkBox, FabFitFun gibi 'sürpriz + curated' deneyimi."
+      },
+      {
+        "term": "Replenishment",
+        "abbrev_tr": "Yenileme",
+        "meaning": "Tüketilen ürünün otomatik tekrar sipariş edilmesi.",
+        "why": "Kahve, vitamin, deterjan — unutmamak için autopilot."
+      },
+      {
+        "term": "Pause/Skip",
+        "abbrev_tr": "Durdur/atla",
+        "meaning": "Müşterinin geçici olarak abonelik teslimatını durdurması.",
+        "why": "Tatilde bile abonelik iptal etmesin diye — churn azaltır."
+      },
+      {
+        "term": "Churn",
+        "abbrev_tr": "Müşteri kaybı",
+        "meaning": "İptal eden abonelerin oranı (aylık %).",
+        "why": "%5 churn = yıllık -%46 müşteri tabanı. Subscription metrik."
+      }
+    ],
+    "stories": [
+      {
+        "persona": "Ayşe Teyze (63) — vitamin yenileme",
+        "context": "Ayşe Teyze doktorun verdiği vitamini hatırlamayı sürekli unutuyor. Bitince yeni alacağı yer 'kapalı' oluyor.",
+        "outcome": "Aylık yenileme abone olundu. Her ayın 1'inde otomatik gönderim. Tatildeyse 'pause 1 ay' butonu. Hatırlatma + paket = unutmak yok."
+      },
+      {
+        "persona": "Bakkal Hatice Teyze (62) — mahallenin sebze kutusu",
+        "context": "Hatice Teyze her hafta mahalleye 30 ailelik sebze paketi yapıyor. Hatırlatma + ödeme + adres bir bir telefon ediyor.",
+        "outcome": "30 aile haftalık subscription. Her Perşembe otomatik kesme + Cuma teslim. Bayramda pause 1 hafta opsiyonu. Hatice Teyze sadece paketler."
+      }
+    ],
+    "lesson": {
+      "ne": "Tek seferlik satış yerine periyodik (haftalık/aylık) teslimat yapma yeteneği.",
+      "nicin": "MRR (Monthly Recurring Revenue) = öngörülebilir gelir. SaaS değil ama mantığı aynı.",
+      "nasil": "1) Product subscribable + interval. 2) Subscription tablosu (customer, product, schedule). 3) Cron job (s-workers-deep) ayın 1'inde fatura+sevkiyat. 4) Customer portal pause/skip/cancel.",
+      "nerede": "`s-subscription-commerce` capability + `s-billing` recurring motor + `s-workers-deep` scheduler.",
+      "ne_zaman": "İlk abonelik ürünü eklenmeden ÖNCE: pause/skip/cancel + dunning policy hazır.",
+      "kim": "Ürün ekibi katalog + interval; backend dev scheduler; CS team churn analysis.",
+      "analoji": "Süt aboneliği: süt ablası her sabah kapıya bırakır. Tatilde 'bu hafta yok' der. Para da ay sonu peşin değil, otomatik kesme. Modern hali aynı, yazılım üzerinde."
+    }
+  },
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "**Subscription commerce = MRR + müşteri sadakati.** Tek seferlik satış 1× ciro; aylık abonelik LTV (lifetime value) 10×+. Ama churn yönetimi olmadan büyüme yanılsamadır."
+    },
+    {
+      "type": "callout",
+      "variant": "info",
+      "label": "SaaS vs Commerce abonelik farkı",
+      "body": "**SaaS subscription** = yazılım hizmeti (Pro plan). **Subscription commerce** = fiziksel ürün periyodik teslim. İkisi de aynı recurring billing motorunu paylaşır (`s-billing`); iş mantığı farklı. Karıştırma."
+    },
+    {
+      "type": "callout",
+      "variant": "tip",
+      "label": "Vibecoding ipucu",
+      "body": "AI ajan'a: *'Subscription DocType: customer_id, product_id, interval ENUM (weekly/monthly/quarterly/yearly), next_billing_date, status (active/paused/cancelled). Cron her gece next_billing_date ≤ today olanları işle: Stripe charge + order create + shipment trigger. Customer portal: pause/skip/cancel endpoints.'*"
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Subscription tipleri"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Tip",
+        "Örnek",
+        "Kritik özellik"
+      ],
+      "rows": [
+        [
+          "Subscription box",
+          "BarkBox, FabFitFun",
+          "Curated + sürpriz"
+        ],
+        [
+          "Replenishment",
+          "Kahve, vitamin",
+          "Auto-skip envanter doluysa"
+        ],
+        [
+          "Curated",
+          "Stitch Fix",
+          "AI/insan personalization"
+        ],
+        [
+          "Access",
+          "Amazon Prime, Costco",
+          "Üye-indirim + öncelik"
+        ]
+      ]
+    }
+  ],
+  "related": [
+    "s-ecommerce-models",
+    "s-commerce",
+    "s-billing",
+    "scale-workers-deep",
+    "l1-notification"
+  ]
+}

@@ -1,0 +1,208 @@
+{
+  "id": "cc-content-jurisdiction",
+  "title": "İçerik & Ürün Jurisdiction Kuralları — Sansür, Yaş, Birim, Voltaj, Takvim",
+  "subtitle": "Ülke bazlı içerik kısıtları (Nazi sembolü DE, alkol IR), yaş kısıtlı içerik, birim/beden standardı (EU 42 / US 9), voltaj/fiş, AB e-fatura formatları, takvim sistemleri.",
+  "cluster": "crosscut",
+  "order": 16,
+  "icon": "ph-funnel",
+  "granularity": "orta-tas",
+  "state": "wip",
+  "tags": [
+    "crosscut",
+    "content",
+    "jurisdiction",
+    "censorship",
+    "age",
+    "unit",
+    "voltage",
+    "calendar",
+    "e-invoice",
+    "lawful-intercept"
+  ],
+  "enrich": {
+    "info": "Ülke bazlı içerik/ürün kuralları + geo-blocking + AB e-fatura formatları + niş takvim sistemleri + lawful intercept yasal talep akışı.",
+    "detail": "**Bu cluster Amazon/eBay'in 'görünmez' codebase ayrımının ürün/içerik tarafı.**\n\n## 1. Ürün Uygunluğu (Sansür / Yasak)\n\n| Ülke | Yasak/kısıtlı | Aksiyon |\n|---|---|---|\n| **DE** | Nazi sembolleri, Hitler kitapları | Katalogdan filtrele + arama engelleme |\n| **CN** | Politik içerik, VPN, Falun Gong | Geo-blocking + content moderation |\n| **SA/UAE** | Alkol, domuz eti, LGBT içerik | Filtre + ürün gizleme |\n| **IR/Sanctions** | Hizmet yasağı (OFAC/MASAK) | Tam blok (`cc-compliance-matrix`) |\n| **FR** | Açık artırma kart oyunları + reklam | Restricted |\n| **TR** | Belirli yayınlar (BTK kararları) | URL bazlı erişim engeli |\n\n**Mimari:** Resolver → jurisdiction → `content_filter_rules` config → katalog/arama/UI dinamik filtre.\n\n## 2. Yaş Kısıtlı İçerik\n\n- **Alkol/Tütün**: TR 18, ABD eyalete göre 21 (alkol)\n- **Kumar**: TR yasak, AB lisanslı, ABD eyalete göre\n- **Cinsel içerik**: AB+ABD age verification (2023 sonrası bazı eyaletlerde KYC)\n- **Reşit olmayan koruma**: COPPA (ABD <13), GDPR digital consent age (13-16 ülkeye göre)\n\nMimari: `age_gate` capability + `min_age` per ürün/kategori + jurisdiction'a göre devre.\n\n## 3. Birim, Beden, Voltaj\n\n| Konu | TR/AB | ABD | UK |\n|---|---|---|---|\n| Ayakkabı | EU 42 | US 9 | UK 8 |\n| Giyim | M/L veya 42 | M/L veya 8 | M/L veya 10 |\n| Sıcaklık | °C | °F | °C |\n| Mesafe | km | mile | mile |\n| Ağırlık | kg | lb | kg |\n| Voltaj | 220V Tip F | 110V Tip A/B | 240V Tip G |\n| Kağıt | A4 | Letter | A4 |\n\n**UCUM** (Unified Code for Units of Measure) referans standardı.\n\n**Çözüm:** Ürün için 2 değer sakla: kanonik (SI/EU 42) + display'de jurisdiction'a göre dönüştür.\n\n## 4. AB E-Fatura Formatları (her ülke farklı)\n\nAB'de e-fatura zorunlu ama format ülkeye göre farklı:\n\n| Ülke | Format | Notlar |\n|---|---|---|\n| **İtalya** | SDI (FatturaPA XML) | SdI platformuna gönderim zorunlu |\n| **Almanya** | XRechnung (CIUS) | Public sector zorunlu 2020, B2B 2025+ |\n| **Fransa** | Factur-X (PDF/A-3 + XML) | 2026 zorunlu |\n| **İspanya** | Facturae XML | Public sector zorunlu |\n| **TR** | UBL-TR XML (GİB) | Tüm B2B zorunlu (cc-tr) |\n\nMimari: `e_invoice_adapter` per jurisdiction. Tek 'PDF fatura' yetmez.\n\n## 5. Niş Takvim Sistemleri\n\n| Sistem | Kullanım | Yıl |\n|---|---|---|\n| Gregoryen | Global standart | 2026 |\n| Hicri | Suudi Arabistan resmi | 1448 H |\n| Buddhist | Tayland resmi | 2569 BE |\n| Japon imparator dönemi | Japonya iş dünyası | Reiwa 8 (令和8年) |\n| Persian (Jalali) | İran resmi | 1404 |\n\n**Çözüm:** Her zaman ISO 8601 sakla (Gregoryen UTC). Display'de jurisdiction'a göre çevir. Icu locale calendar specifier.\n\n## 6. Tatil / İş Günü Takvimleri\n\n- TR: resmi tatiller + Ramazan/Bayram (her yıl Hicri'ye göre değişir)\n- AB: ülke + bölge (Bavyera Katolik tatil farklı)\n- Suudi/UAE: **Cuma-Cumartesi haftasonu** (2022 öncesi); şimdi Suudi Cumartesi-Pazar geçti\n- İsrail: Cumartesi Şabat, Cuma yarım gün\n\n**Mimari:** `business_calendar` per jurisdiction tablosu. *'3 iş günü içinde teslimat'* hesabı bu tablodan.\n\n## 7. Geo-Blocking (CDN/Edge)\n\nYasal sebeplerle bazı içerik bazı bölgelere servis edilemez:\n\n- AB GDPR sıkı → bazı analitik widget bloklan\n- Çin Great Firewall → Google/Facebook bloke (yerel CDN gerek)\n- Rusya → sosyal medya parçaları bloke\n\nCloudflare/Fastly geo-rules + edge worker'da jurisdiction kontrolü.\n\n## 8. Lawful Intercept / Yasal Talep\n\n**Yasal talep türleri:**\n\n- Mahkeme kararı (subpoena/court order): kullanıcı verisi ver\n- Lawful intercept (CALEA ABD, TR BTK): yetkili devlet kuruluşuna anlık erişim\n- Sanctions enforcement (OFAC blok): hesap dondurma\n- Takedown (DMCA, DSA): içerik kaldırma\n\n**Mimari süreç:**\n\n1. **Tek giriş kapısı**: legal@yourapp + structured form\n2. **Doğrulama**: talep gerçek mi? (örn. mahkeme damgası, IP whitelist)\n3. **Scope check**: hangi kullanıcı, hangi veri\n4. **Approval workflow**: legal counsel + CEO 4-göz\n5. **Export**: structured data (DSAR pipeline tekrar kullanılır)\n6. **Audit log**: kim ne zaman ne aktardı (5 yıl saklama)\n7. **Kullanıcıya bildirim**: yasal olarak izin verilirse",
+    "terms": [
+      {
+        "term": "Geo-blocking",
+        "abbrev_tr": "Coğrafi engelleme",
+        "meaning": "Belli içerik belli bölgelerden erişilemez yapılır.",
+        "why": "Yasal zorunluluk (DE Nazi içerik) veya lisans (Netflix bölgesel)."
+      },
+      {
+        "term": "UCUM",
+        "abbrev_of": "Unified Code for Units of Measure",
+        "abbrev_tr": "Birim kodu standardı",
+        "meaning": "Ölçü birimleri için uluslararası standart.",
+        "why": "kg/lb/oz arası birim çevirileri için."
+      },
+      {
+        "term": "SDI / XRechnung / Factur-X",
+        "abbrev_tr": "AB e-fatura formatları",
+        "meaning": "İtalya/Almanya/Fransa farklı zorunlu XML formatları.",
+        "why": "Tek 'PDF fatura' AB'de yetmez."
+      },
+      {
+        "term": "Age Gate",
+        "abbrev_tr": "Yaş kapısı",
+        "meaning": "Yaş kısıtlı içerik öncesi doğrulama.",
+        "why": "Alkol, kumar, cinsel içerik için. KVKK + COPPA + DSA uyum."
+      },
+      {
+        "term": "Lawful Intercept",
+        "abbrev_tr": "Yetkili talep",
+        "meaning": "Devletin yasal yetkilendirmeyle veri talebi.",
+        "why": "CALEA (ABD), BTK (TR) gibi mevzuat altyapısı."
+      },
+      {
+        "term": "Hicri / Buddhist takvim",
+        "abbrev_tr": "Alternatif takvim sistemleri",
+        "meaning": "Müslüman/Tayland/Japonya resmi takvim.",
+        "why": "Her zaman Gregoryen ISO 8601 sakla; display'de çevir."
+      }
+    ],
+    "stories": [
+      {
+        "persona": "E-ticaret yöneticisi Murat Bey (61) — DE açılım",
+        "context": "Murat Bey kitap satıyor, Almanya pazarına açıldı. 'Mein Kampf' edisyonu katalogda. Alman kullanıcı şikâyet etti, BfV (Federal Anayasa Koruma) sorgu açtı.",
+        "outcome": "Content filter rules: DE jurisdiction'da Nazi içerik (Mein Kampf, semboller) katalogdan filtrelenir. Resolver jurisdiction'a göre dinamik filtre. Suç duyurusu önlendi."
+      },
+      {
+        "persona": "Ayşe Teyze (63) — Suudi'de Ramazan",
+        "context": "Ayşe Teyze global SaaS kullanıcısı. Ramazan'da iftar saatlerinde bildirim almak istemiyor.",
+        "outcome": "business_calendar: Suudi jurisdiction'da Ramazan tablosu (Hicri 1448). Iftar saati 19:23. quiet_hours dinamik. Bildirim 21:00'dan sonra."
+      },
+      {
+        "persona": "Hukuk müşaviri (45) — mahkeme kararı",
+        "context": "Mahkeme kararı geldi: 'Şu kullanıcının son 6 ay verisini ver'. Manuel pipeline = haftalar.",
+        "outcome": "DSAR pipeline + lawful_intercept_workflow: legal counsel onay → script tetiklenir → ZIP export → mahkemeye güvenli teslim. 48 saatte tamam, audit log 5 yıl."
+      }
+    ],
+    "lesson": {
+      "ne": "Ülke bazlı içerik kısıtları (sansür, yaş, birim, voltaj), AB e-fatura formatları, takvim sistemleri, geo-blocking, lawful intercept akışı.",
+      "nicin": "Resolver locale + jurisdiction çözer ama 'ne göstereceği' başka katman. Bu cluster içerik/ürün-tarafı kuralları.",
+      "nasil": "1) content_filter_rules per jurisdiction (config-as-data). 2) age_gate capability. 3) Birim canonical + display dönüştürücü (UCUM). 4) e_invoice_adapter per AB ülkesi. 5) business_calendar tatil tablosu. 6) lawful_intercept_workflow.",
+      "nerede": "`cc-content-jurisdiction` cluster + `cc-jurisdiction-resolver` (jurisdiction çözer) + `cc-compliance-matrix` (sanctions, KVKK).",
+      "ne_zaman": "İlk ek ülke açılımından ÖNCE. AB açıldıysan e-fatura, DE açıldıysan content filter zorunlu.",
+      "kim": "Hukuk team kural yazımı; ürün ekibi katalog filtre; backend dev adapter; legal counsel lawful intercept.",
+      "analoji": "Gümrük: ülkeye giriş yaparken kabul edilmeyen şeyler var (alkol Suudi, et Türkiye gibi bazı yerler), birim farklı (gallon vs litre), ödeme farklı (Suudi Riyal vs Euro). Sistem kuralları gümrük gibi: ülkeye göre değişir."
+    }
+  },
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "**Amazon'un 'görünmez' codebase ayrımının ürün/içerik tarafı.** Sansür, yaş, birim, voltaj, e-fatura, takvim, geo-blocking — hepsi config-driven, kodda hard-code değil."
+    },
+    {
+      "type": "callout",
+      "variant": "critical",
+      "label": "AB e-fatura tek format DEĞİL",
+      "body": "İtalya SDI XML, Almanya XRechnung, Fransa Factur-X (PDF/A-3 + XML), İspanya Facturae. **PDF fatura yetmez.** Ülke başına adapter. TR UBL-TR ayrı."
+    },
+    {
+      "type": "callout",
+      "variant": "warning",
+      "label": "Birim dönüştürmede kanonik sakla",
+      "body": "DB'de **kanonik** (SI birimi, EU bedeni) sakla. Display'de jurisdiction'a göre dönüştür. Stored EU 42 → US 9 / UK 8 runtime'da. Çift saklama YASAK."
+    },
+    {
+      "type": "callout",
+      "variant": "tip",
+      "label": "Vibecoding ipucu",
+      "body": "AI ajan'a: *'content_filter_rules tablosu: jurisdiction × category × action ('hide','restrict','flag'). Resolver sonrası katalog query'i bu tablo ile join + filter. age_gate capability ürün için min_age. business_calendar tablosu: jurisdiction × date × type (holiday/weekend). e_invoice_adapter strategy: IT/DE/FR/ES/TR ayrı implementasyon, common interface.'*"
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Ürün uygunluğu — ülke kısıtları"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Ülke",
+        "Yasak / kısıtlı",
+        "Aksiyon"
+      ],
+      "rows": [
+        [
+          "DE",
+          "Nazi sembol, içerik",
+          "Katalog filtre + arama engelle"
+        ],
+        [
+          "CN",
+          "Politik, VPN, dini",
+          "Geo-block + moderasyon"
+        ],
+        [
+          "SA/UAE",
+          "Alkol, LGBT, domuz",
+          "Filtre + gizle"
+        ],
+        [
+          "IR",
+          "Hizmet yasağı (OFAC)",
+          "Tam blok"
+        ],
+        [
+          "FR",
+          "Bazı kart oyunları",
+          "Restricted"
+        ],
+        [
+          "TR",
+          "BTK kararları",
+          "URL erişim engeli"
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "AB e-fatura formatları"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Ülke",
+        "Format",
+        "Notlar"
+      ],
+      "rows": [
+        [
+          "İtalya",
+          "SDI (FatturaPA XML)",
+          "SdI platformuna gönderim zorunlu 2019+"
+        ],
+        [
+          "Almanya",
+          "XRechnung (CIUS)",
+          "Public sector 2020, B2B 2025+"
+        ],
+        [
+          "Fransa",
+          "Factur-X (PDF/A-3 + XML)",
+          "2026 zorunlu"
+        ],
+        [
+          "İspanya",
+          "Facturae XML",
+          "Public sector zorunlu"
+        ],
+        [
+          "TR",
+          "UBL-TR XML (GİB)",
+          "Tüm B2B zorunlu"
+        ]
+      ]
+    }
+  ],
+  "related": [
+    "cc-jurisdiction-resolver",
+    "cc-compliance-matrix",
+    "cc-tr",
+    "s-commerce",
+    "s-tax-compliance",
+    "fe-cdn"
+  ]
+}

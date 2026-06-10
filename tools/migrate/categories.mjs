@@ -1,0 +1,82 @@
+// 03-navigation-ia.md §1 — Rail 1 kategorileri (veri-tabanlı; engine bunları bilmez)
+export const CATEGORIES = [
+  { id: "egitim", label: "Eğitim Yolu", icon: "ph-graduation-cap", order: 0 },
+  { id: "genel", label: "Genel Harita", icon: "ph-list-checks", order: 1 },
+  { id: "kernel", label: "Kernel — Layer 0", icon: "ph-cube", order: 2 },
+  { id: "scale", label: "Scale Primitives", icon: "ph-trend-up", order: 3 },
+  { id: "layer1", label: "Layer 1 — In-tree", icon: "ph-stack", order: 4 },
+  { id: "stack", label: "Stack Ürünleri", icon: "ph-package", order: 5 },
+  { id: "urunler", label: "Ürün Modülleri", icon: "ph-squares-four", order: 6 },
+  { id: "crosscut", label: "Çapraz-Kesen", icon: "ph-arrows-out", order: 7 },
+  { id: "dx", label: "DX & Services", icon: "ph-puzzle-piece", order: 8 },
+  { id: "build", label: "Build & Deploy", icon: "ph-flag-banner", order: 9 },
+  { id: "frontend", label: "Frontend Tech-Stack", icon: "ph-device-mobile", order: 10 },
+  { id: "landx", label: "LandX", icon: "ph-map-trifold", order: 11 },
+  { id: "sus", label: "Sürdürülebilirlik", icon: "ph-infinity", order: 12 },
+];
+
+// Dosya prefix → kategori (07A §2; istisnalar tek tabloda)
+export const PREFIX_TO_CATEGORY = {
+  edu: "egitim",
+  kernel: "kernel",
+  k: "kernel",
+  scale: "scale",
+  layer1: "layer1",
+  l1: "layer1",
+  stack: "stack",
+  s: "urunler",
+  cc: "crosscut",
+  crosscut: "crosscut",
+  sus: "sus",
+  fe: "frontend",
+  landx: "landx",
+  dx: "dx",
+  services: "dx",
+  deploy: "build",
+  build: "build",
+  file: "build",
+  product: "build",
+  anti: "build",
+};
+
+// Tekil meta dosyalar → genel (02-icerik-envanteri.md)
+export const STEM_OVERRIDES = {
+  overview: "genel",
+  philosophy: "genel",
+  "board-rebuilt": "genel",
+  "atomic-types": "genel",
+};
+
+// urunler kategorisinin Rail 2 grupları — 00-overview'daki 9 ürün kategorisi (03 §2)
+export const PRODUCT_GROUPS = [
+  { id: "op", label: "Çekirdek Operasyon" },
+  { id: "fin", label: "Finans & Muhasebe" },
+  { id: "scm", label: "Tedarik Zinciri & Lojistik" },
+  { id: "hr", label: "İnsan Kaynakları" },
+  { id: "cx", label: "Müşteri & Gelir" },
+  { id: "content", label: "İçerik & İşbirliği" },
+  { id: "data", label: "Veri & Zeka" },
+  { id: "platform", label: "Platform & Altyapı" },
+  { id: "vertical", label: "Dikey Çözümler" },
+  { id: "diger", label: "Diğer" },
+];
+
+export const PRODUCT_GROUP_MAP = {
+  crm: "op", sales: "op", pos: "op", inventory: "op", purchase: "op",
+  "ecommerce-models": "op", dropshipping: "op", "subscription-commerce": "op",
+  "social-commerce": "op", classifieds: "op",
+  billing: "fin", "revenue-recognition": "fin", "subscription-analytics": "fin",
+  fpa: "fin", expenses: "fin", "fixed-assets": "fin", treasury: "fin",
+  consolidation: "fin", "tax-compliance": "fin", "payment-methods": "fin",
+  wms: "scm", tms: "scm", fleet: "scm", "demand-planning": "scm",
+  procurement: "scm", quality: "scm", cmms: "scm", traceability: "scm", fsm: "scm",
+  payroll: "hr", ats: "hr", onboarding: "hr", performance: "hr", workforce: "hr",
+  clm: "cx", cpq: "cx", loyalty: "cx", pim: "cx", marketplace: "cx",
+  dms: "content", wiki: "content", community: "content", event: "content",
+  survey: "content", membership: "content",
+  rag: "data", bi: "data", etl: "data", observability: "data", predictive: "data",
+  "doc-matching": "data", conversational: "data", studio: "data",
+  bpm: "platform", ipaas: "platform", iam: "platform", audit: "platform", i18n: "platform",
+  property: "vertical", education: "vertical", clinic: "vertical",
+  restaurant: "vertical", incentive: "vertical", legaltech: "vertical",
+};

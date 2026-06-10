@@ -1,0 +1,164 @@
+{
+  "id": "scale-projections",
+  "title": "CQRS Projections (Materialized Read Models)",
+  "subtitle": "Yazma normalize, okuma denormalize. Event-driven senkron.",
+  "cluster": "scale",
+  "layer": "scale",
+  "order": 2,
+  "icon": "ph-projector-screen-chart",
+  "badge": "Scale primitive #2",
+  "tags": [
+    "cqrs",
+    "projection",
+    "read-model",
+    "scale"
+  ],
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "Write model normalize, transaction-safe; read model denormalize, hız için. Event-driven olarak senkronize."
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Klasik problem"
+    },
+    {
+      "type": "paragraph",
+      "text": "E-ticaret dashboard'unda \"müşterinin son 30 günde toplam harcaması\". Naif:"
+    },
+    {
+      "type": "code",
+      "lang": "sql",
+      "content": "SELECT SUM(total) FROM orders\nWHERE customer_id = ?\n  AND created_at > NOW() - INTERVAL '30 days'"
+    },
+    {
+      "type": "paragraph",
+      "text": "10M sipariş, 1M müşteri olunca her dashboard request'inde aynı query. Yavaş. Cache'liyorsun, stale.",
+      "enrich": {
+        "lesson": {
+          "ne": "Sık kullanılan verinin yakın bir yerde tutulması.",
+          "nicin": "Her seferinde uzaktan çekmek yavaşlar.",
+          "nasil": "Bellekte yedek; süresi dolunca yenilenir.",
+          "kim": "Sistem otomatik.",
+          "analoji": "Tezgâh üstündeki ekmek — depodan her seferinde almak yerine."
+        }
+      }
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Projection ile",
+      "enrich": {}
+    },
+    {
+      "type": "code",
+      "lang": "python",
+      "content": "# Bir tabloya CustomerStats projection'ı kur\n# customer_id, total_spent_30d, order_count, last_order_at\n\n@bus.on(OrderPlaced)\ndef update_customer_stats(event):\n    stats = db.get_or_create_stats(event.customer_id)\n    stats.total_spent_30d += event.total\n    stats.order_count += 1\n    stats.last_order_at = event.timestamp\n    db.save(stats)"
+    },
+    {
+      "type": "paragraph",
+      "text": "Dashboard request'inde tek SELECT, hazır agrege. Eventual consistency = event işlenene kadar 1-2 saniye gecikme olabilir. Çoğu zaman OK."
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "DocType'a projection metadata",
+      "enrich": {}
+    },
+    {
+      "type": "code",
+      "lang": "yaml",
+      "content": "doctype: CustomerStats\nis_projection: true\nsource_events: [OrderPlaced, OrderCancelled, OrderRefunded]\nrebuild_strategy: replay  # event store'dan baştan kur\n\nprojection_handler:\n  OrderPlaced: |\n    customer = stats.get(event.customer_id)\n    customer.total_spent += event.total\n    customer.order_count += 1\n  OrderCancelled: |\n    customer = stats.get(event.customer_id)\n    customer.total_spent -= event.refund_amount"
+    },
+    {
+      "type": "paragraph",
+      "text": "Framework bunu görür, otomatik subscriber kurar. Projection rebuild komutu: `framework rebuild-projection CustomerStats` — event store'dan baştan replay eder (durable workflow ile, kesintide kaldığı yerden).",
+      "enrich": {}
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Eventual consistency penceresi"
+    },
+    {
+      "type": "paragraph",
+      "text": "Event işlenene kadar 1-5 saniye gecikme tipik. Dashboard \"total spent\"i 2 saniye stale olabilir. Çoğu zaman OK. Ödeme/finansal sayfalarda fresh-read gerekirse: `?fresh=true` param → write model'den oku (yavaş ama kesin)."
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Gerçek dünya örnekleri"
+    },
+    {
+      "type": "examples",
+      "items": [
+        {
+          "label": "Twitter timeline",
+          "text": "PostCreated event'inden materialize edilmiş per-user timeline. Okuma anında JOIN yok.",
+          "enrich": {
+            "info": "PostCreated event'inden materialize edilmiş per-user timeline. Okuma anında JOIN yok."
+          }
+        },
+        {
+          "label": "YouTube view count",
+          "text": "yazma: `view++`, okuma: cached projection.",
+          "enrich": {
+            "info": "yazma: `view++`, okuma: cached projection."
+          }
+        },
+        {
+          "label": "Stripe dashboard",
+          "text": "\"this month revenue\" — her ödeme event'i projection update'i.",
+          "enrich": {
+            "info": "\"this month revenue\" — her ödeme event'i projection update'i."
+          }
+        },
+        {
+          "label": "Sosyal medya feed (#14)",
+          "text": "bütün fan-out işi projection.",
+          "enrich": {
+            "info": "bütün fan-out işi projection.",
+            "terms": [
+              {
+                "term": "Fan-out",
+                "abbrev_tr": "Dağıtım yelpazesi",
+                "meaning": "Bir post'u N takipçinin feed'ine dağıtma stratejisi (push/pull/hybrid).",
+                "why": "Twitter ölçeğinde maliyet/perf farkı 1000× olabilir."
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "enrich": {
+    "info": "Hızlı listeleme ve rapor için, ana veri yanında önceden hesaplanmış kopya tablolar.",
+    "detail": "Yazma normalize, okuma denormalize. Event-driven senkron.",
+    "terms": [
+      {
+        "term": "CQRS",
+        "abbrev_of": "Command Query Responsibility Segregation",
+        "abbrev_tr": "Komut-Sorgu Ayrımı",
+        "meaning": "Yazma modeli ile okuma modeli ayrı.",
+        "why": "Karmaşık dashboard sorguları için optimize."
+      },
+      {
+        "term": "Projection",
+        "abbrev_tr": "İzdüşüm",
+        "meaning": "Event'lerden türetilen okuma tablosu.",
+        "why": "JOIN cehenneminden kurtulma.",
+        "enrich": {}
+      }
+    ],
+    "lesson": {
+      "ne": "Hızlı listeleme ve rapor için, ana veri yanında önceden hesaplanmış kopya tablolar. 'Sorulduğunda yetişmeyelim, önceden hazırlayalım' fikri.",
+      "nicin": "Karmaşık raporlar her seferinde hesaplansa sistem yavaşlar. Önceden hazırlanmış özet tabloları olursa sayfa milisaniyede açılır.",
+      "nasil": "Ana veri değiştiğinde sistem ilgili özet tablosunu da kendiliğinden günceller. Kullanıcı sayfayı açtığında doğrudan özet tablosundan okur, ana tabloyu hiç sıkmaz.",
+      "nerede": "Liste sayfaları, dashboard'lar, yıllık raporlar — hepsi projection tablosundan beslenir.",
+      "ne_zaman": "Karmaşık sorgu, çok sayıda ilişkili tablo, ağır toplam hesabı söz konusu olduğunda.",
+      "kim": "Geliştirici projection kurallarını yazar; sistem otomatik günceller; son kullanıcı hızı görür.",
+      "analoji": "Bir kafenin günlük 'en çok satan 10 ürün' panosu: her sipariş geldiğinde pano güncellenir. Müşteri sorduğunda kafe sahibi her seferinde defterleri karıştırmaz; tabelaya bakar."
+    }
+  }
+}

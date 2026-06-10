@@ -1,0 +1,245 @@
+{
+  "id": "cc-resolver-ops",
+  "title": "Resolver Operasyonel Sertleştirme — Migration, Cache, Failure, Governance",
+  "subtitle": "Resolver canlıya nasıl alınır? Mevcut kullanıcı backfill, cache strategy (hot path), failure mode (deny-by-default), config governance (4-göz + OpenFGA), decision-trace observability.",
+  "cluster": "crosscut",
+  "order": 15,
+  "icon": "ph-shield-checkered",
+  "granularity": "orta-tas",
+  "state": "wip",
+  "tags": [
+    "crosscut",
+    "resolver",
+    "operations",
+    "migration",
+    "cache",
+    "governance",
+    "observability"
+  ],
+  "enrich": {
+    "info": "Resolver'ın 'şu an çalışıyor' demek yetmez — canlıya alma + güvenli işletme disiplini. 5 katman: migration, cache, failure, governance, observability.",
+    "detail": "**Resolver kurmak değil, işletmek zor.** Bu cluster 5 operasyonel katman:\n\n## 1. Migration & Rollout (en kritik)\n\nResolver henüz yokken sisteminde 10K kullanıcı varsa, **jurisdiction'ları nasıl backfill edersin?**\n\n**Backfill stratejisi:**\n\n1. **Sinyal toplama**: mevcut user_country, IP geolocation, payment_country, delivery_address.country, signup timezone — hepsinden jurisdiction tahmini\n2. **Confidence score**: yüksek (3+ sinyal eşleşti) / orta (2 sinyal) / düşük (1 sinyal veya çelişki)\n3. **Bulk update**: yüksek-confidence kullanıcılar otomatik; orta/düşük insan onayı bekler\n4. **Self-service düzeltme**: kullanıcı 'yargı bölgem yanlış' diye düzeltebilsin\n\n**Rollout — shadow mode → opt-in → full:**\n\n- **Shadow mode**: Resolver eski sistemle paralel çalışır; karar farkları log'lanır ama eski sistem uygulanır (1-2 hafta)\n- **Opt-in beta**: %5 tenant resolver'a alınır; sorun yoksa kademeli\n- **Full migration**: tüm tenant resolver'a; eski hard-coded rules deprecated\n\nFeature flag (`cc-rollout`) ile her aşama kontrolü.\n\n## 2. Cache Strategy (hot path)\n\nResolver her request'te çalışıyorsa milisaniye fark eder.\n\n**3 katmanlı cache:**\n\n| Katman | TTL | Invalidation |\n|---|---|---|\n| **User-level cache** (per-session) | 5 dk | login/profile-update event |\n| **Jurisdiction config** (per-country) | 1 saat | config-update webhook |\n| **Sanctions list** (global) | 6 saat | nightly sync + manuel |\n\n**Cache stack:**\n- L1: In-process LRU (her pod kendi)\n- L2: Redis cluster (shared)\n- L3: Postgres (source of truth)\n\n**Invalidation event-based:**\n```\nConfig admin değişiklik yaptı\n  ↓\nopenclaw → config-update event yayınlar\n  ↓\nRedis L2 cache flush (per-jurisdiction key)\n  ↓\nPod'lar L1 cache'lerini çağırınca yeniden DB'den çeker\n```\n\nCache miss penalty düşük: tek DB query (~5ms) acceptable.\n\n## 3. Failure Mode — Deny-by-Default\n\n**Resolver çöktüğünde:**\n\n```\nresolver hata fırlattı\n  ↓\nFallback policy yüklenir (en sıkı kural seti)\n  ↓\nİstek devam eder, ama:\n  - Marketing email gönderilmez\n  - Veri yurt dışına aktarılmaz\n  - Sanctions check geçilmiyorsa REDDET\n  - Audit log: 'resolver_fallback' tag\n  ↓\nAlarm: SRE on-call\n```\n\n**Felsefe:** *'Bilmiyorsan en kısıtlayıcı kurala uy.'* Sessiz kabul = yasal ihlal.\n\n**Asla bunu yapma:**\n- Resolver çöktü → request reddet (kullanıcı deneyimi yok eder)\n- Resolver çöktü → varsayılan kabul (yasal ihlal)\n\n**Doğru:** fallback policy + alarm + audit.\n\n## 4. Config Governance — 4-göz + OpenFGA\n\n**Kim config yazıyor?**\n\nJurisdiction config = yasal yükümlülüklerin koddaki karşılığı. Yanlış config = milyon dolarlık ceza.\n\n**Yetki akışı:**\n\n```\n1. Compliance officer config_draft oluşturur (status='draft')\n   ↓ OpenFGA: 'compliance:write' yetkisi gerekli\n2. Legal counsel review eder (status='reviewed')\n   ↓ OpenFGA: 'legal:approve' yetkisi gerekli (FARKLI KİŞİ)\n3. CTO veya designated approver onay (status='approved')\n   ↓ OpenFGA: 'config:deploy' yetkisi\n4. openclaw deploy (status='deployed', effective_from set)\n   ↓ Cache invalidation event\n5. 24 saat shadow mode (eski + yeni paralel, fark log'lanır)\n6. Yeni config aktif (effective_from'da)\n```\n\n**4-göz prensibi**: 1 kişi yazar, başka kişi onaylar. Her adım audit log.\n\n```sql\nCREATE TABLE config_change (\n  id BIGSERIAL,\n  jurisdiction_code TEXT,\n  draft_by INT,\n  draft_at TIMESTAMPTZ,\n  reviewed_by INT,                -- DRAFT_BY ile FARKLI\n  reviewed_at TIMESTAMPTZ,\n  approved_by INT,                -- yine FARKLI\n  approved_at TIMESTAMPTZ,\n  deployed_at TIMESTAMPTZ,\n  effective_from TIMESTAMPTZ,\n  diff_json JSONB,                -- önceki versiyondan fark\n  status TEXT,\n  CHECK (draft_by != reviewed_by),\n  CHECK (reviewed_by != approved_by)\n);\n```\n\n## 5. Decision-Trace Observability\n\nResolver bir karar verdi → o kararı **sonradan açıklayabilmek** yasal ihtiyaç.\n\n*\"Bu kullanıcıya neden EUR + DE KDV uygulandı?\"* sorusunun cevabı 2 yıl sonra bile bulunabilmeli.\n\n```sql\nCREATE TABLE decision_trace (\n  trace_id UUID DEFAULT gen_random_uuid(),\n  request_id UUID,\n  user_id INT,\n  decided_at TIMESTAMPTZ DEFAULT now(),\n  -- Inputs\n  input_url TEXT,\n  input_user_country CHAR(2),\n  input_payment_country CHAR(2),\n  input_delivery_country CHAR(2),\n  input_ip_geo CHAR(2),\n  -- Resolved axes\n  resolved_locale TEXT,\n  resolved_jurisdiction TEXT,\n  resolved_currency CHAR(3),\n  resolved_tax_region TEXT,\n  resolved_timezone TEXT,\n  resolved_data_residency TEXT,\n  -- Policy applied\n  applied_policy_id BIGINT,\n  applied_policy_version INT,\n  -- Outcome\n  outcome TEXT,                   -- 'success', 'fallback', 'rejected_sanctions'\n  PRIMARY KEY (trace_id)\n);\n```\n\n**Retention**: 5 yıl (denetim için). Partition by month.\n\n**Sampling**: %100 (her karar). Compliance açısından sample alma; performans için async insert (batch).\n\n**OpenTelemetry entegrasyonu**: trace_id ile request'i mikroservislerde takip et. Langfuse decision-trace özelliği AI agent kararları için ek dashboard.\n\n## 6. Edge Cases (gerçek hayat)\n\n- **Kullanıcı sınır geçti** (TR → DE taşındı): jurisdiction değişti, eski siparişler eski oranla kalır; yeni siparişler yeni jurisdiction\n- **VPN kullanan kullanıcı**: IP geo DE ama signup country TR, address TR — IP'ye değil signup'a güven (config gerek)\n- **Tatil ortası DST geçişi**: 'her 09:00'da fatura kes' cron job → server UTC'de; kullanıcı yerel saat görüntülenir; geçiş günü duplikat fatura riski (idempotency)\n- **Çift vatandaş**: TR + DE pasaport → hangi jurisdiction? Kullanıcı seçimi + signup tercihi",
+    "terms": [
+      {
+        "term": "Shadow Mode",
+        "abbrev_tr": "Gölge mod",
+        "meaning": "Yeni resolver paralel çalışır; karar farkları log'lanır ama eski sistem uygulanır.",
+        "why": "Güvenli rollout — fark görmeden full migrate'ten kaçınma."
+      },
+      {
+        "term": "Backfill",
+        "abbrev_tr": "Geri doldurma",
+        "meaning": "Yeni alan için eski kayıtlara değer atama.",
+        "why": "Resolver yokken oluşturulan 10K kullanıcının jurisdiction'ını şimdi belirleme."
+      },
+      {
+        "term": "Cache Invalidation",
+        "abbrev_tr": "Önbellek geçersizleştirme",
+        "meaning": "Config değişince cache'i temizleme.",
+        "why": "Cache hot path; config değiştiğinde eski kuralla kullanıcıya cevap vermek YASAL İHLAL."
+      },
+      {
+        "term": "Deny-by-Default",
+        "abbrev_tr": "Varsayılan reddet",
+        "meaning": "Resolver bilmiyorsa en sıkı kurala düş.",
+        "why": "Sessiz kabul = compliance ihlal. Bilinmeyene en kısıtlayıcı uygulanır."
+      },
+      {
+        "term": "4-göz prensibi",
+        "abbrev_tr": "Çift onay",
+        "meaning": "1 kişi yazar, başkası onaylar.",
+        "why": "Yanlış config = milyon dolar ceza. Tek kişi yetkisi YASAK."
+      },
+      {
+        "term": "Decision Trace",
+        "abbrev_tr": "Karar izi",
+        "meaning": "Resolver'ın verdiği her kararın audit log'u.",
+        "why": "'Bu kullanıcıya neden şu kural uygulandı?' yasal soru → 5 yıl saklama."
+      }
+    ],
+    "stories": [
+      {
+        "persona": "SRE Murat Bey (61'lik abisi 36) — backfill",
+        "context": "Resolver canlıya alındı, 50K mevcut kullanıcı var. Her birinin jurisdiction'ı boş.",
+        "outcome": "Backfill script: IP geo + signup country + payment country sinyallerinden tahmin. 35K (%70) yüksek confidence → otomatik atama. 12K orta → CS team batch onay. 3K düşük → 'profilini güncelle' email + kullanıcı kendisi seçer."
+      },
+      {
+        "persona": "Compliance officer Ayşe Hanım (45) — config governance",
+        "context": "Yeni KDV oranı 1 Temmuz'da yürürlüğe girecek. Ayşe Hanım config'i güncellemek istiyor.",
+        "outcome": "`config_draft` oluştur (status=draft). Legal review (Hasan Bey) → reviewed. CTO approve. openclaw deploy (effective_from='2026-07-01T00:00:00+03:00'). 1 Temmuz'a kadar shadow mode'da test. Geçişte sorun yok."
+      },
+      {
+        "persona": "Geliştirici Selim Bey (62'lik abisi 32) — resolver çöktü",
+        "context": "Redis cluster 5 dk crash'lendi. Resolver cache'siz, DB throttled. Bazı kullanıcılar 500 alıyor.",
+        "outcome": "Failure mode kicks in: deny-by-default fallback policy. Marketing email skip; çekirdek hizmet (login, checkout) en sıkı kuralla devam. Audit: 5dk boyunca her karar 'resolver_fallback' tagged. SRE alarm geldi, Redis düzeltildi, normal döndü."
+      }
+    ],
+    "lesson": {
+      "ne": "Resolver kurmak değil, güvenli işletmek için 5 katman: migration/rollout, cache, failure mode, config governance, decision-trace observability.",
+      "nicin": "Resolver 'çalışır' demek yetmez. Backfill yanlış → toplu yasal ihlal. Cache invalidation yanlış → eski kuralla cevap = ihlal. Config governance yok → 1 yanlış commit milyon dolar ceza.",
+      "nasil": "1) Shadow mode → opt-in beta → full rollout. 2) 3-katmanlı cache (L1+L2+L3) + event-based invalidate. 3) Deny-by-default fallback. 4) 4-göz config + OpenFGA yetki. 5) decision_trace 5 yıl saklama.",
+      "nerede": "`cc-resolver-ops` cluster + `cc-jurisdiction-resolver` (resolver kendisi) + `cc-rollout` (feature flag) + `l1-audit` (decision_trace).",
+      "ne_zaman": "Resolver canlıya alınmadan ÖNCE bu 5 katman hazır. Aksi: prod incident garanti.",
+      "kim": "SRE migration + cache; backend dev failure mode; compliance officer config governance; legal review.",
+      "analoji": "Köprü yapımı: köprüyü kurmak teknik mesele; trafik açmak başka mesele. Önce bir lane'i test trafiğine aç (shadow), sonra kamyonlara, sonra hepsine. Çöktüğünde tahliye planı (failure mode). Bakım yapan ekibin yetkisi (governance). Trafik raporu (observability). Kurmak 1 yıl, işletmek 50 yıl."
+    }
+  },
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "**Resolver yokken 50K kullanıcın var.** Jurisdiction backfill'i için: IP geo + signup country + payment + delivery sinyallerinden confidence score. Yüksek → otomatik; orta/düşük → insan onay veya self-service."
+    },
+    {
+      "type": "callout",
+      "variant": "critical",
+      "label": "Failure mode = deny-by-default",
+      "body": "Resolver çöktüğünde **sessiz kabul YASAL İHLAL**. Fallback policy yüklenir (en sıkı kural seti). Marketing skip, sanctions check zorunlu, audit 'resolver_fallback' tag, SRE alarm. 'Bilmiyorsan en kısıtlayıcıya uy.'"
+    },
+    {
+      "type": "callout",
+      "variant": "critical",
+      "label": "4-göz config governance",
+      "body": "Yanlış config = milyon dolar ceza. **Tek kişi yetkisi YASAK.** Draft (compliance) → Review (legal) → Approve (CTO) → Deploy (openclaw). Üç farklı kişi. OpenFGA ile yetki ayrımı + audit log."
+    },
+    {
+      "type": "callout",
+      "variant": "tip",
+      "label": "Vibecoding ipucu",
+      "body": "AI ajan'a: *'Backfill script: user table'ından sinyalleri topla (user_country, payment_country, ip_geo, delivery), confidence score, %70 yüksek otomatik update + log. Resolver cache: in-process LRU + Redis + Postgres (3 katman). Config change tablosu: draft_by/reviewed_by/approved_by ENİ FARKLI olmalı (CHECK constraint). decision_trace tablosu month-partitioned, 5 yıl retention.'*"
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Rollout aşamaları"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Aşama",
+        "Kullanıcı %",
+        "Süre",
+        "Onay metrik"
+      ],
+      "rows": [
+        [
+          "Shadow mode",
+          "%100 (paralel)",
+          "1-2 hafta",
+          "Karar farkı < %1"
+        ],
+        [
+          "Opt-in beta",
+          "%5 (whitelist)",
+          "1 hafta",
+          "Bug yok"
+        ],
+        [
+          "Kademeli",
+          "%25 → %50",
+          "3 gün",
+          "p95 latency OK"
+        ],
+        [
+          "Full",
+          "%100",
+          "-",
+          "Eski hard-coded deprecated"
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Cache stratejisi"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Katman",
+        "TTL",
+        "Invalidation"
+      ],
+      "rows": [
+        [
+          "L1: In-process LRU",
+          "60 sn",
+          "TTL"
+        ],
+        [
+          "L2: Redis (per-user)",
+          "5 dk",
+          "login/profile-update event"
+        ],
+        [
+          "L2: Redis (per-jurisdiction)",
+          "1 saat",
+          "config-update webhook"
+        ],
+        [
+          "L2: Sanctions list",
+          "6 saat",
+          "nightly sync"
+        ],
+        [
+          "L3: Postgres",
+          "-",
+          "Source of truth"
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Config governance workflow"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Adım",
+        "Yetki (OpenFGA)",
+        "Kişi"
+      ],
+      "rows": [
+        [
+          "1. Draft",
+          "compliance:write",
+          "Compliance officer"
+        ],
+        [
+          "2. Review",
+          "legal:approve",
+          "Legal counsel"
+        ],
+        [
+          "3. Approve",
+          "config:deploy",
+          "CTO veya designated"
+        ],
+        [
+          "4. Deploy",
+          "openclaw:execute",
+          "openclaw bot"
+        ],
+        [
+          "5. Shadow",
+          "-",
+          "24 saat paralel"
+        ],
+        [
+          "6. Active",
+          "-",
+          "effective_from'da"
+        ]
+      ]
+    }
+  ],
+  "related": [
+    "cc-jurisdiction-resolver",
+    "cc-compliance-matrix",
+    "cc-rollout",
+    "cc-obs",
+    "cc-obs-deep",
+    "l1-audit",
+    "k-authz"
+  ]
+}

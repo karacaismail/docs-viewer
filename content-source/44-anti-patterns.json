@@ -1,0 +1,185 @@
+{
+  "id": "anti-patterns",
+  "title": "Anti-pattern Özeti",
+  "subtitle": "24 tuzak, niyesi, doğrusu.",
+  "cluster": "build",
+  "order": 4,
+  "icon": "ph-prohibit",
+  "tags": [
+    "anti-pattern",
+    "tuzak",
+    "best-practice"
+  ],
+  "blocks": [
+    {
+      "type": "table",
+      "compact": true,
+      "headers": [
+        "Anti-pattern",
+        "Niye yanlış",
+        "Doğrusu"
+      ],
+      "rows": [
+        [
+          "Tek JSON column polymorphism",
+          "WordPress wp_postmeta — yavaş, type-unsafe, JOIN cehennemi",
+          "Frappe: her DocType fiziksel tablo"
+        ],
+        [
+          "Auth'ı sonradan",
+          "Migration cehennemi, güvensiz geçiş",
+          "Day-1 kernel"
+        ],
+        [
+          "Authz application-level if-check",
+          "Bir unutma → data leak",
+          "Query layer'a örülmüş + RLS defense-in-depth"
+        ],
+        [
+          "Tenant'sız başlamak",
+          "6-12 ay retrofit",
+          "Day-1 tenant_id her satırda"
+        ],
+        [
+          "Module direct DB access",
+          "Tight coupling, refactor imkansız",
+          "Sadece public API + event bus"
+        ],
+        [
+          "Cross-aggregate transaction",
+          "Distributed tx fragile, yavaş",
+          "Outbox + saga + compensation"
+        ],
+        [
+          "Billing core'a",
+          "Her ürün farklı model (escrow/seat/usage)",
+          "Layer 2 module"
+        ],
+        [
+          "Catalog core'a",
+          "CMS/LMS/Drive'ın işi yok",
+          "Layer 2 module"
+        ],
+        [
+          "Feed fan-out kernel'e",
+          "13 üründe feed yok",
+          "Primitive kernel, policy Layer 2"
+        ],
+        [
+          "Logging \"domain\"",
+          "Infrastructure concern",
+          "structlog + OpenTelemetry"
+        ],
+        [
+          "Reinvent search",
+          "Elasticsearch'ü kernel'e fuse",
+          "Interface core, default Postgres, prod swap"
+        ],
+        [
+          "Global mutable plugin state",
+          "Strapi admin extension acısı",
+          "Hook registry + semver kontrat"
+        ],
+        [
+          "Distributed transaction (2PC)",
+          "Yavaş, fragile, çağ geçti",
+          "Saga + outbox + idempotency"
+        ],
+        [
+          "Customer core'a",
+          "Sosyal medyada yok",
+          "Party generic + role module'de"
+        ],
+        [
+          "Polyglot transaction crossing",
+          "2PC fragile",
+          "Synchronous hook = pure function"
+        ],
+        [
+          "e-Belge sonradan",
+          "TR'de baştan bordro/muhasebe yanlış",
+          "e-Belge driver Layer 1 in-tree"
+        ],
+        [
+          "Effective-dating'i atlamak",
+          "HRMS retro çöker",
+          "Bitemporal day-1"
+        ],
+        [
+          "Hot counter ACID",
+          "Viral içerikte lock contention",
+          "Approximate, Redis INCR, sharded"
+        ],
+        [
+          "SCORM'u plugin sanmak",
+          "İlerleme modeli yanlış kurulur",
+          "LMS standardı baştan (cmi5)"
+        ],
+        [
+          "\"Önce tek müşteri\"",
+          "Tenancy retrofit",
+          "Day-1 multi-tenant"
+        ],
+        [
+          "PgBouncer + SET (session)",
+          "Cross-tenant leak",
+          "SET LOCAL (transaction)"
+        ],
+        [
+          "Submittable DocType'ı normal CRUD",
+          "Financial integrity bozulur",
+          "docstatus + immutable submitted"
+        ],
+        [
+          "Drupal 7 \"yarım shipping\"",
+          "5 yıl ekosistem acısı",
+          "Stage 1'i tam bitir"
+        ],
+        [
+          "Mikroservis ilk gün",
+          "Premature",
+          "Modüler monolit, sonra extract"
+        ]
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "critical",
+      "label": "🛑 Sürdürülebilirlik anti-pattern'leri (yeni eklendi)",
+      "body": "Aşağıdaki 3 tuzak küme 1'in mevcut anti-pattern listesine eklendi (kaynak: küme 2 sürdürülebilirlik araştırması):\n\n**1) Zorlanmayan modül sınırı (Shopify dersi).** \"Bu modüle dokunma\" diye yazılı kural koymak ama CI'da kontrol etmemek. 6 ay içinde sosyal anlaşma çürür, monolit çorba olur. Çözüm: {{ref:sus-boundaries}}.\n\n**2) Upgrade'i otomatikleştirmeden uzun-ömür (SAP fosilleşmesi).** \"Sürümümüzü sabit tutun, sonra düzeltiriz\" zihniyeti. Yıllar geçtikçe ekosistem dağılır, yeni özelleştirme imkansızlaşır, sistem fosilleşir. Çözüm: {{ref:sus-codemod}} (Drupal Rector + AI codemod).\n\n**3) Big-bang rewrite (Drupal 8 travması).** Eski sürümü tamamen at, yeniden yaz. Tüm plugin ekosistemi kırılır, ekosistem darmadağın olur. Drupal 8 geçişinde bu yapıldı; D9+ dersi: kademeli deprecation + codemod. Çözüm: {{ref:sus-bc-policy}} + {{ref:sus-versioning}}."
+    },
+    {
+      "type": "callout",
+      "variant": "critical",
+      "label": "Tek squad 70 ürün ANTI-PATTERN",
+      "body": "70+ ürün kataloğu 1-3 kişilik tek squad ile dilemmadır. Her ürünün ortalama bakım yükü ayda 2-5 gün. 70 ürün × 3 gün = 210 gün-ay = en az 10 FTE bakım yalnız başına. Faz sıralı build + her stack için squad ataması zorunlu. Tek seferde tüm 70'i deneyerek başlamak = hiçbirini bitirmemek."
+    },
+    {
+      "type": "callout",
+      "variant": "critical",
+      "label": "Tek Document tablo + type switching ANTI-PATTERN",
+      "body": "`Document` entity'ye `docType` field + `if (type == X)` switch = **anemic domain**. Yeni tip eklemek mevcut kodu kırar; DDD'nin polymorphism prensibini öldürür. **YASAK.**\n\n**Doğrusu:** DocType engine (k-schema) tablo-per-tip generate eder + davranış varsa Strategy pattern policy plugin + sadece etiketse value object enum. Detay: edu-u25, k-schema."
+    }
+  ],
+  "enrich": {
+    "info": "24 tuzak, niyesi, doğrusu.",
+    "detail": "24 tuzak, niyesi, doğrusu.",
+    "terms": [
+      {
+        "term": "Cluster",
+        "abbrev_tr": "Konu kümesi",
+        "meaning": "Bu döküman birimi — kendi başına okunabilir mimari konu.",
+        "why": "Tek dosyada tek bağımsız konu prensibi."
+      }
+    ],
+    "lesson": {
+      "ne": "Yazılımda yapılmaması gereken yaygın hatalar ve niye yapılmaması gerektiği. 'Sakın bunları yapma' rehberi.",
+      "nicin": "Yeni geliştirici cazip görünen yanlış yola sapabilir. Önceden listede görmek hata önler.",
+      "nasil": "Her anti-pattern için: ne, niye yanlış, ne yapmak lazım. Örnek bağlam ile.",
+      "nerede": "Geliştirici dokümanlarında 'Tuzaklar' sayfası.",
+      "ne_zaman": "Yeni gelen okur; karar tartışılırken danışılır.",
+      "kim": "Deneyimli geliştiriciler yazar; tüm ekip okur.",
+      "analoji": "Sürücü kursunda 'sık yapılan hatalar' bölümü: niye yapılmaması gerektiği gerekçeleriyle anlatılır."
+    }
+  }
+}

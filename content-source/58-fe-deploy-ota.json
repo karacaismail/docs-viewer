@@ -1,0 +1,243 @@
+{
+  "id": "fe-deploy",
+  "title": "Frontend — Deploy + OTA + Store Rollout",
+  "subtitle": "Hetzner + Docker + Caddy · GitHub Actions · Fastlane · TestFlight + Play Internal Testing · kendi OTA server.",
+  "cluster": "frontend",
+  "order": 7,
+  "icon": "ph-rocket-launch",
+  "tags": [
+    "frontend",
+    "deploy",
+    "ci",
+    "ota",
+    "store"
+  ],
+  "blocks": [
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "2.15 Deploy & OTA"
+    },
+    {
+      "type": "table",
+      "compact": true,
+      "headers": [
+        "Katman",
+        "Seçim",
+        "Gerekçe"
+      ],
+      "rows": [
+        [
+          "Web hosting",
+          "**Hetzner Debian + Docker + Caddy** (auto-TLS)",
+          "Mevcut altyapı"
+        ],
+        [
+          "Web CI",
+          "GitHub Actions Ubuntu",
+          "docker build → registry → SSH compose pull"
+        ],
+        [
+          "iOS CI",
+          "GitHub Actions macOS runner + Fastlane + match",
+          "Apple Silicon Xcode"
+        ],
+        [
+          "Android CI",
+          "GitHub Actions Ubuntu + Fastlane supply",
+          "AAB → Play Console"
+        ],
+        [
+          "**OTA**",
+          "**Kendi FastAPI server + Hetzner Object Storage**",
+          "Capgo Supabase çelişkisi yok"
+        ],
+        [
+          "OTA client",
+          "@capgo/capacitor-updater (self-host modunda)",
+          "Plugin MPL-2.0, backend kendi"
+        ],
+        [
+          "CDN",
+          "Cloudflare veya BunnyCDN",
+          "Static asset edge"
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "OTA server kontratı (apps/ota-server)"
+    },
+    {
+      "type": "code",
+      "lang": "http",
+      "content": "GET /channels/:channel/manifest?version=:current\n  → { latestVersion, bundleUrl, sha256, mandatory, releaseNotes }\n\nPOST /channels/:channel/releases (admin)\n  → multipart bundle upload, sha256 doğrulama\n\nGET /channels/:channel/rollout\n  → { percentage, audience }\n\nRollout: yüzde + audience (org id, tenant tier) bazlı.\nRollback: POST /channels/:channel/releases/:id/rollback"
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "5. CI/CD pipeline"
+    },
+    {
+      "type": "feature-list",
+      "items": [
+        {
+          "name": "5.1 Web (PR + main)",
+          "desc": "PR → Biome lint, vite-plugin-checker TS, Vitest unit + MSW → Playwright E2E (Docker Compose preview deploy) → Lighthouse CI score gate → axe-core a11y gate. Main merge → Docker image build → Hetzner registry → SSH compose pull.",
+          "enrich": {
+            "info": "PR → Biome lint, vite-plugin-checker TS, Vitest unit + MSW → Playwright E2E (Docker Compose preview deploy) → Lighthouse CI score gate → axe"
+          }
+        },
+        {
+          "name": "5.2 iOS",
+          "desc": "main merge + tag `mobile-v*` → macOS runner → `npx cap sync ios` → Fastlane match (sertifika), gym (build), pilot (TestFlight) → Sentry release + dSYM upload → PostHog event.",
+          "enrich": {
+            "info": "main merge + tag `mobile-v*` → macOS runner → `npx cap sync ios` → Fastlane match (sertifika), gym (build), pilot (TestFlight) → Sentry rele"
+          }
+        },
+        {
+          "name": "5.3 Android",
+          "desc": "Aynı tag → Ubuntu runner → `npx cap sync android` → Fastlane gradle build, supply (Play Console) → Sentry release upload → PostHog event.",
+          "enrich": {
+            "info": "Aynı tag → Ubuntu runner → `npx cap sync android` → Fastlane gradle build, supply (Play Console) → Sentry release upload → PostHog event."
+          }
+        },
+        {
+          "name": "5.4 OTA (JS-only)",
+          "desc": "Tag `ota-v*` → Web bundle build → SHA256 hesapla, manifest oluştur → Hetzner Object Storage'a upload → OTA server'a POST `/channels/production/releases` → Rollout başlat (önce %10, gözlem, sonra %100).",
+          "enrich": {
+            "info": "Tag `ota-v*` → Web bundle build → SHA256 hesapla, manifest oluştur → Hetzner Object Storage'a upload → OTA server'a POST `/channels/producti"
+          }
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Store Rollout (Haziran 2026 Closed Beta)"
+    },
+    {
+      "type": "table",
+      "compact": true,
+      "headers": [
+        "Adım",
+        "Süre",
+        "Detay"
+      ],
+      "rows": [
+        [
+          "D-U-N-S başvurusu",
+          "≈ 5 iş günü (2 haftaya kadar)",
+          "Dun & Bradstreet — Apple Organization enrollment için zorunlu, takvimsel en uzun kalem"
+        ],
+        [
+          "Apple D&B veri çekimi",
+          "+ 2 iş günü",
+          "D-U-N-S oluşunca Apple'ın D&B'den veri alması"
+        ],
+        [
+          "Apple Developer Program enrollment",
+          "1–7 iş günü",
+          "99 USD/yıl, identity verification, doğrulama çağrısı"
+        ],
+        [
+          "Google Play Console Organization",
+          "2–7 iş günü (max 2 hafta)",
+          "25 USD tek seferlik, evrak doğrulama, **12 testers × 14 gün** kuralından MUAF"
+        ],
+        [
+          "iOS Distribution Cert + Provisioning",
+          "Aynı gün",
+          "fastlane match"
+        ],
+        [
+          "TestFlight ilk build (internal)",
+          "Build process bittiği gibi",
+          "Beta App Review **gereksiz** internal'da"
+        ],
+        [
+          "TestFlight external",
+          "+ 24–48 saat",
+          "Beta App Review external testerlar için zorunlu"
+        ],
+        [
+          "Play Internal Testing",
+          "Birkaç dakika",
+          "Opt-in link, 100 tester max"
+        ],
+        [
+          "**Closed Beta açık**",
+          "Toplam 3–4 hafta",
+          "100 internal + 50–200 external + 100 Play"
+        ]
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "warning",
+      "label": "Google Play 12 testers × 14 gün kuralı",
+      "body": "13 Kasım 2023 sonrası **personal account** ile yeni uygulama yayınlamak için minimum 12 opted-in tester ile 14 ardışık gün closed testing zorunludur. **Organization (verified) hesaplar bu kuraldan MUAFTIR**. arsam tüzel kişilik → Google Play Console'a Organization olarak kayıt → 14 günlük takvim parçası kritik path'ten çıkar."
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "6. OpenClaw + n8n otomasyon noktaları"
+    },
+    {
+      "type": "table",
+      "compact": true,
+      "headers": [
+        "Olay",
+        "Otomasyon"
+      ],
+      "rows": [
+        [
+          "PR açıldı",
+          "OpenClaw Lobster → kod review özet → Slack/WhatsApp"
+        ],
+        [
+          "Test failed",
+          "n8n → ilgili geliştiriciye WhatsApp"
+        ],
+        [
+          "Release published (TestFlight/Play)",
+          "n8n → Crowdin string sync → PostHog feature flag flip → release notes Slack"
+        ],
+        [
+          "Sentry error spike",
+          "n8n → severity'ye göre WhatsApp/email + PostHog session replay link"
+        ],
+        [
+          "OTA rollout başladı",
+          "n8n → 30 dk sonra crash rate kontrol → %10 → %50 → %100 veya otomatik rollback"
+        ],
+        [
+          "KYC submission",
+          "n8n → KYB queue → Veriff webhook bekle → onay/red mail"
+        ]
+      ]
+    }
+  ],
+  "enrich": {
+    "info": "Yazılımı geliştirici bilgisayarından gerçek sunucuya taşıma ve güncel tutma yöntemi.",
+    "detail": "Hetzner + Docker + Caddy · GitHub Actions · Fastlane · TestFlight + Play Internal Testing · kendi OTA server.",
+    "terms": [
+      {
+        "term": "Cluster",
+        "abbrev_tr": "Konu kümesi",
+        "meaning": "Bu döküman birimi — kendi başına okunabilir mimari konu.",
+        "why": "Tek dosyada tek bağımsız konu prensibi."
+      }
+    ],
+    "lesson": {
+      "ne": "Yazılımı geliştiricinin bilgisayarından gerçek sunucuya taşıma ve güncel tutma yöntemi. Hazırlanan kodun kullanıcıya ulaşma yolu.",
+      "nicin": "Geliştirici bilgisayarında çalışan kod kullanıcıya fayda etmez. Sunucuya çıkmalı, oradan kullanılmalı. Üstelik düzenli güncellenmeli; eski sürüm bir yerde kalmamalı.",
+      "nasil": "Geliştirici kodunu GitHub'a yükler → otomatik bir pipeline kodu alır, testleri koşar, paketler, sunucuya itelektronik dağıtır → eski sürüm kapanır, yenisi açılır.",
+      "nerede": "GitHub Actions, Hetzner sunucu, Docker konteynerleri — perde arkası takım çalışması.",
+      "ne_zaman": "Her yeni özellik tamamlandığında veya kritik hata düzeltildiğinde. Çoğu ekip günde birkaç kez.",
+      "kim": "Geliştirici kodu hazırlar, DevOps boru hattını kurar, kullanıcı yeni sürümün geldiğini bildirimle görür.",
+      "analoji": "Bir restoran zincirinin yeni menü çıkarması: önce şefin mutfağında denenir, sonra tüm şubelere reçete yollanır, hepsi aynı anda servise başlar."
+    }
+  }
+}

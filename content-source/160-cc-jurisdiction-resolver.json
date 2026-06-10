@@ -1,0 +1,302 @@
+{
+  "id": "cc-jurisdiction-resolver",
+  "title": "Jurisdiction / Policy Resolver — 6-Eksen Orthogonal Model",
+  "subtitle": "Locale ≠ Jurisdiction ≠ Currency ≠ Tax ≠ Timezone ≠ Data residency. Amazon/eBay 'codebase değiştirmez' — politika/config katmanını koddan ayırır. Bu cluster o ayrımın somut mimarisi.",
+  "cluster": "crosscut",
+  "order": 9,
+  "icon": "ph-globe-hemisphere-east",
+  "granularity": "kaya",
+  "state": "wip",
+  "tags": [
+    "crosscut",
+    "jurisdiction",
+    "policy",
+    "compliance",
+    "i18n",
+    "resolver",
+    "capability",
+    "architecture"
+  ],
+  "enrich": {
+    "info": "6 bağımsız eksen + Policy Resolver servisi. Request → eksenler çözümlenir → yürürlükteki kural seti hesaplanır → UI + iş mantığı + billing + bildirim hep o setten beslenir. Kurallar config'te (kod deploy'suz).",
+    "detail": "**Mimari içgörü (asıl ders):**\n\nAmazon Türkiye'de KVKK, AB'de GDPR, ABD'de CCPA'ya göre 'codebase değiştirmiyor'. **Politika/konfigürasyon katmanını koddan ayırıyor.** Bu cluster o ayrımın mimarisidir.\n\n**Klasik HATA:** Tüm uluslararasılaştırmayı `locale` değişkenine bağlamak. Sonuç: Türkiye'de yaşayan Almanca konuşan kullanıcı için `de-TR` locale uydurmak — felaket.\n\n**6 BAĞIMSIZ EKSEN:**\n\n| Eksen | Neye bağlı | Örnek çatışma |\n|---|---|---|\n| **Locale** (dil) | Kullanıcı tercihi | Türk, İngilizce arayüz ister |\n| **Jurisdiction** (hukuk) | İkamet + hizmet yeri | İngilizce kullanır, KVKK'ya tabi |\n| **Currency** (para) | Hesap/ödeme ülkesi | TR hesap, EUR ödeme |\n| **Tax region** (vergi) | Teslimat/hizmet yeri | EUR öder, Almanya teslimat → DE KDV |\n| **Timezone** (saat) | Fiziksel konum (IANA) | Almanya'da yaşayan Türk → Europe/Berlin |\n| **Data residency** (veri) | Yasal zorunluluk | TR vatandaşı verisi TR'de tutulmalı (KVKK md.9) |\n\nBu 6 eksenin **kombinasyonu** = yürürlükteki kural seti. Tek eksene bağlamak = bütün varsayımlar yıkılır.\n\n**Policy Resolver servisi (özet akış):**\n\n```\nrequest geldi\n  ↓\n1. Locale çözümle: URL (/tr/) > user_pref (DB) > Accept-Language > default\n2. Jurisdiction çözümle: user.country + service_country + delivery_country\n3. Currency çözümle: account.currency veya payment.currency\n4. Tax region çözümle: delivery_address.country + service_type\n5. Timezone çözümle: user.tz veya IP geolocation fallback\n6. Data residency çözümle: jurisdiction → izinli storage bölgesi\n  ↓\nPolicy Set oluştur (versiyonlu config'ten)\n  ↓\nKararı decision_trace tablosuna yaz (audit için)\n  ↓\nUI + business logic + billing + notification → set'i tüket\n```\n\n**Çatışma çözüm matrisi (precedence):**\n\n| Çatışma | Çözüm |\n|---|---|\n| KVKK 'sil' vs Vergi Usul Kanunu 'sakla' | **Anonimleştir + finansal kaydı tut** (kişisel veri silinir, fatura kalır) |\n| ABD CCPA opt-out vs AB GDPR opt-in | **En sıkı** uygulanır (opt-in zorunlu olur) |\n| Currency conflict (TR account + EUR payment) | Hesap currency = ledger, payment currency = işlem; FX lock kuralı |\n| Sanctions list match | **REDDET** — diğer her şey önemsiz |\n| Resolver çöktü | **En sıkı varsayılana düş** (deny-by-default) |\n\n**Config-as-data (versiyonlu policy store):**\n\n```sql\nCREATE TABLE jurisdiction_policy (\n  policy_id BIGSERIAL,\n  jurisdiction_code TEXT,         -- 'TR', 'EU', 'DE', 'US-CA'\n  version INT,                    -- versiyonlu, geri dönülebilir\n  effective_from TIMESTAMPTZ,\n  effective_to TIMESTAMPTZ,\n  policy_json JSONB,              -- consent_age, tax_inclusive, currency, retention_years, ...\n  created_by INT,\n  approved_by INT,                -- 4-göz onayı\n  PRIMARY KEY (policy_id)\n);\n\nCREATE TABLE decision_trace (\n  request_id UUID,\n  user_id INT,\n  resolved_locale TEXT,\n  resolved_jurisdiction TEXT,\n  resolved_currency CHAR(3),\n  resolved_tax_region TEXT,\n  resolved_timezone TEXT,\n  resolved_data_residency TEXT,\n  applied_policy_id BIGINT,       -- hangi versiyonlu kural seti uygulandı\n  decided_at TIMESTAMPTZ DEFAULT now()\n);\n```\n\n**Operasyonel sertleştirme:**\n\n- **Cache**: resolver hot path. Per-user → kısa TTL (5 dk). Per-jurisdiction config → uzun TTL + event-based invalidation (config değişti → cache flush).\n- **Failure mode**: resolver veya config eksikse → **deny-by-default** (en sıkı kural uygulanır). Sessiz kabul YASAK.\n- **Audit**: her decision'ı decision_trace'a yaz. 'Neden bu kullanıcıya EUR + DE KDV uygulandı' sorusunun cevabı.\n- **Config yetkisi**: OpenFGA ile config-write yetkisi 4-göz onayına bağlı. Yanlış config = yasal ihlal.",
+    "terms": [
+      {
+        "term": "Jurisdiction",
+        "abbrev_tr": "Yargı yetki alanı",
+        "meaning": "Bir kullanıcıya/işleme hangi ülkenin/bölgenin hukuku uygulanır.",
+        "why": "Locale (dil) ile karıştırılır — felaket. Bağımsız eksen."
+      },
+      {
+        "term": "Orthogonal Axes",
+        "abbrev_tr": "Dik eksenler",
+        "meaning": "6 eksen birbirinden bağımsız değişebilir; biri diğerini belirlemez.",
+        "why": "Klasik hata: hepsini locale'a bağlamak. Almanya'da yaşayan Türk = locale tr, jurisdiction DE, currency EUR, tax DE, tz Berlin, residency EU."
+      },
+      {
+        "term": "Policy Resolver",
+        "abbrev_tr": "Politika çözümleyici",
+        "meaning": "6 ekseni çözümleyip yürürlükteki kural setini hesaplayan servis.",
+        "why": "Tek noktada, koddan ayrı. Kural değişikliği = config update, deploy değil."
+      },
+      {
+        "term": "Config-as-Data",
+        "abbrev_tr": "Veri olarak konfigürasyon",
+        "meaning": "Politika kuralları kodda değil, versiyonlanmış DB/dosyada.",
+        "why": "Kod deploy'u olmadan kural değiştir. Versiyonlama = audit + geri dönüş."
+      },
+      {
+        "term": "Decision Trace",
+        "abbrev_tr": "Karar izi",
+        "meaning": "Resolver'ın verdiği her kararın audit log'u.",
+        "why": "'Bu kullanıcıya neden şu kural uygulandı?' sorusu yasal ihtiyaç (GDPR/KVKK)."
+      },
+      {
+        "term": "Data Residency",
+        "abbrev_tr": "Veri ikametgâhı",
+        "meaning": "Verinin fiziksel olarak saklandığı coğrafi yer.",
+        "why": "KVKK md.9 (TR), GDPR md.44+ (AB), Rusya/Çin yerelleştirme yasaları."
+      },
+      {
+        "term": "Deny-by-Default",
+        "abbrev_tr": "Varsayılan reddet",
+        "meaning": "Resolver karar veremezse → en sıkı kural uygulanır.",
+        "why": "'Bilmiyorsan en kısıtlayıcıya düş' güvenli; sessiz kabul yasal ihlal."
+      }
+    ],
+    "stories": [
+      {
+        "persona": "Ayşe Teyze (63) — Almanya'da yaşayan emekli",
+        "context": "Ayşe Teyze 30 yıldır Almanya'da yaşıyor, hâlâ Türkçe ana dili. Türkiye'deki torunlara hediye sipariş ediyor (TR adres), kart bilgisi Alman bankası (EUR), arayüzü Türkçe istiyor.",
+        "outcome": "6 eksen ayrı çözümlenir: locale=tr, jurisdiction=DE (Ayşe Teyze AB sakini), currency=EUR (Alman kart), tax=TR (TR teslimat), tz=Europe/Berlin, data=EU (GDPR sıkı). Tek-locale yaklaşımı bu kombinasyonu kuramaz."
+      },
+      {
+        "persona": "Mali müşavir Hasan Bey (58) — KVKK + Vergi çatışması",
+        "context": "Hasan Bey'in müşterisi 'verimi sil' diye talep etti. Hasan Bey 'sil' tıklarsa → faturalar siliniyor, vergi denetimi kanıtsız kalıyor.",
+        "outcome": "Çatışma çözümü: kişisel veri (ad, telefon, email, adres) **anonimleştirilir** (TC kimlik hash, ad 'silindi'). Fatura kaydı (tutar, KDV, tarih) **saklanır** (10 yıl). Hem KVKK hem VUK karşılanır."
+      },
+      {
+        "persona": "Genç esnaf Murat Bey (61'lik abisi 40) — sanctions check",
+        "context": "Murat Bey ihracat yapıyor. Yeni bir müşteri sipariş verdi: İran'a teslimat.",
+        "outcome": "Resolver: jurisdiction=US + ödeme USD ⇒ OFAC sanctions check tetiklenir. Müşteri sanctions list'te → **sipariş otomatik REDDEDİLİR**. Resolver decision_trace'a 'sanctioned_country=IR, OFAC_match=true' yazar; CS team görür."
+      }
+    ],
+    "lesson": {
+      "ne": "Kıtalararası SaaS için 6 bağımsız ekseni (locale, jurisdiction, currency, tax, timezone, data-residency) çözen ve yürürlükteki kural setini hesaplayan policy resolver servisi.",
+      "nicin": "Tek-locale yaklaşımı 'codebase her ülkede farklı' demek; doğru mimari 'config her ülkede farklı, kod aynı'. Amazon/eBay'in görünmez sihri.",
+      "nasil": "1) 6 eksen ayrı resolve. 2) Versiyonlu policy_json config tablosu. 3) decision_trace audit. 4) Çatışma matrisi (precedence). 5) Cache + deny-by-default fallback. 6) 4-göz config onayı.",
+      "nerede": "`cc-jurisdiction-resolver` cluster + Layer-1 öncesi middleware. Her request bu resolver'dan geçer.",
+      "ne_zaman": "İlk ikinci-ülke kullanıcısından ÖNCE. Sonradan refactor 1000x pahalı. Pre-revenue startup için bile baştan.",
+      "kim": "Mimar 6 eksen tasarım; backend dev resolver implementasyonu; hukuk ekibi kural yazımı; SRE config dağıtımı.",
+      "analoji": "Apartman site yönetimi: kapı (giriş kontrolü), su (currency), elektrik (tax), gaz (timezone), internet (data residency), site sözleşmesi (locale). Her biri ayrı altyapı; biri kesilirse diğeri çalışır. 'Her şey tek hat' demek = tek arıza her şeyi durdurur."
+    }
+  },
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "**Asıl mimari ders:** Amazon/eBay 'codebase değiştirmiyor' — politika katmanını koddan ayırıyor. Türkiye'de KVKK, AB'de GDPR, ABD'de CCPA — hepsi config + resolver, **tek codebase**."
+    },
+    {
+      "type": "callout",
+      "variant": "critical",
+      "label": "Klasik HATA — locale'a bağlama",
+      "body": "Tüm uluslararasılaştırma `locale` değişkenine bağlanırsa: Türkiye'de yaşayan Almanca konuşan kullanıcı için `de-TR` locale uydurmak gerekir. Felaket. **6 eksen bağımsız (orthogonal)** modellenmeli."
+    },
+    {
+      "type": "image",
+      "src": "/assets/jurisdiction-6-axes.svg",
+      "alt": "6 bağımsız uluslararasılaştırma ekseni diyagramı",
+      "caption": "6-eksen modeli: Locale ⊥ Jurisdiction ⊥ Currency ⊥ Tax ⊥ Timezone ⊥ Data Residency — birbirinden bağımsız çözülür"
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "6 eksen ve neye bağlı"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Eksen",
+        "Neye bağlı",
+        "Çözüm kaynağı"
+      ],
+      "rows": [
+        [
+          "Locale (dil)",
+          "Kullanıcı tercihi",
+          "URL > user_pref > Accept-Language > default"
+        ],
+        [
+          "Jurisdiction (hukuk)",
+          "İkamet + hizmet yeri",
+          "user.country + service_country"
+        ],
+        [
+          "Currency (para)",
+          "Hesap/ödeme ülkesi",
+          "account.currency veya payment.currency"
+        ],
+        [
+          "Tax region (vergi)",
+          "Teslimat/hizmet yeri",
+          "delivery_address.country + service_type"
+        ],
+        [
+          "Timezone (saat)",
+          "Fiziksel konum (IANA)",
+          "user.tz veya IP geolocation fallback"
+        ],
+        [
+          "Data residency (veri)",
+          "Yasal zorunluluk",
+          "jurisdiction → izinli storage bölgesi"
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Çatışma çözüm matrisi (precedence)"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Çatışma",
+        "Çözüm",
+        "Mimari etki"
+      ],
+      "rows": [
+        [
+          "KVKK 'sil' vs VUK 'sakla'",
+          "Anonimleştir + finansal kaydı tut",
+          "Soft-delete + anonymize ayrı"
+        ],
+        [
+          "CCPA opt-out vs GDPR opt-in",
+          "En sıkı uygulanır (opt-in)",
+          "Consent default = false"
+        ],
+        [
+          "TR hesap + EUR ödeme",
+          "Ledger = hesap currency",
+          "Dual ledger (functional + reporting)"
+        ],
+        [
+          "Sanctions list match",
+          "REDDET (her şeyden önce)",
+          "Pre-check middleware"
+        ],
+        [
+          "Resolver çöktü",
+          "Deny-by-default (en sıkı)",
+          "Fallback policy zorunlu"
+        ],
+        [
+          "DST geçişi cron job",
+          "Server UTC; kullanıcı TZ display",
+          "Server zamanı asla local değil"
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Policy Resolver akışı (request başına)"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Adım",
+        "İş",
+        "Süre"
+      ],
+      "rows": [
+        [
+          "1. Locale resolve",
+          "URL > pref > header > default",
+          "< 1ms"
+        ],
+        [
+          "2. Jurisdiction resolve",
+          "user + service + delivery country",
+          "< 1ms"
+        ],
+        [
+          "3. Currency resolve",
+          "account veya payment currency",
+          "< 1ms"
+        ],
+        [
+          "4. Tax resolve",
+          "delivery + service type → tax region",
+          "< 1ms"
+        ],
+        [
+          "5. Timezone resolve",
+          "user.tz veya geo fallback",
+          "< 1ms"
+        ],
+        [
+          "6. Residency resolve",
+          "jurisdiction → storage region",
+          "< 1ms"
+        ],
+        [
+          "7. Policy lookup",
+          "Config from cache (per-jurisdiction)",
+          "< 5ms"
+        ],
+        [
+          "8. Decision trace",
+          "DB insert (async batch)",
+          "async"
+        ]
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "tip",
+      "label": "Vibecoding ipucu",
+      "body": "AI ajan'a: *'JurisdictionResolver service: 6 ayrı resolver function (locale, jurisdiction, currency, tax, tz, residency). Her biri test edilebilir saf fonksiyon. Compose ile policy seti üretir. jurisdiction_policy tablosu versiyonlu config-as-data (effective_from/to). decision_trace audit. Cache: per-user 5dk TTL, per-jurisdiction config 1 saat + event-based invalidate. Failure mode: deny-by-default fallback policy.'*"
+    },
+    {
+      "type": "callout",
+      "variant": "critical",
+      "label": "Resolver çöktüğünde",
+      "body": "Deny-by-default = en sıkı kural seti uygulanır (max consent, max data protection, min data collection). Sessiz kabul = yasal ihlal. **Resolver health-check + alarm zorunlu** (cc-obs-deep)."
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "OpenFGA entegrasyonu (jurisdiction-aware authz)"
+    },
+    {
+      "type": "paragraph",
+      "text": "`user.jurisdiction = 'EU' AND action = 'export_personal_data'` → izin verilen tek format JSON+CSV (data portability GDPR md.20). `user.jurisdiction = 'TR' AND action = 'delete_account'` → aydınlatma metni göster + 30 gün soft-delete + anonimize. Aynı OpenFGA modeli RBAC için zaten kurulu; jurisdiction-relation eklemek = ek bir authorization model."
+    },
+    {
+      "type": "callout",
+      "variant": "warning",
+      "label": "Resolver işletmek = ayrı bir disiplin",
+      "body": "Resolver kurmak teknik; **işletmek** ayrı: backfill stratejisi (mevcut 50K kullanıcı), 3-katmanlı cache (hot path), failure mode (deny-by-default), 4-göz config governance (yanlış config = milyon dolar ceza), decision-trace observability (5 yıl saklama). Detaylar: `cc-resolver-ops`."
+    },
+    {
+      "type": "callout",
+      "variant": "info",
+      "label": "Kimlik modelleri — global tasarım",
+      "body": "Resolver 6-eksen çözer ama kullanıcı verisi (isim, telefon, adres, vergi-no) **ülke-aware** modellenmediyse 2. ülkede çöker. firstName/lastName YASAK; tek fullName + opsiyonel given/family. E.164 telefon + libphonenumber. i18n-postal-address. VAT VIES API. Detaylar: `cc-identity-models`."
+    }
+  ],
+  "related": [
+    "cc-i18n-deep",
+    "cc-privacy",
+    "cc-tr",
+    "cc-security",
+    "cc-obs",
+    "k-authz",
+    "sus-versioning",
+    "l1-audit",
+    "cc-resolver-ops",
+    "cc-identity-models"
+  ]
+}
