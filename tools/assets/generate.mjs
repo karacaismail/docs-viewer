@@ -47,8 +47,8 @@ function wrap(s, max = 26) {
   const words = String(s).split(" ");
   const lines = [""];
   for (const w of words) {
-    if ((lines[lines.length - 1] + " " + w).trim().length > max) lines.push(w);
-    else lines[lines.length - 1] = (lines[lines.length - 1] + " " + w).trim();
+    if (`${lines[lines.length - 1]} ${w}`.trim().length > max) lines.push(w);
+    else lines[lines.length - 1] = `${lines[lines.length - 1]} ${w}`.trim();
   }
   return lines.slice(0, 3);
 }
