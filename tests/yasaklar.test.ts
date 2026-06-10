@@ -1,6 +1,6 @@
 // Yasak taraması (14 kabul #5, #12) — kaynak kodda dangerouslySetInnerHTML ve
 // codeToHtml sıfır; yasak bağımlılıklar package.json'da yok.
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -34,7 +34,8 @@ describe("yasaklar (01 §Yasaklar)", () => {
         if (spec === "react" || spec.startsWith("react-")) {
           // React referansı yalnız registry'de ve yalnız type-only olabilir (08 §2-3)
           const typeOnly = m[0].startsWith("import type");
-          if (!f.endsWith("blockRegistry.ts") || !typeOnly) offenders.push(`${f} -> ${spec} (type-only/registry dışı)`);
+          if (!f.endsWith("blockRegistry.ts") || !typeOnly)
+            offenders.push(`${f} -> ${spec} (type-only/registry dışı)`);
         }
       }
     }
@@ -44,7 +45,15 @@ describe("yasaklar (01 §Yasaklar)", () => {
   it("yasak bağımlılıklar yok: next, redux, flowbite, markdown renderer", () => {
     const pkg = JSON.parse(readFileSync("package.json", "utf8"));
     const deps = Object.keys({ ...pkg.dependencies, ...pkg.devDependencies });
-    const banned = ["next", "redux", "@reduxjs/toolkit", "flowbite", "react-markdown", "marked", "markdown-it"];
+    const banned = [
+      "next",
+      "redux",
+      "@reduxjs/toolkit",
+      "flowbite",
+      "react-markdown",
+      "marked",
+      "markdown-it",
+    ];
     expect(deps.filter((d) => banned.includes(d))).toEqual([]);
   });
 });
