@@ -196,8 +196,8 @@ const named = {
       })
       .join("");
     return svg(
-      "DocType tanımından beş otomatik çıktı",
-      `${DEFS}${box(280, 110, 240, 110, C.elevated, C.accent)}${txt(400, 155, "DocType Tanımı", { size: 19, fill: C.accent, weight: 500 })}${txt(400, 185, "alanlar + metadata flag'leri", { size: 13, fill: C.text2 })}${b}${txt(400, 60, "Tek kaynak — el yazımı CRUD yok", { size: 14, fill: C.muted })}`,
+      "ArcheType tanımından beş otomatik çıktı",
+      `${DEFS}${box(280, 110, 240, 110, C.elevated, C.accent)}${txt(400, 155, "ArcheType Tanımı", { size: 19, fill: C.accent, weight: 500 })}${txt(400, 185, "alanlar + metadata flag'leri", { size: 13, fill: C.text2 })}${b}${txt(400, 60, "Tek kaynak — el yazımı CRUD yok", { size: 14, fill: C.muted })}`,
     );
   },
   "k-bus-flow.svg": () => {

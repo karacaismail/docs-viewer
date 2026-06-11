@@ -21,9 +21,8 @@ Glossary kaydı: 701 | Search document: 3521
 ## Kayıp görsel varlıklar (0) — 07B §1 fallback aktif
 
 ## Glossary zenginleştirme (12A Parti 1 — Eğitim Yolu)
-Zenginleştirilen kayıt: 543 (sayfa-kapsamlı: 368) | Overlay'de karşılığı olmayan label: 1
+Zenginleştirilen kayıt: 544 (sayfa-kapsamlı: 369) | Overlay'de karşılığı olmayan label: 0
 Segment bağlama (B akışı, tüm kategoriler): 451 bağlı terim | bağlı page: 167/236 | egitim: 28/29
-- eşleşmedi: Vibecoding hazırlık eşiği
 
 ## Uyarılar (0)
 

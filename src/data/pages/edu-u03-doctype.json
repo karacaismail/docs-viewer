@@ -5,13 +5,13 @@
   "id": "page-edu-u03-doctype",
   "sourceId": "edu-u03",
   "slug": "egitim/edu-u03-doctype",
-  "title": "DocType ile Model — anlatımsal giriş",
+  "title": "ArcheType ile Model — anlatımsal giriş",
   "summary": "Sen tip dizisi tanımlarsın; framework DB tablosu, REST endpoint, form, audit'i otomatik üretir. Metadata-driven model.",
   "categoryId": "egitim",
   "tags": [
    "education",
    "u03",
-   "doctype",
+   "archetype",
    "model"
   ],
   "meta": {
@@ -49,7 +49,7 @@
     "id": "block-edu-u03-doctype-lh",
     "type": "lessonHeader",
     "unit": "Ünite 03",
-    "title": "DocType — kod yazmadan ürün modeli kurmak",
+    "title": "ArcheType — kod yazmadan ürün modeli kurmak",
     "level": "orta",
     "durationMin": 75,
     "prereq": [
@@ -57,9 +57,9 @@
      "edu-u02"
     ],
     "goals": [
-     "Bir DocType tanımının hangi 8+ çıktıyı otomatik ürettiğini sayabilirsin.",
+     "Bir ArcheType tanımının hangi 8+ çıktıyı otomatik ürettiğini sayabilirsin.",
      "Field, naming series, child table, hook kavramlarını projeden örneklerle anlatabilirsin.",
-     "Bir 'Müşteri Şikayeti' DocType'ını YAML olarak yazabilirsin.",
+     "Bir 'Müşteri Şikayeti' ArcheType'ını YAML olarak yazabilirsin.",
      "Custom field vs property setter farkını söyleyebilirsin."
     ]
    },
@@ -70,10 +70,10 @@
     "text": "Kavramlar"
    },
    {
-    "id": "block-edu-u03-doctype-h-anlatim-bir-doctype-tanimladiginda-ne-olur",
+    "id": "block-edu-u03-doctype-h-anlatim-bir-archetype-tanimladiginda-ne-olur",
     "type": "heading",
     "level": 4,
-    "text": "Anlatım — bir DocType tanımladığında ne olur?"
+    "text": "Anlatım — bir ArcheType tanımladığında ne olur?"
    },
    {
     "id": "block-edu-u03-doctype-p",
@@ -101,8 +101,8 @@
      },
      {
       "type": "term",
-      "text": "DocType",
-      "termId": "term-doctype-edu-u03-doctype"
+      "text": "ArcheType",
+      "termId": "term-archetype-edu-u03-doctype"
      },
      {
       "type": "text",
@@ -135,7 +135,7 @@
     "outcome": [
      {
       "type": "text",
-      "text": "Manifest'e DocType ekler; deploy sonrası DB, API, form hazır. Kod yazmadı."
+      "text": "Manifest'e ArcheType ekler; deploy sonrası DB, API, form hazır. Kod yazmadı."
      }
     ]
    },
@@ -219,7 +219,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "List view, form view, kanban, calendar (DocType metadata'sına bağlı)."
+        "text": "List view, form view, kanban, calendar (ArcheType metadata'sına bağlı)."
        }
       ]
      },
@@ -298,17 +298,17 @@
     ]
    },
    {
-    "id": "block-edu-u03-doctype-h-adim-adim-musteri-sikayeti-doctype-ini-yaz",
+    "id": "block-edu-u03-doctype-h-adim-adim-musteri-sikayeti-archetype-ini-yaz",
     "type": "heading",
     "level": 4,
-    "text": "Adım-adım: 'Müşteri Şikayeti' DocType'ını yaz"
+    "text": "Adım-adım: 'Müşteri Şikayeti' ArcheType'ını yaz"
    },
    {
     "id": "block-edu-u03-doctype-code",
     "type": "codeBlock",
-    "title": "doctype/musteri_sikayeti.yml",
+    "title": "archetype/musteri_sikayeti.yml",
     "language": "yaml",
-    "code": "doctype: MusteriSikayeti\nnaming: format:SIK-{YYYY}-{####}\nis_submittable: false\nfields:\n  - name: konu          # Field name (DB kolon adı)\n    type: Data          # max 140 char string\n    required: true\n    in_list_view: true  # liste sayfasında görünsün\n\n  - name: aciklama\n    type: Text          # uzun metin\n    required: true\n\n  - name: oncelik\n    type: Select        # closed enum\n    options: [\"dusuk\", \"orta\", \"yuksek\", \"acil\"]\n    default: \"orta\"\n\n  - name: atanan\n    type: Link          # başka DocType'a FK\n    options: User       # hangi DocType — User\n\n  - name: musteri\n    type: Link\n    options: Customer\n    required: true\n    in_list_view: true\n\n  - name: ekler\n    type: Table         # child table (1-N)\n    options: SikayetEki # child DocType\n\npermissions:\n  - role: Manager\n    perm: [read, write, create, delete]\n  - role: Customer\n    perm: [read, create]\n    ifowner: true       # sadece kendi kayıtlarını görsün\n\nhooks:\n  on_change: helpdesk.handlers.on_complaint_change"
+    "code": "archetype: MusteriSikayeti\nnaming: format:SIK-{YYYY}-{####}\nis_submittable: false\nfields:\n  - name: konu          # Field name (DB kolon adı)\n    type: Data          # max 140 char string\n    required: true\n    in_list_view: true  # liste sayfasında görünsün\n\n  - name: aciklama\n    type: Text          # uzun metin\n    required: true\n\n  - name: oncelik\n    type: Select        # closed enum\n    options: [\"dusuk\", \"orta\", \"yuksek\", \"acil\"]\n    default: \"orta\"\n\n  - name: atanan\n    type: Link          # başka ArcheType'a FK\n    options: User       # hangi ArcheType — User\n\n  - name: musteri\n    type: Link\n    options: Customer\n    required: true\n    in_list_view: true\n\n  - name: ekler\n    type: Table         # child table (1-N)\n    options: SikayetEki # child ArcheType\n\npermissions:\n  - role: Manager\n    perm: [read, write, create, delete]\n  - role: Customer\n    perm: [read, create]\n    ifowner: true       # sadece kendi kayıtlarını görsün\n\nhooks:\n  on_change: helpdesk.handlers.on_complaint_change"
    },
    {
     "id": "block-edu-u03-doctype-note-2",
@@ -427,7 +427,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "'Tüm DocType'ları tek "
+      "text": "'Tüm ArcheType'ları tek "
      },
      {
       "type": "code",
@@ -460,15 +460,15 @@
      },
      {
       "type": "text",
-      "text": " Her DocType kendi fiziksel tablosu. JSON sadece schema-less ek için."
+      "text": " Her ArcheType kendi fiziksel tablosu. JSON sadece schema-less ek için."
      }
     ]
    },
    {
-    "id": "block-edu-u03-doctype-h-submittable-doctype-fatura-ornegi",
+    "id": "block-edu-u03-doctype-h-submittable-archetype-fatura-ornegi",
     "type": "heading",
     "level": 4,
-    "text": "Submittable DocType — fatura örneği"
+    "text": "Submittable ArcheType — fatura örneği"
    },
    {
     "id": "block-edu-u03-doctype-steps",
@@ -530,7 +530,7 @@
       "segments": [
        {
         "type": "text",
-        "text": "DocType tanımlandığında otomatik üretilen 8 çıktıyı sayabilirim. — DB, REST, GraphQL, form, permission, audit, search, hooks"
+        "text": "ArcheType tanımlandığında otomatik üretilen 8 çıktıyı sayabilirim. — DB, REST, GraphQL, form, permission, audit, search, hooks"
        }
       ]
      },
@@ -562,7 +562,7 @@
       "segments": [
        {
         "type": "text",
-        "text": "Submittable DocType'ın 3 docstatus değerini ve ne anlama geldiğini biliyorum."
+        "text": "Submittable ArcheType'ın 3 docstatus değerini ve ne anlama geldiğini biliyorum."
        }
       ]
      },
@@ -570,7 +570,7 @@
       "segments": [
        {
         "type": "text",
-        "text": "Bir 'Görev (Task)' DocType'ını YAML olarak yazdım. — Mini-projeyi yaptıysan."
+        "text": "Bir 'Görev (Task)' ArcheType'ını YAML olarak yazdım. — Mini-projeyi yaptıysan."
        }
       ]
      }
@@ -588,7 +588,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Defterine bir 'Görev (Task)' DocType'ı yaz. Alanlar: başlık, açıklama, atanan kişi, son tarih, durum (todo/doing/done), öncelik, etiketler (multi-select), proje (link). Naming "
+      "text": "Defterine bir 'Görev (Task)' ArcheType'ı yaz. Alanlar: başlık, açıklama, atanan kişi, son tarih, durum (todo/doing/done), öncelik, etiketler (multi-select), proje (link). Naming "
      },
      {
       "type": "code",
@@ -660,7 +660,7 @@
      },
      {
       "type": "text",
-      "text": " — Veritabanı Temelleri. DocType'ın altındaki PostgreSQL kolon-indeks-ilişki mantığını öğreneceğiz. Mimari bu seviyede şekilleniyor."
+      "text": " — Veritabanı Temelleri. ArcheType'ın altındaki PostgreSQL kolon-indeks-ilişki mantığını öğreneceğiz. Mimari bu seviyede şekilleniyor."
      }
     ]
    },
@@ -695,7 +695,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Ünite 03 — DocType ile Model. Kod yazmadan veri tipleri tanımlama yöntemi."
+        "text": "Ünite 03 — ArcheType ile Model. Kod yazmadan veri tipleri tanımlama yöntemi."
        }
       ]
      },
@@ -704,7 +704,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Her özel ihtiyaç için programcı çağırmak yavaş. DocType yöntemi yöneticiye 'kendi tipini tanımla' der."
+        "text": "Her özel ihtiyaç için programcı çağırmak yavaş. ArcheType yöntemi yöneticiye 'kendi tipini tanımla' der."
        }
       ]
      },

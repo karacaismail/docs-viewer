@@ -33,7 +33,7 @@ describe("MiniSearch + foldTurkish entegrasyonu", () => {
   });
 
   it("sonuç block anchor bilgisi taşır (13 §Index)", () => {
-    const r = ms.search("doctype")[0] as unknown as SearchDoc;
+    const r = ms.search("archetype")[0] as unknown as SearchDoc;
     expect(r.slug).toBeTruthy();
   });
 

@@ -83,7 +83,7 @@
 - Coercion (page-edu-u02-veri-tip) · analoji tohumu var
 - Primitive (page-edu-u02-veri-tip) · analoji tohumu var
 - Cluster (page-edu-u02-veri-tip) · **ince why** · analoji tohumu var
-- DocType (page-edu-u03-doctype) · analoji tohumu var
+- ArcheType (page-edu-u03-doctype) · analoji tohumu var
 - Field (page-edu-u03-doctype) · **ince why** · analoji tohumu var
 - Fieldtype (page-edu-u03-doctype) · **ince why** · analoji tohumu var
 - Naming series (page-edu-u03-doctype) · analoji tohumu var
@@ -225,7 +225,7 @@
 - CQRS (page-overview) · analoji tohumu var
 - DDD (page-overview) · analoji tohumu var
 - Meta-framework (page-overview) · analoji tohumu var
-- DocType (page-overview) · analoji tohumu var
+- ArcheType (page-overview) · analoji tohumu var
 - Cluster (page-philosophy) · **ince why** · analoji tohumu var
 - Cluster (page-board-rebuilt) · **ince why** · analoji tohumu var
 - Scalar (page-atomic-types) · analoji tohumu var
@@ -267,7 +267,7 @@
 - Frappe (page-kernel-schema) · analoji tohumu var
 - Strapi (page-kernel-schema) · analoji tohumu var
 - EAV (page-kernel-schema) · analoji tohumu var
-- DocType (page-kernel-schema) · analoji tohumu var
+- ArcheType (page-kernel-schema) · analoji tohumu var
 - Metadata-driven (page-kernel-schema) · analoji tohumu var
 - Identity (page-kernel-identity) · analoji tohumu var
 - Session (page-kernel-identity) · analoji tohumu var
@@ -688,7 +688,7 @@
 - Stack ürünü (page-s-predictive) · **ince why** · analoji tohumu var
 - Stack ürünü (page-s-doc-matching) · **ince why** · analoji tohumu var
 - Stack ürünü (page-s-conversational) · **ince why** · analoji tohumu var
-- Frappe DocType (page-s-studio) · analoji tohumu var
+- Frappe ArcheType (page-s-studio) · analoji tohumu var
 - Stack ürünü (page-s-bpm) · **ince why** · analoji tohumu var
 - Zapier (page-s-ipaas) · analoji tohumu var
 - OpenFGA (page-s-iam) · analoji tohumu var
@@ -714,7 +714,7 @@
 - CQRS (page-overview) · analoji tohumu var
 - DDD (page-overview) · analoji tohumu var
 - Meta-framework (page-overview) · analoji tohumu var
-- DocType (page-overview) · analoji tohumu var
+- ArcheType (page-overview) · analoji tohumu var
 - Cluster (page-philosophy) · **ince why** · analoji tohumu var
 - Cluster (page-board-rebuilt) · **ince why** · analoji tohumu var
 - Scalar (page-atomic-types) · analoji tohumu var
@@ -731,7 +731,7 @@
 - Coercion (page-atomic-types) · analoji tohumu var
 - Validator (page-atomic-types) · analoji tohumu var
 - EAV (page-kernel-schema) · analoji tohumu var
-- DocType (page-kernel-schema) · analoji tohumu var
+- ArcheType (page-kernel-schema) · analoji tohumu var
 - Metadata-driven (page-kernel-schema) · analoji tohumu var
 - Session (page-kernel-identity) · analoji tohumu var
 - RBAC (page-kernel-authz) · analoji tohumu var
@@ -882,7 +882,7 @@
 - Coercion (page-edu-u02-veri-tip) · analoji tohumu var
 - Primitive (page-edu-u02-veri-tip) · analoji tohumu var
 - Cluster (page-edu-u02-veri-tip) · **ince why** · analoji tohumu var
-- DocType (page-edu-u03-doctype) · analoji tohumu var
+- ArcheType (page-edu-u03-doctype) · analoji tohumu var
 - Hook (page-edu-u03-doctype) · analoji tohumu var
 - REST (page-edu-u03-doctype) · analoji tohumu var
 - GraphQL (page-edu-u03-doctype) · analoji tohumu var

@@ -65,7 +65,7 @@
       "type": "callout",
       "variant": "warning",
       "label": "🏗️ Mimari karar: bitemporal vs klasik audit",
-      "body": "Bu cluster **klasik audit tablosu** yaklaşımını anlatır (yan tablo + değişiklik logu). Daha derin bir yaklaşım — **bitemporal ana tablo** — {{ref:sus-bitemporal}} cluster'ında işlenir.\n\n**Karar (hibrit):** Aşağıdaki DocType'lar için bitemporal **zorunludur** (bedava audit + time-travel + KVKK uyumu): HRMS bordro, GL (genel muhasebe), KVKK kişisel veri kayıtları, sözleşme/poliçe kayıtları, sağlık verisi. Geri kalan tipler için klasik audit yeterli.\n\n**Neden hibrit?** Bitemporal her tabloda zorunlu olursa disk ve yazma maliyeti büyür; klasik audit her yerde olursa \"o tarihte ne biliyorduk\" sorusu kolay cevap bulmaz. Doğru disiplin: gerçek kritiklik seviyesinde bitemporal."
+      "body": "Bu cluster **klasik audit tablosu** yaklaşımını anlatır (yan tablo + değişiklik logu). Daha derin bir yaklaşım — **bitemporal ana tablo** — {{ref:sus-bitemporal}} cluster'ında işlenir.\n\n**Karar (hibrit):** Aşağıdaki ArcheType'lar için bitemporal **zorunludur** (bedava audit + time-travel + KVKK uyumu): HRMS bordro, GL (genel muhasebe), KVKK kişisel veri kayıtları, sözleşme/poliçe kayıtları, sağlık verisi. Geri kalan tipler için klasik audit yeterli.\n\n**Neden hibrit?** Bitemporal her tabloda zorunlu olursa disk ve yazma maliyeti büyür; klasik audit her yerde olursa \"o tarihte ne biliyorduk\" sorusu kolay cevap bulmaz. Doğru disiplin: gerçek kritiklik seviyesinde bitemporal."
     },
     {
       "type": "paragraph",
@@ -78,7 +78,7 @@
       "type": "list",
       "items": [
         {
-          "text": "**Audit Log** (compliance) — immutable, append-only. Her DocType save'inde alan diff'i. KVKK ve mali kanun zorunlu. Retention: 10 yıl (mali için).",
+          "text": "**Audit Log** (compliance) — immutable, append-only. Her ArcheType save'inde alan diff'i. KVKK ve mali kanun zorunlu. Retention: 10 yıl (mali için).",
           "enrich": {
             "info": "Yasal kayıt — append-only, kimse silemez, 10 yıl.",
             "detail": "Mali kanun gereği fatura/defter işlemleri 10 yıl saklanmalı. UPDATE/DELETE yasak; sadece INSERT. Aylık partition: eski partition'lar cold storage'a inebilir.",
@@ -136,7 +136,7 @@
       "type": "code",
       "lang": "sql",
       "title": "audit_log şeması — partition'lı, append-only",
-      "content": "CREATE TABLE audit_log (\n  id uuid PRIMARY KEY,\n  tenant_id uuid NOT NULL,\n  occurred_at timestamptz NOT NULL DEFAULT now(),\n  occurred_by uuid REFERENCES users(id),\n  doctype text NOT NULL,\n  document_id text NOT NULL,\n  action text NOT NULL,            -- create|update|delete|submit|cancel\n  changes jsonb NOT NULL,          -- {field: {old: ..., new: ...}}\n  ip_address inet,\n  user_agent text\n) PARTITION BY RANGE (occurred_at);\n\n-- Monthly partitions\nCREATE TABLE audit_log_2026_01 PARTITION OF audit_log\n  FOR VALUES FROM ('2026-01-01') TO ('2026-02-01');",
+      "content": "CREATE TABLE audit_log (\n  id uuid PRIMARY KEY,\n  tenant_id uuid NOT NULL,\n  occurred_at timestamptz NOT NULL DEFAULT now(),\n  occurred_by uuid REFERENCES users(id),\n  archetype text NOT NULL,\n  document_id text NOT NULL,\n  action text NOT NULL,            -- create|update|delete|submit|cancel\n  changes jsonb NOT NULL,          -- {field: {old: ..., new: ...}}\n  ip_address inet,\n  user_agent text\n) PARTITION BY RANGE (occurred_at);\n\n-- Monthly partitions\nCREATE TABLE audit_log_2026_01 PARTITION OF audit_log\n  FOR VALUES FROM ('2026-01-01') TO ('2026-02-01');",
       "enrich": {
         "info": "Aylık range partition; append-only; user_agent + ip korkulu davranış tespiti için.",
         "detail": "**Neden tenant_id PRIMARY içinde değil?** Audit cross-tenant join yapmaz; partition + index yeter. **Neden changes jsonb?** Field şemaları değişebilir, audit eski şemayı korumalı. **Neden user_agent + ip?** Compromise tespiti: aynı user'dan beklenmedik ip = alarm."
@@ -218,7 +218,7 @@
         [
           "Schema değişikliği",
           "JSONB ile esnek",
-          "Versiyonlu DocType event",
+          "Versiyonlu ArcheType event",
           {
             "text": "Kısmen",
             "state": "partial"
@@ -392,7 +392,7 @@
           "enrich": {
             "state": "missing",
             "granularity": "kucuk-tas",
-            "info": "DocType bazlı: her tip kendi saklama süresini deklare etsin.",
+            "info": "ArcheType bazlı: her tip kendi saklama süresini deklare etsin.",
             "stories": [
               {
                 "persona": "KVKK sorumlusu",
@@ -419,7 +419,7 @@
               {
                 "term": "Capability scope",
                 "abbrev_tr": "Yetenek kapsamı",
-                "meaning": "Bir agent'a verilen izin sınırları (hangi DocType, hangi action, hangi tenant).",
+                "meaning": "Bir agent'a verilen izin sınırları (hangi ArcheType, hangi action, hangi tenant).",
                 "why": "Agent compromise olursa hasar limitli olsun."
               }
             ],

@@ -1,7 +1,7 @@
 {
  "id": "atomic-types",
  "title": "Faz 0 — Atomik tipler — Kum Tanesi",
- "subtitle": "DocType engine'i besleyen atomik primitive'ler. Field'ın altındaki tip katmanı.",
+ "subtitle": "ArcheType engine'i besleyen atomik primitive'ler. Field'ın altındaki tip katmanı.",
  "cluster": "atomic",
  "order": -1,
  "layer": "atomic",
@@ -14,7 +14,7 @@
   "primitive"
  ],
  "enrich": {
-  "info": "Field'ın da altındaki primitive katman. DocType engine bunları kullanarak alan üretir.",
+  "info": "Field'ın da altındaki primitive katman. ArcheType engine bunları kullanarak alan üretir.",
   "detail": "Tahtada `Field, Log, Handler, Security` yazıyordu — yetersiz. Asıl katman bunların altındaki **atomik tipler**. Her field bir type'a referans verir; validator, coercion, admin widget, API serializer hepsi type'tan türer.",
   "terms": [
    {
@@ -41,7 +41,7 @@
    "ne": "Sistemin en küçük yapı taşları: 'para', 'tarih', 'telefon', 'kimlik numarası' gibi her yerde tekrar tekrar gerekecek temel bilgi türleri.",
    "nicin": "Her form alanını sıfırdan tanımlamak yerine, hazır tipler seçilir. Bir kez doğru yazılmış 'para' tipi tüm ürünlerde kuruşa kadar tutarlı çalışır.",
    "nasil": "Yeni form alanı eklerken 'Tip seç' menüsünden Money/Phone/Email gibi bir tip seçilir. Sistem geri kalan kuralları otomatik uygular.",
-   "nerede": "Her DocType tanımının alan listesinde. İK formunda da, muhasebe formunda da aynı tipler.",
+   "nerede": "Her ArcheType tanımının alan listesinde. İK formunda da, muhasebe formunda da aynı tipler.",
    "ne_zaman": "Her yeni alan eklendiğinde.",
    "kim": "Form tasarımcısı tip seçer; framework tipi sağlar; son kullanıcı tutarlılığı yaşar.",
    "analoji": "Marangozluk takımındaki standart vida boyları: M4, M6, M8. Her seferinde özel ölçü yapmak yerine standartlardan seçersin."
@@ -50,10 +50,10 @@
  "blocks": [
   {
    "type": "paragraph",
-   "text": "Senin tahtada **Field, Log, Handler, Security** yazdın. Bunlar başlangıç ama yetersiz. Field'ın altında somut tip sistemi olmalı. Aşağıda kritik tiplerin tam listesi — DocType engine bu primitive'leri kullanarak alan yaratıyor.",
+   "text": "Senin tahtada **Field, Log, Handler, Security** yazdın. Bunlar başlangıç ama yetersiz. Field'ın altında somut tip sistemi olmalı. Aşağıda kritik tiplerin tam listesi — ArcheType engine bu primitive'leri kullanarak alan yaratıyor.",
    "enrich": {
     "info": "Field bir 'kutu'; tip o kutunun ne tutacağını söyler.",
-    "detail": "Frappe pattern'inde DocType'ın her alanı tip referansı tutar. Bizim ek katmanımız: tip sistemi **modüllerle genişletilebilir** (registry pattern).",
+    "detail": "Frappe pattern'inde ArcheType'ın her alanı tip referansı tutar. Bizim ek katmanımız: tip sistemi **modüllerle genişletilebilir** (registry pattern).",
     "lesson": {
      "ne": "Sistemde olan biteni metin satırları halinde kayıt.",
      "nicin": "Hata teşhisi ve geriye dönük analiz için.",
@@ -266,10 +266,10 @@
     },
     {
      "name": "Reference / Link",
-     "desc": "DocType'a foreign key. Cascade kuralı, orphan kontrolü, tenant-scope check otomatik.",
+     "desc": "ArcheType'a foreign key. Cascade kuralı, orphan kontrolü, tenant-scope check otomatik.",
      "critical": true,
      "enrich": {
-      "info": "Bir DocType'tan diğerine pointer; FK + tenant-scope güvenliği.",
+      "info": "Bir ArcheType'tan diğerine pointer; FK + tenant-scope güvenliği.",
       "detail": "Naif FK yetmez: (a) cascade davranışı (silinince ne olur), (b) orphan detection (link kaldı, hedef silindi), (c) **tenant-scope check** (link tenant A'dan tenant B'ye gidemez — kritik güvenlik).",
       "state": "critical",
       "granularity": "atom",
@@ -608,7 +608,7 @@
      "name": "JSON / JSONB",
      "desc": "PostgreSQL JSONB column, schema-less ek alan, opsiyonel JSON Schema validation.",
      "enrich": {
-      "info": "JSONB = binary JSON, indexlenebilir. Ek alan için DocType'a 'extra' kolonu.",
+      "info": "JSONB = binary JSON, indexlenebilir. Ek alan için ArcheType'a 'extra' kolonu.",
       "terms": [
        {
         "term": "JSONB",
@@ -765,9 +765,9 @@
    "type": "callout",
    "variant": "tip",
    "label": "Junior'a not",
-   "body": "Type system framework'ün omurgası. Her DocType field'ı bu atomik tiplere referans verir. Yeni bir tip eklemek istersen (örn. `IBAN` doğrulayan bir tip): type registry'e ekle, validator + coercion yaz, framework otomatik admin form widget + API serializer üretsin.",
+   "body": "Type system framework'ün omurgası. Her ArcheType field'ı bu atomik tiplere referans verir. Yeni bir tip eklemek istersen (örn. `IBAN` doğrulayan bir tip): type registry'e ekle, validator + coercion yaz, framework otomatik admin form widget + API serializer üretsin.",
    "enrich": {
-    "detail": "**Adım adım:**\n1. `framework/types/iban.py` dosyası aç.\n2. `Type` interface'ini implement et: `validate(v)` (MOD-97), `coerce(s)` (boşluk temizle, upper), `serialize(v)`, `widget` (React IBAN input).\n3. `register('iban', IBANType)`.\n4. Modül manifest'ine `requires: ['iban']` yaz.\n5. DocType field'ında `type: 'iban'` kullan — admin formdan API'ye her şey otomatik."
+    "detail": "**Adım adım:**\n1. `framework/types/iban.py` dosyası aç.\n2. `Type` interface'ini implement et: `validate(v)` (MOD-97), `coerce(s)` (boşluk temizle, upper), `serialize(v)`, `widget` (React IBAN input).\n3. `register('iban', IBANType)`.\n4. Modül manifest'ine `requires: ['iban']` yaz.\n5. ArcheType field'ında `type: 'iban'` kullan — admin formdan API'ye her şey otomatik."
    }
   }
  ],

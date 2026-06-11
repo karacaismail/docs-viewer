@@ -51,7 +51,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Bir DocType'ın izlediği durumlar ve durumlar arası geçiş kuralları. 13 üründe lazım. Frappe core'da var, Drupal'da contrib, sen core'da tut."
+      "text": "Bir ArcheType'ın izlediği durumlar ve durumlar arası geçiş kuralları. 13 üründe lazım. Frappe core'da var, Drupal'da contrib, sen core'da tut."
      }
     ]
    },
@@ -60,7 +60,7 @@
     "type": "codeBlock",
     "title": "Workflow tanımı",
     "language": "yaml",
-    "code": "workflow: PurchaseOrderApproval\n  doctype: PurchaseOrder\n  states:\n    - draft (next: pending_approval)\n    - pending_approval (next: approved | rejected)\n    - approved (next: sent)\n    - sent (next: received | cancelled)\n    - received (next: closed)\n    - closed (terminal)\n    - rejected (terminal)\n  transitions:\n    - from: draft, to: pending_approval, action: submit, allowed_roles: [requester]\n    - from: pending_approval, to: approved, action: approve, allowed_roles: [manager], condition: amount < 10000\n    - from: pending_approval, to: approved, action: approve, allowed_roles: [cfo], condition: amount >= 10000\n    - from: pending_approval, to: rejected, action: reject, allowed_roles: [manager, cfo]\n\neca_rules:\n  - on: doctype:PurchaseOrder.field:amount > 50000\n    condition: status == 'draft'\n    action: assign_to_role(cfo); notify(cfo, 'high_value_po')"
+    "code": "workflow: PurchaseOrderApproval\n  archetype: PurchaseOrder\n  states:\n    - draft (next: pending_approval)\n    - pending_approval (next: approved | rejected)\n    - approved (next: sent)\n    - sent (next: received | cancelled)\n    - received (next: closed)\n    - closed (terminal)\n    - rejected (terminal)\n  transitions:\n    - from: draft, to: pending_approval, action: submit, allowed_roles: [requester]\n    - from: pending_approval, to: approved, action: approve, allowed_roles: [manager], condition: amount < 10000\n    - from: pending_approval, to: approved, action: approve, allowed_roles: [cfo], condition: amount >= 10000\n    - from: pending_approval, to: rejected, action: reject, allowed_roles: [manager, cfo]\n\neca_rules:\n  - on: archetype:PurchaseOrder.field:amount > 50000\n    condition: status == 'draft'\n    action: assign_to_role(cfo); notify(cfo, 'high_value_po')"
    },
    {
     "id": "block-layer1-workflow-h-icerir",
@@ -196,7 +196,7 @@
      },
      {
       "type": "text",
-      "text": " (Faz 3 · P1 · Application Squad) bu cluster'ın doğal devamı: DocType yaşam döngüsü için deklaratif state machine. Her transition: guard, action, side-effect, audit. "
+      "text": " (Faz 3 · P1 · Application Squad) bu cluster'ın doğal devamı: ArcheType yaşam döngüsü için deklaratif state machine. Her transition: guard, action, side-effect, audit. "
      },
      {
       "type": "strong",

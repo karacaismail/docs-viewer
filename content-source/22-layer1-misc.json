@@ -35,7 +35,7 @@
       "items": [
         "**Translation files** — gettext .po (her modül kendi tr.po, en.po taşır).",
         "**UI strings** — server-rendered (Jinja `_(\"text\")`), client (React `t('text')`).",
-        "**DocType label translation** — admin paneli \"Customer\" → \"Müşteri\".",
+        "**ArcheType label translation** — admin paneli \"Customer\" → \"Müşteri\".",
         "**Number formatting** — 1.000,50 (TR) vs 1,000.50 (US).",
         "**Date formatting** — DD.MM.YYYY (TR) vs MM/DD/YYYY (US).",
         "**Currency formatting** — ₺1.234,56 vs $1,234.56.",
@@ -52,7 +52,7 @@
     {
       "type": "code",
       "lang": "yaml",
-      "content": "doctype: Currency\n  - code (ISO 4217: TRY, USD, EUR, GBP)\n  - symbol (₺, $, €)\n  - decimals (2 for fiat, 8 for crypto)\n  - format\n\ndoctype: ExchangeRate\n  - from_currency\n  - to_currency\n  - rate (Decimal)\n  - effective_date\n  - source (TCMB, Fixer, ECB)\n\n# TCMB günlük kur entegrasyonu\n@scheduler.daily(at=\"15:30\")  # TCMB kur yayın saati\nasync def fetch_tcmb_rates():\n    rates = await tcmb.get_today_rates()\n    for r in rates:\n        await ExchangeRate.create(...)"
+      "content": "archetype: Currency\n  - code (ISO 4217: TRY, USD, EUR, GBP)\n  - symbol (₺, $, €)\n  - decimals (2 for fiat, 8 for crypto)\n  - format\n\narchetype: ExchangeRate\n  - from_currency\n  - to_currency\n  - rate (Decimal)\n  - effective_date\n  - source (TCMB, Fixer, ECB)\n\n# TCMB günlük kur entegrasyonu\n@scheduler.daily(at=\"15:30\")  # TCMB kur yayın saati\nasync def fetch_tcmb_rates():\n    rates = await tcmb.get_today_rates()\n    for r in rates:\n        await ExchangeRate.create(...)"
     },
     {
       "type": "paragraph",
@@ -88,7 +88,7 @@
       "items": [
         "**Outgoing webhook** — tenant admin \"OrderPlaced event şu URL'e\" config'ler. Framework event bus subscriber'ı. Retry (exponential backoff), HMAC signature, dead letter.",
         "**Incoming webhook** — Stripe, GitHub vs. POST atar. Signature verification, idempotency, event publish.",
-        "**API Gateway** — DocType'tan otomatik REST + GraphQL endpoint. OpenAPI 3.1 spec autogen. Versioning (`/api/v1/`). Throttling per tenant + per key."
+        "**API Gateway** — ArcheType'tan otomatik REST + GraphQL endpoint. OpenAPI 3.1 spec autogen. Versioning (`/api/v1/`). Throttling per tenant + per key."
       ]
     },
     {
@@ -130,7 +130,7 @@
     },
     {
       "type": "paragraph",
-      "text": "LandX L3 Application Surface katmanı bu cluster'ın \"Webhook + API Gateway + Reporting\" bölümünü tamamlar: DocType tanımından otomatik olarak üretilen üç yüzey.",
+      "text": "LandX L3 Application Surface katmanı bu cluster'ın \"Webhook + API Gateway + Reporting\" bölümünü tamamlar: ArcheType tanımından otomatik olarak üretilen üç yüzey.",
       "enrich": {}
     },
     {
@@ -138,9 +138,9 @@
       "items": [
         {
           "name": "S01 — Auto REST API Engine",
-          "desc": "**Faz 1 · P0.** DocType → CRUD + filter + bulk endpoint. Aynı tanımdan OpenAPI spec, MCP tool listesi, GraphQL schema türetilir. *DocType → endpoint p95 <60sn, OpenAPI conformance %100.* Capabilities: CRUD Endpoint Generation, OpenAPI Spec, Bulk & Batch (idempotent), Pagination & Cursor, Webhooks.",
+          "desc": "**Faz 1 · P0.** ArcheType → CRUD + filter + bulk endpoint. Aynı tanımdan OpenAPI spec, MCP tool listesi, GraphQL schema türetilir. *ArcheType → endpoint p95 <60sn, OpenAPI conformance %100.* Capabilities: CRUD Endpoint Generation, OpenAPI Spec, Bulk & Batch (idempotent), Pagination & Cursor, Webhooks.",
           "enrich": {
-            "info": "**Faz 1 · P0.** DocType → CRUD + filter + bulk endpoint. Aynı tanımdan OpenAPI spec, MCP tool listesi, GraphQL schema türetilir. *DocType → ",
+            "info": "**Faz 1 · P0.** ArcheType → CRUD + filter + bulk endpoint. Aynı tanımdan OpenAPI spec, MCP tool listesi, GraphQL schema türetilir. *ArcheType → ",
             "terms": [
               {
                 "term": "GraphQL",
@@ -160,9 +160,9 @@
         },
         {
           "name": "S02 — Auto Admin UI Engine",
-          "desc": "**Faz 2 · P0.** DocType → auto-generated admin UI: list, detail, form, bulk action, filter side-panel. Flowbite + React Router v7. **AI co-pilot her ekranda.** *DocType → çalışır UI <2dk, Lighthouse a11y >90.* `Saved View` (filter_state + sort_state + is_shared), `ai_quick_filter` (doğal dil filtresi).",
+          "desc": "**Faz 2 · P0.** ArcheType → auto-generated admin UI: list, detail, form, bulk action, filter side-panel. Flowbite + React Router v7. **AI co-pilot her ekranda.** *ArcheType → çalışır UI <2dk, Lighthouse a11y >90.* `Saved View` (filter_state + sort_state + is_shared), `ai_quick_filter` (doğal dil filtresi).",
           "enrich": {
-            "info": "**Faz 2 · P0.** DocType → auto-generated admin UI: list, detail, form, bulk action, filter side-panel. Flowbite + React Router v7. **AI co-p"
+            "info": "**Faz 2 · P0.** ArcheType → auto-generated admin UI: list, detail, form, bulk action, filter side-panel. Flowbite + React Router v7. **AI co-p"
           }
         },
         {

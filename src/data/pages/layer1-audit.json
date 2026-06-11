@@ -77,7 +77,7 @@
      },
      {
       "type": "text",
-      "text": " Aşağıdaki DocType'lar için bitemporal "
+      "text": " Aşağıdaki ArcheType'lar için bitemporal "
      },
      {
       "type": "strong",
@@ -131,7 +131,7 @@
       },
       {
        "type": "text",
-       "text": " (compliance) — immutable, append-only. Her DocType save'inde alan diff'i. KVKK ve mali kanun zorunlu. Retention: 10 yıl (mali için)."
+       "text": " (compliance) — immutable, append-only. Her ArcheType save'inde alan diff'i. KVKK ve mali kanun zorunlu. Retention: 10 yıl (mali için)."
       }
      ],
      [
@@ -151,7 +151,7 @@
     "type": "codeBlock",
     "title": "audit_log şeması — partition'lı, append-only",
     "language": "sql",
-    "code": "CREATE TABLE audit_log (\n  id uuid PRIMARY KEY,\n  tenant_id uuid NOT NULL,\n  occurred_at timestamptz NOT NULL DEFAULT now(),\n  occurred_by uuid REFERENCES users(id),\n  doctype text NOT NULL,\n  document_id text NOT NULL,\n  action text NOT NULL,            -- create|update|delete|submit|cancel\n  changes jsonb NOT NULL,          -- {field: {old: ..., new: ...}}\n  ip_address inet,\n  user_agent text\n) PARTITION BY RANGE (occurred_at);\n\n-- Monthly partitions\nCREATE TABLE audit_log_2026_01 PARTITION OF audit_log\n  FOR VALUES FROM ('2026-01-01') TO ('2026-02-01');"
+    "code": "CREATE TABLE audit_log (\n  id uuid PRIMARY KEY,\n  tenant_id uuid NOT NULL,\n  occurred_at timestamptz NOT NULL DEFAULT now(),\n  occurred_by uuid REFERENCES users(id),\n  archetype text NOT NULL,\n  document_id text NOT NULL,\n  action text NOT NULL,            -- create|update|delete|submit|cancel\n  changes jsonb NOT NULL,          -- {field: {old: ..., new: ...}}\n  ip_address inet,\n  user_agent text\n) PARTITION BY RANGE (occurred_at);\n\n-- Monthly partitions\nCREATE TABLE audit_log_2026_01 PARTITION OF audit_log\n  FOR VALUES FROM ('2026-01-01') TO ('2026-02-01');"
    },
    {
     "id": "block-layer1-audit-note-2",
@@ -404,7 +404,7 @@
       [
        {
         "type": "text",
-        "text": "Versiyonlu DocType event"
+        "text": "Versiyonlu ArcheType event"
        }
       ],
       [
