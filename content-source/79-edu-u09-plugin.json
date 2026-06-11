@@ -1,275 +1,282 @@
 {
-  "id": "edu-u09",
-  "title": "Modül Mimarisi",
-  "subtitle": "Manifest, registry, hook, semver, marketplace, contract test, sandboxing.",
-  "cluster": "edu",
-  "order": 12,
-  "icon": "ph-puzzle-piece",
-  "granularity": "buyuk-tas",
-  "state": "ok",
-  "tags": [
-    "education",
-    "u09",
-    "modül",
-    "marketplace",
-    "extensibility"
-  ],
-  "blocks": [
-    {
-      "type": "lesson-header",
-      "unit": "Ünite 09",
-      "title": "Modül Mimarisi — çekirdeği bozmadan davranış ekle",
-      "level": "ileri",
-      "duration_min": 70,
-      "prereq": [
-        "edu-u03",
-        "edu-u08"
-      ],
-      "goals": [
-        "Modül manifest'inin yapısını ve neden gerektiğini bilirsin.",
-        "Modül registry'nin çakışma çözümündeki rolünü anlatabilirsin.",
-        "Hook noktalarına nasıl abone olunduğunu söyleyebilirsin.",
-        "Semver'in marketplace'teki anlamını biliyorsun.",
-        "Sandboxing'in modül güvenliği için neden zorunlu olduğunu söyleyebilirsin.",
-        "WordPress/Drupal/Frappe örneklerini ortak ilkelere bağlayabilirsin."
-      ]
-    },
-    {
-      "type": "terms",
-      "terms": [
-        {
-          "term": "Modül",
-          "abbrev_tr": "Eklenti",
-          "meaning": "Çekirdek değişmeden eklenebilen davranış paketi.",
-          "why": "15 ürün tek çekirdeğin üstünde böyle yaşar."
-        },
-        {
-          "term": "Manifest",
-          "abbrev_tr": "Bildirim dosyası",
-          "meaning": "Modülün adı, sürümü, izinleri, hook'larını listeleyen YAML/JSON.",
-          "why": "Çekirdek manifest'e bakarak modülü yükler."
-        },
-        {
-          "term": "Registry",
-          "abbrev_tr": "Sicil",
-          "meaning": "Yüklü modüllerin merkezi listesi + sürüm bilgisi.",
-          "why": "Çakışma, bağımlılık, yüklü mü kontrolü için."
-        },
-        {
-          "term": "Hook",
-          "abbrev_tr": "Kanca",
-          "meaning": "Çekirdeğin modüle bıraktığı tetikleme noktası (before_save, on_change).",
-          "why": "Modül çekirdeğin akışına girip iş yapar."
-        },
-        {
-          "term": "Filter hook",
-          "meaning": "Veriyi dönüştürür: input → modified output (WordPress modeli).",
-          "why": "Davranışı zincirleme değiştirmek için."
-        },
-        {
-          "term": "Action hook",
-          "meaning": "Sadece tetiklenir, sonuç dönmez (side effect için).",
-          "why": "E-mail gönder, log yaz, cache invalidate vs."
-        },
-        {
-          "term": "Semver",
-          "abbrev_of": "Semantic Versioning",
-          "meaning": "MAJOR.MINOR.PATCH — kırılan değişiklik MAJOR'ı arttırır.",
-          "why": "Marketplace'te güvenli güncelleme."
-        },
-        {
-          "term": "Contract test",
-          "abbrev_tr": "Sözleşme testi",
-          "meaning": "Modül API'sinin geriye uyumlu kalmasını garanti eden test.",
-          "why": "Çekirdek güncellenince modüller bozulmasın."
-        },
-        {
-          "term": "Sandbox",
-          "abbrev_tr": "Kum havuzu",
-          "meaning": "Modülün kısıtlı kaynaklara/API'lere erişimi.",
-          "why": "Kötü niyetli/buggy modül sistemi çökertmesin."
-        },
-        {
-          "term": "Modül lifecycle",
-          "meaning": "install → activate → run → deactivate → uninstall hook'ları.",
-          "why": "Temiz kurulum/kaldırma için."
-        }
-      ]
-    },
-    {
-      "type": "paragraph",
-      "text": "WordPress, Drupal, Frappe ve Salesforce'un ortak başarısı: **çekirdek küçük + modül sistemi açık**. Sen yeni özellik için çekirdeğe dokunmuyorsun; manifest + hook yazıyorsun. Bu sayede 'community ekonomisi' kurulur — binlerce 3rd-party modül."
-    },
-    {
-      "type": "feature-list",
-      "items": [
-        {
-          "name": "Manifest",
-          "desc": "name, version, requires, hooks, doctypes, permissions.",
-          "enrich": {
-            "info": "Modülün 'kimliği' — yüklenmeden okunur."
-          }
-        },
-        {
-          "name": "Registry",
-          "desc": "Hangi modül yüklü, hangi sürüm, hangi tenant'ta aktif.",
-          "enrich": {
-            "info": "Çakışma + bağımlılık çözümü buradan."
-          }
-        },
-        {
-          "name": "Hook noktaları",
-          "desc": "before_insert, validate, on_submit, on_change.",
-          "enrich": {
-            "info": "Çekirdeğin modüle açtığı 'kapı'lar."
-          }
-        },
-        {
-          "name": "Lifecycle hooks",
-          "desc": "install, activate, deactivate, uninstall.",
-          "enrich": {
-            "info": "Migration + cleanup hassas noktalar."
-          }
-        },
-        {
-          "name": "Permission scope",
-          "desc": "Modülün hangi DocType'lara, hangi event'lere, hangi API'lere erişebileceği.",
-          "enrich": {
-            "info": "Sandboxing'in temeli."
-          }
-        },
-        {
-          "name": "Contract test",
-          "desc": "Modül API'sini bozmayacağını garanti eden test seti.",
-          "enrich": {
-            "info": "Çekirdek güncellenince modüller hâlâ çalışır."
-          }
-        }
-      ]
-    },
-    {
-      "type": "steps",
-      "title": "Bir modülün yaşam döngüsü",
-      "items": [
-        {
-          "title": "1. Install",
-          "body": "Modül paketi (zip/git) yüklenir. Manifest doğrulanır (semver match, izinler izinli mi)."
-        },
-        {
-          "title": "2. Migration",
-          "body": "Modülün kendi DocType/tablo migration'ları çalışır. Çekirdek migration framework'u kullanır."
-        },
-        {
-          "title": "3. Activate",
-          "body": "Registry'ye eklenir. Modülün hook'ları subscribe edilir. activate_hook çalışır (örn: default ayarlar)."
-        },
-        {
-          "title": "4. Run",
-          "body": "Modül trafiğe açık. Her event'te ilgili hook'lar çalışır. Performans + error monitor altında."
-        },
-        {
-          "title": "5. Deactivate",
-          "body": "Hook'lar unsubscribe. Veri durur (silinmez). Tekrar aktive edilebilir."
-        },
-        {
-          "title": "6. Uninstall",
-          "body": "Modül tamamen kaldırılır. uninstall_hook → migrate down → veri silinir/arşivlenir."
-        }
-      ]
-    },
-    {
-      "type": "callout",
-      "variant": "tip",
-      "label": "Filter vs Action — pratik örnek",
-      "body": "**Filter**: `apply_filter('order_total', $total)` → her modül total'ı modifiye edebilir (kupon modül %10 düşer). **Action**: `do_action('order_placed', $order)` → her modül tepki verir (email modül gönderir, analytics modül loglar). İkisi de hook ama farklı semantik."
-    },
-    {
-      "type": "callout",
-      "variant": "critical",
-      "label": "Modül güvenliği",
-      "body": "Modülü tam yetkiyle çalıştırma! Permission scope (kullanıcı izniyle): 'Bu modül Order tablosuna OKUR' → user onaylar → o izinle çalışır. Diğer tablolara erişim 403. WordPress'in yaşadığı 'sql injection modül' tarihi öğretici."
-    },
-    {
-      "type": "callout",
-      "variant": "tr",
-      "label": "Semver kuralı",
-      "body": "**MAJOR** = breaking change (API silindi/değişti) — kullanıcı manuel migration. **MINOR** = yeni feature (geriye uyumlu) — otomatik güncelleme OK. **PATCH** = bug fix — otomatik güncelleme. Marketplace `^1.2.0` deyince '>= 1.2.0 ama < 2.0.0' anlar."
-    },
-    {
-      "type": "user-stories",
-      "title": "Üç perspektiften modül",
-      "stories": [
-        {
-          "persona": "Modül geliştirici",
-          "context": "E-fatura entegrasyonu modülü yazıyor.",
-          "outcome": "manifest.yaml + hooks.py yazar; çekirdek koduna dokunmaz. Marketplace'e push, semver 1.0.0. Müşteriler tek tık ile kurar."
-        },
-        {
-          "persona": "Sistem yöneticisi",
-          "context": "Yeni modül kurmadan önce güvenlik denetimi.",
-          "outcome": "Manifest'i okur: hangi DocType'lara erişiyor, hangi API'leri çağırıyor. Permission scope verir. Test ortamında dener → prod."
-        },
-        {
-          "persona": "Çekirdek mimar",
-          "context": "Yeni Order hook'u eklemek istiyor.",
-          "outcome": "Contract test ekler — eski modüllerin hâlâ çalıştığını CI'da garantiler. Semver MINOR bump (yeni feature, geriye uyumlu)."
-        }
-      ]
-    },
-    {
-      "type": "checklist",
-      "title": "Kontrol listesi",
-      "storageKey": "edu.u09",
-      "items": [
-        {
-          "label": "Manifest'in 5 zorunlu alanını sayabilirim.",
-          "hint": "name, version, requires, hooks, doctypes"
-        },
-        {
-          "label": "Modül registry'nin çakışmayı nasıl çözdüğünü biliyorum."
-        },
-        {
-          "label": "Hook'a abone olmayı 'before_save' örneğiyle anlatabilirim."
-        },
-        {
-          "label": "Filter ile action hook farkını ayırt edebilirim."
-        },
-        {
-          "label": "Semver MAJOR/MINOR/PATCH ayrımını söyleyebilirim."
-        },
-        {
-          "label": "Modül lifecycle (install→uninstall) 6 adımını sayabilirim."
-        },
-        {
-          "label": "Permission scope = sandboxing temeli olduğunu biliyorum."
-        },
-        {
-          "label": "Contract test'in çekirdek güncellemesinde rolünü anlatabilirim."
-        }
-      ]
-    },
-    {
-      "type": "callout",
-      "variant": "info",
-      "label": "Sonraki ünite",
-      "body": "{{ref:edu-u10}} — Deploy & Operations. Production'a güvenli geçiş + monitoring."
-    }
-  ],
-  "related": [
+ "id": "edu-u09",
+ "title": "Modül Mimarisi",
+ "subtitle": "Manifest, registry, hook, semver, marketplace, contract test, sandboxing.",
+ "cluster": "edu",
+ "order": 12,
+ "icon": "ph-puzzle-piece",
+ "granularity": "buyuk-tas",
+ "state": "ok",
+ "tags": [
+  "education",
+  "u09",
+  "modül",
+  "marketplace",
+  "extensibility"
+ ],
+ "blocks": [
+  {
+   "type": "callout",
+   "variant": "info",
+   "label": "Karar bağlantısı — gün-1 WASM",
+   "body": "Yükleme modeli kararlaştırıldı (be-kararlar 09): üçüncü taraf module'ler gün-1'den itibaren WASM sandbox içinde çalışır — permission scope bu sandbox'ın izin sözleşmesidir. Kurulum UX çıtası: WordPress module'ü / Chrome extension kurmak kadar basit."
+  },
+  {
+   "type": "lesson-header",
+   "unit": "Ünite 09",
+   "title": "Modül Mimarisi — çekirdeği bozmadan davranış ekle",
+   "level": "ileri",
+   "duration_min": 70,
+   "prereq": [
     "edu-u03",
-    "edu-u08",
-    "edu-u10",
-    "k-modül"
-  ],
-  "enrich": {
-    "lesson": {
-      "ne": "Ünite 09 — Eklenti Mimarisi. Ana koda dokunmadan yeni özellikler ekleme.",
-      "nicin": "Her özel ihtiyaç için ana kodu değiştirmek riski yüksek. Eklenti güvenli yol.",
-      "nasil": "Eklenti yazarı 'tanıtım kartı' yazar; sistem kartı okuyup eklentiyi listeye ekler.",
-      "nerede": "Müfredatın 9. ünitesi.",
-      "ne_zaman": "Sistem standart özelliklere ek bir ihtiyaç çıkarınca.",
-      "kim": "Modül geliştiricileri.",
-      "analoji": "Mutfak robotunun aksesuarları."
+    "edu-u08"
+   ],
+   "goals": [
+    "Modül manifest'inin yapısını ve neden gerektiğini bilirsin.",
+    "Modül registry'nin çakışma çözümündeki rolünü anlatabilirsin.",
+    "Hook noktalarına nasıl abone olunduğunu söyleyebilirsin.",
+    "Semver'in marketplace'teki anlamını biliyorsun.",
+    "Sandboxing'in modül güvenliği için neden zorunlu olduğunu söyleyebilirsin.",
+    "WordPress/Drupal/Frappe örneklerini ortak ilkelere bağlayabilirsin."
+   ]
+  },
+  {
+   "type": "terms",
+   "terms": [
+    {
+     "term": "Modül",
+     "abbrev_tr": "Eklenti",
+     "meaning": "Çekirdek değişmeden eklenebilen davranış paketi.",
+     "why": "15 ürün tek çekirdeğin üstünde böyle yaşar."
+    },
+    {
+     "term": "Manifest",
+     "abbrev_tr": "Bildirim dosyası",
+     "meaning": "Modülün adı, sürümü, izinleri, hook'larını listeleyen YAML/JSON.",
+     "why": "Çekirdek manifest'e bakarak modülü yükler."
+    },
+    {
+     "term": "Registry",
+     "abbrev_tr": "Sicil",
+     "meaning": "Yüklü modüllerin merkezi listesi + sürüm bilgisi.",
+     "why": "Çakışma, bağımlılık, yüklü mü kontrolü için."
+    },
+    {
+     "term": "Hook",
+     "abbrev_tr": "Kanca",
+     "meaning": "Çekirdeğin modüle bıraktığı tetikleme noktası (before_save, on_change).",
+     "why": "Modül çekirdeğin akışına girip iş yapar."
+    },
+    {
+     "term": "Filter hook",
+     "meaning": "Veriyi dönüştürür: input → modified output (WordPress modeli).",
+     "why": "Davranışı zincirleme değiştirmek için."
+    },
+    {
+     "term": "Action hook",
+     "meaning": "Sadece tetiklenir, sonuç dönmez (side effect için).",
+     "why": "E-mail gönder, log yaz, cache invalidate vs."
+    },
+    {
+     "term": "Semver",
+     "abbrev_of": "Semantic Versioning",
+     "meaning": "MAJOR.MINOR.PATCH — kırılan değişiklik MAJOR'ı arttırır.",
+     "why": "Marketplace'te güvenli güncelleme."
+    },
+    {
+     "term": "Contract test",
+     "abbrev_tr": "Sözleşme testi",
+     "meaning": "Modül API'sinin geriye uyumlu kalmasını garanti eden test.",
+     "why": "Çekirdek güncellenince modüller bozulmasın."
+    },
+    {
+     "term": "Sandbox",
+     "abbrev_tr": "Kum havuzu",
+     "meaning": "Modülün kısıtlı kaynaklara/API'lere erişimi.",
+     "why": "Kötü niyetli/buggy modül sistemi çökertmesin."
+    },
+    {
+     "term": "Modül lifecycle",
+     "meaning": "install → activate → run → deactivate → uninstall hook'ları.",
+     "why": "Temiz kurulum/kaldırma için."
     }
+   ]
+  },
+  {
+   "type": "paragraph",
+   "text": "WordPress, Drupal, Frappe ve Salesforce'un ortak başarısı: **çekirdek küçük + modül sistemi açık**. Sen yeni özellik için çekirdeğe dokunmuyorsun; manifest + hook yazıyorsun. Bu sayede 'community ekonomisi' kurulur — binlerce 3rd-party modül."
+  },
+  {
+   "type": "feature-list",
+   "items": [
+    {
+     "name": "Manifest",
+     "desc": "name, version, requires, hooks, doctypes, permissions.",
+     "enrich": {
+      "info": "Modülün 'kimliği' — yüklenmeden okunur."
+     }
+    },
+    {
+     "name": "Registry",
+     "desc": "Hangi modül yüklü, hangi sürüm, hangi tenant'ta aktif.",
+     "enrich": {
+      "info": "Çakışma + bağımlılık çözümü buradan."
+     }
+    },
+    {
+     "name": "Hook noktaları",
+     "desc": "before_insert, validate, on_submit, on_change.",
+     "enrich": {
+      "info": "Çekirdeğin modüle açtığı 'kapı'lar."
+     }
+    },
+    {
+     "name": "Lifecycle hooks",
+     "desc": "install, activate, deactivate, uninstall.",
+     "enrich": {
+      "info": "Migration + cleanup hassas noktalar."
+     }
+    },
+    {
+     "name": "Permission scope",
+     "desc": "Modülün hangi DocType'lara, hangi event'lere, hangi API'lere erişebileceği.",
+     "enrich": {
+      "info": "Sandboxing'in temeli."
+     }
+    },
+    {
+     "name": "Contract test",
+     "desc": "Modül API'sini bozmayacağını garanti eden test seti.",
+     "enrich": {
+      "info": "Çekirdek güncellenince modüller hâlâ çalışır."
+     }
+    }
+   ]
+  },
+  {
+   "type": "steps",
+   "title": "Bir modülün yaşam döngüsü",
+   "items": [
+    {
+     "title": "1. Install",
+     "body": "Modül paketi (zip/git) yüklenir. Manifest doğrulanır (semver match, izinler izinli mi)."
+    },
+    {
+     "title": "2. Migration",
+     "body": "Modülün kendi DocType/tablo migration'ları çalışır. Çekirdek migration framework'u kullanır."
+    },
+    {
+     "title": "3. Activate",
+     "body": "Registry'ye eklenir. Modülün hook'ları subscribe edilir. activate_hook çalışır (örn: default ayarlar)."
+    },
+    {
+     "title": "4. Run",
+     "body": "Modül trafiğe açık. Her event'te ilgili hook'lar çalışır. Performans + error monitor altında."
+    },
+    {
+     "title": "5. Deactivate",
+     "body": "Hook'lar unsubscribe. Veri durur (silinmez). Tekrar aktive edilebilir."
+    },
+    {
+     "title": "6. Uninstall",
+     "body": "Modül tamamen kaldırılır. uninstall_hook → migrate down → veri silinir/arşivlenir."
+    }
+   ]
+  },
+  {
+   "type": "callout",
+   "variant": "tip",
+   "label": "Filter vs Action — pratik örnek",
+   "body": "**Filter**: `apply_filter('order_total', $total)` → her modül total'ı modifiye edebilir (kupon modül %10 düşer). **Action**: `do_action('order_placed', $order)` → her modül tepki verir (email modül gönderir, analytics modül loglar). İkisi de hook ama farklı semantik."
+  },
+  {
+   "type": "callout",
+   "variant": "critical",
+   "label": "Modül güvenliği",
+   "body": "Modülü tam yetkiyle çalıştırma! Permission scope (kullanıcı izniyle): 'Bu modül Order tablosuna OKUR' → user onaylar → o izinle çalışır. Diğer tablolara erişim 403. WordPress'in yaşadığı 'sql injection modül' tarihi öğretici."
+  },
+  {
+   "type": "callout",
+   "variant": "tr",
+   "label": "Semver kuralı",
+   "body": "**MAJOR** = breaking change (API silindi/değişti) — kullanıcı manuel migration. **MINOR** = yeni feature (geriye uyumlu) — otomatik güncelleme OK. **PATCH** = bug fix — otomatik güncelleme. Marketplace `^1.2.0` deyince '>= 1.2.0 ama < 2.0.0' anlar."
+  },
+  {
+   "type": "user-stories",
+   "title": "Üç perspektiften modül",
+   "stories": [
+    {
+     "persona": "Modül geliştirici",
+     "context": "E-fatura entegrasyonu modülü yazıyor.",
+     "outcome": "manifest.yaml + hooks.py yazar; çekirdek koduna dokunmaz. Marketplace'e push, semver 1.0.0. Müşteriler tek tık ile kurar."
+    },
+    {
+     "persona": "Sistem yöneticisi",
+     "context": "Yeni modül kurmadan önce güvenlik denetimi.",
+     "outcome": "Manifest'i okur: hangi DocType'lara erişiyor, hangi API'leri çağırıyor. Permission scope verir. Test ortamında dener → prod."
+    },
+    {
+     "persona": "Çekirdek mimar",
+     "context": "Yeni Order hook'u eklemek istiyor.",
+     "outcome": "Contract test ekler — eski modüllerin hâlâ çalıştığını CI'da garantiler. Semver MINOR bump (yeni feature, geriye uyumlu)."
+    }
+   ]
+  },
+  {
+   "type": "checklist",
+   "title": "Kontrol listesi",
+   "storageKey": "edu.u09",
+   "items": [
+    {
+     "label": "Manifest'in 5 zorunlu alanını sayabilirim.",
+     "hint": "name, version, requires, hooks, doctypes"
+    },
+    {
+     "label": "Modül registry'nin çakışmayı nasıl çözdüğünü biliyorum."
+    },
+    {
+     "label": "Hook'a abone olmayı 'before_save' örneğiyle anlatabilirim."
+    },
+    {
+     "label": "Filter ile action hook farkını ayırt edebilirim."
+    },
+    {
+     "label": "Semver MAJOR/MINOR/PATCH ayrımını söyleyebilirim."
+    },
+    {
+     "label": "Modül lifecycle (install→uninstall) 6 adımını sayabilirim."
+    },
+    {
+     "label": "Permission scope = sandboxing temeli olduğunu biliyorum."
+    },
+    {
+     "label": "Contract test'in çekirdek güncellemesinde rolünü anlatabilirim."
+    }
+   ]
+  },
+  {
+   "type": "callout",
+   "variant": "info",
+   "label": "Sonraki ünite",
+   "body": "{{ref:edu-u10}} — Deploy & Operations. Production'a güvenli geçiş + monitoring."
   }
+ ],
+ "related": [
+  "edu-u03",
+  "edu-u08",
+  "edu-u10",
+  "k-modül",
+  "be-kararlar"
+ ],
+ "enrich": {
+  "lesson": {
+   "ne": "Ünite 09 — Eklenti Mimarisi. Ana koda dokunmadan yeni özellikler ekleme.",
+   "nicin": "Her özel ihtiyaç için ana kodu değiştirmek riski yüksek. Eklenti güvenli yol.",
+   "nasil": "Eklenti yazarı 'tanıtım kartı' yazar; sistem kartı okuyup eklentiyi listeye ekler.",
+   "nerede": "Müfredatın 9. ünitesi.",
+   "ne_zaman": "Sistem standart özelliklere ek bir ihtiyaç çıkarınca.",
+   "kim": "Modül geliştiricileri.",
+   "analoji": "Mutfak robotunun aksesuarları."
+  }
+ }
 }

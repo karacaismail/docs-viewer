@@ -146,6 +146,7 @@ export const NavigationSchema = z.object({
       label: z.string(),
       icon: z.string(),
       order: z.number(),
+      section: z.string().optional(), // Rail 1 bölüm başlığı (03 §1: BAŞLANGIÇ / İNŞA SIRASI / REFERANS)
       groups: z.array(
         z.object({
           id: z.string(),

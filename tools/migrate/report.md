@@ -1,11 +1,11 @@
 # Migration Mutabakat Raporu
 
-Kaynak dosya: 228 (+1 kapsam dışı) | Üretilen page: 228 | Atlanan: 0
-Glossary kaydı: 691 | Search document: 3469
+Kaynak dosya: 232 (+1 kapsam dışı) | Üretilen page: 232 | Atlanan: 0
+Glossary kaydı: 691 | Search document: 3489
 
 ## Kategori dağılımı
 - backend: 3
-- build: 5
+- build: 7
 - crosscut: 17
 - dx: 4
 - egitim: 28
@@ -15,14 +15,14 @@ Glossary kaydı: 691 | Search document: 3469
 - layer1: 12
 - scale: 15
 - stack: 37
-- sus: 13
+- sus: 15
 - urunler: 72
 
 ## Kayıp görsel varlıklar (0) — 07B §1 fallback aktif
 
 ## Glossary zenginleştirme (12A Parti 1 — Eğitim Yolu)
 Zenginleştirilen kayıt: 543 (sayfa-kapsamlı: 368) | Overlay'de karşılığı olmayan label: 0
-Segment bağlama (B akışı, tüm kategoriler): 441 bağlı terim | bağlı page: 165/228 | egitim: 27/28
+Segment bağlama (B akışı, tüm kategoriler): 442 bağlı terim | bağlı page: 165/232 | egitim: 27/28
 
 ## Uyarılar (0)
 

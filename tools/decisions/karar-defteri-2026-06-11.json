@@ -1,0 +1,224 @@
+{
+  "belge": "FastAPI Meta-Framework Kernel — Backend Karar Defteri",
+  "disaAktarmaTarihi": "2026-06-11T10:45:06.609Z",
+  "toplamKarar": 24,
+  "kararlastirilan": 24,
+  "kararlar": [
+    {
+      "id": "d01",
+      "num": "01",
+      "bolum": "Backend Karar Raporu",
+      "soru": "ORM / şema motoru — DocType engine'in altında veritabanıyla konuşan katman ne olacak?",
+      "secilen": "sqlalchemy",
+      "secilenEtiket": "SQLAlchemy 2.0 (Core + ORM), Pydantic v2 ayrı katman",
+      "aciklamam": ""
+    },
+    {
+      "id": "d02",
+      "num": "02",
+      "bolum": "Backend Karar Raporu",
+      "soru": "Migration üretimi — Veritabanı şeması değişince geçiş betiklerini kim yazacak?",
+      "secilen": "doctype-diff",
+      "secilenEtiket": "Alembic altyapı, migration'ı DocType diff'i üretir",
+      "aciklamam": "ayrıca burada, verilen kararı review ederek gücelleyecek, karar verici, bir local llm, bulunsa, daha kararlı olur mu? daha güvenli olur mu? hangi local mini llm'ler? (hangi küçük yada orta dil modelleri?)\n"
+    },
+    {
+      "id": "d03",
+      "num": "03",
+      "bolum": "Backend Karar Raporu",
+      "soru": "Tenant izolasyonu — Bir müşterinin verisini diğerinden ne ayıracak?",
+      "secilen": "both",
+      "secilenEtiket": "ORM zorunlu scope + PostgreSQL RLS (ikisi birden)",
+      "aciklamam": "RLS politikalarının test edilmesi ve bağlantı bağlamı yönetimi, nasıl yapılmalı? belirsiz, bununla ilgili seçenekleri bana ver, araştırayım. \n\nayrıca buraya mini modellerden güvenlik odaklı AI llm ekleyerek, anomali kontrolü nasıl yapılır? "
+    },
+    {
+      "id": "d04",
+      "num": "04",
+      "bolum": "Backend Karar Raporu",
+      "soru": "Async sınırı — Kod tabanının ne kadarı asenkron olacak?",
+      "secilen": "narrow-async",
+      "secilenEtiket": "FastAPI uçları async, iş mantığı sync saf fonksiyonlar",
+      "aciklamam": ""
+    },
+    {
+      "id": "d05",
+      "num": "05",
+      "bolum": "Backend Karar Raporu",
+      "soru": "Worker / kuyruk — Arka plan işlerini (mail, rapor, import) hangi kuyruk taşıyacak?",
+      "secilen": "pg-queue",
+      "secilenEtiket": "Postgres-tabanlı kuyruk (procrastinate / pgqueuer)",
+      "aciklamam": "yeni akım ise kuyruğu da PostgreSQL'in içinde tutmaktır. kuyruğu da PostgreSQL'in içinde tutalım varsayılan olarak.\nama \"Celery+Redis\" bir seçenek olmalı. wordpress gibi kolay kurulan standart yapı = \"kuyruğu da PostgreSQL'in içinde tutmak\" ama ölçekleme ihtiyaç olduğunda  \"Celery+Redis\" bir seçenek olarak altyapıda hazır olmalı. \n\nöncelik (default)  = \"kuyruğu da PostgreSQL'in içinde tutmak\" ama opsiyonel olarak  \"Celery+Redis\" opsiyonel olmalı. "
+    },
+    {
+      "id": "d06",
+      "num": "06",
+      "bolum": "Backend Karar Raporu",
+      "soru": "Event bus taşıyıcısı — Modüller arası olaylar (sipariş oluştu, kullanıcı kaydoldu) ilk gün neyle taşınacak?",
+      "secilen": "outbox-polling",
+      "secilenEtiket": "Outbox + Postgres polling, broker arayüz arkasında",
+      "aciklamam": "ölçekleme için dış servis olarak kesinlikle kafka, rabitmq, desteği olmalı. ama ek seçenek olarak olmalı. default varsayılan \"Outbox + Postgres polling\". "
+    },
+    {
+      "id": "d07",
+      "num": "07",
+      "bolum": "Backend Karar Raporu",
+      "soru": "API üretimi — DocType'tan REST otomatik; GraphQL gün-1 mi gelsin?",
+      "secilen": "both-day1",
+      "secilenEtiket": "REST + GraphQL gün-1",
+      "aciklamam": "default olarak GraphQL çoğunlukla FastAPI'nin bir endpoint'i olarak çalışsın. \nikinci seçenek olarak \"REST + OpenAPI \" opsiyonel olarak altyapıda bulunsun (kurulum adımlarında sorsun). \nama ayrı seçenek olarak (ölçekleme için) GraphQL ayrı servis de olabilsin(Shopify, Netflix, Airbnb, GitHub, gibi yapıların graphql kullanım yapısı gibi).  \n\n"
+    },
+    {
+      "id": "d08",
+      "num": "08",
+      "bolum": "Backend Karar Raporu",
+      "soru": "Kimlik / SSO kütüphanesi — Kullanıcı girişi ve kurumsal SSO'yu kim yönetecek?",
+      "secilen": "own-authlib",
+      "secilenEtiket": "kernel-identity kendi modelin + Authlib (OIDC/SAML) + gün-1 passkey",
+      "aciklamam": ""
+    },
+    {
+      "id": "d09",
+      "num": "09",
+      "bolum": "Backend Karar Raporu",
+      "soru": "Module yükleme modeli — Üçüncü taraf modüller (eski adıyla plugin) kernel'in içinde nasıl çalışacak?",
+      "secilen": "wasm-day1",
+      "secilenEtiket": "Gün-1 WASM sandbox",
+      "aciklamam": "wordpress plugin kurmak kadar basit, chrome extension kurmak kadar basit,  olmalı iş akışı. "
+    },
+    {
+      "id": "d10",
+      "num": "10",
+      "bolum": "Backend Karar Raporu",
+      "soru": "SDK biçimi — Vibecoding-uyumlu SDK ne üretmeli, AI'a hangi yüzey verilmeli?",
+      "secilen": "declarative-sdk",
+      "secilenEtiket": "sdk app create → DocType tanımı + test iskeleti + tipli client; AI yüzeyi: YAML/JSON + saf hook",
+      "aciklamam": ""
+    },
+    {
+      "id": "d11",
+      "num": "11",
+      "bolum": "Backend Karar Raporu",
+      "soru": "AI-native katman — MCP server kernel'in parçası mı, ayrı bir modül mü?",
+      "secilen": "kernel-mcp",
+      "secilenEtiket": "MCP kernel'in parçası: her Action otomatik MCP tool'u",
+      "aciklamam": ""
+    },
+    {
+      "id": "d12",
+      "num": "12",
+      "bolum": "Backend Karar Raporu",
+      "soru": "Tip disiplini ve takım zinciri — Python tarafının araç seti ve katılık seviyesi ne olacak?",
+      "secilen": "strict-chain",
+      "secilenEtiket": "Python 3.12+, uv, ruff, pyright strict, pytest, Pydantic v2 her sınırda",
+      "aciklamam": ""
+    },
+    {
+      "id": "d13",
+      "num": "13",
+      "bolum": "Backend Karar Raporu",
+      "soru": "Deploy birimi — Hetzner/Debian üzerinde dağıtım docker compose mu, k8s mi, systemd mi?",
+      "secilen": "compose-actions",
+      "secilenEtiket": "docker compose + GitHub Actions imaj push; k8s çok-bölgeye kadar ertelenir (ADR'li)",
+      "aciklamam": "https://www.odoo.sh/, frappe cloud service, gibi bir yaklaşım gerekli. \nwordpress.com mesela, drupal acquia.com mesela, \n\nben hem hosting hizmeti sağlayacağım (tam teşekküllü), hemde insanlar self host için wordrpess gibi basit bir shared server üzerinde host edebilecekler. yada kendi k8s kuberntes swarm yapılarını da kurabilirler. altyapı buna uygun olmalı. \"docker compose + GitHub Actions imaj push\" da bir seçenek, wordpress kurulumu gibi shared hosting üzerinde adım adım kurulum da mümkün olmalı. \n\ndolayısıyla, kendi cluster disaster yapılarını kurabilirler, shared host edebilirler, benim bulut sunucu ekosistemimde host edebilirler, benden hizmet satınalabilirler. "
+    },
+    {
+      "id": "d14",
+      "num": "14",
+      "bolum": "Backend Karar Raporu",
+      "soru": "Lisans ve OSS modeli — Framework açık kaynak olacaksa hangi lisansla, ticari hat nereden geçecek?",
+      "secilen": "agpl-core",
+      "secilenEtiket": "Kernel AGPL + SDK/client MIT + Editions ticari (open-core)",
+      "aciklamam": ""
+    },
+    {
+      "id": "d15",
+      "num": "15",
+      "bolum": "Backend Karar Raporu",
+      "soru": "Geriye uyumluluk taahhüdü — Tarih-versiyon + pinleme + named gate API sözleşmesine gün-1 mi giriyor?",
+      "secilen": "day1-versioning",
+      "secilenEtiket": "Gün-1: tarih-versiyon + pinleme + named gate API sözleşmesinde",
+      "aciklamam": "iyi örnek = {Stripe. Tarih-bazlı versiyonlamanın mucidi sayılır: her hesap bir API tarihine pinlidir, 10 yıllık entegrasyonlar hâlâ çalışır. Geliştirici güveninin (ve fiyatlama gücünün) temeli.\n}"
+    },
+    {
+      "id": "e01",
+      "num": "E1",
+      "bolum": "Raporda eksik olanlar",
+      "soru": "Yetkilendirme (authorization) modeli — Rapor kimliği (kim olduğunu) çözüyor ama yetkiyi (ne yapabileceğini) hiç konuşmuyor. Kernel'in yetki modeli ne?",
+      "secilen": "two-plane",
+      "secilenEtiket": "İki-düzlem: entitlement (Edition) + ReBAC/ABAC tek PDP kapısından; motor arayüz arkasında",
+      "aciklamam": ""
+    },
+    {
+      "id": "e02",
+      "num": "E2",
+      "bolum": "Raporda eksik olanlar",
+      "soru": "Gözlemlenebilirlik (observability) — Log, metrik, trace stratejisi raporda yok. Kernel ne üretir, nereye akar?",
+      "secilen": "otel-day1",
+      "secilenEtiket": "OTel SDK gün-1: yapılandırılmış log + temel metrik + trace, tenant_id/correlation id zorunlu; arka uç mevcut LGTM + Sentry",
+      "aciklamam": "geliştirici süreçleri için gerekli ama production first değil. developer first gerekli. production da logging gerekli. production da grafana, gibi opensearch elk gibi entegrasyonlar tamamen diğer dış servisler gibi tamanen opsiyonel, ama seçenek olarak bulunmalı. "
+    },
+    {
+      "id": "e03",
+      "num": "E3",
+      "bolum": "Raporda eksik olanlar",
+      "soru": "Dosya / obje depolama — Tenant'ların yüklediği dosyalar (belgeler, görseller) nerede yaşayacak? Raporda hiç yok.",
+      "secilen": "local-disk",
+      "secilenEtiket": "Yerel disk + rsync yedek",
+      "aciklamam": "aslında \"Yerel disk + rsync yedek\" default, ama \"\nKernel Storage sözleşmesi gün-1; backend: S3-uyumlu (Hetzner Object Storage), geliştirmede yerel sürücü\" gibi seçenekler birinci gün  opsiyonel olarak bulunmalı. "
+    },
+    {
+      "id": "e04",
+      "num": "E4",
+      "bolum": "Raporda eksik olanlar",
+      "soru": "Arama mimarisi — DocType verisinde tam-metin arama: Postgres FTS mi, Meilisearch mi? Raporda yok.",
+      "secilen": "fts-only",
+      "secilenEtiket": "Sadece Postgres FTS, motor sözleşmesi yok",
+      "aciklamam": "\"Kernel SearchProvider sözleşmesi: varsayılan Postgres FTS, Meilisearch outbox-beslemeli opsiyon\" gün 1 = seçenek olarak olmalı. ama default wordpress kadar basit olmalı. \n"
+    },
+    {
+      "id": "e05",
+      "num": "E5",
+      "bolum": "Raporda eksik olanlar",
+      "soru": "Yedekleme ve felaket kurtarma — RPO/RTO hedefi, PITR, restore tatbikatı — raporda tek satır yok.",
+      "secilen": "pitr",
+      "secilenEtiket": "pgBackRest + WAL arşiv (PITR), off-site Hetzner Storage Box, n8n ile aylık restore tatbikatı",
+      "aciklamam": "anlık yedek sistemi önemli. cold snapshot data anlamlı ama anlık yedek çoook önemli. tenant base restore senaryoları geliştirilmesi gerekiyor. ama wordpress kadar basit olmalı (backup to export scriptleri kernelde bulunmalı)  ayrıca dış servisler hetzner vb ise opsiyonel ama gün 1 de hazır bulunmalı. "
+    },
+    {
+      "id": "e06",
+      "num": "E6",
+      "bolum": "Raporda eksik olanlar",
+      "soru": "Secrets yönetimi — DB şifreleri, API anahtarları, tenant webhook secret'ları nerede duracak?",
+      "secilen": "sops",
+      "secilenEtiket": "SOPS + age (git'te şifreli) + GitHub Actions secrets; tenant secret'ları DB'de zarf-şifreli (kernel sözleşmesi)",
+      "aciklamam": ""
+    },
+    {
+      "id": "e07",
+      "num": "E7",
+      "bolum": "Raporda eksik olanlar",
+      "soru": "i18n / l10n kernel kararı — Çok dillilik kernel sözleşmesi mi, app sorunu mu? Raporda hiç geçmiyor — senin uzmanlık alanın olmasına rağmen.",
+      "secilen": "i18n-day1",
+      "secilenEtiket": "Gün-1 sözleşme: string externalization + ICU MessageFormat + CLDR biçimleri; DocType'ta translatable alan tipi",
+      "aciklamam": ""
+    },
+    {
+      "id": "e08",
+      "num": "E8",
+      "bolum": "Raporda eksik olanlar",
+      "soru": "Rate limiting, kota ve metering — API kötüye kullanım koruması ve 'kim ne kadar kullandı' sayacı raporda yok — oysa Edition modeli buna muhtaç.",
+      "secilen": "meter-day1",
+      "secilenEtiket": "Gün-1: kernel middleware rate limit (Edition'dan beslenen) + metering olayları outbox'a; faturalama faz-2",
+      "aciklamam": "ama sıkılık hardenering seçenekleri, esnek olarak (wordprss admin paneli gib bir panelden) app user yönetebilmeli. "
+    },
+    {
+      "id": "e09",
+      "num": "E9",
+      "bolum": "Raporda eksik olanlar",
+      "soru": "KVKK/GDPR veri yaşam döngüsü — Silme talebi, saklama süresi, PII envanteri — ve bunların bitemporal mimariyle gerilimi raporda yok.",
+      "secilen": "pii-shredding",
+      "secilenEtiket": "Gün-1: DocType'ta PII bayrağı + retention politikası + crypto-shredding ile unutulma hakkı (bitemporal'le barışık)",
+      "aciklamam": "sadece [kvkk gpdr] deği, usa, avusturalya, kanada, japonya, mena bölgesi, asia, dahil bir seviyede planlanmalı ilk günden. "
+    }
+  ]
+}

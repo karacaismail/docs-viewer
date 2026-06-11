@@ -210,7 +210,14 @@ function buildNavigation(results) {
     } else {
       groups = [{ id: "tumu", label: "Tümü", order: 0, items: sortItems(pages, c.id === "egitim") }];
     }
-    return { id: c.id, label: c.label, icon: c.icon, order: c.order, groups };
+    return {
+      id: c.id,
+      label: c.label,
+      icon: c.icon,
+      order: c.order,
+      ...(c.section ? { section: c.section } : {}),
+      groups,
+    };
   }).filter((c) => c.groups.some((g) => g.items.length > 0));
 
   return { schemaVersion: "1.0", categories };
@@ -359,7 +366,9 @@ for (const r of results) {
 // aday sayfa eklenir; çift yönlü gezinme katalog kayıtlarını keşfedilebilir kılar (03 §2 Edition notu).
 const byId = new Map(results.map((r) => [r.page.id, r]));
 for (const r of results) {
-  if (r.page.meta?.state !== "aday") continue;
+  const isBacklinkSource =
+    r.page.meta?.state === "aday" || ["KARAR", "TASARIM", "KAVRAM"].includes(r.page.meta?.badge);
+  if (!isBacklinkSource) continue;
   for (const targetId of r.page.related) {
     const target = byId.get(targetId);
     if (target && !target.page.related.includes(r.page.id)) target.page.related.push(r.page.id);

@@ -1,18 +1,18 @@
 // 03-navigation-ia.md §1 — Rail 1 kategorileri (veri-tabanlı; engine bunları bilmez)
 export const CATEGORIES = [
-  { id: "egitim", label: "Eğitim Yolu", icon: "ph-graduation-cap", order: 0 },
-  { id: "genel", label: "Genel Harita", icon: "ph-list-checks", order: 1 },
-  { id: "kernel", label: "Kernel — Layer 0", icon: "ph-cube", order: 2 },
-  { id: "scale", label: "Scale Primitives", icon: "ph-trend-up", order: 3 },
-  { id: "layer1", label: "Layer 1 — In-tree", icon: "ph-stack", order: 4 },
-  { id: "stack", label: "Stack Ürünleri", icon: "ph-package", order: 5 },
-  { id: "urunler", label: "Ürün Modülleri", icon: "ph-squares-four", order: 6 },
-  { id: "crosscut", label: "Çapraz-Kesen", icon: "ph-arrows-out", order: 7 },
-  { id: "dx", label: "DX & Services", icon: "ph-puzzle-piece", order: 8 },
-  { id: "build", label: "Build & Deploy", icon: "ph-flag-banner", order: 9 },
-  { id: "backend", label: "Backend Tech-Stack", icon: "ph-database", order: 10 },
-  { id: "frontend", label: "Frontend Tech-Stack", icon: "ph-device-mobile", order: 11 },
-  { id: "sus", label: "Sürdürülebilirlik", icon: "ph-infinity", order: 12 },
+  { id: "egitim", label: "Eğitim Yolu", icon: "ph-graduation-cap", order: 0, section: "BAŞLANGIÇ" },
+  { id: "genel", label: "Genel Harita", icon: "ph-list-checks", order: 1, section: "BAŞLANGIÇ" },
+  { id: "kernel", label: "Kernel — Layer 0", icon: "ph-cube", order: 2, section: "İNŞA SIRASI" },
+  { id: "scale", label: "Scale Primitives", icon: "ph-trend-up", order: 3, section: "İNŞA SIRASI" },
+  { id: "layer1", label: "Layer 1 — In-tree", icon: "ph-stack", order: 4, section: "İNŞA SIRASI" },
+  { id: "stack", label: "Stack Ürünleri", icon: "ph-package", order: 5, section: "İNŞA SIRASI" },
+  { id: "urunler", label: "Ürün Modülleri", icon: "ph-squares-four", order: 7, section: "REFERANS" },
+  { id: "crosscut", label: "Çapraz-Kesen", icon: "ph-arrows-out", order: 8, section: "REFERANS" },
+  { id: "dx", label: "DX & Services", icon: "ph-puzzle-piece", order: 10, section: "REFERANS" },
+  { id: "build", label: "Build & Deploy", icon: "ph-flag-banner", order: 6, section: "İNŞA SIRASI" },
+  { id: "backend", label: "Backend Tech-Stack", icon: "ph-database", order: 9, section: "REFERANS" },
+  { id: "frontend", label: "Frontend Tech-Stack", icon: "ph-device-mobile", order: 11, section: "REFERANS" },
+  { id: "sus", label: "Sürdürülebilirlik", icon: "ph-infinity", order: 12, section: "REFERANS" },
 ];
 
 // Dosya prefix → kategori (07A §2; istisnalar tek tabloda)

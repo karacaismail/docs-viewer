@@ -31,20 +31,25 @@ export function RailOne({
           </button>
         </div>
       )}
-      {navigation.categories.map((c) => {
+      {navigation.categories.map((c, i) => {
         const [section, page] = firstSlugOf(c.id).split("/");
+        // Bölüm başlığı: önceki kategoriden farklı section başlıyorsa (03 §1)
+        const prev = navigation.categories[i - 1];
+        const sectionHeading = c.section && c.section !== prev?.section ? c.section : undefined;
         return (
-          <Link
-            key={c.id}
-            to="/docs/$section/$page"
-            params={{ section, page }}
-            className="rail1__item"
-            aria-current={c.id === activeSection ? "true" : undefined}
-            onClick={onNavigate}
-          >
-            <i className={`ph ${c.icon}`} aria-hidden />
-            <span>{c.label}</span>
-          </Link>
+          <div key={c.id}>
+            {sectionHeading && <div className="rail1__section">{sectionHeading}</div>}
+            <Link
+              to="/docs/$section/$page"
+              params={{ section, page }}
+              className="rail1__item"
+              aria-current={c.id === activeSection ? "true" : undefined}
+              onClick={onNavigate}
+            >
+              <i className={`ph ${c.icon}`} aria-hidden />
+              <span>{c.label}</span>
+            </Link>
+          </div>
         );
       })}
     </nav>

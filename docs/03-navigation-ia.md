@@ -22,6 +22,10 @@ Bu doküman, iki seviyeli navigasyonun bilgi mimarisini ve URL/ID sözleşmeleri
 
 Kategori ataması elle yapılmaz; migration script'i dosya prefix'inden üretir ve istisnalar tek bir mapping tablosunda tutulur. Engine, kategori sayısına ve adına bağımlı kod içermez — `menu_hiyerarsi_audit.md` madde 4.2'deki "tamamen veri-tabanlı" ilkesi korunur.
 
+### Rail 1 Bölümleri
+
+Rail 1 düz liste değildir; kategoriler üç bölüm başlığı altında akar (bilişsel yük 13 maddeden 3 kümeye iner): **BAŞLANGIÇ** (Eğitim Yolu, Genel Harita) · **İNŞA SIRASI** (Kernel → Scale → Layer 1 → Stack → Build & Deploy — build-sequence fazlarıyla hizalı; Faz 6 Enterprise ve Faz 7 Açık Kaynak sayfaları Build & Deploy altındadır) · **REFERANS** (Ürün Modülleri, Çapraz-Kesen, Backend/Frontend Tech-Stack, DX & Services, Sürdürülebilirlik). Bölüm bilgisi `navigation.json`'da kategori-başına `section` alanıdır; sırası kategori `order`'ından gelir ve bölümler bitişiktir.
+
 ## 2. Rail 2 — Accordion Grupları
 
 Rail 2, seçili kategorinin page listesini accordion gruplar halinde gösterir. Gruplama kuralları kategoriye göre değişir:
