@@ -12,11 +12,11 @@ export const WBS_SAMPLE: WbsNode = {
   meta: "kernel — tek panel, default entegre",
   children: [
     {
-      name: "HRMS · Dağ (34+)",
+      name: "HRMS · App (Dağ · 34+)",
       meta: "Application — Workday clone",
       children: [
         {
-          name: "Çalışanlar · Kaya (21)",
+          name: "Çalışanlar · Domain (Kaya · 21)",
           meta: "Domain / core module",
           children: [
             {
@@ -33,9 +33,9 @@ export const WBS_SAMPLE: WbsNode = {
                       collapsed: true, // derin zincir tıklamayla açılır — etiket çakışmasını önler
                       children: [
                         {
-                          name: "required · Toz (2)",
+                          name: "required · Property (Toz · 2)",
                           meta: "property/validation",
-                          children: [{ name: "TR il listesinden · Atom (1)", meta: "kural/kısıt" }],
+                          children: [{ name: "TR il listesinden · Rule (Atom · 1)", meta: "kural/kısıt" }],
                         },
                       ],
                     },
@@ -56,19 +56,19 @@ export const WBS_SAMPLE: WbsNode = {
           ],
         },
         {
-          name: "Bordro · Kaya (21)",
+          name: "Bordro · Domain (Kaya · 21)",
           meta: "Domain",
           children: [{ name: "Payslip · ArcheType (13)" }],
         },
       ],
     },
     {
-      name: "CRM · Dağ (34+)",
+      name: "CRM · App (Dağ · 34+)",
       meta: "Application — Salesforce clone",
       collapsed: true,
       children: [
         {
-          name: "Satış · Kaya (21)",
+          name: "Satış · Domain (Kaya · 21)",
           children: [
             {
               name: "Deal · ArcheType (13)",

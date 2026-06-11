@@ -197,7 +197,7 @@ describe("pedagojik block kontratları", () => {
     );
     expect(container.querySelector(".wbs-chart")).toBeTruthy();
     // jsdom'da canvas yok -> fallback listesi (örnek app'ler görünür)
-    await findByText(/HRMS · Dağ/);
+    await findByText(/HRMS · App/);
     await findByText(/Adresler · Fragment/);
   });
 });
