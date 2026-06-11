@@ -103,3 +103,5 @@ Shiki teması `github-dark-default` olarak kilitlenir; token renkleri temadan, k
 ## 7. Uygulama Notu
 
 Değerler `src/styles/tokens.css`'te CSS custom property olarak tanımlanır ve `globals.css`'teki semantik class'lar tarafından tüketilir (Tailwind yok — ADR-0004). Token kontrast testi, bu dokümandaki ölçüm formülünün (WCAG relative luminance) Vitest'e taşınmış halidir ve `tokens.css` her değiştiğinde CI'da koşar — değer burada değişir, test orada yakalar.
+
+`--content-max-width: 80rem` — içerik sütunu üst sınırı (1280px); mobile-first akışkan, 320px'te tam genişlik + padding (11 Haziran revizyonu: 52rem'den genişletildi).
