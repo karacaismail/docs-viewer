@@ -1,7 +1,7 @@
 {
   "id": "k-schema",
   "title": "Schema / Metadata Engine (ArcheType)",
-  "subtitle": "Framework'ün kalbi. Frappe DocType, Salesforce Object, Strapi Content-Type — aynı fikir.",
+  "subtitle": "Framework'ün kalbi. Frappe, Salesforce Object, Strapi Content-Type — aynı fikir.",
   "cluster": "layer0",
   "layer": "kernel",
   "order": 1,
@@ -63,9 +63,9 @@
   "blocks": [
     {
       "type": "paragraph",
-      "text": "Bu framework'ün **kalbi**. Frappe DocType, Odoo Model, Salesforce Object, Strapi Content-Type — hepsi aynı fikrin farklı isimleri: *şema kodda değil, metadatada*.",
+      "text": "Bu framework'ün **kalbi**. Frappe, Odoo Model, Salesforce Object, Strapi Content-Type — hepsi aynı fikrin farklı isimleri: *şema kodda değil, metadatada*.",
       "enrich": {
-        "info": "Eşdeğerler: Frappe DocType, Odoo Model, Salesforce Object, Strapi Content-Type.",
+        "info": "Eşdeğerler: Frappe, Odoo Model, Salesforce Object, Strapi Content-Type.",
         "terms": [
           {
             "term": "Frappe",
@@ -408,13 +408,13 @@
       "type": "callout",
       "variant": "critical",
       "label": "ArcheType ≠ tek Document tablo + type switching",
-      "body": "**Yaygın yanlış anlama:** *'ArcheType = single Document entity'sine docType field + `if (type == X)` switch.'* Bu **anemic domain** anti-pattern'idir ve **bu projede YAPILMAZ**.\n\n**Gerçek mimari (Frappe/Salesforce pattern):**\n\n- Her ArcheType **kendi tablosunu** üretir runtime'da (`tabInvoice`, `tabContract`, `tabReceipt`)\n- Her ArcheType **kendi controller'ını** ve **hook'unu** çağırır (Strategy pattern — `InvoicePolicy`, `ContractPolicy`)\n- Davranış kuralı tipe bağlıysa **policy modül** olarak — kodda değil metadata'dan çağrılır\n- Davranış değişmiyorsa **value object** olarak `DocCategory`\n\nKlasik DDD'nin 3 yaklaşımı (ayrı aggregate / Strategy / value object) bu projede **runtime metadata karşılıkları** olarak yaşar. Tek-tablo + type-switching DEĞİL."
+      "body": "**Yaygın yanlış anlama:** *'ArcheType = single Document entity'sine entityType field + `if (type == X)` switch.'* Bu **anemic domain** anti-pattern'idir ve **bu projede YAPILMAZ**.\n\n**Gerçek mimari (Frappe/Salesforce pattern):**\n\n- Her ArcheType **kendi tablosunu** üretir runtime'da (`tabInvoice`, `tabContract`, `tabReceipt`)\n- Her ArcheType **kendi controller'ını** ve **hook'unu** çağırır (Strategy pattern — `InvoicePolicy`, `ContractPolicy`)\n- Davranış kuralı tipe bağlıysa **policy modül** olarak — kodda değil metadata'dan çağrılır\n- Davranış değişmiyorsa **value object** olarak `DocCategory`\n\nKlasik DDD'nin 3 yaklaşımı (ayrı aggregate / Strategy / value object) bu projede **runtime metadata karşılıkları** olarak yaşar. Tek-tablo + type-switching DEĞİL."
     },
     {
       "type": "callout",
       "variant": "info",
       "label": "DDD purist eleştirisine pozisyon",
-      "body": "**Eleştiri:** *'ArcheType DDD'ye aykırı — Invoice, Contract, Receipt ayrı aggregate olmalı, tek modele zorlamak yanlış.'*\n\n**Pozisyon:** Eleştiri **klasik DDD purist çerçevesinde haklı**. Ama bu proje saf DDD değil — açıkça **meta-framework** (Frappe/Drupal/Salesforce sınıfı). Fark kritik:\n\n- **Saf DDD**: aggregate'ler tasarım zamanında sabit; yeni tip = yeni class\n- **Meta-framework**: aggregate'ler **runtime'da metadata'dan generate edilir**; business user yeni 'tip' tanımlayabilmeli (low-code)\n- **Multi-tenant + custom ArcheType**: her tenant kendi Invoice varyantını tanımlayabilir (Salesforce Custom Object pattern)\n\nFrappe DocType **tek tablo + type switching DEĞİL** — her ArcheType kendi tablosunu/UI'sini/handler'ını generate eder. Bu = **runtime'da Strategy + aggregate-per-type**. Eleştiri 'archetype' kelimesini **straw-man** olarak okuyor; gerçek mimari onun önerdiği 3 yaklaşımın metadata-driven karşılığıdır."
+      "body": "**Eleştiri:** *'ArcheType DDD'ye aykırı — Invoice, Contract, Receipt ayrı aggregate olmalı, tek modele zorlamak yanlış.'*\n\n**Pozisyon:** Eleştiri **klasik DDD purist çerçevesinde haklı**. Ama bu proje saf DDD değil — açıkça **meta-framework** (Frappe/Drupal/Salesforce sınıfı). Fark kritik:\n\n- **Saf DDD**: aggregate'ler tasarım zamanında sabit; yeni tip = yeni class\n- **Meta-framework**: aggregate'ler **runtime'da metadata'dan generate edilir**; business user yeni 'tip' tanımlayabilmeli (low-code)\n- **Multi-tenant + custom ArcheType**: her tenant kendi Invoice varyantını tanımlayabilir (Salesforce Custom Object pattern)\n\nFrappe'nin motoru **tek tablo + type switching DEĞİL** — her ArcheType kendi tablosunu/UI'sini/handler'ını generate eder. Bu = **runtime'da Strategy + aggregate-per-type**. Eleştiri 'archetype' kelimesini **straw-man** olarak okuyor; gerçek mimari onun önerdiği 3 yaklaşımın metadata-driven karşılığıdır."
     }
   ]
 }

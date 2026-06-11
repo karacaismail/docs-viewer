@@ -688,7 +688,7 @@
 - Stack ürünü (page-s-predictive) · **ince why** · analoji tohumu var
 - Stack ürünü (page-s-doc-matching) · **ince why** · analoji tohumu var
 - Stack ürünü (page-s-conversational) · **ince why** · analoji tohumu var
-- Frappe DocType (page-s-studio) · analoji tohumu var
+- Frappe (page-s-studio) · analoji tohumu var
 - Stack ürünü (page-s-bpm) · **ince why** · analoji tohumu var
 - Zapier (page-s-ipaas) · analoji tohumu var
 - OpenFGA (page-s-iam) · analoji tohumu var
@@ -708,7 +708,7 @@
 - MRR (page-s-billing) · **ince why** · analoji tohumu var
 - Prorating (page-s-billing) · **ince why** · analoji tohumu var
 
-## Parti 2 — Bağlamsal varyantlar (234 kayıt, 72 label)
+## Parti 2 — Bağlamsal varyantlar (236 kayıt, 73 label)
 - Primitive (page-overview) · analoji tohumu var
 - Outbox (page-overview) · analoji tohumu var
 - CQRS (page-overview) · analoji tohumu var
@@ -730,6 +730,7 @@
 - Primitive (page-atomic-types) · analoji tohumu var
 - Coercion (page-atomic-types) · analoji tohumu var
 - Validator (page-atomic-types) · analoji tohumu var
+- Frappe (page-kernel-schema) · analoji tohumu var
 - EAV (page-kernel-schema) · analoji tohumu var
 - ArcheType (page-kernel-schema) · analoji tohumu var
 - Metadata-driven (page-kernel-schema) · analoji tohumu var
@@ -806,6 +807,7 @@
 - Stack ürünü (page-s-predictive) · **ince why** · analoji tohumu var
 - Stack ürünü (page-s-doc-matching) · **ince why** · analoji tohumu var
 - Stack ürünü (page-s-conversational) · **ince why** · analoji tohumu var
+- Frappe (page-s-studio) · analoji tohumu var
 - Stack ürünü (page-s-bpm) · **ince why** · analoji tohumu var
 - Stack ürünü (page-s-audit) · **ince why** · analoji tohumu var
 - Stack ürünü (page-s-i18n) · **ince why** · analoji tohumu var
