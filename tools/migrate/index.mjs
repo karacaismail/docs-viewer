@@ -152,9 +152,9 @@ function transformCluster({ file, stem, data }) {
     return rec;
   });
 
-  // Parti 1-B: aynı-page birebir bağlama — yalnız egitim (12A §3a)
-  let boundTerms = 0;
-  if (categoryId === "egitim") boundTerms = bindTermsInPage(page, glossary);
+  // Parti 1-B + B-akışı genelleme (12A §3a, 11 Haziran): aynı-page birebir bağlama
+  // tüm kategorilerde — bağlam güvencesi page-içi olduğundan kategori sınırı gereksizdi.
+  const boundTerms = bindTermsInPage(page, glossary);
 
   return {
     page,
@@ -433,8 +433,8 @@ const report = [
   ...missingAssets.slice(0, 100).map((s) => `- ${s}`),
   "",
   "## Glossary zenginleştirme (12A Parti 1 — Eğitim Yolu)",
-  `Zenginleştirilen kayıt: ${enrichedCount.n} (sayfa-kapsamlı/Parti 2: ${enrichedCount.p2}) | Overlay'de karşılığı olmayan label: ${enrichmentMisses.size}`,
-  `Segment bağlama (Parti 1-B): ${results.reduce((a, r) => a + (r.boundTerms ?? 0), 0)} bağlı terim | bağlı page: ${results.filter((r) => (r.boundTerms ?? 0) > 0).length}/${results.filter((r) => r.page.categoryId === "egitim").length} (egitim)`,
+  `Zenginleştirilen kayıt: ${enrichedCount.n} (sayfa-kapsamlı: ${enrichedCount.p2}) | Overlay'de karşılığı olmayan label: ${enrichmentMisses.size}`,
+  `Segment bağlama (B akışı, tüm kategoriler): ${results.reduce((a, r) => a + (r.boundTerms ?? 0), 0)} bağlı terim | bağlı page: ${results.filter((r) => (r.boundTerms ?? 0) > 0).length}/${results.length} | egitim: ${results.filter((r) => r.page.categoryId === "egitim" && (r.boundTerms ?? 0) > 0).length}/${results.filter((r) => r.page.categoryId === "egitim").length}`,
   ...[...enrichmentMisses].map((l) => `- eşleşmedi: ${l}`),
   "",
   `## Uyarılar (${warnings.length})`,

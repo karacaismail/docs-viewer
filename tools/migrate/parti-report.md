@@ -87,7 +87,7 @@
 - Fieldtype (page-edu-u03-doctype) · **ince why** · analoji tohumu var
 - Naming series (page-edu-u03-doctype) · analoji tohumu var
 - Child table (page-edu-u03-doctype) · **ince why** · analoji tohumu var
-- Hook (page-edu-u03-doctype) · **ince why** · analoji tohumu var
+- Hook (page-edu-u03-doctype) · analoji tohumu var
 - Custom field (page-edu-u03-doctype) · **ince why** · analoji tohumu var
 - Property setter (page-edu-u03-doctype) · **ince why** · analoji tohumu var
 - Submittable (page-edu-u03-doctype) · **ince why** · analoji tohumu var
@@ -103,13 +103,13 @@
 - Kolon (page-edu-u04-veritabani) · **ince why** · analoji tohumu var
 - Satır (page-edu-u04-veritabani) · **ince why** · analoji tohumu var
 - Primary Key (page-edu-u04-veritabani) · **ince why** · analoji tohumu var
-- Foreign Key (page-edu-u04-veritabani) · **ince why** · analoji tohumu var
+- Foreign Key (page-edu-u04-veritabani) · analoji tohumu var
 - İndeks (page-edu-u04-veritabani) · **ince why** · analoji tohumu var
 - B-tree (page-edu-u04-veritabani) · **ince why** · analoji tohumu var
 - Transaction (page-edu-u04-veritabani) · analoji tohumu var
 - ACID (page-edu-u04-veritabani) · analoji tohumu var
 - Normalize (page-edu-u04-veritabani) · **ince why** · analoji tohumu var
-- Denormalize (page-edu-u04-veritabani) · **ince why** · analoji tohumu var
+- Denormalize (page-edu-u04-veritabani) · analoji tohumu var
 - JOIN (page-edu-u04-veritabani) · **ince why** · analoji tohumu var
 - Migration (page-edu-u04-veritabani) · analoji tohumu var
 - CQRS (page-edu-u04-veritabani) · analoji tohumu var
@@ -145,7 +145,7 @@
 - ReBAC (page-edu-u07-security) · **ince why** · analoji tohumu var
 - Encryption at rest (page-edu-u07-security) · **ince why** · analoji tohumu var
 - TLS (page-edu-u07-security) · **ince why** · analoji tohumu var
-- CSRF (page-edu-u07-security) · **ince why** · analoji tohumu var
+- CSRF (page-edu-u07-security) · analoji tohumu var
 - Audit log (page-edu-u07-security) · **ince why** · analoji tohumu var
 - Event (page-edu-u08-eventbus) · **ince why** · analoji tohumu var
 - Command (page-edu-u08-eventbus) · **ince why** · analoji tohumu var
@@ -156,12 +156,12 @@
 - At-least-once (page-edu-u08-eventbus) · **ince why** · analoji tohumu var
 - Exactly-once (page-edu-u08-eventbus) · **ince why** · analoji tohumu var
 - DLQ (page-edu-u08-eventbus) · analoji tohumu var
-- Saga (page-edu-u08-eventbus) · **ince why** · analoji tohumu var
+- Saga (page-edu-u08-eventbus) · analoji tohumu var
 - Backpressure (page-edu-u08-eventbus) · **ince why** · analoji tohumu var
 - Plugin (page-edu-u09-plugin) · **ince why** · analoji tohumu var
 - Manifest (page-edu-u09-plugin) · **ince why** · analoji tohumu var
 - Registry (page-edu-u09-plugin) · analoji tohumu var
-- Hook (page-edu-u09-plugin) · **ince why** · analoji tohumu var
+- Hook (page-edu-u09-plugin) · analoji tohumu var
 - Filter hook (page-edu-u09-plugin) · **ince why** · analoji tohumu var
 - Action hook (page-edu-u09-plugin) · **ince why** · analoji tohumu var
 - Semver (page-edu-u09-plugin) · **ince why** · analoji tohumu var
@@ -231,115 +231,115 @@
 - Composite (page-atomic-types) · analoji tohumu var
 - UUID v7 (page-atomic-types) · analoji tohumu var
 - ULID (page-atomic-types) · analoji tohumu var
-- Snowflake (page-atomic-types) · **ince why** · analoji tohumu var
+- Snowflake (page-atomic-types) · analoji tohumu var
 - Decimal (page-atomic-types) · analoji tohumu var
-- ISO 4217 (page-atomic-types) · **ince why** · analoji tohumu var
+- ISO 4217 (page-atomic-types) · analoji tohumu var
 - UTC (page-atomic-types) · analoji tohumu var
 - IANA tz (page-atomic-types) · analoji tohumu var
 - Bitemporal (page-atomic-types) · analoji tohumu var
-- Cascade (page-atomic-types) · **ince why** · analoji tohumu var
-- Orphan (page-atomic-types) · **ince why** · analoji tohumu var
-- Sharded counter (page-atomic-types) · **ince why** · analoji tohumu var
-- Optimistic concurrency (page-atomic-types) · **ince why** · analoji tohumu var
-- ETag (page-atomic-types) · **ince why** · analoji tohumu var
+- Cascade (page-atomic-types) · analoji tohumu var
+- Orphan (page-atomic-types) · analoji tohumu var
+- Sharded counter (page-atomic-types) · analoji tohumu var
+- Optimistic concurrency (page-atomic-types) · analoji tohumu var
+- ETag (page-atomic-types) · analoji tohumu var
 - SHA-256 (page-atomic-types) · analoji tohumu var
-- BLAKE3 (page-atomic-types) · **ince why** · analoji tohumu var
-- Content-addressable storage (page-atomic-types) · **ince why** · analoji tohumu var
+- BLAKE3 (page-atomic-types) · analoji tohumu var
+- Content-addressable storage (page-atomic-types) · analoji tohumu var
 - E.164 (page-atomic-types) · analoji tohumu var
 - MX record (page-atomic-types) · analoji tohumu var
-- Disposable email (page-atomic-types) · **ince why** · analoji tohumu var
+- Disposable email (page-atomic-types) · analoji tohumu var
 - SSRF (page-atomic-types) · analoji tohumu var
 - PostGIS (page-atomic-types) · analoji tohumu var
 - KVKK (page-atomic-types) · analoji tohumu var
 - GDPR (page-atomic-types) · analoji tohumu var
 - AES-256-GCM (page-atomic-types) · analoji tohumu var
 - PII (page-atomic-types) · analoji tohumu var
-- JSONB (page-atomic-types) · **ince why** · analoji tohumu var
-- Embedding (page-atomic-types) · **ince why** · analoji tohumu var
+- JSONB (page-atomic-types) · analoji tohumu var
+- Embedding (page-atomic-types) · analoji tohumu var
 - HNSW (page-atomic-types) · analoji tohumu var
-- pgvector (page-atomic-types) · **ince why** · analoji tohumu var
-- structlog (page-atomic-types) · **ince why** · analoji tohumu var
+- pgvector (page-atomic-types) · analoji tohumu var
+- structlog (page-atomic-types) · analoji tohumu var
 - trace_id (page-atomic-types) · analoji tohumu var
 - Primitive (page-atomic-types) · analoji tohumu var
 - Coercion (page-atomic-types) · analoji tohumu var
 - Validator (page-atomic-types) · analoji tohumu var
-- Frappe (page-kernel-schema) · **ince why** · analoji tohumu var
-- Strapi (page-kernel-schema) · **ince why** · analoji tohumu var
+- Frappe (page-kernel-schema) · analoji tohumu var
+- Strapi (page-kernel-schema) · analoji tohumu var
 - EAV (page-kernel-schema) · analoji tohumu var
 - DocType (page-kernel-schema) · analoji tohumu var
 - Metadata-driven (page-kernel-schema) · analoji tohumu var
-- Identity (page-kernel-identity) · **ince why** · analoji tohumu var
-- Session (page-kernel-identity) · **ince why** · analoji tohumu var
-- 2FA (page-kernel-identity) · **ince why** · analoji tohumu var
-- Impersonation (page-kernel-identity) · **ince why** · analoji tohumu var
+- Identity (page-kernel-identity) · analoji tohumu var
+- Session (page-kernel-identity) · analoji tohumu var
+- 2FA (page-kernel-identity) · analoji tohumu var
+- Impersonation (page-kernel-identity) · analoji tohumu var
 - RBAC (page-kernel-authz) · analoji tohumu var
 - ABAC (page-kernel-authz) · analoji tohumu var
 - ReBAC (page-kernel-authz) · analoji tohumu var
-- Multi-tenancy (page-kernel-tenancy) · **ince why** · analoji tohumu var
-- Tenant scope (page-kernel-tenancy) · **ince why** · analoji tohumu var
-- Sub-tenant (page-kernel-tenancy) · **ince why** · analoji tohumu var
-- Event Bus (page-kernel-bus) · **ince why** · analoji tohumu var
-- Polyglot (page-kernel-bus) · **ince why** · analoji tohumu var
+- Multi-tenancy (page-kernel-tenancy) · analoji tohumu var
+- Tenant scope (page-kernel-tenancy) · analoji tohumu var
+- Sub-tenant (page-kernel-tenancy) · analoji tohumu var
+- Event Bus (page-kernel-bus) · analoji tohumu var
+- Polyglot (page-kernel-bus) · analoji tohumu var
 - Pub/Sub (page-kernel-bus) · analoji tohumu var
-- Plugin (page-kernel-plugin) · **ince why** · analoji tohumu var
-- Manifest (page-kernel-plugin) · **ince why** · analoji tohumu var
-- Registry (page-kernel-plugin) · **ince why** · analoji tohumu var
+- Plugin (page-kernel-plugin) · analoji tohumu var
+- Manifest (page-kernel-plugin) · analoji tohumu var
+- Registry (page-kernel-plugin) · analoji tohumu var
 - Outbox (page-scale-outbox) · analoji tohumu var
-- Dual write (page-scale-outbox) · **ince why** · analoji tohumu var
+- Dual write (page-scale-outbox) · analoji tohumu var
 - CQRS (page-scale-projections) · analoji tohumu var
-- Projection (page-scale-projections) · **ince why** · analoji tohumu var
-- SSO (page-k-sso) · **ince why** · analoji tohumu var
-- SAML (page-k-sso) · **ince why** · analoji tohumu var
-- OIDC (page-k-sso) · **ince why** · analoji tohumu var
-- MFA (page-k-sso) · **ince why** · analoji tohumu var
-- Passkey (page-k-sso) · **ince why** · analoji tohumu var
-- Cron (page-scale-workers-deep) · **ince why** · analoji tohumu var
-- Delayed Job (page-scale-workers-deep) · **ince why** · analoji tohumu var
-- Priority Queue (page-scale-workers-deep) · **ince why** · analoji tohumu var
-- Visibility Timeout (page-scale-workers-deep) · **ince why** · analoji tohumu var
-- Sharding (page-k-tenancy-deep) · **ince why** · analoji tohumu var
-- Shard Key (page-k-tenancy-deep) · **ince why** · analoji tohumu var
-- Hot Shard (page-k-tenancy-deep) · **ince why** · analoji tohumu var
-- Scatter-gather (page-k-tenancy-deep) · **ince why** · analoji tohumu var
-- Bridge model (page-k-tenancy-deep) · **ince why** · analoji tohumu var
+- Projection (page-scale-projections) · analoji tohumu var
+- SSO (page-k-sso) · analoji tohumu var
+- SAML (page-k-sso) · analoji tohumu var
+- OIDC (page-k-sso) · analoji tohumu var
+- MFA (page-k-sso) · analoji tohumu var
+- Passkey (page-k-sso) · analoji tohumu var
+- Cron (page-scale-workers-deep) · analoji tohumu var
+- Delayed Job (page-scale-workers-deep) · analoji tohumu var
+- Priority Queue (page-scale-workers-deep) · analoji tohumu var
+- Visibility Timeout (page-scale-workers-deep) · analoji tohumu var
+- Sharding (page-k-tenancy-deep) · analoji tohumu var
+- Shard Key (page-k-tenancy-deep) · analoji tohumu var
+- Hot Shard (page-k-tenancy-deep) · analoji tohumu var
+- Scatter-gather (page-k-tenancy-deep) · analoji tohumu var
+- Bridge model (page-k-tenancy-deep) · analoji tohumu var
 - Cluster (page-scale-counter) · **ince why** · analoji tohumu var
-- Time-series (page-scale-timeseries) · **ince why** · analoji tohumu var
-- TimescaleDB (page-scale-timeseries) · **ince why** · analoji tohumu var
-- Hyper-table (page-scale-timeseries) · **ince why** · analoji tohumu var
-- Downsampling (page-scale-timeseries) · **ince why** · analoji tohumu var
-- Kafka (page-scale-streaming) · **ince why** · analoji tohumu var
-- Topic (page-scale-streaming) · **ince why** · analoji tohumu var
-- Consumer Group (page-scale-streaming) · **ince why** · analoji tohumu var
-- Windowing (page-scale-streaming) · **ince why** · analoji tohumu var
+- Time-series (page-scale-timeseries) · analoji tohumu var
+- TimescaleDB (page-scale-timeseries) · analoji tohumu var
+- Hyper-table (page-scale-timeseries) · analoji tohumu var
+- Downsampling (page-scale-timeseries) · analoji tohumu var
+- Kafka (page-scale-streaming) · analoji tohumu var
+- Topic (page-scale-streaming) · analoji tohumu var
+- Consumer Group (page-scale-streaming) · analoji tohumu var
+- Windowing (page-scale-streaming) · analoji tohumu var
 - PostGIS (page-scale-gis) · analoji tohumu var
-- GiST (page-scale-gis) · **ince why** · analoji tohumu var
-- Geofencing (page-scale-gis) · **ince why** · analoji tohumu var
-- Geography vs Geometry (page-scale-gis) · **ince why** · analoji tohumu var
+- GiST (page-scale-gis) · analoji tohumu var
+- Geofencing (page-scale-gis) · analoji tohumu var
+- Geography vs Geometry (page-scale-gis) · analoji tohumu var
 - Cluster (page-scale-workers) · **ince why** · analoji tohumu var
-- Saga (page-scale-saga) · **ince why** · analoji tohumu var
-- Compensation (page-scale-saga) · **ince why** · analoji tohumu var
-- Idempotency (page-scale-idempotency) · **ince why** · analoji tohumu var
-- Idempotency Key (page-scale-idempotency) · **ince why** · analoji tohumu var
-- Cache-aside (page-scale-cache) · **ince why** · analoji tohumu var
-- Write-through (page-scale-cache) · **ince why** · analoji tohumu var
-- Stampede (page-scale-cache) · **ince why** · analoji tohumu var
-- LRU (page-scale-cache) · **ince why** · analoji tohumu var
-- Token Bucket (page-scale-ratelimit) · **ince why** · analoji tohumu var
-- Sliding Window (page-scale-ratelimit) · **ince why** · analoji tohumu var
+- Saga (page-scale-saga) · analoji tohumu var
+- Compensation (page-scale-saga) · analoji tohumu var
+- Idempotency (page-scale-idempotency) · analoji tohumu var
+- Idempotency Key (page-scale-idempotency) · analoji tohumu var
+- Cache-aside (page-scale-cache) · analoji tohumu var
+- Write-through (page-scale-cache) · analoji tohumu var
+- Stampede (page-scale-cache) · analoji tohumu var
+- LRU (page-scale-cache) · analoji tohumu var
+- Token Bucket (page-scale-ratelimit) · analoji tohumu var
+- Sliding Window (page-scale-ratelimit) · analoji tohumu var
 - 429 (page-scale-ratelimit) · analoji tohumu var
-- Quota (page-scale-ratelimit) · **ince why** · analoji tohumu var
+- Quota (page-scale-ratelimit) · analoji tohumu var
 - RPO (page-scale-multiregion) · analoji tohumu var
 - RTO (page-scale-multiregion) · analoji tohumu var
-- Streaming Replication (page-scale-multiregion) · **ince why** · analoji tohumu var
+- Streaming Replication (page-scale-multiregion) · analoji tohumu var
 - CRDT (page-scale-multiregion) · analoji tohumu var
-- Geo-failover (page-scale-multiregion) · **ince why** · analoji tohumu var
-- WebSocket (page-scale-realtime) · **ince why** · analoji tohumu var
+- Geo-failover (page-scale-multiregion) · analoji tohumu var
+- WebSocket (page-scale-realtime) · analoji tohumu var
 - SSE (page-scale-realtime) · analoji tohumu var
 - Pub/Sub (page-scale-realtime) · analoji tohumu var
-- Presence (page-scale-realtime) · **ince why** · analoji tohumu var
-- Webhook (page-scale-webhook) · **ince why** · analoji tohumu var
+- Presence (page-scale-realtime) · analoji tohumu var
+- Webhook (page-scale-webhook) · analoji tohumu var
 - HMAC (page-scale-webhook) · analoji tohumu var
-- Replay Attack (page-scale-webhook) · **ince why** · analoji tohumu var
+- Replay Attack (page-scale-webhook) · analoji tohumu var
 - DLQ (page-scale-webhook) · analoji tohumu var
 
 ## Parti 4 (129 kayıt)
@@ -356,30 +356,30 @@
 - Status Page (page-cc-obs-deep) · **ince why** · analoji tohumu var
 - i18n (page-cc-i18n-deep) · **ince why** · analoji tohumu var
 - l10n (page-cc-i18n-deep) · **ince why** · analoji tohumu var
-- ICU MessageFormat (page-cc-i18n-deep) · **ince why** · analoji tohumu var
+- ICU MessageFormat (page-cc-i18n-deep) · analoji tohumu var
 - RTL (page-cc-i18n-deep) · **ince why** · analoji tohumu var
-- Locale (page-cc-i18n-deep) · **ince why** · analoji tohumu var
+- Locale (page-cc-i18n-deep) · analoji tohumu var
 - A11y (page-cc-a11y-backend) · **ince why** · analoji tohumu var
 - Alt Text (page-cc-a11y-backend) · **ince why** · analoji tohumu var
-- WCAG (page-cc-a11y-backend) · **ince why** · analoji tohumu var
+- WCAG (page-cc-a11y-backend) · analoji tohumu var
 - Reduce Motion (page-cc-a11y-backend) · **ince why** · analoji tohumu var
-- Jurisdiction (page-cc-jurisdiction-resolver) · **ince why** · analoji tohumu var
+- Jurisdiction (page-cc-jurisdiction-resolver) · analoji tohumu var
 - Orthogonal Axes (page-cc-jurisdiction-resolver) · analoji tohumu var
 - Policy Resolver (page-cc-jurisdiction-resolver) · analoji tohumu var
 - Config-as-Data (page-cc-jurisdiction-resolver) · analoji tohumu var
-- Decision Trace (page-cc-jurisdiction-resolver) · **ince why** · analoji tohumu var
-- Data Residency (page-cc-jurisdiction-resolver) · **ince why** · analoji tohumu var
-- Deny-by-Default (page-cc-jurisdiction-resolver) · **ince why** · analoji tohumu var
+- Decision Trace (page-cc-jurisdiction-resolver) · analoji tohumu var
+- Data Residency (page-cc-jurisdiction-resolver) · analoji tohumu var
+- Deny-by-Default (page-cc-jurisdiction-resolver) · analoji tohumu var
 - BCP 47 (page-cc-i18n-standards) · **ince why** · analoji tohumu var
 - CLDR (page-cc-i18n-standards) · analoji tohumu var
-- ICU MessageFormat (page-cc-i18n-standards) · **ince why** · analoji tohumu var
+- ICU MessageFormat (page-cc-i18n-standards) · analoji tohumu var
 - Collation (page-cc-i18n-standards) · **ince why** · analoji tohumu var
 - NFC (page-cc-i18n-standards) · analoji tohumu var
 - Logical Properties (page-cc-i18n-standards) · analoji tohumu var
-- Pseudo-localization (page-cc-i18n-standards) · **ince why** · analoji tohumu var
+- Pseudo-localization (page-cc-i18n-standards) · analoji tohumu var
 - hreflang (page-cc-i18n-standards) · **ince why** · analoji tohumu var
 - FX Lock (page-cc-fx-ledger) · **ince why** · analoji tohumu var
-- Functional Currency (page-cc-fx-ledger) · **ince why** · analoji tohumu var
+- Functional Currency (page-cc-fx-ledger) · analoji tohumu var
 - Reporting Currency (page-cc-fx-ledger) · **ince why** · analoji tohumu var
 - Revenue Recognition (page-cc-fx-ledger) · analoji tohumu var
 - Credit Note (page-cc-fx-ledger) · **ince why** · analoji tohumu var
@@ -404,11 +404,11 @@
 - i18n-postal-address (page-cc-identity-models) · **ince why** · analoji tohumu var
 - Veri minimizasyonu (page-cc-identity-models) · **ince why** · analoji tohumu var
 - Shadow Mode (page-cc-resolver-ops) · analoji tohumu var
-- Backfill (page-cc-resolver-ops) · **ince why** · analoji tohumu var
+- Backfill (page-cc-resolver-ops) · analoji tohumu var
 - Cache Invalidation (page-cc-resolver-ops) · analoji tohumu var
-- Deny-by-Default (page-cc-resolver-ops) · **ince why** · analoji tohumu var
+- Deny-by-Default (page-cc-resolver-ops) · analoji tohumu var
 - 4-göz prensibi (page-cc-resolver-ops) · **ince why** · analoji tohumu var
-- Decision Trace (page-cc-resolver-ops) · **ince why** · analoji tohumu var
+- Decision Trace (page-cc-resolver-ops) · analoji tohumu var
 - Geo-blocking (page-cc-content-jurisdiction) · **ince why** · analoji tohumu var
 - UCUM (page-cc-content-jurisdiction) · **ince why** · analoji tohumu var
 - SDI / XRechnung / Factur-X (page-cc-content-jurisdiction) · **ince why** · analoji tohumu var
@@ -420,7 +420,7 @@
 - unicode-range (page-cc-cultural-ux) · analoji tohumu var
 - lang attribute (page-cc-cultural-ux) · **ince why** · analoji tohumu var
 - CSS Logical Properties (page-cc-cultural-ux) · **ince why** · analoji tohumu var
-- Pseudo-localization (page-cc-cultural-ux) · **ince why** · analoji tohumu var
+- Pseudo-localization (page-cc-cultural-ux) · analoji tohumu var
 - OAuth (page-crosscut-tr) · **ince why** · analoji tohumu var
 - KVKK (page-crosscut-tr) · analoji tohumu var
 - KVKK (page-crosscut-tr) · analoji tohumu var
@@ -475,7 +475,7 @@
 
 ## Parti 5 (112 kayıt)
 - Streaming Export (page-l1-export) · **ince why** · analoji tohumu var
-- Presigned URL (page-l1-export) · **ince why** · analoji tohumu var
+- Presigned URL (page-l1-export) · analoji tohumu var
 - Multipart Upload (page-l1-export) · **ince why** · analoji tohumu var
 - UBL-TR (page-l1-export) · **ince why** · analoji tohumu var
 - Dry-run (page-l1-import) · **ince why** · analoji tohumu var
@@ -484,11 +484,11 @@
 - Validation Schema (page-l1-import) · **ince why** · analoji tohumu var
 - Inbound Webhook (page-l1-webhook-in) · **ince why** · analoji tohumu var
 - HMAC Signature (page-l1-webhook-in) · **ince why** · analoji tohumu var
-- Replay Attack (page-l1-webhook-in) · **ince why** · analoji tohumu var
+- Replay Attack (page-l1-webhook-in) · analoji tohumu var
 - Event Idempotency (page-l1-webhook-in) · **ince why** · analoji tohumu var
 - CDN (page-fe-cdn) · **ince why** · analoji tohumu var
-- Edge (page-fe-cdn) · **ince why** · analoji tohumu var
-- Cache Invalidation (page-fe-cdn) · **ince why** · analoji tohumu var
+- Edge (page-fe-cdn) · analoji tohumu var
+- Cache Invalidation (page-fe-cdn) · analoji tohumu var
 - Hash-based Versioning (page-fe-cdn) · **ince why** · analoji tohumu var
 - Signed URL (page-fe-cdn) · **ince why** · analoji tohumu var
 - Quiet Hours (page-l1-quiet-hours) · **ince why** · analoji tohumu var
@@ -499,7 +499,7 @@
 - Did-you-mean (page-l1-search-deep) · **ince why** · analoji tohumu var
 - Levenshtein Distance (page-l1-search-deep) · **ince why** · analoji tohumu var
 - Aggregations (page-l1-search-deep) · **ince why** · analoji tohumu var
-- BM25 (page-l1-search-deep) · **ince why** · analoji tohumu var
+- BM25 (page-l1-search-deep) · analoji tohumu var
 - Vector Search (page-l1-search-deep) · **ince why** · analoji tohumu var
 - Party (page-layer1-party) · **ince why** · analoji tohumu var
 - Driver pattern (page-layer1-file) · **ince why** · analoji tohumu var
@@ -516,7 +516,7 @@
 - Immutable (page-layer1-audit) · **ince why** · analoji tohumu var
 - Event sourcing (page-layer1-audit) · analoji tohumu var
 - Retention (page-layer1-audit) · analoji tohumu var
-- BM25 (page-layer1-search) · **ince why** · analoji tohumu var
+- BM25 (page-layer1-search) · analoji tohumu var
 - Vector search (page-layer1-search) · **ince why** · analoji tohumu var
 - Hybrid (page-layer1-search) · **ince why** · analoji tohumu var
 - GraphQL (page-layer1-misc) · analoji tohumu var
@@ -527,21 +527,21 @@
 - Cluster (page-stack-hrms) · **ince why** · analoji tohumu var
 - Cluster (page-stack-pms) · **ince why** · analoji tohumu var
 - Cluster (page-stack-lms) · **ince why** · analoji tohumu var
-- Cache (page-stack-cms) · **ince why** · analoji tohumu var
-- Edge (page-stack-cms) · **ince why** · analoji tohumu var
+- Cache (page-stack-cms) · analoji tohumu var
+- Edge (page-stack-cms) · analoji tohumu var
 - GraphQL (page-stack-cms) · analoji tohumu var
 - REST (page-stack-cms) · analoji tohumu var
 - Slug (page-stack-cms) · **ince why** · analoji tohumu var
 - SEO (page-stack-cms) · **ince why** · analoji tohumu var
 - Cluster (page-stack-cms) · **ince why** · analoji tohumu var
-- Fan-out (page-stack-social) · **ince why** · analoji tohumu var
-- Presence (page-stack-social) · **ince why** · analoji tohumu var
+- Fan-out (page-stack-social) · analoji tohumu var
+- Presence (page-stack-social) · analoji tohumu var
 - Read receipt (page-stack-social) · **ince why** · analoji tohumu var
 - Realtime (page-stack-social) · **ince why** · analoji tohumu var
 - Cluster (page-stack-social) · **ince why** · analoji tohumu var
 - Cluster (page-stack-mrp) · **ince why** · analoji tohumu var
-- WebSocket (page-stack-ai) · **ince why** · analoji tohumu var
-- Fan-out (page-stack-ai) · **ince why** · analoji tohumu var
+- WebSocket (page-stack-ai) · analoji tohumu var
+- Fan-out (page-stack-ai) · analoji tohumu var
 - Cluster (page-stack-ai) · **ince why** · analoji tohumu var
 - Cluster (page-stack-marketing) · **ince why** · analoji tohumu var
 - SLA (page-stack-helpdesk) · **ince why** · analoji tohumu var
@@ -561,7 +561,7 @@
 - Cluster (page-landx-l2-agent) · **ince why** · analoji tohumu var
 - GraphQL (page-landx-l3-application) · analoji tohumu var
 - REST (page-landx-l3-application) · analoji tohumu var
-- Webhook (page-landx-l3-application) · **ince why** · analoji tohumu var
+- Webhook (page-landx-l3-application) · analoji tohumu var
 - Cluster (page-landx-l3-application) · **ince why** · analoji tohumu var
 - KVKK (page-landx-l4-compliance) · analoji tohumu var
 - KVKK (page-landx-l4-compliance) · analoji tohumu var
@@ -576,8 +576,8 @@
 - Cluster (page-fe-deploy-ota) · **ince why** · analoji tohumu var
 - Cluster (page-fe-anti-stack) · **ince why** · analoji tohumu var
 - Runner (page-deploy-yap) · **ince why** · analoji tohumu var
-- CI (page-deploy-yap) · **ince why** · analoji tohumu var
-- CD (page-deploy-yap) · **ince why** · analoji tohumu var
+- CI (page-deploy-yap) · analoji tohumu var
+- CD (page-deploy-yap) · analoji tohumu var
 - GitHub Pages (page-deploy-yap) · **ince why** · analoji tohumu var
 - GitHub Actions (page-deploy-yap) · **ince why** · analoji tohumu var
 - Workflow (page-deploy-yap) · **ince why** · analoji tohumu var
@@ -716,17 +716,17 @@
 - EAV (page-kernel-schema) · analoji tohumu var
 - DocType (page-kernel-schema) · analoji tohumu var
 - Metadata-driven (page-kernel-schema) · analoji tohumu var
-- Session (page-kernel-identity) · **ince why** · analoji tohumu var
+- Session (page-kernel-identity) · analoji tohumu var
 - RBAC (page-kernel-authz) · analoji tohumu var
 - ABAC (page-kernel-authz) · analoji tohumu var
 - ReBAC (page-kernel-authz) · analoji tohumu var
-- Multi-tenancy (page-kernel-tenancy) · **ince why** · analoji tohumu var
-- Tenant scope (page-kernel-tenancy) · **ince why** · analoji tohumu var
-- Sub-tenant (page-kernel-tenancy) · **ince why** · analoji tohumu var
+- Multi-tenancy (page-kernel-tenancy) · analoji tohumu var
+- Tenant scope (page-kernel-tenancy) · analoji tohumu var
+- Sub-tenant (page-kernel-tenancy) · analoji tohumu var
 - Pub/Sub (page-kernel-bus) · analoji tohumu var
-- Plugin (page-kernel-plugin) · **ince why** · analoji tohumu var
-- Manifest (page-kernel-plugin) · **ince why** · analoji tohumu var
-- Registry (page-kernel-plugin) · **ince why** · analoji tohumu var
+- Plugin (page-kernel-plugin) · analoji tohumu var
+- Manifest (page-kernel-plugin) · analoji tohumu var
+- Registry (page-kernel-plugin) · analoji tohumu var
 - Outbox (page-scale-outbox) · analoji tohumu var
 - CSRF (page-edu-u19-owasp) · analoji tohumu var
 - Presigned URL (page-edu-u23-file) · **ince why** · analoji tohumu var
@@ -737,35 +737,35 @@
 - DSAR (page-edu-u24-i18n-jurisdiction) · analoji tohumu var
 - Metadata-driven (page-edu-u25-doctype-vs-ddd) · analoji tohumu var
 - CQRS (page-scale-projections) · analoji tohumu var
-- Presigned URL (page-l1-export) · **ince why** · analoji tohumu var
-- Replay Attack (page-l1-webhook-in) · **ince why** · analoji tohumu var
-- Edge (page-fe-cdn) · **ince why** · analoji tohumu var
-- Cache Invalidation (page-fe-cdn) · **ince why** · analoji tohumu var
+- Presigned URL (page-l1-export) · analoji tohumu var
+- Replay Attack (page-l1-webhook-in) · analoji tohumu var
+- Edge (page-fe-cdn) · analoji tohumu var
+- Cache Invalidation (page-fe-cdn) · analoji tohumu var
 - Cluster (page-scale-counter) · **ince why** · analoji tohumu var
 - PostGIS (page-scale-gis) · analoji tohumu var
-- ICU MessageFormat (page-cc-i18n-deep) · **ince why** · analoji tohumu var
-- Locale (page-cc-i18n-deep) · **ince why** · analoji tohumu var
-- WCAG (page-cc-a11y-backend) · **ince why** · analoji tohumu var
+- ICU MessageFormat (page-cc-i18n-deep) · analoji tohumu var
+- Locale (page-cc-i18n-deep) · analoji tohumu var
+- WCAG (page-cc-a11y-backend) · analoji tohumu var
 - Cluster (page-scale-workers) · **ince why** · analoji tohumu var
-- BM25 (page-l1-search-deep) · **ince why** · analoji tohumu var
-- Saga (page-scale-saga) · **ince why** · analoji tohumu var
+- BM25 (page-l1-search-deep) · analoji tohumu var
+- Saga (page-scale-saga) · analoji tohumu var
 - AI özellik (page-s-crm) · **ince why** · analoji tohumu var
 - AI özellik (page-s-sales) · **ince why** · analoji tohumu var
 - AI özellik (page-s-inventory) · **ince why** · analoji tohumu var
-- Idempotency (page-scale-idempotency) · **ince why** · analoji tohumu var
+- Idempotency (page-scale-idempotency) · analoji tohumu var
 - Stack ürünü (page-s-consolidation) · **ince why** · analoji tohumu var
 - TR Lokalizasyon (page-s-tax-compliance) · analoji tohumu var
 - Stack ürünü (page-s-tms) · **ince why** · analoji tohumu var
 - Stack ürünü (page-s-demand-planning) · **ince why** · analoji tohumu var
 - Stack ürünü (page-s-quality) · **ince why** · analoji tohumu var
-- Jurisdiction (page-cc-jurisdiction-resolver) · **ince why** · analoji tohumu var
-- Decision Trace (page-cc-jurisdiction-resolver) · **ince why** · analoji tohumu var
-- Data Residency (page-cc-jurisdiction-resolver) · **ince why** · analoji tohumu var
-- Deny-by-Default (page-cc-jurisdiction-resolver) · **ince why** · analoji tohumu var
-- ICU MessageFormat (page-cc-i18n-standards) · **ince why** · analoji tohumu var
-- Pseudo-localization (page-cc-i18n-standards) · **ince why** · analoji tohumu var
+- Jurisdiction (page-cc-jurisdiction-resolver) · analoji tohumu var
+- Decision Trace (page-cc-jurisdiction-resolver) · analoji tohumu var
+- Data Residency (page-cc-jurisdiction-resolver) · analoji tohumu var
+- Deny-by-Default (page-cc-jurisdiction-resolver) · analoji tohumu var
+- ICU MessageFormat (page-cc-i18n-standards) · analoji tohumu var
+- Pseudo-localization (page-cc-i18n-standards) · analoji tohumu var
 - Stack ürünü (page-s-traceability) · **ince why** · analoji tohumu var
-- Functional Currency (page-cc-fx-ledger) · **ince why** · analoji tohumu var
+- Functional Currency (page-cc-fx-ledger) · analoji tohumu var
 - KVKK (page-cc-compliance-matrix) · analoji tohumu var
 - GDPR (page-cc-compliance-matrix) · analoji tohumu var
 - DSAR (page-cc-compliance-matrix) · analoji tohumu var
@@ -773,15 +773,15 @@
 - AI özellik (page-s-ats) · **ince why** · analoji tohumu var
 - E.164 (page-cc-identity-models) · analoji tohumu var
 - Stack ürünü (page-s-onboarding) · **ince why** · analoji tohumu var
-- Backfill (page-cc-resolver-ops) · **ince why** · analoji tohumu var
+- Backfill (page-cc-resolver-ops) · analoji tohumu var
 - Cache Invalidation (page-cc-resolver-ops) · analoji tohumu var
-- Deny-by-Default (page-cc-resolver-ops) · **ince why** · analoji tohumu var
-- Decision Trace (page-cc-resolver-ops) · **ince why** · analoji tohumu var
+- Deny-by-Default (page-cc-resolver-ops) · analoji tohumu var
+- Decision Trace (page-cc-resolver-ops) · analoji tohumu var
 - Stack ürünü (page-s-performance) · **ince why** · analoji tohumu var
 - Stack ürünü (page-s-workforce) · **ince why** · analoji tohumu var
 - AI özellik (page-s-clm) · **ince why** · analoji tohumu var
 - Stack ürünü (page-s-loyalty) · **ince why** · analoji tohumu var
-- Pseudo-localization (page-cc-cultural-ux) · **ince why** · analoji tohumu var
+- Pseudo-localization (page-cc-cultural-ux) · analoji tohumu var
 - Stack ürünü (page-s-dms) · **ince why** · analoji tohumu var
 - Stack ürünü (page-s-event) · **ince why** · analoji tohumu var
 - AI özellik (page-s-survey) · **ince why** · analoji tohumu var
@@ -797,7 +797,7 @@
 - Stack ürünü (page-s-clinic) · **ince why** · analoji tohumu var
 - Stack ürünü (page-s-restaurant) · **ince why** · analoji tohumu var
 - TR Lokalizasyon (page-s-incentive) · analoji tohumu var
-- BM25 (page-layer1-search) · **ince why** · analoji tohumu var
+- BM25 (page-layer1-search) · analoji tohumu var
 - GraphQL (page-layer1-misc) · analoji tohumu var
 - REST (page-layer1-misc) · analoji tohumu var
 - Cluster (page-layer1-misc) · **ince why** · analoji tohumu var
@@ -806,17 +806,17 @@
 - Cluster (page-stack-hrms) · **ince why** · analoji tohumu var
 - Cluster (page-stack-pms) · **ince why** · analoji tohumu var
 - Cluster (page-stack-lms) · **ince why** · analoji tohumu var
-- Cache (page-stack-cms) · **ince why** · analoji tohumu var
-- Edge (page-stack-cms) · **ince why** · analoji tohumu var
+- Cache (page-stack-cms) · analoji tohumu var
+- Edge (page-stack-cms) · analoji tohumu var
 - GraphQL (page-stack-cms) · analoji tohumu var
 - REST (page-stack-cms) · analoji tohumu var
 - Cluster (page-stack-cms) · **ince why** · analoji tohumu var
-- Fan-out (page-stack-social) · **ince why** · analoji tohumu var
-- Presence (page-stack-social) · **ince why** · analoji tohumu var
+- Fan-out (page-stack-social) · analoji tohumu var
+- Presence (page-stack-social) · analoji tohumu var
 - Cluster (page-stack-social) · **ince why** · analoji tohumu var
 - Cluster (page-stack-mrp) · **ince why** · analoji tohumu var
-- WebSocket (page-stack-ai) · **ince why** · analoji tohumu var
-- Fan-out (page-stack-ai) · **ince why** · analoji tohumu var
+- WebSocket (page-stack-ai) · analoji tohumu var
+- Fan-out (page-stack-ai) · analoji tohumu var
 - Cluster (page-stack-ai) · **ince why** · analoji tohumu var
 - Cluster (page-stack-marketing) · **ince why** · analoji tohumu var
 - Cluster (page-stack-helpdesk) · **ince why** · analoji tohumu var
@@ -838,7 +838,7 @@
 - Cluster (page-landx-l2-agent) · **ince why** · analoji tohumu var
 - GraphQL (page-landx-l3-application) · analoji tohumu var
 - REST (page-landx-l3-application) · analoji tohumu var
-- Webhook (page-landx-l3-application) · **ince why** · analoji tohumu var
+- Webhook (page-landx-l3-application) · analoji tohumu var
 - Cluster (page-landx-l3-application) · **ince why** · analoji tohumu var
 - KVKK (page-landx-l4-compliance) · analoji tohumu var
 - KVKK (page-landx-l4-compliance) · analoji tohumu var
@@ -852,8 +852,8 @@
 - Cluster (page-fe-test-tooling) · **ince why** · analoji tohumu var
 - Cluster (page-fe-deploy-ota) · **ince why** · analoji tohumu var
 - Cluster (page-fe-anti-stack) · **ince why** · analoji tohumu var
-- CI (page-deploy-yap) · **ince why** · analoji tohumu var
-- CD (page-deploy-yap) · **ince why** · analoji tohumu var
+- CI (page-deploy-yap) · analoji tohumu var
+- CD (page-deploy-yap) · analoji tohumu var
 - Meta-framework (page-edu-u01-yazilim) · analoji tohumu var
 - DDD (page-edu-u01-yazilim) · analoji tohumu var
 - Cluster (page-edu-u01-yazilim) · **ince why** · analoji tohumu var
@@ -866,13 +866,13 @@
 - Primitive (page-edu-u02-veri-tip) · analoji tohumu var
 - Cluster (page-edu-u02-veri-tip) · **ince why** · analoji tohumu var
 - DocType (page-edu-u03-doctype) · analoji tohumu var
-- Hook (page-edu-u03-doctype) · **ince why** · analoji tohumu var
+- Hook (page-edu-u03-doctype) · analoji tohumu var
 - REST (page-edu-u03-doctype) · analoji tohumu var
 - GraphQL (page-edu-u03-doctype) · analoji tohumu var
 - EAV (page-edu-u03-doctype) · analoji tohumu var
 - Cluster (page-edu-u03-doctype) · **ince why** · analoji tohumu var
-- Foreign Key (page-edu-u04-veritabani) · **ince why** · analoji tohumu var
-- Denormalize (page-edu-u04-veritabani) · **ince why** · analoji tohumu var
+- Foreign Key (page-edu-u04-veritabani) · analoji tohumu var
+- Denormalize (page-edu-u04-veritabani) · analoji tohumu var
 - Migration (page-edu-u04-veritabani) · analoji tohumu var
 - CQRS (page-edu-u04-veritabani) · analoji tohumu var
 - Cluster (page-edu-u04-veritabani) · **ince why** · analoji tohumu var
@@ -887,15 +887,15 @@
 - RBAC (page-edu-u07-security) · analoji tohumu var
 - ABAC (page-edu-u07-security) · **ince why** · analoji tohumu var
 - ReBAC (page-edu-u07-security) · **ince why** · analoji tohumu var
-- CSRF (page-edu-u07-security) · **ince why** · analoji tohumu var
+- CSRF (page-edu-u07-security) · analoji tohumu var
 - Pub/Sub (page-edu-u08-eventbus) · analoji tohumu var
 - Outbox (page-edu-u08-eventbus) · analoji tohumu var
 - DLQ (page-edu-u08-eventbus) · analoji tohumu var
-- Saga (page-edu-u08-eventbus) · **ince why** · analoji tohumu var
+- Saga (page-edu-u08-eventbus) · analoji tohumu var
 - Plugin (page-edu-u09-plugin) · **ince why** · analoji tohumu var
 - Manifest (page-edu-u09-plugin) · **ince why** · analoji tohumu var
 - Registry (page-edu-u09-plugin) · analoji tohumu var
-- Hook (page-edu-u09-plugin) · **ince why** · analoji tohumu var
+- Hook (page-edu-u09-plugin) · analoji tohumu var
 - CI (page-edu-u10-deploy) · **ince why** · analoji tohumu var
 - CD (page-edu-u10-deploy) · **ince why** · analoji tohumu var
 - Canary (page-edu-u10-deploy) · **ince why** · analoji tohumu var
@@ -912,13 +912,13 @@
 - Token Bucket (page-edu-u14-cache-ratelimit) · analoji tohumu var
 - 429 (page-edu-u14-cache-ratelimit) · analoji tohumu var
 - WCAG (page-edu-u15-ux-60-plus) · analoji tohumu var
-- Token Bucket (page-scale-ratelimit) · **ince why** · analoji tohumu var
+- Token Bucket (page-scale-ratelimit) · analoji tohumu var
 - 429 (page-scale-ratelimit) · analoji tohumu var
-- WebSocket (page-scale-realtime) · **ince why** · analoji tohumu var
+- WebSocket (page-scale-realtime) · analoji tohumu var
 - Pub/Sub (page-scale-realtime) · analoji tohumu var
-- Presence (page-scale-realtime) · **ince why** · analoji tohumu var
-- Webhook (page-scale-webhook) · **ince why** · analoji tohumu var
-- Replay Attack (page-scale-webhook) · **ince why** · analoji tohumu var
+- Presence (page-scale-realtime) · analoji tohumu var
+- Webhook (page-scale-webhook) · analoji tohumu var
+- Replay Attack (page-scale-webhook) · analoji tohumu var
 - DLQ (page-scale-webhook) · analoji tohumu var
 - Canary (page-cc-rollout) · analoji tohumu var
 - KVKK (page-cc-privacy) · analoji tohumu var

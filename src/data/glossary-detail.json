@@ -73,13 +73,28 @@
    ]
   },
   "term-uuid-v7-atomic-types": {
-   "longExplanation": "İlk 48 bit ms timestamp; geri kalan random. RFC 9562.\n\nv4 random'dı, B-tree index'i parçalardı. v7 sıralı, insert performansı korunur. Açılımı: Universally Unique Identifier version 7. Türkçesi: Evrensel tek-kimlik v7."
+   "longExplanation": "İlk 48 bit ms timestamp; geri kalan random. RFC 9562.\n\nv4 random'dı, B-tree index'i parçalardı. v7 sıralı, insert performansı korunur. Açılımı: Universally Unique Identifier version 7. Türkçesi: Evrensel tek-kimlik v7.\n\nTip kataloğunda UUID v7 varsayılan birincil anahtardır: zaman-sıralı ön eki B-tree index'ini dağıtmaz, random kuyruğu çakışmayı önler. v4'ün index parçalama sorunu bu seçimle kapanır.",
+   "realWorldAnalogy": "Sıra numaralı bilet ile çekiliş bileti karışımı gibi — önü sıra (zaman), arkası çekiliş (random); hem dizilir hem tahmin edilemez.",
+   "useCases": [
+    "Yeni tabloların varsayılan PK tipi",
+    "Zaman aralığına göre verimli ID taraması"
+   ]
   },
   "term-ulid-atomic-types": {
-   "longExplanation": "128 bit, Crockford base32, 26 karakter.\n\nURL'lerde, log'larda okunaklı; sortable. Açılımı: Universally Unique Lexicographically Sortable Identifier. Türkçesi: Sözlük sırasına göre dizilebilir tek-kimlik."
+   "longExplanation": "128 bit, Crockford base32, 26 karakter.\n\nURL'lerde, log'larda okunaklı; sortable. Açılımı: Universally Unique Lexicographically Sortable Identifier. Türkçesi: Sözlük sırasına göre dizilebilir tek-kimlik.\n\nKatalogda ULID, insan-okur ID gereken yerlerin adayıdır: 26 karakterlik Crockford base32, URL ve log'da UUID'den derli toplu durur; sıralanabilirliği v7 ile aynıdır.",
+   "realWorldAnalogy": "Plaka gibi — şasi numarası (UUID) resmi kayıtta, plaka (ULID) günlük hayatta okunur.",
+   "useCases": [
+    "Loglarda göze okunur kayıt kimliği",
+    "URL'de taşınabilir kısa kimlik"
+   ]
   },
   "term-snowflake-atomic-types": {
-   "longExplanation": "64 bit ID = timestamp + datacenter + worker + sequence. Twitter pattern.\n\nKompakt; DB'de bigint kolon, çok daha hızlı. Türkçesi: Kar tanesi."
+   "longExplanation": "64 bit ID = timestamp + datacenter + worker + sequence. Twitter pattern.\n\nKompakt; DB'de bigint kolon, çok daha hızlı. Türkçesi: Kar tanesi.\n\nKatalogda Snowflake tarihsel referanstır: 64-bit kompakt ID'nin makine koordinasyonu (datacenter/worker bitleri) gerektirmesi, koordinasyonsuz UUID v7 tercihinin gerekçesini netleştirir.",
+   "realWorldAnalogy": "Şube kodlu evrak numarası gibi — kompakt ama her şubeye numara bloğu dağıtan bir merkez ister.",
+   "useCases": [
+    "64-bit kısıtlı eski sistemlerle entegrasyon",
+    "ID tasarım kararlarının karşılaştırma tablosu"
+   ]
   },
   "term-decimal-atomic-types": {
    "longExplanation": "Sabit hassasiyetli sayı. Float'tan farkı: 0.1+0.2 == 0.3 doğrudur.\n\nIEEE-754 float kuruş kaybeder; muhasebe testinden geçmez. Türkçesi: Ondalık (sabit-hassasiyet).\n\nAtomik tipler bağlamında Decimal, Money composite'inin kurucu scalar'ıdır: para asla float değildir kuralı tip katalogunda burada kökleşir. Hassasiyet ve yuvarlama politikası tip sözleşmesinin parçasıdır.",
@@ -90,7 +105,12 @@
    ]
   },
   "term-iso-4217-atomic-types": {
-   "longExplanation": "Para birimi kod standardı — TRY, USD, EUR.\n\nString 'lira' yazmak yerine standart kod; uluslararası bağlam tek seçenek."
+   "longExplanation": "Para birimi kod standardı — TRY, USD, EUR.\n\nString 'lira' yazmak yerine standart kod; uluslararası bağlam tek seçenek.\n\nTip kataloğunda ISO 4217, Money composite'inin currency alanının değer kümesidir: serbest metin değil standart kod (TRY, USD) kabul edilir; validator listeden doğrular.",
+   "realWorldAnalogy": "Ülke telefon kodları gibi — 'Türkiye' yazmak yerine +90; herkesin anladığı sabit kod.",
+   "useCases": [
+    "Money.currency alanının standart kod doğrulaması",
+    "Kur servisi entegrasyonlarında kod eşleşmesi"
+   ]
   },
   "term-utc-atomic-types": {
    "longExplanation": "Zaman dilimi olmayan referans saat. Eski adıyla GMT.\n\nTek doğruluk noktası — sunucu, DB, log her zaman UTC. Açılımı: Coordinated Universal Time. Türkçesi: Eşgüdümlü Evrensel Zaman.\n\nAtomik tipler bağlamında UTC, DateTime tipinin saklama sözleşmesidir: tüm zaman değerleri UTC yazılır, gösterim katmanı tenant'ın dilimine çevirir. Tip, dilimsiz 'duvar saati' kabul etmez.",
@@ -101,7 +121,12 @@
    ]
   },
   "term-iana-tz-atomic-types": {
-   "longExplanation": "Tüm dünya tz tanımları — yaz saati değişikliklerini içerir.\n\nDüz '+03:00' offset yetmez; DST tarihleri yıldan yıla değişir. Açılımı: Internet Assigned Numbers Authority timezone database. Türkçesi: İnternet sayı atama otoritesi zaman dilimi veritabanı."
+   "longExplanation": "Tüm dünya tz tanımları — yaz saati değişikliklerini içerir.\n\nDüz '+03:00' offset yetmez; DST tarihleri yıldan yıla değişir. Açılımı: Internet Assigned Numbers Authority timezone database. Türkçesi: İnternet sayı atama otoritesi zaman dilimi veritabanı.\n\nTip kataloğunda IANA tz, DateTime'ın gösterim katmanının sözlüğüdür: tenant'ın dilimi 'Europe/Istanbul' gibi adlandırılmış kayıttır; yaz saati kuralları veritabanı güncellemesiyle gelir, kodla değil.",
+   "realWorldAnalogy": "Diyanet'in namaz vakitleri takvimi gibi — kural yerel otoriteden gelir, sen sadece güncel takvimi kullanırsın.",
+   "useCases": [
+    "Tenant timezone alanının IANA adlarıyla tutulması",
+    "tz veritabanı güncellemelerinin bağımlılık olarak izlenmesi"
+   ]
   },
   "term-bitemporal-atomic-types": {
    "longExplanation": "Bilginin ne zaman geçerli olduğu (valid) + ne zaman kaydedildiği (recorded) ayrı.\n\nHRMS, finans gibi geriye dönük düzeltme yapılan alanlarda audit denkleştirme için zorunlu. Türkçesi: İki-zamanlı.\n\nAtomik tipler bağlamında bitemporal, zaman tipinin ileri sözleşmesidir: valid-time ve record-time ayrımı tip düzeyinde alan çifti olarak kurulur. Hangi varlıkların buna ihtiyaç duyduğu (maaş, fiyat, sözleşme) katalogda işaretlenir.",
@@ -112,28 +137,68 @@
    ]
   },
   "term-cascade-atomic-types": {
-   "longExplanation": "Hedef silinince link tarafına ne olur: ON DELETE CASCADE/SET NULL/RESTRICT.\n\nYanlış cascade veri kaybına; yokluğu orphan'a yol açar. Türkçesi: Şelale."
+   "longExplanation": "Hedef silinince link tarafına ne olur: ON DELETE CASCADE/SET NULL/RESTRICT.\n\nYanlış cascade veri kaybına; yokluğu orphan'a yol açar. Türkçesi: Şelale.\n\nTip kataloğunda cascade, Link tipinin silme sözleşmesidir: hedef silinince bağlı kayda ne olacağı (CASCADE/SET NULL/RESTRICT) alan tanımında beyan edilir; varsayılan RESTRICT'tir — sessiz veri kaybı yasaktır.",
+   "realWorldAnalogy": "Elektrik panosundaki sigorta zinciri gibi — ana şalter inince nelerin söneceği önceden etiketlidir.",
+   "useCases": [
+    "Link alanında silme davranışının zorunlu beyanı",
+    "Yanlışlıkla zincirleme silmenin RESTRICT ile önlenmesi"
+   ]
   },
   "term-orphan-atomic-types": {
-   "longExplanation": "Hedefi silinmiş ama hâlâ duran link.\n\nSoft-delete'lerde sık olur; periyodik check gerekir. Türkçesi: Yetim."
+   "longExplanation": "Hedefi silinmiş ama hâlâ duran link.\n\nSoft-delete'lerde sık olur; periyodik check gerekir. Türkçesi: Yetim.\n\nTip kataloğunda orphan, cascade sözleşmesinin ihlal belirtisidir: hedefi silinmiş link, bütünlük taramasında yakalanır ve rapora düşer; orphan'ın varlığı şema değil operasyon hatasıdır.",
+   "realWorldAnalogy": "Yıkılmış binaya kayıtlı ikametgâh gibi — adres defterde durur ama kapı yoktur; sayım (tarama) bunu bulur.",
+   "useCases": [
+    "Dönemsel bütünlük taramasında orphan raporu",
+    "Orphan üreten akışın cascade beyanının düzeltilmesi"
+   ]
   },
   "term-sharded-counter-atomic-types": {
-   "longExplanation": "Tek satıra her UPDATE değil; 10 shard'a random INCR, okurken SUM(shards).\n\nLock contention çözümü — Twitter 'like' patterni. Türkçesi: Parçalanmış sayaç."
+   "longExplanation": "Tek satıra her UPDATE değil; 10 shard'a random INCR, okurken SUM(shards).\n\nLock contention çözümü — Twitter 'like' patterni. Türkçesi: Parçalanmış sayaç.\n\nTip kataloğunda sharded counter, Counter tipinin yüksek-yazma uygulamasıdır: tek satıra UPDATE kilitlenir; N shard'a dağıtılan artış kilidi dağıtır, okuma toplamla döner.",
+   "realWorldAnalogy": "Konserde tek turnike yerine on turnike açmak gibi — sayım kapıda dağılır, toplam tabloda birleşir.",
+   "useCases": [
+    "Beğeni/görüntülenme sayaçlarının kilitsiz artışı",
+    "Shard sayısının yazma yoğunluğuna göre seçimi"
+   ]
   },
   "term-optimistic-concurrency-atomic-types": {
-   "longExplanation": "Lock almadan çalış, yazarken çatışma var mı kontrol et.\n\nPesimist lock yüksek trafikte ölür; çatışma nadir. Türkçesi: İyimser eşzamanlılık."
+   "longExplanation": "Lock almadan çalış, yazarken çatışma var mı kontrol et.\n\nPesimist lock yüksek trafikte ölür; çatışma nadir. Türkçesi: İyimser eşzamanlılık.\n\nTip kataloğunda optimistic concurrency, Version tipinin çalışma ilkesidir: kilit alınmaz, yazarken versiyon karşılaştırılır; çatışma istisnası kullanıcıya 'kayıt değişti' diyaloğuyla döner.",
+   "realWorldAnalogy": "İki kişinin aynı belgeyi düzenlemesi gibi — kaydederken 'arkadaşın değiştirdi, üstüne yazma' uyarısı; kapıyı kilitlemekten ucuz.",
+   "useCases": [
+    "Form kaydında versiyon kontrolü",
+    "Çatışmada fark gösterip birleştirme önerisi"
+   ]
   },
   "term-etag-atomic-types": {
-   "longExplanation": "HTTP response'unda kaynak versiyonunu işaretleyen string.\n\nClient If-Match header'ı ile race-free PUT yapabilir. Açılımı: Entity Tag. Türkçesi: Varlık etiketi."
+   "longExplanation": "HTTP response'unda kaynak versiyonunu işaretleyen string.\n\nClient If-Match header'ı ile race-free PUT yapabilir. Açılımı: Entity Tag. Türkçesi: Varlık etiketi.\n\nTip kataloğunda ETag, optimistic concurrency'nin HTTP yüzüdür: kaynağın versiyonu response başlığında taşınır; istemci If-Match ile yazar, eski versiyona 412 döner.",
+   "realWorldAnalogy": "Kargo takip numarasının son hali gibi — elindeki numara eskiyse şube 'güncel fişi getir' der.",
+   "useCases": [
+    "API'de If-Match zorunlu güncelleme akışı",
+    "Cache doğrulamasında 304 ekonomisi"
+   ]
   },
   "term-sha-256-atomic-types": {
-   "longExplanation": "256-bit özet üreten hash. Çakışma bulmak pratikte imkansız.\n\nStandart — git, S3, blockchain hepsi kullanır. Açılımı: Secure Hash Algorithm 256-bit. Türkçesi: Güvenli özet algoritması 256-bit."
+   "longExplanation": "256-bit özet üreten hash. Çakışma bulmak pratikte imkansız.\n\nStandart — git, S3, blockchain hepsi kullanır. Açılımı: Secure Hash Algorithm 256-bit. Türkçesi: Güvenli özet algoritması 256-bit.\n\nTip kataloğunda SHA-256, Hash tipinin varsayılanıdır: dosya bütünlüğü, içerik adresleme ve imza zincirlerinde kullanılır; kriptografik dayanıklılık gereken yerde BLAKE3'e değil buna işaret edilir.",
+   "realWorldAnalogy": "Mühür mumu gibi — içerik değişirse mühür tutmaz; aynı mührü taklit etmek pratikte imkânsızdır.",
+   "useCases": [
+    "Dosya bütünlük doğrulaması",
+    "Audit zincirinde kayıt özeti"
+   ]
   },
   "term-blake3-atomic-types": {
-   "longExplanation": "SHA-256'dan çok daha hızlı modern hash.\n\nBüyük dosyalarda CPU darboğazını çözer."
+   "longExplanation": "SHA-256'dan çok daha hızlı modern hash.\n\nBüyük dosyalarda CPU darboğazını çözer.\n\nTip kataloğunda BLAKE3 performans alternatifidir: içerik adresli depolamada (CAS) büyük dosyaların hash'i hız ister; paralel çalışan BLAKE3 burada SHA-256'nın yerini alır — dış uyumluluk gerekmedikçe.",
+   "realWorldAnalogy": "Aynı yolun otobanı gibi — varış aynı (özet), şerit sayısı (paralellik) yolculuğu kısaltır.",
+   "useCases": [
+    "Büyük dosya yüklemede hızlı içerik özeti",
+    "Dedup taramasının CPU maliyetini düşürme"
+   ]
   },
   "term-content-addressable-storage-atomic-types": {
-   "longExplanation": "Dosya hash'i = dosya adresi. Aynı içerik tek kez saklanır.\n\nDrive ürününde dedup; storage maliyeti büyük tasarruf. Türkçesi: İçerik-adresli depolama."
+   "longExplanation": "Dosya hash'i = dosya adresi. Aynı içerik tek kez saklanır.\n\nDrive ürününde dedup; storage maliyeti büyük tasarruf. Türkçesi: İçerik-adresli depolama.\n\nTip kataloğunda CAS, File tipinin depolama deseniyle ilişkilidir: dosyanın adresi içeriğinin hash'idir; aynı dosya iki kez yüklenirse tek kopya yaşar, referanslar çoğalır.",
+   "realWorldAnalogy": "Kütüphanenin ISBN sistemi gibi — aynı kitap iki kez basılmaz; ikinci istek mevcut rafa yönlendirilir.",
+   "useCases": [
+    "Tekrarlanan eklerin otomatik dedup'u",
+    "Hash doğrulamalı dosya bütünlüğü"
+   ]
   },
   "term-e-164-atomic-types": {
    "longExplanation": "Uluslararası telefon numarası standardı: + işareti + ülke kodu + abone.\n\nTek format → SMS, WhatsApp, regex hepsi tek doğru biçim üzerinde. Açılımı: ITU-T Recommendation E.164. Türkçesi: ITU-T E.164 numaralandırma standardı.\n\nAtomik tipler bağlamında E.164, Phone tipinin saklama standardıdır: kullanıcı nasıl yazarsa yazsın, coercion +90… formuna çevirir, validator hane kurallarını zorlar. Görüntüleme yerelleştirilir, saklama tek biçimdir.",
@@ -144,13 +209,28 @@
    ]
   },
   "term-mx-record-atomic-types": {
-   "longExplanation": "Bir domain'in posta sunucusunu söyleyen DNS kaydı.\n\nMX yoksa o domain'e mail gitmez; tip-o yakalanır. Açılımı: Mail eXchange record. Türkçesi: Posta değişim kaydı."
+   "longExplanation": "Bir domain'in posta sunucusunu söyleyen DNS kaydı.\n\nMX yoksa o domain'e mail gitmez; tip-o yakalanır. Açılımı: Mail eXchange record. Türkçesi: Posta değişim kaydı.\n\nTip kataloğunda MX kaydı, Email tipinin derin doğrulama katmanıdır: biçim doğru olsa da domain posta alamıyorsa adres ölüdür; kayıt sorgusu opsiyonel doğrulama adımıdır.",
+   "realWorldAnalogy": "Adresin posta kutusu kontrolü gibi — sokak ve numara doğru ama kutu yoksa mektup geri döner.",
+   "useCases": [
+    "Kayıt formunda ölü domain tespiti",
+    "Toplu e-posta öncesi liste hijyeni"
+   ]
   },
   "term-disposable-email-atomic-types": {
-   "longExplanation": "10-minute-mail gibi geçici mail servisleri.\n\nSpam abuse, free-trial sömürüsünü engeller. Türkçesi: Tek kullanımlık mail."
+   "longExplanation": "10-minute-mail gibi geçici mail servisleri.\n\nSpam abuse, free-trial sömürüsünü engeller. Türkçesi: Tek kullanımlık mail.\n\nTip kataloğunda disposable email, Email tipinin itibar filtresidir: geçici servis domain'leri listeyle işaretlenir; ürün, deneme istismarına karşı bu sinyali kullanır — sert red yerine politika kararıdır.",
+   "realWorldAnalogy": "Takma adla otele yazılmak gibi — kapıda çevrilmez ama oda servisi (deneme hakkı) kısıtlı verilir.",
+   "useCases": [
+    "Deneme hesabı istismarının işaretlenmesi",
+    "Disposable domain'de doğrulama zorunluluğu"
+   ]
   },
   "term-ssrf-atomic-types": {
-   "longExplanation": "Saldırgan, sunucuyu istemediği bir URL'e istek atmaya zorlar.\n\nAWS metadata endpoint'i, internal API gibi yerlere sızıntıya yol açar. Açılımı: Server-Side Request Forgery. Türkçesi: Sunucu-tarafı istek sahteciliği."
+   "longExplanation": "Saldırgan, sunucuyu istemediği bir URL'e istek atmaya zorlar.\n\nAWS metadata endpoint'i, internal API gibi yerlere sızıntıya yol açar. Açılımı: Server-Side Request Forgery. Türkçesi: Sunucu-tarafı istek sahteciliği.\n\nTip kataloğunda SSRF, URL tipinin güvenlik gerekçesidir: kullanıcıdan gelen URL'e sunucunun istek atması iç ağa tünel açabilir; tip, şema/host allowlist'i ve iç IP bloklarını doğrulamada taşır.",
+   "realWorldAnalogy": "Kuryeye 'şu adrese git' deyip şirketin kasa odasını adres göstermek gibi — kurye (sunucu) iç kapılara sokulmamalı.",
+   "useCases": [
+    "Webhook URL'lerinde iç IP bloklarının reddi",
+    "Görsel çekme servislerinde allowlist zorunluluğu"
+   ]
   },
   "term-postgis-atomic-types": {
    "longExplanation": "PostgreSQL'e geometri/coğrafya operatörü ekleyen extension.\n\n'Bana 5 km içindeki ilanlar' tek SQL ile çözülür. Türkçesi: PostgreSQL coğrafi uzantısı.\n\nAtomik tipler bağlamında PostGIS, Geo tiplerinin altyapı gerekçesidir: point/polygon alanları DB'de gerçek geometri olarak yaşar; mesafe ve kapsama sorguları tip sisteminin uzantısıdır.",
@@ -177,7 +257,12 @@
    ]
   },
   "term-aes-256-gcm-atomic-types": {
-   "longExplanation": "Authenticated symmetric encryption — şifreleme + bütünlük tek geçişte.\n\nModern, hızlı, NIST onaylı. Açılımı: Advanced Encryption Standard 256-bit Galois/Counter Mode. Türkçesi: İleri şifreleme standardı 256-bit GCM kipi."
+   "longExplanation": "Authenticated symmetric encryption — şifreleme + bütünlük tek geçişte.\n\nModern, hızlı, NIST onaylı. Açılımı: Advanced Encryption Standard 256-bit Galois/Counter Mode. Türkçesi: İleri şifreleme standardı 256-bit GCM kipi.\n\nTip kataloğunda AES-256-GCM, Encrypted alan tipinin algoritmasıdır: gizlilik + bütünlük tek geçişte; nonce yönetimi tip implementasyonuna gömülüdür, geliştirici seçim yapmaz.",
+   "realWorldAnalogy": "Kilitli ve mühürlü zarf gibi — açılamaz (şifreleme) ve açılmaya çalışıldığı belli olur (bütünlük).",
+   "useCases": [
+    "PII alanlarının at-rest şifrelenmesi",
+    "Anahtar rotasyonunun tip katmanında yönetimi"
+   ]
   },
   "term-pii-atomic-types": {
    "longExplanation": "Kimlik no, telefon, adres — kişiyi tek başına tanımlayan veri.\n\nKVKK/GDPR uyumu için ek koruma şart. Açılımı: Personally Identifiable Information. Türkçesi: Kişisel tanımlayıcı bilgi.\n\nAtomik tipler bağlamında PII bir tip niteliğidir: alan 'pii: true' işaretini taşıyınca maskeleme, şifreleme ve export kuralları otomatik bağlanır. Gizlilik, geliştirici disiplinine değil tip sistemine emanettir.",
@@ -188,22 +273,52 @@
    ]
   },
   "term-jsonb-atomic-types": {
-   "longExplanation": "PostgreSQL'in indexlenebilir JSON tipi.\n\nSchema-less esneklik + index hızı bir arada. Açılımı: JSON Binary. Türkçesi: İkili JSON."
+   "longExplanation": "PostgreSQL'in indexlenebilir JSON tipi.\n\nSchema-less esneklik + index hızı bir arada. Açılımı: JSON Binary. Türkçesi: İkili JSON.\n\nTip kataloğunda JSONB, esnek alanın disiplinli kaçış kapısıdır: şemasız veri indexlenebilir biçimde saklanır; EAV reddinin istisnası değil tamamlayıcısıdır — yapı belliyse kolon, gerçekten serbestse JSONB.",
+   "realWorldAnalogy": "Dosya dolabındaki 'muhtelif' çekmecesi gibi — her şey oraya atılmaz; ama gerçekten sınıflanamayanın da düzenli bir yeri olur.",
+   "useCases": [
+    "Entegrasyon payload'larının ham saklanması",
+    "JSONB path index'iyle seçili alan sorgusu"
+   ]
   },
   "term-embedding-atomic-types": {
-   "longExplanation": "Metni/görseli N boyutlu vektöre çeviren ML modeli çıktısı.\n\nAnlamsal yakınlık (cosine similarity) yapmak için. Türkçesi: Gömme."
+   "longExplanation": "Metni/görseli N boyutlu vektöre çeviren ML modeli çıktısı.\n\nAnlamsal yakınlık (cosine similarity) yapmak için. Türkçesi: Gömme.\n\nTip kataloğunda embedding, Vector tipinin üreticisidir: metin/görsel N boyutlu sayıya iner, anlam yakınlığı mesafeye dönüşür; tip bunu pgvector kolonu olarak taşır.",
+   "realWorldAnalogy": "Şehirlerin koordinata inmesi gibi — 'İstanbul Ankara'ya yakın mı' sorusu haritada mesafeye dönüşür.",
+   "useCases": [
+    "Benzer kayıt önerisinin vektör mesafesiyle çözümü",
+    "Semantik aramada sorgu embedding'i"
+   ]
   },
   "term-hnsw-atomic-types": {
-   "longExplanation": "Yaklaşık en yakın komşu (ANN) index algoritması.\n\nMilyonlarca vektör arasında milisaniyede arama. Açılımı: Hierarchical Navigable Small World. Türkçesi: Hiyerarşik gezilebilir küçük dünya."
+   "longExplanation": "Yaklaşık en yakın komşu (ANN) index algoritması.\n\nMilyonlarca vektör arasında milisaniyede arama. Açılımı: Hierarchical Navigable Small World. Türkçesi: Hiyerarşik gezilebilir küçük dünya.\n\nTip kataloğunda HNSW, Vector kolonunun index tercihindir: kesin değil yaklaşık en yakın komşu — milyonlarca vektörde milisaniyelik arama, küçük doğruluk ödünüyle alınır.",
+   "realWorldAnalogy": "Şehirde adres sormak gibi — herkese tek tek sormak (tam tarama) yerine mahalle mahalle yaklaşmak; %99 doğru, bin kat hızlı.",
+   "useCases": [
+    "Büyük embedding setinde ANN index kurulumu",
+    "Recall/hız dengesinin parametreyle ayarı"
+   ]
   },
   "term-pgvector-atomic-types": {
-   "longExplanation": "Postgres'e vector tipi + index ekleyen extension.\n\nAyrı vector DB (Pinecone) kurmadan, mevcut DB'de semantik arama. Türkçesi: PostgreSQL vektör uzantısı."
+   "longExplanation": "Postgres'e vector tipi + index ekleyen extension.\n\nAyrı vector DB (Pinecone) kurmadan, mevcut DB'de semantik arama. Türkçesi: PostgreSQL vektör uzantısı.\n\nTip kataloğunda pgvector, Vector tipinin altyapı kararıdır: ayrı vektör veritabanı yerine Postgres extension'ı — tek operasyon yüzeyi, transaction bütünlüğü ve mevcut yedekleme düzeni korunur.",
+   "realWorldAnalogy": "Eve ek oda yapmak gibi — ayrı depo kiralamak (vektör DB) yerine mevcut çatı altında genişlemek.",
+   "useCases": [
+    "Vector kolonlarının ana DB'de yaşaması",
+    "Anti-stack kararı: ayrı vektör DB reddi"
+   ]
   },
   "term-structlog-atomic-types": {
-   "longExplanation": "Python structured logging kütüphanesi — JSON output, context binding.\n\nGrep yerine alanlara göre filtre; observability omurgası."
+   "longExplanation": "Python structured logging kütüphanesi — JSON output, context binding.\n\nGrep yerine alanlara göre filtre; observability omurgası.\n\nTip kataloğunda structlog, log üretiminin Python tarafındaki aracıdır: serbest metin yerine alanlı JSON; trace_id ve tenant_id her satıra bağlam olarak girer, arama alan bazlı yapılır.",
+   "realWorldAnalogy": "Fişsiz bakkal defteri yerine yazarkasa fişi gibi — kalem kalem, tarihli, toplanabilir.",
+   "useCases": [
+    "Tenant ve trace bağlamlı JSON log üretimi",
+    "Log alanlarıyla hata desenlerinin sorgulanması"
+   ]
   },
   "term-trace-id-atomic-types": {
-   "longExplanation": "Bir isteğin sistem boyunca takip edilebilmesi için unique ID.\n\nMikro-servis/iş kuyruğunda 'hangi log hangi istekten' sorusunu tek bakışta çözer. Türkçesi: İz kimliği."
+   "longExplanation": "Bir isteğin sistem boyunca takip edilebilmesi için unique ID.\n\nMikro-servis/iş kuyruğunda 'hangi log hangi istekten' sorusunu tek bakışta çözer. Türkçesi: İz kimliği.\n\nTip kataloğunda trace_id, isteğin kimlik ipliğidir: API'den worker'a, oradan webhook'a aynı ID taşınır; dağılmış logların tek hikâyeye dizilmesi bu alanla mümkün olur.",
+   "realWorldAnalogy": "Kargonun takip numarası gibi — paket beş depodan geçer, numara hepsinde aynı kalır; hikâye tek ekranda izlenir.",
+   "useCases": [
+    "İstek zincirinin uçtan uca izlenmesi",
+    "Hata anında ilgili tüm logların tek sorguyla toplanması"
+   ]
   },
   "term-primitive-atomic-types": {
    "longExplanation": "Bölünemez en küçük tip. Scalar (string/int) + composite (Money = Decimal+currency).\n\nTüm framework'ün omurgası — değiştirilmez kabul edilir. Türkçesi: İlkel.\n\nAtomik tipler sayfası bağlamında primitive teknik sınıflandırmanın köküdür: scalar (bölünemez) ve composite (birleşik) ayrımı buradan dallanır. Sayfa, hangi tipin neden primitive sayıldığını sözleşmeye bağlar.",
@@ -230,10 +345,20 @@
    ]
   },
   "term-frappe-kernel-schema": {
-   "longExplanation": "Python+JS metadata-driven framework. ERPNext'in altyapısı.\n\nDocType paterni ilk kanıtlayan açık kaynak."
+   "longExplanation": "Python+JS metadata-driven framework. ERPNext'in altyapısı.\n\nDocType paterni ilk kanıtlayan açık kaynak.\n\nKernel-schema bağlamında Frappe ilham kaynağıdır: DocType kavramının kanıtlanmış örneği — ERPNext'in altında 10+ yıldır çalışır. Katalog, deseni alır; Python-tekeli ve UI-bağımlılığını almaz.",
+   "realWorldAnalogy": "Usta-çırak ilişkisi gibi — ustanın tekniği alınır, atölyesinin dağınıklığı alınmaz.",
+   "useCases": [
+    "DocType yaşam döngüsünün referans karşılaştırması",
+    "Desen kanıtı olarak ERPNext vakası"
+   ]
   },
   "term-strapi-kernel-schema": {
-   "longExplanation": "Node.js headless CMS. Content-Type metadata-driven.\n\nContent-Type yaklaşımı bizim DocType'ımıza eşdeğer."
+   "longExplanation": "Node.js headless CMS. Content-Type metadata-driven.\n\nContent-Type yaklaşımı bizim DocType'ımıza eşdeğer.\n\nKernel-schema bağlamında Strapi ikinci referanstır: Content-Type builder'ı metadata-driven UI üretiminin örneğidir; CMS'e sıkışmışlığı, genel-amaçlı DocType kararının gerekçesini besler.",
+   "realWorldAnalogy": "Tek yemek yapan başarılı lokanta gibi — tarifin gücü görülür, menünün darlığı aşılır.",
+   "useCases": [
+    "Admin UI üretiminin desen karşılaştırması",
+    "Content-Type vs DocType kapsam analizi"
+   ]
   },
   "term-eav-kernel-schema": {
    "longExplanation": "Bir tabloda (entity_id, attr_name, value) satırları tutarak şema-less davranma.\n\nKolay başlar, sorgu ve performans cehennemine döner. WP postmeta bunun klasik tuzağı. Açılımı: Entity-Attribute-Value. Türkçesi: Varlık-Nitelik-Değer.\n\nKernel-schema bağlamında EAV, bilinçli reddedilen alternatiftir: 'esneklik' vaadiyle gelen (entity, attr, value) düzeni sorgu, index ve bütünlük maliyetiyle reddedilir; esneklik DocType migration'ıyla sağlanır.",
@@ -260,16 +385,36 @@
    ]
   },
   "term-identity-kernel-identity": {
-   "longExplanation": "Kullanıcı/servis kim olduğunu kanıtlayan sistem.\n\nKimlik = her güvenlik kararının başlangıç noktası. Türkçesi: Kimlik."
+   "longExplanation": "Kullanıcı/servis kim olduğunu kanıtlayan sistem.\n\nKimlik = her güvenlik kararının başlangıç noktası. Türkçesi: Kimlik.\n\nKernel-identity bağlamında identity, kimliğin tek doğruluk kaynağıdır: kullanıcı, servis hesabı ve API anahtarı aynı modelde yaşar; 'kim' sorusunun cevabı her modül için buradan gelir.",
+   "realWorldAnalogy": "Nüfus müdürlüğü gibi — her kurum kimliği kendisi basmaz; tek merci verir, herkes ona güvenir.",
+   "useCases": [
+    "Kullanıcı + servis hesabının tek modelde yönetimi",
+    "Modüllerin kimlik sorgusunu tek API'den alması"
+   ]
   },
   "term-session-kernel-identity": {
-   "longExplanation": "Bir kullanıcının kimlik kanıtlandıktan sonra süren etkileşim periyodu.\n\nHer istekte tekrar şifre sormamak için. Türkçesi: Oturum."
+   "longExplanation": "Bir kullanıcının kimlik kanıtlandıktan sonra süren etkileşim periyodu.\n\nHer istekte tekrar şifre sormamak için. Türkçesi: Oturum.\n\nKernel-identity bağlamında session, kimlik kanıtının yaşam döngüsüdür: üretim, yenileme (refresh), iptal ve cihaz-bazlı izleme çekirdek sözleşmedir; modüller session'ı sorgular, yönetmez.",
+   "realWorldAnalogy": "Otel kart anahtarı gibi — resepsiyon (kernel) verir, süresini ve iptalini resepsiyon yönetir; oda kapısı (modül) yalnız doğrular.",
+   "useCases": [
+    "Cihaz başına aktif session listesi ve uzaktan iptal",
+    "Refresh token rotasyonunun tek noktadan yönetimi"
+   ]
   },
   "term-2fa-kernel-identity": {
-   "longExplanation": "Şifre + ek doğrulama (SMS, TOTP).\n\nŞifre çalınsa bile hesap güvende. Açılımı: Two-Factor Authentication. Türkçesi: İki-faktörlü kimlik doğrulama."
+   "longExplanation": "Şifre + ek doğrulama (SMS, TOTP).\n\nŞifre çalınsa bile hesap güvende. Açılımı: Two-Factor Authentication. Türkçesi: İki-faktörlü kimlik doğrulama.\n\nKernel-identity bağlamında 2FA, kimlik kanıtının ikinci kilididir: TOTP varsayılan, SMS düşüş seçeneğidir; zorunluluk politikası tenant yöneticisine bırakılır, mekanizma çekirdekte yaşar.",
+   "realWorldAnalogy": "Kasanın çift anahtarı gibi — biri cebinde (şifre), biri kolunda (telefon); ikisi birden kaybolmaz.",
+   "useCases": [
+    "Tenant bazlı 2FA zorunluluk politikası",
+    "TOTP kurulumu ve yedek kodların yönetimi"
+   ]
   },
   "term-impersonation-kernel-identity": {
-   "longExplanation": "Destek personeli müşterinin oturumunu açar (denetimli).\n\nDestek için gerekli, audit zorunlu. Türkçesi: Kimliğe bürünme."
+   "longExplanation": "Destek personeli müşterinin oturumunu açar (denetimli).\n\nDestek için gerekli, audit zorunlu. Türkçesi: Kimliğe bürünme.\n\nKernel-identity bağlamında impersonation, denetimli vekâlettir: destek personeli müşteri oturumunu açar ama her eylem 'X adına Y' olarak loglanır; süre sınırlı, kapsam daraltılmıştır.",
+   "realWorldAnalogy": "Çilingirle eve girmek gibi — kapı açılır ama tutanakla; kim, ne zaman, hangi gerekçeyle kayda geçer.",
+   "useCases": [
+    "Destek oturumunun süreli ve loglu açılması",
+    "Hassas modüllerin impersonation kapsamı dışında tutulması"
+   ]
   },
   "term-rbac-kernel-authz": {
    "longExplanation": "İzinler rollere atanır, kullanıcı rol alır.\n\nÇoğu sistem için yeterli, basit. Açılımı: Role-Based Access Control. Türkçesi: Rol bazlı erişim.\n\nKernel-authz bağlamında RBAC çekirdek sözleşmedir: rol-izin matrisi, kaynak/aksiyon taneciği ve tenant sınırı burada tanımlanır. Üst katmanlar rol icat etmez; kernel'in verdiği modeli parametrelendirir.",
@@ -280,25 +425,60 @@
    ]
   },
   "term-abac-kernel-authz": {
-   "longExplanation": "İzin, niteliklere (departman, saat, tutar) göre dinamik.\n\nKarmaşık politikalar için RBAC yetmez. Açılımı: Attribute-Based Access Control. Türkçesi: Nitelik bazlı erişim."
+   "longExplanation": "İzin, niteliklere (departman, saat, tutar) göre dinamik.\n\nKarmaşık politikalar için RBAC yetmez. Açılımı: Attribute-Based Access Control. Türkçesi: Nitelik bazlı erişim.\n\nKernel-authz bağlamında ABAC, RBAC'in yetmediği yerde devreye giren ikinci modeldir: 'müdür VE mesai saatinde VE 50bin altı' gibi nitelik koşulları policy olarak çekirdekte değerlendirilir.",
+   "realWorldAnalogy": "Kredi onay kuralları gibi — unvan yetmez; tutar, teminat ve gün sonu saati birlikte karar verir.",
+   "useCases": [
+    "Tutar eşiğine göre onay yetkisinin dinamik hesaplanması",
+    "Mesai dışı erişim kısıtının policy ile tanımı"
+   ]
   },
   "term-rebac-kernel-authz": {
-   "longExplanation": "İzin, kayıtlar arası ilişkilerden türer (sahip, takım üyesi).\n\nGoogle Docs paylaşım modeli. Açılımı: Relationship-Based Access Control. Türkçesi: İlişki bazlı erişim."
+   "longExplanation": "İzin, kayıtlar arası ilişkilerden türer (sahip, takım üyesi).\n\nGoogle Docs paylaşım modeli. Açılımı: Relationship-Based Access Control. Türkçesi: İlişki bazlı erişim.\n\nKernel-authz bağlamında ReBAC üçüncü modeldir: izin, kayıtlar arası ilişkiden (sahibi, takım üyesi, paylaşılan) türetilir. Doküman ve kayıt paylaşımı senaryolarının doğal dili budur.",
+   "realWorldAnalogy": "Aile fotoğraf albümü gibi — kim göreceğini liste değil akrabalık belirler; yeni kuzen otomatik dahildir.",
+   "useCases": [
+    "'Kaydı sahibi ve ekibi görür' kuralının ilişkiden türemesi",
+    "Paylaşım zincirinin (link verilen herkes) çözülmesi"
+   ]
   },
   "term-multi-tenancy-kernel-tenancy": {
-   "longExplanation": "Tek kod tabanı, birçok müşteri (tenant) hizmet verir.\n\nSaaS'ın temel ekonomisi. Türkçesi: Çoklu kiracılık."
+   "longExplanation": "Tek kod tabanı, birçok müşteri (tenant) hizmet verir.\n\nSaaS'ın temel ekonomisi. Türkçesi: Çoklu kiracılık.\n\nKernel-tenancy bağlamında multi-tenancy gün-1 mimari kararıdır: izolasyon stratejisi (satır bazlı + tenant_id), kota ve fatura sınırı çekirdekte yaşar; hiçbir modül tenant'sız veri yazamaz.",
+   "realWorldAnalogy": "Apartman yönetimi gibi — su tesisatı ortak ama her dairenin sayacı ayrı; faturayı sayaç keser, komşu suyunu göremezsin.",
+   "useCases": [
+    "Yeni tenant açılışının dakikalar içinde tamamlanması",
+    "Tenant başına kota ve kullanım ölçümü"
+   ]
   },
   "term-tenant-scope-kernel-tenancy": {
-   "longExplanation": "Her sorguya otomatik WHERE tenant_id=X eklenmesi.\n\nVeri sızıntısının teknik garantisi. Türkçesi: Kiracı kapsamı."
+   "longExplanation": "Her sorguya otomatik WHERE tenant_id=X eklenmesi.\n\nVeri sızıntısının teknik garantisi. Türkçesi: Kiracı kapsamı.\n\nKernel-tenancy bağlamında tenant scope, izolasyonun uygulanma mekanizmasıdır: WHERE tenant_id=X filtresi ORM katmanında otomatik enjekte edilir; geliştiricinin unutması mümkün kılınmaz.",
+   "realWorldAnalogy": "Bina giriş kartının asansörü yalnız kendi katına çıkarması gibi — kat düğmesine bassan da kart izin vermez.",
+   "useCases": [
+    "ORM seviyesinde zorunlu tenant filtresi",
+    "Scope'suz ham sorguların CI'da yakalanması"
+   ]
   },
   "term-sub-tenant-kernel-tenancy": {
-   "longExplanation": "Bir kiracının altındaki iş birimi (örn: holding altı şirketler).\n\nMuhasebede konsolide rapor için gerekli. Türkçesi: Alt-kiracı."
+   "longExplanation": "Bir kiracının altındaki iş birimi (örn: holding altı şirketler).\n\nMuhasebede konsolide rapor için gerekli. Türkçesi: Alt-kiracı.\n\nKernel-tenancy bağlamında sub-tenant hiyerarşi sözleşmesidir: holding-şirket-şube zinciri tek tenant ağacında modellenir; yetki ve rapor konsolidasyonu ağaç üzerinden akar.",
+   "realWorldAnalogy": "Holding organizasyon şeması gibi — her şirket kendi defterini tutar, holding hepsinin toplamını görür.",
+   "useCases": [
+    "Holding altı şirketlerin ayrı defter, ortak rapor düzeni",
+    "Üst tenant'tan alt tenant'lara politika kalıtımı"
+   ]
   },
   "term-event-bus-kernel-bus": {
-   "longExplanation": "Modüllerin gevşek bağlı haberleşme kanalı.\n\nDirekt çağrı bağımlılığını ortadan kaldırır. Türkçesi: Olay otoyolu."
+   "longExplanation": "Modüllerin gevşek bağlı haberleşme kanalı.\n\nDirekt çağrı bağımlılığını ortadan kaldırır. Türkçesi: Olay otoyolu.\n\nKernel-bus bağlamında event bus çekirdek bileşenin kendisidir: yayın sözleşmesi, şema kaydı ve teslim güvencesi burada tanımlanır; dış broker (Redis/Kafka) takılabilir, sözleşme değişmez.",
+   "realWorldAnalogy": "Şehrin metro hattı gibi — vagon markası değişebilir, istasyonlar ve sefer düzeni sabittir.",
+   "useCases": [
+    "Modüller arası tüm event trafiğinin tek sözleşmesi",
+    "Broker değişiminin modüllere dokunmaması"
+   ]
   },
   "term-polyglot-kernel-bus": {
-   "longExplanation": "Bir sistemde birden fazla dil (Python+TS+Go) yan yana.\n\nDoğru iş, doğru araçla. Türkçesi: Çok-dilli."
+   "longExplanation": "Bir sistemde birden fazla dil (Python+TS+Go) yan yana.\n\nDoğru iş, doğru araçla. Türkçesi: Çok-dilli.\n\nKernel-bus bağlamında polyglot, bus'ın varlık nedenlerindendir: Python ve TS runtime'ları ortak event diliyle konuşur; dil sınırı süreç sınırıdır, sözleşme sınırı değildir.",
+   "realWorldAnalogy": "İki dilli şirketin ortak yazışma formatı gibi — herkes kendi dilinde düşünür, forma aynı alanları doldurur.",
+   "useCases": [
+    "Python worker ile TS API'nin event üzerinden işbirliği",
+    "Şema kaydının dil-bağımsız doğrulaması"
+   ]
   },
   "term-pub-sub-kernel-bus": {
    "longExplanation": "Yayıncı event yayar, aboneler dinler.\n\nYayıncı kimin dinlediğini bilmez — gevşek bağlama. Açılımı: Publisher/Subscriber. Türkçesi: Yayıncı/Abone.\n\nKernel-bus bağlamında Pub/Sub çekirdeğin sinir sistemidir: modüller birbirini değil bus'ı bilir; event şeması versiyonlanır ve sözleşme kernel'de yaşar. Gevşek bağlılık burada mimari zorunluluktur.",
@@ -309,13 +489,28 @@
    ]
   },
   "term-plugin-kernel-plugin": {
-   "longExplanation": "Çekirdek değişmeden eklenen davranış paketi.\n\n15 ürün tek çekirdeğin üstünde böyle yaşar. Türkçesi: Eklenti."
+   "longExplanation": "Çekirdek değişmeden eklenen davranış paketi.\n\n15 ürün tek çekirdeğin üstünde böyle yaşar. Türkçesi: Eklenti.\n\nKernel-plugin bağlamında plugin, çekirdeğe dokunmadan davranış ekleme sözleşmesidir: izin beyanı, sandbox sınırı ve yaşam döngüsü (kur/etkinleştir/kaldır) çekirdek tarafından zorlanır.",
+   "realWorldAnalogy": "Prize takılan elektrikli alet gibi — priz standardı (sözleşme) sabit; alet ne yaparsa yapsın sigortayı (sandbox) aşamaz.",
+   "useCases": [
+    "Üçüncü taraf modülün izin beyanıyla kurulumu",
+    "Plugin kaldırıldığında verinin öksüz kalmaması"
+   ]
   },
   "term-manifest-kernel-plugin": {
-   "longExplanation": "Plugin'in adı, sürümü, izinleri, hook'larını listeleyen dosya.\n\nÇekirdek manifest'e bakarak plugin'i yükler. Türkçesi: Bildirim dosyası."
+   "longExplanation": "Plugin'in adı, sürümü, izinleri, hook'larını listeleyen dosya.\n\nÇekirdek manifest'e bakarak plugin'i yükler. Türkçesi: Bildirim dosyası.\n\nKernel-plugin bağlamında manifest, plugin'in kimlik beyanıdır: ad, sürüm, istediği izinler ve bağlandığı hook'lar makine-okur dosyada durur; kurulum onayı bu beyana göre verilir.",
+   "realWorldAnalogy": "İthal ürünün gümrük beyannamesi gibi — kutuda ne olduğu açılmadan beyandan okunur; beyan dışı çıkan mal müsadere edilir.",
+   "useCases": [
+    "İzin beyanının kurulum ekranında gösterimi",
+    "Sürüm uyumluluğunun manifest'ten denetimi"
+   ]
   },
   "term-registry-kernel-plugin": {
-   "longExplanation": "Yüklü plugin'lerin merkezi listesi.\n\nÇakışma, sürüm, bağımlılık çözümü. Türkçesi: Sicil."
+   "longExplanation": "Yüklü plugin'lerin merkezi listesi.\n\nÇakışma, sürüm, bağımlılık çözümü. Türkçesi: Sicil.\n\nKernel-plugin bağlamında registry, kurulu plugin'lerin tek doğruluk kaynağıdır: sürüm, durum (etkin/devre dışı) ve bağımlılık burada izlenir; çakışma tespiti registry üzerinden yapılır.",
+   "realWorldAnalogy": "Apartman yönetiminin demirbaş defteri gibi — hangi dairede hangi cihaz var, ne zaman takıldı; arıza çıkınca ilk bakılan defter.",
+   "useCases": [
+    "Plugin sürüm envanterinin tek ekrandan izlenmesi",
+    "İki plugin'in aynı hook'ta çakışmasının tespiti"
+   ]
   },
   "term-outbox-scale-outbox": {
    "longExplanation": "DB içinde mesaj satırları, ayrı worker bunları publish eder.\n\nDual-write sorununu çözer — DB ve message bus atomik. Türkçesi: Giden kutusu.\n\nScale primitive bağlamında outbox uygulama desenidir: mesaj, iş verisinin transaction'ı İÇİNDE outbox tablosuna yazılır; ayrı worker yayınlar ve işaretler. At-least-once teslim, idempotent tüketicilerle tamamlanır.",
@@ -326,7 +521,12 @@
    ]
   },
   "term-dual-write-scale-outbox": {
-   "longExplanation": "Aynı anda iki sisteme (DB + Kafka) yazma denemesi.\n\nTehlikeli — biri başarısız olursa tutarsızlık. Türkçesi: Çift yazma."
+   "longExplanation": "Aynı anda iki sisteme (DB + Kafka) yazma denemesi.\n\nTehlikeli — biri başarısız olursa tutarsızlık. Türkçesi: Çift yazma.\n\nScale-outbox bağlamında dual write, çözülen hastalıktır: DB'ye ve broker'a ayrı ayrı yazmak, birinin başarısız olduğu anda sistemin yalan söylemesi demektir; outbox bu ikiliği tek transaction'a indirir.",
+   "realWorldAnalogy": "İki deftere ayrı ayrı yazmak gibi — biri unutulunca hangisi doğru bilinmez; tek defter + kopyalama (outbox) bunu çözer.",
+   "useCases": [
+    "Dual write vakalarının kod taramasıyla avlanması",
+    "Yeni event akışlarının outbox'tan geçme zorunluluğu"
+   ]
   },
   "term-unit-test-edu-u16-test": {
    "longExplanation": "Tek fonksiyonun doğru çalıştığını test eder. Bağımlılıklar mock'lanır.\n\nEn hızlı, en çok yazılır; bug erken yakalanır. Türkçesi: Birim testi.",
@@ -486,11 +686,11 @@
    ]
   },
   "term-csrf-edu-u19-owasp": {
-   "longExplanation": "Başka sitede kurban açıkken, senin siteye istek attırma.\n\nPara transferi, kullanıcı sebebi olmadan yapılır. Açılımı: Cross-Site Request Forgery. Türkçesi: Siteler arası istek sahteciliği.",
-   "realWorldAnalogy": "Sahte imzalı talimat: kapıcıya 'daire 5 söyledi' diye not bırakmak; kapıcı imza kontrolü (token) yapmazsa kanar.",
+   "longExplanation": "Başka sitede kurban açıkken, senin siteye istek attırma.\n\nPara transferi, kullanıcı sebebi olmadan yapılır. Açılımı: Cross-Site Request Forgery. Türkçesi: Siteler arası istek sahteciliği.\n\nOWASP ünitesi bağlamında CSRF saldırgan gözüyle incelenir: kurbanın açık oturumu üzerinden gizli form gönderimi senaryolaştırılır; amaç savunmanın hangi adımı kırdığını görmektir.",
+   "realWorldAnalogy": "Senin imzanla sahte dilekçe vermek gibi — kapıdaki memur (token kontrolü) dilekçeyi sahibine sormadan işleme koyarsa suç işler.",
    "useCases": [
-    "Form aksiyonlarında CSRF token kontrolü",
-    "SameSite cookie politikası"
+    "Zafiyetli örnek üzerinde saldırı senaryosu",
+    "Savunma katmanlarının hangi adımı kırdığı analizi"
    ]
   },
   "term-idor-edu-u19-owasp": {
@@ -766,40 +966,95 @@
    ]
   },
   "term-projection-scale-projections": {
-   "longExplanation": "Event'lerden türetilen okuma tablosu.\n\nJOIN cehenneminden kurtulma. Türkçesi: İzdüşüm."
+   "longExplanation": "Event'lerden türetilen okuma tablosu.\n\nJOIN cehenneminden kurtulma. Türkçesi: İzdüşüm.\n\nScale-projections bağlamında projection, CQRS'in okuma ürünüdür: event akışından türetilen düz tablo; bozulursa silinip yeniden inşa edilir, asıl kaynak event'tir.",
+   "realWorldAnalogy": "Heykelin kalıptan dökümü gibi — döküm kırılırsa kalıptan yenisi alınır; kalıp (event log) kıymetlidir.",
+   "useCases": [
+    "Liste/rapor ekranlarının join'siz projection'ı",
+    "Şema değişiminde sıfırdan rebuild akışı"
+   ]
   },
   "term-sso-k-sso": {
-   "longExplanation": "Bir kez giriş, çoklu uygulamaya kabul.\n\nKurumsal müşteri 10 uygulama için 10 parola istemez. Açılımı: Single Sign-On. Türkçesi: Tek oturum."
+   "longExplanation": "Bir kez giriş, çoklu uygulamaya kabul.\n\nKurumsal müşteri 10 uygulama için 10 parola istemez. Açılımı: Single Sign-On. Türkçesi: Tek oturum.\n\nSSO-deep bağlamında SSO, kurumsal satışın kapı şartıdır: müşteri IT'si 'bizim Azure AD ile girilsin' der; tek giriş deneyimi kullanıcı konforu değil, hesap yaşam döngüsünün (işe giriş/çıkış) merkezden yönetimidir.",
+   "realWorldAnalogy": "Sitenin ana kapı kartı gibi — her bloğa ayrı anahtar yerine tek kart; kart iptal olunca tüm kapılar aynı anda kapanır.",
+   "useCases": [
+    "Kurumsal tenant'ın kendi IdP'siyle girişi",
+    "İşten çıkanın tüm erişiminin tek iptalle kesilmesi"
+   ]
   },
   "term-saml-k-sso": {
-   "longExplanation": "XML tabanlı kurumsal SSO protokolü.\n\nEnterprise IT'nin bildiği standart. Açılımı: Security Assertion Markup Language. Türkçesi: SAML 2.0."
+   "longExplanation": "XML tabanlı kurumsal SSO protokolü.\n\nEnterprise IT'nin bildiği standart. Açılımı: Security Assertion Markup Language. Türkçesi: SAML 2.0.\n\nSSO-deep bağlamında SAML, eski ama yaşayan kurumsal protokoldür: XML imzaları ve sertifika döngüsü külfetlidir ama büyük kurumların IdP'leri hâlâ SAML konuşur; destek pazarlık konusu değildir.",
+   "realWorldAnalogy": "Faks gibi — modern değil ama resmi kurumlar hâlâ ister; cihazı bulundurursun.",
+   "useCases": [
+    "Legacy IdP'lerle (ADFS) federasyon",
+    "Sertifika yenileme döngüsünün izlenmesi"
+   ]
   },
   "term-oidc-k-sso": {
-   "longExplanation": "OAuth 2.0 üstüne identity bilgisi.\n\nModern SSO standardı. Açılımı: OpenID Connect. Türkçesi: OpenID Connect."
+   "longExplanation": "OAuth 2.0 üstüne identity bilgisi.\n\nModern SSO standardı. Açılımı: OpenID Connect. Türkçesi: OpenID Connect.\n\nSSO-deep bağlamında OIDC tercih edilen protokoldür: OAuth 2.0'ın üstüne kimlik katmanı, JSON/JWT diliyle; yeni entegrasyonlar OIDC'ye yönlendirilir, SAML geriye uyumluluk için durur.",
+   "realWorldAnalogy": "E-imza gibi — ıslak imzanın (SAML) yaptığını modern altyapıyla yapar; yeni sözleşmeler e-imzayla açılır.",
+   "useCases": [
+    "Yeni tenant entegrasyonlarında varsayılan protokol",
+    "ID token claim'lerinden rol eşlemesi"
+   ]
   },
   "term-mfa-k-sso": {
-   "longExplanation": "Parola + ikinci şey (SMS, TOTP, parmak izi).\n\nParola çalınsa bile korur. Açılımı: Multi-Factor Authentication. Türkçesi: Çok faktörlü kimlik doğrulama."
+   "longExplanation": "Parola + ikinci şey (SMS, TOTP, parmak izi).\n\nParola çalınsa bile korur. Açılımı: Multi-Factor Authentication. Türkçesi: Çok faktörlü kimlik doğrulama.\n\nSSO-deep bağlamında MFA, federasyonla birlikte düşünülür: kurumsal girişte MFA'yı müşterinin IdP'si uygular, yerel hesaplarda biz; 'kim MFA'ladı' bilgisi oturum bağlamında taşınır.",
+   "realWorldAnalogy": "Pasaport kontrolü gibi — vizeyi konsolosluk (IdP) verir, sınır kapısı (biz) damgaya bakar; kimin kontrol ettiği belgede yazar.",
+   "useCases": [
+    "IdP-taraflı MFA'nın oturum claim'iyle kanıtı",
+    "Yerel hesaplara MFA zorunluluk politikası"
+   ]
   },
   "term-passkey-k-sso": {
-   "longExplanation": "WebAuthn cryptographic key, parolasız giriş.\n\nPhishing'e karşı bağışık + UX harika. Türkçesi: Parolasız anahtar."
+   "longExplanation": "WebAuthn cryptographic key, parolasız giriş.\n\nPhishing'e karşı bağışık + UX harika. Türkçesi: Parolasız anahtar.\n\nSSO-deep bağlamında passkey gelecek yoludur: WebAuthn anahtar çifti parolayı tamamen kaldırır, phishing yüzeyini yok eder; yerel hesaplar için varsayılan öneri, kurumsalda IdP kararına tabidir.",
+   "realWorldAnalogy": "Kapıya anahtar yerine yüz tanıma takmak gibi — kopyalanacak, çalınacak, unutulacak şey kalmaz.",
+   "useCases": [
+    "Parolasız yerel hesap girişi",
+    "Phishing'e dayanıklı yönetici hesapları"
+   ]
   },
   "term-cron-scale-workers-deep": {
-   "longExplanation": "Unix'in zamanlama syntax'ı.\n\n60 yıllık standart. Türkçesi: Cron (zamanlanmış)."
+   "longExplanation": "Unix'in zamanlama syntax'ı.\n\n60 yıllık standart. Türkçesi: Cron (zamanlanmış).\n\nWorkers-deep bağlamında cron, zamanlanmış işin diliyle sınırlı değildir: ifade tenant timezone'unda yorumlanır, kaçan tetik (downtime) telafi politikasına bağlanır; 'her gece 02:00' kimin gecesi sorusu burada cevaplanır.",
+   "realWorldAnalogy": "Ezan vakti gibi — saat sabit değil, şehre göre hesaplanır; merkezi takvim herkese kendi vaktini söyler.",
+   "useCases": [
+    "Tenant-timezone'lu zamanlama",
+    "Kaçan tetiklerin telafi (catch-up) politikası"
+   ]
   },
   "term-delayed-job-scale-workers-deep": {
-   "longExplanation": "X süre sonra çalışsın.\n\n'1 saat sonra cart hatırlatma'. Türkçesi: Gecikmeli iş."
+   "longExplanation": "X süre sonra çalışsın.\n\n'1 saat sonra cart hatırlatma'. Türkçesi: Gecikmeli iş.\n\nWorkers-deep bağlamında delayed job, geleceğe atılan tek işdir: 'X olaydan 24 saat sonra hatırlat' deseni; iptal edilebilirlik şarttır — olay geçersizleşince bekleyen iş de düşmelidir.",
+   "realWorldAnalogy": "Çalar saat kurmak gibi — kurarsın, vakti gelince çalar; plan değişirse kurulumu iptal edersin.",
+   "useCases": [
+    "Sepet hatırlatmasının 24 saat gecikmeli kurulması",
+    "Sipariş iptalinde bekleyen işin düşürülmesi"
+   ]
   },
   "term-priority-queue-scale-workers-deep": {
-   "longExplanation": "Yüksek öncelikli önce işlenir.\n\nKullanıcı bekleyen iş önce. Türkçesi: Öncelik kuyruğu."
+   "longExplanation": "Yüksek öncelikli önce işlenir.\n\nKullanıcı bekleyen iş önce. Türkçesi: Öncelik kuyruğu.\n\nWorkers-deep bağlamında priority queue, adalet sorusudur: kritik iş (ödeme webhook'u) rapor üretiminin arkasında bekleyemez; öncelik şeritleri açlık (starvation) korumasıyla birlikte kurulur.",
+   "realWorldAnalogy": "Hastane triajı gibi — acil önce alınır ama bekleyen yeşil kart sonsuza dek bekletilmez; süre garantisi vardır.",
+   "useCases": [
+    "Ödeme/bildirim işlerine yüksek şerit",
+    "Düşük öncelikli işe maksimum bekleme garantisi"
+   ]
   },
   "term-visibility-timeout-scale-workers-deep": {
-   "longExplanation": "Worker iş aldıktan sonra başkasının görmemesi süresi.\n\nWorker crash = iş başkasına geçer. Türkçesi: Görünürlük süresi."
+   "longExplanation": "Worker iş aldıktan sonra başkasının görmemesi süresi.\n\nWorker crash = iş başkasına geçer. Türkçesi: Görünürlük süresi.\n\nWorkers-deep bağlamında visibility timeout, 'işi alan öldü mü' sorusunun mekanizmasıdır: iş alındığında kuyrukta görünmez olur; süre dolup ack gelmezse iş yeniden görünür — kayıp değil gecikme yaşanır.",
+   "realWorldAnalogy": "Kütüphane ödünç süresi gibi — kitap rafta görünmez; iade gelmezse süre sonunda tekrar kataloga düşer.",
+   "useCases": [
+    "Çöken worker'ın işinin otomatik geri dönmesi",
+    "Uzun işlerde timeout'un heartbeat'le uzatılması"
+   ]
   },
   "term-streaming-export-l1-export": {
    "longExplanation": "Veriyi RAM'e almadan parça parça dosyaya yazma.\n\n1M satır RAM'e sığmaz. Türkçesi: Akıtarak dışa aktarma."
   },
   "term-presigned-url-l1-export": {
-   "longExplanation": "S3 dosyasına 1 saat erişim.\n\nBackend statik servis vermeden. Türkçesi: İmzalı geçici link."
+   "longExplanation": "S3 dosyasına 1 saat erişim.\n\nBackend statik servis vermeden. Türkçesi: İmzalı geçici link.\n\nExport servisi bağlamında presigned URL, büyük dosyanın backend'i yormadan tesliminin yoludur: rapor S3'e yazılır, kullanıcıya süreli imzalı link verilir; indirme trafiği API'ye hiç uğramaz.",
+   "realWorldAnalogy": "Emanet dolabının tek kullanımlık şifresi gibi — görevli (backend) paketi koyar, şifreyi verir; teslimde görevliye gerek kalmaz.",
+   "useCases": [
+    "Büyük CSV exportunun S3 linkiyle teslimi",
+    "Link süresinin dosya hassasiyetine göre ayarlanması"
+   ]
   },
   "term-multipart-upload-l1-export": {
    "longExplanation": "100MB+ dosyayı parça parça S3'e yükleme.\n\nTek istek timeout'u aşar. Türkçesi: Parçalı yükleme."
@@ -826,7 +1081,12 @@
    "longExplanation": "Mesaj + secret = hash.\n\nSahte webhook'a karşı koruma. Türkçesi: HMAC imza."
   },
   "term-replay-attack-l1-webhook-in": {
-   "longExplanation": "Saldırgan eski webhook'u kaydedip tekrar gönderir.\n\nTimestamp ile engellenir. Türkçesi: Tekrar saldırısı."
+   "longExplanation": "Saldırgan eski webhook'u kaydedip tekrar gönderir.\n\nTimestamp ile engellenir. Türkçesi: Tekrar saldırısı.\n\nGelen webhook bağlamında replay saldırısı birincil tehdittir: imza doğru ama istek eskidir. Savunma timestamp toleransı + nonce kaydıdır; pencere dışı veya tekrar eden istek düşürülür.",
+   "realWorldAnalogy": "Fotokopi davetiye gibi — davetiye gerçek ama aynı numarayla ikinci kişi kapıda durdurulur.",
+   "useCases": [
+    "Timestamp toleransı dışındaki isteklerin reddi",
+    "Nonce tekrarının idempotency kaydıyla yakalanması"
+   ]
   },
   "term-event-idempotency-l1-webhook-in": {
    "longExplanation": "Aynı event_id 2 kez gelirse 1 kez işle.\n\nStripe at-least-once; idempotency olmadan çift işlem. Türkçesi: Olay yinelendirme dayanıklılığı."
@@ -847,10 +1107,20 @@
    "longExplanation": "Edge sunucu ağı.\n\nİstanbul 5ms vs Almanya 50ms. Açılımı: Content Delivery Network. Türkçesi: İçerik dağıtım ağı."
   },
   "term-edge-fe-cdn": {
-   "longExplanation": "CDN'in dağıttığı önbellekleyen sunucu.\n\nKullanıcıya en yakın = en hızlı. Türkçesi: Sınır sunucu."
+   "longExplanation": "CDN'in dağıttığı önbellekleyen sunucu.\n\nKullanıcıya en yakın = en hızlı. Türkçesi: Sınır sunucu.\n\nCDN bağlamında edge, statik varlığın kullanıcıya en yakın kopyasının yaşadığı yerdir: build çıktısı yüzlerce noktaya itilir; gecikme fiziksel mesafeyle birlikte düşer.",
+   "realWorldAnalogy": "Zincir marketin mahalle şubesi gibi — depo (origin) tek, raf (edge) her mahallede; süt için şehir merkezine gidilmez.",
+   "useCases": [
+    "Build varlıklarının bölgesel edge'lere dağıtımı",
+    "Edge cache hit oranının yayın metriği olarak izlenmesi"
+   ]
   },
   "term-cache-invalidation-fe-cdn": {
-   "longExplanation": "Eski cache'i temizleyip yeniyi servisleme.\n\nBilgisayar biliminin 2 zor probleminden biri. Türkçesi: Önbellek geçersiz kılma."
+   "longExplanation": "Eski cache'i temizleyip yeniyi servisleme.\n\nBilgisayar biliminin 2 zor probleminden biri. Türkçesi: Önbellek geçersiz kılma.\n\nCDN bağlamında invalidation, yayının görünür olma hızıdır: hash'li dosya adları çoğu işi çözer (içerik değişti = ad değişti); ad sabit kalan HTML için purge çağrısı yapılır.",
+   "realWorldAnalogy": "Ürün barkodunu değiştirmek gibi — yeni ürün yeni barkodla rafa girer, eskisiyle karışmaz; sabit raf etiketi (HTML) elle yenilenir.",
+   "useCases": [
+    "Hash'li varlık adlarıyla zahmetsiz invalidation",
+    "Deploy sonrası HTML purge çağrısının otomasyonu"
+   ]
   },
   "term-hash-based-versioning-fe-cdn": {
    "longExplanation": "Dosya adına içerik hash'i.\n\nYeni içerik = yeni URL = invalidation otomatik. Türkçesi: Hash tabanlı versiyon."
@@ -859,46 +1129,111 @@
    "longExplanation": "Kısa süreli kullanıcıya özel CDN linki.\n\nPremium content public link olmasın. Türkçesi: İmzalı URL."
   },
   "term-sharding-k-tenancy-deep": {
-   "longExplanation": "Tek tabloyu birden fazla DB'ye bölme.\n\n100M+ satır tek DB yavaş. Türkçesi: Parçalama."
+   "longExplanation": "Tek tabloyu birden fazla DB'ye bölme.\n\n100M+ satır tek DB yavaş. Türkçesi: Parçalama.\n\nTenancy-deep bağlamında sharding, satır-bazlı izolasyonun ölçek devamıdır: tek DB doyunca tenant'lar shard'lara dağılır; uygulama kodu shard'ı bilmez, yönlendirme katmanı bilir.",
+   "realWorldAnalogy": "Okulun şubelere bölünmesi gibi — 9-A, 9-B; öğrenci tek şubede okur, müfredat (kod) hepsinde aynıdır.",
+   "useCases": [
+    "Tenant büyümesinde yatay bölünme planı",
+    "Shard'lar arası tenant taşıma akışı"
+   ]
   },
   "term-shard-key-k-tenancy-deep": {
-   "longExplanation": "Hangi satır hangi shard'a gider.\n\nYanlış seçim = hot shard. Türkçesi: Parça anahtarı."
+   "longExplanation": "Hangi satır hangi shard'a gider.\n\nYanlış seçim = hot shard. Türkçesi: Parça anahtarı.\n\nTenancy-deep bağlamında shard key kararı kalıcıdır: tenant_id doğal anahtardır — tenant verisi tek shard'da kalır, cross-shard join doğmaz; yanlış anahtar seçimi geri alınamaz maliyettir.",
+   "realWorldAnalogy": "Arşivin soyadına göre dizilmesi gibi — dizilim bir kez seçilir; sonradan 'doğum yılına göre' demek tüm arşivi elden geçirmektir.",
+   "useCases": [
+    "tenant_id ile shard yerleşimi",
+    "Anahtar kararının ADR ile kayıt altına alınması"
+   ]
   },
   "term-hot-shard-k-tenancy-deep": {
-   "longExplanation": "Birkaç tenant tek shard'da, geri kalan boş.\n\nYük dengesiz. Türkçesi: Sıcak parça."
+   "longExplanation": "Birkaç tenant tek shard'da, geri kalan boş.\n\nYük dengesiz. Türkçesi: Sıcak parça.\n\nTenancy-deep bağlamında hot shard, dağılımın başarısızlık modudur: birkaç dev tenant aynı shard'a düşerse komşuları ezer; izleme shard-başına yük metriğiyle yapılır, çözüm taşımadır.",
+   "realWorldAnalogy": "Apartmanda bir dairenin düğün salonu gibi çalışması gibi — asansör hep meşgul; çözüm düğün salonunu müstakile (dedicated shard) taşımak.",
+   "useCases": [
+    "Shard-başına yük dengesinin izlenmesi",
+    "Dev tenant'ın dedicated shard'a taşınması"
+   ]
   },
   "term-scatter-gather-k-tenancy-deep": {
-   "longExplanation": "Query tüm shard'lara gider, sonuçlar merge.\n\nCross-shard tek seçenek. Türkçesi: Yay-topla."
+   "longExplanation": "Query tüm shard'lara gider, sonuçlar merge.\n\nCross-shard tek seçenek. Türkçesi: Yay-topla.\n\nTenancy-deep bağlamında scatter-gather istisnai yoldur: tenant-üstü sorgu (platform analitiği) tüm shard'lara dağılıp birleşir; pahalıdır ve ürün yüzeyine değil iç raporlamaya aittir.",
+   "realWorldAnalogy": "Tüm şubelere anket faksla- yıp cevapları birleştirmek gibi — yapılır ama her gün yapılmaz; rutin rapor şubeden gelir.",
+   "useCases": [
+    "Platform-geneli metriklerin gece toplanması",
+    "Scatter sorgularının ürün API'sinden men edilmesi"
+   ]
   },
   "term-bridge-model-k-tenancy-deep": {
-   "longExplanation": "Schema-per-tenant.\n\nPool ile silo arası orta seçenek. Türkçesi: Köprü model."
+   "longExplanation": "Schema-per-tenant.\n\nPool ile silo arası orta seçenek. Türkçesi: Köprü model.\n\nTenancy-deep bağlamında bridge model orta yoldur: schema-per-tenant, satır-bazlıdan güçlü izolasyon, DB-per-tenant'tan ucuz operasyon sunar; migration maliyeti (N şema × her değişiklik) bilinçli kabuldür.",
+   "realWorldAnalogy": "Sitede her daireye ayrı sayaç ama ortak bina gibi — müstakil ev (ayrı DB) maliyeti olmadan mahremiyet artar; bakım yine N kapı gezer.",
+   "useCases": [
+    "Uyum-hassas tenant'lara şema izolasyonu",
+    "Migration'ın N şemaya fan-out otomasyonu"
+   ]
   },
   "term-cluster-scale-counter": {
    "longExplanation": "Bu döküman birimi — kendi başına okunabilir mimari konu.\n\nTek dosyada tek bağımsız konu prensibi. Türkçesi: Konu kümesi."
   },
   "term-time-series-scale-timeseries": {
-   "longExplanation": "Zaman damgalı, ardışık veri akışı.\n\nSensör/metrik 'şu an x değer' bilgisi sürekli. Türkçesi: Zaman serisi."
+   "longExplanation": "Zaman damgalı, ardışık veri akışı.\n\nSensör/metrik 'şu an x değer' bilgisi sürekli. Türkçesi: Zaman serisi.\n\nTimeseries bağlamında time-series ayrı bir veri sınıfıdır: ekleme-yoğun, güncelleme-yok, zaman-aralıklı sorgu; klasik OLTP tablosuna sığmaz, kendi saklama ve sıkıştırma düzenini ister.",
+   "realWorldAnalogy": "Güvenlik kamerası kaydı gibi — sürekli akar, geri dönüp değiştirilmez, 'dün 14:00-15:00' diye izlenir.",
+   "useCases": [
+    "IoT/metrik verisinin ayrı saklama düzeni",
+    "Zaman-aralıklı sorguların chunk'tan karşılanması"
+   ]
   },
   "term-timescaledb-scale-timeseries": {
-   "longExplanation": "PostgreSQL extension, time-series için optimize.\n\nPgvector gibi extension; ayrı DB değil. Türkçesi: TimescaleDB."
+   "longExplanation": "PostgreSQL extension, time-series için optimize.\n\nPgvector gibi extension; ayrı DB değil. Türkçesi: TimescaleDB.\n\nTimeseries bağlamında TimescaleDB anti-stack tercihindir: ayrı TSDB (InfluxDB) yerine Postgres extension'ı — SQL, yedekleme ve operasyon tek kalır; pgvector kararıyla aynı felsefedir.",
+   "realWorldAnalogy": "Eve ek kat çıkmak gibi — ayrı yazlık (Influx) almak yerine aynı temelin üstüne genişlemek.",
+   "useCases": [
+    "Metrik tablolarının hypertable'a çevrilmesi",
+    "Tek DB operasyonuyla TS iş yükü"
+   ]
   },
   "term-hyper-table-scale-timeseries": {
-   "longExplanation": "Zaman bazlı otomatik chunk'lara bölünen tablo.\n\nINSERT performans, eski chunk compress. Türkçesi: Hiper-tablo."
+   "longExplanation": "Zaman bazlı otomatik chunk'lara bölünen tablo.\n\nINSERT performans, eski chunk compress. Türkçesi: Hiper-tablo.\n\nTimeseries bağlamında hypertable şeffaf bölümlemedir: tablo zaman chunk'larına otomatik bölünür; sorgu planlayıcı yalnız ilgili chunk'lara iner, eski chunk'lar sıkıştırılır veya düşürülür.",
+   "realWorldAnalogy": "Klasörü aylara bölmek gibi — 'Mart faturaları' sorusu tüm dolabı değil tek klasörü açtırır.",
+   "useCases": [
+    "Chunk-pruning ile aralık sorgusu hızlanması",
+    "Eski chunk'ların otomatik sıkıştırılması"
+   ]
   },
   "term-downsampling-scale-timeseries": {
-   "longExplanation": "Saniyelik veriyi dakikalık ortalamaya düşürme.\n\n30 gün sonra her saniye lazım değil. Türkçesi: Örnek azaltma."
+   "longExplanation": "Saniyelik veriyi dakikalık ortalamaya düşürme.\n\n30 gün sonra her saniye lazım değil. Türkçesi: Örnek azaltma.\n\nTimeseries bağlamında downsampling, saklama ekonomisidir: saniyelik ham veri 30 gün, dakikalık özet 1 yıl, saatlik özet süresiz — çözünürlük yaşla düşer, soru cevaplanabilir kalır.",
+   "realWorldAnalogy": "Günlük tutmak gibi — bu haftayı saat saat, geçen yılı 'özetle' hatırlarsın; defter şişmez, hikâye kaybolmaz.",
+   "useCases": [
+    "Yaş-bazlı çözünürlük politikası",
+    "Continuous aggregate ile otomatik özetleme"
+   ]
   },
   "term-kafka-scale-streaming": {
-   "longExplanation": "Distributed event log / streaming platform.\n\n100K+ event/sn ölçeklenir. Türkçesi: Apache Kafka."
+   "longExplanation": "Distributed event log / streaming platform.\n\n100K+ event/sn ölçeklenir. Türkçesi: Apache Kafka.\n\nStreaming bağlamında Kafka, eşiğin öbür tarafıdır: bus + outbox çoğu yükü taşır; kalıcı log, replay ve çok-tüketicili akış gerektiğinde Kafka devreye girer — erken almak anti-stack, geç kalmak darboğazdır.",
+   "realWorldAnalogy": "Şehir içi servis yerine tren hattı döşemek gibi — yolcu (event) milyonlaşınca hat kurulur; üç yolcu için ray döşenmez.",
+   "useCases": [
+    "Bus'tan Kafka'ya geçiş eşiğinin metriklerle tanımı",
+    "Event log replay ile yeni projection inşası"
+   ]
   },
   "term-topic-scale-streaming": {
-   "longExplanation": "Kafka'da event akışının kanalı.\n\nProducer yazar, consumer okur. Türkçesi: Konu."
+   "longExplanation": "Kafka'da event akışının kanalı.\n\nProducer yazar, consumer okur. Türkçesi: Konu.\n\nStreaming bağlamında topic, akışın adresleme birimidir: domain-bazlı adlandırma (orders.events) ve partition sayısı baştan düşünülür — partition, paralellik tavanıdır ve sonradan artırmak sancılıdır.",
+   "realWorldAnalogy": "Radyo frekans planı gibi — kanal listesi baştan tasarlanır; yayın başladıktan sonra frekans kaydırmak dinleyici kaybettirir.",
+   "useCases": [
+    "Domain-bazlı topic adlandırma sözleşmesi",
+    "Partition sayısının paralellik hedefine göre seçimi"
+   ]
   },
   "term-consumer-group-scale-streaming": {
-   "longExplanation": "Aynı topic'ten paralel okuma için worker grubu.\n\nYatay ölçek. Türkçesi: Tüketici grubu."
+   "longExplanation": "Aynı topic'ten paralel okuma için worker grubu.\n\nYatay ölçek. Türkçesi: Tüketici grubu.\n\nStreaming bağlamında consumer group, paralel tüketimin birimidir: aynı gruptaki worker'lar partition'ları paylaşır; grup başına offset, 'nerede kalmıştık' sorusunun cevabıdır ve rebalance kesintisi planlanır.",
+   "realWorldAnalogy": "Vardiya ekibi gibi — bant (partition) ekip üyelerine paylaştırılır; biri ayrılınca bant yeniden dağıtılır, sayaç kalır.",
+   "useCases": [
+    "Tüketici ölçeklemesinin partition sınırına kadar artışı",
+    "Rebalance sırasında çift işlemeye idempotency koruması"
+   ]
   },
   "term-windowing-scale-streaming": {
-   "longExplanation": "Akan event'leri belli zaman penceresi içinde grup.\n\n'Son 5 dk' agregasyonu için. Türkçesi: Pencereleme."
+   "longExplanation": "Akan event'leri belli zaman penceresi içinde grup.\n\n'Son 5 dk' agregasyonu için. Türkçesi: Pencereleme.\n\nStreaming bağlamında windowing, akan veriye soru sormanın yoludur: 'son 5 dakikada kaç hata' sorusu pencere tanımı ister; geç gelen event (late arrival) politikası pencerenin dürüstlüğünü belirler.",
+   "realWorldAnalogy": "Otoyol sayım noktası gibi — 'saatte kaç araç' ancak saat dilimi çizilince anlamlıdır; geç bildirilen geçiş hangi saate yazılır, kural ister.",
+   "useCases": [
+    "Kayan pencereyle anomali eşiği izleme",
+    "Geç event'in pencereye kabul politikası"
+   ]
   },
   "term-postgis-scale-gis": {
    "longExplanation": "PostgreSQL'in coğrafi veri eklentisi.\n\nLat/lng sorgular standart SQL'de zor. Türkçesi: PostGIS extension.\n\nGIS primitive bağlamında PostGIS işletim konusudur: spatial index'ler, geometri sorgu planları ve büyük polygon setlerinde performans burada ele alınır. Tip kataloğu 'ne'yi, bu sayfa 'nasıl hızlı'yı anlatır.",
@@ -909,13 +1244,28 @@
    ]
   },
   "term-gist-scale-gis": {
-   "longExplanation": "Spatial veri için index türü.\n\nCoğrafi sorgu hızlı için zorunlu. Açılımı: Generalized Search Tree. Türkçesi: GiST index."
+   "longExplanation": "Spatial veri için index türü.\n\nCoğrafi sorgu hızlı için zorunlu. Açılımı: Generalized Search Tree. Türkçesi: GiST index.\n\nGIS bağlamında GiST, spatial sorgunun index ailesidir: B-tree'nin sıralayamadığı 'içinde mi / yakın mı' soruları bounding-box hiyerarşisiyle yanıtlanır; PostGIS kolonu index'siz tam taramadır.",
+   "realWorldAnalogy": "Haritayı kareleme sistemi gibi — iğneyi bulmak için tüm haritayı değil, önce büyük kareyi sonra küçüğünü açarsın.",
+   "useCases": [
+    "Polygon-içinde-nokta sorgusunun index'lenmesi",
+    "Yakınlık sorgularında mesafe operatörü + GiST"
+   ]
   },
   "term-geofencing-scale-gis": {
-   "longExplanation": "Bir noktanın belli polygon içinde olup olmadığı.\n\nTeslimat bölgesi, sınır kontrolü. Türkçesi: Coğrafi sınırlama."
+   "longExplanation": "Bir noktanın belli polygon içinde olup olmadığı.\n\nTeslimat bölgesi, sınır kontrolü. Türkçesi: Coğrafi sınırlama.\n\nGIS bağlamında geofencing, konum-tetikli iş kuralıdır: aracın bölgeye girişi/çıkışı event üretir; sürekli konum akışında her noktayı her çitle test etmemek için index ve kaba-eleme şarttır.",
+   "realWorldAnalogy": "Görünmez sınır alarmı gibi — koyun sürüsüne çoban köpeği değil, sınır geçilince çalan çıngırak.",
+   "useCases": [
+    "Araç bölge giriş/çıkış event'leri",
+    "Teslimat bölgesi dışına çıkma uyarısı"
+   ]
   },
   "term-geography-vs-geometry-scale-gis": {
-   "longExplanation": "Geography: küre, gerçek mesafe. Geometry: düz koordinat.\n\n100 km'de geometry hatalı; geography doğru. Türkçesi: Coğrafya vs geometri."
+   "longExplanation": "Geography: küre, gerçek mesafe. Geometry: düz koordinat.\n\n100 km'de geometry hatalı; geography doğru. Türkçesi: Coğrafya vs geometri.\n\nGIS bağlamında bu ayrım doğruluk-hız takasıdır: geography küre üstünde gerçek metre verir (pahalı), geometry düzlem varsayar (hızlı); şehir-içi işlerde geometry + uygun projeksiyon çoğu ihtiyacı karşılar.",
+   "realWorldAnalogy": "Dünya haritası ile şehir krokisi gibi — kıtalararası mesafe küre ister, mahalle ölçümü krokiyle doğrudur.",
+   "useCases": [
+    "Şehir-içi mesafede projeksiyonlu geometry",
+    "Ülke-ölçeği hesapta geography tercihi"
+   ]
   },
   "term-quiet-hours-l1-quiet-hours": {
    "longExplanation": "Bildirim göndermenin yasak olduğu saat aralığı.\n\nKullanıcı gece bildirim istemez. Türkçesi: Sessiz saatler."
@@ -933,13 +1283,23 @@
    "longExplanation": "Belirli bir locale için çeviri + format ayarı.\n\ni18n altyapı, l10n içerik. Açılımı: Localization. Türkçesi: Yerelleştirme."
   },
   "term-icu-messageformat-cc-i18n-deep": {
-   "longExplanation": "Unicode'un çoğul/cinsiyet/koşul formatı.\n\nKarmaşık çoğul kuralları çözer. Türkçesi: ICU mesaj formatı."
+   "longExplanation": "Unicode'un çoğul/cinsiyet/koşul formatı.\n\nKarmaşık çoğul kuralları çözer. Türkçesi: ICU mesaj formatı.\n\ni18n-deep bağlamında ICU, çoğul ve cinsiyet kurallarının motorudur: '1 dosya / 2 dosya / 5 dosya' Türkçede tekil görünse de dillerin çoğul sınıfları değişir; format motoru dile göre dallanır.",
+   "realWorldAnalogy": "Dil bilgisi kitabının çekim tabloları gibi — kelime aynı, ek dile ve sayıya göre tablodan seçilir.",
+   "useCases": [
+    "Çoğul sınıflarının dil-bazlı doğru seçimi",
+    "Değişken içeren mesajların güvenli enterpolasyonu"
+   ]
   },
   "term-rtl-cc-i18n-deep": {
    "longExplanation": "Arapça/İbranice yazı yönü.\n\nLayout'u tersine çevirir; CSS logical properties şart. Açılımı: Right-to-Left. Türkçesi: Sağdan sola."
   },
   "term-locale-cc-i18n-deep": {
-   "longExplanation": "Dil + bölge: tr-TR, en-US.\n\ntr-TR + tr-CY farklı para birimi. Türkçesi: Yerel ayar."
+   "longExplanation": "Dil + bölge: tr-TR, en-US.\n\ntr-TR + tr-CY farklı para birimi. Türkçesi: Yerel ayar.\n\ni18n-deep bağlamında locale, çeviri anahtarının ötesidir: sayı, para, tarih ve sıralama (collation) kuralları locale'den türer; tr-TR'de 'İ' sıralaması bunun klasik sınavıdır.",
+   "realWorldAnalogy": "Aynı markanın ülke mağazaları gibi — vitrin aynı, etiket biçimi ve para birimi şubeye göre değişir.",
+   "useCases": [
+    "Sayı/para biçiminin locale'den otomatik türemesi",
+    "Türkçe İ/i sıralama ve karşılaştırma kurallarının testi"
+   ]
   },
   "term-a11y-cc-a11y-backend": {
    "longExplanation": "a + 11 harf + y = 'accessibility'.\n\nEngelli kullanıcılar yazılımı kullanabilsin. Açılımı: Accessibility. Türkçesi: Erişilebilirlik."
@@ -948,7 +1308,12 @@
    "longExplanation": "Resmin metin açıklaması; ekran okuyucu okur.\n\nGörme engelli kullanıcı için. Türkçesi: Alternatif metin."
   },
   "term-wcag-cc-a11y-backend": {
-   "longExplanation": "Web erişilebilirlik kuralları.\n\nYasal + etik standart. Açılımı: Web Content Accessibility Guidelines. Türkçesi: WCAG."
+   "longExplanation": "Web erişilebilirlik kuralları.\n\nYasal + etik standart. Açılımı: Web Content Accessibility Guidelines. Türkçesi: WCAG.\n\nA11y-backend bağlamında WCAG, frontend'in tek başına karşılayamadığı kuralların kaynağıdır: hata mesajı metinleri, zaman aşımı toleransları ve export edilen dokümanların erişilebilirliği backend sözleşmesine girer.",
+   "realWorldAnalogy": "Binanın asansör standardı gibi — rampa (frontend) yetmez; asansör kabini de (backend çıktıları) standarda uymalı.",
+   "useCases": [
+    "API hata mesajlarının okunabilir ve eyleme dönük olması",
+    "Üretilen PDF/CSV çıktılarının erişilebilirlik kontrolü"
+   ]
   },
   "term-reduce-motion-cc-a11y-backend": {
    "longExplanation": "Animasyonu kapatma seçeneği.\n\nVertigo, motion sickness için. Türkçesi: Hareket azalt."
@@ -972,16 +1337,31 @@
    "longExplanation": "Arama sonuçlarını kategoriye göre saymak.\n\n'Marka: Apple (24)' sayısı her arama sonrası güncel. Türkçesi: Toplulaştırmalar."
   },
   "term-bm25-l1-search-deep": {
-   "longExplanation": "Klasik full-text search puanlama algoritması.\n\nTerm frequency + document length normalizasyonu. Türkçesi: BM25 algoritması."
+   "longExplanation": "Klasik full-text search puanlama algoritması.\n\nTerm frequency + document length normalizasyonu. Türkçesi: BM25 algoritması.\n\nSearch-deep bağlamında BM25, hibrit aramanın klasik bacağıdır: vektör benzerliği anlamı, BM25 birebir terimi yakalar; iki skor birleştirilerek (RRF) sıralanır. Kod ve ID aramasında BM25 hâlâ rakipsizdir.",
+   "realWorldAnalogy": "Kütüphanede hem konuya hem kitap adına bakmak gibi — konu rafı (vektör) benzerini, fihrist (BM25) tam adı bulur.",
+   "useCases": [
+    "Hibrit skorlamada BM25 + vektör birleşimi",
+    "Hata kodu/ID aramalarında birebir eşleşme önceliği"
+   ]
   },
   "term-vector-search-l1-search-deep": {
    "longExplanation": "Embedding similarity (cosine) ile semantic arama.\n\n'köpek mama' → 'kuru gıda' bulabilir; kelime eşleşmez. Türkçesi: Vektör arama."
   },
   "term-saga-scale-saga": {
-   "longExplanation": "Birden fazla servise yayılan uzun iş akışı.\n\nDistributed transaction'ın güvenli alternatifi. Türkçesi: Saga (iş zinciri)."
+   "longExplanation": "Birden fazla servise yayılan uzun iş akışı.\n\nDistributed transaction'ın güvenli alternatifi. Türkçesi: Saga (iş zinciri).\n\nScale-saga bağlamında saga işletim desenidir: durum makinesi, zaman aşımı, telafi kuyruğu ve yarım kalan saga'ların gözlemlenebilirliği burada kurulur. Tasarım sorusu 'ne olur'dan 'yarıda kalırsa kim görür'e kayar.",
+   "realWorldAnalogy": "Şantiye iş programı gibi — beton gelmezse kalıp ekibi beklemez, program revize edilir; yarım iş panoda kırmızı yanar.",
+   "useCases": [
+    "Saga durum makinesinin izlenebilir panosu",
+    "Zaman aşımına düşen adımın telafi kuyruğuna alınması"
+   ]
   },
   "term-compensation-scale-saga": {
-   "longExplanation": "Bir saga adımı başarısız olursa önceki adımları geri alma işlemi.\n\nROLLBACK'in mikro-servis dünyasındaki karşılığı. Türkçesi: Telafi."
+   "longExplanation": "Bir saga adımı başarısız olursa önceki adımları geri alma işlemi.\n\nROLLBACK'in mikro-servis dünyasındaki karşılığı. Türkçesi: Telafi.\n\nSaga bağlamında compensation, rollback'in dağıtık dünyadaki karşılığıdır: yapılan iş geri alınmaz, ters işlem yapılır (ödeme iadesi, rezervasyon iptali); her saga adımı telafisiyle birlikte tasarlanır, telafisiz adım saga'ya giremez.",
+   "realWorldAnalogy": "Yanlış EFT'nin iadesi gibi — gönderilen para 'geri alınmaz', iade transferi yapılır; ikisi de dekontludur.",
+   "useCases": [
+    "Adım başına telafi aksiyonunun zorunlu tasarımı",
+    "Telafinin de idempotent olması kuralı"
+   ]
   },
   "term-salesforce-s-crm": {
    "longExplanation": "Salesforce — CRM kategorisinde pazar referansı.\n\nMüşteri 'X gibi, ama bizim platformumuza entegre' iletişimi için karşılaştırma noktası. Türkçesi: Pazar lideri (muadil)."
@@ -1020,10 +1400,20 @@
    "longExplanation": "Expensify — Expenses & Travel kategorisinde pazar referansı.\n\nMüşteri 'X gibi, ama bizim platformumuza entegre' iletişimi için karşılaştırma noktası. Türkçesi: Pazar lideri (muadil)."
   },
   "term-idempotency-scale-idempotency": {
-   "longExplanation": "Aynı işlemin N kez yapılması = 1 kez yapılması.\n\nAğ tekrar denemelerinde çift işlem olmasın. Türkçesi: Tekrar-güvenliği."
+   "longExplanation": "Aynı işlemin N kez yapılması = 1 kez yapılması.\n\nAğ tekrar denemelerinde çift işlem olmasın. Türkçesi: Tekrar-güvenliği.\n\nScale-idempotency bağlamında desen mekanizmaya iner: anahtar üretimi, sonuç saklama süresi ve çakışan eşzamanlı isteklerin tekilleştirilmesi (in-flight lock) burada çözülür.",
+   "realWorldAnalogy": "Noter kayıt numarası gibi — aynı evrak ikinci kez gelirse yeni işlem açılmaz, ilk işlemin sonucu gösterilir.",
+   "useCases": [
+    "Anahtar başına sonuç cache'i ve saklama süresi",
+    "Eşzamanlı çift isteğin tek işleme indirgenmesi"
+   ]
   },
   "term-idempotency-key-scale-idempotency": {
-   "longExplanation": "İstemcinin ürettiği unique string; sunucu aynı key ile gelen ikinciyi yutar.\n\nKart çekme gibi yan-etkili işlemlerde şart. Türkçesi: Tekrar-anahtarı."
+   "longExplanation": "İstemcinin ürettiği unique string; sunucu aynı key ile gelen ikinciyi yutar.\n\nKart çekme gibi yan-etkili işlemlerde şart. Türkçesi: Tekrar-anahtarı.\n\nIdempotency bağlamında anahtar, istemci-sunucu el sıkışmasıdır: istemci üretir, sunucu sonucu anahtara bağlar; aynı anahtar tekrar gelirse işlem değil kayıtlı sonuç döner. Anahtar kapsamı (tenant+uç) ve ömrü sözleşmedir.",
+   "realWorldAnalogy": "Bilet rezervasyon kodu gibi — aynı kodla ikinci kez 'satın al' dersen ikinci koltuk verilmez, mevcut biletin gösterilir.",
+   "useCases": [
+    "Ödeme ucunda zorunlu anahtar başlığı",
+    "Anahtar-sonuç cache'inin ömür politikası"
+   ]
   },
   "term-capability-flag-s-ecommerce-models": {
    "longExplanation": "Tenant başına açılabilir/kapatılabilir yetenek (b2c, b2b, marketplace, dropship).\n\nTek tenant aynı anda hem B2C hem B2B çalışabilir; enum tek seçim zorlar, flag çoklu açar. Türkçesi: Yetenek bayrağı."
@@ -1142,7 +1532,12 @@
    "longExplanation": "Person + Organization üst tipi (Customer, Vendor, Employee aynı tabandan).\n\nAynı kişi hem müşteri hem tedarikçi olabilir; tek kayıt. Türkçesi: Taraf."
   },
   "term-jurisdiction-cc-jurisdiction-resolver": {
-   "longExplanation": "Bir kullanıcıya/işleme hangi ülkenin/bölgenin hukuku uygulanır.\n\nLocale (dil) ile karıştırılır — felaket. Bağımsız eksen. Türkçesi: Yargı yetki alanı."
+   "longExplanation": "Bir kullanıcıya/işleme hangi ülkenin/bölgenin hukuku uygulanır.\n\nLocale (dil) ile karıştırılır — felaket. Bağımsız eksen. Türkçesi: Yargı yetki alanı.\n\nResolver bağlamında jurisdiction çözülen şeyin kendisidir: kullanıcının konumu, tenant'ın ülkesi ve işlem türünden uygulanacak hukuk rejimi hesaplanır; tüm uyum akışları bu karara bağlanır.",
+   "realWorldAnalogy": "Uluslararası uçuşun hangi ülke hukukunda olduğunu belirlemek gibi — kalkış, varış ve bayrak ülkesi birlikte okunur.",
+   "useCases": [
+    "Tenant+kullanıcı+işlem üçlüsünden rejim kararı",
+    "Rejim kararının DSAR ve saklama sürelerine yayılması"
+   ]
   },
   "term-orthogonal-axes-cc-jurisdiction-resolver": {
    "longExplanation": "6 eksen birbirinden bağımsız değişebilir; biri diğerini belirlemez.\n\nKlasik hata: hepsini locale'a bağlamak. Almanya'da yaşayan Türk = locale tr, jurisdiction DE, currency EUR, tax DE, tz Berlin, residency EU. Türkçesi: Dik eksenler."
@@ -1154,13 +1549,28 @@
    "longExplanation": "Politika kuralları kodda değil, versiyonlanmış DB/dosyada.\n\nKod deploy'u olmadan kural değiştir. Versiyonlama = audit + geri dönüş. Türkçesi: Veri olarak konfigürasyon."
   },
   "term-decision-trace-cc-jurisdiction-resolver": {
-   "longExplanation": "Resolver'ın verdiği her kararın audit log'u.\n\n'Bu kullanıcıya neden şu kural uygulandı?' sorusu yasal ihtiyaç (GDPR/KVKK). Türkçesi: Karar izi."
+   "longExplanation": "Resolver'ın verdiği her kararın audit log'u.\n\n'Bu kullanıcıya neden şu kural uygulandı?' sorusu yasal ihtiyaç (GDPR/KVKK). Türkçesi: Karar izi.\n\nResolver bağlamında decision trace, kararın savunulabilirliğidir: hangi girdiyle hangi kural çalıştı ve neden bu rejim çıktı — denetimde 'sistem öyle dedi' cevabı geçersizdir, iz zorunludur.",
+   "realWorldAnalogy": "Hakem kararının VAR kaydı gibi — karar tartışılınca pozisyon kayıttan izlenir; kayıt yoksa otorite de yoktur.",
+   "useCases": [
+    "Rejim kararının girdi+kural+sonuç üçlüsüyle loglanması",
+    "Denetimde geçmiş kararın aynen yeniden üretilmesi"
+   ]
   },
   "term-data-residency-cc-jurisdiction-resolver": {
-   "longExplanation": "Verinin fiziksel olarak saklandığı coğrafi yer.\n\nKVKK md.9 (TR), GDPR md.44+ (AB), Rusya/Çin yerelleştirme yasaları. Türkçesi: Veri ikametgâhı."
+   "longExplanation": "Verinin fiziksel olarak saklandığı coğrafi yer.\n\nKVKK md.9 (TR), GDPR md.44+ (AB), Rusya/Çin yerelleştirme yasaları. Türkçesi: Veri ikametgâhı.\n\nResolver bağlamında data residency, rejim kararının fiziksel sonucudur: 'bu tenant'ın verisi hangi bölgede yaşamalı' sorusu resolver çıktısıyla cevaplanır ve depolama yerleşimi buna uyar.",
+   "realWorldAnalogy": "Banka kasasının şube seçimi gibi — müşteri sözleşmesi hangi şehri diyorsa kasa orada açılır; içerik aynı olsa da adres bağlayıcıdır.",
+   "useCases": [
+    "Tenant açılışında bölge seçiminin rejimden türemesi",
+    "Bölge dışına replikasyonun engellenmesi"
+   ]
   },
   "term-deny-by-default-cc-jurisdiction-resolver": {
-   "longExplanation": "Resolver karar veremezse → en sıkı kural uygulanır.\n\n'Bilmiyorsan en kısıtlayıcıya düş' güvenli; sessiz kabul yasal ihlal. Türkçesi: Varsayılan reddet."
+   "longExplanation": "Resolver karar veremezse → en sıkı kural uygulanır.\n\n'Bilmiyorsan en kısıtlayıcıya düş' güvenli; sessiz kabul yasal ihlal. Türkçesi: Varsayılan reddet.\n\nResolver bağlamında deny-by-default, belirsizliğin güvenli tarafıdır: rejim çözülemiyorsa en sıkı kural uygulanır; 'bilmiyorum' asla 'serbest' anlamına gelmez.",
+   "realWorldAnalogy": "Gümrükte beyan edilemeyen paketin bekletilmesi gibi — ne olduğu anlaşılmayan kutu içeri salınmaz, kenara alınır.",
+   "useCases": [
+    "Çözülemeyen rejimde en sıkı saklama/maskeleme setine düşme",
+    "Belirsiz kararların inceleme kuyruğuna yazılması"
+   ]
   },
   "term-upkeep-s-cmms": {
    "longExplanation": "UpKeep — Maintenance / CMMS kategorisinde pazar referansı.\n\nMüşteri 'X gibi, ama bizim platformumuza entegre' iletişimi için karşılaştırma noktası. Türkçesi: Pazar lideri (muadil)."
@@ -1172,7 +1582,12 @@
    "longExplanation": "Tarih/sayı/para/plural kuralları için altın kaynak.\n\nTek noktadan tüm dillerin format kuralları. Açılımı: Common Locale Data Repository. Türkçesi: Unicode CLDR."
   },
   "term-icu-messageformat-cc-i18n-standards": {
-   "longExplanation": "Pluralization + variable interpolation standardı.\n\nTüm gramer formlarını destekler; cümle birleştirme yasak. Türkçesi: ICU mesaj formatı."
+   "longExplanation": "Pluralization + variable interpolation standardı.\n\nTüm gramer formlarını destekler; cümle birleştirme yasak. Türkçesi: ICU mesaj formatı.\n\ni18n-standards bağlamında ICU bir tercihtir: ekip-içi icat format yerine endüstri standardı seçilir; çeviri büroları ve araç zinciri (TMS) aynı dili konuşur.",
+   "realWorldAnalogy": "Elektrik prizinde standart seçmek gibi — kendi fişini icat edersen her cihaz için adaptör yazarsın.",
+   "useCases": [
+    "Çeviri dosyalarının TMS araçlarıyla uyumu",
+    "Format hatalarının CI'da lint ile yakalanması"
+   ]
   },
   "term-collation-cc-i18n-standards": {
    "longExplanation": "Stringlerin alfabetik sıralama mantığı.\n\nTürkçe'de 'İstanbul' aramada 'istanbul' bulmalı — locale-aware collation. Türkçesi: Sıralama kuralı."
@@ -1184,7 +1599,12 @@
    "longExplanation": "margin-inline-start, padding-block-end gibi yön-bağımsız CSS.\n\nRTL'de margin-left/right ters çevirmek YASAK; logical properties otomatik. Türkçesi: Mantıksal CSS özellikleri."
   },
   "term-pseudo-localization-cc-i18n-standards": {
-   "longExplanation": "Metni Unicode varyantla genişletip layout test etme.\n\nAlmanca %35 uzun; hardcoded string'i ortaya çıkarır. Türkçesi: Sahte yerelleştirme."
+   "longExplanation": "Metni Unicode varyantla genişletip layout test etme.\n\nAlmanca %35 uzun; hardcoded string'i ortaya çıkarır. Türkçesi: Sahte yerelleştirme.\n\ni18n-standards bağlamında pseudo-localization CI adımıdır: build'de pseudo locale üretilir, hardcoded (çevrilmemiş) metin pseudo'da düz kalınca kendini ele verir.",
+   "realWorldAnalogy": "Karanlıkta parlayan işaretleyici gibi — işaretlenmemiş (hardcoded) metin ışıkta hemen seçilir.",
+   "useCases": [
+    "Hardcoded string'lerin pseudo build'de tespiti",
+    "Çeviri kapsam yüzdesinin CI raporu"
+   ]
   },
   "term-hreflang-cc-i18n-standards": {
    "longExplanation": "Google'a 'bu sayfanın X dil versiyonu' sinyali.\n\nYanlış yaparsan duplicate content cezası. Türkçesi: Dil-link etiketi."
@@ -1196,7 +1616,12 @@
    "longExplanation": "Bir işlemin hangi anda kura tabi olduğu (sipariş/fatura/tahsilat).\n\n3 farklı an = 3 farklı muhasebe sonucu. Karar mimari. Türkçesi: Kur kilidi."
   },
   "term-functional-currency-cc-fx-ledger": {
-   "longExplanation": "Şirketin esas iş yaptığı para birimi.\n\nTüm yabancı işlemler buna çevrilir; FX gain/loss buradan hesaplanır. Açılımı: IAS 21. Türkçesi: İşletme para birimi."
+   "longExplanation": "Şirketin esas iş yaptığı para birimi.\n\nTüm yabancı işlemler buna çevrilir; FX gain/loss buradan hesaplanır. Açılımı: IAS 21. Türkçesi: İşletme para birimi.\n\nFX-ledger bağlamında functional currency, defterin ana eksenidir: tüm işlemler kayıt anındaki kurla fonksiyonel paraya çevrilir; kur farkı ayrı hesapta izlenir, rapor tek eksende okunur.",
+   "realWorldAnalogy": "Yurtdışı gezide harcamaları akşam tek para birimine çevirip not etmek gibi — cüzdanda üç para olsa da hesap tek dilde tutulur.",
+   "useCases": [
+    "Çok-kurlu işlemlerin tek eksende defterleşmesi",
+    "Kur farkı kalemlerinin otomatik ayrıştırılması"
+   ]
   },
   "term-reporting-currency-cc-fx-ledger": {
    "longExplanation": "Konsolide finansal raporlar için kullanılan.\n\nHolding company USD'de raporlar; TR'deki şirket TL functional, USD reporting. Türkçesi: Raporlama para birimi."
@@ -1311,19 +1736,39 @@
    "longExplanation": "Yeni resolver paralel çalışır; karar farkları log'lanır ama eski sistem uygulanır.\n\nGüvenli rollout — fark görmeden full migrate'ten kaçınma. Türkçesi: Gölge mod."
   },
   "term-backfill-cc-resolver-ops": {
-   "longExplanation": "Yeni alan için eski kayıtlara değer atama.\n\nResolver yokken oluşturulan 10K kullanıcının jurisdiction'ını şimdi belirleme. Türkçesi: Geri doldurma."
+   "longExplanation": "Yeni alan için eski kayıtlara değer atama.\n\nResolver yokken oluşturulan 10K kullanıcının jurisdiction'ını şimdi belirleme. Türkçesi: Geri doldurma.\n\nResolver-ops bağlamında backfill, kural değişiminin geçmişe uygulanmasıdır: yeni jurisdiction alanı eski tenant'larda boştur; toplu hesaplama kontrollü partilerle, decision trace bırakıp koşar.",
+   "realWorldAnalogy": "Yeni soyadı kanununda eski nüfus defterlerinin güncellenmesi gibi — köy köy, kayıt kayıt; her değişiklik şerhli.",
+   "useCases": [
+    "Eski kayıtlara parti parti rejim ataması",
+    "Backfill sırasında canlı trafiğin etkilenmemesi"
+   ]
   },
   "term-cache-invalidation-cc-resolver-ops": {
-   "longExplanation": "Config değişince cache'i temizleme.\n\nCache hot path; config değiştiğinde eski kuralla kullanıcıya cevap vermek YASAL İHLAL. Türkçesi: Önbellek geçersizleştirme."
+   "longExplanation": "Config değişince cache'i temizleme.\n\nCache hot path; config değiştiğinde eski kuralla kullanıcıya cevap vermek YASAL İHLAL. Türkçesi: Önbellek geçersizleştirme.\n\nResolver-ops bağlamında invalidation, kural değişiminin yayılma anıdır: jurisdiction config'i değişince eski kararların cache'i düşürülür; bayat kararla işlem yapma riski operasyonel hatadır.",
+   "realWorldAnalogy": "Fiyat listesi değişince kasalardaki eski listenin toplanması gibi — tek kasa unutulsa yanlış fiyat kesilir.",
+   "useCases": [
+    "Config sürümüyle cache anahtarının bağlanması",
+    "Değişiklik sonrası karar tutarlılığı taraması"
+   ]
   },
   "term-deny-by-default-cc-resolver-ops": {
-   "longExplanation": "Resolver bilmiyorsa en sıkı kurala düş.\n\nSessiz kabul = compliance ihlal. Bilinmeyene en kısıtlayıcı uygulanır. Türkçesi: Varsayılan reddet."
+   "longExplanation": "Resolver bilmiyorsa en sıkı kurala düş.\n\nSessiz kabul = compliance ihlal. Bilinmeyene en kısıtlayıcı uygulanır. Türkçesi: Varsayılan reddet.\n\nResolver-ops bağlamında deny-by-default'un bedeli izlenir: en sıkıya düşen kararların oranı operasyon metriğidir; oran yükseliyorsa kural seti eksiktir ve backlog'a iş düşer.",
+   "realWorldAnalogy": "Şehirdeki 'emin değilsen dur' kavşağı gibi — herkes duruyorsa kavşak tasarımı eksiktir; trafik mühendisi çağrılır.",
+   "useCases": [
+    "Sıkı-düşüş oranının haftalık metriği",
+    "Sık düşen girdi desenlerinden yeni kural çıkarımı"
+   ]
   },
   "term-4-goz-prensibi-cc-resolver-ops": {
    "longExplanation": "1 kişi yazar, başkası onaylar.\n\nYanlış config = milyon dolar ceza. Tek kişi yetkisi YASAK. Türkçesi: Çift onay."
   },
   "term-decision-trace-cc-resolver-ops": {
-   "longExplanation": "Resolver'ın verdiği her kararın audit log'u.\n\n'Bu kullanıcıya neden şu kural uygulandı?' yasal soru → 5 yıl saklama. Türkçesi: Karar izi."
+   "longExplanation": "Resolver'ın verdiği her kararın audit log'u.\n\n'Bu kullanıcıya neden şu kural uygulandı?' yasal soru → 5 yıl saklama. Türkçesi: Karar izi.\n\nResolver-ops bağlamında decision trace operasyon aracıdır: kural değişikliğinin etkisi, eski-yeni kararların diff'iyle ölçülür; beklenmedik sapma yayını durdurur.",
+   "realWorldAnalogy": "Yeni tarifeye geçmeden eski faturaları yeni tarifeyle hesaplayıp karşılaştırmak gibi — sapma büyükse tarife masaya geri gelir.",
+   "useCases": [
+    "Kural değişikliği öncesi karar diff raporu",
+    "Sapma eşiği aşılınca otomatik yayın durdurma"
+   ]
   },
   "term-stack-urunu-s-performance": {
    "longExplanation": "Kernel + Scale + Layer-1 üstüne kurulu, bağımsız satılabilir ürün.\n\nTek müşteriye sadece bu modül satılabilir; ama altyapı ortak. Türkçesi: Layer-2 ürün."
@@ -1404,7 +1849,12 @@
    "longExplanation": "margin-inline-start, padding-block-end gibi yön-bağımsız.\n\nRTL'de margin-left/right ters çevirmek YASAK; logical otomatik. Türkçesi: Mantıksal CSS."
   },
   "term-pseudo-localization-cc-cultural-ux": {
-   "longExplanation": "Metni Unicode varyantla uzatıp layout test.\n\nAlmanca'nın %35 uzunluğunu önceden simüle. Türkçesi: Sahte yerelleştirme."
+   "longExplanation": "Metni Unicode varyantla uzatıp layout test.\n\nAlmanca'nın %35 uzunluğunu önceden simüle. Türkçesi: Sahte yerelleştirme.\n\nCultural-UX bağlamında pseudo-localization görsel dayanıklılık testidir: metinler %30 uzatılıp aksanlı karakterlerle bozulur; taşan buton, kırpılan başlık çeviri gelmeden yakalanır.",
+   "realWorldAnalogy": "Gelinliği provada bol ayarlamak gibi — düğün günü (gerçek çeviri) sürpriz yaşanmaz.",
+   "useCases": [
+    "Almanca-uzunluğu simülasyonuyla layout taraması",
+    "Kırpılma hatalarının ekran görüntüsü diff'iyle raporu"
+   ]
   },
   "term-mirakl-s-marketplace": {
    "longExplanation": "Mirakl — Marketplace Management kategorisinde pazar referansı.\n\nMüşteri 'X gibi, ama bizim platformumuza entegre' iletişimi için karşılaştırma noktası. Türkçesi: Pazar lideri (muadil)."
@@ -1540,7 +1990,12 @@
    "longExplanation": "Verinin yasal/iş gereği saklanması gereken minimum/maksimum süre.\n\nMali 10 yıl, KVKK 'gereken kadar'; aşıldıktan sonra silme zorunlu olabilir. Türkçesi: Saklama süresi."
   },
   "term-bm25-layer1-search": {
-   "longExplanation": "Klasik keyword arama skoru.\n\nTam-eşleşme + frequency için iyi. Türkçesi: Best Match 25."
+   "longExplanation": "Klasik keyword arama skoru.\n\nTam-eşleşme + frequency için iyi. Türkçesi: Best Match 25.\n\nLayer1-search bağlamında BM25 varsayılan motordur: in-tree arama servisinin ilk sürümü BM25 ile çalışır; vektör katmanı opsiyonel eklentidir. Basit kurulum, çoğu tenant'ın ihtiyacını karşılar.",
+   "realWorldAnalogy": "Mahalle esnafının ürün bulması gibi — çoğu soru 'adıyla' sorulur; raf düzeni (index) iyiyse fihrist yeter.",
+   "useCases": [
+    "Kurulumsuz full-text aramanın varsayılan açılması",
+    "Sorgu loglarına gerek kalmadan alaka ayarı (alan ağırlıkları)"
+   ]
   },
   "term-vector-search-layer1-search": {
    "longExplanation": "Semantik benzerlik bazlı arama (embedding'ler).\n\n\"Eşanlamlı kelime\" sorununu çözer. Türkçesi: Vektör arama."
@@ -1583,10 +2038,20 @@
    "longExplanation": "Bu döküman birimi — kendi başına okunabilir mimari konu.\n\nTek dosyada tek bağımsız konu prensibi. Türkçesi: Konu kümesi."
   },
   "term-cache-stack-cms": {
-   "longExplanation": "Sık erişilen veriyi hızlı bellekte tutan katman.\n\nDB yükünü ve latency'yi düşürür. Türkçesi: Önbellek."
+   "longExplanation": "Sık erişilen veriyi hızlı bellekte tutan katman.\n\nDB yükünü ve latency'yi düşürür. Türkçesi: Önbellek.\n\nCMS bağlamında cache yayın mimarisinin kendisidir: içerik nadir değişir, çok okunur — bu asimetri katmanlı cache'i (uygulama + edge) varsayılan yapar; sorun tazelik değil invalidation disiplinidir.",
+   "realWorldAnalogy": "Fırının vitrini gibi — ekmek (içerik) sabah çıkar, gün boyu vitrinden satılır; taze parti gelince vitrin yenilenir.",
+   "useCases": [
+    "Yayınlanmış sayfanın katmanlı cache'ten servis edilmesi",
+    "Yayın olayına bağlı otomatik invalidation"
+   ]
   },
   "term-edge-stack-cms": {
-   "longExplanation": "Kullanıcıya en yakın coğrafi noktada çalışan sunucu.\n\nEn düşük gecikme için. Türkçesi: Kenar (sunucu)."
+   "longExplanation": "Kullanıcıya en yakın coğrafi noktada çalışan sunucu.\n\nEn düşük gecikme için. Türkçesi: Kenar (sunucu).\n\nCMS bağlamında edge, yayınlanmış içeriğin servis katmanıdır: headless içerik edge'de önbellenir, yayın anında invalidation tetiklenir; okuyucu trafiği origin'e inmeden karşılanır.",
+   "realWorldAnalogy": "Gazete bayisi gibi — matbaa (CMS) günde bir basar, okur bayiden alır; yeni baskı gelince eski nüsha raftan iner.",
+   "useCases": [
+    "Yayın anında ilgili URL'lerin edge'den düşürülmesi",
+    "Trafik tepe noktalarında origin yükünün sabit kalması"
+   ]
   },
   "term-graphql-stack-cms": {
    "longExplanation": "Tek endpoint, istemci hangi alanları istediğini söyler.\n\nMobile için over-fetching'i çözer. Türkçesi: Graf sorgu dili.\n\nCMS bağlamında GraphQL headless senaryonun ana dilidir: frontend, içerik tiplerini alan alan sorgular ve yalnız ihtiyacını çeker. Sayfa kurgusu CMS'te değil istemcide yaşadığı için esnek sorgu yüzeyi burada lüks değil gerekliliktir.",
@@ -1614,10 +2079,20 @@
    "longExplanation": "Bu döküman birimi — kendi başına okunabilir mimari konu.\n\nTek dosyada tek bağımsız konu prensibi. Türkçesi: Konu kümesi."
   },
   "term-fan-out-stack-social": {
-   "longExplanation": "Bir post'u N takipçinin feed'ine dağıtma stratejisi (push/pull/hybrid).\n\nTwitter ölçeğinde maliyet/perf farkı 1000× olabilir. Türkçesi: Dağıtım yelpazesi."
+   "longExplanation": "Bir post'u N takipçinin feed'ine dağıtma stratejisi (push/pull/hybrid).\n\nTwitter ölçeğinde maliyet/perf farkı 1000× olabilir. Türkçesi: Dağıtım yelpazesi.\n\nSocial stack bağlamında fan-out, feed mimarisinin merkez kararıdır: yazma anında dağıt (push) okuma hızı, okuma anında derle (pull) yazma ekonomisi verir; ünlü-kullanıcı problemi hibrit zorlar.",
+   "realWorldAnalogy": "Gazete dağıtımı ile gazete bayisi farkı gibi — aboneye kapıya götürmek (push) hızlı, bayiden aldırmak (pull) ucuzdur; tirajı patlayan yazar için karma model kurulur.",
+   "useCases": [
+    "Takipçi sayısına göre push/pull eşik stratejisi",
+    "Feed tazeliği ile yazma maliyetinin dengelenmesi"
+   ]
   },
   "term-presence-stack-social": {
-   "longExplanation": "Kullanıcının o an aktif olup olmadığı bilgisi.\n\nSohbet/topluluk UX'inin temel parçası. Türkçesi: Varlık (online/offline)."
+   "longExplanation": "Kullanıcının o an aktif olup olmadığı bilgisi.\n\nSohbet/topluluk UX'inin temel parçası. Türkçesi: Varlık (online/offline).\n\nSocial stack bağlamında presence ürün özelliğidir: 'aktif' yeşil noktası, son görülme ve yazıyor... göstergesi etkileşimi artırır; gizlilik ayarı (görünmez mod) ürün sözleşmesinin parçasıdır.",
+   "realWorldAnalogy": "Dükkânın 'açık' tabelası gibi — müşteri kapıyı tabelaya göre çalar; tabelayı söndürme hakkı dükkân sahibinindir.",
+   "useCases": [
+    "Son görülme ve aktiflik göstergesi",
+    "Görünmez mod tercihinin tüm yüzeylere yayılması"
+   ]
   },
   "term-read-receipt-stack-social": {
    "longExplanation": "Mesajın okunup okunmadığı durumu.\n\nModern messenger UX standardı. Türkçesi: Okundu bildirimi."
@@ -1632,10 +2107,20 @@
    "longExplanation": "Bu döküman birimi — kendi başına okunabilir mimari konu.\n\nTek dosyada tek bağımsız konu prensibi. Türkçesi: Konu kümesi."
   },
   "term-websocket-stack-ai": {
-   "longExplanation": "Sunucu-istemci arasında kalıcı, çift-yönlü TCP bağlantısı.\n\nAnlık mesaj, presence, canlı yayın için zorunlu. Türkçesi: Çift-yönlü kalıcı bağlantı."
+   "longExplanation": "Sunucu-istemci arasında kalıcı, çift-yönlü TCP bağlantısı.\n\nAnlık mesaj, presence, canlı yayın için zorunlu. Türkçesi: Çift-yönlü kalıcı bağlantı.\n\nAI stack bağlamında WebSocket, üretken çıktının akış kanalıdır: token-token streaming, uzun süren işin ilerleme yüzdesi ve iptal sinyali çift yönlü hattan akar; istek-cevap modeli bu UX'i veremez.",
+   "realWorldAnalogy": "Canlı maç anlatımı gibi — maç bitince özet (response) değil, gol anında anlatım (stream); dinleyici radyoyu kapatabilir (iptal).",
+   "useCases": [
+    "LLM cevabının token akışıyla ekrana yazılması",
+    "Uzun analizin ilerleme ve iptal sinyalleri"
+   ]
   },
   "term-fan-out-stack-ai": {
-   "longExplanation": "Bir post'u N takipçinin feed'ine dağıtma stratejisi (push/pull/hybrid).\n\nTwitter ölçeğinde maliyet/perf farkı 1000× olabilir. Türkçesi: Dağıtım yelpazesi."
+   "longExplanation": "Bir post'u N takipçinin feed'ine dağıtma stratejisi (push/pull/hybrid).\n\nTwitter ölçeğinde maliyet/perf farkı 1000× olabilir. Türkçesi: Dağıtım yelpazesi.\n\nAI stack bağlamında fan-out, AI çıktısının dağıtım sorunudur: tek içgörü (örn. anomali uyarısı) ilgili N kullanıcının paneline/bildirimine yayılır; push/pull seçimi maliyet ve gecikme dengesidir.",
+   "realWorldAnalogy": "Yangın alarmı gibi — algılayıcı tek, zil her katta; herkese tek tek telefon açılmaz.",
+   "useCases": [
+    "İçgörünün ilgili rol panellerine yayılması",
+    "Bildirim fan-out'unda push/pull eşik kararı"
+   ]
   },
   "term-cluster-stack-ai": {
    "longExplanation": "Bu döküman birimi — kendi başına okunabilir mimari konu.\n\nTek dosyada tek bağımsız konu prensibi. Türkçesi: Konu kümesi."
@@ -1736,7 +2221,12 @@
    ]
   },
   "term-webhook-landx-l3-application": {
-   "longExplanation": "Bir olay olduğunda dış sistemin URL'ine HTTP POST atan callback.\n\nÜçüncü-taraf entegrasyonlar için standart. Türkçesi: Web kancası."
+   "longExplanation": "Bir olay olduğunda dış sistemin URL'ine HTTP POST atan callback.\n\nÜçüncü-taraf entegrasyonlar için standart. Türkçesi: Web kancası.\n\nLandX L3 bağlamında webhook, dış kurum entegrasyonunun olay kapısıdır: tapu/belediye sistemlerine 'kayıt değişti' bildirimi push'lanır; karşı tarafın çekmesi (poll) beklenmez.",
+   "realWorldAnalogy": "Mahkeme tebligatı gibi — ilgiliye haber gider; ilgilinin her gün adliyeye sorması beklenmez.",
+   "useCases": [
+    "Parsel durumu değişiminin abone kurumlara push'u",
+    "Teslim edilemeyen bildirimin DLQ'da görünürlüğü"
+   ]
   },
   "term-cluster-landx-l3-application": {
    "longExplanation": "Bu döküman birimi — kendi başına okunabilir mimari konu.\n\nTek dosyada tek bağımsız konu prensibi. Türkçesi: Konu kümesi."
@@ -1791,10 +2281,20 @@
    "longExplanation": "Workflow'u çalıştıran VM (Ubuntu/Mac/Windows).\n\nubuntu-latest bizim varsayılan — frontend için yeterli. Türkçesi: Koşucu."
   },
   "term-ci-deploy-yap": {
-   "longExplanation": "Her push'ta otomatik test/lint/build çalıştırma.\n\nBozuk commit'i merge etmeden önce yakalar. Açılımı: Continuous Integration. Türkçesi: Sürekli bütünleştirme."
+   "longExplanation": "Her push'ta otomatik test/lint/build çalıştırma.\n\nBozuk commit'i merge etmeden önce yakalar. Açılımı: Continuous Integration. Türkçesi: Sürekli bütünleştirme.\n\nDeploy-yap bağlamında CI, bu projenin fiilî zinciridir: biome → migrate → tsc → vitest+coverage → build → e2e+axe → size-limit. Sıra bilinçlidir — ucuz kapılar önde, pahalılar arkada.",
+   "realWorldAnalogy": "Havaalanı güvenlik hattı gibi — önce bilet (lint), sonra X-ray (test), en son pasaport (e2e); kuyruğu en ucuz kontrol eler.",
+   "useCases": [
+    "Kapı sırasının maliyete göre dizilmesi",
+    "Kırmızı kapının birleşmeyi mutlak engellemesi"
+   ]
   },
   "term-cd-deploy-yap": {
-   "longExplanation": "Test geçen kod otomatik canlıya çıkar.\n\nManuel deploy adımlarındaki insan hatasını yok eder. Açılımı: Continuous Deployment. Türkçesi: Sürekli dağıtım."
+   "longExplanation": "Test geçen kod otomatik canlıya çıkar.\n\nManuel deploy adımlarındaki insan hatasını yok eder. Açılımı: Continuous Deployment. Türkçesi: Sürekli dağıtım.\n\nDeploy-yap bağlamında CD, Pages yayınının otomasyonudur: main'e giren ve tüm kapıları geçen commit, insan eli değmeden canlıya çıkar; rollback 'önceki commit'i tekrar yayınla'dan ibarettir.",
+   "realWorldAnalogy": "Matbaanın baskı bandı gibi — düzeltmen (CI) onayladıysa baskı otomatik; hatalı baskı bir önceki kalıpla geri basılır.",
+   "useCases": [
+    "Yeşil main'in otomatik Pages yayını",
+    "Rollback'in git revert ile tek adımda yapılması"
+   ]
   },
   "term-github-pages-deploy-yap": {
    "longExplanation": "Static site hosting; repo'dan otomatik yayın.\n\nFrontend için sıfır maliyetli yayın. Türkçesi: GitHub Sayfaları."
@@ -1961,11 +2461,11 @@
    ]
   },
   "term-float-edu-u02-veri-tip": {
-   "longExplanation": "Bilim ondalık sayı gösterimi (IEEE-754). Yaklaşıktır.\n\nBilimsel hesap için iyi; **para için felaket** çünkü 0.1+0.2 ≠ 0.3. Açılımı: Floating-point number. Türkçesi: Kayan nokta sayısı.\n\nBu projede para alanlarında float şema seviyesinde reddedilir; Decimal zorunludur. Kural, code review'a değil tip sistemine gömülüdür.",
-   "realWorldAnalogy": "Lastikli şerit metre: hızlı ölçer ama milimetrede esner — kuyumcuda kullanılmaz.",
+   "longExplanation": "Bilim ondalık sayı gösterimi (IEEE-754). Yaklaşıktır.\n\nBilimsel hesap için iyi; **para için felaket** çünkü 0.1+0.2 ≠ 0.3. Açılımı: Floating-point number. Türkçesi: Kayan nokta sayısı.\n\nVeri tipleri ünitesi bağlamında float, 'yaklaşıklık'ın tanıtımıdır: IEEE-754'ün neden 0.1'i tam tutamadığı gösterilir; float bilimsel ölçüm için doğru, sayım/para için yanlış araçtır.",
+   "realWorldAnalogy": "Lastik metre gibi — duvar ölçmeye yeter, kuyumcu terazisi yerine geçmez.",
    "useCases": [
-    "Bilimsel hesap ve grafik koordinatları",
-    "Para DIŞINDA oran/ortalama hesapları"
+    "Sensör/ölçüm verisinde float'ın doğru kullanımı",
+    "0.1+0.2 deneyiyle yaklaşıklığın gösterimi"
    ]
   },
   "term-decimal-edu-u02-veri-tip": {
@@ -2073,11 +2573,11 @@
    ]
   },
   "term-hook-edu-u03-doctype": {
-   "longExplanation": "Belirli bir olayda çağrılan fonksiyon. `before_insert`, `on_submit`, `on_change`.\n\nPlugin'in framework'ün doğal akışına müdahale ettiği yer. Türkçesi: Kanca.",
-   "realWorldAnalogy": "Düğün salonunun 'pasta kesilirken' anonsu: o anda kimin ne yapacağı önceden yazılmış; an gelince hepsi tetiklenir.",
+   "longExplanation": "Belirli bir olayda çağrılan fonksiyon. `before_insert`, `on_submit`, `on_change`.\n\nPlugin'in framework'ün doğal akışına müdahale ettiği yer. Türkçesi: Kanca.\n\nDocType ünitesi bağlamında hook, tanıma davranış ekleme noktasıdır: before_insert/on_submit fonksiyonları DocType'ın yaşam döngüsüne asılır; öğrenci 'alan + kural = canlı form' denklemini burada tamamlar.",
+   "realWorldAnalogy": "Kapı ziline bağlanan otomasyon gibi — zil (kayıt olayı) çalınca ışık yanar (hook); zilin kendisi değişmez.",
    "useCases": [
-    "before_insert'te varsayılan değer atamak",
-    "on_submit'te stok düşümü tetiklemek"
+    "before_insert ile alan otomatik doldurma",
+    "on_submit ile başka kayda etki tetikleme"
    ]
   },
   "term-custom-field-edu-u03-doctype": {
@@ -2201,11 +2701,11 @@
    ]
   },
   "term-foreign-key-edu-u04-veritabani": {
-   "longExplanation": "Bir tablonun başka tablodaki kayda işaret eden kolonu.\n\nİlişki kurar; integrity sağlar (yetim engellenir). Açılımı: FK. Türkçesi: Yabancı anahtar.",
-   "realWorldAnalogy": "Kütüphane fişindeki kitap numarası: fiş kitabın kendisini değil, raftaki yerini gösterir; kitap yoksa fiş geçersizdir.",
+   "longExplanation": "Bir tablonun başka tablodaki kayda işaret eden kolonu.\n\nİlişki kurar; integrity sağlar (yetim engellenir). Açılımı: FK. Türkçesi: Yabancı anahtar.\n\nVeritabanı ünitesi bağlamında foreign key, ilişki kavramının tekniğidir: kolonun başka tablodaki kayda işaret etmesi, JOIN'in ve bütünlük kısıtının temelidir; öğrenci ilk ilişkisini burada kurar.",
+   "realWorldAnalogy": "Kitaptaki dipnot numarası gibi — metin (satır) kaynağa (öbür tablo) numarayla bağlanır; kaynak yoksa dipnot hatadır.",
    "useCases": [
-    "Sipariş satırının müşteri kaydına bağlanması",
-    "Yetim kayıt oluşumunu DB seviyesinde engellemek"
+    "Müşteri-sipariş ilişkisinin FK ile kurulması",
+    "Silinen kayda işaret eden satırın engellenmesi"
    ]
   },
   "term-indeks-edu-u04-veritabani": {
@@ -2249,11 +2749,11 @@
    ]
   },
   "term-denormalize-edu-u04-veritabani": {
-   "longExplanation": "Performans için bilinçli kopyalama (örn. projection).\n\nYüksek-okuma noktalarında JOIN yorgunluğunu önler. Türkçesi: Tekrar-yığma.",
-   "realWorldAnalogy": "Kasiyerin en çok satan ürün fiyatlarını ezberlemesi: her seferinde kataloğa bakmaz; katalog değişince ezberi tazelemek gerekir.",
+   "longExplanation": "Performans için bilinçli kopyalama (örn. projection).\n\nYüksek-okuma noktalarında JOIN yorgunluğunu önler. Türkçesi: Tekrar-yığma.\n\nVeritabanı ünitesi bağlamında denormalize, normalizasyon dersinin bilinçli ihlalidir: okuma hızı için kopya tutulur; kopyanın güncel kalma sorumluluğu (senkron maliyeti) öğrenciye baştan gösterilir.",
+   "realWorldAnalogy": "Cüzdandaki not kâğıdı gibi — telefon rehberi (kaynak) evde, sık arananlar cüzdanda; numara değişince ikisi de güncellenmeli.",
    "useCases": [
-    "Dashboard için projection tablosu üretmek",
-    "Sık okunan müşteri adını sipariş satırına kopyalamak"
+    "Liste ekranı için ad/toplam kopyalama",
+    "Kopya alanın event'le senkron tutulması"
    ]
   },
   "term-join-edu-u04-veritabani": {
@@ -2265,11 +2765,11 @@
    ]
   },
   "term-migration-edu-u04-veritabani": {
-   "longExplanation": "Tablo yapısını sürümler arasında değiştiren komut dosyası.\n\nYeni kolon, yeni indeks; production'a güvenli geçiş. Türkçesi: Göç (şema değişikliği).\n\nBu projede her migration'ın downgrade'i zorunludur ve CI'da sırayla uygulanabilirliği test edilir.",
-   "realWorldAnalogy": "Köprü inşaatı: trafik akarken yeni köprü yapılır, açılır, eskisi sonra sökülür — yol asla kapanmaz.",
+   "longExplanation": "Tablo yapısını sürümler arasında değiştiren komut dosyası.\n\nYeni kolon, yeni indeks; production'a güvenli geçiş. Türkçesi: Göç (şema değişikliği).\n\nVeritabanı ünitesi bağlamında migration, şemanın sürüm kontrolüdür: tablo değişikliği elle değil sıralı dosyayla yapılır; 'benim makinemde çalışıyor' şema farkları böyle kapanır.",
+   "realWorldAnalogy": "Binanın tadilat ruhsat dosyası gibi — her değişiklik tarihli evrakla; bina bugünkü haline o dosyayı oynatarak gelinir.",
    "useCases": [
-    "Yeni kolonu Alembic script'iyle eklemek",
-    "Üretim DB'sini sürümler arasında güvenle taşımak"
+    "Şema değişikliğinin sıralı dosyayla taşınması",
+    "Yeni ortamın migration zinciriyle sıfırdan kurulması"
    ]
   },
   "term-cqrs-edu-u04-veritabani": {
@@ -2537,11 +3037,11 @@
    ]
   },
   "term-csrf-edu-u07-security": {
-   "longExplanation": "Kullanıcı tarayıcısının istek dışı bir form göndermesi.\n\nSession cookie'lerin doğal zaafı; token ile çöz. Açılımı: Cross-Site Request Forgery.",
-   "realWorldAnalogy": "Sahte imzalı talimat: kapıcıya 'daire 5 söyledi' diye not bırakmak; kapıcı imza kontrolü (token) yapmazsa kanar.",
+   "longExplanation": "Kullanıcı tarayıcısının istek dışı bir form göndermesi.\n\nSession cookie'lerin doğal zaafı; token ile çöz. Açılımı: Cross-Site Request Forgery.\n\nGüvenlik ünitesi bağlamında CSRF savunma tarafından öğretilir: token, SameSite cookie ve origin kontrolü katman katman kurulur; öğrenci 'oturum varken istek nereden geldi' sorusunu sormayı öğrenir.",
+   "realWorldAnalogy": "Bankadaki imza karşılaştırması gibi — talimat (istek) gerçek hesaptan ama imza (token) eşleşmiyorsa işlem yapılmaz.",
    "useCases": [
-    "Form aksiyonlarında CSRF token kontrolü",
-    "SameSite cookie politikası"
+    "SameSite + CSRF token ikilisinin kurulması",
+    "State-değiştiren GET'in yasaklanması"
    ]
   },
   "term-audit-log-edu-u07-security": {
@@ -2625,11 +3125,11 @@
    ]
   },
   "term-saga-edu-u08-eventbus": {
-   "longExplanation": "Birden fazla mikroservis transaction'ını sıralayan koordinatör.\n\nDağıtık işlemler için 2PC alternatifi.",
-   "realWorldAnalogy": "Düğün organizatörü: salon, yemek, orkestra ayrı esnaf; biri iptal ederse organizatör sırayla diğer kaporaları geri alır.",
+   "longExplanation": "Birden fazla mikroservis transaction'ını sıralayan koordinatör.\n\nDağıtık işlemler için 2PC alternatifi.\n\nEvent bus ünitesi bağlamında saga, 'dağıtık transaction yok' gerçeğinin cevabı olarak tanıtılır: uzun akış adımlara bölünür, her adımın telafisi (compensation) baştan tasarlanır. Öğrenci, rollback yerine telafi düşünmeyi öğrenir.",
+   "realWorldAnalogy": "Tatil planı gibi — uçak, otel, araç ayrı ayrı ayırtılır; otel iptal olursa uçak 'geri alınmaz', iade süreci (telafi) işletilir.",
    "useCases": [
-    "Çok adımlı işlemde telafi (compensation) zinciri",
-    "DBOS ile durable iş akışı yürütmek"
+    "Sipariş-ödeme-kargo zincirinin adımlara bölünmesi",
+    "Her adım için telafi aksiyonunun tasarlanması"
    ]
   },
   "term-backpressure-edu-u08-eventbus": {
@@ -2665,11 +3165,11 @@
    ]
   },
   "term-hook-edu-u09-plugin": {
-   "longExplanation": "Çekirdeğin plugin'e bıraktığı tetikleme noktası (before_save, on_change).\n\nPlugin çekirdeğin akışına girip iş yapar. Türkçesi: Kanca.",
-   "realWorldAnalogy": "Düğün salonunun 'pasta kesilirken' anonsu: o anda kimin ne yapacağı önceden yazılmış; an gelince hepsi tetiklenir.",
+   "longExplanation": "Çekirdeğin plugin'e bıraktığı tetikleme noktası (before_save, on_change).\n\nPlugin çekirdeğin akışına girip iş yapar. Türkçesi: Kanca.\n\nPlugin ünitesi bağlamında hook, çekirdek-plugin sözleşmesinin yarısıdır: çekirdek tetikleme noktalarını ilan eder, plugin bunlara abone olur; çekirdek plugin'i tanımaz, hook listesini tanır.",
+   "realWorldAnalogy": "Panoya asılan etkinlik takvimi gibi — belediye (çekirdek) tarihleri ilan eder, dernekler (plugin) istediklerine katılır.",
    "useCases": [
-    "before_insert'te varsayılan değer atamak",
-    "on_submit'te stok düşümü tetiklemek"
+    "Plugin'in manifest'te hook aboneliği beyanı",
+    "Aynı hook'a birden çok plugin sıralaması"
    ]
   },
   "term-filter-hook-edu-u09-plugin": {
@@ -2825,11 +3325,11 @@
    ]
   },
   "term-float-edu-u02b-para-tarih": {
-   "longExplanation": "Yaklaşık virgüllü sayı tipi. Hızlıdır ama parada YASAKTIR.\n\nFloat'ta 0.1 + 0.2 ≠ 0.3 — banka asla bunu kabul etmez. Türkçesi: Kayan nokta.\n\nBu projede para alanlarında float şema seviyesinde reddedilir; Decimal zorunludur. Kural, code review'a değil tip sistemine gömülüdür.",
-   "realWorldAnalogy": "Lastikli şerit metre: hızlı ölçer ama milimetrede esner — kuyumcuda kullanılmaz.",
+   "longExplanation": "Yaklaşık virgüllü sayı tipi. Hızlıdır ama parada YASAKTIR.\n\nFloat'ta 0.1 + 0.2 ≠ 0.3 — banka asla bunu kabul etmez. Türkçesi: Kayan nokta.\n\nPara-tarih ünitesi bağlamında float yasak levhasıdır: kuruş kayması örnekleriyle 'parada float' hatasının faturaya nasıl yansıdığı gösterilir; kural tartışmasızdır — para Decimal'dir.",
+   "realWorldAnalogy": "Benzin istasyonunda damlayan hortum gibi — damla küçük, ay sonunda tank eksik.",
    "useCases": [
-    "Bilimsel hesap ve grafik koordinatları",
-    "Para DIŞINDA oran/ortalama hesapları"
+    "Fatura toplamlarında kuruş kayması senaryosu",
+    "Kod incelemesinde para-float'ın otomatik reddi"
    ]
   },
   "term-utc-edu-u02b-para-tarih": {
@@ -2865,11 +3365,11 @@
    ]
   },
   "term-foreign-key-edu-u04b-veri-tasarim": {
-   "longExplanation": "Bir tablonun başka tablodaki kayda işaret etmesi.\n\nVeritabanı bütünlüğü: olmayan kayda referans yapamazsın; kayıt silinemez (veya kademeli silinir). Türkçesi: Yabancı anahtar (FK).",
-   "realWorldAnalogy": "Kütüphane fişindeki kitap numarası: fiş kitabın kendisini değil, raftaki yerini gösterir; kitap yoksa fiş geçersizdir.",
+   "longExplanation": "Bir tablonun başka tablodaki kayda işaret etmesi.\n\nVeritabanı bütünlüğü: olmayan kayda referans yapamazsın; kayıt silinemez (veya kademeli silinir). Türkçesi: Yabancı anahtar (FK).\n\nVeri tasarımı ünitesi bağlamında foreign key tasarım kararıdır: nerede FK, nerede gevşek referans (ID kopyası) kullanılacağı modül sınırlarıyla birlikte düşünülür; her bağ FK olmak zorunda değildir.",
+   "realWorldAnalogy": "Resmî nikâh ile sözlü anlaşma farkı gibi — kritik bağ (FK) memurla kayıt altına alınır, gevşek bağ esnek kalır.",
    "useCases": [
-    "Sipariş satırının müşteri kaydına bağlanması",
-    "Yetim kayıt oluşumunu DB seviyesinde engellemek"
+    "Modül-içi bağlarda FK, modüller-arası bağlarda ID referansı",
+    "Cascade davranışının bilinçli seçimi"
    ]
   },
   "term-junction-table-edu-u04b-veri-tasarim": {
@@ -2889,11 +3389,11 @@
    ]
   },
   "term-denormalize-edu-u04b-veri-tasarim": {
-   "longExplanation": "Hızlı okuma için bilgiyi bilerek birkaç yere kopyalama.\n\n100M satırlı tabloda JOIN yavaşsa, sık okunan kolonu tekrar yazıp tek tablodan okuruz. CQRS okuma tarafıdır. Türkçesi: Denormalize (tekrar koy).",
-   "realWorldAnalogy": "Kasiyerin en çok satan ürün fiyatlarını ezberlemesi: her seferinde kataloğa bakmaz; katalog değişince ezberi tazelemek gerekir.",
+   "longExplanation": "Hızlı okuma için bilgiyi bilerek birkaç yere kopyalama.\n\n100M satırlı tabloda JOIN yavaşsa, sık okunan kolonu tekrar yazıp tek tablodan okuruz. CQRS okuma tarafıdır. Türkçesi: Denormalize (tekrar koy).\n\nVeri tasarımı ünitesi bağlamında denormalize desenleşir: hangi alan kopyalanır (değişmeyen: fatura adresi), hangisi referans kalır (değişen: müşteri adı) — 'o anki değer' ile 'güncel değer' ayrımı tasarım dilidir.",
+   "realWorldAnalogy": "Fatura üstündeki adres gibi — kesildiği günkü adres faturada donar; müşteri taşınsa da fatura değişmez.",
    "useCases": [
-    "Dashboard için projection tablosu üretmek",
-    "Sık okunan müşteri adını sipariş satırına kopyalamak"
+    "Fatura anı verisinin bilinçli dondurulması",
+    "Güncel-değer alanlarının referansla çözülmesi"
    ]
   },
   "term-try-catch-edu-u11-hata-yonetimi": {
@@ -2921,11 +3421,11 @@
    ]
   },
   "term-idempotency-edu-u11-hata-yonetimi": {
-   "longExplanation": "Aynı işlemi 1 kez veya 5 kez çalıştırmak aynı sonucu verir.\n\nRetry edilen işlem idempotent değilse aynı sipariş 5 kez girer. Anahtar: 'isteğin idempotency key'i' ile aynı işlem 1 kez işlenir. Türkçesi: Yinelendirme dayanıklığı.",
-   "realWorldAnalogy": "Asansör düğmesi: kaç kez basarsan bas, asansör bir kez gelir.",
+   "longExplanation": "Aynı işlemi 1 kez veya 5 kez çalıştırmak aynı sonucu verir.\n\nRetry edilen işlem idempotent değilse aynı sipariş 5 kez girer. Anahtar: 'isteğin idempotency key'i' ile aynı işlem 1 kez işlenir. Türkçesi: Yinelendirme dayanıklığı.\n\nHata yönetimi ünitesi bağlamında idempotency, retry'ın ön koşulu olarak öğretilir: tekrar denemek ancak işlem tekrarı zararsızsa güvenlidir. 'Çifte ödeme' senaryosu dersin çapasıdır.",
+   "realWorldAnalogy": "Asansör düğmesi gibi — beş kez basmak asansörü beş kez çağırmaz; istek kaydedilmiştir, tekrar zararsızdır.",
    "useCases": [
-    "Retry'lı akışlarda çift kayıt önleme",
-    "Mesaj tüketicisinde işlenmişlik kontrolü"
+    "Ödeme isteğinde idempotency key zorunluluğu",
+    "Retry politikasının yalnız idempotent uçlara uygulanması"
    ]
   },
   "term-dlq-edu-u11-hata-yonetimi": {
@@ -2945,11 +3445,11 @@
    ]
   },
   "term-migration-edu-u12-migration": {
-   "longExplanation": "Veritabanı yapısını (tablolar, kolonlar) değiştiren tanımlı, sıralı kod parçası.\n\nEl ile SQL çalıştırılırsa hangi DB'de hangi yapı var bilinmez; migration sıralı, versioned, izlenebilir. Türkçesi: Şema göçü.\n\nBu projede her migration'ın downgrade'i zorunludur ve CI'da sırayla uygulanabilirliği test edilir.",
-   "realWorldAnalogy": "Köprü inşaatı: trafik akarken yeni köprü yapılır, açılır, eskisi sonra sökülür — yol asla kapanmaz.",
+   "longExplanation": "Veritabanı yapısını (tablolar, kolonlar) değiştiren tanımlı, sıralı kod parçası.\n\nEl ile SQL çalıştırılırsa hangi DB'de hangi yapı var bilinmez; migration sıralı, versioned, izlenebilir. Türkçesi: Şema göçü.\n\nMigration ünitesi bağlamında konu derinleşir: geri alınabilirlik (down), kilitlemeyen değişiklik (online DDL) ve backfill ile birlikte 'canlıda şema değiştirme' disiplini kurulur; DocType'ın ürettiği migration'lar da aynı kurallara uyar.",
+   "realWorldAnalogy": "Köprüyü trafiği kesmeden onarmak gibi — şerit şerit (online DDL), her aşama geri dönülebilir planla.",
    "useCases": [
-    "Yeni kolonu Alembic script'iyle eklemek",
-    "Üretim DB'sini sürümler arasında güvenle taşımak"
+    "Kilitlemeyen kolon ekleme + backfill sıralaması",
+    "Her migration'ın down senaryosunun testi"
    ]
   },
   "term-expand-contract-edu-u12-migration": {
@@ -3113,16 +3613,36 @@
    ]
   },
   "term-cache-aside-scale-cache": {
-   "longExplanation": "Kod önce cache'e bakar, yoksa DB'den çeker + cache'e yazar.\n\nEn yaygın, en güvenli. Cache çalışmasa bile sistem DB'den çalışır. Türkçesi: Cache yanında."
+   "longExplanation": "Kod önce cache'e bakar, yoksa DB'den çeker + cache'e yazar.\n\nEn yaygın, en güvenli. Cache çalışmasa bile sistem DB'den çalışır. Türkçesi: Cache yanında.\n\nCache bağlamında cache-aside varsayılan desendir: kod cache'e bakar, ıskalarsa DB'den okuyup cache'e koyar; sahiplik uygulamadadır, cache düşse de sistem yalnız yavaşlar — bozulmaz.",
+   "realWorldAnalogy": "Sekreterin masasındaki sık aranan dosyalar gibi — arşiv (DB) asıl; masada yoksa arşivden alınır ve masaya konur.",
+   "useCases": [
+    "Okuma-yoğun sorguların TTL'li cache'i",
+    "Cache düşüşünde davranışın yalnız yavaşlama olması"
+   ]
   },
   "term-write-through-scale-cache": {
-   "longExplanation": "Yazma anında DB + cache aynı anda güncellenir.\n\nCache her zaman taze. Ama yazma yavaşlar. Türkçesi: Yazarken geç."
+   "longExplanation": "Yazma anında DB + cache aynı anda güncellenir.\n\nCache her zaman taze. Ama yazma yavaşlar. Türkçesi: Yazarken geç.\n\nCache bağlamında write-through, tutarlılık-öncelikli alternatiftir: yazma DB ve cache'i birlikte günceller; bayatlık penceresi kapanır, yazma gecikmesi artar — sık-okunan-az-yazılan konfigürasyon verisi tipik adayıdır.",
+   "realWorldAnalogy": "Hem deftere hem panoya aynı anda yazmak gibi — pano hiç eskimez, yazmak iki hamle sürer.",
+   "useCases": [
+    "Konfig/parametre verisinde bayatlıksız cache",
+    "Yazma gecikmesinin kabul edildiği dar veri seti"
+   ]
   },
   "term-stampede-scale-cache": {
-   "longExplanation": "TTL bitince 1000 istek aynı anda DB'ye gider, DB çöker.\n\nDistributed lock veya stale-while-revalidate gerek. Türkçesi: Sürü saldırısı."
+   "longExplanation": "TTL bitince 1000 istek aynı anda DB'ye gider, DB çöker.\n\nDistributed lock veya stale-while-revalidate gerek. Türkçesi: Sürü saldırısı.\n\nCache bağlamında stampede, TTL'in karanlık yüzüdür: popüler anahtar düşünce bin istek aynı anda DB'ye iner; tek-uçuş kilidi (ilk istek doldurur, kalanlar bekler) ve jitter'lı TTL standart savunmadır.",
+   "realWorldAnalogy": "Kapı açılışında tüm kalabalığın tek kasaya koşması gibi — görevli 'sıra' der (lock), kapanışlar da saat saat dağıtılır (jitter).",
+   "useCases": [
+    "Tek-uçuş (single-flight) doldurma kilidi",
+    "TTL'lere jitter ekleyerek eşzamanlı düşüş önleme"
+   ]
   },
   "term-lru-scale-cache": {
-   "longExplanation": "Cache dolu, hangi kayıdı atalım? En uzun süredir okunmayan.\n\nRAM sınırlı; eski kayıt yer açar. Açılımı: Least Recently Used. Türkçesi: En az kullanılanı sil."
+   "longExplanation": "Cache dolu, hangi kayıdı atalım? En uzun süredir okunmayan.\n\nRAM sınırlı; eski kayıt yer açar. Açılımı: Least Recently Used. Türkçesi: En az kullanılanı sil.\n\nCache bağlamında LRU, dolu kovanın politika sorusudur: en uzun süredir okunmayan düşer; 'bir kez okunan dev rapor' cache'i süpürmesin diye boyut-farkındalı varyantlar tercih edilir.",
+   "realWorldAnalogy": "Gardırop temizliği gibi — iki yıldır giyilmeyen çıkar; ama tek kullanımlık gelinlik dolabı işgal etmeden zaten çıkarılır.",
+   "useCases": [
+    "Eviction politikasının yük profiline göre seçimi",
+    "Büyük-değerli anahtarların ayrı kovada izolasyonu"
+   ]
   },
   "term-mekanizma-sus-overview": {
    "longExplanation": "Sürekli aynı şekilde çalışan, kişiye bağlı olmayan otomatik denetim/işlem\n\nİnsan unutur, mekanizma unutmaz"
@@ -3134,16 +3654,36 @@
    "longExplanation": "Continuous Integration — kod birleştirme öncesi otomatik kontrol; ihlali olan PR reddedilir\n\nTek koruma; insan göz kaçırır"
   },
   "term-token-bucket-scale-ratelimit": {
-   "longExplanation": "Saniyede X token dolar; her istek 1 harcar; tükenince reddedilir.\n\nBurst izinli (kovada birikmiş token), sürekli yüksek yük değil. Türkçesi: Jeton kovası."
+   "longExplanation": "Saniyede X token dolar; her istek 1 harcar; tükenince reddedilir.\n\nBurst izinli (kovada birikmiş token), sürekli yüksek yük değil. Türkçesi: Jeton kovası.\n\nScale-ratelimit bağlamında token bucket uygulama tercihindir: burst toleransı (kova dolu başlar) ile uzun vadeli oranı tek mekanizmada birleştirir; sliding window'a göre bellek ucuzdur.",
+   "realWorldAnalogy": "Şehir suyu deposu gibi — depo doluyken anlık yoğun kullanım sorun değil; sürekli aşırı çekiş depoyu kurutur ve vana kısılır.",
+   "useCases": [
+    "Tenant başına kova boyutu/dolum oranı ayarı",
+    "Burst trafiğin reddedilmeden emilmesi"
+   ]
   },
   "term-sliding-window-scale-ratelimit": {
-   "longExplanation": "Son 60 sn'de kaç istek geldi? Hesapla, limit'ten az mı?\n\nToken bucket'tan daha hassas, ama daha pahalı (her istek için hesap). Türkçesi: Kayar pencere."
+   "longExplanation": "Son 60 sn'de kaç istek geldi? Hesapla, limit'ten az mı?\n\nToken bucket'tan daha hassas, ama daha pahalı (her istek için hesap). Türkçesi: Kayar pencere.\n\nRatelimit bağlamında sliding window, doğruluk tarafıdır: 'son 60 saniye' kayan pencerede sayılır, sabit pencerenin sınır-anı patlaması (iki pencere birleşiminde 2× istek) yaşanmaz; bedeli anahtar başına daha çok durumdur.",
+   "realWorldAnalogy": "Dönen kapı sayacı gibi — 'dakikada 10 kişi' her an son 60 saniyeye bakar; saat başı sıfırlanan turnike gibi kandırılamaz.",
+   "useCases": [
+    "Sınır-anı burst'ünün engellenmesi",
+    "Hassas uçlarda window, kalanlarda bucket dengesi"
+   ]
   },
   "term-429-scale-ratelimit": {
-   "longExplanation": "HTTP durum kodu: rate limit aşıldı.\n\nİstemci için standart sinyal; client SDK'lar otomatik backoff yapar. Açılımı: Too Many Requests. Türkçesi: 429 — çok istek."
+   "longExplanation": "HTTP durum kodu: rate limit aşıldı.\n\nİstemci için standart sinyal; client SDK'lar otomatik backoff yapar. Açılımı: Too Many Requests. Türkçesi: 429 — çok istek.\n\nScale-ratelimit bağlamında 429, limitin nazik dilidir: Retry-After başlığıyla 'ne zaman gelebilirsin' söylenir; istemci SDK'ları bu başlığa göre backoff kurar — başlıksız 429 yarım sözleşmedir.",
+   "realWorldAnalogy": "Dolu restoranın 'yarım saate masa açılır' demesi gibi — kapıyı kapatmak değil, randevu vermek.",
+   "useCases": [
+    "Retry-After başlığının her 429'a eklenmesi",
+    "SDK'larda başlığa saygılı otomatik backoff"
+   ]
   },
   "term-quota-scale-ratelimit": {
-   "longExplanation": "Belli sürede toplam istek hakkı (aylık/günlük/saatlik).\n\nTier'lı satış modeli: ne kadar ödüyorsan o kadar. Türkçesi: Kontingen."
+   "longExplanation": "Belli sürede toplam istek hakkı (aylık/günlük/saatlik).\n\nTier'lı satış modeli: ne kadar ödüyorsan o kadar. Türkçesi: Kontingen.\n\nRatelimit bağlamında quota, ticari katmandır: saniyelik koruma (bucket) altyapıyı, aylık kota sözleşmeyi korur; plan limitleri, kullanım sayacı ve aşım davranışı (kes/fatura/uyar) ürün kararıdır.",
+   "realWorldAnalogy": "Telefon tarifesi gibi — anlık konuşma kalitesi şebekenin (ratelimit), aylık dakika paketin sözleşmenin (quota) işidir.",
+   "useCases": [
+    "Plan-bazlı aylık çağrı kotası",
+    "Kota aşımında kes/ek-ücret/uyar seçenekleri"
+   ]
   },
   "term-bc-backward-compatibility-sus-bc-policy": {
    "longExplanation": "Yeni sürüm eski tüketicinin programını çalıştırmaya devam etmeli\n\nSözleşmenin matematiksel adı Türkçesi: Geriye Uyumluluk."
@@ -3155,19 +3695,44 @@
    "longExplanation": "Kırıcı patch tespit edilince otomatik geri alma\n\nİnsanın tartışmasına gerek kalmadan korunma"
   },
   "term-rpo-scale-multiregion": {
-   "longExplanation": "Felaketten önceki en son güvenli veri noktası. RPO=1 saat = max 1 saatlik kayıp tolerans.\n\nİş ihtiyacı belirler: bankacılık RPO=0, blog RPO=24 saat olabilir. Açılımı: Recovery Point Objective. Türkçesi: Kayıp tolerans noktası."
+   "longExplanation": "Felaketten önceki en son güvenli veri noktası. RPO=1 saat = max 1 saatlik kayıp tolerans.\n\nİş ihtiyacı belirler: bankacılık RPO=0, blog RPO=24 saat olabilir. Açılımı: Recovery Point Objective. Türkçesi: Kayıp tolerans noktası.\n\nMultiregion bağlamında RPO, kabul edilen veri kaybı penceresidir: replikasyon gecikmesi RPO'yu belirler; 'sıfır kayıp' sözü senkron replikasyon ve yazma gecikmesi bedeliyle gelir — rakam ürün sözleşmesidir.",
+   "realWorldAnalogy": "Bilgisayarın otomatik kayıt aralığı gibi — elektrik kesilince kaybın, son kayıttan bu yana yazdıklarındır.",
+   "useCases": [
+    "Tenant sözleşmesine RPO taahhüdü yazılması",
+    "Replikasyon gecikmesinin RPO alarmıyla izlenmesi"
+   ]
   },
   "term-rto-scale-multiregion": {
-   "longExplanation": "Felaketten sonra sistemin kalkmasına izin verilen max süre.\n\nSaaS satış sözleşmesinde 'uptime 99.9%' = yılda 8.7 saat down. RTO bu süreyi belirler. Açılımı: Recovery Time Objective. Türkçesi: Kurtarma süresi hedefi."
+   "longExplanation": "Felaketten sonra sistemin kalkmasına izin verilen max süre.\n\nSaaS satış sözleşmesinde 'uptime 99.9%' = yılda 8.7 saat down. RTO bu süreyi belirler. Açılımı: Recovery Time Objective. Türkçesi: Kurtarma süresi hedefi.\n\nMultiregion bağlamında RTO, ayağa kalkma sözüdür: failover otomasyonu, DNS süresi ve veri doğrulama adımları toplamı RTO'yu verir; tatbikatsız RTO rakamı temennidir, ölçüm değildir.",
+   "realWorldAnalogy": "Yedek jeneratörün devreye girme süresi gibi — kâğıtta 30 saniye; gerçek süre, denenmemişse bilinmiyordur.",
+   "useCases": [
+    "Failover tatbikatıyla RTO'nun ölçülmesi",
+    "DNS TTL ve otomasyon adımlarının süre bütçesi"
+   ]
   },
   "term-streaming-replication-scale-multiregion": {
-   "longExplanation": "Postgres WAL'ı (write-ahead log) anlık bir slave'e gönderir.\n\nMaster çökerse slave'e döner. RPO ~saniye seviye. Türkçesi: Akış kopyası."
+   "longExplanation": "Postgres WAL'ı (write-ahead log) anlık bir slave'e gönderir.\n\nMaster çökerse slave'e döner. RPO ~saniye seviye. Türkçesi: Akış kopyası.\n\nMultiregion bağlamında streaming replication, Postgres'in taşıma bandıdır: WAL anlık olarak yedek bölgeye akar; asenkron modda RPO küçük ama sıfır değildir — fark, alarm eşiği olarak izlenir.",
+   "realWorldAnalogy": "Canlı yayın gecikmesi gibi — maç 'canlı' ama birkaç saniye geriden; gol sevinci (veri) çok kısa süre risktedir.",
+   "useCases": [
+    "WAL gecikmesinin saniye-bazlı izlenmesi",
+    "Yedek bölgenin salt-okur rapor için kullanımı"
+   ]
   },
   "term-crdt-scale-multiregion": {
-   "longExplanation": "İki bölgede aynı anda yazılan veriyi otomatik birleştiren matematiksel yapı.\n\nAktif-aktif için zorunlu; klasik DB conflict'i çözemez. Açılımı: Conflict-Free Replicated Data Type. Türkçesi: Çatışmasız çoğaltılan veri tipi."
+   "longExplanation": "İki bölgede aynı anda yazılan veriyi otomatik birleştiren matematiksel yapı.\n\nAktif-aktif için zorunlu; klasik DB conflict'i çözemez. Açılımı: Conflict-Free Replicated Data Type. Türkçesi: Çatışmasız çoğaltılan veri tipi.\n\nMultiregion bağlamında CRDT, çift-aktif yazmanın matematiğidir: iki bölge aynı veriyi bağımsız değiştirir, birleşim çatışmasız tanımlıdır; yalnız buna uyan veri tipleri (sayaç, küme) için kullanılır — genel çözüm değildir.",
+   "realWorldAnalogy": "İki defterin birleştirilebilir tutulması gibi — herkes kendi sayfasına ekler; akşam birleştirme kuralı baştan bellidir, silgi yoktur.",
+   "useCases": [
+    "Çift-bölge sayaç/küme verisinde çatışmasız birleşim",
+    "CRDT'ye uymayan verinin tek-bölge yazıma sabitlenmesi"
+   ]
   },
   "term-geo-failover-scale-multiregion": {
-   "longExplanation": "Ana bölge çökünce trafiği yedek bölgeye yönlendirme.\n\nDNS TTL + healthcheck ile 1-5 dk içinde olur. Türkçesi: Bölge geçişi."
+   "longExplanation": "Ana bölge çökünce trafiği yedek bölgeye yönlendirme.\n\nDNS TTL + healthcheck ile 1-5 dk içinde olur. Türkçesi: Bölge geçişi.\n\nMultiregion bağlamında geo-failover, felaket anının koreografisidir: sağlık sinyali, karar eşiği, DNS/anycast yönlendirme ve split-brain koruması — dönüş (failback) planı da en az gidiş kadar önemlidir.",
+   "realWorldAnalogy": "Yedek havaalanına yönlendirme gibi — pist kapanınca uçaklar planlı alternatife iner; pist açılınca dönüş de kontrollü yapılır.",
+   "useCases": [
+    "Otomatik failover karar eşiği ve fren mekanizması",
+    "Split-brain'e karşı tek-yazar garantisi"
+   ]
   },
   "term-tarih-versiyon-sus-versioning": {
    "longExplanation": "Sürüm adı bir tarih (2026-06-01): hangi sözleşmenin geçerli olduğu net\n\nMajor/minor numarasından daha net"
@@ -3182,10 +3747,20 @@
    "longExplanation": "Sürümler arası fark `if v < ...` değil, isimli modül olarak soyutlanır (Stripe deseni)\n\nYıllar içinde okunabilirlik Türkçesi: İsimli kapı."
   },
   "term-websocket-scale-realtime": {
-   "longExplanation": "İstemci-sunucu arası kalıcı, iki yönlü iletişim kanalı.\n\nHTTP istemci başlatır; WebSocket sonra sunucu da push yapabilir. Türkçesi: Web yuva."
+   "longExplanation": "İstemci-sunucu arası kalıcı, iki yönlü iletişim kanalı.\n\nHTTP istemci başlatır; WebSocket sonra sunucu da push yapabilir. Türkçesi: Web yuva.\n\nRealtime bağlamında WebSocket taşıyıcı katmandır: bağlantı yaşam döngüsü, yeniden bağlanma (backoff'lu) ve sunucu tarafı fan-out ölçeği burada işletilir; SSE/polling'e düşüş (fallback) plan dahilindedir.",
+   "realWorldAnalogy": "Telefon santralinin açık hattı gibi — her aramada numara çevrilmez; hat düşerse santral otomatik yeniden bağlar.",
+   "useCases": [
+    "Kopan bağlantının backoff'la yeniden kurulması",
+    "Bağlantı başına kanal aboneliklerinin yönetimi"
+   ]
   },
   "term-sse-scale-realtime": {
-   "longExplanation": "HTTP üzerinde tek-yönlü push: sunucu mesaj yollar, istemci dinler.\n\nWebSocket'ten basit, HTTP/2 ile multipleks. Bildirim için ideal. Açılımı: Server-Sent Events. Türkçesi: Sunucudan olay."
+   "longExplanation": "HTTP üzerinde tek-yönlü push: sunucu mesaj yollar, istemci dinler.\n\nWebSocket'ten basit, HTTP/2 ile multipleks. Bildirim için ideal. Açılımı: Server-Sent Events. Türkçesi: Sunucudan olay.\n\nRealtime bağlamında SSE, WebSocket'in sade kardeşidir: tek yönlü push yeterliyse (bildirim, ilerleme) HTTP üstünde çalışır, proxy'lerle barışıktır; çift yön gerektiğinde WebSocket'e çıkılır.",
+   "realWorldAnalogy": "Anons hoparlörü gibi — duyuru tek yönde akar; soru sormak isteyen (çift yön) danışmaya gider.",
+   "useCases": [
+    "Bildirim akışının SSE ile taşınması",
+    "WebSocket fallback merdiveninin ilk basamağı"
+   ]
   },
   "term-pub-sub-scale-realtime": {
    "longExplanation": "Mesaj yayımcı yazar; konuyu (kanal) dinleyenler okur.\n\nÇok sayıda dinleyici için ölçeklenebilir. Türkçesi: Yayımla/Abone ol.\n\nRealtime bağlamında Pub/Sub kanalları kullanıcıya uzanır: WebSocket abonelikleri konu (kanal) bazlı yönetilir, presence ve canlı güncelleme bu desenle akar. Ölçek, kanal başına fan-out maliyetiyle ölçülür.",
@@ -3196,7 +3771,12 @@
    ]
   },
   "term-presence-scale-realtime": {
-   "longExplanation": "Kimin online olduğunu takip.\n\nChat'te 'Ahmet yazıyor', 'Ayşe online' gösterimi için. Türkçesi: Var olma."
+   "longExplanation": "Kimin online olduğunu takip.\n\nChat'te 'Ahmet yazıyor', 'Ayşe online' gösterimi için. Türkçesi: Var olma.\n\nRealtime bağlamında presence işletim problemidir: bağlantı kopuşları, çoklu cihaz ve heartbeat toleransı 'online' tanımını bulanıklaştırır; durum TTL'li anahtarlarla, kesin değil yaklaşık tutulur.",
+   "realWorldAnalogy": "Apartman penceresindeki ışık gibi — yanıyorsa muhtemelen evdeler; kesin bilmek için kapıyı çalmak (heartbeat) gerekir.",
+   "useCases": [
+    "Çoklu cihazda tek kullanıcı presence birleştirmesi",
+    "Heartbeat kaçıran bağlantının TTL ile düşürülmesi"
+   ]
   },
   "term-import-linter-sus-boundaries": {
    "longExplanation": "Python paketlerinin birbirine import etmesini contract'a göre kontrol eden CI aracı\n\nPackwerk muadili"
@@ -3208,13 +3788,28 @@
    "longExplanation": "İzin verilen/yasak bağımlılıkların yazılı tanımı\n\nİnsan unutabilir; yazı unutmaz Türkçesi: Sözleşme."
   },
   "term-webhook-scale-webhook": {
-   "longExplanation": "Olay olduğunda dış URL'e otomatik POST.\n\nPolling'ten çok daha verimli — dış sistem 'yeni var mı?' diye sormaz, sen 'oldu' dersin. Türkçesi: Geri çağrı."
+   "longExplanation": "Olay olduğunda dış URL'e otomatik POST.\n\nPolling'ten çok daha verimli — dış sistem 'yeni var mı?' diye sormaz, sen 'oldu' dersin. Türkçesi: Geri çağrı.\n\nScale-webhook bağlamında webhook işletim disiplinidir: imza, sıra garantisi yokluğu, retry penceresi ve 24 saat sonunda DLQ — dış dünyanın güvenilmezliği ürün sözleşmesine çevrilir.",
+   "realWorldAnalogy": "Kargo firması çalıştırmak gibi — adres yanlışsa üç kez denenir, sonra şubeye çekilir; her adım barkodla izlenir.",
+   "useCases": [
+    "İmzalı teslimat + retry penceresi sözleşmesi",
+    "Webhook sağlığının müşteri panelinde raporu"
+   ]
   },
   "term-hmac-scale-webhook": {
-   "longExplanation": "Mesaj + paylaşılan gizli anahtar → hash. Alıcı aynı hash'i hesaplar, eşleşirse mesaj doğru.\n\nSaldırgan webhook'u tutamaz veya değiştiremez. Açılımı: Hash-based Message Authentication Code. Türkçesi: Hash tabanlı kimlik doğrulama."
+   "longExplanation": "Mesaj + paylaşılan gizli anahtar → hash. Alıcı aynı hash'i hesaplar, eşleşirse mesaj doğru.\n\nSaldırgan webhook'u tutamaz veya değiştiremez. Açılımı: Hash-based Message Authentication Code. Türkçesi: Hash tabanlı kimlik doğrulama.\n\nWebhook bağlamında HMAC, teslimatın imzasıdır: payload + paylaşılan sır → hash başlığa konur; alıcı aynı hesabı yapıp karşılaştırır. Sır rotasyonu ve timestamp'in imzaya dahli sözleşmenin parçasıdır.",
+   "realWorldAnalogy": "Mühürlü zarf + bilinen mühür deseni gibi — alıcı mühür kalıbının kopyasına sahiptir; zarf yolda açıldıysa mühür tutmaz.",
+   "useCases": [
+    "İmza doğrulama reçetesinin entegrasyon dokümanı",
+    "Sır rotasyonunda çift-imza geçiş penceresi"
+   ]
   },
   "term-replay-attack-scale-webhook": {
-   "longExplanation": "Saldırgan eski webhook'u kaydedip tekrar gönderir.\n\nTimestamp + idempotency ID = çözüm. Türkçesi: Tekrar saldırısı."
+   "longExplanation": "Saldırgan eski webhook'u kaydedip tekrar gönderir.\n\nTimestamp + idempotency ID = çözüm. Türkçesi: Tekrar saldırısı.\n\nGiden webhook bağlamında replay, karşı tarafın sorusudur: bizim gönderdiğimiz isteğin kopyalanıp tekrar oynatılmasına karşı imzaya timestamp dahil edilir; alıcıya doğrulama reçetesi belgeyle verilir.",
+   "realWorldAnalogy": "Çek yaprağına tarih yazmak gibi — imza gerçek olsa da eski tarihli çek ikinci kez bozdurulamaz.",
+   "useCases": [
+    "İmza şemasına timestamp eklenmesi",
+    "Entegrasyon dökümanında alıcı-taraf doğrulama reçetesi"
+   ]
   },
   "term-dlq-scale-webhook": {
    "longExplanation": "24 saat boyunca başarısız webhook'ların gittiği park.\n\nSonsuz retry değil, insan inceler. Açılımı: Dead Letter Queue. Türkçesi: Ölü mesaj kuyruğu.\n\nWebhook bağlamında DLQ dış dünya gerçeğine cevaptır: karşı taraf 24 saat ayakta olmayabilir; teslimat denemeleri biter, kayıt DLQ'ya düşer ve müşteri panelinde görünür. Şeffaflık, destek talebini azaltır.",
@@ -3243,7 +3838,12 @@
    "longExplanation": "Sorun çıkınca özelliği anında kapatma butonu.\n\nRollback olmadan, deploy olmadan saniyeler içinde özelliği geri al. Türkçesi: Acil kapatma."
   },
   "term-canary-cc-rollout": {
-   "longExplanation": "%5 trafiği yeni sürüme yönlendir; sorun varsa fark et.\n\nEski madende kanarya zehirli gazda ölürdü — insan korunurdu. Software'de aynı prensip. Türkçesi: Kanarya."
+   "longExplanation": "%5 trafiği yeni sürüme yönlendir; sorun varsa fark et.\n\nEski madende kanarya zehirli gazda ölürdü — insan korunurdu. Software'de aynı prensip. Türkçesi: Kanarya.\n\nRollout bağlamında canary, riskin kontrollü satın alınmasıdır: yeni davranış önce küçük tenant yüzdesine açılır, hata bütçesi izlenir; sorun tüm filoya değil %5'e dokunur.",
+   "realWorldAnalogy": "Yeni yemeği önce bir masaya ikram etmek gibi — beğenilmezse menüye girmeden mutfağa döner.",
+   "useCases": [
+    "Tenant yüzdesiyle kademeli özellik açılışı",
+    "Hata bütçesi aşımında otomatik geri çekilme"
+   ]
   },
   "term-a-b-test-cc-rollout": {
    "longExplanation": "İki varyantı (A ve B) eşit gruplara göster, hangisi iyi?\n\nSezgi yerine veri ile karar. Türkçesi: A/B testi."

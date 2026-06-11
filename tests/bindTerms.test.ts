@@ -48,8 +48,16 @@ describe("term segment bağlama (Parti 1-B)", () => {
     }
   });
 
-  it("egitim dışı kategorilerde bağlama yoktur (Parti 2+ kapsamı)", () => {
+  it("B akışı tüm kategorilerde aktif: egitim dışında da bağlı page var (12A §3a genelleme)", () => {
     const other = pages.filter((p) => p.categoryId !== "egitim");
-    expect(other.every((p) => termSegmentsOf(p).length === 0)).toBe(true);
+    const bound = other.filter((p) => termSegmentsOf(p).length > 0);
+    expect(bound.length).toBeGreaterThan(other.length / 2);
+  });
+
+  it("cross-page yasağı tüm kategorilerde geçerli: her bağlı termId kendi page'ine aittir", () => {
+    for (const p of pages) {
+      const re = new RegExp(`-${p.id.slice(5)}(-2)*$`);
+      for (const s of termSegmentsOf(p)) expect(re.test(s.termId), p.id).toBe(true);
+    }
   });
 });
