@@ -54,3 +54,10 @@ describe("bağlamsal glossary (12 §Çözümleme)", () => {
     expect(resolveTerm("term-olmayan-xyz")).toBeUndefined();
   });
 });
+
+it("resolvePage stem-fallback: taşınan kategorinin eski slug'ı içerik render eder (landx -> stack)", async () => {
+  const { resolvePage } = await import("../src/engine");
+  const r = resolvePage("landx", "landx-overview");
+  expect(r.kind).toBe("found");
+  if (r.kind === "found") expect(r.entry.slug).toBe("stack/landx-overview");
+});

@@ -11,7 +11,9 @@ const byId = new Map(pagesIndex.map((p) => [p.id, p]));
 const byOldId = new Map(pagesIndex.filter((p) => p.sourceId).map((p) => [p.sourceId as string, p]));
 
 export function resolvePage(section: string, pageSlug: string): ResolvedPage {
-  const entry = bySlug.get(`${section}/${pageSlug}`);
+  // Stem-fallback: kategori taşınmalarında (örn. landx -> stack, 03 §2) eski
+  // bölümlü derin linkler kırılmaz — sayfa stem'inden çözülür, içerik render edilir.
+  const entry = bySlug.get(`${section}/${pageSlug}`) ?? byId.get(`page-${pageSlug}`);
   return entry ? { kind: "found", entry } : { kind: "not-found", slug: `${section}/${pageSlug}` };
 }
 
