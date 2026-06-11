@@ -30,6 +30,8 @@ Eager/lazy bölünmesi performans bütçesinin (14 #15) yapısal karşılığıd
 | `sourceId` | string | hayır | Eski cluster id'si — `{{ref:x}}` ve `related` çözüm anahtarı (kaynak veri eski id ile referans verir, 07A §3a) |
 | `meta` | { granularity?, state?, badge? } | hayır | Eski şemadan taşınan rozet bilgisi (07A §2) |
 
+**`meta.granularity` izinli değer seti (v2 adlarıyla):** `kaya` · `buyuk-tas` · `orta-tas` · `kucuk-tas` — sayfa-iriliği etiketi; iş-kırılımı SP'siyle karıştırılmaz (ADR-0008).
+
 **Rozet sözlüğü (`meta.badge` — serbest string ama fiilî envanter):** `ADAY` (katalog adayı — ürünleşme kararı bekler) · `EDITION` (UI/UX paketi) · `DISTRIBUTION` (sektör paketi) · `KAVRAM` (bağlayıcı kavram sayfası) · `KARAR` (kilitli karar kaydı) · `TASARIM` (tasarım sözleşmesi) · `FAZ` (inşa fazı sayfası) · `REFERANS` (destekleyici referans) · `ÖRNEK` (örnek/görselleştirme) · `ARŞİV` (tarihî artefakt — bağlayıcı değil). Özgün içerikten gelen serbest rozetler (Layer/LandX etiketleri) bilgilendiricidir.
 | `related` | string[] (pageId) | hayır | Sayfa sonu "İlgili sayfalar" cardGrid'i |
 | `blocks` | Block[] | evet | Sıralı içerik |

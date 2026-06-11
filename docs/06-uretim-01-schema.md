@@ -15,7 +15,7 @@ src/schemas/
 
 ## Yönergeler
 
-1. Block union'ı `z.discriminatedUnion("type", [...])` ile kurulur; her block type ayrı şema sabitidir. Yeni block type eklemek union listesine bir satır eklemektir — başka dosyaya dokunulmaz. Union, master prompt'un 13 type'ına ek olarak içerik envanterinin zorunlu kıldığı `image`, `list`, `lessonHeader` type'larını kapsar (`07A-alan-esleme-tablosu.md` §6).
+1. Block union'ı `z.discriminatedUnion("type", [...])` ile kurulur; her block type ayrı şema sabitidir. Yeni block type eklemek union listesine bir satır eklemektir — başka dosyaya dokunulmaz. Union, master prompt'un 13 type'ına ek olarak içerik envanterinin zorunlu kıldığı `image`, `list`, `lessonHeader` type'larını ve 11 Haziran'da eklenen `wbsChart`'ı (ADR-0011) kapsar — toplam 17 (`07A-alan-esleme-tablosu.md` §6).
 2. Segment union'ı aynı desenle kurulur ve `paragraph`, `callout`, `table` hücresi gibi tüm inline alanlar tarafından paylaşılır. Segment şeması tek yerde tanımlanır; kopyalanmaz.
 3. ID alanları düz `z.string()` değil, prefix kontrolü yapan refinement'lardır (`page-`, `block-`, `term-`, `search-`). Yanlış prefix'li ID şema seviyesinde yakalanır.
 4. Ortak alanlar (id, type) bir base şemada toplanır ve `extend` ile genişletilir; tekrar eden tanım anti-pattern kabul edilir.
