@@ -688,7 +688,7 @@
 - Stack ürünü (page-s-predictive) · **ince why** · analoji tohumu var
 - Stack ürünü (page-s-doc-matching) · **ince why** · analoji tohumu var
 - Stack ürünü (page-s-conversational) · **ince why** · analoji tohumu var
-- Frappe ArcheType (page-s-studio) · analoji tohumu var
+- Frappe DocType (page-s-studio) · analoji tohumu var
 - Stack ürünü (page-s-bpm) · **ince why** · analoji tohumu var
 - Zapier (page-s-ipaas) · analoji tohumu var
 - OpenFGA (page-s-iam) · analoji tohumu var
