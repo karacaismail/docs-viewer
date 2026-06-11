@@ -1,0 +1,47 @@
+# AGENTS.md — Meta-Framework İş Tarifi Sözleşmesi (LLM Bağlam Paketi)
+
+Bu dosya, bu projede çalışan HER AI ajanının bağlayıcı sözleşmesidir. "crm dağ yap" da dense, "crm app'i yaz" da dense **aynı plana** düşersin. Kanonik kaynaklar: https://karacaismail.github.io/docs-viewer/ (özellikle kernel/k-granulerlik, kernel/k-surface, kernel/k-terminoloji, backend/be-kararlar, backend/be-sdk).
+
+## 1. Sözlük (bağlayıcı)
+
+- **Kernel** = sistemin kalbi/beyni (Linux kernel gibi). **Core** = bir app'in kalbi (Drupal core gibi; app başına TEK, değişmez core module).
+- **App** = kernel üstünde, bir veya birden çok stack'i (gerekirse edition katmanıyla) TEK PANELDE paketleyen ürün; tek stack tek başına app olabilir. Tüm app'ler birbirine varsayılan entegre gelir (paylaşılan ArcheType'lar, örn. Party).
+- **Module** = genişletme birimi (Drupal dili). YASAK KELİME: "plugin". 
+- **ArcheType** = bildirimsel varlık tanımı; tablo+API+MCP tool+varsayılan Surface'i ÜRETİR. YASAK KELİME: "doctype" (Frappe'nin kendi kavramına atıf hariç).
+- Yapı ekseni: **Domain > ArcheType > Fragment > Atom**. Fragment = ana kayıtla yaşayan satırlı parça (eski dünyadaki child table). Atom = en küçük bildirimsel bileşen (kural/kısıt).
+- Yan eksen: **Workflow** (durum makinesi; ArcheType'tan bağımsız versiyonlanır, tenant'a pinlenir) · **Surface** (her sayfa bir Surface'tir; 1+ ArcheType'ı projekte eder; `surface: none` = headless) · **Contract** (Domain sınırının API kapısı).
+- Taksonomi: **Stack** ⊂ **Edition** (aynı kod, gelişmiş UI/UX + GTM) ⊂ **Distribution** (edition + config + sektör içeriği).
+
+## 2. Granülerlik Zinciri — Eş Anlam Tablosu (komut çözümleme anahtarı)
+
+| Tanım katmanı (öne çıkan) | Metafor (eş anlamlı) | Frontend | Backend | SP |
+|---|---|---|---|---|
+| App | Dağ | Application | Application | 34+ |
+| Domain (Module) | Kaya | Module | Module / Bounded Context | 21 |
+| Surface (ekran) · ArcheType işi | Büyük Taş | Page/Screen | Service Group | 13 |
+| View / Projection | Orta Taş | Sub Page/View | Endpoint Group | 8 |
+| Fragment / Section / Use Case | Küçük Taş | Block/Section | Use Case | 5 |
+| Component / Endpoint (alan*) | Kum Tanesi | Component | API Endpoint | 3 |
+| Property / bayrak | Toz Tanesi | Property | Validation/Policy | 2 |
+| Atom (Rule) | Atom | Rule | Business Rule | 1 |
+
+\* alan seviyesinin adı (Field/Attribute) AÇIK karardır — şimdilik "alan" de.
+
+## 3. Komut Grameri
+
+Biçim: `<hedef> <seviye> yap|yaz|üret|planla`. **Seviye adı iki dilden de gelebilir** — yukarıdaki tablo eş anlamlıdır:
+- "crm **dağ** yap" ≡ "crm **app**'i yaz" → CRM app'ini Dağ→Atom zinciriyle planla: Domain'lere (Kaya) böl, her Domain'de ArcheType'ları (BT) çıkar, SP'leri yapraktan topla.
+- "listing **orta taş** yap" ≡ "listing **view**'ını üret" → bir Büyük Taş altındaki liste view'ı + endpoint grubu.
+- "employee **archetype**'ı yaz" ≡ "employee **büyük taş** yap" → ArcheType tanımı + Fragment/alan/bayrak/Atom yaprakları + üretilecek Surface notu.
+
+**Çözümleme adımları (her komutta):** (1) seviyeyi tablodan çöz; (2) KOMŞULUK KURALI: her seviye yalnız bir alt komşusuna bağlanır — "Kaya doğrudan Kum'a bağlanamaz"; zincirde atlama varsa planı REDDET ve eksik ara seviyeleri iste; (3) plan ağacını SP'lerle ver; (4) onaydan sonra iskelet üret — SIRA: önce testler, sonra tanımlar, sonra hook gövdeleri.
+
+## 4. Çıktı Sözleşmeleri
+
+İskelet (be-sdk): `tests/` İLK üretilir (kırmızı başlar) → `archetypes/*.yaml` → `surfaces/*.yaml` → `workflows/*.yaml` → `manifest.yaml` (izin beyanı; WASM sandbox). AI'ın dokunabildiği yüzey YALNIZ bunlar + saf hook fonksiyonları; kernel iç API'sine dokunulmaz.
+
+Zorunlu bayrak disiplini: para alanı = Money (Decimal; float YASAK) · kişisel veri = `pii: true` (+retention) · tarihçeli değer = `bitemporal: true` · her şey audit'li. Varsayılan-basit ilkesi: tek Postgres (kuyruk/arama/event dahil); Redis/Kafka/S3/k8s yalnız opsiyon. API varsayılanı GraphQL (FastAPI endpoint'i); REST+OpenAPI kurulum opsiyonu.
+
+## 5. Yasaklar (CI kapılı)
+
+"doctype" ve "plugin" kelimeleri içerikte kullanılmaz (ArcheType / module de). Next.js, Redux, Flowbite kullanılmaz. Test-önce sırası atlanmaz. Komşuluk kuralı ihlal eden backlog üretilmez.
