@@ -30,6 +30,7 @@ export const WBS_SAMPLE: WbsNode = {
                     {
                       name: "il · Alan — Kum (3)",
                       meta: "adı tartışılacak: Field/Attribute",
+                      collapsed: true, // derin zincir tıklamayla açılır — etiket çakışmasını önler
                       children: [
                         {
                           name: "required · Toz (2)",
@@ -141,7 +142,7 @@ export function WbsChartBlock({ block }: { block: Extract<Block, { type: "wbsCha
               data: [WBS_SAMPLE],
               orient: "LR",
               left: 8,
-              right: 240,
+              right: 300,
               top: 8,
               bottom: 8,
               symbolSize: 9,
@@ -180,7 +181,7 @@ export function WbsChartBlock({ block }: { block: Extract<Block, { type: "wbsCha
           ref={ref}
           role="img"
           aria-label="WBS ağacı: Dağ'dan Atom'a soldan sağa kırılım — HRMS ve CRM örnek app'leri"
-          style={{ width: "100%", height: 560 }}
+          style={{ width: "100%", height: 620 }}
         />
       )}
       {block.caption && <figcaption>{block.caption}</figcaption>}
