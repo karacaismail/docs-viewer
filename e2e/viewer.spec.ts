@@ -126,6 +126,25 @@ test.describe("explanation panel sözleşmesi (kabul #10, 12 §Etkileşim)", () 
     await expect(after).toBeChecked(); // ilerleme geri yüklendi
   });
 
+  test("kod kopyalama panoya yazar + sr onayı (11 §code)", async ({ page, context, viewport }) => {
+    test.skip((viewport?.width ?? 0) < 900, "pano izni desktop projesinde verilir");
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await page.goto(KERNEL);
+    const block = page.locator(".codeblock").first();
+    await block.scrollIntoViewIfNeeded();
+    await block.getByRole("button", { name: "Kodu kopyala" }).click();
+    const text = await page.evaluate(() => navigator.clipboard.readText());
+    expect(text.length).toBeGreaterThan(0);
+    await expect(block.locator("[aria-live=polite]")).toHaveText("Kod panoya kopyalandı");
+  });
+
+  test("highlightedLines satır vurgusu render edilir (11 §code)", async ({ page }) => {
+    await page.goto("/docs/urunler/s-channel-hub");
+    const hl = page.locator(".line--hl");
+    await hl.first().scrollIntoViewIfNeeded();
+    await expect(hl).toHaveCount(2);
+  });
+
   test("rail navigasyonu yalnız klavye ile kullanılabilir (kabul: a11y §1)", async ({ page }) => {
     await page.goto(FIRST);
     // Açılışta focus h1'e taşınır (10 §Routing 4 — bilinçli tasarım); skip link çalışır durumda

@@ -3,6 +3,7 @@
 import * as Accordion from "@radix-ui/react-accordion";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { stripBase } from "../../engine";
 import type { NavCategory } from "../../schemas";
 
 export function RailTwo({
@@ -15,7 +16,8 @@ export function RailTwo({
   plain?: boolean;
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const activeSlug = pathname.replace(/^\/docs\//, "");
+  // Pages alt-dizin yayınında pathname base önekiyle gelir (ADR-0003) — aktif vurgu/grup için arındırılır
+  const activeSlug = stripBase(pathname).replace(/^\/docs\//, "");
   const activeGroup = category.groups.find((g) => g.items.some((i) => i.slug === activeSlug))?.id;
   const [openGroups, setOpenGroups] = useState<string[]>(
     activeGroup ? [activeGroup] : [category.groups[0]?.id ?? ""],

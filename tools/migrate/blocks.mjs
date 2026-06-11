@@ -135,6 +135,9 @@ export function createTransformer(ctx) {
           title: b.title ?? undefined,
           language: normalizeLang(b.lang, warn),
           code: b.content ?? "",
+          ...(Array.isArray(b.highlightedLines) && b.highlightedLines.length
+            ? { highlightedLines: b.highlightedLines }
+            : {}),
         });
         break;
       case "list":

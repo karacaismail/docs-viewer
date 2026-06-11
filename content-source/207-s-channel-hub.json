@@ -72,6 +72,21 @@
    "variant": "tip",
    "label": "Organik kanal",
    "body": "TR'nin en yüksek niyetli B2B yazılım aramalarından: 'trendyol entegrasyon'. Mevcut oyuncuların fiyat/destek şikayetleri forumlarda — karşılaştırma içeriği organik getirir. Komisyon/abonelik geliri işlem hacmiyle büyür."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Akış Örneği"
+  },
+  {
+   "type": "code",
+   "lang": "json",
+   "title": "Pazaryeri stok senkron akışı (kritik satırlar vurgulu)",
+   "highlightedLines": [
+    4,
+    7
+   ],
+   "content": "{\n \"trigger\": \"inventory.stock_changed\",\n \"steps\": [\n  { \"app\": \"sopyo\", \"action\": \"update_stock\", \"retry\": \"exponential\" },\n  { \"app\": \"stockmount\", \"action\": \"update_stock\", \"retry\": \"exponential\" },\n  { \"if_error\": \"dlq\", \"notify\": \"channel-ops\" }\n ],\n \"idempotency_key\": \"{{event_id}}\"\n}"
   }
  ]
 }

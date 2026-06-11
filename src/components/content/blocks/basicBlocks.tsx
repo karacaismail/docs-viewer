@@ -1,4 +1,6 @@
 // heading, paragraph, callout, divider, list, image — semantik HTML zorunlu (11 §3)
+
+import { withBase } from "../../../engine";
 import type { Block } from "../../../schemas";
 import { SegmentRenderer } from "../SegmentRenderer";
 
@@ -60,7 +62,12 @@ export function ImageBlock({ block }: B<"image">) {
   // Kayıp varlıkta erişilebilir metin fallback — kırık görsel ikonu gösterilmez (07B §1)
   return (
     <figure id={block.id}>
-      <object data={block.src} type="image/svg+xml" aria-label={block.alt} style={{ maxWidth: "100%" }}>
+      <object
+        data={withBase(block.src)}
+        type="image/svg+xml"
+        aria-label={block.alt}
+        style={{ maxWidth: "100%" }}
+      >
         <div className="image-fallback" role="img" aria-label={block.alt}>
           <i className="ph ph-image" aria-hidden /> {block.alt}
         </div>
