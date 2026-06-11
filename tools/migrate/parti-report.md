@@ -219,7 +219,7 @@
 - Affordance (page-edu-u15-ux-60-plus) · **ince why** · analoji tohumu var
 - Progressive Disclosure (page-edu-u15-ux-60-plus) · analoji tohumu var
 
-## Parti 3 (135 kayıt)
+## Parti 3 (140 kayıt)
 - Primitive (page-overview) · analoji tohumu var
 - Outbox (page-overview) · analoji tohumu var
 - CQRS (page-overview) · analoji tohumu var
@@ -334,6 +334,11 @@
 - Kum Tanesi (page-k-granulerlik)
 - Toz Tanesi (page-k-granulerlik)
 - Atom (page-k-granulerlik)
+- Surface (page-k-surface)
+- Domain (page-k-surface)
+- Workflow (page-k-surface)
+- Headless ArcheType (page-k-surface)
+- Projection (page-k-surface)
 - Cache-aside (page-scale-cache) · analoji tohumu var
 - Write-through (page-scale-cache) · analoji tohumu var
 - Stampede (page-scale-cache) · analoji tohumu var
@@ -708,7 +713,7 @@
 - MRR (page-s-billing) · **ince why** · analoji tohumu var
 - Prorating (page-s-billing) · **ince why** · analoji tohumu var
 
-## Parti 2 — Bağlamsal varyantlar (236 kayıt, 73 label)
+## Parti 2 — Bağlamsal varyantlar (240 kayıt, 75 label)
 - Primitive (page-overview) · analoji tohumu var
 - Outbox (page-overview) · analoji tohumu var
 - CQRS (page-overview) · analoji tohumu var
@@ -755,6 +760,7 @@
 - DSAR (page-edu-u24-i18n-jurisdiction) · analoji tohumu var
 - Metadata-driven (page-edu-u25-doctype-vs-ddd) · analoji tohumu var
 - CQRS (page-scale-projections) · analoji tohumu var
+- Projection (page-scale-projections) · analoji tohumu var
 - Presigned URL (page-l1-export) · analoji tohumu var
 - Replay Attack (page-l1-webhook-in) · analoji tohumu var
 - Edge (page-fe-cdn) · analoji tohumu var
@@ -822,6 +828,8 @@
 - Cluster (page-layer1-misc) · **ince why** · analoji tohumu var
 - Cluster (page-stack-commerce) · **ince why** · analoji tohumu var
 - Cluster (page-stack-accounting) · **ince why** · analoji tohumu var
+- Workflow (page-k-surface)
+- Projection (page-k-surface)
 - Cluster (page-stack-hrms) · **ince why** · analoji tohumu var
 - Cluster (page-stack-pms) · **ince why** · analoji tohumu var
 - Cluster (page-stack-lms) · **ince why** · analoji tohumu var
@@ -873,6 +881,7 @@
 - Cluster (page-fe-anti-stack) · **ince why** · analoji tohumu var
 - CI (page-deploy-yap) · analoji tohumu var
 - CD (page-deploy-yap) · analoji tohumu var
+- Workflow (page-deploy-yap) · analoji tohumu var
 - Meta-framework (page-edu-u01-yazilim) · analoji tohumu var
 - DDD (page-edu-u01-yazilim) · analoji tohumu var
 - Cluster (page-edu-u01-yazilim) · **ince why** · analoji tohumu var
