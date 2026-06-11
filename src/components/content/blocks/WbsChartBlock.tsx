@@ -20,16 +20,16 @@ export const WBS_SAMPLE: WbsNode = {
           meta: "Domain / core module",
           children: [
             {
-              name: "Employee · ArcheType — Büyük Taş (13)",
-              meta: "screen + service group üretir",
+              name: "Employee · ArcheType (13)",
+              meta: "Büyük Taş — screen + service group üretir",
               children: [
                 {
-                  name: "Adresler · Fragment — Küçük Taş (5)",
-                  meta: "child satırlar — ana kayıtla yaşar",
+                  name: "Adresler · Fragment (5)",
+                  meta: "Küçük Taş — child satırlar, ana kayıtla yaşar",
                   children: [
                     {
-                      name: "il · Alan — Kum (3)",
-                      meta: "adı tartışılacak: Field/Attribute",
+                      name: "il · Alan (3)",
+                      meta: "Kum — adı tartışılacak: Field/Attribute",
                       collapsed: true, // derin zincir tıklamayla açılır — etiket çakışmasını önler
                       children: [
                         {
@@ -43,16 +43,14 @@ export const WBS_SAMPLE: WbsNode = {
                 },
                 {
                   name: "ZamanKayıtları · Fragment (5)",
-                  meta: "child satırlar",
-                  collapsed: true,
+                  meta: "Küçük Taş — child satırlar",
                   children: [{ name: "saat · Alan (3)" }],
                 },
               ],
             },
             {
               name: "LeaveRequest · ArcheType (13)",
-              meta: "izin talepleri",
-              collapsed: true,
+              meta: "Büyük Taş — izin talepleri",
               children: [{ name: "Onaylar · Fragment (5)" }],
             },
           ],
@@ -60,7 +58,6 @@ export const WBS_SAMPLE: WbsNode = {
         {
           name: "Bordro · Kaya (21)",
           meta: "Domain",
-          collapsed: true,
           children: [{ name: "Payslip · ArcheType (13)" }],
         },
       ],
@@ -142,7 +139,7 @@ export function WbsChartBlock({ block }: { block: Extract<Block, { type: "wbsCha
               data: [WBS_SAMPLE],
               orient: "LR",
               left: 8,
-              right: 300,
+              right: 230,
               top: 8,
               bottom: 8,
               symbolSize: 9,
@@ -177,12 +174,17 @@ export function WbsChartBlock({ block }: { block: Extract<Block, { type: "wbsCha
           <FallbackList node={WBS_SAMPLE} />
         </ul>
       ) : (
-        <div
-          ref={ref}
-          role="img"
-          aria-label="WBS ağacı: Dağ'dan Atom'a soldan sağa kırılım — HRMS ve CRM örnek app'leri"
-          style={{ width: "100%", height: 620 }}
-        />
+        <>
+          {/* biome-ignore lint/a11y/noNoninteractiveTabindex: yatay kaydırılabilir bölge klavyeyle odaklanabilir olmalı (axe: scrollable-region-focusable) */}
+          <section style={{ overflowX: "auto" }} tabIndex={0} aria-label="WBS ağacı — yatay kaydırılabilir">
+            <div
+              ref={ref}
+              role="img"
+              aria-label="WBS ağacı: Dağ'dan Atom'a soldan sağa kırılım — HRMS ve CRM örnek app'leri"
+              style={{ width: 1560, height: 640 }}
+            />
+          </section>
+        </>
       )}
       {block.caption && <figcaption>{block.caption}</figcaption>}
     </figure>
