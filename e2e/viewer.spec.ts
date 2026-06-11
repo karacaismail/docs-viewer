@@ -114,6 +114,18 @@ test.describe("explanation panel sözleşmesi (kabul #10, 12 §Etkileşim)", () 
     await expect(page.getByRole("dialog")).toBeHidden();
   });
 
+  test("checklist ilerlemesi localStorage'da kalıcıdır (07A §3 kapanışı)", async ({ page }) => {
+    await page.goto("/docs/egitim/edu-u01-yazilim");
+    const box = page.locator("ul.checklist input[type=checkbox]").first();
+    await box.scrollIntoViewIfNeeded();
+    await box.check();
+    await expect(page.locator(".checklist__progress").first()).toContainText("1/");
+    await page.reload();
+    const after = page.locator("ul.checklist input[type=checkbox]").first();
+    await after.scrollIntoViewIfNeeded();
+    await expect(after).toBeChecked(); // ilerleme geri yüklendi
+  });
+
   test("rail navigasyonu yalnız klavye ile kullanılabilir (kabul: a11y §1)", async ({ page }) => {
     await page.goto(FIRST);
     // Açılışta focus h1'e taşınır (10 §Routing 4 — bilinçli tasarım); skip link çalışır durumda

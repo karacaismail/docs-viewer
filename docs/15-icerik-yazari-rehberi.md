@@ -7,7 +7,7 @@ Bu doküman, viewer yayına girdikten sonra içerikle çalışan kişinin el kit
 1. `content-source/` altına yeni cluster JSON dosyası açılır (ADR-0001 §1). Dosya adı sözleşmesi: `NN-kategori-konu.json` — kategori prefix'i `03 §1` tablosundaki Rail 1 eşlemesine uyar; numara yalnızca insan-okur sıralamadır, hiçbir kimliğe sızmaz (07A §2).
 2. Zorunlu alanlar doldurulur: `id`, `title`, `subtitle`, `cluster`, `order`, `icon` (Phosphor adı), `tags`, `blocks`. Pedagojik katman (`enrich.info`, `lesson`, `terms`, `stories`) yeni içerikte de teşvik edilir — glossary ve useCase üretimi bu alanlardan beslenir (07A §4).
 3. Block'lar `04 §3` type setiyle yazılır. Serbest metin alanlarında markdown alışkanlığı sınırlıdır: bold/backtick/listeler parse edilir (07B §1), ama yeni içerikte doğrudan yapılandırılmış block kullanmak tercihtir — parse bir telafi mekanizmasıdır, yazım biçimi değil.
-4. Migration çalıştırılır; mutabakat raporu yeni page'in kategori/grup atamasını, üretilen ID'leri ve uyarıları gösterir. Rapor uyarısız değilse PR açılmaz.
+4. Migration çalıştırılır; mutabakat raporu yeni page'in kategori/grup atamasını, üretilen ID'leri ve uyarıları gösterir. Raporun **Uyarılar** bölümü boş değilse PR açılmaz; **Bilinçli düşürmeler / Notlar** bölümü kapı değildir — kayıtlı kararları listeler (örn. table'ın filterable/stateColumn düşürmesi, 07A §3).
 5. Yerel önizlemede kontrol: sayfa Rail 2'de doğru grupta mı, anchor'lar çalışıyor mu, 320px'te taşma var mı.
 6. İçerik PR'ı açılır: yalnızca `content-source/` + üretilmiş `src/data/` dosyaları (12A §5.4 — içerik PR'ı kod PR'ından ayrıdır). CI içerik doğrulama kapısı (05 §2.4) referans bütünlüğünü zorlar.
 

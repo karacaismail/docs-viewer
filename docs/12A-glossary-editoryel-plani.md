@@ -24,7 +24,7 @@ Editöryel iş üç ayrı akıştır; karıştırılmaz, ayrı izlenir:
 
 **B — Segment bağlama:** paragraph metinlerindeki kelimeleri `term` segment'ine çevirmek. Otomatik yapılmaz (07A kuralı: yanlış bağlam riski); migration raporundaki aynı-page birebir eşleşme adayları işlenir. Kural: bir terimin page içindeki **ilk** geçişi bağlanır, tekrarları bağlanmaz (görsel gürültü ve tooltip yorgunluğu — 60+ kullanıcı için kritik).
 
-**C — Yeni terim:** açıklama gerektiren ama `enrich.terms`'te olmayan jargon. Kaynak: editörün okuma geçişi + arama loglarının ileride göstereceği boş sonuçlar.
+**C — Yeni terim:** açıklama gerektiren ama `enrich.terms`'te olmayan jargon. Kaynak: editörün okuma geçişi + kullanıcı geri bildirimi. *(İlk halin "arama logları" varsayımı ADR-0006 ile kapatıldı: viewer telemetri toplamaz; boş-arama sinyali bilinçli feda edilir.)*
 
 ## 3. Öncelik Sırası — Okuma Akışıyla Aynı
 
@@ -55,7 +55,7 @@ Zenginleştirilmiş sayılan kayıt: `shortExplanation` tek cümle (~160 karakte
 
 ## 5. Süreç ve Ölçüm
 
-1. Migration raporu parti listelerini üretir (kategori → kayıt listesi + ince `why` işareti + analoji tohumu); editöryel iş bu rapordan ilerler, elle envanter tutulmaz.
+1. Migration raporu parti listelerini üretir (kategori → kayıt listesi + ince `why` işareti + analoji tohumu); editöryel iş bu rapordan ilerler, elle envanter tutulmaz. *Uygulama (11 Haziran 2026):* `tools/migrate/parti-report.md` her migrate koşusunda üretilir; ölçüm 679 kayıt tabanında Parti 1/3/4/5/6 = 214/122/129/112/102, bağlamsal varyant kümesi 72 label / 234 kayıt (§1'deki 29, 198-dosya snapshot'ının daha dar label-eşleme yöntemiyle sayımıydı; parti-report güncel ölçümdür).
 2. İlerleme iki metrikle izlenir: zenginleştirilmiş kayıt oranı (parti bazında) ve bağlı page oranı (≥1 term segment'i olan page yüzdesi). İkisi de CI'da bilgi amaçlı raporlanır; kapı değildir — içerik doğrulama kapısı yalnızca referans bütünlüğünü (her `termId` çözülür) zorlar.
 3. Tahmini efor, planlama içindir ve bağlayıcı değildir: A kaydı ~10 dk (Parti 1 ≈ 35 saat), B page'i ~10 dk (197 page ≈ 33 saat). Parti 1+2+3 toplamı ~50 saat — tek editörle 2-3 haftalık yarı zamanlı iş.
 4. Her parti tek PR ailesiyle gider; içerik PR'ı kod PR'ından ayrıdır ve yalnızca `src/data/` dosyalarına dokunur (14 §3 ilkesi: içerik güncellemesi viewer koduna dokunmaz).

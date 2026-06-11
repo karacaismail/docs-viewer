@@ -16,7 +16,7 @@ Karara etki eden olgular: metawork Stage 0 (monorepo + boundaries + CI) henüz k
 
 Viewer **bağımsız private GitHub repo'su** olarak kurulur: `docs-viewer`. Monorepo'ya katılım reddedilmez, ertelenir — aşağıdaki revizyon tetikleyicisiyle.
 
-1. **Kaynak içerik repo'ya taşınır:** 197 cluster JSON `docs-viewer/content-source/` altına git geçmişiyle birlikte alınır ve oradaki kopya tek doğruluk kaynağı olur. `mimari/` klasörü çalışma arşivi statüsüne düşer; çift kaynak yaşatılmaz (02 §4 izlenebilirlik ilkesinin repo karşılığı). Migration hattı (07) `content-source/ → src/data/` yönünde repo içinde çalışır.
+1. **Kaynak içerik repo'ya taşınır:** 197 cluster JSON `docs-viewer/content-source/` altına kopyalanır (uygulamada düz kopya alındı; `mimari/` git deposu olmadığından taşınacak geçmiş yoktu — izlenebilirlik `oldatas/` arşivi üzerinden korunur) ve oradaki kopya tek doğruluk kaynağı olur. `mimari/` klasörü çalışma arşivi statüsüne düşer; çift kaynak yaşatılmaz (02 §4 izlenebilirlik ilkesinin repo karşılığı). Migration hattı (07) `content-source/ → src/data/` yönünde repo içinde çalışır.
 2. **Bu doc seti** `docs-viewer/docs/` altına taşınır; viewer ADR'leri `docs-viewer/docs/adr/` altında bu şablonla birikir.
 3. **Mimari analiz raporları** (`MIMARI-ANALIZ-*`, `HEDEF_MIMARI-8` vb.) viewer repo'suna girmez — onlar framework kararlarıdır ve `HEDEF_MIMARI-8` §12.3 gereği metawork `docs/adr/`'sine gider.
 4. **Deploy** bağımsızdır: GitHub Actions → Hetzner Debian, `releases/<sha>` + `current` symlink (05 §4'teki hat). Viewer'ın yayını metawork release döngüsüne bağlanmaz.

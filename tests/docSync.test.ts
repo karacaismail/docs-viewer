@@ -58,6 +58,20 @@ describe("doc ↔ üretilmiş veri tutarlılığı", () => {
     expect(num(gen, /(\d+) paket kartı \(cards\/\)/, "generate kart")).toBe(cardCount);
   });
 
+  it("07A: toplam kaynak dosya sayısı diskle eşleşir", () => {
+    expect(num(doc("07A-alan-esleme-tablosu.md"), /aday katalog kaydıyla toplam (\d+)/, "07A toplam")).toBe(
+      sourceFiles.length,
+    );
+  });
+
+  it("05: axe kapsamı sayısı e2e/a11y.spec.ts PAGES dizisiyle eşleşir", () => {
+    const spec = readFileSync(join(ROOT, "e2e", "a11y.spec.ts"), "utf8");
+    const pages = (spec.match(/^\s*"\/docs\//gm) ?? []).length;
+    expect(
+      num(doc("05-test-plani.md"), /axe-core WCAG 2A\/AA taraması \((\d+) temsilî sayfa/, "05 axe"),
+    ).toBe(pages);
+  });
+
   it("12A: aday kayıt sayısı pages-index ile eşleşir", () => {
     expect(num(doc("12A-glossary-editoryel-plani.md"), /genişlemesindeki (\d+) aday kayıt/, "12A aday")).toBe(
       adayCount,

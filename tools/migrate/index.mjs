@@ -21,7 +21,9 @@ const OUT_DIR = join(ROOT, "src", "data");
 const SKIP = new Set(["ARCHITECTURE-5.json"]); // 07A §5: spec, içerik değil
 
 const warnings = [];
+const notes = []; // bilinçli düşürmeler / kayıtlı kararlar — kapı değildir (15 §1.4)
 const fileWarn = (file) => (msg) => warnings.push(`${file}: ${msg}`);
+const fileNote = (file) => (msg) => notes.push(`${file}: ${msg}`);
 
 // 12A Parti 1 — Eğitim Yolu editöryel zenginleştirme overlay'i
 const ENRICHMENT = JSON.parse(
@@ -62,7 +64,7 @@ function transformCluster({ file, stem, data }) {
   const collectTerms = (list) => {
     for (const t of list ?? []) if (t?.term) terms.push(t);
   };
-  const ctx = { nextId, warn, collectTerms, images: [] };
+  const ctx = { nextId, warn, note: fileNote(file), collectTerms, images: [] };
   const tr = createTransformer(ctx);
 
   const blocks = [];
@@ -159,6 +161,7 @@ function transformCluster({ file, stem, data }) {
     oldId: data.id,
     icon: data.icon ?? "ph-file",
     order: data.order ?? 0,
+    analojiSeed: Boolean(data.enrich?.lesson?.analoji), // 12A §5.1 parti raporu girdisi
   };
 }
 
@@ -338,6 +341,17 @@ for (const r of results) {
     })
     .filter(Boolean);
 }
+// Aday kayıtlardan geri bağlar (türetilmiş katman — kaynak dosyalara dokunulmaz, 02 §1 dokunulmazlığı):
+// aday bir sayfa özgün bir sayfayı related ile gösteriyorsa, hedef sayfanın üretilmiş related listesine
+// aday sayfa eklenir; çift yönlü gezinme katalog kayıtlarını keşfedilebilir kılar (03 §2 Edition notu).
+const byId = new Map(results.map((r) => [r.page.id, r]));
+for (const r of results) {
+  if (r.page.meta?.state !== "aday") continue;
+  for (const targetId of r.page.related) {
+    const target = byId.get(targetId);
+    if (target && !target.page.related.includes(r.page.id)) target.page.related.push(r.page.id);
+  }
+}
 const glossary = results.flatMap((r) => r.glossary);
 const navigation = buildNavigation(results);
 const searchIndex = buildSearchIndex(results, glossary);
@@ -422,8 +436,58 @@ const report = [
   "",
   `## Uyarılar (${warnings.length})`,
   ...[...new Set(warnings)].map((w) => `- ${w}`),
+  "",
+  `## Bilinçli düşürmeler / Notlar (${notes.length}) — kapı değildir (15 §1.4)`,
+  ...[...new Set(notes)].map((w) => `- ${w}`),
 ].join("\n");
 writeFileSync(join(ROOT, "tools", "migrate", "report.md"), report);
+
+// 12A §5.1: parti listeleri — editöryel iş bu rapordan ilerler, elle envanter tutulmaz.
+// Parti eşlemesi 12A §3 tablosundan; Parti 2 (bağlamsal varyantlar) kategori değil
+// label-çokluğu kümesidir ve ayrı listelenir (kayıtlar kendi kategorilerinin partisinde de görünür).
+const PARTI_OF = {
+  egitim: 1,
+  genel: 3,
+  kernel: 3,
+  scale: 3,
+  crosscut: 4,
+  sus: 4,
+  layer1: 5,
+  stack: 5,
+  dx: 5,
+  build: 5,
+  frontend: 5,
+  landx: 5,
+  urunler: 6,
+};
+const labelPages = new Map();
+for (const r of results)
+  for (const t of r.glossary) {
+    if (!labelPages.has(t.label)) labelPages.set(t.label, new Set());
+    labelPages.get(t.label).add(r.page.id);
+  }
+const partiLines = { 1: [], 3: [], 4: [], 5: [], 6: [] };
+const variantLines = [];
+for (const r of results) {
+  const parti = PARTI_OF[r.page.categoryId];
+  for (const t of r.glossary) {
+    const ince = (t.longExplanation ?? "").length < 160 ? " · **ince why**" : "";
+    const seed = r.analojiSeed ? " · analoji tohumu var" : "";
+    const line = `- ${t.label} (${r.page.id})${ince}${seed}`;
+    if (parti) partiLines[parti].push(line);
+    if (labelPages.get(t.label).size > 1) variantLines.push(line);
+  }
+}
+const partiReport = [
+  "# 12A §5.1 — Parti Listeleri (editöryel iş kuyruğu)",
+  "",
+  'Üretici: tools/migrate (otomatik). "ince why" = longExplanation < 160 karakter — A akışı önceliği.',
+  ...[1, 3, 4, 5, 6].flatMap((n) => ["", `## Parti ${n} (${partiLines[n].length} kayıt)`, ...partiLines[n]]),
+  "",
+  `## Parti 2 — Bağlamsal varyantlar (${variantLines.length} kayıt, ${[...labelPages.values()].filter((s) => s.size > 1).length > 0 ? [...labelPages.entries()].filter(([, v]) => v.size > 1).length : 0} label)`,
+  ...variantLines,
+].join("\n");
+writeFileSync(join(ROOT, "tools", "migrate", "parti-report.md"), partiReport);
 console.log(
-  `OK: ${results.length} page, ${glossary.length} term, ${searchIndex.documents.length} search doc, ${warnings.length} uyarı`,
+  `OK: ${results.length} page, ${glossary.length} term, ${searchIndex.documents.length} search doc, ${warnings.length} uyarı, ${notes.length} not`,
 );

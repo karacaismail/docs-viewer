@@ -171,4 +171,22 @@ describe("pedagojik block kontratları", () => {
     expect(screen.getAllByLabelText("alternatif metin").length).toBeGreaterThan(0);
     expect(screen.getByText("altyazı")).toBeTruthy();
   });
+
+  it("codeBlock: highlightedLines satıra line--hl sınıfı verir (11 §code)", async () => {
+    const { CodeBlock } = await import("../src/components/content/blocks/CodeBlock");
+    const { container } = render(
+      <CodeBlock
+        block={{
+          id: "block-t-code",
+          type: "codeBlock",
+          language: "text",
+          code: "satır bir\nsatır iki\nsatır üç",
+          highlightedLines: [2],
+        }}
+      />,
+    );
+    const hl = container.querySelectorAll(".line--hl");
+    expect(hl.length).toBe(1);
+    expect(hl[0].textContent).toContain("satır iki");
+  });
 });

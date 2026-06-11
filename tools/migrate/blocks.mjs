@@ -31,6 +31,7 @@ function treeToAscii(node, prefix = "", isLast = true, isRoot = true) {
 
 export function createTransformer(ctx) {
   const { nextId, warn, collectTerms } = ctx;
+  const note = ctx.note ?? warn; // bilinçli düşürmeler: uyarı değil kayıtlı karar (15 §1.4)
 
   // Block-level enrich → bitişik block'lara açılır (07A §3 son satır)
   function expandEnrich(enrich) {
@@ -96,7 +97,8 @@ export function createTransformer(ctx) {
         break;
       }
       case "table": {
-        if (b.filterable || b.stateColumn) warn("table özelliği düşürüldü: filterable/stateColumn");
+        if (b.filterable || b.stateColumn)
+          note("table özelliği bilinçli düşürüldü: filterable/stateColumn (07A §3 kararı)");
         // Hücre string veya obje ({text, state?, enrich?}) olabilir — 07A tablosunun eksiği, burada kapatıldı
         const cellToSegments = (c) => {
           if (typeof c === "string") return parseInline(c);
@@ -171,11 +173,11 @@ export function createTransformer(ctx) {
           id: nextId("chk"),
           type: "checklist",
           title: b.title ?? undefined,
+          ...(b.storageKey ? { storageKey: b.storageKey } : {}),
           items: (b.items ?? []).map((it) => ({
             segments: parseInline(it.hint ? `${it.label} — ${it.hint}` : (it.label ?? "")),
           })),
         });
-        if (b.storageKey) warn("checklist.storageKey ilk kapsam dışı (07A §3)");
         break;
       case "lesson-header":
         push({
@@ -259,14 +261,43 @@ export function createTransformer(ctx) {
         });
         break;
       case "granularity-legend":
+        // 07A §3 kapanışı: tek kullanımlık legend, sayfanın kendi metnindeki yedi
+        // seviyeli tane büyüklüğü zincirinden (kaya → atom) definitionList'e çevrilir.
         push({
           id: nextId("legend"),
-          type: "callout",
-          variant: "info",
-          title: b.title ?? "Gösterge",
-          segments: [],
+          type: "heading",
+          level: 3,
+          text: b.title ?? "Tane Büyüklüğü Göstergesi",
         });
-        warn("granularity-legend elle dönüşüm bekliyor (07A §3)");
+        push({
+          id: nextId("legend"),
+          type: "definitionList",
+          items: [
+            {
+              term: "kaya",
+              definition: [{ type: "text", text: "Modül/ürün — kullanıma hazır bütün (örn. hrms)" }],
+            },
+            {
+              term: "büyük taş",
+              definition: [
+                { type: "text", text: "Ürünün kendi iş mantığı — modül altındaki ana parçalar (items[])" },
+              ],
+            },
+            { term: "orta taş", definition: [{ type: "text", text: "Bir sayfa / ortak ihtiyaç düzeyi" }] },
+            { term: "küçük taş", definition: [{ type: "text", text: "Bir form bölümü" }] },
+            { term: "kum", definition: [{ type: "text", text: "Tek bir field" }] },
+            { term: "toz", definition: [{ type: "text", text: "Bir validator" }] },
+            {
+              term: "atom",
+              definition: [
+                {
+                  type: "text",
+                  text: "Type primitive — en küçük yapı taşı; fibonacci SP bu zincire göre otomatik atanır",
+                },
+              ],
+            },
+          ],
+        });
         break;
       default:
         // 07 edge-case kuralı: sessizce düşürme — düz metne indir + uyar

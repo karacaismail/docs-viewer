@@ -49,7 +49,7 @@ Kritik bulgu: dönüşüm "serbest metin → block" değil, büyük ölçüde **
 | `kv-row` | 34 | `definitionList` | `pairs[].key` → term, `pairs[].value` → definition |
 | `feature-list` | 31 | `definitionList` | `name` → term, `desc` → definition; `critical` flag'i definition'a `strong` vurgusu olarak taşınır |
 | `divider` | 16 | `divider` | Birebir |
-| `checklist` | 11 | `checklist` | `items[].label` → text, `hint` definition'a eklenir; `storageKey` (progress persist) ilk kapsam dışı — raporda |
+| `checklist` | 11 | `checklist` | `items[].label` → text, `hint` definition'a eklenir; `storageKey` taşınır — ilerleme `localStorage`'da kalıcıdır (11 Haziran kapanışı; ADR-0006: veri cihazda kalır) |
 | `lesson-header` | 10 | **`lessonHeader` — YENİ block type gerekli** | Eğitim kimliği: `{unit, title, level, duration_min, prereq, goals}`; eğitim kategorisinin 10 ünitesinde standart |
 | `terms` | 10 | glossary'ye taşınır | Block olarak render edilmez; içerdiği kayıtlar `glossary.json`'a gider (bkz. §4), sayfada term segment işaretlemesiyle yaşar |
 | `steps` | 10 | `stepList` | `items[].title` → title, `body` → segments |
@@ -59,7 +59,7 @@ Kritik bulgu: dönüşüm "serbest metin → block" değil, büyük ölçüde **
 | `ref-grid` | 3 | `cardGrid` | refs → kart + internal link |
 | `layer-cards` | 2 | `cardGrid` — **otomatik** | Kart yapısı (`{tag, name, desc, tone, enrich}`) keşifte düzenli çıktı: `tag — name` → title, `desc` → segments; kart `enrich.terms` glossary'ye akar. 'Elle' kararı uygulamada revize edildi |
 | `tree` | 2 | `codeBlock(text)` — **otomatik** | `root {name, children, comment}` yapısı düzenli; ASCII ağaca (`├─/└─` + `# comment`) deterministik çevrilir, monospace render çizimi korur (07B diyagram kararıyla aynı ilke) |
-| `granularity-legend` | 1 | elle dönüşüm | Tek kullanım; `definitionList` adayı |
+| `granularity-legend` | 1 | `heading` + `definitionList` | Tek kullanım; yedi seviyeli tane-büyüklüğü zinciri otomatik üretilir (11 Haziran kapanışı) |
 | `blocks[].enrich` | 165 | bitişik block'lara açılır | Block-level enrich (info 42, lesson 59, detail 20, stories 6, terms 5) yeni modelde yok; ilgili block'un hemen ardına callout/useCase olarak deterministik sırayla eklenir |
 
 ## 4. `enrich` Katmanı Eşlemesi (pedagojik içerik)
@@ -90,7 +90,7 @@ Bu tablo `07-uretim-02-data-migration.md`'deki bir kuralı revize eder: glossary
 4. `codeBlock.language` enum'u gerçek envanterden kurulur: `python, sql, yaml, typescript, bash, http, text` (+`sh`→bash, `openfga`→text normalize).
 5. `cardGrid` kartlarına opsiyonel `tone` alanı (7 kullanım) — eklenmezse düşürme kararı rapora yazılır.
 
-Elle dönüşüm yükü uygulamada 5'ten 1'e indi: `layer-cards` ve `tree` kaynak yapıları düzenli çıktığı için otomatikleştirildi (yukarıdaki revize satırlar); yalnız `granularity-legend` (1 block) placeholder callout'la bekliyor.
+Elle dönüşüm yükü uygulamada 5'ten 1'e indi: `layer-cards` ve `tree` kaynak yapıları düzenli çıktığı için otomatikleştirildi (yukarıdaki revize satırlar); son kalan `granularity-legend` da 11 Haziran'da otomatikleşti — elle dönüşüm kuyruğu boş.
 
 ## 3a. Uygulama Keşifleri (kod-doğumlu kararlar — bu tabloya geri işlendi)
 

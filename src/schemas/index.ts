@@ -52,6 +52,7 @@ export const BlockSchema = z.discriminatedUnion("type", [
   base.extend({
     type: z.literal("checklist"),
     title: z.string().optional(),
+    storageKey: z.string().optional(), // varsa ilerleme localStorage'da kalıcıdır (07A §3 kapanışı)
     items: z.array(z.object({ segments })),
   }),
   base.extend({

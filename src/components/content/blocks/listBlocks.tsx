@@ -1,4 +1,5 @@
 // definitionList, stepList, checklist, useCase, caseStudy, cardGrid, lessonHeader
+import { useState } from "react";
 import type { Block } from "../../../schemas";
 import { SegmentRenderer } from "../SegmentRenderer";
 
@@ -32,16 +33,65 @@ export function StepListBlock({ block }: B<"stepList">) {
   );
 }
 
+// storageKey'li checklist ilerlemesi localStorage'da yaşar (07A §3 kapanışı; 12 §UX: 60+ kullanıcı
+// için "kaldığım yer" güvencesi). Anahtar başına işaretli index dizisi tutulur; storage erişimi
+// güvenli sarılır (private mode / kota durumunda özellik sessizce salt-okura düşer).
+const readChecked = (key: string): number[] => {
+  try {
+    const raw = window.localStorage.getItem(`checklist:${key}`);
+    const v: unknown = raw ? JSON.parse(raw) : [];
+    return Array.isArray(v) ? v.filter((n): n is number => typeof n === "number") : [];
+  } catch {
+    return [];
+  }
+};
+const writeChecked = (key: string, value: number[]): void => {
+  try {
+    window.localStorage.setItem(`checklist:${key}`, JSON.stringify(value));
+  } catch {
+    // kota/private mode: kalıcılık yok, işaretleme oturum içi çalışmaya devam eder
+  }
+};
+
 export function ChecklistBlock({ block }: B<"checklist">) {
+  const key = block.storageKey;
+  const [checked, setChecked] = useState<number[]>(() => (key ? readChecked(key) : []));
+  if (!key) {
+    return (
+      <section id={block.id}>
+        {block.title && <h3>{block.title}</h3>}
+        <ul className="checklist">
+          {block.items.map((it, i) => (
+            <li key={i}>
+              <span>
+                <SegmentRenderer segments={it.segments} />
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    );
+  }
+  const toggle = (i: number) => {
+    const next = checked.includes(i) ? checked.filter((n) => n !== i) : [...checked, i];
+    setChecked(next);
+    writeChecked(key, next);
+  };
   return (
     <section id={block.id}>
       {block.title && <h3>{block.title}</h3>}
+      <p className="checklist__progress" role="status">
+        {checked.length}/{block.items.length} tamamlandı
+      </p>
       <ul className="checklist">
         {block.items.map((it, i) => (
           <li key={i}>
-            <span>
-              <SegmentRenderer segments={it.segments} />
-            </span>
+            <label>
+              <input type="checkbox" checked={checked.includes(i)} onChange={() => toggle(i)} />
+              <span>
+                <SegmentRenderer segments={it.segments} />
+              </span>
+            </label>
           </li>
         ))}
       </ul>
