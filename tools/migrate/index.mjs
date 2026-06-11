@@ -29,7 +29,7 @@ const fileNote = (file) => (msg) => notes.push(`${file}: ${msg}`);
 const ENRICHMENT = JSON.parse(
   readFileSync(join(dirname(fileURLToPath(import.meta.url)), "glossary-enrichment.json"), "utf8"),
 );
-const enrichedCount = { n: 0 };
+const enrichedCount = { n: 0, p2: 0 };
 const enrichmentMisses = new Set();
 
 function readClusters() {
@@ -134,17 +134,20 @@ function transformCluster({ file, stem, data }) {
         .filter(Boolean)
         .join("\n\n"),
     };
-    // 12A Parti 1 overlay'i — yalnız Eğitim Yolu (egitim) kategorisi
-    if (categoryId === "egitim") {
-      const e = ENRICHMENT.byLabel[foldTr(t.term)];
-      if (e) {
-        if (e.a) rec.realWorldAnalogy = e.a;
-        if (e.u?.length) rec.useCases = e.u;
-        if (e.l) rec.longExplanation += `\n\n${e.l}`;
-        enrichedCount.n += 1;
-      } else {
-        enrichmentMisses.add(t.term);
-      }
+    // Overlay iki anahtar düzeyiyle uygulanır (ADR-0005 Revizyon 1):
+    // 1) `label@stem` — sayfa-kapsamlı, her kategoride geçerli; bağlamsal varyantların (12A Parti 2)
+    //    aynı label altında farklı bağlam açıklaması taşımasını sağlar. Önceliklidir.
+    // 2) düz `label` — yalnız Eğitim Yolu (egitim); Parti 1 semantiği değişmeden korunur.
+    const scoped = ENRICHMENT.byLabel[`${foldTr(t.term)}@${stem}`];
+    const e = scoped ?? (categoryId === "egitim" ? ENRICHMENT.byLabel[foldTr(t.term)] : undefined);
+    if (e) {
+      if (e.a) rec.realWorldAnalogy = e.a;
+      if (e.u?.length) rec.useCases = e.u;
+      if (e.l) rec.longExplanation += `\n\n${e.l}`;
+      enrichedCount.n += 1;
+      if (scoped) enrichedCount.p2 += 1;
+    } else if (categoryId === "egitim") {
+      enrichmentMisses.add(t.term);
     }
     return rec;
   });
@@ -430,7 +433,7 @@ const report = [
   ...missingAssets.slice(0, 100).map((s) => `- ${s}`),
   "",
   "## Glossary zenginleştirme (12A Parti 1 — Eğitim Yolu)",
-  `Zenginleştirilen kayıt: ${enrichedCount.n} | Overlay'de karşılığı olmayan label: ${enrichmentMisses.size}`,
+  `Zenginleştirilen kayıt: ${enrichedCount.n} (sayfa-kapsamlı/Parti 2: ${enrichedCount.p2}) | Overlay'de karşılığı olmayan label: ${enrichmentMisses.size}`,
   `Segment bağlama (Parti 1-B): ${results.reduce((a, r) => a + (r.boundTerms ?? 0), 0)} bağlı terim | bağlı page: ${results.filter((r) => (r.boundTerms ?? 0) > 0).length}/${results.filter((r) => r.page.categoryId === "egitim").length} (egitim)`,
   ...[...enrichmentMisses].map((l) => `- eşleşmedi: ${l}`),
   "",

@@ -1,7 +1,10 @@
 // 12A §2-B — Parti 1-B: term segment bağlama.
 // Daraltılmış otomasyon kapsamı (12A §3a sapma kaydı): yalnız AYNI page'in kendi
-// glossary kayıtları, yalnız paragraph block'ları, birebir kelime eşleşmesi,
-// page başına terim başına İLK geçiş. Cross-page / fuzzy bağlama yasak kalır.
+// glossary kayıtları, birebir kelime eşleşmesi, page başına terim başına İLK geçiş.
+// Kapsam revizyonu (11 Haziran 2026, 12A §3a): paragraph'a ek olarak definitionList
+// tanımları ve callout gövdeleri de taranır — aynı-page güvencesi bağlam riskini
+// değiştirmez; 6 egitim page'inin terimleri yalnız bu block'larda yaşıyordu.
+// Cross-page / fuzzy bağlama yasak kalır.
 import { foldTr } from "./inline.mjs";
 
 const ALNUM = /[\p{L}\p{N}]/u;
@@ -46,11 +49,24 @@ export function bindTermsInPage(page, glossaryRecords) {
   for (const rec of records) {
     if (foldTr(rec.label).length < 3) continue; // tek/iki karakterlik label'da yanlış pozitif riski
     for (const block of page.blocks) {
-      if (block.type !== "paragraph") continue; // 12A §2-B: paragraph metinleri
-      if (bindInSegments(block.segments, rec.label, rec.id)) {
-        bound += 1;
-        break; // ilk geçiş kuralı — sonraki block'lara bakılmaz
+      // 12A §2-B revizyonu: paragraph + definitionList tanımları + callout gövdesi
+      const segmentLists =
+        block.type === "paragraph"
+          ? [block.segments]
+          : block.type === "definitionList"
+            ? block.items.map((it) => it.definition)
+            : block.type === "callout"
+              ? [block.segments ?? []]
+              : [];
+      let hit = false;
+      for (const segs of segmentLists) {
+        if (bindInSegments(segs, rec.label, rec.id)) {
+          bound += 1;
+          hit = true;
+          break;
+        }
       }
+      if (hit) break; // ilk geçiş kuralı — sonraki block'lara bakılmaz
     }
   }
   return bound;

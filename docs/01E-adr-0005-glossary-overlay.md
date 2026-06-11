@@ -21,3 +21,11 @@ Olumlu: editöryel katman tek dosyada diff'lenebilir ve geri alınabilir; kaynak
 ## Revizyon Tetikleyicisi
 
 Parti 2'de aynı label'ın bağlamlar arası FARKLI analoji/useCases istemesi `byTermId` katmanının eklenmesini tetikler; overlay 1.000 girdiyi aşarsa kategori-başına dosyalara bölme değerlendirilir.
+
+## Revizyon 1 — Sayfa-Kapsamlı Anahtar (11 Haziran 2026)
+
+İlk tasarımın anahtarı `foldTurkish(label)` idi ve yalnız `egitim` kategorisine uygulanıyordu. Bu, 12A Parti 2'yi (bağlamsal varyantlar) yapısal olarak imkânsız kılıyordu: varyantın özü "aynı label, farklı bağlam"dır; label anahtarı bağlamları ayırt edemez.
+
+Karar: overlay iki anahtar düzeyi tanır. **`label@stem`** (sayfa-kapsamlı) her kategoride geçerlidir ve önceliklidir — varyant kayıtları bağlamlarına özel `a/u/l` taşır. **Düz `label`** davranışı değişmez: yalnız `egitim`, Parti 1 semantiği korunur. Editör için kural basittir: terim tek bağlamlıysa düz anahtar (egitim), çok bağlamlıysa her sayfa için `@stem` anahtarı.
+
+Uygulama: Parti 2'nin öncelikli kümesi (27 label / 77 kayıt — KVKK, GraphQL/REST, Outbox, CQRS, DocType, RBAC, DSAR, DLQ vb.) sayfa-kapsamlı kayıtlarla zenginleştirildi; mutabakat raporu sayfa-kapsamlı sayacı ayrıca raporlar. Kapsam dışı bırakılan: katalog şablon terimleri ("Cluster", "Stack ürünü" — 66 kayıt) gerçek bağlam varyantı değildir, tüm sayfalarda aynı anlamı taşır; bunlara tekil kayıt yeterlidir ve Parti 2 işi sayılmaz.

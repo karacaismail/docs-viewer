@@ -11,19 +11,23 @@ const pages: Page[] = readdirSync(PAGES_DIR)
   .map((f) => JSON.parse(readFileSync(join(PAGES_DIR, f), "utf8")).page as Page);
 const termIds = new Set((glossary as unknown as { terms: { id: string }[] }).terms.map((t) => t.id));
 
+// 12A §2-B revizyonu kapsamı: paragraph + definitionList tanımları + callout gövdesi
 function termSegmentsOf(p: Page): Extract<Segment, { type: "term" }>[] {
   return p.blocks
-    .filter((b) => b.type === "paragraph")
-    .flatMap((b) => (b as Extract<Page["blocks"][number], { type: "paragraph" }>).segments)
+    .flatMap((b) => {
+      if (b.type === "paragraph" || b.type === "callout") return b.segments;
+      if (b.type === "definitionList") return b.items.flatMap((it) => it.definition);
+      return [];
+    })
     .filter((s): s is Extract<Segment, { type: "term" }> => s.type === "term");
 }
 
 describe("term segment bağlama (Parti 1-B)", () => {
   const edu = pages.filter((p) => p.categoryId === "egitim");
 
-  it("egitim sayfalarının çoğunda paragraph içi term segmenti var", () => {
+  it("egitim sayfalarının neredeyse tamamında term segmenti var (revize kapsam: 27/28)", () => {
     const bound = edu.filter((p) => termSegmentsOf(p).length > 0);
-    expect(bound.length).toBeGreaterThan(edu.length / 2);
+    expect(bound.length).toBeGreaterThanOrEqual(edu.length - 1);
   });
 
   it("ilk-geçiş kuralı: aynı termId bir page'de en fazla bir kez bağlanır", () => {
