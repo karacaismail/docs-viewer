@@ -219,7 +219,7 @@
 - Affordance (page-edu-u15-ux-60-plus) · **ince why** · analoji tohumu var
 - Progressive Disclosure (page-edu-u15-ux-60-plus) · analoji tohumu var
 
-## Parti 3 (143 kayıt)
+## Parti 3 (146 kayıt)
 - Primitive (page-overview) · analoji tohumu var
 - Outbox (page-overview) · analoji tohumu var
 - CQRS (page-overview) · analoji tohumu var
@@ -339,6 +339,9 @@
 - Workflow (page-k-surface)
 - Headless ArcheType (page-k-surface)
 - Projection (page-k-surface)
+- Fragment (page-k-surface)
+- Atom (page-k-surface)
+- Contract (page-k-surface)
 - Tanım bayrağı (page-k-archetype-bayraklari)
 - Şema pinleme (page-k-sozlesme)
 - Üretilmiş kontrat testi (page-k-sozlesme)
@@ -716,7 +719,7 @@
 - MRR (page-s-billing) · **ince why** · analoji tohumu var
 - Prorating (page-s-billing) · **ince why** · analoji tohumu var
 
-## Parti 2 — Bağlamsal varyantlar (240 kayıt, 75 label)
+## Parti 2 — Bağlamsal varyantlar (244 kayıt, 77 label)
 - Primitive (page-overview) · analoji tohumu var
 - Outbox (page-overview) · analoji tohumu var
 - CQRS (page-overview) · analoji tohumu var
@@ -830,9 +833,12 @@
 - REST (page-layer1-misc) · analoji tohumu var
 - Cluster (page-layer1-misc) · **ince why** · analoji tohumu var
 - Cluster (page-stack-commerce) · **ince why** · analoji tohumu var
+- Atom (page-k-granulerlik)
 - Cluster (page-stack-accounting) · **ince why** · analoji tohumu var
 - Workflow (page-k-surface)
 - Projection (page-k-surface)
+- Atom (page-k-surface)
+- Contract (page-k-surface)
 - Cluster (page-stack-hrms) · **ince why** · analoji tohumu var
 - Cluster (page-stack-pms) · **ince why** · analoji tohumu var
 - Cluster (page-stack-lms) · **ince why** · analoji tohumu var
@@ -948,6 +954,7 @@
 - WebSocket (page-scale-realtime) · analoji tohumu var
 - Pub/Sub (page-scale-realtime) · analoji tohumu var
 - Presence (page-scale-realtime) · analoji tohumu var
+- Contract (page-sus-boundaries) · analoji tohumu var
 - Webhook (page-scale-webhook) · analoji tohumu var
 - Replay Attack (page-scale-webhook) · analoji tohumu var
 - DLQ (page-scale-webhook) · analoji tohumu var

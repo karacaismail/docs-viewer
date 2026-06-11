@@ -2,7 +2,7 @@
 
 Bu doküman, `mimari/` klasöründeki mevcut varlıkların sayımını yapar ve her grubun yeni doc viewer'daki rolünü tanımlar. Migration yönergesi (`07-uretim-02-data-migration.md`) bu envanteri girdi kabul eder.
 
-## 1. Cluster JSON Dosyaları (240 dosya — birincil içerik kaynağı; 197 özgün + 26 aday + 16 karar/kavram + 1 kapsam dışı)
+## 1. Cluster JSON Dosyaları (241 dosya — birincil içerik kaynağı; 197 özgün + 26 aday + 17 karar/kavram + 1 kapsam dışı)
 
 Dosya adlandırması `NN-kategori-konu.json` sözleşmesini izler. Kategori prefix'leri ve sayıları:
 
@@ -18,7 +18,7 @@ Dosya adlandırması `NN-kategori-konu.json` sözleşmesini izler. Kategori pref
 | `dist-*` | 5 | Distributions — sektör paketleri (site, ngo, travel, construction, realestate); `badge: DISTRIBUTION` | Stack Ürünleri (ayrı grup) |
 | `fe-*` | 9 | Frontend tech-stack kararları | Frontend Tech-Stack |
 | `layer1-*` + `l1-*` | 12 | Layer 1 in-tree servisler (party, file, audit…) | Layer 1 — In-tree |
-| `kernel-*` + `k-*` | 14 (Faz 0 atomic-types dahil) | Layer 0 kernel domain'leri | Kernel — Layer 0 |
+| `kernel-*` + `k-*` | 15 (Faz 0 atomic-types dahil) | Layer 0 kernel domain'leri | Kernel — Layer 0 |
 | `landx-*` | 7 | LandX — sahibinden clone vakası (l0–l5) | Stack Ürünleri (vaka grubu; top-level değil) |
 | `be-*` | 4 | Backend Tech-Stack — karar defteri (24/24), mail provider chain, deploy profilleri + entegrasyon matrisi | Backend Tech-Stack |
 | `dx-*` + `services` | 4 | Module DX, marketplace, dış servisler | DX & Services |

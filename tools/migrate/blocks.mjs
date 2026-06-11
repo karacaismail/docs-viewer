@@ -263,6 +263,14 @@ export function createTransformer(ctx) {
           code: b.root ? treeToAscii(b.root).join("\n") : "",
         });
         break;
+      case "wbs-chart":
+        push({
+          id: nextId("wbs"),
+          type: "wbsChart",
+          title: b.title ?? undefined,
+          caption: b.caption ?? undefined,
+        });
+        break;
       case "granularity-legend":
         // 8 seviyeli granülerlik zinciri v2 (k-granulerlik sözleşmesi): Dağ -> Atom + fibonacci SP.
         push({

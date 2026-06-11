@@ -19,6 +19,7 @@ import {
   UseCaseBlock,
 } from "./blocks/listBlocks";
 import { ComparisonTableBlock, TableBlock } from "./blocks/TableBlock";
+import { WbsChartBlock } from "./blocks/WbsChartBlock";
 
 export function registerCoreBlocks(): void {
   registerBlock("heading", HeadingBlock);
@@ -37,4 +38,5 @@ export function registerCoreBlocks(): void {
   registerBlock("image", ImageBlock);
   registerBlock("list", ListBlock);
   registerBlock("lessonHeader", LessonHeaderBlock);
+  registerBlock("wbsChart", WbsChartBlock);
 }

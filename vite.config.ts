@@ -18,6 +18,7 @@ export default defineConfig({
           if (id.includes("src/data/pages/")) return undefined; // page-başına lazy chunk (14 #15)
           if (id.includes("src/data/")) return "content-meta"; // navigation + index + glossary (eager, küçük)
           if (id.includes("node_modules/minisearch")) return "minisearch";
+          if (id.includes("node_modules/echarts") || id.includes("node_modules/zrender")) return undefined; // yalnız dinamik import (WbsChart) — eager bütçeye girmez
           if (id.includes("node_modules/shiki") || id.includes("node_modules/@shikijs")) return undefined;
           if (id.includes("node_modules")) return "vendor";
           return undefined;

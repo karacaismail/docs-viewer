@@ -104,6 +104,11 @@ export const BlockSchema = z.discriminatedUnion("type", [
   }),
   base.extend({ type: z.literal("list"), ordered: z.boolean().optional(), items: z.array(segments) }),
   base.extend({
+    type: z.literal("wbsChart"),
+    title: z.string().optional(),
+    caption: z.string().optional(),
+  }),
+  base.extend({
     type: z.literal("lessonHeader"),
     unit: z.string(),
     title: z.string(),

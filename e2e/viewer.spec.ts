@@ -138,6 +138,13 @@ test.describe("explanation panel sözleşmesi (kabul #10, 12 §Etkileşim)", () 
     await expect(block.locator("[aria-live=polite]")).toHaveText("Kod panoya kopyalandı");
   });
 
+  test("wbs ağacı render edilir — canvas veya erişilebilir fallback (k-wbs)", async ({ page }) => {
+    await page.goto("/docs/kernel/k-wbs");
+    const fig = page.locator(".wbs-chart");
+    await fig.scrollIntoViewIfNeeded();
+    await expect(fig.locator("canvas, ul").first()).toBeVisible({ timeout: 10000 });
+  });
+
   test("highlightedLines satır vurgusu render edilir (11 §code)", async ({ page }) => {
     await page.goto("/docs/urunler/s-channel-hub");
     const hl = page.locator(".line--hl");

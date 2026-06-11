@@ -189,4 +189,15 @@ describe("pedagojik block kontratları", () => {
     expect(hl.length).toBe(1);
     expect(hl[0].textContent).toContain("satır iki");
   });
+
+  it("wbsChart: konteyner erişilebilir; canvas yoksa liste fallback'i örnek veriyi gösterir", async () => {
+    const { WbsChartBlock } = await import("../src/components/content/blocks/WbsChartBlock");
+    const { container, findByText } = render(
+      <WbsChartBlock block={{ id: "b-t-wbs", type: "wbsChart", title: "WBS" }} />,
+    );
+    expect(container.querySelector(".wbs-chart")).toBeTruthy();
+    // jsdom'da canvas yok -> fallback listesi (örnek app'ler görünür)
+    await findByText(/HRMS · Dağ/);
+    await findByText(/Adresler · Fragment/);
+  });
 });
