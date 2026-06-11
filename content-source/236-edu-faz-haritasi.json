@@ -1,0 +1,99 @@
+{
+ "id": "edu-faz-haritasi",
+ "title": "Vibecoding × İnşa Sırası — Faz Haritası",
+ "subtitle": "Hangi üniteyi bitirince hangi inşa fazında AI ile güvenle üretebilirsin: u01–u25'in Faz 0-7'ye eşlenmesi.",
+ "cluster": "egitim",
+ "order": 1.5,
+ "icon": "ph-map-trifold",
+ "granularity": "kaya",
+ "state": "wip",
+ "badge": "KAVRAM",
+ "tags": [
+  "vibecoding",
+  "faz",
+  "harita",
+  "egitim"
+ ],
+ "related": [
+  "edu-overview",
+  "build-sequence",
+  "build-enterprise",
+  "build-acik-kaynak",
+  "be-sdk",
+  "be-kararlar",
+  "k-terminoloji"
+ ],
+ "enrich": {
+  "info": "Bu sayfa iki ana amacı birbirine bağlar: jr-öncesi geliştiricinin eğitim yolu (u01–u25) ile meta-framework'ün inşa sırası (Faz 0-7). Kural basittir: bir fazın ünitelerini bitirmeden o fazda vibecoding yapma — AI sana kod yazar ama neyi reddedeceğini bilmek senin işindir.",
+  "terms": [
+   {
+    "term": "Vibecoding hazırlık eşiği",
+    "meaning": "Bir inşa fazında AI ile üretime başlamadan önce tamamlanması gereken ünite kümesi; eşik 'AI'ın çıktısını değerlendirebilme' yetkinliğidir, kod yazma hızı değil.",
+    "why": "Vibecoding'de kodu AI yazar; insanın katkısı doğru tarif ve doğru ret'tir. Üniteler tam bu yargı gücünü kurar — eşiğin altında üretilen kod, anlaşılmadan kabul edilmiş borçtur."
+   }
+  ]
+ },
+ "blocks": [
+  {
+   "type": "paragraph",
+   "text": "Eğitim Yolu sırayla okunur (u01→u25) ama amacı sınav değildir: her ünite kümesi seni inşa sırasının bir fazında **AI ile güvenle üretebilir** hale getirir. Aşağıdaki harita 'bu fazda çalışacaksan şu üniteler ön koşul' sözleşmesidir — buna vibecoding hazırlık eşiği denir; SDK iskeletleri ({{ref:be-sdk}}) test-önce geldiğinden, her fazın çıktısı 'çalışan ve testi olan' parçadır."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Faz → Ünite → Vibecoding Çıktısı"
+  },
+  {
+   "type": "kv-row",
+   "pairs": [
+    {
+     "key": "Faz 0 · Atomik Tipler",
+     "value": "u01 (zihinsel model) + u02 + u02b (tipler, para-tarih). Çıktın: Money/Phone/DateTime gibi tipleri DOĞRU seçen tanımlar; 'parada float' öneren AI çıktısını reddedebilirsin"
+    },
+    {
+     "key": "Faz 1 · Kernel",
+     "value": "u03 (DocType) + u04/u04b (veritabanı, ilişkiler) + u05 (API) + u06 (tenancy) + u07 (yetki). Çıktın: DocType tanımı yazıp üretilen tablo/API/form'u değerlendirme; tenant-scope'suz sorguyu yakalama"
+    },
+    {
+     "key": "Faz 2 · Scale Primitives",
+     "value": "u08 (event bus/outbox) + u11 (hata/DLQ) + u14 (cache/rate limit). Çıktın: 'direkt publish edelim' diyen AI'a outbox'ı, retry'sız koda idempotency'yi dayatma"
+    },
+    {
+     "key": "Faz 3 · Layer 1",
+     "value": "u12 (migration) + u13 (log) + u20 (backup) + u22 (email/SMS) + u23 (dosya). Çıktın: in-tree servisleri (file, notification, audit) SDK sözleşmeleriyle kullanan app parçaları; mail zincirine ({{ref:be-mail-zinciri}}) kanal eklemek"
+    },
+    {
+     "key": "Faz 4 · Stack + DX",
+     "value": "u09 (module mimarisi) + u15 (60+ UX) + u16 (test piramidi) + u17 (git) + u25 (DocType vs DDD). Çıktın: SDK ile uçtan uca bir module/app iskeleti; AI'ın ürettiği module'ün manifest/izin beyanını denetleme"
+    },
+    {
+     "key": "Faz 5 · Scale Proof",
+     "value": "u18 (performans) + u19 (OWASP) + u21 (money/tax derinlik). Çıktın: yük altında darboğaz bulma; AI'ın 'çalışıyor' dediği kodda N+1, SSRF, kuruş kayması yakalama"
+    },
+    {
+     "key": "Faz 6 · Enterprise Multi-Product",
+     "value": "Ünite ön koşulu: tamamı (özellikle u06, u07, u24). Okuma: {{ref:build-enterprise}} + k-sso. Çıktın: entitlement/Edition farkındalığıyla çok-app senaryoları kurgulama"
+    },
+    {
+     "key": "Faz 7 · Açık Kaynak Yayını",
+     "value": "Ünite ön koşulu: u09 + u16 + u17. Okuma: {{ref:build-acik-kaynak}} + sus-lisans + sus-bc-policy + sus-conformance. Çıktın: CLA'lı katkı akışında üretilen module'ü conformance suite'ten geçirme"
+    }
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Çapraz-Kesen Üniteler"
+  },
+  {
+   "type": "paragraph",
+   "text": "u10 (deploy) Faz 1'den itibaren her fazda geçerlidir — CI kapıları gün-1 kuralı. u24 (i18n/jurisdiction) Faz 3'te sözleşme (E7 kararı), Faz 6'da rejim matrisi (E9) olarak geri gelir. u15'in 60+ UX prensipleri Editions'ın ({{ref:stack-editions}}) tasarım dilidir."
+  },
+  {
+   "type": "callout",
+   "variant": "tip",
+   "label": "Vibecoding sözleşmesi",
+   "body": "Sıra her fazda aynıdır ve SDK iskeletine gömülüdür: önce test planı → sonra DocType/şema → sonra üretim (kullanıcı kuralı). AI'a verilecek yüzey dar ve tiplidir (YAML tanım + saf hook — be-kararlar 10); ünitesi eksik fazda 'AI nasılsa biliyor' diye ilerlemek, bu haritanın tek ihlal biçimidir."
+  }
+ ]
+}

@@ -228,6 +228,7 @@ function buildNavigation(results) {
 function sortItems(results, isEdu = false) {
   const eduOrder = (stem) => {
     if (stem === "edu-overview") return -1;
+    if (stem === "edu-faz-haritasi") return -0.5; // Vibecoding × Faz haritası — overview'dan hemen sonra
     const m = stem.match(/edu-u(\d+)/);
     return m ? Number(m[1]) : 999;
   };

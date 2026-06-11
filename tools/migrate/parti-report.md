@@ -2,7 +2,7 @@
 
 Üretici: tools/migrate (otomatik). "ince why" = longExplanation < 160 karakter — A akışı önceliği.
 
-## Parti 1 (214 kayıt)
+## Parti 1 (215 kayıt)
 - Unit Test (page-edu-u16-test) · **ince why** · analoji tohumu var
 - Integration Test (page-edu-u16-test) · **ince why** · analoji tohumu var
 - E2E (page-edu-u16-test) · analoji tohumu var
@@ -54,6 +54,7 @@
 - Type Switching (page-edu-u25-doctype-vs-ddd) · **ince why** · analoji tohumu var
 - Metadata-driven (page-edu-u25-doctype-vs-ddd) · analoji tohumu var
 - Tablo-per-tip (page-edu-u25-doctype-vs-ddd) · **ince why** · analoji tohumu var
+- Vibecoding hazırlık eşiği (page-edu-faz-haritasi)
 - Kod (page-edu-u01-yazilim) · analoji tohumu var
 - Derleyici (page-edu-u01-yazilim) · analoji tohumu var
 - Yorumlayıcı (page-edu-u01-yazilim) · **ince why** · analoji tohumu var

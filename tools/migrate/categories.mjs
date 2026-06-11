@@ -47,7 +47,7 @@ export const STEM_OVERRIDES = {
   overview: "genel",
   philosophy: "genel",
   "board-rebuilt": "genel",
-  "atomic-types": "genel",
+  "atomic-types": "kernel", // Faz 0 — İnşa Sırası'nın sıfırıncı adımı (03 §1); eski genel/ linki stem-fallback ile sağ
 };
 
 // urunler kategorisinin Rail 2 grupları — 00-overview'daki 9 ürün kategorisi (03 §2)

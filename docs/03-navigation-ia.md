@@ -24,7 +24,7 @@ Kategori ataması elle yapılmaz; migration script'i dosya prefix'inden üretir 
 
 ### Rail 1 Bölümleri
 
-Rail 1 düz liste değildir; kategoriler üç bölüm başlığı altında akar (bilişsel yük 13 maddeden 3 kümeye iner): **BAŞLANGIÇ** (Eğitim Yolu, Genel Harita) · **İNŞA SIRASI** (Kernel → Scale → Layer 1 → Stack → Build & Deploy — build-sequence fazlarıyla hizalı; Faz 6 Enterprise ve Faz 7 Açık Kaynak sayfaları Build & Deploy altındadır) · **REFERANS** (Ürün Modülleri, Çapraz-Kesen, Backend/Frontend Tech-Stack, DX & Services, Sürdürülebilirlik). Bölüm bilgisi `navigation.json`'da kategori-başına `section` alanıdır; sırası kategori `order`'ından gelir ve bölümler bitişiktir.
+Rail 1 düz liste değildir; kategoriler üç bölüm başlığı altında akar (bilişsel yük 13 maddeden 3 kümeye iner): **BAŞLANGIÇ** (Eğitim Yolu, Genel Harita) · **İNŞA SIRASI** (Kernel → Scale → Layer 1 → Stack → Build & Deploy — build-sequence fazlarıyla hizalı; Faz 6 Enterprise ve Faz 7 Açık Kaynak sayfaları Build & Deploy altındadır) · **REFERANS** (Ürün Modülleri, Çapraz-Kesen, Backend/Frontend Tech-Stack, DX & Services, Sürdürülebilirlik). Bölüm bilgisi `navigation.json`'da kategori-başına `section` alanıdır; sırası kategori `order`'ından gelir ve bölümler bitişiktir. Faz 0 (Atomik Tipler) Kernel kategorisinin ilk maddesidir (eski `genel/` linki stem-fallback ile çalışır); Eğitim Yolu'nun ikinci maddesi `edu-faz-haritasi` üniteleri Faz 0-7'ye eşler (vibecoding hazırlık eşiği). `board-rebuilt` ARŞİV rozetlidir.
 
 ## 2. Rail 2 — Accordion Grupları
 

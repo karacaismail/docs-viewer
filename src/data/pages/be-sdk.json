@@ -1,0 +1,165 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-be-sdk",
+  "sourceId": "be-sdk",
+  "slug": "backend/be-sdk",
+  "title": "SDK Tasarımı — Vibecoding-Uyumlu App Üretimi",
+  "summary": "sdk app create akışı, üretilen iskelet, AI'a açılan dar tipli yüzey ve MIT/API-boundary rolü.",
+  "categoryId": "backend",
+  "tags": [
+   "sdk",
+   "vibecoding",
+   "app",
+   "scaffold"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "wip",
+   "badge": "TASARIM"
+  },
+  "related": [
+   "page-be-kararlar",
+   "page-k-terminoloji",
+   "page-dx-cli",
+   "page-sus-lisans",
+   "page-edu-faz-haritasi"
+  ],
+  "blocks": [
+   {
+    "id": "block-be-sdk-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Karar 10'un tasarımı: SDK, app/module geliştirmenin tek kapısıdır ve MIT lisanslıdır — lisans mimarisindeki API-boundary'nin (sus-lisans) teknik gövdesi budur. Vibecoding-uyumluluk pazarlama sözü değil tasarım kısıtıdır: AI'a açılan yüzey yalnız bildirimsel tanım + saf fonksiyondur."
+     }
+    ]
+   },
+   {
+    "id": "block-be-sdk-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "App geliştirecek kişi SDK ile geliştirir (k-terminoloji sözleşmesi). SDK'nın iki müşterisi vardır ve ikisi aynı yüzeyi kullanır: "
+     },
+     {
+      "type": "strong",
+      "text": "jr-öncesi geliştirici"
+     },
+     {
+      "type": "text",
+      "text": " (eğitim yolundan gelir — "
+     },
+     {
+      "type": "ref",
+      "text": "edu-faz-haritasi",
+      "refId": "edu-faz-haritasi"
+     },
+     {
+      "type": "text",
+      "text": ") ve "
+     },
+     {
+      "type": "strong",
+      "text": "AI"
+     },
+     {
+      "type": "text",
+      "text": " (vibecoding). Yüzey bilinçle dardır: kernel iç API'si SDK'dan sızmaz; sızsaydı hem AGPL sınırı bulanır (sus-lisans) hem AI'ın hata alanı büyürdü."
+     }
+    ]
+   },
+   {
+    "id": "block-be-sdk-h-akis-sdk-app-create",
+    "type": "heading",
+    "level": 2,
+    "text": "Akış — sdk app create"
+   },
+   {
+    "id": "block-be-sdk-h-sira-kullanici-kuraliyla-aynidir-test-sema-gelistirme",
+    "type": "heading",
+    "level": 3,
+    "text": "Sıra kullanıcı kuralıyla aynıdır: test → şema → geliştirme"
+   },
+   {
+    "id": "block-be-sdk-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "Tanımla",
+      "segments": [
+       {
+        "type": "text",
+        "text": "İnteraktif sorular veya YAML: app adı, core module kapsamı, ilk DocType'lar — çıktı bildirimsel tanım dosyalarıdır, kod değil"
+       }
+      ]
+     },
+     {
+      "title": "İskelet üret",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Test dosyaları İLK üretilir (kontrat + örnek senaryo, kırmızı başlar); sonra DocType YAML'ları; sonra boş saf-hook dosyaları; manifest + izin beyanı"
+       }
+      ]
+     },
+     {
+      "title": "Vibecode et",
+      "segments": [
+       {
+        "type": "text",
+        "text": "AI'a verilen bağlam: DocType tanımları + hook imzaları + test beklentileri. AI hook gövdelerini ve yeni tanımları doldurur; kernel'e dokunamaz"
+       }
+      ]
+     },
+     {
+      "title": "Doğrula",
+      "segments": [
+       {
+        "type": "text",
+        "text": "sdk check: pyright strict + üretilmiş tenant-izolasyon testleri + conformance suite; geçmeyen iskelet pakete dönüşmez"
+       }
+      ]
+     },
+     {
+      "title": "Paketle",
+      "segments": [
+       {
+        "type": "text",
+        "text": "sdk build → WASM sandbox'a uygun module paketi (be-kararlar 09); kurulum hedefi 'Chrome extension kadar basit'"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-be-sdk-code",
+    "type": "codeBlock",
+    "title": "Üretilen iskelet (özet ağaç — testler başta)",
+    "language": "text",
+    "code": "my-app/\n├── tests/                  # ÖNCE üretilir — kontrat + senaryo, kırmızı başlar\n│   └── test_order.py        # 'komşu tenant okuyamaz' dahil üretilmiş testler\n├── doctypes/\n│   └── order.yaml           # bildirimsel tanım — AI'ın ana yüzeyi\n├── hooks/\n│   └── order_hooks.py       # saf fonksiyonlar: before_insert, on_submit\n├── manifest.yaml            # izin beyanı + hook abonelikleri (WASM sözleşmesi)\n└── client/                  # tipli client (üretilir, elle yazılmaz)",
+    "highlightedLines": [
+     2,
+     3
+    ]
+   },
+   {
+    "id": "block-be-sdk-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "AI yüzey sözleşmesi",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI'ın görebildiği/değiştirebildiği: doctypes/*.yaml, hooks/*.py (saf fonksiyon), tests/*. Göremediği: kernel iç API'si, ORM oturumu, tenant bağlamı — bunlar SDK çağrılarının arkasındadır. Bu sınır aynı anda üç şeydir: vibecoding hata alanı daraltması, AGPL/MIT lisans sınırı ve WASM izin sınırı."
+     }
+    ]
+   }
+  ]
+ }
+}
