@@ -12,7 +12,7 @@ Eski yedi seviyeli zincirde (kaya→...→atom) iki sorun vardı: tepe seviye 'k
 
 ## Karar
 
-Zincir sekiz seviyedir ve tek doğruluk kaynağı `kernel/k-granulerlik` sayfasıdır: **Dağ** (Application, SP 34+) → **Kaya** (Core Module/Bounded Context, 21) → **Büyük Taş** (Screen/Service Group, 13) → **Orta Taş** (View/Endpoint Group, 8) → **Küçük Taş** (Section/Use Case, 5) → **Kum Tanesi** (Component/API Endpoint, 3) → **Toz Tanesi** (Property/Validation-Policy, 2) → **Atom** (Rule/Constraint/Logic, 1). Frontend ve backend aynı metafora eşlenir. **Komşuluk kuralı** bağlayıcıdır: bir seviye yalnız bir alt komşusuna bağlanır — ihlal, eksik analiz sinyalidir ve AI-backlog üretiminde denetleyici olarak kullanılır. Granülerlik Atom'u (kural) ile Atomik Tipler (Faz 0, tip primitifleri) ayrı kavramlardır ve içerikte açıkça ayrıştırılır.
+Zincir sekiz seviyedir ve tek doğruluk kaynağı `kernel/k-granulerlik` sayfasıdır: **Dağ** (Application, SP 34+) → **Kaya** (Module/Bounded Context, 21 — kayalardan biri app'in tekil core module'üdür) → **Büyük Taş** (Screen/Service Group, 13) → **Orta Taş** (View/Endpoint Group, 8) → **Küçük Taş** (Section/Use Case, 5) → **Kum Tanesi** (Component/API Endpoint, 3) → **Toz Tanesi** (Property/Validation-Policy, 2) → **Atom** (Rule/Constraint/Logic, 1). Frontend ve backend aynı metafora eşlenir. **Komşuluk kuralı** bağlayıcıdır: bir seviye yalnız bir alt komşusuna bağlanır — ihlal, eksik analiz sinyalidir ve AI-backlog üretiminde denetleyici olarak kullanılır. Granülerlik Atom'u (kural) ile Atomik Tipler (Faz 0, tip primitifleri) ayrı kavramlardır ve içerikte açıkça ayrıştırılır.
 
 ## Sonuçlar
 

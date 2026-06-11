@@ -58,7 +58,7 @@
     ],
     "goals": [
      "Bir ArcheType tanımının hangi 8+ çıktıyı otomatik ürettiğini sayabilirsin.",
-     "Field, naming series, child table, hook kavramlarını projeden örneklerle anlatabilirsin.",
+     "Field, naming series, Fragment, hook kavramlarını projeden örneklerle anlatabilirsin.",
      "Bir 'Müşteri Şikayeti' ArcheType'ını YAML olarak yazabilirsin.",
      "Custom field vs property setter farkını söyleyebilirsin."
     ]
@@ -68,6 +68,36 @@
     "type": "heading",
     "level": 4,
     "text": "Kavramlar"
+   },
+   {
+    "id": "block-edu-u03-doctype-co",
+    "type": "callout",
+    "variant": "info",
+    "title": "Açık karar — alan seviyesinin adı",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu ünitede Frappe geleneğiyle '"
+     },
+     {
+      "type": "term",
+      "text": "Field",
+      "termId": "term-field-edu-u03-doctype"
+     },
+     {
+      "type": "text",
+      "text": "/"
+     },
+     {
+      "type": "term",
+      "text": "Fieldtype",
+      "termId": "term-fieldtype-edu-u03-doctype"
+     },
+     {
+      "type": "text",
+      "text": "' deniyor; meta-framework'te alan seviyesinin nihai adı (Field mi Attribute mı) bilinçli olarak AÇIK karardır (ADR-0010 Rev.1) — karar verilince bu ünite tek süpürmeyle güncellenecek."
+     }
+    ]
    },
    {
     "id": "block-edu-u03-doctype-h-anlatim-bir-archetype-tanimladiginda-ne-olur",
@@ -215,11 +245,11 @@
       ]
      },
      {
-      "term": "Admin form",
+      "term": "Varsayılan Surface (admin form)",
       "definition": [
        {
         "type": "text",
-        "text": "List view, form view, kanban, calendar (ArcheType metadata'sına bağlı)."
+        "text": "List view, form view, kanban — varsayılan Surface üretimi; surface:none ile kapatılabilir, çok-ArcheType yüzeyler ayrı Surface tanımıdır (k-surface)."
        }
       ]
      },
@@ -306,9 +336,9 @@
    {
     "id": "block-edu-u03-doctype-code",
     "type": "codeBlock",
-    "title": "archetype/musteri_sikayeti.yml",
+    "title": "archetypes/musteri_sikayeti.yaml",
     "language": "yaml",
-    "code": "archetype: MusteriSikayeti\nnaming: format:SIK-{YYYY}-{####}\nis_submittable: false\nfields:\n  - name: konu          # Field name (DB kolon adı)\n    type: Data          # max 140 char string\n    required: true\n    in_list_view: true  # liste sayfasında görünsün\n\n  - name: aciklama\n    type: Text          # uzun metin\n    required: true\n\n  - name: oncelik\n    type: Select        # closed enum\n    options: [\"dusuk\", \"orta\", \"yuksek\", \"acil\"]\n    default: \"orta\"\n\n  - name: atanan\n    type: Link          # başka ArcheType'a FK\n    options: User       # hangi ArcheType — User\n\n  - name: musteri\n    type: Link\n    options: Customer\n    required: true\n    in_list_view: true\n\n  - name: ekler\n    type: Table         # child table (1-N)\n    options: SikayetEki # child ArcheType\n\npermissions:\n  - role: Manager\n    perm: [read, write, create, delete]\n  - role: Customer\n    perm: [read, create]\n    ifowner: true       # sadece kendi kayıtlarını görsün\n\nhooks:\n  on_change: helpdesk.handlers.on_complaint_change"
+    "code": "archetype: MusteriSikayeti\nnaming: format:SIK-{YYYY}-{####}\nis_submittable: false\nfields:\n  - name: konu          # Field name (DB kolon adı)\n    type: Data          # max 140 char string\n    required: true\n    in_list_view: true  # liste sayfasında görünsün\n\n  - name: aciklama\n    type: Text          # uzun metin\n    required: true\n\n  - name: oncelik\n    type: Select        # closed enum\n    options: [\"dusuk\", \"orta\", \"yuksek\", \"acil\"]\n    default: \"orta\"\n\n  - name: atanan\n    type: Link          # başka ArcheType'a FK\n    options: User       # hangi ArcheType — User\n\n  - name: musteri\n    type: Link\n    options: Customer\n    required: true\n    in_list_view: true\n\n  - name: ekler\n    type: Table         # child table (1-N)\n    options: SikayetEki # Fragment tanımı\n\npermissions:\n  - role: Manager\n    perm: [read, write, create, delete]\n  - role: Customer\n    perm: [read, create]\n    ifowner: true       # sadece kendi kayıtlarını görsün\n\nhooks:\n  on_change: helpdesk.handlers.on_complaint_change"
    },
    {
     "id": "block-edu-u03-doctype-note-2",
@@ -420,7 +450,7 @@
     ]
    },
    {
-    "id": "block-edu-u03-doctype-co",
+    "id": "block-edu-u03-doctype-co-2",
     "type": "callout",
     "variant": "warning",
     "title": "Tuzak — JSON-her-şey",
@@ -546,7 +576,7 @@
       "segments": [
        {
         "type": "text",
-        "text": "Child table'ı bir gerçek dünya örneğiyle açıklayabilirim. — Sipariş → SiparişKalemleri."
+        "text": "Fragment'i bir gerçek dünya örneğiyle açıklayabilirim. — Sipariş → SiparişKalemleri."
        }
       ]
      },
@@ -622,8 +652,8 @@
      },
      {
       "type": "term",
-      "text": "child table",
-      "termId": "term-child-table-edu-u03-doctype"
+      "text": "Fragment",
+      "termId": "term-fragment-edu-u03-doctype"
      },
      {
       "type": "text",
@@ -648,7 +678,7 @@
     ]
    },
    {
-    "id": "block-edu-u03-doctype-co-2",
+    "id": "block-edu-u03-doctype-co-3",
     "type": "callout",
     "variant": "info",
     "title": "Sonraki ünite",

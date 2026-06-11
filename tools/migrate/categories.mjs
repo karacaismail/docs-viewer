@@ -46,7 +46,7 @@ export const PREFIX_TO_CATEGORY = {
 export const STEM_OVERRIDES = {
   overview: "genel",
   philosophy: "genel",
-  "board-rebuilt": "genel",
+  "board-rebuilt": "build", // ARŞİV — inşa geçmişi artefaktı; BAŞLANGIÇ bölümünden çıkarıldı
   "atomic-types": "kernel", // Faz 0 — İnşa Sırası'nın sıfırıncı adımı (03 §1); eski genel/ linki stem-fallback ile sağ
 };
 

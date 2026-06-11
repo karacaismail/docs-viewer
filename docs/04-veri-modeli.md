@@ -29,6 +29,8 @@ Eager/lazy bölünmesi performans bütçesinin (14 #15) yapısal karşılığıd
 | `tags` | string[] | hayır | Search boost alanı |
 | `sourceId` | string | hayır | Eski cluster id'si — `{{ref:x}}` ve `related` çözüm anahtarı (kaynak veri eski id ile referans verir, 07A §3a) |
 | `meta` | { granularity?, state?, badge? } | hayır | Eski şemadan taşınan rozet bilgisi (07A §2) |
+
+**Rozet sözlüğü (`meta.badge` — serbest string ama fiilî envanter):** `ADAY` (katalog adayı — ürünleşme kararı bekler) · `EDITION` (UI/UX paketi) · `DISTRIBUTION` (sektör paketi) · `KAVRAM` (bağlayıcı kavram sayfası) · `KARAR` (kilitli karar kaydı) · `TASARIM` (tasarım sözleşmesi) · `FAZ` (inşa fazı sayfası) · `REFERANS` (destekleyici referans) · `ÖRNEK` (örnek/görselleştirme) · `ARŞİV` (tarihî artefakt — bağlayıcı değil). Özgün içerikten gelen serbest rozetler (Layer/LandX etiketleri) bilgilendiricidir.
 | `related` | string[] (pageId) | hayır | Sayfa sonu "İlgili sayfalar" cardGrid'i |
 | `blocks` | Block[] | evet | Sıralı içerik |
 
@@ -54,6 +56,7 @@ Her block iki ortak alan taşır: `id` (benzersiz, anchor hedefi) ve `type` (dis
 | `image` | `src`, `alt`, `caption?` — mevcut içerikte 83 kullanım (07A §3) |
 | `list` | `ordered?`, `items[]: segments[]` — düz liste; stepList'ten ayrı semantik |
 | `lessonHeader` | `unit`, `title`, `level`, `durationMin`, `prereq[]`, `goals[]` — eğitim üniteleri |
+| `wbsChart` | `title?`, `caption?` — granülerlik WBS ağacı; veri bileşen-içi örnek settir, ECharts dinamik yüklenir (ADR-0011), canvas yoksa erişilebilir liste fallback'i |
 
 Bilinmeyen `type` build hatasıdır; runtime'a asla sızmaz (fail loudly).
 

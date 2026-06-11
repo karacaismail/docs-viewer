@@ -179,10 +179,6 @@
    "a": "Noterin evrak numarası: 2026/000123 — sıralı, tahmin edilebilir, asla çakışmaz.",
    "u": ["SO-0001 formatlı sipariş numarası üretimi", "Yıl bazlı fatura serisi (INV-2026-####)"]
   },
-  "child table": {
-   "a": "Fatura ve kalemleri: başlık tek kâğıt, satırlar onun altındaki çizelge; çizelge tek başına anlamsız.",
-   "u": ["Sipariş → sipariş kalemleri modellemesi", "Bordro → kazanç/kesinti satırları"]
-  },
   "hook": {
    "a": "Düğün salonunun 'pasta kesilirken' anonsu: o anda kimin ne yapacağı önceden yazılmış; an gelince hepsi tetiklenir.",
    "u": ["before_insert'te varsayılan değer atamak", "on_submit'te stok düşümü tetiklemek"]
@@ -938,7 +934,7 @@
     "Mobil istemcinin dar alan kümesiyle bant genişliği tasarrufu",
     "Tek istekte party + file + audit birleşik sorgusu"
    ],
-   "l": "Layer 1 bağlamında GraphQL, in-tree servislerin dışa açtığı ikinci kapıdır: REST otomatik üretilir, GraphQL ise istemcinin alan seçebildiği esnek sorgu yüzeyi olarak onun yanında durur. Servis kodu ikisini de aynı ArcheType tanımından türetir."
+   "l": "Layer 1 bağlamında GraphQL ürünün VARSAYILAN sorgu yüzeyidir (be-kararlar 07): FastAPI'nin bir endpoint'i olarak çalışır, istemci alan seçer. Servis kodu her iki yüzeyi de aynı ArcheType tanımından türetir."
   },
   "graphql@stack-cms": {
    "a": "Gazete matbaası yerine haber ajansı gibi — ajans (CMS) ham içeriği verir, sayfayı her yayıncı (frontend) kendi düzenler.",
@@ -978,7 +974,7 @@
     "Üçüncü taraf entegrasyonların OpenAPI sözleşmesiyle hızlı bağlanması",
     "CRUD endpoint'lerinin migration'la birlikte versiyonlanması"
    ],
-   "l": "Layer 1 bağlamında REST varsayılan dış yüzdür: her in-tree servisin CRUD'u ArcheType tanımından otomatik REST endpoint'i olarak doğar. Sözleşme OpenAPI ile yayınlanır; GraphQL bunun üzerine seçmeli katmandır."
+   "l": "Layer 1 bağlamında REST+OpenAPI kurulumda açılan opsiyondur (be-kararlar 07; varsayılan GraphQL'dir) — ama açıldığında sözleşmesi tam teşekküllüdür: OpenAPI, SDK ve developer portal üretiminin kaynağıdır; üçüncü taraf entegrasyonların çoğu bu kapıyı tercih eder."
   },
   "rest@stack-cms": {
    "a": "Fırının vitrin rafı gibi — sık satılan ekmek (yayınlanmış içerik) rafta hazır durur; özel sipariş (GraphQL) tezgâha gider.",
@@ -3127,7 +3123,7 @@
   "fragment@k-surface": {
    "a": "Faturanın kalem satırları gibi — fatura tek belgedir ama içinde kendi sütunları olan satırlar yaşar; satır faturasız var olamaz.",
    "u": ["Sipariş altında SiparişKalemleri Fragment'i", "Employee altında Adresler/ZamanKayıtları"],
-   "l": "Bu sayfada Fragment, yapı ekseninin orta halkasıdır: ArcheType'la doğar-taşınır ama kendi satır yapısı vardır; Frappe'nin child table'ından farkı, Surface'ten bağımsız tanımlanabilmesi ve kendi Atom'larını (kural bileşenlerini) taşımasıdır."
+   "l": "Bu sayfada Fragment, yapı ekseninin orta halkasıdır: ArcheType'la doğar-taşınır ama kendi satır yapısı vardır; Frappe'nin Fragment'ından farkı, Surface'ten bağımsız tanımlanabilmesi ve kendi Atom'larını (kural bileşenlerini) taşımasıdır."
   },
   "atom@k-surface": {
    "a": "Lego setindeki tekil tuğla gibi — set (Fragment) tuğlalardan kurulur; tuğlanın altı yoktur, en küçük birim odur.",
@@ -3144,6 +3140,11 @@
     "Module'ün dış dünyaya verdiği endpoint listesinin beyanı"
    ],
    "l": "Bu sayfada Contract yan eksenin üçüncü kavramıdır: modüller arası API'nin tanım-katmanı kaydı. sus-boundaries'teki statik sınır zorlaması (import-linter/Packwerk deseni) derleme-zamanı bekçisiyse, Contract çalışma-zamanı sözleşmesidir — ikisi aynı sınırın iki kapısıdır."
+  },
+  "fragment@edu-u03-doctype": {
+   "a": "Fatura ve kalemleri: başlık tek kâğıt, satırlar onun altındaki çizelge; çizelge tek başına anlamsız.",
+   "u": ["Sipariş → sipariş kalemleri modellemesi", "Bordro → kazanç/kesinti satırları"],
+   "l": "Bu ünitede Fragment, ArcheType'ın 1-N satırlı parçası olarak öğretilir (Frappe'deki adı child table'dı — bizde Fragment, ADR-0010 Rev.1): SikayetEki gibi kendi alanları olan ama ana kayıtla doğup taşınan tablo. Yapı ekseninin orta halkasıdır (k-surface)."
   }
  }
 }

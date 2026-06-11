@@ -87,7 +87,7 @@
 - Field (page-edu-u03-doctype) · **ince why** · analoji tohumu var
 - Fieldtype (page-edu-u03-doctype) · **ince why** · analoji tohumu var
 - Naming series (page-edu-u03-doctype) · analoji tohumu var
-- Child table (page-edu-u03-doctype) · **ince why** · analoji tohumu var
+- Fragment (page-edu-u03-doctype) · analoji tohumu var
 - Hook (page-edu-u03-doctype) · analoji tohumu var
 - Custom field (page-edu-u03-doctype) · **ince why** · analoji tohumu var
 - Property setter (page-edu-u03-doctype) · **ince why** · analoji tohumu var
@@ -219,7 +219,7 @@
 - Affordance (page-edu-u15-ux-60-plus) · **ince why** · analoji tohumu var
 - Progressive Disclosure (page-edu-u15-ux-60-plus) · analoji tohumu var
 
-## Parti 3 (146 kayıt)
+## Parti 3 (145 kayıt)
 - Primitive (page-overview) · analoji tohumu var
 - Outbox (page-overview) · analoji tohumu var
 - CQRS (page-overview) · analoji tohumu var
@@ -227,7 +227,6 @@
 - Meta-framework (page-overview) · analoji tohumu var
 - ArcheType (page-overview) · analoji tohumu var
 - Cluster (page-philosophy) · **ince why** · analoji tohumu var
-- Cluster (page-board-rebuilt) · **ince why** · analoji tohumu var
 - Scalar (page-atomic-types) · analoji tohumu var
 - Composite (page-atomic-types) · analoji tohumu var
 - UUID v7 (page-atomic-types) · analoji tohumu var
@@ -367,7 +366,7 @@
 - Replay Attack (page-scale-webhook) · analoji tohumu var
 - DLQ (page-scale-webhook) · analoji tohumu var
 
-## Parti 4 (132 kayıt)
+## Parti 4 (131 kayıt)
 - Introspectable (page-sus-metadata) · analoji tohumu var
 - Meta-metadata (page-sus-metadata) · analoji tohumu var
 - ServiceNow Glide (page-sus-metadata) · analoji tohumu var
@@ -451,7 +450,6 @@
 - Geri açılma garantisi (page-sus-lisans)
 - OAuth (page-crosscut-tr) · analoji tohumu var
 - KVKK (page-crosscut-tr) · analoji tohumu var
-- KVKK (page-crosscut-tr) · analoji tohumu var
 - GİB (page-crosscut-tr) · analoji tohumu var
 - VUK (page-crosscut-tr) · analoji tohumu var
 - Cluster (page-crosscut-security) · **ince why** · analoji tohumu var
@@ -501,7 +499,8 @@
 - DBOS (page-sus-durable) · analoji tohumu var
 - Temporal (page-sus-durable) · analoji tohumu var
 
-## Parti 5 (112 kayıt)
+## Parti 5 (111 kayıt)
+- Cluster (page-board-rebuilt) · **ince why** · analoji tohumu var
 - Streaming Export (page-l1-export) · analoji tohumu var
 - Presigned URL (page-l1-export) · analoji tohumu var
 - Multipart Upload (page-l1-export) · analoji tohumu var
@@ -573,7 +572,6 @@
 - Cluster (page-stack-ai) · **ince why** · analoji tohumu var
 - Cluster (page-stack-marketing) · **ince why** · analoji tohumu var
 - SLA (page-stack-helpdesk) · analoji tohumu var
-- SLA (page-stack-helpdesk) · analoji tohumu var
 - Cluster (page-stack-helpdesk) · **ince why** · analoji tohumu var
 - Cluster (page-stack-drive) · **ince why** · analoji tohumu var
 - Cluster (page-dx-cli) · **ince why** · analoji tohumu var
@@ -591,7 +589,6 @@
 - REST (page-landx-l3-application) · analoji tohumu var
 - Webhook (page-landx-l3-application) · analoji tohumu var
 - Cluster (page-landx-l3-application) · **ince why** · analoji tohumu var
-- KVKK (page-landx-l4-compliance) · analoji tohumu var
 - KVKK (page-landx-l4-compliance) · analoji tohumu var
 - Cluster (page-landx-l4-compliance) · **ince why** · analoji tohumu var
 - Cluster (page-landx-l5-operations) · **ince why** · analoji tohumu var
@@ -719,7 +716,7 @@
 - MRR (page-s-billing) · **ince why** · analoji tohumu var
 - Prorating (page-s-billing) · **ince why** · analoji tohumu var
 
-## Parti 2 — Bağlamsal varyantlar (244 kayıt, 77 label)
+## Parti 2 — Bağlamsal varyantlar (244 kayıt, 78 label)
 - Primitive (page-overview) · analoji tohumu var
 - Outbox (page-overview) · analoji tohumu var
 - CQRS (page-overview) · analoji tohumu var
@@ -837,6 +834,7 @@
 - Cluster (page-stack-accounting) · **ince why** · analoji tohumu var
 - Workflow (page-k-surface)
 - Projection (page-k-surface)
+- Fragment (page-k-surface)
 - Atom (page-k-surface)
 - Contract (page-k-surface)
 - Cluster (page-stack-hrms) · **ince why** · analoji tohumu var
@@ -858,7 +856,6 @@
 - Cluster (page-stack-helpdesk) · **ince why** · analoji tohumu var
 - Cluster (page-stack-drive) · **ince why** · analoji tohumu var
 - KVKK (page-crosscut-tr) · analoji tohumu var
-- KVKK (page-crosscut-tr) · analoji tohumu var
 - Cluster (page-crosscut-security) · **ince why** · analoji tohumu var
 - Cluster (page-crosscut-observability) · **ince why** · analoji tohumu var
 - Cluster (page-dx-cli) · **ince why** · analoji tohumu var
@@ -876,7 +873,6 @@
 - REST (page-landx-l3-application) · analoji tohumu var
 - Webhook (page-landx-l3-application) · analoji tohumu var
 - Cluster (page-landx-l3-application) · **ince why** · analoji tohumu var
-- KVKK (page-landx-l4-compliance) · analoji tohumu var
 - KVKK (page-landx-l4-compliance) · analoji tohumu var
 - Cluster (page-landx-l4-compliance) · **ince why** · analoji tohumu var
 - Cluster (page-landx-l5-operations) · **ince why** · analoji tohumu var
@@ -903,6 +899,7 @@
 - Primitive (page-edu-u02-veri-tip) · analoji tohumu var
 - Cluster (page-edu-u02-veri-tip) · **ince why** · analoji tohumu var
 - ArcheType (page-edu-u03-doctype) · analoji tohumu var
+- Fragment (page-edu-u03-doctype) · analoji tohumu var
 - Hook (page-edu-u03-doctype) · analoji tohumu var
 - REST (page-edu-u03-doctype) · analoji tohumu var
 - GraphQL (page-edu-u03-doctype) · analoji tohumu var

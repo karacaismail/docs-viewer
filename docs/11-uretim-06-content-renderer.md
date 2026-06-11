@@ -1,6 +1,6 @@
 # 11 — Üretim Yönergesi 6: Content Renderer ve Block Bileşenleri
 
-Bu faz, page'in `blocks` dizisini ekrana çeviren renderer'ı ve 16 block bileşenini (master prompt'un 13 type'ı + 07A ile eklenen `image`, `list`, `lessonHeader`) üretir. Renderer registry üzerinden çözümleme yapar; switch zinciri oluşmaz. Her block bileşeninin kontrat testi bileşenden önce yazılır.
+Bu faz, page'in `blocks` dizisini ekrana çeviren renderer'ı ve 17 block bileşenini (master prompt'un 13 type'ı + 07A ile eklenen `image`, `list`, `lessonHeader` + 11 Haziran'da eklenen `wbsChart` — ADR-0011) üretir. Renderer registry üzerinden çözümleme yapar; switch zinciri oluşmaz. Her block bileşeninin kontrat testi bileşenden önce yazılır.
 
 ## Üretilecek Dosyalar
 

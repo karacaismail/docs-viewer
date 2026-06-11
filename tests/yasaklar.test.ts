@@ -82,3 +82,38 @@ it("yasak kelime: doctype — içerik/doc/src'de geçmez (ADR-0009 kapısı)", (
   ];
   expect(hits).toEqual([]);
 });
+
+// ADR-0007 sağlaması: "plugin" kelimesi yaşamaz — genişletme birimi module'dür.
+// Muaf: slug token'ları, WordPress'in KENDİ terimine atıf, yasağı tarif eden cümleler (ADR-0007 + k-terminoloji).
+it("yasak kelime: plugin — module dili dışında geçmez (ADR-0007 kapısı)", () => {
+  const PROTECTED = [
+    "kernel-plugin",
+    "edu-u09-plugin",
+    "WordPress plugin",
+    "WordPress Plugin",
+    "plugin reddi",
+    "plugin değil",
+    "plugin yasak",
+    "plugin' ifadesi",
+    "plugin ifadesi",
+    '"plugin"',
+  ];
+  const scan = (dir: string, exts: string[], skip: (f: string) => boolean = () => false): string[] => {
+    const hits: string[] = [];
+    for (const f of readdirSync(dir, { recursive: true }) as string[]) {
+      const full = join(dir, f);
+      if (!exts.some((e) => f.endsWith(e)) || skip(f)) continue;
+      let body = readFileSync(full, "utf8");
+      for (const t of PROTECTED) body = body.replaceAll(t, "");
+      if (/plugin/i.test(body)) hits.push(full);
+    }
+    return hits;
+  };
+  const hits = [
+    ...scan("content-source", [".json"]),
+    ...scan("docs", [".md"], (f) => f.includes("01G-adr-0007")),
+    ...scan("src", [".ts", ".tsx"], (f) => f.startsWith("data")),
+    ...scan("tools/migrate", [".mjs", ".json"]),
+  ];
+  expect(hits).toEqual([]);
+});

@@ -59,6 +59,7 @@ Kritik bulgu: dönüşüm "serbest metin → block" değil, büyük ölçüde **
 | `ref-grid` | 3 | `cardGrid` | refs → kart + internal link |
 | `layer-cards` | 2 | `cardGrid` — **otomatik** | Kart yapısı (`{tag, name, desc, tone, enrich}`) keşifte düzenli çıktı: `tag — name` → title, `desc` → segments; kart `enrich.terms` glossary'ye akar. 'Elle' kararı uygulamada revize edildi |
 | `tree` | 2 | `codeBlock(text)` — **otomatik** | `root {name, children, comment}` yapısı düzenli; ASCII ağaca (`├─/└─` + `# comment`) deterministik çevrilir, monospace render çizimi korur (07B diyagram kararıyla aynı ilke) |
+| `wbs-chart` | 1 | `wbsChart` | Granülerlik WBS ağacı (k-wbs); başlık/altyazı taşır, örnek veri bileşendedir |
 | `granularity-legend` | 1 | `heading` + `definitionList` | Tek kullanım; sekiz seviyeli granülerlik zinciri v2 (ADR-0008: Dağ→Atom + SP) otomatik üretilir |
 | `blocks[].enrich` | 165 | bitişik block'lara açılır | Block-level enrich (info 42, lesson 59, detail 20, stories 6, terms 5) yeni modelde yok; ilgili block'un hemen ardına callout/useCase olarak deterministik sırayla eklenir |
 
