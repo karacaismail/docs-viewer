@@ -2225,6 +2225,807 @@
    "a": "Heykelin kalıptan dökümü gibi — döküm kırılırsa kalıptan yenisi alınır; kalıp (event log) kıymetlidir.",
    "u": ["Liste/rapor ekranlarının join'siz projection'ı", "Şema değişiminde sıfırdan rebuild akışı"],
    "l": "Scale-projections bağlamında projection, CQRS'in okuma ürünüdür: event akışından türetilen düz tablo; bozulursa silinip yeniden inşa edilir, asıl kaynak event'tir."
+  },
+  "github actions@deploy-yap": {
+   "a": "Apartmanın kendi jeneratörü gibi — elektrik işi dışarıya (ayrı CI çiftliği) verilmez; cihaz bodrumda, bakım planı panoda.",
+   "u": ["deploy.yml zincirinin tek dosyada yaşaması", "Workflow değişikliğinin PR diff'inde görünmesi"],
+   "l": "Deploy-yap bağlamında Actions, bu projenin fiilî CI/CD motorudur: workflow YAML repo'da yaşar, runner'da koşar; ayrı CI sunucusu (Jenkins) anti-stack gereği reddedilmiştir — altyapı kod gibi versiyonlanır."
+  },
+  "github pages@deploy-yap": {
+   "a": "Belediyenin ilan panosu gibi — kendi binanı (sunucu) kiralamadan duyurun şehir merkezinde asılı durur.",
+   "u": ["SPA fallback ile derin link çalışırlığı", "Base-path'li build'in Pages altında koşması"],
+   "l": "Deploy-yap bağlamında Pages, ADR-0003'ün yayın hedefidir: statik SPA sunucusuz yayınlanır; 404.html fallback'i derin linkleri taşır, BASE_URL base path'i çözer — sıfır sunucu maliyeti bilinçli mimari sınırdır."
+  },
+  "pages workflow@deploy-yap": {
+   "a": "Matbaaya baskı dosyası göndermek gibi — dizgiyi (branch) matbaada saklamazsın; baskıya hazır PDF (artifact) gider.",
+   "u": ["Artifact-tabanlı yayının branch'siz akışı", "Yayın izninin workflow-permission ile sınırlanması"],
+   "l": "Deploy-yap bağlamında bu ikili, resmi yayın yoludur: artifact yüklenir, deploy-pages yayınlar; eski 'gh-pages branch'ine push' deseni terk edilmiştir — yayın, branch kirliliği değil artifact aktarımıdır."
+  },
+  "runner@deploy-yap": {
+   "a": "Ortak mutfak kiralama gibi — her kullanımda boş tezgâh; malzemeni (deps) getirir, işin bitince masa silinir.",
+   "u": [
+    "Temiz-ortam build'inin yerel farkları yakalaması",
+    "Bağımlılık cache'iyle koşu süresinin kısaltılması"
+   ],
+   "l": "Deploy-yap bağlamında runner, kiralık tezgâhtır: her koşuda temiz Ubuntu VM — 'bende çalışıyordu' bahanesini yapısal olarak öldürür; bağımlılık ve cache yönetimi bilinçli adımlardır çünkü tezgâh her gün sıfırlanır."
+  },
+  "workflow@deploy-yap": {
+   "a": "Yemek tarifi kartı gibi — malzeme, sıra, süre tek kartta; yeni sipariş gelince eski tencere ocaktan iner.",
+   "u": ["Tetik-iş-adım hiyerarşisinin tek dosyada okunması", "Concurrency ile bayat koşuların iptali"],
+   "l": "Deploy-yap bağlamında workflow, otomasyonun birimi: tetik (push), işler (jobs), adımlar (steps) tek YAML'da; concurrency ayarı eski koşuyu iptal eder — kuyruk değil son-hal kazanır."
+  },
+  "api gateway@dx-api-gateway": {
+   "a": "Fabrika danışması gibi — ziyaretçi hangi bölüme giderse gitsin önce danışmadan kart alır; bölümler kapı kontrolü yapmaz.",
+   "u": ["Tüm public trafiğin tek kapıdan ölçümü", "Sürüm/pin yönlendirmesinin kapıda çözülmesi"],
+   "l": "DX bağlamında gateway, public API'nin tek kapısıdır: auth, ratelimit, sürüm yönlendirme ve ölçüm tek noktada; modüller iş mantığına bakar, kapı disiplinini gateway taşır."
+  },
+  "api key@dx-api-gateway": {
+   "a": "Otopark abonelik kartı gibi — kart kaybolursa plaka değil kart iptal edilir; girişler kart numarasıyla kayıtlıdır.",
+   "u": ["Prefix'le canlı/test ayrımının görünür olması", "Sızıntı durumunda anında iptal ve rotasyon"],
+   "l": "DX bağlamında API key, makine kimliğinin basit halidir: prefix'li format (sk_live_) ortam karışıklığını önler, hash'lenmiş saklanır, son-kullanım izlenir; sızıntıda tek tıkla iptal — anahtar değil kilit yönetilir."
+  },
+  "developer portal@dx-api-gateway": {
+   "a": "Bankanın internet şubesi gibi — dekont için gişeye gidilmez; hesap sahibi işini kendi ekranından görür.",
+   "u": ["Self-serve key üretimi ve kullanım grafiği", "Dokümantasyonun OpenAPI'den canlı üretimi"],
+   "l": "DX bağlamında portal, API'nin vitrinidir: docs, key yönetimi, kullanım grafiği ve status tek yerde; entegrasyon destek bileti yerine self-serve ilerler — DX, ürünün satış yüzeyidir."
+  },
+  "openapi@dx-api-gateway": {
+   "a": "Mimari projenin DWG dosyası gibi — ustalar (SDK, docs, test) aynı çizimden çalışır; herkesin kendi krokisi olmaz.",
+   "u": ["Şemadan SDK ve docs'un otomatik üretimi", "Sözleşme değişiminin diff'le görünür olması"],
+   "l": "DX bağlamında OpenAPI, API'nin makine-okur sözleşmesidir: DocType'tan üretilir, elle yazılmaz; SDK üretimi, portal docs ve sözleşme testleri aynı dosyadan beslenir — tek kaynak, üç tüketici."
+  },
+  "cdn@fe-cdn": {
+   "a": "Süt dağıtım ağı gibi — mandıra (origin) tek; bayiler (edge) her semtte, süt taze ve yakın.",
+   "u": ["Varlıkların edge-dağıtımıyla gecikme düşüşü", "Origin yükünün cache-hit ile sabitlenmesi"],
+   "l": "FE bağlamında CDN, statik dağıtımın omurgasıdır: build çıktısı edge ağına itilir; origin tek, kopya yüzlerce — kullanıcı gecikmesi coğrafyadan bağımsızlaşır. Pages zaten CDN-önlüdür; desen platformla bedavaya gelir."
+  },
+  "hash-based versioning@fe-cdn": {
+   "a": "Kitabın ISBN'i gibi — yeni baskı yeni numara; kütüphanedeki eski numara yanlış kitaba asla götürmez.",
+   "u": [
+    "immutable cache başlığıyla sonsuz edge cache",
+    "Yayın sonrası bayat-bundle hatasının imkânsızlaşması"
+   ],
+   "l": "FE bağlamında hash adlandırma, cache'in korkusuz hali: içerik değişince ad değişir; eski ad sonsuz cache'lenebilir, yeni yayın yeni adla gelir — 'kullanıcıda eski JS kaldı' sınıfı hata yapısal olarak ölür."
+  },
+  "signed url@fe-cdn": {
+   "a": "Konser bileti QR'ı gibi — kapı (CDN) herkese aynı; turnike yalnız geçerli QR'a döner, bilet saati geçince kâğıt olur.",
+   "u": ["Korumalı medyanın edge'den süreli teslimi", "İmza süresinin içerik hassasiyetiyle eşlenmesi"],
+   "l": "FE bağlamında signed URL, özel içeriğin CDN'den servisidir: korumalı dosya (rapor, export) edge hızıyla ama süreli imzayla iner; CDN herkese açık, içerik imza-bilene açıktır."
+  },
+  "multipart upload@l1-export": {
+   "a": "Mobilyayı kamyona modüler taşımak gibi — koltuk takımı tek parça sıkışmaz; merdivende düşen tek modül yeniden çıkar.",
+   "u": ["Büyük export'un parça-bazlı dayanıklı yüklenmesi", "Yarım yüklemenin temiz iptali (abort)"],
+   "l": "Export bağlamında multipart, büyük dosyanın sigortalı taşımasıdır: 100MB+ çıktı parça parça S3'e yazılır; kopan bağlantı tüm dosyayı değil son parçayı tekrarlatır — uzun export'un iptali de parça sınırında temizdir."
+  },
+  "streaming export@l1-export": {
+   "a": "Barajdan bardağa hortum çekmek gibi — gölü eve taşımazsın; musluk aktıkça bardaklar dolar.",
+   "u": ["Cursor-tabanlı satır akışıyla sabit bellek", "Export sırasında servis belleğinin düz kalması"],
+   "l": "Export bağlamında streaming, RAM disiplinidir: milyon satır belleğe alınmadan cursor'la akar, dosyaya parça parça yazılır; 'büyük tenant export aldı, servis şişti' vakası yapısal olarak engellenir."
+  },
+  "ubl-tr@l1-export": {
+   "a": "Resmî dilekçe formatı gibi — içerik senin, kalıp kurumun; kalıba uymayan dilekçe okunmadan iade edilir.",
+   "u": ["e-Fatura XML üretiminin şema doğrulaması", "GİB şema sürüm geçişlerinin adaptörde izolasyonu"],
+   "l": "Export bağlamında UBL-TR, GİB'in fatura dilidir: e-fatura XML'i bu şemaya göre üretilir ve doğrulanır; şema sürümü GİB tebliğiyle değişir — adaptör deseni (SDI/XRechnung ailesiyle aynı) burada da geçerlidir."
+  },
+  "bulk insert@l1-import": {
+   "a": "Koliyle taşımak gibi — bardakları tek tek değil kasayla taşırsın; kasa düşerse de tek kasa kırılır (rollback).",
+   "u": ["Büyük CSV'nin toplu transaction'la yazımı", "Hook maliyetinin toplu-mod stratejisi"],
+   "l": "Import bağlamında bulk insert, hacmin tekniğidir: satır satır INSERT yerine toplu yazım — 10 bin satır tek transaction'da; hook'ların satır-başı maliyeti toplu modda bilinçli olarak ertelenir veya toplulaştırılır."
+  },
+  "column mapping@l1-import": {
+   "a": "Çeviri tablosu gibi — 'Müşteri Adı' bizim 'full_name'imizdir denir bir kez; sonraki dosyalar aynı sözlükle okunur.",
+   "u": ["Eşleme şablonlarının kaydedilip yeniden kullanımı", "Eşlenmemiş kolonların açık uyarısı"],
+   "l": "Import bağlamında mapping, kullanıcının sözleşme anıdır: CSV başlıkları sistem alanlarına sürükle-bırak eşlenir, şablon olarak kaydedilir; ikinci import'ta eşleme hatırlanır — tekrar eden iş sıfırlanır."
+  },
+  "dry-run@l1-import": {
+   "a": "Terzide prova gibi — makas kumaşa provasız değmez; iğneleme (önizleme) onaylanınca dikiş başlar.",
+   "u": ["Yazımsız önizleme raporu", "Hatalı satırların import öncesi düzeltilmesi"],
+   "l": "Import bağlamında dry-run, pişmanlık sigortasıdır: gerçek yazım olmadan 'ne olacak' raporu — kaç satır geçer, kaç hata, hangi kayıtlar güncellenir; kullanıcı sonucu görüp onaylar, geri-alma ihtiyacı baştan küçülür."
+  },
+  "validation schema@l1-import": {
+   "a": "Sınav optik formu gibi — yanlış kodlanan soru tek tek işaretlenir; kâğıt komple reddedilmez.",
+   "u": ["Satır-bazlı tip doğrulama ve konumlu hata", "Kısmî kabul (geçenler girer) politikası"],
+   "l": "Import bağlamında şema, satırın gümrüğüdür: her satır Zod ile tip ve kural kontrolünden geçer; hata satır-numaralı ve alan-adlı raporlanır — 'dosyanız hatalı' yerine '42. satır, telefon alanı' denir."
+  },
+  "bypass@l1-quiet-hours": {
+   "a": "Hastane acil servisi gibi — mesai bitti diye kapanmaz; ama acile gelen her vaka kayda girer, 'kestirme' olarak kullanılamaz.",
+   "u": ["Kritik bildirim tiplerinin saat-muafiyeti", "Bypass kullanımının audit kaydı"],
+   "l": "Quiet-hours bağlamında bypass, istisnanın resmî yoludur: güvenlik uyarısı ve OTP saate bakmaz; bypass yetkisi bildirim tipine tanımlıdır ve kullanımı loglanır — istisna vardır ama kaçak yoktur."
+  },
+  "per-channel@l1-quiet-hours": {
+   "a": "Telefonun rahatsız-etme modu gibi — aramalar sessize düşer ama alarm çalar; her ses türünün kendi kuralı vardır.",
+   "u": ["Kanal başına ayrı sessiz-saat penceresi", "Biriken bildirimlerin sabah özetlenmesi"],
+   "l": "Quiet-hours bağlamında kanal-bazlılık, rahatsızlığın ayarıdır: gece e-posta birikir, SMS susar, push ertelenir — kanalların rahatsızlık seviyesi farklıdır ve kullanıcı her birini ayrı kurar."
+  },
+  "quiet hours@l1-quiet-hours": {
+   "a": "Apartman sessiz saati gibi — 22:00'den sonra matkap yok; ertelenen iş sabah sırayla yapılır, gece bekçisi (bypass) hariç.",
+   "u": ["Yerel-gece penceresinin tz-doğru hesabı", "Pencere-sonu kuyruk boşaltma sırası"],
+   "l": "Bu sayfada quiet hours servis sözleşmesidir: kullanıcının yerel gecesinde bildirim gönderilmez; pencere tenant timezone'unda hesaplanır (IANA tz), biriken iletiler pencere sonunda sıralı boşalır."
+  },
+  "aggregations@l1-search-deep": {
+   "a": "Seçim sonucu ekranı gibi — sandık listesi değil il-il dağılım gösterilir; detay isteyen ile tıklar.",
+   "u": ["Sonuç dağılımının tek sorguda dönmesi", "Facet sayılarının canlı güncellenmesi"],
+   "l": "Search-deep bağlamında aggregation, sonucun haritasıdır: arama yalnız liste değil dağılım döner — kategori başına sayı, fiyat aralıkları; faceted UI bu sayılardan kurulur, ayrı sorguyla değil."
+  },
+  "autocomplete@l1-search-deep": {
+   "a": "Taksiciye adresin ilk hecesini söylemek gibi — 'Kad...' dediğinde 'Kadıköy mü?' diye tamamlar; tüm haritayı açmaz.",
+   "u": ["Prefix-index'le hafif öneri servisi", "TR-fold'lu önerilerin doğru eşleşmesi"],
+   "l": "Search-deep bağlamında autocomplete, yazarken-bulmadır: prefix index'i ayrı tutulur (edge n-gram), tam aramadan hafiftir; foldTurkish burada da geçerlidir — 'ist' yazana İstanbul önerilir, büyük-İ sorunu yaşatılmaz."
+  },
+  "did-you-mean@l1-search-deep": {
+   "a": "Eczacının el yazısını sökmesi gibi — okunmayan reçeteye 'şunu mu demek istedi' diye en yakın ilacı sorar; eli boş göndermez.",
+   "u": ["Sıfır-sonuçta yakın-yazım önerisi", "Öneri tıklamalarının kalite sinyali olarak izlenmesi"],
+   "l": "Search-deep bağlamında did-you-mean, boş-sonucun kurtarıcısıdır: sıfır sonuç dönen sorgu Levenshtein komşularıyla denenir, en yakın zengin sonuç önerilir; boş ekran yerine köprü kurulur."
+  },
+  "faceted search@l1-search-deep": {
+   "a": "Emlak sitesinin yan paneli gibi — 'şu mahalle, 2+1, şu bütçe' kutucuklarıyla yüz bin ilan üç tıkta yirmiye iner.",
+   "u": ["Filtre panelinin facet sayılarıyla beslenmesi", "Çoklu-facet kombinasyonlarının performansı"],
+   "l": "Search-deep bağlamında facet, daraltmanın arayüzüdür: marka/fiyat/durum filtreleri aggregation sayılarıyla birlikte sunulur; kullanıcı sorgu yazmaz, kutucuk işaretler — keşif aramadan filtrelemeye kayar."
+  },
+  "levenshtein distance@l1-search-deep": {
+   "a": "Anahtar-kilit toleransı gibi — hafif çapaklı anahtar döner (1 harf), eğri anahtar dönmez (3 harf); tolerans kasayı açık bırakmamalı.",
+   "u": ["Fuzzy eşleşme eşiğinin kelime-boyu kuralı", "Did-you-mean'in mesafe-sıralı adayları"],
+   "l": "Search-deep bağlamında Levenshtein, yazım toleransının ölçüsüdür: kaç harf değişirse eşleşir — mesafe eşiği kelime boyuna göre ayarlanır; kısa kelimede 1, uzunda 2 tipiktir, gevşek eşik gürültü üretir."
+  },
+  "vector search@l1-search-deep": {
+   "a": "Kütüphanecinin 'bunu arayanlar şunu da sordu' sezgisi gibi — fihrist (kelime) değil konu komşuluğu konuşur.",
+   "u": ["Eş-anlamlı sorguların embedding'le yakalanması", "Hibrit skorda anlam/kelime ağırlık ayarı"],
+   "l": "Search-deep bağlamında vector search, anlam bacağıdır: embedding benzerliği 'müşteri kaybı' sorgusuna 'churn raporu'nu getirir — kelime ortak olmasa da; BM25 ile hibrit skor, iki dünyanın toplamıdır."
+  },
+  "event idempotency@l1-webhook-in": {
+   "a": "Davetiye kontrol listesi gibi — aynı isim ikinci kez gelirse içeri alınmaz ama kapıda kavga da edilmez; 'kaydınız var' denir.",
+   "u": ["event_id tabanlı mükerrer eleme", "Mükerrer onayının 200-dönüşlü sessiz kabulü"],
+   "l": "Webhook-in bağlamında event idempotency, çift-teslimin panzehiridir: kaynak sistemler aynı event'i tekrar gönderebilir; event_id işlenmişler tablosunda aranır, mükerrer sessizce onaylanır — yan etki tek kez doğar."
+  },
+  "hmac signature@l1-webhook-in": {
+   "a": "Kulüp el damgası gibi — kapıda vurulan damga UV ışıkta kontrol edilir; damgasız bilek ne kadar ikna edici olsa da geçemez.",
+   "u": ["Gövde-imza doğrulamasının zorunluluğu", "Sır rotasyonunda çift-sır geçiş penceresi"],
+   "l": "Webhook-in bağlamında HMAC, kapı kimliğidir: gelen isteğin gövdesi paylaşılan sırla hash'lenir, başlıkla karşılaştırılır; imzasız veya eski-imzalı (timestamp) istek işlenmeden düşer — kapı, kimliksizi içeri sokmaz."
+  },
+  "inbound webhook@l1-webhook-in": {
+   "a": "Restoranın paket servis zili gibi — kurye kapıda bekletilmez; paket alınır (200), mutfak işini kuyruktan görür.",
+   "u": ["Hızlı-kabul + asenkron işleme deseni", "Sağlayıcı bazlı doğrulama adaptörleri"],
+   "l": "Bu sayfada inbound webhook, dış dünyanın bize POST'udur: ödeme sağlayıcı, kargo, banka — hepsi buraya vurur; doğrula (HMAC) → tekille (event_id) → kuyruğa at → 200 dön sırası kanundur, senkron iş yapmak yasaktır."
+  },
+  "append-only@layer1-audit": {
+   "a": "Uçuş kayıt cihazı gibi — kara kutu yazar, silmez; kazadan sonra 'bandı düzeltelim' diyecek düğme yoktur.",
+   "u": ["DB-izin seviyesinde UPDATE/DELETE yasağı", "Düzeltmenin yeni-kayıt-olarak eklenmesi"],
+   "l": "Audit bağlamında append-only, güvenin fiziğidir: tablo yalnız INSERT kabul eder, UPDATE/DELETE veritabanı izniyle kapalıdır; 'kayıt sonradan oynandı' iddiası teknik olarak imkânsızlaştırılır."
+  },
+  "blast radius@layer1-audit": {
+   "a": "Dinamit ruhsatı gibi — patlatma izni delik başına verilir; 'dağı komple' isteyen ruhsat başka masaya gider.",
+   "u": ["Eylem-öncesi etki alanı hesabı", "Geniş-etkili Action'larda ek onay kapısı"],
+   "l": "Audit bağlamında blast radius, agent çağının yeni metriğidir: bir eylemin dokunabileceği alan baştan hesaplanır — tek kayıt mı, tüm tablo mu; geniş-yarıçaplı eylemler ek onay ister, audit kaydına yarıçap da yazılır."
+  },
+  "capability scope@layer1-audit": {
+   "a": "Stajyerin anahtarlığı gibi — yalnız çalıştığı katın anahtarı; arşiv kapısını denemesi bile tutanağa geçer.",
+   "u": ["Agent başına pozitif izin listesi", "Scope-dışı denemenin loglu reddi"],
+   "l": "Audit bağlamında capability scope, agent'ın tasma boyudur: hangi DocType, hangi Action, hangi tenant — izinler pozitif listeyle dar verilir; scope dışı çağrı reddedilir ve reddin kendisi de audit'e düşer."
+  },
+  "event sourcing@layer1-audit": {
+   "a": "Maç özeti ile maçın skoru farkı gibi — özet (audit) olanı anlatır; skor tablosu (ES) golleri toplayarak hesaplanır.",
+   "u": ["Audit-log ile ES sınırının net çizilmesi", "Defter-tipi verilerde ES değerlendirmesi"],
+   "l": "Audit bağlamında event sourcing, akrabadır ama aynı şey değildir: audit log gözlemdir (ne oldu), event sourcing inşadır (state, olayların toplamıdır); biz audit tutarız, ES'i seçili dar alanlarda (defter) değerlendiririz."
+  },
+  "forensic@layer1-audit": {
+   "a": "Kasadaki kamera kaydı gibi — soygun günü takılmaz; yıllardır kayıtta olduğu için o gün işe yarar.",
+   "u": ["İhlal şüphesinde eylem zinciri rekonstrüksiyonu", "Delil bütünlüğünün append-only ile garantisi"],
+   "l": "Audit bağlamında forensic, kötü günün senaryosudur: ihlal şüphesinde 'kim, ne zaman, neye dokundu' zinciri kurulur; bunun mümkün olması için bugünden trace_id, capability scope ve append-only disiplini gerekir — delil, olaydan önce biriktirilir."
+  },
+  "immutable@layer1-audit": {
+   "a": "Noter senedi gibi — yanlış yazıldıysa karalanmaz; yeni senet düzenlenir, eskisi 'iptal' şerhiyle durur.",
+   "u": ["Alan-düzeyi değişmezlik garantisi", "Düzeltme-kayıtlarının orijinale referansı"],
+   "l": "Audit bağlamında immutability, kaydın yeminidir: oluşan satırın hiçbir alanı değişmez; düzeltme, işaret eden yeni kayıttır. Bitemporal'ın system_time'ı ile aynı ailedendir — geçmiş, geçmişte kalır."
+  },
+  "retention@layer1-audit": {
+   "a": "Eczane reçete arşivi gibi — mevzuat 'beş yıl sakla' der, mahremiyet 'süresi dolanı imha et' der; dolap takvimle çalışır.",
+   "u": ["Veri-tipi bazlı saklama politikası", "Süre-sonu otomatik imha/anonimleştirme"],
+   "l": "Audit bağlamında retention, iki yönlü süredir: yasal minimum (VUK 5-10 yıl) silmeyi yasaklar, KVKK maksimumu tutmayı yasaklar; politika veri-tipine göre tanımlanır ve otomatik uygulanır — insan hatırlamaz, sistem süre tutar."
+  },
+  "worm@layer1-audit": {
+   "a": "Mühürlü arşiv odası gibi — içeri evrak girer, çıkmaz; müdürün anahtarı bile mührü açmaz, sadece yeni raf ekler.",
+   "u": ["Object-lock'lu audit arşivi", "DB-üstü saldırıya karşı depolama kilidi"],
+   "l": "Audit bağlamında WORM, append-only'nin depolama katmanıdır: yaz-bir-kez diskleri/bucket kilidi, DB yetkisini aşan saldırgana karşı son savunmadır; uyum denetimlerinde 'değiştirilemezlik' kanıtı bu katmandan gösterilir."
+  },
+  "driver pattern@layer1-file": {
+   "a": "Yazıcı sürücüsü gibi — belge aynı; çıktı ofisteki yazıcıya da matbaaya da sürücü değişerek gider.",
+   "u": ["Depolama backend'inin konfigle değişmesi", "Residency kararının driver'a bağlanması"],
+   "l": "File bağlamında driver pattern, depolama özgürlüğüdür: Local/S3/R2 tek interface arkasında; tenant'ın data-residency kararı driver seçimiyle uygulanır, modül kodu 'nereye yazdığını' bilmez."
+  },
+  "pre-signed url@layer1-file": {
+   "a": "Kapıcıya koli bırakmak yerine kargo şubesine gitmek gibi — kapıcı (API) sadece 'şubeye git' kâğıdı verir; koliyi şube taşır.",
+   "u": ["Doğrudan-storage upload akışı", "İmza süresi ve boyut-sınırı politikası"],
+   "l": "File bağlamında pre-signed URL, yükün yön değiştirmesidir: dosya backend'e değil doğrudan storage'a gider; API yalnız izin imzalar — bant genişliği ve bellek backend'den storage'a devredilir."
+  },
+  "channel-agnostic@layer1-notification": {
+   "a": "Sekreterin 'ulaş bana' talimatı gibi — patron nasıl ulaşılacağını söylemez; sekreter kimi arar, kime yazar bilir.",
+   "u": ["Modül-bildirim ayrımının tek API'si", "Yeni kanalın (WhatsApp) merkezden eklenmesi"],
+   "l": "Notification bağlamında kanal-bağımsızlık, gönderenin cehaletidir: modül 'bildir' der, kanal (email/SMS/push) tercihe ve duruma göre katmanda seçilir; yeni kanal eklemek modüllere dokunmaz."
+  },
+  "party@layer1-party": {
+   "a": "Kişinin tek kimlik numarası gibi — vergi dairesi mükellefi, hastane hastayı görür; numara aynı insandır.",
+   "u": ["Rol-bazlı görünümlerin tek kayda bağlanması", "Mükerrer kişi birleştirme (merge) akışı"],
+   "l": "Party bağlamında bu üst tip, mükerrerliğin ilacıdır: Customer, Vendor, Employee aynı kişinin rolleridir, kişi tek kayıttır; 'aynı adam üç tabloda üç kez' sorunu kökten çözülür — CRM ve HR aynı Party'ye bakar."
+  },
+  "hybrid@layer1-search": {
+   "a": "İki tercümanlı toplantı gibi — biri kelimesi kelimesine, öbürü mealen çevirir; tutanağa en doğru cümle yazılır.",
+   "u": ["RRF ile çift-skor birleşimi", "Sorgu-tipine göre ağırlık ayarı"],
+   "l": "Search bağlamında hybrid, iki motorun evliliğidir: BM25 kelimeyi, vektör anlamı bulur; RRF benzeri birleşim tek sıralama verir — kullanıcı hangi motorun bulduğunu bilmez, sadece doğru sonucu görür."
+  },
+  "vector search@layer1-search": {
+   "a": "Arabanın opsiyonel paketi gibi — temel model herkese yeter; isteyen navigasyon paketini ekletir, şasi değişmez.",
+   "u": ["pgvector'lu opsiyonel anlam katmanı", "Tenant-bazlı özellik açma ekonomisi"],
+   "l": "Search bağlamında vector search, opsiyonel katmandır: BM25 varsayılan çalışır, embedding katmanı pgvector'la açılır; küçük tenant'a maliyet yüklenmez, büyüğe anlam araması açılır — kademeli zenginleşme desenidir."
+  },
+  "approval chain@layer1-workflow": {
+   "a": "Harcama formunun imza sırası gibi — küçük tutar tek imza, büyük tutar üç; izinli müdürün yerine vekili imzalar.",
+   "u": ["Tutar-eşikli çok-katmanlı onay", "Zaman-aşımında eskalasyon ve vekâlet"],
+   "l": "Workflow bağlamında approval chain, yetkinin merdivenidir: tutar ve tipe göre onaycı katmanları (müdür→direktör→GM) kurulur; vekâlet, zaman aşımı ve hatırlatma zinciri tanımın parçasıdır — onay e-postada kaybolmaz."
+  },
+  "eca@layer1-workflow": {
+   "a": "Ev otomasyonu kuralı gibi — 'kapı açılırsa (E), saat geceyse (C), ışığı yak (A)'; her senaryo aynı kalıba oturur.",
+   "u": ["Kullanıcı-tanımlı kuralların ECA derlemesi", "Kural çakışmalarının tespit ve sıralaması"],
+   "l": "Workflow bağlamında ECA (Event-Condition-Action), otomasyonun grameridir: olay olduğunda, koşul sağlanıyorsa, eylemi yap — kullanıcının kurduğu her kural bu üçlüye derlenir; Studio'nun otomasyon ekranı ECA editörüdür."
+  },
+  "state machine@layer1-workflow": {
+   "a": "Trafik ışığı gibi — kırmızıdan yeşile geçilir, kırmızıdan sarıya dönülmez; sıra makinededir, sürücü insafında değildir.",
+   "u": ["Durum-geçiş matrisinin tek tanımı", "Geçiş butonlarının makineden türetilmesi"],
+   "l": "Workflow bağlamında state machine, kaydın anayasasıdır: durumlar ve izinli geçişler çizilidir; 'taslaktan direkt arşive' gibi kaçak geçiş kod değil tanım engeller — UI butonları da bu tanımdan üretilir."
+  },
+  "seo@stack-cms": {
+   "a": "Mağazanın cadde tabelası gibi — vitrin (içerik) güzel olsa da tabela ve yol işaretleri (meta) yoksa müşteri sokağı bulamaz.",
+   "u": ["Sitemap ve meta'nın otomatik üretimi", "Yapılandırılmış verinin şablondan basılması"],
+   "l": "CMS bağlamında SEO, içeriğin görünürlük altyapısıdır: meta üretimi, sitemap, yapılandırılmış veri (JSON-LD) ve hreflang CMS'in işidir; editör içerik yazar, teknik sinyalleri sistem üretir."
+  },
+  "slug@stack-cms": {
+   "a": "Dükkânın kapı numarası gibi — tabela (başlık) değişebilir; numara değişirse eski adrese yönlendirme levhası asılır.",
+   "u": ["TR-karakter normalize slug üretimi", "Slug değişiminde otomatik 301 yönlendirme"],
+   "l": "CMS bağlamında slug, URL'in kimliğidir: başlıktan TR-normalize üretilir (foldTurkish ailesi), yayın sonrası değişmez — değişirse 301 zinciri kurulur; SEO değeri slug istikrarında birikir."
+  },
+  "sla@stack-helpdesk": {
+   "a": "Kargo teslim taahhüdü gibi — 'yarın 12:00'ye kadar' sözü panoda sayaçla izlenir; geciken paket müdüre düşer.",
+   "u": ["İş-saati duyarlı SLA sayacı", "İhlal-öncesi otomatik eskalasyon"],
+   "l": "Helpdesk bağlamında SLA, sözün saate dökülmüş halidir: ilk-cevap ve çözüm süreleri plana göre tanımlanır; sayaç iş saatinde işler (quiet hours/tatil düşülür), ihlal yaklaşırken eskalasyon tetiklenir."
+  },
+  "read receipt@stack-social": {
+   "a": "Taahhütlü mektubun tebliğ kâğıdı gibi — gönderen teslimi bilir; ama bilgi tek yönlü ayrıcalık değil, iki tarafın kabulüdür.",
+   "u": ["Karşılıklılık-ilkeli okundu göstergesi", "Okundu event'lerinin realtime yayını"],
+   "l": "Social bağlamında read receipt, mahremiyet-özellik dengesidir: okundu bilgisi karşılıklılık ilkesiyle çalışır (kapatan göremez); durum, mesaj-başına event'tir ve realtime kanaldan akar."
+  },
+  "realtime@stack-social": {
+   "a": "Canlı skor ekranı gibi — golü sayfa yenileyen değil ekran söyler; gecikme saniyeleri aşarsa heyecan ölür.",
+   "u": ["Feed ve mesajın push güncellemesi", "Bağlantı düşüşünde sessiz yeniden bağlanma"],
+   "l": "Social bağlamında realtime, ürünün nabzıdır: feed güncellemesi, mesaj ve presence SSE/WebSocket'le akar; scale-realtime primitive'i burada ürün özelliğine dönüşür — 'yenile'ye basılan sosyal ürün ölüdür."
+  },
+  "a11y@cc-a11y-backend": {
+   "a": "Rampalı binanın içindeki dik merdiven gibi — giriş erişilebilir olsa da hizmetin kendisi değilse bina erişilebilir sayılmaz.",
+   "u": ["Hata mesajlarının ekran okuyucuya anlamlı olması", "Sistem e-postalarının erişilebilir şablonları"],
+   "l": "Bu sayfada a11y, frontend'in tekelinden çıkar: hata mesajları, e-posta şablonları ve üretilen dokümanlar da erişilebilirlik yüzeyidir; backend çıktısı bozuksa arayüz düzeltemez."
+  },
+  "alt text@cc-a11y-backend": {
+   "a": "Fotoğraf arşivinin etiketleri gibi — etiketsiz fotoğraf arşive girmez; sonradan kim olduğunu kimse hatırlamaz.",
+   "u": ["Image alanlarında zorunlu alt doğrulaması", "Toplu içerik importunda alt eksiği raporu"],
+   "l": "Backend bağlamında alt text veri sözleşmesidir: image alanı alt'sız kabul edilmez; içerik doğrulama bunu kapı yapar — eksik alt, frontend'de değil kaynakta yakalanır."
+  },
+  "reduce motion@cc-a11y-backend": {
+   "a": "Ev sahibinin misafir için müziği kısması gibi — tercih bir kez söylenir, her odada geçerli olur.",
+   "u": ["Tercihin profil düzeyinde saklanması", "Animasyonlu e-posta içeriğinin statik alternatifi"],
+   "l": "Bu bağlamda reduce motion, tercih senkronudur: kullanıcının işletim sistemi tercihi profilde saklanıp e-posta/şablon gibi backend ürünlerine de yansıtılır."
+  },
+  "adequacy decision@cc-compliance-matrix": {
+   "a": "Vizesiz seyahat anlaşması gibi — ülke listede ise pasaport yeter; değilse ek evrak (SCC) istenir.",
+   "u": ["AB-dışı transferde yeterlilik kontrolü", "Yeterlilik yoksa SCC sözleşme akışı"],
+   "l": "Matris bağlamında adequacy decision, veri transferi satırının anahtarıdır: hedef ülke 'yeterli' listede mi sorusu, ek sözleşme (SCC) gerekip gerekmediğini belirler."
+  },
+  "anonymization@cc-compliance-matrix": {
+   "a": "Kâğıt öğütücü gibi — parçalanan belge artık belge değildir; buruşturulmuş belge (pseudonym) ise düzeltilebilir.",
+   "u": ["Analitik veri setlerinin anonimleştirilmesi", "Anonim/pseudonym ayrımının denetim kaydı"],
+   "l": "Matris bağlamında anonymization, yükümlülükten çıkış yoludur: geri-çözülemez veri kişisel veri olmaktan çıkar; analitik bu sayede uyum yükü taşımadan çalışır. Pseudonymization ile karıştırılmaz — o hâlâ kişiseldir."
+  },
+  "ofac@cc-compliance-matrix": {
+   "a": "Havaalanı kara listesi gibi — isim listede ise uçuş satışı sistem tarafından durur; karar gişe memurunun değildir.",
+   "u": ["Müşteri açılışında SDN taraması", "Ödeme akışında yaptırım eşleşme durdurması"],
+   "l": "Matris bağlamında OFAC, yaptırım taraması satırıdır: ödeme ve müşteri açılışında SDN listesi kontrolü; eşleşme işlemi durdurur ve insan incelemesine düşer."
+  },
+  "pci-dss@cc-compliance-matrix": {
+   "a": "Kıymetli eşyayı evde değil banka kasasında tutmak gibi — hırsız alarmı kurmak yerine evde tutmamak.",
+   "u": ["Kart verisinin tokenization ile dışarıda tutulması", "SAQ-A seviyesinde kalma stratejisi"],
+   "l": "Matris bağlamında PCI-DSS, kapsam-dışı kalma stratejisiyle yönetilir: kart verisi hiç dokunulmadan ödeme sağlayıcıya (tokenization) bırakılır; matris satırı 'kapsamı daralt' der, 'uy' demez."
+  },
+  "age gate@cc-content-jurisdiction": {
+   "a": "Sinema gişesindeki yaş kontrolü gibi — film aynı, giriş kuralı ülkenin sınıflandırma kuruluna göre değişir.",
+   "u": ["Ülke-bazlı yaş eşiği konfigürasyonu", "Doğrulama sertliğinin (beyan/kimlik) rejime bağlanması"],
+   "l": "Bu bağlamda age gate, jurisdiction çıktısıdır: hangi içeriğe hangi yaşta, hangi doğrulama sertliğiyle — ülkeye göre değişir ve resolver kararından beslenir."
+  },
+  "geo-blocking@cc-content-jurisdiction": {
+   "a": "Yayın haklarının ülke sınırı gibi — maç bazı ülkelerde izlenemez; ekran 'neden' yazar, boş kalmaz.",
+   "u": ["Bölge-kısıtlı içeriğin gerekçeli engellenmesi", "Kısıt listesinin versiyonlu config'te tutulması"],
+   "l": "Bu bağlamda geo-blocking, içerik-rejim eşlemesinin uygulanmasıdır: kısıt listesi config-as-data olarak yaşar; engelleme sayfası gerekçe gösterir, sessiz 404 verilmez."
+  },
+  "hicri / buddhist takvim@cc-content-jurisdiction": {
+   "a": "Çift takvimli duvar takvimi gibi — aynı gün iki sistemde iki adla yazılır; randevu tek tarihte buluşur.",
+   "u": ["Yerel takvimde gösterim, ISO'da saklama", "Tatil hesaplarının takvim-duyarlı yapılması"],
+   "l": "Bu bağlamda alternatif takvimler gösterim katmanı işidir: saklama her zaman ISO/UTC kalır; resmi tatil ve dini gün hesapları takvim-duyarlı kütüphaneyle çözülür."
+  },
+  "lawful intercept@cc-content-jurisdiction": {
+   "a": "Mahkeme kararıyla kasa açılması gibi — kararın aslı görülür, tutanak tutulur, yalnız karardaki kasa açılır.",
+   "u": ["Resmi taleplerin doğrulama ve kapsam daraltma akışı", "Talep istatistiklerinin şeffaflık raporu"],
+   "l": "Bu bağlamda lawful intercept, hukuki talep akışıdır: devletten gelen veri talebi doğrulanır, kapsamı daraltılır, decision trace ile loglanır ve mümkünse kullanıcı bilgilendirilir — sessiz arka kapı yoktur."
+  },
+  "sdi / xrechnung / factur-x@cc-content-jurisdiction": {
+   "a": "Priz adaptör seti gibi — cihaz (fatura) aynı, fişi ülkeye göre değişir; bavulda adaptör seti taşınır.",
+   "u": [
+    "Ülke-format adaptörlerinin tek çekirdek modele bağlanması",
+    "Yeni ülke açılışında yalnız adaptör yazılması"
+   ],
+   "l": "Bu bağlamda üçlü, e-fatura adaptör deseninin gerekçesidir: her ülkenin zorunlu XML'i farklıdır; çekirdek fatura modeli tek, ülke formatları takılabilir adaptördür — UBL-TR de aynı desene oturur."
+  },
+  "ucum@cc-content-jurisdiction": {
+   "a": "Para birimi kodu (ISO 4217) gibi — 'dolar' yazmak yerine USD; makine karıştırmaz, çevirir.",
+   "u": ["Ürün/ölçüm birimlerinin UCUM koduyla saklanması", "Birimler arası otomatik dönüşüm"],
+   "l": "Bu bağlamda UCUM, birim alanlarının değer standardıdır: 'kg', 'lb', 'm²' serbest metin değil koddur; dönüşüm ve karşılaştırma standart üzerinden güvenle yapılır."
+  },
+  "css logical properties@cc-cultural-ux": {
+   "a": "'Sağ' yerine 'kapı tarafı' demek gibi — araç hangi ülkede üretilirse üretilsin tarif geçerli kalır.",
+   "u": ["Token CSS'in yön-bağımsız yazılması", "RTL açılışında sıfır layout düzeltmesi"],
+   "l": "Cultural-UX bağlamında logical properties, RTL hazırlığının zahmetsiz yoludur: left/right yerine inline-start/end yazılır; Arapça açılınca layout kendiliğinden aynalanır."
+  },
+  "cultural semiotics@cc-cultural-ux": {
+   "a": "El şakası gibi — bir ülkede dostluk, başka ülkede hakaret; jest aynı, anlam coğrafyaya bağlı.",
+   "u": ["İkon/renk setinin pazar-öncesi kültür taraması", "Riskli sembollerin nötr alternatifleri"],
+   "l": "Cultural-UX bağlamında semiyotik, görsel dilin yerelleştirilmesidir: onay yeşili, baş parmak ve baykuş gibi simgeler kültüre göre anlam değiştirir; ikon seti locale-duyarlı gözden geçirilir."
+  },
+  "font fallback stack@cc-cultural-ux": {
+   "a": "Yedek konuşmacı listesi gibi — ilk konuşmacı o dili bilmiyorsa sıradaki mikrofonu alır; sahne boş kalmaz.",
+   "u": ["Çok-script fallback zincirinin tanımı", "Tofu tespitinin görsel regresyon testi"],
+   "l": "Cultural-UX bağlamında fallback stack, çok-dilli metnin güvenlik ağıdır: ana font Arapça glifi taşımıyorsa zincirdeki sonraki devralır; 'tofu' (boş kutu) kullanıcıya hiç gösterilmez."
+  },
+  "lang attribute@cc-cultural-ux": {
+   "a": "Şarkı sözü kitapçığındaki dil notu gibi — koro hangi dizede dile geçeceğini nottan bilir.",
+   "u": ["Sayfa ve inline dil işaretlerinin doğruluğu", "Karışık-dilli içerikte sesletim testi"],
+   "l": "Cultural-UX bağlamında lang, ekran okuyucunun telaffuz anahtarıdır: Türkçe sayfada İngilizce alıntı inline lang ile işaretlenir; yanlış dil sesletimi a11y hatasıdır."
+  },
+  "unicode-range@cc-cultural-ux": {
+   "a": "Otelin kat anahtarı gibi — misafir yalnız kendi katının anahtarını taşır; tüm binanın anahtarlığı cebe konmaz.",
+   "u": ["Script-bazlı font dilimleme", "Kullanılmayan script fontunun indirilmemesi"],
+   "l": "Cultural-UX bağlamında unicode-range, font ekonomisidir: Arapça font yalnız Arapça karakter aralığı için yüklenir; Türkçe kullanıcı o dosyayı hiç indirmez."
+  },
+  "credit note@cc-fx-ledger": {
+   "a": "Taksitle alınan ürünün iadesi gibi — iade tutarı bugünkü etikete değil alış günü fişine bakar; aradaki fark ayrı kalemdir.",
+   "u": ["İade belgesinin orijinal kur referansı", "İade kaynaklı kur farkının otomatik kaydı"],
+   "l": "FX-ledger bağlamında credit note, kur kilidinin sınavıdır: iade, orijinal faturanın kuruyla mı bugünkü kurla mı kesilir — cevap FX Lock politikasından gelir ve kur farkı kalemi otomatik doğar."
+  },
+  "fx gain/loss@cc-fx-ledger": {
+   "a": "Döviz bozdurma farkı gibi — sabah bozdursaydın başkaydı; fark cebe ya da cepten, ama mutlaka fişte.",
+   "u": ["Fatura-tahsilat kur farkının otomatik kalemi", "Dönem sonu açık kalemlerin yeniden değerlemesi"],
+   "l": "FX-ledger bağlamında kur farkı kendi hesabında yaşar: fatura kuru ile tahsilat kuru arasındaki fark gelir/gider kalemi olarak otomatik üretilir; elle düzeltme yasaktır — denetim izi bozulur."
+  },
+  "fx lock@cc-fx-ledger": {
+   "a": "Düğün fiyatını kapora günü sabitlemek gibi — salon zammı yapsa da sözleşmedeki tarih geçerlidir.",
+   "u": ["Belge tipi başına kur-anı politikası", "Belgeye işlenen kurun değişmezliği"],
+   "l": "FX-ledger bağlamında FX lock, 'hangi anın kuru' sözleşmesidir: sipariş/fatura/tahsilat anlarından hangisinin kuru bağlayıcı — belge tipine göre politika tanımlıdır ve belgeye yazılır."
+  },
+  "reporting currency@cc-fx-ledger": {
+   "a": "Olimpiyat madalya tablosu gibi — her ülke kendi liginde yarışır, tablo tek formatta yayınlanır.",
+   "u": ["Grup konsolidasyonunda tek raporlama parası", "Çevrim kuru politikasının rapor dipnotu"],
+   "l": "FX-ledger bağlamında reporting currency, konsolidasyonun dilidir: çok-ülkeli grup şirketleri kendi functional currency'lerinde çalışır, rapor tek para birimine çevrilir; çevrim kuru politikası dipnottur."
+  },
+  "revenue recognition@cc-fx-ledger": {
+   "a": "Yıllık kira peşin alınsa da ay ay 'hak edilmesi' gibi — kasaya giren para, defterde takvimle gelir olur.",
+   "u": ["Abonelik gelirinin dönemsel tanınması", "Tanıma anı kurunun defter kaydına bağlanması"],
+   "l": "FX-ledger bağlamında revrec, kur kilidiyle kesişir: gelir hangi anda 'kazanılmış' sayılırsa o anın kuru defteri belirler; abonelikte aylık parçalı tanıma, parçalı kur demektir."
+  },
+  "rtl@cc-i18n-deep": {
+   "a": "Arapça kitabı arkadan açmak gibi — sayfa düzeni aynalanır ama içindeki fotoğraflar ters çevrilmez.",
+   "u": ["RTL locale'de tam ayna düzen", "Karışık yönlü (sayı+metin) satırların bidi kontrolü"],
+   "l": "i18n-deep bağlamında RTL düzen ayna sorunudur: metin yönü, ikon yönü ve sayıların (her zaman LTR) karışık akışı birlikte çözülür; logical properties bu işin CSS yarısıdır."
+  },
+  "i18n@cc-i18n-deep": {
+   "a": "Elektrik tesisatını çok prizli döşemek gibi — bugün tek cihaz takılı olsa da duvar hazırdır.",
+   "u": ["Hardcoded metin sıfır hedefi", "Yeni dilin yalnız çeviri dosyasıyla açılması"],
+   "l": "i18n-deep bağlamında i18n mimari hazırlıktır: metinlerin koddan çıkması, formatların locale'den türemesi — çeviri yapılmasa bile yapı kurulur; l10n bu yapının doldurulmasıdır."
+  },
+  "l10n@cc-i18n-deep": {
+   "a": "Dublaj gibi — altyazı (i18n altyapısı) hazırsa dublaj (l10n) stüdyo işidir; dudak senkronu insan ister.",
+   "u": ["Pazar açılışında locale paketi tamamlama", "Ana-dil gözden geçirme adımı"],
+   "l": "i18n-deep bağlamında l10n, tek locale'in işidir: çeviri + format + kültürel uyarlama; kalitesi ana dili konuşan gözle ölçülür, makine çevirisi taslaktır."
+  },
+  "bcp 47@cc-i18n-standards": {
+   "a": "Adres formatı gibi — ülke/il/ilçe sırası bellidir; 'oralarda bir yer' posta sisteminde çalışmaz.",
+   "u": ["Locale alanlarının BCP 47 doğrulaması", "Dil eşleşmesinde en-yakın-locale çözümü"],
+   "l": "Standards bağlamında BCP 47, locale alanının değer formatıdır: dil-script-bölge hiyerarşisi (zh-Hant-HK) tek string'de; serbest 'Çince' yazımı kabul edilmez."
+  },
+  "cldr@cc-i18n-standards": {
+   "a": "TDK sözlüğü gibi — imla tartışması çıkınca kaynak açılır; herkesin kendi sözlüğü olmaz.",
+   "u": ["Format kurallarının CLDR'den türetilmesi", "CLDR sürüm güncellemesinin değişiklik testi"],
+   "l": "Standards bağlamında CLDR, format verisinin tek kaynağıdır: ay adları, çoğul kuralları, para sembolleri elle yazılmaz, CLDR'den gelir; güncellemesi bağımlılık güncellemesidir."
+  },
+  "collation@cc-i18n-standards": {
+   "a": "Telefon rehberinin Türkçe alfabe sırası gibi — Ç, C'den sonra gelir; İngiliz rehberi bunu bilmez.",
+   "u": ["Tenant diline göre DB collation seçimi", "Liste sıralamalarının dil-doğru çıkması"],
+   "l": "Standards bağlamında collation, sıralamanın dil kuralıdır: Türkçe'de ı/i, ç/c sırası DB collation'ı ile çözülür; foldTurkish arama içindir, sıralama DB'de doğru collation ister."
+  },
+  "logical properties@cc-i18n-standards": {
+   "a": "Pusulasız tarif gibi — 'girişe göre sol' demek yerine 'giriş tarafı' demek; bina aynalansa da tarif çalışır.",
+   "u": ["left/right kullanımına lint yasağı", "Tek CSS ile LTR/RTL desteği"],
+   "l": "Standards bağlamında logical properties, RTL standardının CSS ayağıdır: yön-bağımsız özellikler standart settir; left/right kullanımına lint kuralı konur."
+  },
+  "nfc@cc-i18n-standards": {
+   "a": "Aynı kelimenin el yazısı ve matbaa hali gibi — okunuşu aynı, piksel farklı; karşılaştırmadan önce tek biçime çekilir.",
+   "u": ["Girdi normalizasyonunun NFC standardı", "Eşitlik kontrollerinde normalize karşılaştırma"],
+   "l": "Standards bağlamında NFC, karşılaştırmanın ön şartıdır: 'é' tek karakter de iki karakter de olabilir; saklamadan önce NFC'ye normalize edilmez ise eşitlik ve arama yalan söyler. foldTurkish hattındaki NFD adımıyla karıştırılmaz — o arama-içi fold'dur."
+  },
+  "hreflang@cc-i18n-standards": {
+   "a": "Kitabın çeviri künyesi gibi — 'bu eserin İngilizcesi şu ISBN'de' notu; kütüphaneci doğru rafı gösterir.",
+   "u": ["Dil sürümleri arası karşılıklı hreflang", "Varsayılan sürüm (x-default) işaretlemesi"],
+   "l": "Standards bağlamında hreflang, çok-dilli SEO sinyalidir: aynı içeriğin dil sürümleri birbirine işaret eder; yanlış eşleme, kullanıcıyı yanlış dile düşürür ve sıralamayı böler."
+  },
+  "vies@cc-identity-models": {
+   "a": "Vergi levhası sorgulama gibi — faturayı kesmeden önce müşterinin levhası sistemden teyit edilir.",
+   "u": ["B2B kayıtta VAT ID canlı doğrulaması", "Geçersiz ID'de KDV muamelesinin değişmesi"],
+   "l": "Identity-models bağlamında VIES, B2B doğrulamanın ücretsiz kapısıdır: AB müşterisinin VAT ID'si gerçek zamanlı doğrulanır; geçersiz ID, ters-KDV (reverse charge) uygulanamaması demektir."
+  },
+  "veri minimizasyonu@cc-identity-models": {
+   "a": "Bavul hazırlamak gibi — 'belki giyerim' gömleği taşınan ağırlıktır; liste işe göre yazılır.",
+   "u": ["Form alanlarının gerekçe envanteri", "Kullanılmayan alanların dönemsel budanması"],
+   "l": "Identity-models bağlamında minimizasyon form tasarımına iner: alan eklemek 'lazım olur' ile gerekçelenemez; her alanın işlevi kayıtlıdır, işlevsiz alan KVKK/GDPR yüzeyini büyütür."
+  },
+  "fullname modeli@cc-identity-models": {
+   "a": "Tek satırlık imza alanı gibi — herkes adını kendi düzeninde yazar; form kimseyi iki kutuya sığmaya zorlamaz.",
+   "u": ["Tek alan ad modeli + opsiyonel parçalar", "Ad-bazlı selamlama yerine kullanıcı tercihli hitap"],
+   "l": "Identity-models bağlamında fullName, ad varsayımlarının reddidir: dünyanın çoğunda ad-soyad ikilisi çalışmaz; tek full_name + opsiyonel parçalar her kültürü taşır, sıralama collation'a bırakılır."
+  },
+  "i18n-postal-address@cc-identity-models": {
+   "a": "Her ülkenin zarf düzeni gibi — pul hep sağ üstte ama adres satırlarının sırası posta idaresine göre değişir.",
+   "u": ["Ülke-bazlı adres formu şablonları", "Adres doğrulamada ülke kural setleri"],
+   "l": "Identity-models bağlamında adres, ülke-şablonlu composite'tir: alan seti ve sırası ülkeye göre değişir (Japonya'da il önce); tek 'adres satırı' kutusu kargo iadesi demektir."
+  },
+  "libphonenumber@cc-identity-models": {
+   "a": "Ankesörlü santral yerine hazır santral almak gibi — dünya numara planını takip etmek tam zamanlı iştir; dışarıdan alınır.",
+   "u": [
+    "Telefon doğrulamanın kütüphaneye delegasyonu",
+    "Ülke verisi güncellemelerinin bağımlılıkla gelmesi"
+   ],
+   "l": "Identity-models bağlamında libphonenumber, Phone tipinin motorudur: parse/format/validate tekerleğini yeniden icat etmek yasaktır; E.164 saklama, yerel gösterim bu kütüphaneyle yapılır."
+  },
+  "config-as-data@cc-jurisdiction-resolver": {
+   "a": "Trafik işaretlerinin yönetmelikte değil levhada yaşaması gibi — kural değişince yol yeniden asfaltlanmaz, levha değişir.",
+   "u": ["Kural değişikliğinin deploy'suz yayını", "Politika sürümlerinin diff ve rollback'i"],
+   "l": "Resolver bağlamında config-as-data, kural setinin yaşam biçimidir: politika DB'de versiyonlu kayıttır; değişiklik deploy değil veri işlemidir — diff'lenir, onaylanır (4-göz), geri alınır."
+  },
+  "orthogonal axes@cc-jurisdiction-resolver": {
+   "a": "Mikser düğmeleri gibi — bas, tiz, balans ayrı döner; tek 'ülke' düğmesine bağlanmış mikser müzik değil gürültü verir.",
+   "u": ["Eksenlerin bağımsız konfigürasyonu", "Paket-varsayım hatalarının testle yakalanması"],
+   "l": "Resolver bağlamında ortogonallik, tasarımın direğidir: dil, takvim, vergi, gizlilik rejimi bağımsız eksenlerdir; 'Almanya = Almanca + EUR + GDPR' paketlemesi yanlıştır — Türk şirketi Almanca kullanabilir."
+  },
+  "policy resolver@cc-jurisdiction-resolver": {
+   "a": "Danışma masası gibi — her memurun mevzuat ezberlemesi yerine tek masa cevap verir; cevap değişirse tek masada değişir.",
+   "u": ["Tek karar noktasından kural servisi", "Modüllerin kural yorumundan arındırılması"],
+   "l": "Bu sayfada policy resolver bileşenin kendisidir: altı ekseni girdi alır, yürürlükteki kural setini çıktı verir; tüm uyum modülleri kuralı kendisi yorumlamak yerine resolver'a sorar."
+  },
+  "10dlc@cc-notification-consent": {
+   "a": "İşyeri açma ruhsatı gibi — tezgâh kurmadan önce alınır; ruhsatsız satışın cezası tezgâhın kapanmasıdır.",
+   "u": ["ABD tenant'ında kampanya ön-kayıt akışı", "Kayıtsız SMS denemesinin engellenmesi"],
+   "l": "Consent bağlamında 10DLC, ABD pazarının SMS kapısıdır: marka ve kampanya ön-kaydı olmadan toplu SMS spam'e düşer; kayıt süreci ürün onboarding'inin parçasıdır, müşteriye sonradan söylenmez."
+  },
+  "dlt@cc-notification-consent": {
+   "a": "Noter onaylı dilekçe şablonu gibi — kurum yalnız kayıtlı şablonla yazılmış dilekçeyi işleme alır.",
+   "u": ["Şablon kaydı ve şablon-dışı reddi", "Ülke SMS kurallarının adaptörleşmesi"],
+   "l": "Consent bağlamında DLT, Hindistan'ın 10DLC muadilidir: gönderici ve şablon kaydı zorunlu; şablon dışı metin operatörde reddedilir. Ülke-bazlı SMS mevzuatının adaptör deseni burada da geçerlidir."
+  },
+  "marketing email@cc-notification-consent": {
+   "a": "Kapıya bırakılan broşür gibi — 'broşür istemiyorum' yazan kapıya bırakmak cezalıdır; fatura zarfı ise her kapıya gider.",
+   "u": ["Kampanya gönderiminin izin filtresi", "Her pazarlama e-postasında çıkış mekanizması"],
+   "l": "Consent bağlamında marketing email, iznin sert tarafıdır: opt-in olmadan gönderilemez (İYS/GDPR), her gönderimde çıkış linki zorunludur; transactional ile karışması en pahalı sınıflandırma hatasıdır."
+  },
+  "opt-in / opt-out@cc-notification-consent": {
+   "a": "Abonelik ile deneme kargosu farkı gibi — birinde sen istersin, ötekinde gelmesin diye uğraşırsın; hangi düzenin geçerli olduğu ülkeye bağlıdır.",
+   "u": ["Rejim-bazlı varsayılan izin durumu", "İzin kaydının zaman damgalı kanıtı"],
+   "l": "Consent bağlamında bu ikili, rejim farkıdır: AB/TR pazarlamada opt-in ister, bazı rejimler opt-out'a izin verir; varsayılan kutucuğun işaretli olup olmaması hukuki sonuçtur ve resolver'dan gelir."
+  },
+  "transactional email@cc-notification-consent": {
+   "a": "Fatura zarfı gibi — reklam broşüründen farklı olarak her adrese gider; ama zarfın içine broşür koyarsan zarf da broşür olur.",
+   "u": ["Transactional/marketing sınıflandırma kapısı", "OTP ve sipariş bildirimlerinin izinden muafiyeti"],
+   "l": "Consent bağlamında transactional, izinden muaf dar alandır: sipariş onayı, OTP, fatura — hizmetin kendisidir ve izin gerektirmez; pazarlama içeriği sızdırılırsa muafiyet düşer."
+  },
+  "iys@cc-notification-consent": {
+   "a": "Araç muayene kaydı gibi — kendi defterinde 'muayne yaptım' yazması yetmez; devletin sistemindeki kayıt geçerlidir.",
+   "u": ["Gönderim öncesi İYS izin senkronu", "İzin değişikliklerinin çift yönlü eşitlenmesi"],
+   "l": "Consent bağlamında İYS, TR pazarının zorunlu kaydıdır: ticari ileti izni İYS'de tutulur, gönderim öncesi senkron kontrol gerekir; ETK cezaları gönderen adınadır — entegrasyon TR Lokalizasyon'un parçasıdır."
+  },
+  "healthcheck@cc-obs-deep": {
+   "a": "Sabah yoklaması gibi — 'burada' demek (shallow) hızlıdır; sağlık taraması (deep) ayrı randevudur.",
+   "u": ["LB için hızlı, izleme için derin uç ayrımı", "Bağımlılık durumlarının tek özette toplanması"],
+   "l": "Obs-deep bağlamında healthcheck, dışa dönük nabızdır: DB, cache ve kritik dış servisler tek endpoint'te özetlenir; load balancer ve status page buradan okur. Derin kontrol pahalıdır — sıklık ve derinlik ayrı uçlara bölünür."
+  },
+  "liveness probe@cc-obs-deep": {
+   "a": "Kapıyı tıklatmak gibi — içeriden ses gelmiyorsa kapı kırılır (restart); komşunun elektriği diye kapı kırılmaz.",
+   "u": ["Kilitlenen sürecin otomatik yeniden başlatılması", "Liveness'ın bağımlılıklardan arındırılması"],
+   "l": "Obs-deep bağlamında liveness, 'süreç kilitlendi mi' sorusudur: cevap veremeyen pod yeniden başlatılır; liveness'a bağımlılık kontrolü konmaz — DB düştü diye pod'u öldürmek yangına benzin taşımaktır."
+  },
+  "readiness probe@cc-obs-deep": {
+   "a": "Taksi durağındaki 'müsait' ışığı gibi — ışık sönükse müşteri binmez ama araç çalışır; tamir bitince ışık yanar.",
+   "u": ["Bağımlılık kopuşunda trafikten çıkma", "Toparlanmada otomatik geri katılım"],
+   "l": "Obs-deep bağlamında readiness, 'trafik alabilir miyim' sorusudur: bağımlılığı kopan pod trafikten çıkar ama öldürülmez; toparlanınca geri girer. Liveness ile karışması kademeli çöküş üretir."
+  },
+  "status page@cc-obs-deep": {
+   "a": "Havalimanı uçuş panosu gibi — rötarı gişeden sormak yerine panodan okursun; pano dürüstse kuyruk kısalır.",
+   "u": ["Olay iletişiminin tek kanalı", "Uptime taahhüdünün kamuya açık kanıtı"],
+   "l": "Obs-deep bağlamında status page, güvenin vitrindir: uptime ve olay geçmişi müşteriye açık yayınlanır; 'sistemleriniz çalışıyor mu' destek bileti yerine sayfaya bakılır. Bizim katalogda s-observability ile akrabadır."
+  },
+  "soft delete@cc-privacy": {
+   "a": "Çöpe atmak ile çöpü dökmek farkı gibi — sepetteki kâğıt hâlâ evdedir; 'imha edildi' demek için kamyon gelmiş olmalı.",
+   "u": [
+    "Soft delete ile DSAR-silme ayrımının netleştirilmesi",
+    "Saklama süresi dolan soft-deleted verinin gerçek imhası"
+   ],
+   "l": "Privacy bağlamında soft delete, silme hakkıyla gerilim içindedir: deleted_at damgası kaydı gizler ama veri durur; KVKK silme talebi geldiğinde soft delete yetmez — anonimleştirme veya gerçek silme akışı devreye girer."
+  },
+  "4-göz prensibi@cc-resolver-ops": {
+   "a": "Çift imzalı çek gibi — tek imza bankada geçmez; yetki var, tek başına kullanım yok.",
+   "u": ["Politika değişikliğinde zorunlu ikinci onay", "Onay kaydının decision trace'e bağlanması"],
+   "l": "Resolver-ops bağlamında 4-göz, kural değişiminin sigortasıdır: politika verisini bir kişi yazar, başka kişi onaylar; tek kişilik değişiklik teknik olarak engellidir — config-as-data bunu PR akışıyla alır."
+  },
+  "shadow mode@cc-resolver-ops": {
+   "a": "Stajyer pilotun yanında kaptan uçması gibi — kumanda stajyerde değil; kararları kaydedilir, uyuşmazlık brifingde konuşulur.",
+   "u": ["Yeni politikanın etkisiz paralel koşusu", "Fark raporu eşiğiyle terfi kararı"],
+   "l": "Resolver-ops bağlamında shadow mode, yeni kural setinin staj dönemidir: paralel çalışır, kararı uygulanmaz, farkları loglanır; fark oranı eşiğin altına inince terfi eder."
+  },
+  "a/b test@cc-rollout": {
+   "a": "İki vitrin denemesi gibi — aynı mağaza, iki düzen; hangisi çok sattırdıysa kalıcı olur.",
+   "u": ["Varyant atamasının tenant/kullanıcı bazlı tutarlılığı", "Metrik anlamlılığı olmadan karar yasağı"],
+   "l": "Rollout bağlamında A/B test, davranış sorusunun deneyidir: iki varyant eş gruplara açılır, metrik konuşur; canary'den farkı amaçtır — canary risk azaltır, A/B öğrenir."
+  },
+  "feature flag@cc-rollout": {
+   "a": "Elektrik şalteri gibi — kablo döşenmiştir (deploy), ışık şalterle yanar (release); kullanılmayan şalter panoyu karıştırır.",
+   "u": ["Deploy'dan bağımsız özellik açılışı", "Ölü bayrakların dönemsel temizliği"],
+   "l": "Rollout bağlamında feature flag, dağıtımı yayından ayırır: kod main'e girer, davranış bayrağa bağlı kalır; bayrak envanteri bakım ister — ölü bayrak teknik borçtur."
+  },
+  "kill switch@cc-rollout": {
+   "a": "Fabrikadaki acil durdurma butonu gibi — bandı durdurmak için müdür toplantısı beklenmez; buton oradadır diye banda güvenilir.",
+   "u": ["Kritik özelliklere zorunlu kapatma anahtarı", "Anahtarın etki kapsamının önceden tanımı"],
+   "l": "Rollout bağlamında kill switch, en hızlı geri çekiştir: sorunlu özellik deploy beklenmeden kapatılır; kritik her yeni özellik anahtarıyla doğar — anahtarsız özellik riskli teslimattır."
+  },
+  "gib@crosscut-tr": {
+   "a": "Elektrik idaresi gibi — sayaç standardını o koyar; uymayan sayaç bağlanmaz, değişiklik tebliğle gelir.",
+   "u": ["GİB şema sürümlerinin takip ve dağıtımı", "Zorunluluk eşiklerinin tenant'a otomatik uygulanması"],
+   "l": "TR crosscut bağlamında GİB, e-belge düzeninin otoritesidir: e-Fatura/e-Arşiv şemaları, zorunluluk eşikleri ve entegratör kuralları buradan gelir; şema değişiklikleri ürün güncellemesi olarak dağıtılır."
+  },
+  "oauth@crosscut-tr": {
+   "a": "Vale anahtarı gibi — arabayı park eder, bagajı açamaz; anahtar sahibi yetkiyi daraltarak verir.",
+   "u": ["Üçüncü-taraf erişimin scope'lu token'ı", "Token iptalinin erişimi anında kesmesi"],
+   "l": "TR crosscut bağlamında OAuth, entegrasyon güvenliğinin standardıdır: muhasebeci erişimi, entegratör bağlantısı ve üçüncü-taraf uygulamalar parola paylaşmadan, kapsamı daraltılmış token'la bağlanır."
+  },
+  "vuk@crosscut-tr": {
+   "a": "Tapu arşivi yönetmeliği gibi — hangi evrak kaç yıl, hangi formatta; denetim günü 'silmiştik' cevabı yoktur.",
+   "u": ["Belge saklama sürelerinin VUK ile hizalanması", "e-Defter üretim ve ibraz akışı"],
+   "l": "TR crosscut bağlamında VUK, saklama ve defter kurallarının kaynağıdır: belge saklama süreleri, e-Defter formatı ve ibraz yükümlülüğü buradan gelir; retention politikaları VUK süreleriyle çakıştırılır."
+  },
+  "action@sus-actions": {
+   "a": "Bankadaki işlem fişi gibi — 'para çek' serbest bir cümle değil, yetki ve kayıt gerektiren tanımlı işlemdir.",
+   "u": ["Agent'lara açılan işlemlerin Action kataloğu", "Her Action çağrısının audit'e düşmesi"],
+   "l": "Sus-actions bağlamında Action, agent çağının yüzeyidir: sistemin dış dünyaya (insan veya AI) açtığı her işlem tipli, izinli ve audit'lidir; 'API endpoint' yerine 'Action' demek, izin ve izlenebilirliği tanımın içine gömmektir."
+  },
+  "mcp@sus-actions": {
+   "a": "USB standardı gibi — cihaz (Action) bir kez USB konuşursa her bilgisayara takılır; özel fiş her masada adaptör ister.",
+   "u": ["Action'ların MCP server olarak sunulması", "Yeni AI istemcilerinin sıfır-entegrasyonla bağlanması"],
+   "l": "Sus-actions bağlamında MCP, Action kataloğunun dış kapısıdır: AI modelleri araçlara bu protokolle erişir; kendi protokolünü icat etmek yerine standarda bağlanmak, her yeni AI istemcisini bedavaya getirir."
+  },
+  "ontology@sus-actions": {
+   "a": "Şehir rehberi gibi — sokaklar (nesneler), bağlantılar (ilişkiler) ve toplu taşıma (eylemler) tek haritada; turist (agent) sormadan gezer.",
+   "u": ["Agent'ın eylem keşfini ontology'den yapması", "DocType+Action birleşiminin ontology üretmesi"],
+   "l": "Sus-actions bağlamında ontology, agent'ın dünya haritasıdır: nesneler, ilişkiler ve eylemler tipli tanımlıysa AI 'ne yapabilirim' sorusunu introspection'la cevaplar; Palantir deseni budur ve DocType bu haritanın yarısını bedava verir."
+  },
+  "bc (backward compatibility)@sus-bc-policy": {
+   "a": "Elektrik idaresinin voltaj sözü gibi — şebeke yenilenir ama 220V sözü tutulur; evdeki cihazlar çöpe atılmaz.",
+   "u": ["Kırıcı değişikliğin sürüm kapısıyla yalıtımı", "Eski tüketicilerin sözleşme testleriyle korunması"],
+   "l": "BC-policy bağlamında geriye uyumluluk, sözleşme yüzeyinin namusudur: yeni sürüm eski tüketiciyi kırmaz; kıracaksa named gate + tarih-versiyon + duyuru üçlüsüyle yönetilir — sessiz kırılma en ağır ihlaldir."
+  },
+  "don't break userspace@sus-bc-policy": {
+   "a": "Belediyenin su borusu yenilemesi gibi — boru değişir, musluklar akmaya devam eder; 'herkes tesisatını yenilesin' denmez.",
+   "u": [
+    "Kernel değişikliklerinin tüketici testinden geçmesi",
+    "Kırılma tespitinde değişikliğin geri alınması"
+   ],
+   "l": "BC-policy bağlamında Linus kuralı kuzey yıldızıdır: çekirdek (kernel/L0) değişikliği üst katmanların programını bozamaz; 'içeriyi düzelttim, dışarısı uyum sağlasın' cümlesi bu repoda geçersizdir."
+  },
+  "revert kapisi@sus-bc-policy": {
+   "a": "Hakemin VAR kararı gibi — gol kural ihlaliyle geldiyse önce iptal edilir; itiraz sonra dinlenir.",
+   "u": ["Kırılma sinyalinde otomatik revert akışı", "Revert sonrası kök-neden analizi"],
+   "l": "BC-policy bağlamında revert kapısı, kuralın dişidir: kırıcı patch tespit edilince tartışma değil geri alma çalışır; önce revert, sonra tartışma — üretim sözleşmesi müzakere masası değildir."
+  },
+  "time-travel sql@sus-bitemporal": {
+   "a": "Gazete arşivinde eski sayıyı açmak gibi — bugünün bilgisiyle değil, o günün baskısıyla okursun.",
+   "u": ["Geçmiş-an bakiye sorgusu", "Denetimde 'o gün bilinene' göre yeniden hesap"],
+   "l": "Bitemporal bağlamında AS OF sorgusu, iki eksenin meyvesidir: 'geçen ay bu müşterinin bakiyesi neydi' ve 'geçen ay biz ne biliyorduk' ayrı sorulardır; ikisi de tek sorguyla, yedekten dönmeden cevaplanır."
+  },
+  "system_time@sus-bitemporal": {
+   "a": "Postanenin damgası gibi — mektupta hangi tarih yazarsa yazsın, damga vurulduğu günü söyler.",
+   "u": ["Yazım anının değiştirilemez damgası", "Geriye dönük girişlerin tespitinde eksen karşılaştırması"],
+   "l": "Bitemporal bağlamında system_time, sistemin dürüstlük eksenidir: kayıt ne zaman yazıldı/değişti — kullanıcı beyanından bağımsız, makine damgasıdır ve asla elle düzeltilmez."
+  },
+  "valid_time@sus-bitemporal": {
+   "a": "Düğün tarihi ile nikâh dairesinin kayıt tarihi gibi — evlilik düğün günü başlar, deftere yazım başka gün olabilir.",
+   "u": ["Geriye dönük zammın doğru döneme işlenmesi", "İleri tarihli sözleşmenin vadesinde aktifleşmesi"],
+   "l": "Bitemporal bağlamında valid_time, gerçeğin eksenidir: olay dünyada ne zaman geçerliydi — geriye dönük zam, ileri tarihli sözleşme bu eksende yaşar; system_time ile arasındaki fark 'geç öğrenme'nin ölçüsüdür."
+  },
+  "contract@sus-boundaries": {
+   "a": "Site yönetim planı gibi — 'ortak alan kullanımı' sözle değil planla bellidir; ihlal yönetime (CI) düşer.",
+   "u": ["İzinli bağımlılık listesinin kural dosyası", "Sınır ihlalinin merge engeli olması"],
+   "l": "Boundaries bağlamında contract, modül sınırının yazılı halidir: kim kimi import edebilir — niyet dokümanda değil, makinenin okuduğu kural dosyasında yaşar ve CI'da zorlanır."
+  },
+  "packwerk@sus-boundaries": {
+   "a": "Açık ofiste bant çizgileri gibi — duvar örmeden (mikroservis) masalar ayrılır; çizgiyi geçen uyarılır.",
+   "u": ["Monolit-içi modül sınırı deseni referansı", "Sınır araçlarının CI entegrasyon örneği"],
+   "l": "Boundaries bağlamında Packwerk, kanıt vakasıdır: Shopify dev monolitini bu araçla modüler tuttu; ders, 'mikroservise bölmeden sınır çizilebilir' — bizim engine→UI sınır taraması aynı ailenin küçük kardeşidir."
+  },
+  "import-linter@sus-boundaries": {
+   "a": "Tek yön levhası gibi — ters girişi polis (linter) çevirir; 'acelem vardı' geçerli mazeret değildir.",
+   "u": ["Katman-yönlü import kurallarının zorlanması", "Yeni modülün contract'a kayıt zorunluluğu"],
+   "l": "Boundaries bağlamında import-linter, Python tarafının sınır bekçisidir: katman kuralları (üst alt'ı bilir, tersi yasak) contract dosyasında tanımlanır; ihlal lint hatasıdır, code review insafına kalmaz."
+  },
+  "ast@sus-codemod": {
+   "a": "Binanın statik projesi gibi — duvarı boyamak (metin) değil kolonu taşımak (yapı) için proje açılır.",
+   "u": ["Güvenli toplu yeniden adlandırma", "Regex-yetmez dönüşümlerin ağaç üzerinde yapılması"],
+   "l": "Codemod bağlamında AST, kodun ameliyat masasıdır: metin değil ağaç düzenlenir; 'tüm deprecated çağrıları bul-değiştir' regex'le kumar, AST'yle cerrahidir."
+  },
+  "codemod@sus-codemod": {
+   "a": "Şehir şebekesi değişince tesisatçı ekibinin ev ev gezmesi gibi — 'herkes kendi borusunu değiştirsin' yerine ekip standart dönüşümü uygular.",
+   "u": ["Deprecation'a eşlik eden otomatik dönüşüm", "Plugin kodlarının toplu migration'ı"],
+   "l": "Codemod bağlamında desen, kırıcı değişikliğin telafisidir: API değişirse tüketici koduna 'elle düzelt' denmez, codemod yazılır; deprecation duyurusu + codemod ikilisi BC politikasının uygulama aracıdır."
+  },
+  "libcst@sus-codemod": {
+   "a": "Restorasyon ustası gibi — duvarı taşırken üstündeki çiniyi kırmaz; iş bitince ev sahibi yalnız taşınan duvarı fark eder.",
+   "u": ["Biçim-koruyan Python dönüşümleri", "Codemod diff'lerinin incelenebilir kalması"],
+   "l": "Codemod bağlamında LibCST, Python hattının aracıdır: yorumları ve biçimi koruyan somut ağaç — codemod sonrası diff yalnız kasıtlı değişikliği gösterir; AST'nin biçim-kaybı sorunu burada çözülür."
+  },
+  "rector@sus-codemod": {
+   "a": "Trafik değişikliğinde belediyenin ücretsiz nakliye vermesi gibi — yol değişir ama taşınma külfeti vatandaşa yıkılmaz.",
+   "u": [
+    "Plugin API deprecation'larında hazır kural yayını",
+    "Topluluk modüllerinin otomatik sürüm taşıması"
+   ],
+   "l": "Codemod bağlamında Rector, ekosistem dersidir: Drupal her deprecation'a kural yazar, topluluk binlerce modülü otomatik taşır; 'kırıcı değişiklik + hazır dönüşüm' kültürü bizim plugin ekosistemi hedefimizin modelidir."
+  },
+  "conformance suite@sus-conformance": {
+   "a": "Sürücü ehliyeti sınavı gibi — 'araba kullanmayı bilirim' beyanı yetmez; direksiyon sınavı geçilir, belge alınır.",
+   "u": ["Plugin onayında zorunlu uyum testi", "Rozet/sürüm matrisinin suite sonucundan üretimi"],
+   "l": "Conformance bağlamında suite, sözleşmenin sınav kâğıdıdır: plugin/entegrasyon 'uyuyorum' demekle kalmaz, testi geçer; markette 'uyumlu' rozeti suite çıktısıdır, pazarlama cümlesi değil."
+  },
+  "golden file@sus-conformance": {
+   "a": "Mühür örneği gibi — bankadaki imza kartonuyla karşılaştırılır; kartondan sapma sorgu başlatır.",
+   "u": ["API yanıtlarının kanonik kopyayla diff'i", "Bilinçli değişikliklerde golden güncelleme ritüeli"],
+   "l": "Conformance bağlamında golden file, doğrunun fotoğrafıdır: kanonik çıktı saklanır, her koşuda gerçek çıktıyla diff'lenir; fark ya hata ya bilinçli güncellemedir — ikisi de görünür olur."
+  },
+  "invariant@sus-conformance": {
+   "a": "Terazinin dengesi gibi — hangi ağırlık konursa konsun iki kefe toplamı değişmez; değişiyorsa terazi bozuktur.",
+   "u": [
+    "İş kurallarının invariant olarak yazılması",
+    "İhlalin hangi girdiyle doğduğunun otomatik daraltılması"
+   ],
+   "l": "Conformance bağlamında invariant, her durumda doğru kalması gereken iş kuralıdır: 'toplam borç ≥ 0', 'silinen kayda referans yok' — test senaryosu değil, senaryolar-üstü kanundur; property-based test bunun avcısıdır."
+  },
+  "property-based testing@sus-conformance": {
+   "a": "Kapı dayanıklılık makinesi gibi — usta üç kez itmez; makine on bin kez farklı açıyla iter, kırılan açı rapora geçer.",
+   "u": [
+    "Migration determinizminin rastgele girdiyle sınanması",
+    "Bulunan kırıcı örneğin regresyon testine dönüşmesi"
+   ],
+   "l": "Conformance bağlamında PBT, örnek-testin tamamlayıcısıdır: elle seçilmiş girdiler yerine üretilmiş binlerce girdiyle invariant korunuyor mu bakılır; bulunan kırıcı girdi otomatik küçültülür (shrinking) ve örnek-test olarak sabitlenir."
+  },
+  "ash@sus-declarative": {
+   "a": "Aynı yemeğin başka mutfakta pişmesi gibi — tarif (felsefe) ortak; malzeme (dil) yerel.",
+   "u": ["Resource-tanımdan türetim deseninin karşılaştırması", "Policy'nin tanıma gömülmesi örneği"],
+   "l": "Declarative bağlamında Ash, felsefe yoldaşıdır: 'domain'i modelle, gerisini türet' — Elixir'de DocType benzeri resource tanımından API/policy/changeset üretir; desenin dil-bağımsız olduğunun kanıtıdır."
+  },
+  "convex@sus-declarative": {
+   "a": "Lego talimatı gibi — parçalar tipliyse robot da insan da aynı seti kurar; serbest kil (tipsiz) robotu şaşırtır.",
+   "u": ["Tipli uçtan-uca sözleşmenin AI-codegen değeri", "Reaktif sorgu modelinin karşılaştırması"],
+   "l": "Declarative bağlamında Convex, AI-çağı sinyalidir: uçtan uca tipli, reaktif backend — kod üreten AI için öngörülebilir hedef. 'AI'ın doğru kod yazacağı substrat' fikri bizim agent-native kararımızın pazardaki yankısıdır."
+  },
+  "declarative@sus-declarative": {
+   "a": "Navigasyona adres vermek gibi — yol tarifini sen ezberlemezsin; yol değişince cihaz yeni rotayı kendisi çizer.",
+   "u": [
+    "Tanım-değişikliğinde türevlerin yeniden üretimi",
+    "İmperatif kaçakların (elle yazılmış türev) tespiti"
+   ],
+   "l": "Bu sayfada declarative, sürdürülebilirliğin ana fikridir: 'ne' tarif edilir, 'nasıl'ı sistem üretir; üretilen şey (migration, API, UI) elle yazılandan farklı olarak topluca yeniden-üretilebilir — codemod yerine re-generate."
+  },
+  "edgedb/gel@sus-declarative": {
+   "a": "Terzinin ölçüden kalıp çıkarması gibi — ölçü (SDL) verilir, kalıbı (migration) usta kendisi çizer.",
+   "u": ["SDL-tabanlı migration üretiminin incelenmesi", "Şema dilinin tip sistemiyle karşılaştırması"],
+   "l": "Declarative bağlamında EdgeDB/Gel, şema-türetimin DB-içi örneğidir: SDL'den migration'ı veritabanı üretir; bizim 'DocType→migration üreteci' kararımızın aynı problemi DB katmanında çözen akrabasıdır."
+  },
+  "checkpoint@sus-durable": {
+   "a": "Oyundaki kayıt noktası gibi — canavar yenince oyun kaydedilir; elektrik kesilse de bölüm başa sarmaz.",
+   "u": ["Adım-sonu durum kalıcılaştırması", "Çökme sonrası otomatik devam testi"],
+   "l": "Durable bağlamında checkpoint, kaldığı-yerden-devamın temelidir: iş akışının durumu adım sonlarında kalıcılaşır; çökme sonrası akış baştan değil son checkpoint'ten sürer — uzun işlerde 'baştan al' kabul edilemez."
+  },
+  "dbos@sus-durable": {
+   "a": "Evin mevcut kazanına bağlanan yerden ısıtma gibi — ayrı kazan dairesi (orkestratör) kurulmaz; mevcut tesisat taşır.",
+   "u": ["Postgres-içi durable workflow değerlendirmesi", "Ayrı-altyapısız çökme-dayanıklı işler"],
+   "l": "Durable bağlamında DBOS, anti-stack uyumlu seçenektir: durable workflow'u Postgres'in içinde çözer — ayrı orkestratör altyapısı (Temporal sunucusu) gerekmez; 'tek operasyon yüzeyi' ilkemizle hizalıdır."
+  },
+  "durable execution@sus-durable": {
+   "a": "Noterli taksitli satış gibi — her taksit makbuzlu; taraflardan biri kaybolsa da kalınan yer dosyadan bellidir.",
+   "u": ["Uzun iş akışlarının çökme-dayanıklı koşumu", "Yarım-iş belirsizliğinin yapısal yok edilmesi"],
+   "l": "Bu sayfada durable execution ana kavramdır: iş akışı çökmeye, yeniden başlatmaya ve sürüm değişimine dayanır; her adım kayıtlı olduğundan 'yarıda kaldı, durumu meçhul' sınıfı hata yok edilir — saga'nın altyapı kardeşidir."
+  },
+  "temporal@sus-durable": {
+   "a": "Şehir şebekesi yerine baraj kurmak gibi — su ihtiyacı barajlıksa kurulur; iki mahalle için baraj israftır.",
+   "u": [
+    "Geçiş eşiğinin (iş hacmi/karmaşıklık) tanımı",
+    "DBOS→Temporal taşıma senaryosunun el altında tutulması"
+   ],
+   "l": "Durable bağlamında Temporal, eşiğin öbür yanıdır: olgun, kanıtlanmış durable platform — ama ayrı küme ister. DBOS-yetmez ölçeğe gelinirse geçiş adayıdır; erken almak anti-stack ihlalidir (Kafka kararıyla aynı mantık)."
+  },
+  "introspectable@sus-metadata": {
+   "a": "Binanın canlı maketi gibi — kat planı çizim değil, sensörlü maket; oda eklenince maket kendiliğinden güncellenir.",
+   "u": ["Agent'ın sistem yeteneklerini runtime keşfi", "Şema dokümantasyonunun canlı üretimi"],
+   "l": "Metadata bağlamında introspectable, sistemin aynasıdır: 'hangi DocType'lar var, hangi alanlar, hangi Action'lar' sorusu çalışan sistemden sorgulanır; dokümantasyon ve agent keşfi bu aynadan beslenir — bayatlamaz çünkü kaynağın kendisidir."
+  },
+  "meta-metadata@sus-metadata": {
+   "a": "Sözlüğün 'sözlük' maddesini içermesi gibi — tanım aracının kendisi de tanımlıdır; sistem kendi kendini anlatabilir.",
+   "u": ["Şema-şemasının tek kaynaktan servis edilmesi", "Studio'nun alan-tipi paletini meta'dan üretmesi"],
+   "l": "Metadata bağlamında meta-metadata, üst kattır: DocType'ı tarif eden şemanın kendisi de kayıttır; 'alan tipi nedir' sorusunun cevabı da sorgulanabilir olunca araçlar (Studio, doğrulayıcı, AI) tek dilden konuşur."
+  },
+  "servicenow glide@sus-metadata": {
+   "a": "Şehrin imar sisteminin kendisinin de imara kayıtlı olması gibi — kural koyan dairenin binası da aynı tapu sisteminde.",
+   "u": ["Metadata-tabanlı platformun ölçek vakası", "Aşırı-metadata'nın performans/karmaşıklık sınırları"],
+   "l": "Metadata bağlamında Glide, ölçek kanıtıdır: tablolar, roller, workflow'lar — platformun kendisi metadata kayıtlarıdır ve Fortune 500'ü taşır; 'her şey kayıt' fikrinin uçtaki halidir, sınırlarıyla birlikte ders alınır."
+  },
+  "ci kapisi@sus-overview": {
+   "a": "Baraj kapağı gibi — su (kod) ancak kapak açılırsa geçer; kapağı niyet değil mekanizma açar.",
+   "u": ["Her sürdürülebilirlik kuralının kapıya bağlanması", "Kapısız kuralın 'temenni' sayılması"],
+   "l": "Sus-overview bağlamında CI kapısı, mekanizmanın vücut bulmuş halidir: sürdürülebilirlik niyetle değil birleşme-engeliyle korunur; bu repo kendi ilkesini uygular — biome'dan size-limit'e zincir, kapı setidir."
+  },
+  "mekanizma@sus-overview": {
+   "a": "Fabrika bandındaki sensör gibi — ustabaşının gözü kadar keskin olmasa da üç vardiya hiç kırpmaz.",
+   "u": ["İnsan-bağımlı kontrollerin otomasyona devri", "Tekrarlanan hatanın mekanizmayla kapanması"],
+   "l": "Sus-overview bağlamında mekanizma, kahramana karşı sistemdir: kaliteyi dikkatli insan değil otomatik denetim korur; insan yorulur, mekanizma yorulmaz — 'dikkat edelim' cümlesi bu repoda kural değildir."
+  },
+  "sözleşme yüzeyi@sus-overview": {
+   "a": "Mağazanın garanti belgesi gibi — neyi kapsadığı yazılıdır; yazılmayan şey nezaket, yazılan şey yükümlülüktür.",
+   "u": ["Yüzeyin açık envanteri (ne sözleşme, ne değil)", "Yüzey genişletmenin bilinçli karar olması"],
+   "l": "Sus-overview bağlamında sözleşme yüzeyi, değişmezlik sözünün kapsamıdır: API, format, davranış — dışarıya verilen her söz yüzeydir ve BC politikasına tabidir; yüzey bilinçli dar tutulur çünkü her söz bakım borcudur."
+  },
+  "soyutlama@sus-timi": {
+   "a": "Elektrik prizine yazmak gibi — santral kömürden güneşe dönse de ütü fişi aynı kalır.",
+   "u": ["Katman sınırlarının değişim-yalıtım testi", "Substrat değişiminde üst katman regresyonu"],
+   "l": "TIMI bağlamında soyutlama, uzun ömrün sırrıdır: uygulama donanıma değil ara katmana yazılır; alt katman komple değişse de üst katman fark etmez — bizim kernel/L1 sınırlarımız aynı sözün küçük ölçeğidir."
+  },
+  "substrat@sus-timi": {
+   "a": "Binanın zemini gibi — üstte yaşayan kat planını bilir, zemin etüdünü bilmez; ama müteahhit (platform) ikisini de dosyalar.",
+   "u": ["Substrat bağımlılık envanteri", "Substrat-sızıntısının (DB-özel SQL) lint'le yakalanması"],
+   "l": "TIMI bağlamında substrat, altın altıdır: DB, dil runtime'ı, donanım — uygulamanın bilmemesi gereken her şey; substrat envanteri açıkça tutulur ki 'neye bağımlıyız' sorusu cevapsız kalmasın."
+  },
+  "timi@sus-timi": {
+   "a": "1980'lerin plağını bugünün cihazında çalmak gibi — müzik (uygulama) aynı; pikap nesil nesil değişti, format sözü tutuldu.",
+   "u": ["Soyutlama-ömrü ilişkisinin vaka analizi", "DocType'ın substrat-bağımsızlık hedefi"],
+   "l": "Bu sayfada TIMI vaka çalışmasıdır: IBM i uygulamaları 40 yıldır kaynak değişmeden donanım nesilleri atlar — bytecode katmanı sayesinde. Ders: doğru soyutlama, on yıllarla ölçülen ömür verir; bizim DocType katmanımız bu iddianın varisidir."
+  },
+  "named gate@sus-versioning": {
+   "a": "Tren makasları gibi — yön değişimi rayların her metresinde değil, isimli makas noktalarında; makas haritası işletmenin elindedir.",
+   "u": ["Sürüm dallanmalarının isimli modülde toplanması", "Emekli kapıların güvenle silinmesi"],
+   "l": "Versioning bağlamında named gate, if-yığınının panzehiridir: sürüm farkı kodun her yerinde 'if v<3' olarak değil, isimli tek modülde yaşar; kapı listesi sürüm haritasıdır ve emekliye ayrılan kapı silinir."
+  },
+  "pinleme@sus-versioning": {
+   "a": "Kira kontratı gibi — bina yönetimi kuralları yenilese de senin kontratın imzaladığın metindir; yeni kurala geçiş imzayla olur.",
+   "u": [
+    "Tenant'ın sürüme sabitlenmesi ve bilinçli yükseltme",
+    "Pin dağılımının (kaç tenant hangi sürümde) izlenmesi"
+   ],
+   "l": "Versioning bağlamında pinleme, müşterinin zaman güvencesidir: tenant ilk bağlandığı sözleşme sürümüne sabitlenir; platform ilerler, pin değişmedikçe davranış değişmez — yükseltme müşterinin kararıdır, bizim sürprizimiz değil."
+  },
+  "response transform@sus-versioning": {
+   "a": "Müzenin çok-dilli kulaklığı gibi — eser (veri) tek; anlatım ziyaretçinin diline (pin) çevrilir.",
+   "u": ["Çıkış-katmanı sürüm çevirisi", "Transform'ların golden-file ile doğrulanması"],
+   "l": "Versioning bağlamında response transform, tek-gerçek-çok-görünüm hilesidir: iç model hep günceldir; eski pin'e cevap, çıkışta o sürümün şekline çevrilir — N sürüm için N kod yolu değil, N transform tutulur."
+  },
+  "tarih-versiyon@sus-versioning": {
+   "a": "Kanun yürürlük tarihi gibi — 'hangi mevzuat' sorusunun cevabı bir tarihtir; tarih, içeriğin adresidir.",
+   "u": ["Sürüm adlarının tarih olarak verilmesi", "Changelog'un sürüm-tarihiyle hizalanması"],
+   "l": "Versioning bağlamında tarih-versiyon, adlandırmanın dürüst halidir: v3.2'nin aksine 2026-06-01 kendini açıklar — 'o günkü sözleşme'; Stripe deseni. Pin, changelog ve destek konuşması aynı takvimi konuşur."
   }
  }
 }

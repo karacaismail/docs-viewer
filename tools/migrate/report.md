@@ -21,7 +21,7 @@ Glossary kaydı: 679 | Search document: 3409
 ## Kayıp görsel varlıklar (0) — 07B §1 fallback aktif
 
 ## Glossary zenginleştirme (12A Parti 1 — Eğitim Yolu)
-Zenginleştirilen kayıt: 386 (sayfa-kapsamlı: 211) | Overlay'de karşılığı olmayan label: 0
+Zenginleştirilen kayıt: 538 (sayfa-kapsamlı: 363) | Overlay'de karşılığı olmayan label: 0
 Segment bağlama (B akışı, tüm kategoriler): 435 bağlı terim | bağlı page: 162/217 | egitim: 27/28
 
 ## Uyarılar (0)

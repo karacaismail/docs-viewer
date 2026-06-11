@@ -55,7 +55,9 @@ Sapma kaydı: §2-A "kaynaktaki `enrich.terms`" yerine **overlay dosyası** kull
 
 **Parti 3 durumu (11 Haziran 2026):** Genel Harita + Kernel + Scale kategorilerinin tamamı sayfa-kapsamlı kayıtlarla zenginleştirildi (atomic-types 23 kayıt dahil; yalnız 4 Cluster şablon kaydı bilinçli dışarıda). **Parti 3: tamamlandı.** Toplam zenginleştirilmiş kayıt 386/679; sayfa-kapsamlı 211.
 
-**B akışı genellemesi (11 Haziran 2026):** bağlama tüm kategorilere açıldı — bağlam güvencesi page-içi olduğundan kategori sınırı gereksizdi. Ölçüm: **435 bağlı terim, 162/217 page** (egitim 27/28). Cross-page yasağı artık tüm kategorilerde test kapısındadır. Parti 4–6'nın B akışı böylece kapandı; kalan iş yalnız A akışıdır (Parti 4: cc+sus seçmeli, Parti 5: layer1/stack/dx/build/fe/landx seçmeli, Parti 6: s-* yalnız tooltip yeterliliği).
+**B akışı genellemesi (11 Haziran 2026):** bağlama tüm kategorilere açıldı — bağlam güvencesi page-içi olduğundan kategori sınırı gereksizdi. Ölçüm: **435 bağlı terim, 162/217 page** (egitim 27/28). Cross-page yasağı artık tüm kategorilerde test kapısındadır. Parti 4–6'nın B akışı böylece kapandı.
+
+**Parti 4–5 kapanışı (11 Haziran 2026):** A-seçmeli iş tamamlandı — ince-`why` işaretli 153 kayıt (P4: cc+sus 83, P5: layer1/stack/dx/build/fe/landx 70+) sayfa-kapsamlı `a/u/l` ile zenginleştirildi; şablon terimler (ADR-0005 Rev. 1) dışarıda. Parti 6 tanımı gereği (yalnız B + A'sız kabul) zaten kapalıydı. **§3 tablosundaki altı partinin tamamı kapandı.** Toplam: 538/679 kayıt zenginleştirilmiş (sayfa-kapsamlı 363); kalan 141 kayıt ya zaten yeterli uzunluktadır (ince değil) ya şablon terimdir — plan kapsamında açık iş yoktur. Bundan sonrası bakımdır: yeni içerik kendi partisinin kuralına tabidir (§2, §4); C akışı (yeni terim) kullanıcı geri bildirimiyle beslenir (ADR-0006).
 
 ## 4. Kayıt Başına Bitiş Tanımı (Done Definition)
 
