@@ -1,0 +1,114 @@
+{
+ "id": "be-deploy-profilleri",
+ "title": "Deploy Profilleri ve Entegrasyon Matrisi",
+ "subtitle": "WordPress kadar basit kurulum + Shopify kadar dayanıklı ölçek: dört birinci-sınıf dağıtım profili ve opsiyonel dış servis adaptörleri.",
+ "cluster": "backend",
+ "order": 2,
+ "icon": "ph-stack",
+ "granularity": "kaya",
+ "state": "wip",
+ "badge": "TASARIM",
+ "tags": [
+  "backend",
+  "deploy",
+  "olcekleme",
+  "entegrasyon"
+ ],
+ "related": [
+  "be-kararlar",
+  "be-mail-zinciri",
+  "deploy-yap",
+  "sus-versioning",
+  "sus-bc-policy",
+  "scale-multiregion"
+ ],
+ "enrich": {
+  "info": "Aynı kod dört profilde koşar: shared hosting'e WordPress gibi adım adım kurulur; compose ile self-host edilir; müşterinin k8s/swarm cluster'ına ölçeklenir; bizim yönetilen bulutta (odoo.sh / Frappe Cloud / wordpress.com / Acquia modeli) hizmet olarak satılır.",
+  "terms": [
+   {
+    "term": "Deploy profili",
+    "meaning": "Aynı kod tabanının hedef ortama göre paketlenmiş kurulum yolu: shared / compose / cluster / managed — dördü de birinci sınıf desteklenir.",
+    "why": "WordPress'i devleştiren şey shared hosting'e kurulabilmesi, Shopify'ı devleştiren şey yüksek trafikte dayanması ve odoo.sh/Frappe Cloud'u gelir yapan şey yönetilen hizmettir; üç gücü tek üründe birleştirmenin yolu profilleri ürünün parçası saymaktır, dağıtım detayı değil."
+   }
+  ]
+ },
+ "blocks": [
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Dört Profil"
+  },
+  {
+   "type": "kv-row",
+   "pairs": [
+    {
+     "key": "P1 · Shared hosting",
+     "value": "WordPress-tarzı adım adım kurulum sihirbazı; tek Postgres, Postgres-içi kuyruk/arama, yerel disk, mail zinciri katman 1-2-5. Hedef: cPanel'li basit hosting'de çalışan tam ürün"
+    },
+    {
+     "key": "P2 · Self-host compose",
+     "value": "docker compose + GitHub Actions imaj akışı (be-kararlar 13); Hetzner/Debian tek sunucu ilk 3 app'i taşır"
+    },
+    {
+     "key": "P3 · Müşteri cluster'ı",
+     "value": "Kubernetes / Docker Swarm; Redis cluster, Celery worker'lar, ayrı GraphQL servisi, Kafka/RabbitMQ — tüm ölçek adaptörleri burada açılır; AWS/GCP dahil"
+    },
+    {
+     "key": "P4 · Yönetilen bulut",
+     "value": "Bizim ekosistemimizde hosting (odoo.sh / Frappe Cloud / wordpress.com / Acquia deseni): tam teşekküllü hizmet + Editions satışının doğal kanalı"
+    }
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Entegrasyon Matrisi — hepsi opsiyonel adaptör"
+  },
+  {
+   "type": "kv-row",
+   "pairs": [
+    {
+     "key": "Observability",
+     "value": "ELK / OpenSearch / Grafana-LGTM / Sentry — OTel çıkışına takılır (E2: developer-first, production'da opsiyonel)"
+    },
+    {
+     "key": "Depolama",
+     "value": "S3-uyumlu (Hetzner Object Storage, AWS S3) — Kernel Storage sözleşmesi (E3); varsayılan yerel disk + rsync"
+    },
+    {
+     "key": "Mail",
+     "value": "Mailgun, SendGrid, Resend, SES… — be-mail-zinciri sıralı sağlayıcıları"
+    },
+    {
+     "key": "DNS",
+     "value": "PowerDNS (self-host), Route 53, Cloudflare DNS — DnsProvider sözleşmesi; s-mail ürününün de altyapısı"
+    },
+    {
+     "key": "LLM",
+     "value": "Claude/Anthropic, ChatGPT/OpenAI, Gemini, Llama (yerel) — AI katmanı (be-kararlar 11) sağlayıcı-bağımsız LlmProvider sözleşmesiyle konuşur"
+    },
+    {
+     "key": "Kuyruk/Event ölçeği",
+     "value": "Celery+Redis (05), Kafka/RabbitMQ (06) — varsayılan Postgres'ten ölçeğe terfi yolları"
+    }
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Dayanıklılık ve Upgrade Felsefesi"
+  },
+  {
+   "type": "callout",
+   "variant": "warning",
+   "label": "Dayanıklılık çıtası",
+   "body": "WordPress gibi yüksek trafik altında kırılgan değil, Shopify gibi dayanıklı: kernel ve core yapıları ölçeğe dayanıklı tasarlanır (scale primitives gün-1), profil yükseltmek (P1→P3) kod değişikliği değil konfigürasyon terfisidir."
+  },
+  {
+   "type": "callout",
+   "variant": "tip",
+   "label": "Upgrade sözleşmesi",
+   "body": "Drupal'ın major-sürüm acısı (6→7→8) yaşatılmaz: Stripe gibi tarih-versiyonlu geriye dönük API (be-kararlar 15, sus-versioning), Linux gibi 'kullanıcıyı kırma' anayasası (sus-bc-policy) ve WordPress gibi kullanıcıyı merkeze alan otomatik küçük güncellemeler — major değişiklik named gate + codemod ile gelir, kullanıcıya taşınma yükü yıkılmaz."
+  }
+ ]
+}

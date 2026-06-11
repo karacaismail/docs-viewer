@@ -347,7 +347,7 @@
 - Replay Attack (page-scale-webhook) · analoji tohumu var
 - DLQ (page-scale-webhook) · analoji tohumu var
 
-## Parti 4 (129 kayıt)
+## Parti 4 (132 kayıt)
 - Introspectable (page-sus-metadata) · analoji tohumu var
 - Meta-metadata (page-sus-metadata) · analoji tohumu var
 - ServiceNow Glide (page-sus-metadata) · analoji tohumu var
@@ -426,6 +426,9 @@
 - lang attribute (page-cc-cultural-ux) · analoji tohumu var
 - CSS Logical Properties (page-cc-cultural-ux) · analoji tohumu var
 - Pseudo-localization (page-cc-cultural-ux) · analoji tohumu var
+- CLA (page-sus-lisans)
+- API-boundary stratejisi (page-sus-lisans)
+- Geri açılma garantisi (page-sus-lisans)
 - OAuth (page-crosscut-tr) · analoji tohumu var
 - KVKK (page-crosscut-tr) · analoji tohumu var
 - KVKK (page-crosscut-tr) · analoji tohumu var

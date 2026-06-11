@@ -10,7 +10,8 @@ export const CATEGORIES = [
   { id: "crosscut", label: "Çapraz-Kesen", icon: "ph-arrows-out", order: 7 },
   { id: "dx", label: "DX & Services", icon: "ph-puzzle-piece", order: 8 },
   { id: "build", label: "Build & Deploy", icon: "ph-flag-banner", order: 9 },
-  { id: "frontend", label: "Frontend Tech-Stack", icon: "ph-device-mobile", order: 10 },
+  { id: "backend", label: "Backend Tech-Stack", icon: "ph-database", order: 10 },
+  { id: "frontend", label: "Frontend Tech-Stack", icon: "ph-device-mobile", order: 11 },
   { id: "sus", label: "Sürdürülebilirlik", icon: "ph-infinity", order: 12 },
 ];
 
@@ -31,6 +32,7 @@ export const PREFIX_TO_CATEGORY = {
   fe: "frontend",
   landx: "stack", // LandX top-level değil — Stack Ürünleri altında vaka (sahibinden clone)
   edition: "stack",
+  be: "backend",
   dx: "dx",
   services: "dx",
   deploy: "build",

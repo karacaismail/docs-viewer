@@ -35,7 +35,7 @@ describe("doc ↔ üretilmiş veri tutarlılığı", () => {
   it("02 §1: cluster dosya sayısı ve aday sayısı diskle eşleşir", () => {
     const d = doc("02-icerik-envanteri.md");
     expect(num(d, /## 1\. Cluster JSON Dosyaları \((\d+) dosya/, "02 toplam")).toBe(sourceFiles.length);
-    expect(num(d, /\+ (\d+) aday \+ 1 terminoloji \+ 1 kapsam dışı/, "02 aday")).toBe(adayCount);
+    expect(num(d, /\+ (\d+) aday \+ \d+ karar\/kavram \+ 1 kapsam dışı/, "02 aday")).toBe(adayCount);
   });
 
   it("03 §1: stack satırı navigation.json grup sayılarıyla eşleşir", () => {
@@ -67,7 +67,7 @@ describe("doc ↔ üretilmiş veri tutarlılığı", () => {
   });
 
   it("07A: toplam kaynak dosya sayısı diskle eşleşir", () => {
-    expect(num(doc("07A-alan-esleme-tablosu.md"), /terminoloji kaydıyla toplam (\d+)/, "07A toplam")).toBe(
+    expect(num(doc("07A-alan-esleme-tablosu.md"), /kavram kaydıyla toplam (\d+)/, "07A toplam")).toBe(
       sourceFiles.length,
     );
   });

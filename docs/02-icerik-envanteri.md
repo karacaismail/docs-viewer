@@ -2,7 +2,7 @@
 
 Bu doküman, `mimari/` klasöründeki mevcut varlıkların sayımını yapar ve her grubun yeni doc viewer'daki rolünü tanımlar. Migration yönergesi (`07-uretim-02-data-migration.md`) bu envanteri girdi kabul eder.
 
-## 1. Cluster JSON Dosyaları (225 dosya — birincil içerik kaynağı; 197 özgün + 26 aday + 1 terminoloji + 1 kapsam dışı)
+## 1. Cluster JSON Dosyaları (229 dosya — birincil içerik kaynağı; 197 özgün + 26 aday + 5 karar/kavram + 1 kapsam dışı)
 
 Dosya adlandırması `NN-kategori-konu.json` sözleşmesini izler. Kategori prefix'leri ve sayıları:
 
@@ -12,7 +12,7 @@ Dosya adlandırması `NN-kategori-konu.json` sözleşmesini izler. Kategori pref
 | `s-*` | 72 | Sektör/ürün modülleri (crm, sales, wms, payroll…) + 10 Haziran 2026 aday genişlemesi (comms, mail, channel-hub, scheduling, esign, isg, kvkk, iot) | Ürün Modülleri — Layer 2 |
 | `scale-*` | 15 | Scale primitives (outbox, saga, cache, realtime…) | Scale Primitives |
 | `cc-*` + `crosscut-*` | 17 | Çapraz-kesen konular (i18n, privacy, compliance…) | Çapraz-Kesen |
-| `sus-*` | 12 | Sürdürülebilirlik (versioning, bitemporal, conformance…) | Sürdürülebilirlik |
+| `sus-*` | 13 | Sürdürülebilirlik (versioning, bitemporal, conformance…) | Sürdürülebilirlik |
 | `stack-*` | 19 | Stack ürün aileleri (commerce, accounting…) + 6 aday yatay stack (workspace, compliance, channel, builder, service, messaging) + 1 taksonomi kavram kaydı (editions) | Stack Ürünleri |
 | `edition-*` | 6 | Editions — UI estetiği ve UX akışı gelişmiş stack paketleri (people, onmuhasebe, storefront, salescrm, creator, randevu); `badge: EDITION` | Stack Ürünleri (Editions grubu) |
 | `dist-*` | 5 | Distributions — sektör paketleri (site, ngo, travel, construction, realestate); `badge: DISTRIBUTION` | Stack Ürünleri (ayrı grup) |
@@ -20,6 +20,7 @@ Dosya adlandırması `NN-kategori-konu.json` sözleşmesini izler. Kategori pref
 | `layer1-*` + `l1-*` | 12 | Layer 1 in-tree servisler (party, file, audit…) | Layer 1 — In-tree |
 | `kernel-*` + `k-*` | 9 | Layer 0 kernel domain'leri | Kernel — Layer 0 |
 | `landx-*` | 7 | LandX — sahibinden clone vakası (l0–l5) | Stack Ürünleri (vaka grubu; top-level değil) |
+| `be-*` | 3 | Backend Tech-Stack — karar defteri (24/24), mail provider chain, deploy profilleri + entegrasyon matrisi | Backend Tech-Stack |
 | `dx-*` + `services` | 4 | Module DX, marketplace, dış servisler | DX & Services |
 | Tekil meta dosyalar | ~10 | overview, philosophy, board, atomic-types, build-sequence, anti-patterns, file-layout, product-mapping, deploy-yap | Genel Harita + Build & Deploy |
 

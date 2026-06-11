@@ -16,6 +16,7 @@ Bu doküman, iki seviyeli navigasyonun bilgi mimarisini ve URL/ID sözleşmeleri
 | 7 | `crosscut` | Çapraz-Kesen | `ph-arrows-out` | `cc-*`, `crosscut-*` | 17 |
 | 8 | `dx` | DX & Services | `ph-puzzle-piece` | `dx-*`, services | 4 |
 | 9 | `build` | Build & Deploy | `ph-flag-banner` | build, deploy, file-layout, product-mapping, anti-patterns | 5 |
+| 10 | `backend` | Backend Tech-Stack | `ph-database` | `be-*` | 3 |
 | 10 | `frontend` | Frontend Tech-Stack | `ph-device-mobile` | `fe-*` | 9 |
 | 12 | `sus` | Sürdürülebilirlik | `ph-infinity` | `sus-*` | 12 |
 
@@ -27,7 +28,7 @@ Rail 2, seçili kategorinin page listesini accordion gruplar halinde gösterir. 
 
 - `egitim`: tek düz liste, ünite sırasına göre (overview → u01 → … → u25). Accordion'a gerek yok; sıralı okuma akışı bölünmez.
 - `urunler` (64 page): `00-overview.json`'daki 9 ürün kategorisi accordion grubu olur — Çekirdek Operasyon, Finans & Muhasebe, Tedarik Zinciri & Lojistik, İnsan Kaynakları, Müşteri & Gelir, İçerik & İşbirliği, Veri & Zeka, Platform/Altyapı, Dikey çözümler. Her `s-*` page'i bir gruba atanır; atama tablosu migration'da üretilir ve `navigation.json`'da taşınır.
-- `stack`: dört accordion grubu — **Stacks** (`stack-*`: fonksiyonel olarak eksiksiz yatay app paketleri), **Distributions** (`dist-*`: sektör paketi = stack + config + içerik), **Editions** (`edition-*` + `stack-editions` kavram kaydı: aynı core module seti, gelişmiş UI estetiği ve UX akışı — ölçüt: Frappe HRMS fonksiyonu yeter, BambooHR estetiği Edition işidir) ve **LandX — sahibinden clone (vaka)** (`landx-*`: top-level kategori değil, Stack Ürünleri altındaki ürünlerden biri). Taksonomi sözleşmesi ADR-0007 terminolojisiyle birlikte okunur: kernel sistemin kalbi, core app'in kalbi, genişletme birimi module'dür.
+- `stack`: dört accordion grubu — **Stacks** (`stack-*`: fonksiyonel olarak eksiksiz yatay app paketleri), **Distributions** (`dist-*`: sektör paketi = **edition + config + sektör içeriği** — iç içe halkalar: Stack ⊂ Edition ⊂ Distribution), **Editions** (`edition-*` + `stack-editions` kavram kaydı: aynı core module seti, gelişmiş UI estetiği ve UX akışı — ölçüt: Frappe HRMS fonksiyonu yeter, BambooHR estetiği Edition işidir) ve **LandX — sahibinden clone (vaka)** (`landx-*`: top-level kategori değil, Stack Ürünleri altındaki ürünlerden biri). Taksonomi sözleşmesi ADR-0007 terminolojisiyle birlikte okunur: kernel sistemin kalbi, core app'in kalbi, genişletme birimi module'dür.
 - Diğer kategoriler: page sayısı ≤ 17 olduğundan tek accordion grubu veya konu bazlı 2–3 grup yeterlidir; grup başına 10 item üst sınırı hedeflenir (bilişsel yük sınırı).
 
 ## 3. Slug ve ID Sözleşmeleri

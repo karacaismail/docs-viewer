@@ -1,0 +1,342 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-be-kararlar",
+  "sourceId": "be-kararlar",
+  "slug": "backend/be-kararlar",
+  "title": "Backend Karar Defteri — 24/24",
+  "summary": "FastAPI meta-framework kernel'inin kilitli backend kararları (11 Haziran 2026) — varsayılan basit, ölçek opsiyonel ilkesiyle.",
+  "categoryId": "backend",
+  "tags": [
+   "backend",
+   "fastapi",
+   "karar",
+   "kernel"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "wip",
+   "badge": "KARAR"
+  },
+  "related": [
+   "page-k-terminoloji",
+   "page-be-mail-zinciri",
+   "page-be-deploy-profilleri",
+   "page-sus-lisans",
+   "page-sus-versioning",
+   "page-kernel-authz"
+  ],
+  "blocks": [
+   {
+    "id": "block-be-kararlar-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Yön veren ilke her kararda aynıdır: WordPress kadar basit varsayılan + Shopify kadar dayanıklı ölçek seçeneği. Varsayılan tek Postgres'te yaşar (kuyruk, arama, event dahil); ölçek isteyen Celery+Redis, Kafka/RabbitMQ, Meilisearch, S3, k8s'i adaptör olarak açar."
+     }
+    ]
+   },
+   {
+    "id": "block-be-kararlar-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu defter, backend karar raporunun "
+     },
+     {
+      "type": "strong",
+      "text": "24/24 kararlaştırılmış"
+     },
+     {
+      "type": "text",
+      "text": " halidir. Her satır bağlayıcıdır; revizyon ADR ister. Kullanıcı notları kararın parçasıdır ve *varsayılan/opsiyon* ayrımını tanımlar."
+     }
+    ]
+   },
+   {
+    "id": "block-be-kararlar-h-cekirdek-kararlar-1-15",
+    "type": "heading",
+    "level": 2,
+    "text": "Çekirdek Kararlar (1–15)"
+   },
+   {
+    "id": "block-be-kararlar-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "01 · ORM",
+      "definition": [
+       {
+        "type": "text",
+        "text": "SQLAlchemy 2.0 (Core+ORM); Pydantic v2 ayrı katman"
+       }
+      ]
+     },
+     {
+      "term": "02 · Migration",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Alembic altyapı; migration'ı DocType diff'i üretir. Açık araştırma: üretilen migration'ı review eden yerel mini-LLM kapısı (aday modeller sayfa sonunda)"
+       }
+      ]
+     },
+     {
+      "term": "03 · Tenant izolasyonu",
+      "definition": [
+       {
+        "type": "text",
+        "text": "ORM zorunlu scope + Postgres RLS birlikte. Açık araştırma: RLS test stratejisi + bağlantı bağlamı yönetimi seçenekleri"
+       }
+      ]
+     },
+     {
+      "term": "04 · Async sınırı",
+      "definition": [
+       {
+        "type": "text",
+        "text": "FastAPI uçları async; iş mantığı sync saf fonksiyonlar — vibecoding hata alanını daraltır"
+       }
+      ]
+     },
+     {
+      "term": "05 · Kuyruk",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Varsayılan: Postgres-içi kuyruk (procrastinate/pgqueuer). Opsiyon: Celery+Redis — altyapıda gün-1 hazır, kurulumda seçilir"
+       }
+      ]
+     },
+     {
+      "term": "06 · Event bus",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Varsayılan: Outbox + Postgres polling; broker arayüz arkasında. Ölçek opsiyonu: Kafka / RabbitMQ adaptörleri"
+       }
+      ]
+     },
+     {
+      "term": "07 · API üretimi",
+      "definition": [
+       {
+        "type": "text",
+        "text": "REST + GraphQL gün-1. Varsayılan: GraphQL, FastAPI'nin bir endpoint'i; opsiyon: REST+OpenAPI kurulumda sorulur; ölçek opsiyonu: GraphQL ayrı servis (Shopify/GitHub deseni)"
+       }
+      ]
+     },
+     {
+      "term": "08 · Kimlik/SSO",
+      "definition": [
+       {
+        "type": "text",
+        "text": "kernel-identity kendi modeli + Authlib (OIDC/SAML) + gün-1 passkey"
+       }
+      ]
+     },
+     {
+      "term": "09 · Module yükleme",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Gün-1 WASM sandbox. UX çıtası: WordPress module'ü / Chrome extension kurmak kadar basit kurulum akışı"
+       }
+      ]
+     },
+     {
+      "term": "10 · SDK",
+      "definition": [
+       {
+        "type": "text",
+        "text": "sdk app create → DocType tanımı + test iskeleti + tipli client; AI yüzeyi yalnız YAML/JSON tanım + saf hook fonksiyonları"
+       }
+      ]
+     },
+     {
+      "term": "11 · AI-native",
+      "definition": [
+       {
+        "type": "text",
+        "text": "MCP kernel'in parçası — her Action otomatik MCP tool'u"
+       }
+      ]
+     },
+     {
+      "term": "12 · Takım zinciri",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Python 3.12+, uv, ruff, pyright strict, pytest; Pydantic v2 her sınırda"
+       }
+      ]
+     },
+     {
+      "term": "13 · Deploy",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Dört profil birinci sınıf: shared hosting (WP-basitliği) / self-host compose / müşterinin k8s-swarm'ı / bizim yönetilen bulut (odoo.sh-frappecloud-wordpress.com modeli) — ayrıntı: be-deploy-profilleri"
+       }
+      ]
+     },
+     {
+      "term": "14 · Lisans",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kernel AGPLv3 + CLA; SDK/client MIT; Editions ticari (open-core) — ayrıntı: sus-lisans"
+       }
+      ]
+     },
+     {
+      "term": "15 · Geriye uyumluluk",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Gün-1: tarih-versiyon + pinleme + named gate (Stripe deseni — 10 yıllık entegrasyon hâlâ çalışır)"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-be-kararlar-h-tamamlama-kararlari-e1-e9",
+    "type": "heading",
+    "level": 2,
+    "text": "Tamamlama Kararları (E1–E9)"
+   },
+   {
+    "id": "block-be-kararlar-kv-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "E1 · Yetkilendirme",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İki-düzlem: entitlement (Edition'dan beslenir) + ReBAC/ABAC tek PDP kapısından; motor arayüz arkasında"
+       }
+      ]
+     },
+     {
+      "term": "E2 · Observability",
+      "definition": [
+       {
+        "type": "text",
+        "text": "OTel SDK gün-1 (yapılandırılmış log + metrik + trace; tenant_id/correlation zorunlu). Developer-first: Grafana/ELK/OpenSearch/Sentry tamamen opsiyonel dış servis"
+       }
+      ]
+     },
+     {
+      "term": "E3 · Dosya depolama",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Varsayılan: yerel disk + rsync yedek. Gün-1 opsiyon: Kernel Storage sözleşmesi üzerinden S3-uyumlu (Hetzner Object Storage)"
+       }
+      ]
+     },
+     {
+      "term": "E4 · Arama",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Varsayılan: Postgres FTS (WordPress kadar basit). Gün-1 opsiyon: SearchProvider sözleşmesi + Meilisearch (outbox-beslemeli)"
+       }
+      ]
+     },
+     {
+      "term": "E5 · Yedek/DR",
+      "definition": [
+       {
+        "type": "text",
+        "text": "pgBackRest + WAL arşiv (PITR, anlık yedek esas) + off-site Storage Box + aylık restore tatbikatı (n8n). Tenant-bazlı restore senaryoları; kernel'de basit backup/export script'leri"
+       }
+      ]
+     },
+     {
+      "term": "E6 · Secrets",
+      "definition": [
+       {
+        "type": "text",
+        "text": "SOPS + age (git'te şifreli) + Actions secrets; tenant secret'ları DB'de zarf-şifreli (kernel sözleşmesi)"
+       }
+      ]
+     },
+     {
+      "term": "E7 · i18n",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Gün-1 kernel sözleşmesi: string externalization + ICU MessageFormat + CLDR; DocType'ta translatable alan tipi"
+       }
+      ]
+     },
+     {
+      "term": "E8 · Rate limit/metering",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Gün-1: Edition'dan beslenen kernel middleware + metering olayları outbox'a; faturalama faz-2. Sertlik ayarları admin panelinden esnek yönetilir"
+       }
+      ]
+     },
+     {
+      "term": "E9 · Veri yaşam döngüsü",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Gün-1: DocType'ta PII bayrağı + retention + "
+       },
+       {
+        "type": "term",
+        "text": "crypto-shredding",
+        "termId": "term-crypto-shredding-be-kararlar"
+       },
+       {
+        "type": "text",
+        "text": " ile unutulma hakkı (bitemporal'le barışık). Kapsam yalnız KVKK/GDPR değil: ABD, Avustralya, Kanada, Japonya, MENA, Asya rejimleri ilk günden planda (jurisdiction resolver deseni)"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-be-kararlar-h-acik-arastirma-sorulari",
+    "type": "heading",
+    "level": 2,
+    "text": "Açık Araştırma Soruları"
+   },
+   {
+    "id": "block-be-kararlar-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "02 — Migration review LLM'i",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Üretilen migration'ı kural-tabanlı lint + yerel mini-LLM ile review etme fikri araştırılacak. Aday modeller: Qwen2.5-Coder (7B/14B), DeepSeek-Coder-V2-Lite, Codestral-22B, Llama-3.1-8B-Instruct; koşum: Ollama/vLLM. İlke: LLM karar verici değil, ek gözden geçiren — deterministik kapılar (tip, test, kural) esastır."
+     }
+    ]
+   },
+   {
+    "id": "block-be-kararlar-co-2",
+    "type": "callout",
+    "variant": "warning",
+    "title": "03 — RLS test ve bağlantı bağlamı",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Seçenekler: (a) SET LOCAL app.tenant_id + transaction-scoped bağlam (pool-uyumlu, önerilen başlangıç); (b) SET ROLE tenant-rolü; (c) ayrı bağlantı havuzları. Test: pgTAP ile policy birim testleri + her DocType için 'komşu tenant okuyamaz' üretilmiş (generated) testler + CI'da RLS-kapalı kaçak taraması. Anomali için güvenlik-LLM'i ikincil sinyal — esas savunma deterministik politikalardır."
+     }
+    ]
+   }
+  ]
+ }
+}

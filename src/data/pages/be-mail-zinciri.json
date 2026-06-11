@@ -1,0 +1,192 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-be-mail-zinciri",
+  "sourceId": "be-mail-zinciri",
+  "slug": "backend/be-mail-zinciri",
+  "title": "Mail Provider Chain — Çalıştır ve Unut",
+  "summary": "WordPress-seviyesi 'kur ve çalışsın' mail katmanı: 7 katmanlı sağlayıcı zinciri, tek MailProvider sözleşmesi, kuyruklu telafi.",
+  "categoryId": "backend",
+  "tags": [
+   "backend",
+   "mail",
+   "provider-chain",
+   "dayaniklilik"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "wip",
+   "badge": "TASARIM"
+  },
+  "related": [
+   "page-be-kararlar",
+   "page-be-deploy-profilleri",
+   "page-s-mail",
+   "page-layer1-notification",
+   "page-scale-webhook"
+  ],
+  "blocks": [
+   {
+    "id": "block-be-mail-zinciri-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Mantık tek cümledir: mail gönder → Provider #1 başarısızsa #2 → #3… Zincir konfigürasyonla sıralanır; hiçbir katman zorunlu değildir. Shared hosting'de sendmail ile, kurumsalda SES/Resend ile aynı kod çalışır."
+     }
+    ]
+   },
+   {
+    "id": "block-be-mail-zinciri-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Hedef WordPress-seviyesi "
+     },
+     {
+      "type": "strong",
+      "text": "çalıştır ve unut"
+     },
+     {
+      "type": "text",
+      "text": ": kurulum hangi ortamda olursa olsun (cPanel shared hosting'den k8s cluster'a) mail ilk dakikadan akar. Bunu tek bir "
+     },
+     {
+      "type": "code",
+      "text": "MailProvider"
+     },
+     {
+      "type": "text",
+      "text": " sözleşmesi ve sıralı adaptör zinciri sağlar; başarısızlık zinciri aşağı iner, hiçbir katmanda mail sessizce kaybolmaz."
+     }
+    ]
+   },
+   {
+    "id": "block-be-mail-zinciri-h-yedi-katman",
+    "type": "heading",
+    "level": 2,
+    "text": "Yedi Katman"
+   },
+   {
+    "id": "block-be-mail-zinciri-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "1 · Yerel sunucu",
+      "definition": [
+       {
+        "type": "text",
+        "text": "sendmail / exim / postfix / localhost SMTP — en düşük maliyet; WordPress hosting'lerinin büyük kısmında hazır"
+       }
+      ]
+     },
+     {
+      "term": "2 · Kullanıcının SMTP'si",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Gmail SMTP, Microsoft 365, Zoho, kurumsal/hosting SMTP — müşteri kendi bilgisini girer"
+       }
+      ]
+     },
+     {
+      "term": "3 · Transactional API'ler",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Resend, SendGrid, Mailgun, Postmark, Amazon SES, Brevo, SparkPost, MailerSend, Elastic Email — API ile, SMTP'siz"
+       }
+      ]
+     },
+     {
+      "term": "4 · Cloud Mail API",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Gmail API, Microsoft Graph Mail — SMTP portları kapalıyken bile çalışır"
+       }
+      ]
+     },
+     {
+      "term": "5 · PHP Bridge",
+      "definition": [
+       {
+        "type": "text",
+        "text": "FastAPI → mail.php → PHP mail() — cPanel shared hosting kurtarıcısı; shared profilin (be-deploy-profilleri) tamamlayıcısı"
+       }
+      ]
+     },
+     {
+      "term": "6 · Kuyruk ve telafi",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Gönderilemedi → Postgres kuyruğu → 15 dk sonra tekrar — geçici SMTP kesintisinde mail kaybolmaz (outbox deseniyle aynı aile)"
+       }
+      ]
+     },
+     {
+      "term": "7 · Alternatif kanal",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mail tüm zincirde başarısızsa: SMS → WhatsApp → push → uygulama-içi bildirim (örn. doğrulama kodu) — layer1-notification'ın channel-agnostic sözleşmesi"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-be-mail-zinciri-h-sozlesme-ve-konfigurasyon",
+    "type": "heading",
+    "level": 2,
+    "text": "Sözleşme ve Konfigürasyon"
+   },
+   {
+    "id": "block-be-mail-zinciri-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Tüm adaptörler tek arayüzü uygular: "
+     },
+     {
+      "type": "code",
+      "text": "MailProvider.send(...)"
+     },
+     {
+      "type": "text",
+      "text": ". Adaptör seti: SendmailProvider, SMTPProvider, ResendProvider, SendGridProvider, MailgunProvider, SESProvider, GmailAPIProvider, GraphAPIProvider, PhpMailProvider. Zincir sırası config'tedir:"
+     }
+    ]
+   },
+   {
+    "id": "block-be-mail-zinciri-code",
+    "type": "codeBlock",
+    "title": "mail zinciri konfigürasyonu (sıra = deneme sırası)",
+    "language": "yaml",
+    "code": "mail:\n  providers:\n    - sendmail        # 1) önce yerelde dene\n    - smtp\n    - resend\n    - sendgrid\n    - mailgun\n    - phpmail         # 5) en son PHP bridge\n  retry:\n    queue: postgres\n    delay_minutes: 15\n  fallback_channels: [sms, whatsapp, push, in_app]",
+    "highlightedLines": [
+     3,
+     8
+    ]
+   },
+   {
+    "id": "block-be-mail-zinciri-co",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Varsayılan-basit ilkesi",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Varsayılan kurulumda zincir [sendmail → kullanıcı SMTP] ile başlar; API sağlayıcıları anahtar girilince zincire katılır. Sağlayıcı sağlığı (başarı oranı, gecikme) metering olaylarıyla izlenir; sıralama panelden değiştirilir."
+     }
+    ]
+   }
+  ]
+ }
+}

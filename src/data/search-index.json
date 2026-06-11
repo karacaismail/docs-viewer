@@ -20284,7 +20284,7 @@
    "blockId": "block-stack-editions-ozet",
    "blockType": "callout",
    "title": "Edition Kavramı — Stack Varyantları",
-   "text": "Edition, katalog taksonomisinin üçüncü kavramıdır: Stack satılabilir yatay paket (fonksiyonel olarak eksiksiz), Distribution sektör paketi (stack + config + içerik), Edition ise mevcut bir stack'in gelişmiş UI estetiği ve UX akışıyla paketlenmesidir — kod ve core module seti aynıdır. Ölçüt: Frappe HRMS fonksiyon olarak yeter ama BambooHR estetiğinde değildir; Edition tam bu farkı kapatır."
+   "text": "Katalog taksonomisi iç içe üç halkadır: Stack satılabilir yatay paket (fonksiyonel olarak eksiksiz); Edition mevcut stack'in gelişmiş UI estetiği ve UX akışıyla paketlenmesi (kod ve core module seti aynı); Distribution sektör paketi = Edition + sektör config'i + hazır içerik — sektöre giden paket, en gelişmiş deneyimle (edition katmanıyla) gider. Ölçüt: Frappe HRMS fonksiyon olarak yeter ama BambooHR estetiğinde değildir; Edition tam bu farkı kapatır."
   },
   {
    "id": "search-page-stack-editions-block-stack-editions-p",
@@ -20317,7 +20317,7 @@
    "blockId": "block-stack-editions-co",
    "blockType": "callout",
    "title": "Aday Edition'lar",
-   "text": "Distribution sektöre iner (stack + config + sektör içeriği), Edition aynı stack'i farklı pazarlama ambalajıyla sunar. İkisi de kernel'e ve modül koduna dokunmaz; fark dağıtım kanalındadır."
+   "text": "Halkalar iç içedir: Stack ⊂ Edition ⊂ Distribution. Edition aynı stack'i gelişmiş UI/UX ve pazarlama ambalajıyla sunar; Distribution sektöre iner ve edition + config + sektör içeriği toplamıdır — sektör paketi ham stack'le değil, edition-kalitesinde deneyimle teslim edilir. Hiçbiri kernel'e ve module koduna dokunmaz."
   },
   {
    "id": "search-page-stack-editions-block-stack-editions-co-2",
@@ -20749,6 +20749,138 @@
    "text": "WordPress'in 'plugin' ifadesi bu projede kullanılmaz; Drupal'ın 'module' ifadesi esastır. Kernel/core ayrımına dikkat: sistem geneli için core demek, app çekirdeği için kernel demek terminoloji hatasıdır."
   },
   {
+   "id": "search-page-be-kararlar-block-be-kararlar-ozet",
+   "kind": "block",
+   "pageId": "page-be-kararlar",
+   "pageTitle": "Backend Karar Defteri — 24/24",
+   "slug": "backend/be-kararlar",
+   "blockId": "block-be-kararlar-ozet",
+   "blockType": "callout",
+   "title": "Backend Karar Defteri — 24/24",
+   "text": "Yön veren ilke her kararda aynıdır: WordPress kadar basit varsayılan + Shopify kadar dayanıklı ölçek seçeneği. Varsayılan tek Postgres'te yaşar (kuyruk, arama, event dahil); ölçek isteyen Celery+Redis, Kafka/RabbitMQ, Meilisearch, S3, k8s'i adaptör olarak açar."
+  },
+  {
+   "id": "search-page-be-kararlar-block-be-kararlar-p",
+   "kind": "block",
+   "pageId": "page-be-kararlar",
+   "pageTitle": "Backend Karar Defteri — 24/24",
+   "slug": "backend/be-kararlar",
+   "blockId": "block-be-kararlar-p",
+   "blockType": "paragraph",
+   "title": "Backend Karar Defteri — 24/24",
+   "text": "Bu defter, backend karar raporunun 24/24 kararlaştırılmış halidir. Her satır bağlayıcıdır; revizyon ADR ister. Kullanıcı notları kararın parçasıdır ve *varsayılan/opsiyon* ayrımını tanımlar."
+  },
+  {
+   "id": "search-page-be-kararlar-block-be-kararlar-kv",
+   "kind": "block",
+   "pageId": "page-be-kararlar",
+   "pageTitle": "Backend Karar Defteri — 24/24",
+   "slug": "backend/be-kararlar",
+   "blockId": "block-be-kararlar-kv",
+   "blockType": "definitionList",
+   "title": "Çekirdek Kararlar (1–15)",
+   "text": "01 · ORM: SQLAlchemy 2.0 (Core+ORM); Pydantic v2 ayrı katman 02 · Migration: Alembic altyapı; migration'ı DocType diff'i üretir. Açık araştırma: üretilen migration'ı review eden yerel mini-LLM kapısı (aday modeller sayfa sonunda) 03 · Tenant izolasyonu: ORM zorunlu scope + Postgres RLS birlikte. Açık araştırma: RLS test stratejisi + bağlantı bağlamı yönetimi seçenekleri 04 · Async sınırı: FastAPI uçları async; iş mantığı sync saf fonksiyonlar — vibecoding hata alanını daraltır 05 · Kuyruk: Varsayılan: Postgres-içi kuyruk (procrastinate/pgqueuer). Opsiyon: Celery+Redis — altyapıda gün-1 hazır, kurulumda seçilir 06 · Event bus: Varsayılan: Outbox + Postgres polling; broker arayüz arkasında. Ölçek opsiyonu: Kafka / RabbitMQ adaptörleri 07 · API üretimi: REST + GraphQL gün-1. Varsayılan: Graph"
+  },
+  {
+   "id": "search-page-be-kararlar-block-be-kararlar-kv-2",
+   "kind": "block",
+   "pageId": "page-be-kararlar",
+   "pageTitle": "Backend Karar Defteri — 24/24",
+   "slug": "backend/be-kararlar",
+   "blockId": "block-be-kararlar-kv-2",
+   "blockType": "definitionList",
+   "title": "Tamamlama Kararları (E1–E9)",
+   "text": "E1 · Yetkilendirme: İki-düzlem: entitlement (Edition'dan beslenir) + ReBAC/ABAC tek PDP kapısından; motor arayüz arkasında E2 · Observability: OTel SDK gün-1 (yapılandırılmış log + metrik + trace; tenant_id/correlation zorunlu). Developer-first: Grafana/ELK/OpenSearch/Sentry tamamen opsiyonel dış servis E3 · Dosya depolama: Varsayılan: yerel disk + rsync yedek. Gün-1 opsiyon: Kernel Storage sözleşmesi üzerinden S3-uyumlu (Hetzner Object Storage) E4 · Arama: Varsayılan: Postgres FTS (WordPress kadar basit). Gün-1 opsiyon: SearchProvider sözleşmesi + Meilisearch (outbox-beslemeli) E5 · Yedek/DR: pgBackRest + WAL arşiv (PITR, anlık yedek esas) + off-site Storage Box + aylık restore tatbikatı (n8n). Tenant-bazlı restore senaryoları; kernel'de basit backup/export script'leri E6 · Secrets: SOPS "
+  },
+  {
+   "id": "search-page-be-kararlar-block-be-kararlar-co",
+   "kind": "block",
+   "pageId": "page-be-kararlar",
+   "pageTitle": "Backend Karar Defteri — 24/24",
+   "slug": "backend/be-kararlar",
+   "blockId": "block-be-kararlar-co",
+   "blockType": "callout",
+   "title": "Açık Araştırma Soruları",
+   "text": "Üretilen migration'ı kural-tabanlı lint + yerel mini-LLM ile review etme fikri araştırılacak. Aday modeller: Qwen2.5-Coder (7B/14B), DeepSeek-Coder-V2-Lite, Codestral-22B, Llama-3.1-8B-Instruct; koşum: Ollama/vLLM. İlke: LLM karar verici değil, ek gözden geçiren — deterministik kapılar (tip, test, kural) esastır."
+  },
+  {
+   "id": "search-page-be-kararlar-block-be-kararlar-co-2",
+   "kind": "block",
+   "pageId": "page-be-kararlar",
+   "pageTitle": "Backend Karar Defteri — 24/24",
+   "slug": "backend/be-kararlar",
+   "blockId": "block-be-kararlar-co-2",
+   "blockType": "callout",
+   "title": "Açık Araştırma Soruları",
+   "text": "Seçenekler: (a) SET LOCAL app.tenant_id + transaction-scoped bağlam (pool-uyumlu, önerilen başlangıç); (b) SET ROLE tenant-rolü; (c) ayrı bağlantı havuzları. Test: pgTAP ile policy birim testleri + her DocType için 'komşu tenant okuyamaz' üretilmiş (generated) testler + CI'da RLS-kapalı kaçak taraması. Anomali için güvenlik-LLM'i ikincil sinyal — esas savunma deterministik politikalardır."
+  },
+  {
+   "id": "search-page-be-mail-zinciri-block-be-mail-zinciri-ozet",
+   "kind": "block",
+   "pageId": "page-be-mail-zinciri",
+   "pageTitle": "Mail Provider Chain — Çalıştır ve Unut",
+   "slug": "backend/be-mail-zinciri",
+   "blockId": "block-be-mail-zinciri-ozet",
+   "blockType": "callout",
+   "title": "Mail Provider Chain — Çalıştır ve Unut",
+   "text": "Mantık tek cümledir: mail gönder → Provider #1 başarısızsa #2 → #3… Zincir konfigürasyonla sıralanır; hiçbir katman zorunlu değildir. Shared hosting'de sendmail ile, kurumsalda SES/Resend ile aynı kod çalışır."
+  },
+  {
+   "id": "search-page-be-mail-zinciri-block-be-mail-zinciri-p",
+   "kind": "block",
+   "pageId": "page-be-mail-zinciri",
+   "pageTitle": "Mail Provider Chain — Çalıştır ve Unut",
+   "slug": "backend/be-mail-zinciri",
+   "blockId": "block-be-mail-zinciri-p",
+   "blockType": "paragraph",
+   "title": "Mail Provider Chain — Çalıştır ve Unut",
+   "text": "Hedef WordPress-seviyesi çalıştır ve unut: kurulum hangi ortamda olursa olsun (cPanel shared hosting'den k8s cluster'a) mail ilk dakikadan akar. Bunu tek bir MailProvider sözleşmesi ve sıralı adaptör zinciri sağlar; başarısızlık zinciri aşağı iner, hiçbir katmanda mail sessizce kaybolmaz."
+  },
+  {
+   "id": "search-page-be-mail-zinciri-block-be-mail-zinciri-kv",
+   "kind": "block",
+   "pageId": "page-be-mail-zinciri",
+   "pageTitle": "Mail Provider Chain — Çalıştır ve Unut",
+   "slug": "backend/be-mail-zinciri",
+   "blockId": "block-be-mail-zinciri-kv",
+   "blockType": "definitionList",
+   "title": "Yedi Katman",
+   "text": "1 · Yerel sunucu: sendmail / exim / postfix / localhost SMTP — en düşük maliyet; WordPress hosting'lerinin büyük kısmında hazır 2 · Kullanıcının SMTP'si: Gmail SMTP, Microsoft 365, Zoho, kurumsal/hosting SMTP — müşteri kendi bilgisini girer 3 · Transactional API'ler: Resend, SendGrid, Mailgun, Postmark, Amazon SES, Brevo, SparkPost, MailerSend, Elastic Email — API ile, SMTP'siz 4 · Cloud Mail API: Gmail API, Microsoft Graph Mail — SMTP portları kapalıyken bile çalışır 5 · PHP Bridge: FastAPI → mail.php → PHP mail() — cPanel shared hosting kurtarıcısı; shared profilin (be-deploy-profilleri) tamamlayıcısı 6 · Kuyruk ve telafi: Gönderilemedi → Postgres kuyruğu → 15 dk sonra tekrar — geçici SMTP kesintisinde mail kaybolmaz (outbox deseniyle aynı aile) 7 · Alternatif kanal: Mail tüm zincirde ba"
+  },
+  {
+   "id": "search-page-be-mail-zinciri-block-be-mail-zinciri-p-2",
+   "kind": "block",
+   "pageId": "page-be-mail-zinciri",
+   "pageTitle": "Mail Provider Chain — Çalıştır ve Unut",
+   "slug": "backend/be-mail-zinciri",
+   "blockId": "block-be-mail-zinciri-p-2",
+   "blockType": "paragraph",
+   "title": "Sözleşme ve Konfigürasyon",
+   "text": "Tüm adaptörler tek arayüzü uygular: MailProvider.send(...). Adaptör seti: SendmailProvider, SMTPProvider, ResendProvider, SendGridProvider, MailgunProvider, SESProvider, GmailAPIProvider, GraphAPIProvider, PhpMailProvider. Zincir sırası config'tedir:"
+  },
+  {
+   "id": "search-page-be-mail-zinciri-block-be-mail-zinciri-code",
+   "kind": "block",
+   "pageId": "page-be-mail-zinciri",
+   "pageTitle": "Mail Provider Chain — Çalıştır ve Unut",
+   "slug": "backend/be-mail-zinciri",
+   "blockId": "block-be-mail-zinciri-code",
+   "blockType": "codeBlock",
+   "title": "Sözleşme ve Konfigürasyon",
+   "text": "mail zinciri konfigürasyonu (sıra = deneme sırası) mail: providers: - sendmail # 1) önce yerelde dene - smtp - resend - sendgrid - mailgun - phpmail # 5) en son PHP bridge retry: queue: postgres delay_minutes: 15 fallback_channels: [sms, whatsapp, push, in_app]"
+  },
+  {
+   "id": "search-page-be-mail-zinciri-block-be-mail-zinciri-co",
+   "kind": "block",
+   "pageId": "page-be-mail-zinciri",
+   "pageTitle": "Mail Provider Chain — Çalıştır ve Unut",
+   "slug": "backend/be-mail-zinciri",
+   "blockId": "block-be-mail-zinciri-co",
+   "blockType": "callout",
+   "title": "Sözleşme ve Konfigürasyon",
+   "text": "Varsayılan kurulumda zincir [sendmail → kullanıcı SMTP] ile başlar; API sağlayıcıları anahtar girilince zincire katılır. Sağlayıcı sağlığı (başarı oranı, gecikme) metering olaylarıyla izlenir; sıralama panelden değiştirilir."
+  },
+  {
    "id": "search-page-stack-commerce-block-stack-commerce-ozet",
    "kind": "block",
    "pageId": "page-stack-commerce",
@@ -20857,6 +20989,138 @@
    "blockType": "definitionList",
    "title": "Bu konu yedi soruda",
    "text": "Ne?: E-ticaret modülü: ürün katalog, sepet, ödeme, sipariş takip, kargo, iade — bir online mağazanın bütün parçaları bir arada. Niçin?: Türkiye'de e-ticaret sitesi açmak isteyen müşteri, sıfırdan yazılım yazmak yerine bu modülü açar, ürünlerini ekler, başlar. Nasıl?: Müşteri ürün listesini açar → sepete ekler → ödeme bilgisi girer → sipariş onaylanır → kargo bilgisi gelir → ürün teslim alınır. Nerede?: Müşterinin görüştüğü tüm e-ticaret arayüzleri + arka plandaki sipariş/envanter yönetimi. Ne zaman?: İşletmenin internet üzerinden satış yapmaya başladığı anda. Kim?: Tüccar ürünlerini ekler; müşteri alışveriş yapar; kargo firmaları teslimat yapar; muhasebe satışları kaydeder. Analoji: Bir kırtasiyenin internet üzerinden satış başlatması: aynı mağazaya bir dijital kapı eklemek gibi. Vitrin, k"
+  },
+  {
+   "id": "search-page-be-deploy-profilleri-block-be-deploy-profilleri-ozet",
+   "kind": "block",
+   "pageId": "page-be-deploy-profilleri",
+   "pageTitle": "Deploy Profilleri ve Entegrasyon Matrisi",
+   "slug": "backend/be-deploy-profilleri",
+   "blockId": "block-be-deploy-profilleri-ozet",
+   "blockType": "callout",
+   "title": "Deploy Profilleri ve Entegrasyon Matrisi",
+   "text": "Aynı kod dört profilde koşar: shared hosting'e WordPress gibi adım adım kurulur; compose ile self-host edilir; müşterinin k8s/swarm cluster'ına ölçeklenir; bizim yönetilen bulutta (odoo.sh / Frappe Cloud / wordpress.com / Acquia modeli) hizmet olarak satılır."
+  },
+  {
+   "id": "search-page-be-deploy-profilleri-block-be-deploy-profilleri-kv",
+   "kind": "block",
+   "pageId": "page-be-deploy-profilleri",
+   "pageTitle": "Deploy Profilleri ve Entegrasyon Matrisi",
+   "slug": "backend/be-deploy-profilleri",
+   "blockId": "block-be-deploy-profilleri-kv",
+   "blockType": "definitionList",
+   "title": "Dört Profil",
+   "text": "P1 · Shared hosting: WordPress-tarzı adım adım kurulum sihirbazı; tek Postgres, Postgres-içi kuyruk/arama, yerel disk, mail zinciri katman 1-2-5. Hedef: cPanel'li basit hosting'de çalışan tam ürün P2 · Self-host compose: docker compose + GitHub Actions imaj akışı (be-kararlar 13); Hetzner/Debian tek sunucu ilk 3 app'i taşır P3 · Müşteri cluster'ı: Kubernetes / Docker Swarm; Redis cluster, Celery worker'lar, ayrı GraphQL servisi, Kafka/RabbitMQ — tüm ölçek adaptörleri burada açılır; AWS/GCP dahil P4 · Yönetilen bulut: Bizim ekosistemimizde hosting (odoo.sh / Frappe Cloud / wordpress.com / Acquia deseni): tam teşekküllü hizmet + Editions satışının doğal kanalı"
+  },
+  {
+   "id": "search-page-be-deploy-profilleri-block-be-deploy-profilleri-kv-2",
+   "kind": "block",
+   "pageId": "page-be-deploy-profilleri",
+   "pageTitle": "Deploy Profilleri ve Entegrasyon Matrisi",
+   "slug": "backend/be-deploy-profilleri",
+   "blockId": "block-be-deploy-profilleri-kv-2",
+   "blockType": "definitionList",
+   "title": "Entegrasyon Matrisi — hepsi opsiyonel adaptör",
+   "text": "Observability: ELK / OpenSearch / Grafana-LGTM / Sentry — OTel çıkışına takılır (E2: developer-first, production'da opsiyonel) Depolama: S3-uyumlu (Hetzner Object Storage, AWS S3) — Kernel Storage sözleşmesi (E3); varsayılan yerel disk + rsync Mail: Mailgun, SendGrid, Resend, SES… — be-mail-zinciri sıralı sağlayıcıları DNS: PowerDNS (self-host), Route 53, Cloudflare DNS — DnsProvider sözleşmesi; s-mail ürününün de altyapısı LLM: Claude/Anthropic, ChatGPT/OpenAI, Gemini, Llama (yerel) — AI katmanı (be-kararlar 11) sağlayıcı-bağımsız LlmProvider sözleşmesiyle konuşur Kuyruk/Event ölçeği: Celery+Redis (05), Kafka/RabbitMQ (06) — varsayılan Postgres'ten ölçeğe terfi yolları"
+  },
+  {
+   "id": "search-page-be-deploy-profilleri-block-be-deploy-profilleri-co",
+   "kind": "block",
+   "pageId": "page-be-deploy-profilleri",
+   "pageTitle": "Deploy Profilleri ve Entegrasyon Matrisi",
+   "slug": "backend/be-deploy-profilleri",
+   "blockId": "block-be-deploy-profilleri-co",
+   "blockType": "callout",
+   "title": "Dayanıklılık ve Upgrade Felsefesi",
+   "text": "WordPress gibi yüksek trafik altında kırılgan değil, Shopify gibi dayanıklı: kernel ve core yapıları ölçeğe dayanıklı tasarlanır (scale primitives gün-1), profil yükseltmek (P1→P3) kod değişikliği değil konfigürasyon terfisidir."
+  },
+  {
+   "id": "search-page-be-deploy-profilleri-block-be-deploy-profilleri-co-2",
+   "kind": "block",
+   "pageId": "page-be-deploy-profilleri",
+   "pageTitle": "Deploy Profilleri ve Entegrasyon Matrisi",
+   "slug": "backend/be-deploy-profilleri",
+   "blockId": "block-be-deploy-profilleri-co-2",
+   "blockType": "callout",
+   "title": "Dayanıklılık ve Upgrade Felsefesi",
+   "text": "Drupal'ın major-sürüm acısı (6→7→8) yaşatılmaz: Stripe gibi tarih-versiyonlu geriye dönük API (be-kararlar 15, sus-versioning), Linux gibi 'kullanıcıyı kırma' anayasası (sus-bc-policy) ve WordPress gibi kullanıcıyı merkeze alan otomatik küçük güncellemeler — major değişiklik named gate + codemod ile gelir, kullanıcıya taşınma yükü yıkılmaz."
+  },
+  {
+   "id": "search-page-sus-lisans-block-sus-lisans-ozet",
+   "kind": "block",
+   "pageId": "page-sus-lisans",
+   "pageTitle": "Lisans Mimarisi — AGPL Kernel + MIT SDK + CLA",
+   "slug": "sus/sus-lisans",
+   "blockId": "block-sus-lisans-ozet",
+   "blockType": "callout",
+   "title": "Lisans Mimarisi — AGPL Kernel + MIT SDK + CLA",
+   "text": "Karar 14'ün tam mimarisi: Kernel AGPLv3 + CLA; SDK/istemci MIT (tek entegrasyon yüzeyi); resmi module'ler AGPL; üçüncü-parti pazaryeri module'leri kademeli (MIT SDK'ya karşı yazılan her lisansı seçebilir — proprietary dahil); Editions ticari. Tek başına AGPL yetmez: CLA dual-licensing gücünü, MIT-SDK sınırı türev-eser belirsizliğini, ToS+marka katmanı birinci-parti pazaryeri ayrıcalığını verir."
+  },
+  {
+   "id": "search-page-sus-lisans-block-sus-lisans-kv",
+   "kind": "block",
+   "pageId": "page-sus-lisans",
+   "pageTitle": "Lisans Mimarisi — AGPL Kernel + MIT SDK + CLA",
+   "slug": "sus/sus-lisans",
+   "blockId": "block-sus-lisans-kv",
+   "blockType": "definitionList",
+   "title": "Katman Tablosu",
+   "text": "Kernel: AGPLv3 + CLA — bulut-devi koruması (Grafana modeli) + gelecekteki dual-licensing gücü SDK / istemciler: MIT — kurumsal AGPL çekincesini hafifletir; üçüncü-parti module'lerin tek entegrasyon yüzeyi Resmi module'ler: AGPLv3 — çekirdekle tutarlılık 3. parti pazaryeri: Kademeli: MIT SDK'ya karşı yazılan module her lisansı seçebilir (proprietary dahil — Odoo OEEL deseni); kernel'i değiştiren AGPL'e tabidir Editions: Ticari lisans (CLA sayesinde) — open-core hattı Edition sınırından geçer; gelir yakalama buradadır"
+  },
+  {
+   "id": "search-page-sus-lisans-block-sus-lisans-kv-2",
+   "kind": "block",
+   "pageId": "page-sus-lisans",
+   "pageTitle": "Lisans Mimarisi — AGPL Kernel + MIT SDK + CLA",
+   "slug": "sus/sus-lisans",
+   "blockId": "block-sus-lisans-kv-2",
+   "blockType": "definitionList",
+   "title": "Vaka Dersleri",
+   "text": "Grafana (2021): Apache→AGPL geçişi çatallanmasız başarıldı — doğru yol kanıtı Elastic / Redis / HashiCorp / MongoDB: OSI-dışı lisansa kaçış (SSPL/BUSL) → OpenSearch, Valkey, OpenTofu çatalları; Elastic ve Redis sonunda AGPL'e döndü — sonradan sıkılaştırma krizdir WordPress / Envato / WP Engine: Türev-eser belirsizliği 20 yıl sürdü; Envato split-license boşluğundan beslendi; WP Engine krizi marka katmanından çıktı. Ders: belirsizliği mimariyle (MIT-SDK sınırı) ve marka/ToS katmanıyla baştan kapat Odoo (LGPL geçişi): AGPL→LGPL'i App Store'u mümkün kılmak için yaptı; OEEL module'lere 'LGPL/MIT/proprietary' seçme hakkı verir — pazaryeri lisans şablonumuzun modeli"
+  },
+  {
+   "id": "search-page-sus-lisans-block-sus-lisans-co",
+   "kind": "block",
+   "pageId": "page-sus-lisans",
+   "pageTitle": "Lisans Mimarisi — AGPL Kernel + MIT SDK + CLA",
+   "slug": "sus/sus-lisans",
+   "blockId": "block-sus-lisans-co",
+   "blockType": "callout",
+   "title": "Vaka Dersleri",
+   "text": "Commons Clause tipi 'sell yasağı' rider'ları (Redis 2018 tepkisi); SSPL/BUSL ile başlamak (OSI-dışı = çatallanma); WordPress-tipi belirsiz türev pozisyonu; uyarısız ani lisans değişikliği. Hiçbiri bu projede kullanılmaz."
+  },
+  {
+   "id": "search-page-sus-lisans-block-sus-lisans-co-2",
+   "kind": "block",
+   "pageId": "page-sus-lisans",
+   "pageTitle": "Lisans Mimarisi — AGPL Kernel + MIT SDK + CLA",
+   "slug": "sus/sus-lisans",
+   "blockId": "block-sus-lisans-co-2",
+   "blockType": "callout",
+   "title": "Vaka Dersleri",
+   "text": "Copyleft FSEK üzerinden teorik olarak sağlam (m.21-25 mali haklar; Berne/TRIPS tarafıyız); GPL'e özgü TR içtihadı yok — Almanya (Welte/Sitecom-D-Link) ve Fransa (Entr'ouvert v Orange, ~€860K, 2024) ikna edici emsal. Açık risk: FSEK m.52 yazılı-şekil şartının click-through lisansla ilişkisi test edilmemiş — lisans kabul akışı (elektronik kabul + hakların ayrı ayrı gösterimi) hukukçuyla sağlamlaştırılmalı."
+  },
+  {
+   "id": "search-page-sus-lisans-block-sus-lisans-steps",
+   "kind": "block",
+   "pageId": "page-sus-lisans",
+   "pageTitle": "Lisans Mimarisi — AGPL Kernel + MIT SDK + CLA",
+   "slug": "sus/sus-lisans",
+   "blockId": "block-sus-lisans-steps",
+   "blockType": "stepList",
+   "title": "Uygulama Aşamaları",
+   "text": "Repo halka açılmadan ÖNCE (geri alınamaz) Kernel AGPLv3; Apache-tabanlı CLA tüm katkıcılardan; SDK MIT ayrı paket; MIT-SDK'yı tek entegrasyon yüzeyi yapan teknik sınır mimaride net Pazaryeri lansmanı Odoo OEEL-tarzı module lisans şablonu; birinci-parti pazaryeri ToS + revenue-share (Shopify modeli — ayrıcalık sözleşmeyle, kod lisansıyla değil); marka şartları yalnız lisans-içi Güven inşası KDE Free Qt tarzı geri-açılma garantisi yayımla: 'AGPL sürümü terk edilirse kod BSD/Apache altında serbest kalır'"
+  },
+  {
+   "id": "search-page-sus-lisans-block-sus-lisans-co-3",
+   "kind": "block",
+   "pageId": "page-sus-lisans",
+   "pageTitle": "Lisans Mimarisi — AGPL Kernel + MIT SDK + CLA",
+   "slug": "sus/sus-lisans",
+   "blockId": "block-sus-lisans-co-3",
+   "blockType": "callout",
+   "title": "Uygulama Aşamaları",
+   "text": "Kurumsal benimseme AGPL nedeniyle ölçülebilir engelleniyorsa → dual-licensing'i öne çıkar, AGPL'i asla kaldırma. Parazit pazaryeri çıkarsa → AGPL ağ-copyleft + marka ToS; gerekirse Editions sınırını yeniden çiz. TR'de enforcement gerekirse → m.52 riskini önceden kapat."
   },
   {
    "id": "search-page-stack-accounting-block-stack-accounting-ozet",
@@ -34477,6 +34741,39 @@
    "text": "SDK App ve module geliştirme kiti: DocType tanımından tipli iskelet üretir; vibecoding-uyumlu — AI'ın doğru kod üreteceği dar, tipli yüzey. App ve module geliştirme kiti: DocType tanımından tipli iskelet üretir; vibecoding-uyumlu — AI'ın doğru kod üreteceği dar, tipli yüzey.\n\nApp geliştirecek kişi SDK ile geliştirir; SDK'nın tipli sözleşmeleri hem insanın hem AI'ın hata alanını daraltır.\n\nBu sayfada SDK, app üretiminin kapısıdır: DocType tanımından tipli iskelet üretir; vibecoding-uyumluluk tasarım hedefidir — AI'ın (ve jr-öncesi geliştiricinin) hata alanını tipli dar yüzey daraltır."
   },
   {
+   "id": "search-term-term-varsayilan-basit-ilkesi-be-kararlar",
+   "kind": "term",
+   "pageId": "page-be-kararlar",
+   "pageTitle": "Backend Karar Defteri — 24/24",
+   "slug": "backend/be-kararlar",
+   "blockId": "",
+   "blockType": "term",
+   "title": "Varsayılan-basit ilkesi",
+   "text": "Varsayılan-basit ilkesi Her altyapı kararında varsayılanın tek Postgres + tek süreçte çalışması; ölçek bileşenlerinin (Redis, Kafka, S3, k8s) opsiyonel adaptör olması. Her altyapı kararında varsayılanın tek Postgres + tek süreçte çalışması; ölçek bileşenlerinin (Redis, Kafka, S3, k8s) opsiyonel adaptör olması.\n\nWordPress'in benimsenme gücü kurulum basitliğinden gelir; Shopify'ın güveni dayanıklılıktan. İkisini aynı anda istemek çelişki değildir — varsayılan basit kurulur, sözleşmeler ölçek bileşenlerini ilk günden takılabilir kılar."
+  },
+  {
+   "id": "search-term-term-crypto-shredding-be-kararlar",
+   "kind": "term",
+   "pageId": "page-be-kararlar",
+   "pageTitle": "Backend Karar Defteri — 24/24",
+   "slug": "backend/be-kararlar",
+   "blockId": "",
+   "blockType": "term",
+   "title": "Crypto-shredding",
+   "text": "Crypto-shredding PII'nın tenant/kayıt-başına anahtarla şifrelenmesi; unutulma hakkında verinin değil anahtarın imha edilmesi. PII'nın tenant/kayıt-başına anahtarla şifrelenmesi; unutulma hakkında verinin değil anahtarın imha edilmesi.\n\nBitemporal 'geçmiş silinmez' ilkesi ile KVKK/GDPR 'silinme hakkı' geriliminin barışık çözümü: kayıt iskeleti denetim için kalır, kişisel içerik anahtar yok edilince matematiksel olarak okunamaz olur."
+  },
+  {
+   "id": "search-term-term-provider-chain-be-mail-zinciri",
+   "kind": "term",
+   "pageId": "page-be-mail-zinciri",
+   "pageTitle": "Mail Provider Chain — Çalıştır ve Unut",
+   "slug": "backend/be-mail-zinciri",
+   "blockId": "",
+   "blockType": "term",
+   "title": "Provider Chain",
+   "text": "Provider Chain Aynı işin (mail gönderimi) sıralı sağlayıcı listesiyle denenmesi: biri başarısız olursa zincirdeki sonraki devralır; sıra konfigürasyondur. Aynı işin (mail gönderimi) sıralı sağlayıcı listesiyle denenmesi: biri başarısız olursa zincirdeki sonraki devralır; sıra konfigürasyondur.\n\nWordPress'in 'her hosting'de çalışır' gücü tek sağlayıcıya yaslanmamasından gelir. Zincir, en ucuz yerel kanaldan kurumsal API'lere kadar tüm ortamları tek sözleşmeyle kapsar ve geçici kesintide mail kaybetmez."
+  },
+  {
    "id": "search-term-term-cluster-stack-commerce",
    "kind": "term",
    "pageId": "page-stack-commerce",
@@ -34486,6 +34783,50 @@
    "blockType": "term",
    "title": "Cluster",
    "text": "Cluster Bu döküman birimi — kendi başına okunabilir mimari konu. Bu döküman birimi — kendi başına okunabilir mimari konu.\n\nTek dosyada tek bağımsız konu prensibi. Türkçesi: Konu kümesi."
+  },
+  {
+   "id": "search-term-term-deploy-profili-be-deploy-profilleri",
+   "kind": "term",
+   "pageId": "page-be-deploy-profilleri",
+   "pageTitle": "Deploy Profilleri ve Entegrasyon Matrisi",
+   "slug": "backend/be-deploy-profilleri",
+   "blockId": "",
+   "blockType": "term",
+   "title": "Deploy profili",
+   "text": "Deploy profili Aynı kod tabanının hedef ortama göre paketlenmiş kurulum yolu: shared / compose / cluster / managed — dördü de birinci sınıf desteklenir. Aynı kod tabanının hedef ortama göre paketlenmiş kurulum yolu: shared / compose / cluster / managed — dördü de birinci sınıf desteklenir.\n\nWordPress'i devleştiren şey shared hosting'e kurulabilmesi, Shopify'ı devleştiren şey yüksek trafikte dayanması ve odoo.sh/Frappe Cloud'u gelir yapan şey yönetilen hizmettir; üç gücü tek üründe birleştirmenin yolu profilleri ürünün parçası saymaktır, dağıtım detayı değil."
+  },
+  {
+   "id": "search-term-term-cla-sus-lisans",
+   "kind": "term",
+   "pageId": "page-sus-lisans",
+   "pageTitle": "Lisans Mimarisi — AGPL Kernel + MIT SDK + CLA",
+   "slug": "sus/sus-lisans",
+   "blockId": "",
+   "blockType": "term",
+   "title": "CLA",
+   "text": "CLA Contributor License Agreement — katkıcının telif haklarını projeye lisanslayan sözleşme; relisanslama ve dual-licensing gücünün tek yasal anahtarı. Contributor License Agreement — katkıcının telif haklarını projeye lisanslayan sözleşme; relisanslama ve dual-licensing gücünün tek yasal anahtarı.\n\nMySQL/Qt modeli ancak %100 telif konsolidasyonuyla çalışır; DCO bunu sağlamaz. CLA olmadan ticari Edition lisansı satılamaz ve gelecekte lisans revizyonu topluluk onayına mahkûm olur — Grafana Apache-tabanlı CLA ile AGPL'e çatallanmasız geçebildi."
+  },
+  {
+   "id": "search-term-term-api-boundary-stratejisi-sus-lisans",
+   "kind": "term",
+   "pageId": "page-sus-lisans",
+   "pageTitle": "Lisans Mimarisi — AGPL Kernel + MIT SDK + CLA",
+   "slug": "sus/sus-lisans",
+   "blockId": "",
+   "blockType": "term",
+   "title": "API-boundary stratejisi",
+   "text": "API-boundary stratejisi MIT lisanslı SDK'yı üçüncü-parti module'lerin tek entegrasyon yüzeyi yapmak: SDK'ya karşı yazılan module AGPL kernel'in türevi sayılmaz, kendi lisansını seçer. MIT lisanslı SDK'yı üçüncü-parti module'lerin tek entegrasyon yüzeyi yapmak: SDK'ya karşı yazılan module AGPL kernel'in türevi sayılmaz, kendi lisansını seçer.\n\nWordPress'in 20 yıllık 'eklenti türev mi' belirsizliği (Thesis davası, Envato split-license) lisans metniyle değil mimariyle çözülür: sınır teknik olarak nettir — kernel'e dokunan AGPL'dir, SDK'ya karşı yazan özgürdür. Odoo'nun LGPL+OEEL ikilisi aynı mantığın kanıtlanmış halidir."
+  },
+  {
+   "id": "search-term-term-geri-acilma-garantisi-sus-lisans",
+   "kind": "term",
+   "pageId": "page-sus-lisans",
+   "pageTitle": "Lisans Mimarisi — AGPL Kernel + MIT SDK + CLA",
+   "slug": "sus/sus-lisans",
+   "blockId": "",
+   "blockType": "term",
+   "title": "Geri açılma garantisi",
+   "text": "Geri açılma garantisi KDE Free Qt Foundation modeli: şirket özgür sürümü terk ederse kodun otomatik olarak permissive lisans (BSD/Apache) altında serbest kalması taahhüdü. KDE Free Qt Foundation modeli: şirket özgür sürümü terk ederse kodun otomatik olarak permissive lisans (BSD/Apache) altında serbest kalması taahhüdü.\n\nAGPL+CLA'nın yarattığı 'şirket gücü' endişesini dengeler: topluluk 'asla kapatılamaz' güvencesi alır, çatallanma motivasyonu düşer. Qt bu garantiyle 25+ yıldır hem ticari hem özgür yaşıyor."
   },
   {
    "id": "search-term-term-cluster-stack-accounting",

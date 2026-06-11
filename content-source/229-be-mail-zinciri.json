@@ -1,0 +1,103 @@
+{
+ "id": "be-mail-zinciri",
+ "title": "Mail Provider Chain — Çalıştır ve Unut",
+ "subtitle": "WordPress-seviyesi 'kur ve çalışsın' mail katmanı: 7 katmanlı sağlayıcı zinciri, tek MailProvider sözleşmesi, kuyruklu telafi.",
+ "cluster": "backend",
+ "order": 1,
+ "icon": "ph-envelope-simple",
+ "granularity": "kaya",
+ "state": "wip",
+ "badge": "TASARIM",
+ "tags": [
+  "backend",
+  "mail",
+  "provider-chain",
+  "dayaniklilik"
+ ],
+ "related": [
+  "be-kararlar",
+  "be-deploy-profilleri",
+  "s-mail",
+  "layer1-notification",
+  "scale-webhook"
+ ],
+ "enrich": {
+  "info": "Mantık tek cümledir: mail gönder → Provider #1 başarısızsa #2 → #3… Zincir konfigürasyonla sıralanır; hiçbir katman zorunlu değildir. Shared hosting'de sendmail ile, kurumsalda SES/Resend ile aynı kod çalışır.",
+  "terms": [
+   {
+    "term": "Provider Chain",
+    "meaning": "Aynı işin (mail gönderimi) sıralı sağlayıcı listesiyle denenmesi: biri başarısız olursa zincirdeki sonraki devralır; sıra konfigürasyondur.",
+    "why": "WordPress'in 'her hosting'de çalışır' gücü tek sağlayıcıya yaslanmamasından gelir. Zincir, en ucuz yerel kanaldan kurumsal API'lere kadar tüm ortamları tek sözleşmeyle kapsar ve geçici kesintide mail kaybetmez."
+   }
+  ]
+ },
+ "blocks": [
+  {
+   "type": "paragraph",
+   "text": "Hedef WordPress-seviyesi **çalıştır ve unut**: kurulum hangi ortamda olursa olsun (cPanel shared hosting'den k8s cluster'a) mail ilk dakikadan akar. Bunu tek bir `MailProvider` sözleşmesi ve sıralı adaptör zinciri sağlar; başarısızlık zinciri aşağı iner, hiçbir katmanda mail sessizce kaybolmaz."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Yedi Katman"
+  },
+  {
+   "type": "kv-row",
+   "pairs": [
+    {
+     "key": "1 · Yerel sunucu",
+     "value": "sendmail / exim / postfix / localhost SMTP — en düşük maliyet; WordPress hosting'lerinin büyük kısmında hazır"
+    },
+    {
+     "key": "2 · Kullanıcının SMTP'si",
+     "value": "Gmail SMTP, Microsoft 365, Zoho, kurumsal/hosting SMTP — müşteri kendi bilgisini girer"
+    },
+    {
+     "key": "3 · Transactional API'ler",
+     "value": "Resend, SendGrid, Mailgun, Postmark, Amazon SES, Brevo, SparkPost, MailerSend, Elastic Email — API ile, SMTP'siz"
+    },
+    {
+     "key": "4 · Cloud Mail API",
+     "value": "Gmail API, Microsoft Graph Mail — SMTP portları kapalıyken bile çalışır"
+    },
+    {
+     "key": "5 · PHP Bridge",
+     "value": "FastAPI → mail.php → PHP mail() — cPanel shared hosting kurtarıcısı; shared profilin (be-deploy-profilleri) tamamlayıcısı"
+    },
+    {
+     "key": "6 · Kuyruk ve telafi",
+     "value": "Gönderilemedi → Postgres kuyruğu → 15 dk sonra tekrar — geçici SMTP kesintisinde mail kaybolmaz (outbox deseniyle aynı aile)"
+    },
+    {
+     "key": "7 · Alternatif kanal",
+     "value": "Mail tüm zincirde başarısızsa: SMS → WhatsApp → push → uygulama-içi bildirim (örn. doğrulama kodu) — layer1-notification'ın channel-agnostic sözleşmesi"
+    }
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Sözleşme ve Konfigürasyon"
+  },
+  {
+   "type": "paragraph",
+   "text": "Tüm adaptörler tek arayüzü uygular: `MailProvider.send(...)`. Adaptör seti: SendmailProvider, SMTPProvider, ResendProvider, SendGridProvider, MailgunProvider, SESProvider, GmailAPIProvider, GraphAPIProvider, PhpMailProvider. Zincir sırası config'tedir:"
+  },
+  {
+   "type": "code",
+   "lang": "yaml",
+   "title": "mail zinciri konfigürasyonu (sıra = deneme sırası)",
+   "highlightedLines": [
+    3,
+    8
+   ],
+   "content": "mail:\n  providers:\n    - sendmail        # 1) önce yerelde dene\n    - smtp\n    - resend\n    - sendgrid\n    - mailgun\n    - phpmail         # 5) en son PHP bridge\n  retry:\n    queue: postgres\n    delay_minutes: 15\n  fallback_channels: [sms, whatsapp, push, in_app]"
+  },
+  {
+   "type": "callout",
+   "variant": "tip",
+   "label": "Varsayılan-basit ilkesi",
+   "body": "Varsayılan kurulumda zincir [sendmail → kullanıcı SMTP] ile başlar; API sağlayıcıları anahtar girilince zincire katılır. Sağlayıcı sağlığı (başarı oranı, gecikme) metering olaylarıyla izlenir; sıralama panelden değiştirilir."
+  }
+ ]
+}

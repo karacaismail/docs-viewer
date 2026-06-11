@@ -1,0 +1,189 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-be-deploy-profilleri",
+  "sourceId": "be-deploy-profilleri",
+  "slug": "backend/be-deploy-profilleri",
+  "title": "Deploy Profilleri ve Entegrasyon Matrisi",
+  "summary": "WordPress kadar basit kurulum + Shopify kadar dayanıklı ölçek: dört birinci-sınıf dağıtım profili ve opsiyonel dış servis adaptörleri.",
+  "categoryId": "backend",
+  "tags": [
+   "backend",
+   "deploy",
+   "olcekleme",
+   "entegrasyon"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "wip",
+   "badge": "TASARIM"
+  },
+  "related": [
+   "page-be-kararlar",
+   "page-be-mail-zinciri",
+   "page-deploy-yap",
+   "page-sus-versioning",
+   "page-sus-bc-policy",
+   "page-scale-multiregion"
+  ],
+  "blocks": [
+   {
+    "id": "block-be-deploy-profilleri-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Aynı kod dört profilde koşar: shared hosting'e WordPress gibi adım adım kurulur; compose ile self-host edilir; müşterinin k8s/swarm cluster'ına ölçeklenir; bizim yönetilen bulutta (odoo.sh / Frappe Cloud / wordpress.com / Acquia modeli) hizmet olarak satılır."
+     }
+    ]
+   },
+   {
+    "id": "block-be-deploy-profilleri-h-dort-profil",
+    "type": "heading",
+    "level": 2,
+    "text": "Dört Profil"
+   },
+   {
+    "id": "block-be-deploy-profilleri-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "P1 · Shared hosting",
+      "definition": [
+       {
+        "type": "text",
+        "text": "WordPress-tarzı adım adım kurulum sihirbazı; tek Postgres, Postgres-içi kuyruk/arama, yerel disk, mail zinciri katman 1-2-5. Hedef: cPanel'li basit hosting'de çalışan tam ürün"
+       }
+      ]
+     },
+     {
+      "term": "P2 · Self-host compose",
+      "definition": [
+       {
+        "type": "text",
+        "text": "docker compose + GitHub Actions imaj akışı (be-kararlar 13); Hetzner/Debian tek sunucu ilk 3 app'i taşır"
+       }
+      ]
+     },
+     {
+      "term": "P3 · Müşteri cluster'ı",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kubernetes / Docker Swarm; Redis cluster, Celery worker'lar, ayrı GraphQL servisi, Kafka/RabbitMQ — tüm ölçek adaptörleri burada açılır; AWS/GCP dahil"
+       }
+      ]
+     },
+     {
+      "term": "P4 · Yönetilen bulut",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bizim ekosistemimizde hosting (odoo.sh / Frappe Cloud / wordpress.com / Acquia deseni): tam teşekküllü hizmet + Editions satışının doğal kanalı"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-be-deploy-profilleri-h-entegrasyon-matrisi-hepsi-opsiyonel-adaptor",
+    "type": "heading",
+    "level": 2,
+    "text": "Entegrasyon Matrisi — hepsi opsiyonel adaptör"
+   },
+   {
+    "id": "block-be-deploy-profilleri-kv-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Observability",
+      "definition": [
+       {
+        "type": "text",
+        "text": "ELK / OpenSearch / Grafana-LGTM / Sentry — OTel çıkışına takılır (E2: developer-first, production'da opsiyonel)"
+       }
+      ]
+     },
+     {
+      "term": "Depolama",
+      "definition": [
+       {
+        "type": "text",
+        "text": "S3-uyumlu (Hetzner Object Storage, AWS S3) — Kernel Storage sözleşmesi (E3); varsayılan yerel disk + rsync"
+       }
+      ]
+     },
+     {
+      "term": "Mail",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mailgun, SendGrid, Resend, SES… — be-mail-zinciri sıralı sağlayıcıları"
+       }
+      ]
+     },
+     {
+      "term": "DNS",
+      "definition": [
+       {
+        "type": "text",
+        "text": "PowerDNS (self-host), Route 53, Cloudflare DNS — DnsProvider sözleşmesi; s-mail ürününün de altyapısı"
+       }
+      ]
+     },
+     {
+      "term": "LLM",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Claude/Anthropic, ChatGPT/OpenAI, Gemini, Llama (yerel) — AI katmanı (be-kararlar 11) sağlayıcı-bağımsız LlmProvider sözleşmesiyle konuşur"
+       }
+      ]
+     },
+     {
+      "term": "Kuyruk/Event ölçeği",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Celery+Redis (05), Kafka/RabbitMQ (06) — varsayılan Postgres'ten ölçeğe terfi yolları"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-be-deploy-profilleri-h-dayaniklilik-ve-upgrade-felsefesi",
+    "type": "heading",
+    "level": 2,
+    "text": "Dayanıklılık ve Upgrade Felsefesi"
+   },
+   {
+    "id": "block-be-deploy-profilleri-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Dayanıklılık çıtası",
+    "segments": [
+     {
+      "type": "text",
+      "text": "WordPress gibi yüksek trafik altında kırılgan değil, Shopify gibi dayanıklı: kernel ve core yapıları ölçeğe dayanıklı tasarlanır (scale primitives gün-1), profil yükseltmek (P1→P3) kod değişikliği değil konfigürasyon terfisidir."
+     }
+    ]
+   },
+   {
+    "id": "block-be-deploy-profilleri-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Upgrade sözleşmesi",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Drupal'ın major-sürüm acısı (6→7→8) yaşatılmaz: Stripe gibi tarih-versiyonlu geriye dönük API (be-kararlar 15, sus-versioning), Linux gibi 'kullanıcıyı kırma' anayasası (sus-bc-policy) ve WordPress gibi kullanıcıyı merkeze alan otomatik küçük güncellemeler — major değişiklik named gate + codemod ile gelir, kullanıcıya taşınma yükü yıkılmaz."
+     }
+    ]
+   }
+  ]
+ }
+}
