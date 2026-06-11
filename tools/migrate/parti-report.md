@@ -219,7 +219,7 @@
 - Affordance (page-edu-u15-ux-60-plus) · **ince why** · analoji tohumu var
 - Progressive Disclosure (page-edu-u15-ux-60-plus) · analoji tohumu var
 
-## Parti 3 (140 kayıt)
+## Parti 3 (143 kayıt)
 - Primitive (page-overview) · analoji tohumu var
 - Outbox (page-overview) · analoji tohumu var
 - CQRS (page-overview) · analoji tohumu var
@@ -339,6 +339,9 @@
 - Workflow (page-k-surface)
 - Headless ArcheType (page-k-surface)
 - Projection (page-k-surface)
+- Tanım bayrağı (page-k-archetype-bayraklari)
+- Şema pinleme (page-k-sozlesme)
+- Üretilmiş kontrat testi (page-k-sozlesme)
 - Cache-aside (page-scale-cache) · analoji tohumu var
 - Write-through (page-scale-cache) · analoji tohumu var
 - Stampede (page-scale-cache) · analoji tohumu var

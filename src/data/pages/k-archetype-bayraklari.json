@@ -1,0 +1,179 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-k-archetype-bayraklari",
+  "sourceId": "k-archetype-bayraklari",
+  "slug": "kernel/k-archetype-bayraklari",
+  "title": "ArcheType Bayrakları — Zaman ve Veri Yaşamı",
+  "summary": "Eskiden disiplin gerektiren şeyler artık tanımdaki bir bayrak: bitemporal, pii, retention, audit — kod değil beyan.",
+  "categoryId": "kernel",
+  "tags": [
+   "archetype",
+   "bayrak",
+   "bitemporal",
+   "pii",
+   "retention"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "wip",
+   "badge": "KAVRAM"
+  },
+  "related": [
+   "page-kernel-schema",
+   "page-k-surface",
+   "page-sus-bitemporal",
+   "page-cc-privacy",
+   "page-layer1-audit",
+   "page-be-kararlar"
+  ],
+  "blocks": [
+   {
+    "id": "block-k-archetype-bayraklari-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bugün bir programcı 'maaş geçmişi tutulsun, kişisel veri 2 yıl sonra silinsin, her değişiklik loglansın' isteklerini tek tek kod yazarak yapar. Bizde bunlar ArcheType tanımına yazılan tek kelimelik işaretlerdir — bayrağı koyan davranışı satın alır, davranış kernel'de bir kez doğru yazılmıştır."
+     }
+    ]
+   },
+   {
+    "id": "block-k-archetype-bayraklari-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bugün bir programcı \"maaş geçmişi tutulsun, kişisel veri 2 yıl sonra silinsin, her değişiklik loglansın\" isteklerini tek tek "
+     },
+     {
+      "type": "strong",
+      "text": "kod yazarak"
+     },
+     {
+      "type": "text",
+      "text": " yapar. Bizde bunlar ArcheType tanımına yazılan "
+     },
+     {
+      "type": "strong",
+      "text": "tek kelimelik işaretlerdir"
+     },
+     {
+      "type": "text",
+      "text": ". Yani: eskiden disiplin gerektiren şeyler, artık tanımdaki bir bayrak."
+     }
+    ]
+   },
+   {
+    "id": "block-k-archetype-bayraklari-h-bayraklar",
+    "type": "heading",
+    "level": 2,
+    "text": "Bayraklar"
+   },
+   {
+    "id": "block-k-archetype-bayraklari-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "bitemporal: true",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sistem her kayıtta iki tarihi kendiliğinden tutar — 'zam ne zaman geçerli oldu' (valid) ve 'deftere ne zaman yazıldı' (recorded). Geçmişe dönük zam girsen bile iki tarih ayrı durur, muhasebe şaşmaz ("
+       },
+       {
+        "type": "ref",
+        "text": "sus-bitemporal",
+        "refId": "sus-bitemporal"
+       },
+       {
+        "type": "text",
+        "text": ")"
+       }
+      ]
+     },
+     {
+      "term": "pii: true",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Alan kişisel veri sayılır: loglarda kendiliğinden maskelenir; müşteri 'beni unutun' deyince şifre-anahtarı imha edilir, veri matematiksel olarak okunamaz olur — kayıt iskeleti denetim için kalır (crypto-shredding, be-kararlar E9; "
+       },
+       {
+        "type": "ref",
+        "text": "cc-privacy",
+        "refId": "cc-privacy"
+       },
+       {
+        "type": "text",
+        "text": ")"
+       }
+      ]
+     },
+     {
+      "term": "retention: <süre>",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yasal minimum silmeyi yasaklar (VUK), mahremiyet maksimumu tutmayı yasaklar (KVKK) — dolap takvimle çalışır, insan hatırlamaz"
+       }
+      ]
+     },
+     {
+      "term": "audit: true",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her save'de alan diff'i append-only audit kaydına düşer ("
+       },
+       {
+        "type": "ref",
+        "text": "layer1-audit",
+        "refId": "layer1-audit"
+       },
+       {
+        "type": "text",
+        "text": "); 'kayıt sonradan oynandı' iddiası teknik olarak imkânsızlaşır"
+       }
+      ]
+     },
+     {
+      "term": "translatable",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Alan çok-dilli içerik taşır (be-kararlar E7) — çeviri altyapısı tanımdan kurulur"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-k-archetype-bayraklari-code",
+    "type": "codeBlock",
+    "title": "Bayraklı alan — kod yok, beyan var",
+    "language": "yaml",
+    "code": "archetype: Employee\nfields:\n  - name: maas\n    type: Money\n    bitemporal: true     # geçmişe dönük zam güvenle girilir\n  - name: tckn\n    type: TCKN\n    pii: true            # maskele + unutulma hakkı + envanter\n    retention: 10y       # VUK alt sınırı",
+    "highlightedLines": [
+     4,
+     5
+    ]
+   },
+   {
+    "id": "block-k-archetype-bayraklari-co",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Neden bayrak, neden kod değil",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Davranış kernel'de bir kez doğru yazılır; bayrağı koyan onu satın alır. 70 app'in 70 ekibinin aynı disiplini hatırlaması gerekmez — vibecoding'de AI'ın da 'logla, maskele, sakla' kodunu her seferinde yeniden (ve yanlış) üretmesi engellenir."
+     }
+    ]
+   }
+  ]
+ }
+}

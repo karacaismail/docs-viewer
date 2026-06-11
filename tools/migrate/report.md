@@ -1,7 +1,7 @@
 # Migration Mutabakat Raporu
 
-Kaynak dosya: 237 (+1 kapsam dışı) | Üretilen page: 237 | Atlanan: 0
-Glossary kaydı: 706 | Search document: 3534
+Kaynak dosya: 239 (+1 kapsam dışı) | Üretilen page: 239 | Atlanan: 0
+Glossary kaydı: 709 | Search document: 3546
 
 ## Kategori dağılımı
 - backend: 4
@@ -11,7 +11,7 @@ Glossary kaydı: 706 | Search document: 3534
 - egitim: 29
 - frontend: 9
 - genel: 3
-- kernel: 12
+- kernel: 14
 - layer1: 12
 - scale: 15
 - stack: 37
@@ -21,8 +21,8 @@ Glossary kaydı: 706 | Search document: 3534
 ## Kayıp görsel varlıklar (0) — 07B §1 fallback aktif
 
 ## Glossary zenginleştirme (12A Parti 1 — Eğitim Yolu)
-Zenginleştirilen kayıt: 549 (sayfa-kapsamlı: 374) | Overlay'de karşılığı olmayan label: 0
-Segment bağlama (B akışı, tüm kategoriler): 454 bağlı terim | bağlı page: 168/237 | egitim: 28/29
+Zenginleştirilen kayıt: 552 (sayfa-kapsamlı: 377) | Overlay'de karşılığı olmayan label: 0
+Segment bağlama (B akışı, tüm kategoriler): 454 bağlı terim | bağlı page: 168/239 | egitim: 28/29
 
 ## Uyarılar (0)
 
