@@ -53,7 +53,7 @@
       "text": "Senin tahtada **Field, Log, Handler, Security** yazdın. Bunlar başlangıç ama yetersiz. Field'ın altında somut tip sistemi olmalı. Aşağıda kritik tiplerin tam listesi — DocType engine bu primitive'leri kullanarak alan yaratıyor.",
       "enrich": {
         "info": "Field bir 'kutu'; tip o kutunun ne tutacağını söyler.",
-        "detail": "Frappe pattern'inde DocType'ın her alanı tip referansı tutar. Bizim ek katmanımız: tip sistemi **plugin'lerle genişletilebilir** (registry pattern).",
+        "detail": "Frappe pattern'inde DocType'ın her alanı tip referansı tutar. Bizim ek katmanımız: tip sistemi **modüllerle genişletilebilir** (registry pattern).",
         "lesson": {
           "ne": "Sistemde olan biteni metin satırları halinde kayıt.",
           "nicin": "Hata teşhisi ve geriye dönük analiz için.",
@@ -82,7 +82,7 @@
           "critical": true,
           "enrich": {
             "info": "Scalar = bölünemez (int, string). Composite = birleşik (Money = Decimal + currency).",
-            "detail": "Plugin'ler yeni tip ekleyebilmeli; registry pattern.\n\n**Anatomi:** `{ name, validate(v), coerce(input)→v, serialize(v)→json, widget→ReactComponent }`.",
+            "detail": "Modüller yeni tip ekleyebilmeli; registry pattern.\n\n**Anatomi:** `{ name, validate(v), coerce(input)→v, serialize(v)→json, widget→ReactComponent }`.",
             "state": "critical",
             "granularity": "atom",
             "terms": [
@@ -101,7 +101,7 @@
             ],
             "stories": [
               {
-                "persona": "Plugin geliştirici",
+                "persona": "Modül geliştirici",
                 "context": "E-ticaret modülüne 'IBAN' tipini eklemek istiyor.",
                 "outcome": "Type registry'e ekler; admin form'da otomatik IBAN input, API'de MOD-97 check, DB'de string saklanır."
               },
@@ -363,7 +363,7 @@
       "text": "Yardımcı tipler",
       "icon": "ph-toolbox",
       "enrich": {
-        "info": "Kritik değil ama yokluklarında plugin geliştirici tekrar yazıyor — DRY için core'a."
+        "info": "Kritik değil ama yokluklarında modül geliştirici tekrar yazıyor — DRY için core'a."
       }
     },
     {
@@ -767,7 +767,7 @@
       "label": "Junior'a not",
       "body": "Type system framework'ün omurgası. Her DocType field'ı bu atomik tiplere referans verir. Yeni bir tip eklemek istersen (örn. `IBAN` doğrulayan bir tip): type registry'e ekle, validator + coercion yaz, framework otomatik admin form widget + API serializer üretsin.",
       "enrich": {
-        "detail": "**Adım adım:**\n1. `framework/types/iban.py` dosyası aç.\n2. `Type` interface'ini implement et: `validate(v)` (MOD-97), `coerce(s)` (boşluk temizle, upper), `serialize(v)`, `widget` (React IBAN input).\n3. `register('iban', IBANType)`.\n4. Plugin manifest'ine `requires: ['iban']` yaz.\n5. DocType field'ında `type: 'iban'` kullan — admin formdan API'ye her şey otomatik."
+        "detail": "**Adım adım:**\n1. `framework/types/iban.py` dosyası aç.\n2. `Type` interface'ini implement et: `validate(v)` (MOD-97), `coerce(s)` (boşluk temizle, upper), `serialize(v)`, `widget` (React IBAN input).\n3. `register('iban', IBANType)`.\n4. Modül manifest'ine `requires: ['iban']` yaz.\n5. DocType field'ında `type: 'iban'` kullan — admin formdan API'ye her şey otomatik."
       }
     }
   ],

@@ -1,6 +1,6 @@
-// 103 görsel varlığın deterministik üretimi (07B §1 kapanışı + katalog genişlemesi).
+// 110 görsel varlığın deterministik üretimi (07B §1 kapanışı + katalog genişlemesi).
 // Renkler 09A token değerleridir (SVG'ler <object> ile izole yüklendiği için hex gömülür).
-// Üç şablon ailesi: 70 ürün kartı (stack/s-*) + 13 adlandırılmış diyagram + 20 paket kartı (cards/).
+// Üç şablon ailesi: 70 ürün kartı (stack/s-*) + 13 adlandırılmış diyagram + 27 paket kartı (cards/).
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -369,6 +369,8 @@ for (const [src, meta] of [...images.entries()].sort()) {
     else if (stem.startsWith("dist-"))
       content = packageCard(meta.title, "DISTRIBUTION — SEKTÖR PAKETİ", C.tr);
     else if (stem === "stack-editions") content = packageCard(meta.title, "KAVRAM — STACK VARYANTI", C.info);
+    else if (stem.startsWith("edition-")) content = packageCard(meta.title, "EDITION — UI/UX PAKETİ", C.tip);
+    else if (stem === "k-terminoloji") content = packageCard(meta.title, "KAVRAM — TERMİNOLOJİ", C.info);
     else content = packageCard(meta.title, "YATAY STACK — PAKET ÜRÜN", C.accent);
   } else if (named[rel]) {
     content = named[rel]();

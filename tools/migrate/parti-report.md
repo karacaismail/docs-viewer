@@ -158,7 +158,7 @@
 - DLQ (page-edu-u08-eventbus) · analoji tohumu var
 - Saga (page-edu-u08-eventbus) · analoji tohumu var
 - Backpressure (page-edu-u08-eventbus) · **ince why** · analoji tohumu var
-- Plugin (page-edu-u09-plugin) · **ince why** · analoji tohumu var
+- Modül (page-edu-u09-plugin) · **ince why** · analoji tohumu var
 - Manifest (page-edu-u09-plugin) · **ince why** · analoji tohumu var
 - Registry (page-edu-u09-plugin) · analoji tohumu var
 - Hook (page-edu-u09-plugin) · analoji tohumu var
@@ -167,7 +167,7 @@
 - Semver (page-edu-u09-plugin) · **ince why** · analoji tohumu var
 - Contract test (page-edu-u09-plugin) · **ince why** · analoji tohumu var
 - Sandbox (page-edu-u09-plugin) · **ince why** · analoji tohumu var
-- Plugin lifecycle (page-edu-u09-plugin) · **ince why** · analoji tohumu var
+- Modül lifecycle (page-edu-u09-plugin) · **ince why** · analoji tohumu var
 - CI (page-edu-u10-deploy) · **ince why** · analoji tohumu var
 - CD (page-edu-u10-deploy) · **ince why** · analoji tohumu var
 - Blue/Green (page-edu-u10-deploy) · **ince why** · analoji tohumu var
@@ -218,7 +218,7 @@
 - Affordance (page-edu-u15-ux-60-plus) · **ince why** · analoji tohumu var
 - Progressive Disclosure (page-edu-u15-ux-60-plus) · analoji tohumu var
 
-## Parti 3 (122 kayıt)
+## Parti 3 (127 kayıt)
 - Primitive (page-overview) · analoji tohumu var
 - Outbox (page-overview) · analoji tohumu var
 - CQRS (page-overview) · analoji tohumu var
@@ -281,7 +281,7 @@
 - Event Bus (page-kernel-bus) · analoji tohumu var
 - Polyglot (page-kernel-bus) · analoji tohumu var
 - Pub/Sub (page-kernel-bus) · analoji tohumu var
-- Plugin (page-kernel-plugin) · analoji tohumu var
+- Modül (page-kernel-plugin) · analoji tohumu var
 - Manifest (page-kernel-plugin) · analoji tohumu var
 - Registry (page-kernel-plugin) · analoji tohumu var
 - Outbox (page-scale-outbox) · analoji tohumu var
@@ -320,6 +320,11 @@
 - Compensation (page-scale-saga) · analoji tohumu var
 - Idempotency (page-scale-idempotency) · analoji tohumu var
 - Idempotency Key (page-scale-idempotency) · analoji tohumu var
+- Kernel (page-k-terminoloji)
+- Core (page-k-terminoloji)
+- App (page-k-terminoloji)
+- Module (page-k-terminoloji)
+- SDK (page-k-terminoloji)
 - Cache-aside (page-scale-cache) · analoji tohumu var
 - Write-through (page-scale-cache) · analoji tohumu var
 - Stampede (page-scale-cache) · analoji tohumu var
@@ -724,7 +729,7 @@
 - Tenant scope (page-kernel-tenancy) · analoji tohumu var
 - Sub-tenant (page-kernel-tenancy) · analoji tohumu var
 - Pub/Sub (page-kernel-bus) · analoji tohumu var
-- Plugin (page-kernel-plugin) · analoji tohumu var
+- Modül (page-kernel-plugin) · analoji tohumu var
 - Manifest (page-kernel-plugin) · analoji tohumu var
 - Registry (page-kernel-plugin) · analoji tohumu var
 - Outbox (page-scale-outbox) · analoji tohumu var
@@ -892,7 +897,7 @@
 - Outbox (page-edu-u08-eventbus) · analoji tohumu var
 - DLQ (page-edu-u08-eventbus) · analoji tohumu var
 - Saga (page-edu-u08-eventbus) · analoji tohumu var
-- Plugin (page-edu-u09-plugin) · **ince why** · analoji tohumu var
+- Modül (page-edu-u09-plugin) · **ince why** · analoji tohumu var
 - Manifest (page-edu-u09-plugin) · **ince why** · analoji tohumu var
 - Registry (page-edu-u09-plugin) · analoji tohumu var
 - Hook (page-edu-u09-plugin) · analoji tohumu var

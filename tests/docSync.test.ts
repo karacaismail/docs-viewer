@@ -35,16 +35,24 @@ describe("doc ↔ üretilmiş veri tutarlılığı", () => {
   it("02 §1: cluster dosya sayısı ve aday sayısı diskle eşleşir", () => {
     const d = doc("02-icerik-envanteri.md");
     expect(num(d, /## 1\. Cluster JSON Dosyaları \((\d+) dosya/, "02 toplam")).toBe(sourceFiles.length);
-    expect(num(d, /\+ (\d+) aday \+ 1 kapsam dışı/, "02 aday")).toBe(adayCount);
+    expect(num(d, /\+ (\d+) aday \+ 1 terminoloji \+ 1 kapsam dışı/, "02 aday")).toBe(adayCount);
   });
 
   it("03 §1: stack satırı navigation.json grup sayılarıyla eşleşir", () => {
     const stack = navigation.categories.find((c: { id: string }) => c.id === "stack");
-    const yatay = stack.groups.find((g: { id: string }) => g.id === "yatay").items.length;
-    const dist = stack.groups.find((g: { id: string }) => g.id === "dist").items.length;
-    const m = doc("03-navigation-ia.md").match(/\| (\d+) \((\d+) yatay \+ (\d+) distribution\)/);
+    const n = (gid: string) => stack.groups.find((g: { id: string }) => g.id === gid)?.items.length ?? 0;
+    const m = doc("03-navigation-ia.md").match(
+      /\| (\d+) \((\d+) stack \+ (\d+) distribution \+ (\d+) edition \+ (\d+) landx\)/,
+    );
     expect(m, "03 stack satırı deseni").not.toBeNull();
-    expect([Number(m?.[1]), Number(m?.[2]), Number(m?.[3])]).toEqual([yatay + dist, yatay, dist]);
+    const [stacks, dist, editions, landx] = [n("stacks"), n("dist"), n("editions"), n("landx")];
+    expect([Number(m?.[1]), Number(m?.[2]), Number(m?.[3]), Number(m?.[4]), Number(m?.[5])]).toEqual([
+      stacks + dist + editions + landx,
+      stacks,
+      dist,
+      editions,
+      landx,
+    ]);
   });
 
   it("07B + 15 + generate.mjs: görsel varlık sayıları diskle eşleşir", () => {
@@ -59,7 +67,7 @@ describe("doc ↔ üretilmiş veri tutarlılığı", () => {
   });
 
   it("07A: toplam kaynak dosya sayısı diskle eşleşir", () => {
-    expect(num(doc("07A-alan-esleme-tablosu.md"), /aday katalog kaydıyla toplam (\d+)/, "07A toplam")).toBe(
+    expect(num(doc("07A-alan-esleme-tablosu.md"), /terminoloji kaydıyla toplam (\d+)/, "07A toplam")).toBe(
       sourceFiles.length,
     );
   });

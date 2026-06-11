@@ -1,14 +1,14 @@
 {
-  "id": "k-plugin",
-  "title": "Plugin Registry + Manifest",
-  "subtitle": "Framework olmanın can damarı. Plugin yazılabiliyorsa platform, yazılamıyorsa uygulama.",
+  "id": "k-modül",
+  "title": "Module Registry + Manifest",
+  "subtitle": "Framework olmanın can damarı. Modül yazılabiliyorsa platform, yazılamıyorsa uygulama.",
   "cluster": "layer0",
   "layer": "kernel",
   "order": 6,
   "icon": "ph-puzzle-piece",
   "badge": "Layer 0 — Kernel #6",
   "tags": [
-    "plugin",
+    "modül",
     "manifest",
     "extension",
     "kernel"
@@ -16,12 +16,12 @@
   "blocks": [
     {
       "type": "paragraph",
-      "text": "Framework olmanın can damarı. Plugin yazılabiliyorsa platform, yazılamıyorsa uygulama. Tahtanda bu yoktu — eklemek zorundayız."
+      "text": "Framework olmanın can damarı. Modül yazılabiliyorsa platform, yazılamıyorsa uygulama. Tahtanda bu yoktu — eklemek zorundayız."
     },
     {
       "type": "heading",
       "level": 4,
-      "text": "Plugin manifest — kanonik format"
+      "text": "Modül manifest — kanonik format"
     },
     {
       "type": "paragraph",
@@ -30,8 +30,8 @@
     {
       "type": "code",
       "lang": "yaml",
-      "title": "plugin.yaml",
-      "content": "name: my_inventory_extension\nversion: 1.2.3\napi_version: \"1.0\"        # framework API contract version\npublisher: acme-corp\nlicense: LGPL-3.0\ndescription: \"Custom inventory extensions for Acme\"\n\ndepends:\n  - framework: \"^1.0.0\"\n  - commerce: \"^2.1.0\"\n  - accounting: \"^1.5.0\"\n\npermissions:\n  - read: [Customer, SalesOrder]\n  - write: [SalesOrder]\n  - publish_event: [OrderShipped]\n\nhooks:\n  doc_events:\n    SalesOrder:\n      before_save: handlers/sales_order.py::before_save\n      on_submit: handlers/sales_order.ts::onSubmit\n  schedule:\n    daily: tasks/cleanup.py::daily_cleanup\n    cron:\n      - schedule: \"0 */6 * * *\"\n        handler: tasks/sync.py::sync_partners\n\ndoctypes:           # DocType'ları bu plugin tanımlar\n  - definitions/custom_field.json\n\nfixtures:           # Initial data (seed)\n  - fixtures/categories.json\n\ntranslations:\n  - translations/tr.po\n  - translations/en.po\n\nui:\n  pages:\n    - path: /inventory/dashboard\n      component: pages/Dashboard.tsx\n  menu:\n    - title: \"Acme Inventory\"\n      icon: ph-package\n      route: /inventory"
+      "title": "modül.yaml",
+      "content": "name: my_inventory_extension\nversion: 1.2.3\napi_version: \"1.0\"        # framework API contract version\npublisher: acme-corp\nlicense: LGPL-3.0\ndescription: \"Custom inventory extensions for Acme\"\n\ndepends:\n  - framework: \"^1.0.0\"\n  - commerce: \"^2.1.0\"\n  - accounting: \"^1.5.0\"\n\npermissions:\n  - read: [Customer, SalesOrder]\n  - write: [SalesOrder]\n  - publish_event: [OrderShipped]\n\nhooks:\n  doc_events:\n    SalesOrder:\n      before_save: handlers/sales_order.py::before_save\n      on_submit: handlers/sales_order.ts::onSubmit\n  schedule:\n    daily: tasks/cleanup.py::daily_cleanup\n    cron:\n      - schedule: \"0 */6 * * *\"\n        handler: tasks/sync.py::sync_partners\n\ndoctypes:           # DocType'ları bu modül tanımlar\n  - definitions/custom_field.json\n\nfixtures:           # Initial data (seed)\n  - fixtures/categories.json\n\ntranslations:\n  - translations/tr.po\n  - translations/en.po\n\nui:\n  pages:\n    - path: /inventory/dashboard\n      component: pages/Dashboard.tsx\n  menu:\n    - title: \"Acme Inventory\"\n      icon: ph-package\n      route: /inventory"
     },
     {
       "type": "heading",
@@ -40,7 +40,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Odoo'nun `depends` listesi: install sırasında topological sort. A plugin'i B'ye bağlıysa, B önce yüklenir. Cycle detection — framework boot'ta hata verir, install fail."
+      "text": "Odoo'nun `depends` listesi: install sırasında topological sort. A modülü B'ye bağlıysa, B önce yüklenir. Cycle detection — framework boot'ta hata verir, install fail."
     },
     {
       "type": "paragraph",
@@ -49,7 +49,7 @@
     {
       "type": "heading",
       "level": 4,
-      "text": "Plugin lifecycle hooks"
+      "text": "Modül lifecycle hooks"
     },
     {
       "type": "list",
@@ -170,7 +170,7 @@
     },
     {
       "type": "paragraph",
-      "text": "VS Code Marketplace + Shopify App Store muadili. Publisher kayıt olur, plugin yükler, review (security scan + manual). Tenant admin App Store'a girer, install eder. Install:",
+      "text": "VS Code Marketplace + Shopify App Store muadili. Publisher kayıt olur, modül yükler, review (security scan + manual). Tenant admin App Store'a girer, install eder. Install:",
       "enrich": {}
     },
     {
@@ -188,7 +188,7 @@
       "type": "callout",
       "variant": "warning",
       "label": "Tuzak — global mutable state",
-      "body": "Junior plugin'i çoğunlukla \"framework'ün global'ine yamala\" diye düşünür. Yasak. Hook registry üzerinden bağlanır. Strapi'nin \"admin extension\" sorununu yaratan budur: \"plugin update'i extension'larımı kırıyor\". Hook contract'ı semver ile koru."
+      "body": "Junior modülü çoğunlukla \"framework'ün global'ine yamala\" diye düşünür. Yasak. Hook registry üzerinden bağlanır. Strapi'nin \"admin extension\" sorununu yaratan budur: \"modül update'i extension'larımı kırıyor\". Hook contract'ı semver ile koru."
     },
     {
       "type": "divider"
@@ -197,20 +197,20 @@
       "type": "heading",
       "level": 4,
       "icon": "ph-grid-four",
-      "text": "LandX bakışı: K01 Plugin Lifecycle + K05 Service Container"
+      "text": "LandX bakışı: K01 Modül Lifecycle + K05 Service Container"
     },
     {
       "type": "paragraph",
-      "text": "LandX **K01 — Plugin Lifecycle Manager** (Faz 1 · P0) plugin manifest'in tam alanlarını verir: `slug` (globally unique), `version` (semver), `license` (MIT/Apache-2.0/Proprietary/Commercial), `signed` (boolean), `signature_authority`, `compatibility_matrix` (kernel sürüm aralığı). *Plugin install p95 <30sn, dependency conflict otomatik tespiti %100, downtime-free upgrade >%95.*"
+      "text": "LandX **K01 — Modül Lifecycle Manager** (Faz 1 · P0) modül manifest'in tam alanlarını verir: `slug` (globally unique), `version` (semver), `license` (MIT/Apache-2.0/Proprietary/Commercial), `signed` (boolean), `signature_authority`, `compatibility_matrix` (kernel sürüm aralığı). *Modül install p95 <30sn, dependency conflict otomatik tespiti %100, downtime-free upgrade >%95.*"
     },
     {
       "type": "feature-list",
       "items": [
         {
-          "name": "Plugin Capability Beyanı",
-          "desc": "`declared_doctypes`, `declared_hooks`, **`declared_tools`** (MCP tool'ları), `declared_routes`, `required_capabilities` (başka plugin'lerden ihtiyaç), `optional_capabilities`",
+          "name": "Modül Capability Beyanı",
+          "desc": "`declared_doctypes`, `declared_hooks`, **`declared_tools`** (MCP tool'ları), `declared_routes`, `required_capabilities` (başka modüllerden ihtiyaç), `optional_capabilities`",
           "enrich": {
-            "info": "`declared_doctypes`, `declared_hooks`, **`declared_tools`** (MCP tool'ları), `declared_routes`, `required_capabilities` (başka plugin'lerden"
+            "info": "`declared_doctypes`, `declared_hooks`, **`declared_tools`** (MCP tool'ları), `declared_routes`, `required_capabilities` (başka modüllerden"
           }
         },
         {
@@ -235,7 +235,7 @@
           }
         },
         {
-          "name": "Plugin Registry",
+          "name": "Module Registry",
           "desc": "`Local Registry` (sync, trusted_publishers, verification_policy), `Health Probe` (liveness/readiness, error_rate_5m)",
           "enrich": {
             "info": "`Local Registry` (sync, trusted_publishers, verification_policy), `Health Probe` (liveness/readiness, error_rate_5m)"
@@ -271,10 +271,10 @@
   ],
   "enrich": {
     "info": "Sistemin ana koduna dokunmadan yeni özellikler eklemenizi sağlayan eklenti listesi.",
-    "detail": "Framework olmanın can damarı. Plugin yazılabiliyorsa platform, yazılamıyorsa uygulama.",
+    "detail": "Framework olmanın can damarı. Modül yazılabiliyorsa platform, yazılamıyorsa uygulama.",
     "terms": [
       {
-        "term": "Plugin",
+        "term": "Modül",
         "abbrev_tr": "Eklenti",
         "meaning": "Çekirdek değişmeden eklenen davranış paketi.",
         "why": "15 ürün tek çekirdeğin üstünde böyle yaşar."
@@ -282,13 +282,13 @@
       {
         "term": "Manifest",
         "abbrev_tr": "Bildirim dosyası",
-        "meaning": "Plugin'in adı, sürümü, izinleri, hook'larını listeleyen dosya.",
-        "why": "Çekirdek manifest'e bakarak plugin'i yükler."
+        "meaning": "Modülün adı, sürümü, izinleri, hook'larını listeleyen dosya.",
+        "why": "Çekirdek manifest'e bakarak modülü yükler."
       },
       {
         "term": "Registry",
         "abbrev_tr": "Sicil",
-        "meaning": "Yüklü plugin'lerin merkezi listesi.",
+        "meaning": "Yüklü modüllerin merkezi listesi.",
         "why": "Çakışma, sürüm, bağımlılık çözümü."
       }
     ],

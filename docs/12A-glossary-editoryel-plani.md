@@ -14,7 +14,7 @@ Bu doküman, glossary iş yükünü ölçülebilir hale getirir: ne otomatik gel
 | `shortExplanation` kaynağı (`meaning`) | Median 55 karakter — tooltip için yeterli |
 | `longExplanation` kaynağı (`why`) | **Median 50 karakter — panel için ince**; editöryel zenginleştirmenin ana nedeni |
 
-Kategori dağılımı (term/dosya): edu 210/28 · s 102/64 · cc 80/14 · scale 47/15 · sus 42/12 · l1+layer1 37/12 · kernel+k 31/8 · fe 13/9 · stack 12/12 · kalan ~38. *(10–11 Haziran genişlemesindeki 20 aday kayıt bilinçli terimsizdir — `state: aday`; terim yükü ürünleşme kararıyla gelir.)*
+Kategori dağılımı (term/dosya): edu 210/28 · s 102/64 · cc 80/14 · scale 47/15 · sus 42/12 · l1+layer1 37/12 · kernel+k 31/8 · fe 13/9 · stack 12/12 · kalan ~38. *(10–11 Haziran genişlemesindeki 26 aday kayıt bilinçli terimsizdir — `state: aday`; terim yükü ürünleşme kararıyla gelir.)*
 
 ## 2. İş Tanımları
 
@@ -51,7 +51,7 @@ Sapma kaydı: §2-A "kaynaktaki `enrich.terms`" yerine **overlay dosyası** kull
 
 **Kapsam revizyonu (11 Haziran 2026):** §2-B'nin "yalnız paragraph" sınırı genişletildi — definitionList tanımları ve callout gövdeleri de taranır; aynı-page güvencesi bağlam riskini değiştirmediği için sapma değil kapsam güncellemesidir. Ölçüm: **130 bağlı terim, 27/28 egitim page'i** (kalan tek sayfa `edu-overview` — §1 gereği bilinçli terimsiz).
 
-**Parti 2 durumu (11 Haziran 2026):** ADR-0005 Revizyon 1 ile sayfa-kapsamlı `label@stem` anahtarı eklendi ve öncelikli varyant kümesi tamamlandı: **27 label / 77 kayıt** (KVKK×5, GraphQL×5, REST×5, TR Lokalizasyon×4, üçlü ve ikili gruplar) bağlam-ayrıştıran `a/u/l` ile zenginleştirildi. Katalog şablon terimleri ("Cluster" 46, "Stack ürünü" 20 kayıt) bağlamsal varyant DEĞİLDİR — anlamları sayfadan bağımsız aynıdır; Parti 2 kapsamı dışında tutulmuştur (ADR-0005 Rev. 1). **Parti 2 kapanışı (11 Haziran 2026, ikinci dilim):** kalan tüm gerçek varyant kayıtları tamamlandı — AI özellik (7 ürün bağlamı), kernel/edu çiftleri (Session, ABAC, ReBAC, tenancy üçlüsü, plugin üçlüsü), cc/scale/stack çiftleri ve edu-içi çiftler (Hook, Float, Foreign Key, Denormalize, Migration, CSRF). Şablon terimler (Cluster, Stack ürünü) ADR-0005 Rev. 1 gereği kapsam dışı. **Parti 2: tamamlandı.**
+**Parti 2 durumu (11 Haziran 2026):** ADR-0005 Revizyon 1 ile sayfa-kapsamlı `label@stem` anahtarı eklendi ve öncelikli varyant kümesi tamamlandı: **27 label / 77 kayıt** (KVKK×5, GraphQL×5, REST×5, TR Lokalizasyon×4, üçlü ve ikili gruplar) bağlam-ayrıştıran `a/u/l` ile zenginleştirildi. Katalog şablon terimleri ("Cluster" 46, "Stack ürünü" 20 kayıt) bağlamsal varyant DEĞİLDİR — anlamları sayfadan bağımsız aynıdır; Parti 2 kapsamı dışında tutulmuştur (ADR-0005 Rev. 1). **Parti 2 kapanışı (11 Haziran 2026, ikinci dilim):** kalan tüm gerçek varyant kayıtları tamamlandı — AI özellik (7 ürün bağlamı), kernel/edu çiftleri (Session, ABAC, ReBAC, tenancy üçlüsü, modül üçlüsü), cc/scale/stack çiftleri ve edu-içi çiftler (Hook, Float, Foreign Key, Denormalize, Migration, CSRF). Şablon terimler (Cluster, Stack ürünü) ADR-0005 Rev. 1 gereği kapsam dışı. **Parti 2: tamamlandı.**
 
 **Parti 3 durumu (11 Haziran 2026):** Genel Harita + Kernel + Scale kategorilerinin tamamı sayfa-kapsamlı kayıtlarla zenginleştirildi (atomic-types 23 kayıt dahil; yalnız 4 Cluster şablon kaydı bilinçli dışarıda). **Parti 3: tamamlandı.** Toplam zenginleştirilmiş kayıt 386/679; sayfa-kapsamlı 211.
 

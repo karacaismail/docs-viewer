@@ -190,12 +190,22 @@ function buildNavigation(results) {
         items: sortItems(gmap.get(g.id)),
       })).filter((g) => g.items.length > 0);
     } else if (c.id === "stack") {
-      // Stack kategorisi: yatay paketler + Distributions (sektör paketleri) ayrı gruplar
-      const horiz = pages.filter((r) => !r.page.id.startsWith("page-dist-"));
-      const dists = pages.filter((r) => r.page.id.startsWith("page-dist-"));
+      // Taksonomi grupları (03 §2): Stacks / Distributions / Editions + LandX vaka grubu.
+      // stack-editions kavram kaydı Editions grubunda yaşar.
+      const of = (pred) => sortItems(pages.filter(pred));
+      const stacks = of((r) => r.page.id.startsWith("page-stack-") && r.page.id !== "page-stack-editions");
+      const dists = of((r) => r.page.id.startsWith("page-dist-"));
+      const editions = of(
+        (r) => r.page.id.startsWith("page-edition-") || r.page.id === "page-stack-editions",
+      );
+      const landx = of((r) => r.page.id.startsWith("page-landx-"));
       groups = [
-        { id: "yatay", label: "Yatay Stack'ler", order: 0, items: sortItems(horiz) },
-        ...(dists.length ? [{ id: "dist", label: "Distributions", order: 1, items: sortItems(dists) }] : []),
+        { id: "stacks", label: "Stacks", order: 0, items: stacks },
+        ...(dists.length ? [{ id: "dist", label: "Distributions", order: 1, items: dists }] : []),
+        ...(editions.length ? [{ id: "editions", label: "Editions", order: 2, items: editions }] : []),
+        ...(landx.length
+          ? [{ id: "landx", label: "LandX — sahibinden clone (vaka)", order: 3, items: landx }]
+          : []),
       ];
     } else {
       groups = [{ id: "tumu", label: "Tümü", order: 0, items: sortItems(pages, c.id === "egitim") }];

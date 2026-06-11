@@ -2,7 +2,7 @@
 
 Bu doküman, `mimari/` klasöründeki mevcut varlıkların sayımını yapar ve her grubun yeni doc viewer'daki rolünü tanımlar. Migration yönergesi (`07-uretim-02-data-migration.md`) bu envanteri girdi kabul eder.
 
-## 1. Cluster JSON Dosyaları (218 dosya — birincil içerik kaynağı; 197 özgün + 20 aday + 1 kapsam dışı)
+## 1. Cluster JSON Dosyaları (225 dosya — birincil içerik kaynağı; 197 özgün + 26 aday + 1 terminoloji + 1 kapsam dışı)
 
 Dosya adlandırması `NN-kategori-konu.json` sözleşmesini izler. Kategori prefix'leri ve sayıları:
 
@@ -14,12 +14,13 @@ Dosya adlandırması `NN-kategori-konu.json` sözleşmesini izler. Kategori pref
 | `cc-*` + `crosscut-*` | 17 | Çapraz-kesen konular (i18n, privacy, compliance…) | Çapraz-Kesen |
 | `sus-*` | 12 | Sürdürülebilirlik (versioning, bitemporal, conformance…) | Sürdürülebilirlik |
 | `stack-*` | 19 | Stack ürün aileleri (commerce, accounting…) + 6 aday yatay stack (workspace, compliance, channel, builder, service, messaging) + 1 taksonomi kavram kaydı (editions) | Stack Ürünleri |
+| `edition-*` | 6 | Editions — UI estetiği ve UX akışı gelişmiş stack paketleri (people, onmuhasebe, storefront, salescrm, creator, randevu); `badge: EDITION` | Stack Ürünleri (Editions grubu) |
 | `dist-*` | 5 | Distributions — sektör paketleri (site, ngo, travel, construction, realestate); `badge: DISTRIBUTION` | Stack Ürünleri (ayrı grup) |
 | `fe-*` | 9 | Frontend tech-stack kararları | Frontend Tech-Stack |
 | `layer1-*` + `l1-*` | 12 | Layer 1 in-tree servisler (party, file, audit…) | Layer 1 — In-tree |
-| `kernel-*` + `k-*` | 8 | Layer 0 kernel domain'leri | Kernel — Layer 0 |
-| `landx-*` | 7 | LandX ürün mimarisi (l0–l5) | LandX |
-| `dx-*` + `services` | 4 | Plugin DX, marketplace, dış servisler | DX & Services |
+| `kernel-*` + `k-*` | 9 | Layer 0 kernel domain'leri | Kernel — Layer 0 |
+| `landx-*` | 7 | LandX — sahibinden clone vakası (l0–l5) | Stack Ürünleri (vaka grubu; top-level değil) |
+| `dx-*` + `services` | 4 | Module DX, marketplace, dış servisler | DX & Services |
 | Tekil meta dosyalar | ~10 | overview, philosophy, board, atomic-types, build-sequence, anti-patterns, file-layout, product-mapping, deploy-yap | Genel Harita + Build & Deploy |
 
 Bu dosyalar eski viewer'ın şemasındadır ve **zaten block tabanlıdır** (21 eski block type + `enrich` pedagojik katmanı). Yeni modelde her cluster bir **page**'e dönüşür; dönüşüm büyük ölçüde block-to-block çeviridir, serbest metin parse'ı yalnızca `enrich.info/detail` ve inline işaretler için gerekir. Alan alan kurallar `07A-alan-esleme-tablosu.md`'dedir.
