@@ -218,7 +218,9 @@ function buildNavigation(results) {
       ...(c.section ? { section: c.section } : {}),
       groups,
     };
-  }).filter((c) => c.groups.some((g) => g.items.length > 0));
+  })
+    .filter((c) => c.groups.some((g) => g.items.length > 0))
+    .sort((a, b) => a.order - b.order); // Rail 1 bölümleri bitişik kalsın (03 §1)
 
   return { schemaVersion: "1.0", categories };
 }
