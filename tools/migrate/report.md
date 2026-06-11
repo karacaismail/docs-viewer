@@ -1,7 +1,7 @@
 # Migration Mutabakat Raporu
 
-Kaynak dosya: 235 (+1 kapsam dışı) | Üretilen page: 235 | Atlanan: 0
-Glossary kaydı: 693 | Search document: 3505
+Kaynak dosya: 236 (+1 kapsam dışı) | Üretilen page: 236 | Atlanan: 0
+Glossary kaydı: 701 | Search document: 3521
 
 ## Kategori dağılımı
 - backend: 4
@@ -11,7 +11,7 @@ Glossary kaydı: 693 | Search document: 3505
 - egitim: 29
 - frontend: 9
 - genel: 3
-- kernel: 10
+- kernel: 11
 - layer1: 12
 - scale: 15
 - stack: 37
@@ -22,7 +22,7 @@ Glossary kaydı: 693 | Search document: 3505
 
 ## Glossary zenginleştirme (12A Parti 1 — Eğitim Yolu)
 Zenginleştirilen kayıt: 543 (sayfa-kapsamlı: 368) | Overlay'de karşılığı olmayan label: 1
-Segment bağlama (B akışı, tüm kategoriler): 443 bağlı terim | bağlı page: 166/235 | egitim: 28/29
+Segment bağlama (B akışı, tüm kategoriler): 451 bağlı terim | bağlı page: 167/236 | egitim: 28/29
 - eşleşmedi: Vibecoding hazırlık eşiği
 
 ## Uyarılar (0)

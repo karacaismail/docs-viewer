@@ -219,7 +219,7 @@
 - Affordance (page-edu-u15-ux-60-plus) · **ince why** · analoji tohumu var
 - Progressive Disclosure (page-edu-u15-ux-60-plus) · analoji tohumu var
 
-## Parti 3 (127 kayıt)
+## Parti 3 (135 kayıt)
 - Primitive (page-overview) · analoji tohumu var
 - Outbox (page-overview) · analoji tohumu var
 - CQRS (page-overview) · analoji tohumu var
@@ -326,6 +326,14 @@
 - App (page-k-terminoloji)
 - Module (page-k-terminoloji)
 - SDK (page-k-terminoloji)
+- Dağ (page-k-granulerlik)
+- Kaya (page-k-granulerlik)
+- Büyük Taş (page-k-granulerlik)
+- Orta Taş (page-k-granulerlik)
+- Küçük Taş (page-k-granulerlik)
+- Kum Tanesi (page-k-granulerlik)
+- Toz Tanesi (page-k-granulerlik)
+- Atom (page-k-granulerlik)
 - Cache-aside (page-scale-cache) · analoji tohumu var
 - Write-through (page-scale-cache) · analoji tohumu var
 - Stampede (page-scale-cache) · analoji tohumu var

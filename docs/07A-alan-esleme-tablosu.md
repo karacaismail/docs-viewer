@@ -1,6 +1,6 @@
 # 07A — Eski Şema → Yeni Block Model Alan Eşleme Tablosu
 
-Bu doküman, migration script'inin (`07-uretim-02-data-migration.md`) yazılmasından önce şart olan resmî alan eşlemesini verir. Tablolar tahmine değil taramaya dayanır: 198 JSON dosyasının tamamı programatik olarak analiz edilmiştir (10 Haziran 2026; 10–11 Haziran'da eklenen 26 aday katalog kaydı ve 12 karar/kavram kaydıyla toplam 236 — yeniler aynı şemayı izler, aday olanlar `state: aday` + `badge` ile işaretlidir). 197 özgün dosya ortak cluster şemasını izler; `ARCHITECTURE-5.json` farklı bir yapıdadır (`$schema`, `meta`, `milestones`…) ve içerik değil spec olduğundan migration kapsamı dışıdır.
+Bu doküman, migration script'inin (`07-uretim-02-data-migration.md`) yazılmasından önce şart olan resmî alan eşlemesini verir. Tablolar tahmine değil taramaya dayanır: 198 JSON dosyasının tamamı programatik olarak analiz edilmiştir (10 Haziran 2026; 10–11 Haziran'da eklenen 26 aday katalog kaydı ve 13 karar/kavram kaydıyla toplam 237 — yeniler aynı şemayı izler, aday olanlar `state: aday` + `badge` ile işaretlidir). 197 özgün dosya ortak cluster şemasını izler; `ARCHITECTURE-5.json` farklı bir yapıdadır (`$schema`, `meta`, `milestones`…) ve içerik değil spec olduğundan migration kapsamı dışıdır.
 
 ## 1. Eski Cluster Şemasının Resmî Dökümü (kanıt: alan frekansları)
 
@@ -59,7 +59,7 @@ Kritik bulgu: dönüşüm "serbest metin → block" değil, büyük ölçüde **
 | `ref-grid` | 3 | `cardGrid` | refs → kart + internal link |
 | `layer-cards` | 2 | `cardGrid` — **otomatik** | Kart yapısı (`{tag, name, desc, tone, enrich}`) keşifte düzenli çıktı: `tag — name` → title, `desc` → segments; kart `enrich.terms` glossary'ye akar. 'Elle' kararı uygulamada revize edildi |
 | `tree` | 2 | `codeBlock(text)` — **otomatik** | `root {name, children, comment}` yapısı düzenli; ASCII ağaca (`├─/└─` + `# comment`) deterministik çevrilir, monospace render çizimi korur (07B diyagram kararıyla aynı ilke) |
-| `granularity-legend` | 1 | `heading` + `definitionList` | Tek kullanım; yedi seviyeli tane-büyüklüğü zinciri otomatik üretilir (11 Haziran kapanışı) |
+| `granularity-legend` | 1 | `heading` + `definitionList` | Tek kullanım; sekiz seviyeli granülerlik zinciri v2 (ADR-0008: Dağ→Atom + SP) otomatik üretilir |
 | `blocks[].enrich` | 165 | bitişik block'lara açılır | Block-level enrich (info 42, lesson 59, detail 20, stories 6, terms 5) yeni modelde yok; ilgili block'un hemen ardına callout/useCase olarak deterministik sırayla eklenir |
 
 ## 4. `enrich` Katmanı Eşlemesi (pedagojik içerik)

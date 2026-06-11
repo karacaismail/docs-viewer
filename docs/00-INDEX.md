@@ -16,6 +16,7 @@ Bu set, `mimari/` klasöründeki mevcut içeriğin (≈198 cluster JSON + mimari
 | 01E | `01E-adr-0005-glossary-overlay.md` | ADR-0005: glossary zenginleştirme overlay dosyası | Zemin |
 | 01F | `01F-adr-0006-telemetri.md` | ADR-0006: telemetri yok — arama logları dahil | Zemin |
 | 01G | `01G-adr-0007-terminoloji.md` | ADR-0007: kernel/core ayrımı + module dili (plugin reddi) | Zemin |
+| 01H | `01H-adr-0008-granulerlik.md` | ADR-0008: granülerlik zinciri v2 — Dağ→Atom, SP katsayıları, komşuluk kuralı | Zemin |
 | 02 | `02-icerik-envanteri.md` | Mevcut kaynak dosyaların envanteri ve kaderi | Zemin |
 | 03 | `03-navigation-ia.md` | Rail 1 / Rail 2 bilgi mimarisi, slug ve ID sözleşmeleri | Zemin |
 | 04 | `04-veri-modeli.md` | navigation / pages / glossary / search-index JSON sözleşmeleri | Zemin |

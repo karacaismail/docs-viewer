@@ -264,38 +264,61 @@ export function createTransformer(ctx) {
         });
         break;
       case "granularity-legend":
-        // 07A §3 kapanışı: tek kullanımlık legend, sayfanın kendi metnindeki yedi
-        // seviyeli tane büyüklüğü zincirinden (kaya → atom) definitionList'e çevrilir.
+        // 8 seviyeli granülerlik zinciri v2 (k-granulerlik sözleşmesi): Dağ -> Atom + fibonacci SP.
         push({
           id: nextId("legend"),
           type: "heading",
           level: 3,
-          text: b.title ?? "Tane Büyüklüğü Göstergesi",
+          text: b.title ?? "Granülerlik Zinciri — Dağ'dan Atom'a",
         });
         push({
           id: nextId("legend"),
           type: "definitionList",
           items: [
             {
-              term: "kaya",
-              definition: [{ type: "text", text: "Modül/ürün — kullanıma hazır bütün (örn. hrms)" }],
+              term: "Dağ (SP 34+)",
+              definition: [{ type: "text", text: "Application/Product — HRMS, CRM, ERP gibi bütün ürün" }],
             },
             {
-              term: "büyük taş",
+              term: "Kaya (SP 21)",
               definition: [
-                { type: "text", text: "Ürünün kendi iş mantığı — modül altındaki ana parçalar (items[])" },
+                { type: "text", text: "Core Module / Bounded Context — Çalışanlar, İzin, Bordro" },
               ],
             },
-            { term: "orta taş", definition: [{ type: "text", text: "Bir sayfa / ortak ihtiyaç düzeyi" }] },
-            { term: "küçük taş", definition: [{ type: "text", text: "Bir form bölümü" }] },
-            { term: "kum", definition: [{ type: "text", text: "Tek bir field" }] },
-            { term: "toz", definition: [{ type: "text", text: "Bir validator" }] },
             {
-              term: "atom",
+              term: "Büyük Taş (SP 13)",
+              definition: [
+                { type: "text", text: "Page/Screen · Service Group — Çalışan Listesi, İzin Talepleri" },
+              ],
+            },
+            {
+              term: "Orta Taş (SP 8)",
+              definition: [
+                { type: "text", text: "Sub Page/View · Endpoint Group — Liste, Detay, Oluşturma, Düzenleme" },
+              ],
+            },
+            {
+              term: "Küçük Taş (SP 5)",
+              definition: [
+                { type: "text", text: "Block/Section/Feature · Use Case — Kişisel Bilgiler, Filtre Alanı" },
+              ],
+            },
+            {
+              term: "Kum Tanesi (SP 3)",
+              definition: [{ type: "text", text: "Component · API Endpoint — Input, Select, Table, Modal" }],
+            },
+            {
+              term: "Toz Tanesi (SP 2)",
+              definition: [
+                { type: "text", text: "Property/Behavior · Validation/Policy — Required, MaxLength, Event" },
+              ],
+            },
+            {
+              term: "Atom (SP 1)",
               definition: [
                 {
                   type: "text",
-                  text: "Type primitive — en küçük yapı taşı; fibonacci SP bu zincire göre otomatik atanır",
+                  text: "Rule/Constraint/Logic — regex, TC algoritması, permission rule; komşuluk kuralı: her seviye yalnız bir alt komşusuna bağlanır",
                 },
               ],
             },
