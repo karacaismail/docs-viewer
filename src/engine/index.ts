@@ -6,6 +6,7 @@ export * from "./blocksToMarkdown";
 export { foldTurkish } from "./foldTurkish";
 export {
   glossaryTerms,
+  lastUpdated,
   loadPageBlocks,
   loadSearchIndex,
   loadTermDetail,

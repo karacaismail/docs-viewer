@@ -2,11 +2,14 @@
 // page gövdeleri page-başına lazy chunk (14 #15), search-index lazy (13 §Index).
 
 import glossaryJson from "../data/glossary.json";
+import lastUpdatedJson from "../data/last-updated.json";
 import navigationJson from "../data/navigation.json";
 import pagesIndexJson from "../data/pages-index.json";
 import type { GlossaryTerm, NavigationFile, Page, PageIndexEntry } from "../schemas";
 
 export const navigation = navigationJson as unknown as NavigationFile;
+// Sayfa bazlı güncellik (UX-E18) — tools/last-updated.mjs üretir, stem anahtarlı
+export const lastUpdated = lastUpdatedJson as Record<string, string>;
 export const pagesIndex = (pagesIndexJson as unknown as { pages: PageIndexEntry[] }).pages;
 export const glossaryTerms = (glossaryJson as unknown as { terms: GlossaryTerm[] }).terms;
 

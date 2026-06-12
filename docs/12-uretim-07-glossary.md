@@ -31,3 +31,7 @@ Glossary'nin çekirdeği migration'dan otomatik gelir: 679 kayıt (`enrich.terms
 ## Kabul Kriterleri
 
 Faz 7 test listesi yeşildir; aynı label'lı iki term farklı page'lerde farklı içerik gösterir; tooltip üç giriş yöntemiyle de (hover, focus, tap) erişilebilir; panel focus trap + Escape + focus dönüşü sözleşmesini Playwright testiyle kanıtlar.
+
+## UX Revizyonu — Global Sözlük Dizini (2026-06: 60+ öğrenen odağı)
+
+`/sozluk` route'u 709 bağlamsal terimin tamamını A-Z gruplu dizin olarak sunar (`GlossaryIndexPage`): TR-katlamalı ad süzme + kategori açılır listesi (slug önekiyle), her kayıtta kısa açıklama, bağlam sayfası linki ve mevcut "?" panelini açan düğme (UiState `open("panel", termId)` — panel global olduğundan ek altyapı gerekmez). Rail 1 alt bilgisi ve 404 sayfası buraya bağlanır; axe kapsamı bu sayfayı içerir (05'te 8. temsilî sayfa).

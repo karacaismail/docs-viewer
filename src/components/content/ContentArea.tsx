@@ -3,6 +3,7 @@
 import { Link, useParams, useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
+  lastUpdated,
   loadPageBlocks,
   pageAt,
   pageNeighbors,
@@ -143,6 +144,7 @@ export function ContentArea() {
   };
 
   const flat = pageAt(entry.slug);
+  const updatedAt = lastUpdated[entry.id.slice(5)];
   const headings = (page?.blocks ?? []).filter(
     (b): b is Extract<typeof b, { type: "heading" }> => b.type === "heading" && b.level === 2,
   );
@@ -189,7 +191,7 @@ export function ContentArea() {
           </span>
         )}
       </div>
-      {(entry.meta?.badge || entry.meta?.state || entry.meta?.granularity) && (
+      {(entry.meta?.badge || entry.meta?.state || entry.meta?.granularity || updatedAt) && (
         <div className="meta-row">
           {entry.meta?.badge && <span className="badge">{entry.meta.badge}</span>}
           {entry.meta?.granularity && (
@@ -200,6 +202,7 @@ export function ContentArea() {
           {entry.meta?.state && (
             <span className="badge">{STATE_TR[entry.meta.state] ?? entry.meta.state}</span>
           )}
+          {updatedAt && <span className="updated-at">Son güncelleme: {updatedAt}</span>}
         </div>
       )}
       <h1 tabIndex={-1} ref={h1Ref}>
