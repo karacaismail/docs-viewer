@@ -45,7 +45,7 @@ test.describe("klavye akışı (kabul #7, 13 §Overlay)", () => {
     const input = page.getByRole("combobox", { name: "Dokümanlarda ara" });
     await expect(input).toBeFocused();
     await input.fill("outbox");
-    await expect(page.getByRole("option").first()).toBeVisible();
+    await expect(page.locator("#search-results").getByRole("option").first()).toBeVisible();
     // Glossary sonuçları tasarım gereği hash taşımaz (13 §Overlay 4);
     // block sonucuna inene kadar ok ile gez — klavye sözleşmesinin kendisi de böylece test edilir
     for (let i = 0; i < 10; i += 1) {
