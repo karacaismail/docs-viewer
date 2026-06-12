@@ -32,6 +32,14 @@ const ENRICHMENT = JSON.parse(
 const enrichedCount = { n: 0, p2: 0 };
 const enrichmentMisses = new Set();
 
+// 12A §6 — Yedi Soru genellemesi (terim düzeyi, tüm kategoriler): her glossary
+// kaydı Ne/Niçin/Nasıl/Nerede/Ne zaman/Kim/Analoji cevaplarını overlay'den alır.
+const SEVEN_QUESTIONS = JSON.parse(
+  readFileSync(join(dirname(fileURLToPath(import.meta.url)), "seven-questions.json"), "utf8"),
+);
+const sevenCount = { n: 0 };
+const sevenMisses = [];
+
 function readClusters() {
   const files = readdirSync(SRC_DIR)
     .filter((f) => f.endsWith(".json") && !SKIP.has(f))
@@ -148,6 +156,13 @@ function transformCluster({ file, stem, data }) {
       if (scoped) enrichedCount.p2 += 1;
     } else if (categoryId === "egitim") {
       enrichmentMisses.add(t.term);
+    }
+    const sq = SEVEN_QUESTIONS.byTermId[tid];
+    if (sq) {
+      rec.sevenQuestions = sq;
+      sevenCount.n += 1;
+    } else {
+      sevenMisses.push(tid);
     }
     return rec;
   });
@@ -431,6 +446,7 @@ write("glossary-detail.json", {
         ...(t.realWorldAnalogy ? { realWorldAnalogy: t.realWorldAnalogy } : {}),
         ...(t.useCases ? { useCases: t.useCases } : {}),
         ...(t.caseStudies ? { caseStudies: t.caseStudies } : {}),
+        ...(t.sevenQuestions ? { sevenQuestions: t.sevenQuestions } : {}),
       },
     ]),
   ),
@@ -458,6 +474,10 @@ const report = [
   `Zenginleştirilen kayıt: ${enrichedCount.n} (sayfa-kapsamlı: ${enrichedCount.p2}) | Overlay'de karşılığı olmayan label: ${enrichmentMisses.size}`,
   `Segment bağlama (B akışı, tüm kategoriler): ${results.reduce((a, r) => a + (r.boundTerms ?? 0), 0)} bağlı terim | bağlı page: ${results.filter((r) => (r.boundTerms ?? 0) > 0).length}/${results.length} | egitim: ${results.filter((r) => r.page.categoryId === "egitim" && (r.boundTerms ?? 0) > 0).length}/${results.filter((r) => r.page.categoryId === "egitim").length}`,
   ...[...enrichmentMisses].map((l) => `- eşleşmedi: ${l}`),
+  "",
+  "## Yedi Soru genellemesi (12A §6 — tüm terimler)",
+  `Yedi soru kaydı: ${sevenCount.n}/${sevenCount.n + sevenMisses.length} | Eksik: ${sevenMisses.length}`,
+  ...sevenMisses.map((l) => `- yedi soru eksik: ${l}`),
   "",
   `## Uyarılar (${warnings.length})`,
   ...[...new Set(warnings)].map((w) => `- ${w}`),

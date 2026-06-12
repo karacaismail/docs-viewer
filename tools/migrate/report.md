@@ -24,6 +24,9 @@ Glossary kaydı: 709 | Search document: 3555
 Zenginleştirilen kayıt: 552 (sayfa-kapsamlı: 378) | Overlay'de karşılığı olmayan label: 0
 Segment bağlama (B akışı, tüm kategoriler): 457 bağlı terim | bağlı page: 168/240 | egitim: 28/29
 
+## Yedi Soru genellemesi (12A §6 — tüm terimler)
+Yedi soru kaydı: 709/709 | Eksik: 0
+
 ## Uyarılar (0)
 
 ## Bilinçli düşürmeler / Notlar (3) — kapı değildir (15 §1.4)

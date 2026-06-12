@@ -184,11 +184,24 @@ export const GlossaryTermSchema = z.object({
 export type GlossaryTerm = z.infer<typeof GlossaryTermSchema>;
 export const GlossarySchema = z.object({ schemaVersion: z.string(), terms: z.array(GlossaryTermSchema) });
 
+// Yedi soru kalıbı (12A §6): her terim Ne/Niçin/Nasıl/Nerede/Ne zaman/Kim/Analoji taşır
+export const SevenQuestionsSchema = z.object({
+  ne: z.string(),
+  nicin: z.string(),
+  nasil: z.string(),
+  nerede: z.string(),
+  ne_zaman: z.string(),
+  kim: z.string(),
+  analoji: z.string(),
+});
+export type SevenQuestions = z.infer<typeof SevenQuestionsSchema>;
+
 export const GlossaryDetailSchema = z.object({
   longExplanation: z.string(),
   realWorldAnalogy: z.string().optional(),
   useCases: z.array(z.string()).optional(),
   caseStudies: z.array(z.object({ title: z.string(), story: z.string() })).optional(),
+  sevenQuestions: SevenQuestionsSchema.optional(),
 });
 export type GlossaryDetail = z.infer<typeof GlossaryDetailSchema>;
 export const GlossaryDetailFileSchema = z.object({

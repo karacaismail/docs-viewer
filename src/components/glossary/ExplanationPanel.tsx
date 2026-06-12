@@ -5,8 +5,20 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { useEffect, useState } from "react";
 import { loadTermDetail, resolveTerm } from "../../engine";
-import type { GlossaryDetail } from "../../schemas";
+import type { GlossaryDetail, SevenQuestions } from "../../schemas";
+
 import { useUiState } from "../ui/UiState";
+
+// Yedi soru kalıbı etiketleri (12A §6) — sıra sabit: kavrama giriş sırası
+const SEVEN_Q_LABELS: [keyof SevenQuestions, string][] = [
+  ["ne", "Ne?"],
+  ["nicin", "Niçin?"],
+  ["nasil", "Nasıl?"],
+  ["nerede", "Nerede?"],
+  ["ne_zaman", "Ne zaman?"],
+  ["kim", "Kim?"],
+  ["analoji", "Analoji"],
+];
 
 export function ExplanationPanel() {
   const ui = useUiState();
@@ -68,7 +80,21 @@ export function ExplanationPanel() {
                     <p style={{ whiteSpace: "pre-line" }}>{detail.longExplanation}</p>
                   </section>
 
-                  {detail.realWorldAnalogy && (
+                  {detail.sevenQuestions && (
+                    <section className="panel-section">
+                      <h3>Yedi soruda</h3>
+                      <dl className="seven-q">
+                        {SEVEN_Q_LABELS.map(([key, label]) => (
+                          <div key={key} className="seven-q__row">
+                            <dt>{label}</dt>
+                            <dd>{detail.sevenQuestions?.[key]}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </section>
+                  )}
+
+                  {detail.realWorldAnalogy && !detail.sevenQuestions && (
                     <section className="panel-section">
                       <h3>Gerçek dünya analojisi</h3>
                       <p>{detail.realWorldAnalogy}</p>
