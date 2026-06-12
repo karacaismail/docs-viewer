@@ -18,3 +18,8 @@ export function resolveTerm(termId: string): GlossaryTerm | undefined {
 export function termsOfPage(pageId: string): GlossaryTerm[] {
   return byPage.get(pageId) ?? [];
 }
+
+/** Global sözlük görünümü (UX-C10) için tüm terimler. */
+export function allTerms(): GlossaryTerm[] {
+  return glossaryTerms;
+}

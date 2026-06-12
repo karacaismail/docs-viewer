@@ -2,6 +2,7 @@
 import { createRootRoute, createRoute, createRouter, redirect } from "@tanstack/react-router";
 import { AppShell } from "../components/app-shell/AppShell";
 import { ContentArea } from "../components/content/ContentArea";
+import { GlossaryIndexPage } from "../components/content/GlossaryIndexPage";
 import { navigation } from "../engine";
 
 const firstSlug = navigation.categories[0]?.groups[0]?.items[0]?.slug ?? "";
@@ -23,7 +24,13 @@ export const docRoute = createRoute({
   component: ContentArea,
 });
 
-const routeTree = rootRoute.addChildren([indexRoute, docRoute]);
+export const sozlukRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/sozluk",
+  component: GlossaryIndexPage,
+});
+
+const routeTree = rootRoute.addChildren([indexRoute, docRoute, sozlukRoute]);
 // basepath: Pages alt yolunda da kök dağıtımda da çalışır
 export const router = createRouter({ routeTree, basepath: import.meta.env.BASE_URL });
 

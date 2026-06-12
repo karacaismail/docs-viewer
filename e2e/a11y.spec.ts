@@ -11,6 +11,7 @@ const PAGES = [
   "/docs/stack/stack-editions", // KAVRAM kaydı: taksonomi kartı + 5'li kv-row + parse'lı paragraph
   "/docs/backend/be-kararlar", // KARAR şablonu: uzun definitionList + callout'lar + Rail 1 bölüm başlıkları
   "/docs/kernel/k-wbs", // wbsChart: canvas role=img + fallback listesi
+  "/sozluk", // global sözlük dizini: filtre + ? panel tetikleyicileri (UX-C10)
 ];
 
 test.describe("axe-core a11y taraması", () => {

@@ -175,8 +175,17 @@ export function WbsChartBlock({ block }: { block: Extract<Block, { type: "wbsCha
         </ul>
       ) : (
         <>
-          {/* biome-ignore lint/a11y/noNoninteractiveTabindex: yatay kaydırılabilir bölge klavyeyle odaklanabilir olmalı (axe: scrollable-region-focusable) */}
-          <section style={{ overflowX: "auto" }} tabIndex={0} aria-label="WBS ağacı — yatay kaydırılabilir">
+          <p className="wbs-hint">
+            <i className="ph ph-arrows-horizontal" aria-hidden /> Şema sayfadan geniştir — sağa kaydırarak
+            Atom seviyesine kadar görebilirsin.
+          </p>
+          <section
+            className="wbs-scroll"
+            style={{ overflowX: "auto" }}
+            // biome-ignore lint/a11y/noNoninteractiveTabindex: yatay kaydırılabilir bölge klavyeyle odaklanabilir olmalı (axe: scrollable-region-focusable)
+            tabIndex={0}
+            aria-label="WBS ağacı — yatay kaydırılabilir"
+          >
             <div
               ref={ref}
               role="img"

@@ -3,6 +3,10 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   base: process.env.VITE_BASE ?? "/", // GitHub Pages alt yol desteği
+  define: {
+    // Site güncellik damgası (UX-D6) — Rail 1 alt bilgisinde gösterilir
+    __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10)),
+  },
   plugins: [react()],
   build: {
     // Önce sandbox-yerel dizine yazılır, sonra build/ içine senkronlanır

@@ -35,3 +35,7 @@ src/components/navigation/
 ## Kabul Kriterleri
 
 Faz 5 test listesi yeşildir; tüm navigasyon yalnızca keyboard ile kullanılabilir; URL paylaşıldığında alıcı aynı görünümü (kategori + page + anchor) elde eder.
+
+## UX Revizyonu — Sıralı Okuma ve Yön Bulma (2026-06: 60+ öğrenen odağı)
+
+Eğitim dokümanı yapısı gereği gezinme yalnız rastgele erişim değil, sıralı okuma da destekler. `src/engine/pageOrder.ts` navigation'ı düz listeye indirger; `pageNeighbors(slug)` önceki/sonraki sayfayı (kategori sınırında `crossesCategory` işaretiyle) döner ve ContentArea'nın sayfa altı gezgini ("← Önceki / Sonraki →", sınırda "Sıradaki bölüm: <kategori>") buradan beslenir. Sayfa üstünde breadcrumb (`SECTION › Kategori`, `pageAt(slug)`) konum duygusu verir. Rail 1 alt bilgisi (RailFooter): "Devam et: <son sayfa>" (localStorage `son-ziyaret`), `/sozluk` bağlantısı, A−/A+ yazı boyutu kontrolü (`yazi-boyutu`, %100/%112,5/%125 kök font), geri bildirim (GitHub issue) ve `llms.txt` bağlantıları, build tarihi (`__BUILD_DATE__` vite define). `/sozluk` route'u (`sozlukRoute`) tüm sözlüğü A-Z dizin olarak sunar; 404 sayfası arama ve sözlük çıkışları verir.

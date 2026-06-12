@@ -28,7 +28,11 @@ describe("ChecklistBlock storageKey kalıcılığı", () => {
     const boxes = screen.getAllByRole("checkbox");
     expect(boxes).toHaveLength(2);
     fireEvent.click(boxes[1]);
-    expect(JSON.parse(window.localStorage.getItem("checklist:edu-u01") ?? "[]")).toEqual([1]);
+    // v2 format (UX-B6): { checked, total } — müfredat özeti toplam hesaplayabilsin
+    expect(JSON.parse(window.localStorage.getItem("checklist:edu-u01") ?? "{}")).toEqual({
+      checked: [1],
+      total: 2,
+    });
     expect(screen.getByRole("status").textContent).toContain("1/2");
   });
 

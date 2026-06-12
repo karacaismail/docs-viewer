@@ -36,18 +36,24 @@ export function StepListBlock({ block }: B<"stepList">) {
 // storageKey'li checklist ilerlemesi localStorage'da yaşar (07A §3 kapanışı; 12 §UX: 60+ kullanıcı
 // için "kaldığım yer" güvencesi). Anahtar başına işaretli index dizisi tutulur; storage erişimi
 // güvenli sarılır (private mode / kota durumunda özellik sessizce salt-okura düşer).
+// v2 format: { checked: number[], total: number } — müfredat ilerleme özeti (UX-B6) toplamı
+// hesaplayabilsin diye. Eski düz-dizi kayıtları okurken kabul edilir (geriye uyum).
 const readChecked = (key: string): number[] => {
   try {
     const raw = window.localStorage.getItem(`checklist:${key}`);
     const v: unknown = raw ? JSON.parse(raw) : [];
-    return Array.isArray(v) ? v.filter((n): n is number => typeof n === "number") : [];
+    if (Array.isArray(v)) return v.filter((n): n is number => typeof n === "number");
+    if (v && typeof v === "object" && Array.isArray((v as { checked?: unknown }).checked)) {
+      return (v as { checked: unknown[] }).checked.filter((n): n is number => typeof n === "number");
+    }
+    return [];
   } catch {
     return [];
   }
 };
-const writeChecked = (key: string, value: number[]): void => {
+const writeChecked = (key: string, value: number[], total: number): void => {
   try {
-    window.localStorage.setItem(`checklist:${key}`, JSON.stringify(value));
+    window.localStorage.setItem(`checklist:${key}`, JSON.stringify({ checked: value, total }));
   } catch {
     // kota/private mode: kalıcılık yok, işaretleme oturum içi çalışmaya devam eder
   }
@@ -75,7 +81,7 @@ export function ChecklistBlock({ block }: B<"checklist">) {
   const toggle = (i: number) => {
     const next = checked.includes(i) ? checked.filter((n) => n !== i) : [...checked, i];
     setChecked(next);
-    writeChecked(key, next);
+    writeChecked(key, next, block.items.length);
   };
   return (
     <section id={block.id}>

@@ -9,6 +9,28 @@ import type { SearchDoc } from "../../schemas";
 import { useUiState } from "../ui/UiState";
 
 type Result = SearchDoc & { score: number };
+// Son seçimler (UX-C14): sorgu boşken "kaldığın yerden devam" listesi — bu cihazda saklanır
+type RecentHit = { title: string; pageTitle: string; slug: string; blockId?: string };
+const RECENT_KEY = "son-aramalar";
+const readRecents = (): RecentHit[] => {
+  try {
+    const v: unknown = JSON.parse(window.localStorage.getItem(RECENT_KEY) ?? "[]");
+    return Array.isArray(v) ? (v as RecentHit[]).slice(0, 5) : [];
+  } catch {
+    return [];
+  }
+};
+const pushRecent = (h: RecentHit): void => {
+  try {
+    const list = [h, ...readRecents().filter((r) => !(r.slug === h.slug && r.blockId === h.blockId))].slice(
+      0,
+      5,
+    );
+    window.localStorage.setItem(RECENT_KEY, JSON.stringify(list));
+  } catch {
+    /* kalıcılık yoksa sessiz geç */
+  }
+};
 let cachedIndex: MiniSearch<SearchDoc> | null = null;
 
 async function getIndex(): Promise<MiniSearch<SearchDoc>> {
@@ -41,6 +63,9 @@ export function SearchOverlay() {
   const [results, setResults] = useState<Result[]>([]);
   const [sel, setSel] = useState(0);
   const [ready, setReady] = useState(false);
+  const [kindFilter, setKindFilter] = useState<"all" | "block" | "term">("all");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [recents, setRecents] = useState<RecentHit[]>([]);
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -48,6 +73,9 @@ export function SearchOverlay() {
     setQuery("");
     setResults([]);
     setSel(0);
+    setKindFilter("all");
+    setSuggestions([]);
+    setRecents(readRecents());
     void getIndex().then(() => setReady(true));
   }, [open]);
 
@@ -59,8 +87,18 @@ export function SearchOverlay() {
         return;
       }
       void getIndex().then((ms) => {
-        setResults(ms.search(query).slice(0, 30) as unknown as Result[]);
+        const found = ms.search(query).slice(0, 30) as unknown as Result[];
+        setResults(found);
         setSel(0);
+        // "Şunu mu demek istediniz?" (UX-C12): sıfır sonuçta gevşek fuzzy önerisi
+        setSuggestions(
+          found.length === 0
+            ? ms
+                .autoSuggest(query, { fuzzy: 0.4, prefix: true })
+                .slice(0, 3)
+                .map((s) => s.suggestion)
+            : [],
+        );
       });
     }, 120);
     return () => window.clearTimeout(t);
@@ -72,20 +110,23 @@ export function SearchOverlay() {
 
   const go = (r: Result) => {
     const [section, page] = r.slug.split("/");
+    pushRecent({ title: r.title, pageTitle: r.pageTitle, slug: r.slug, blockId: r.blockId || undefined });
     ui.close();
     void navigate({ to: "/docs/$section/$page", params: { section, page }, hash: r.blockId || undefined });
   };
 
+  const shown = kindFilter === "all" ? results : results.filter((r) => r.kind === kindFilter);
+
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setSel((s) => Math.min(s + 1, results.length - 1));
+      setSel((s) => Math.min(s + 1, shown.length - 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setSel((s) => Math.max(s - 1, 0));
-    } else if (e.key === "Enter" && results[sel]) {
+    } else if (e.key === "Enter" && shown[sel]) {
       e.preventDefault();
-      go(results[sel]);
+      go(shown[sel]);
     }
   };
 
@@ -105,22 +146,75 @@ export function SearchOverlay() {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKeyDown}
             role="combobox"
-            aria-expanded={results.length > 0}
+            aria-expanded={shown.length > 0}
             aria-controls="search-results"
-            aria-activedescendant={results[sel] ? `sr-${sel}` : undefined}
+            aria-activedescendant={shown[sel] ? `sr-${sel}` : undefined}
             // biome-ignore lint/a11y/noAutofocus: search overlay açılışında odak input'a taşınır — 13 §Overlay 1 sözleşmesi
             autoFocus
           />
+          <fieldset className="search-chips" aria-label="Sonuç türü filtresi">
+            {(
+              [
+                ["all", "Tümü"],
+                ["block", "İçerik"],
+                ["term", "Terimler"],
+              ] as const
+            ).map(([k, label]) => (
+              <button
+                type="button"
+                key={k}
+                className={`chip${kindFilter === k ? " chip--active" : ""}`}
+                aria-pressed={kindFilter === k}
+                onClick={() => {
+                  setKindFilter(k);
+                  setSel(0);
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </fieldset>
           <div className="search-results" id="search-results" role="listbox" ref={listRef}>
-            {query.trim() && results.length === 0 && ready && (
+            {query.trim() && shown.length === 0 && ready && (
               <div className="search-empty" role="status">
                 Sonuç bulunamadı: “{query}”
+                {kindFilter !== "all" && results.length > 0 && (
+                  <p>Bu türde sonuç yok — "Tümü" filtresini dene.</p>
+                )}
+                {suggestions.length > 0 && (
+                  <p className="search-suggest">
+                    Şunu mu demek istediniz:{" "}
+                    {suggestions.map((sg) => (
+                      <button type="button" key={sg} className="chip" onClick={() => setQuery(sg)}>
+                        {sg}
+                      </button>
+                    ))}
+                  </p>
+                )}
+              </div>
+            )}
+            {!query.trim() && recents.length > 0 && (
+              <div className="search-recents">
+                <p className="search-recents__title">Son açtıkların</p>
+                {recents.map((r) => (
+                  <button
+                    type="button"
+                    key={`${r.slug}#${r.blockId ?? ""}`}
+                    className="search-result"
+                    onClick={() => go({ ...r, blockId: r.blockId ?? "" } as unknown as Result)}
+                  >
+                    <span className="r-title">
+                      <i className="ph ph-clock-counter-clockwise" aria-hidden /> {r.title}
+                    </span>{" "}
+                    <span className="r-page">— {r.pageTitle}</span>
+                  </button>
+                ))}
               </div>
             )}
             <span aria-live="polite" style={{ position: "absolute", left: -9999 }}>
-              {query.trim() ? `${results.length} sonuç` : ""}
+              {query.trim() ? `${shown.length} sonuç` : ""}
             </span>
-            {results.map((r, i) => (
+            {shown.map((r, i) => (
               <button
                 type="button"
                 key={r.id}

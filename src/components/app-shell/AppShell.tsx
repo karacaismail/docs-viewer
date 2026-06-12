@@ -1,6 +1,6 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { Outlet, useRouterState } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { navigation } from "../../engine";
 import { ExplanationPanel } from "../glossary/ExplanationPanel";
 import { RailOne } from "../navigation/RailOne";
@@ -24,6 +24,7 @@ function useActiveSection(): string {
 
 function Shell() {
   const ui = useUiState();
+  const [showKeys, setShowKeys] = useState(false);
   const section = useActiveSection();
   const category = navigation.categories.find((c) => c.id === section);
 
@@ -33,6 +34,12 @@ function Shell() {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         ui.open("search");
+      }
+      // "?" → kısayol yardımı (UX-D4): form alanı odaktayken tetiklenmez
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (e.key === "?" && tag !== "INPUT" && tag !== "TEXTAREA" && tag !== "SELECT") {
+        e.preventDefault();
+        setShowKeys(true);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -44,6 +51,38 @@ function Shell() {
       <a className="skip-link" href="#icerik">
         İçeriğe atla
       </a>
+
+      <Dialog.Root open={showKeys} onOpenChange={setShowKeys}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="overlay-backdrop" />
+          <Dialog.Content className="keys-dialog" aria-describedby={undefined}>
+            <Dialog.Title>Klavye kısayolları</Dialog.Title>
+            <dl className="keys-list">
+              <dt>
+                <kbd>Ctrl</kbd>+<kbd>K</kbd> <span className="keys-or">(Mac: ⌘K)</span>
+              </dt>
+              <dd>Aramayı aç</dd>
+              <dt>
+                <kbd>↑</kbd> <kbd>↓</kbd> + <kbd>Enter</kbd>
+              </dt>
+              <dd>Arama sonuçlarında gezin ve aç</dd>
+              <dt>
+                <kbd>Esc</kbd>
+              </dt>
+              <dd>Açık pencereyi kapat</dd>
+              <dt>
+                <kbd>?</kbd>
+              </dt>
+              <dd>Bu yardım penceresi</dd>
+            </dl>
+            <Dialog.Close asChild>
+              <button type="button" className="iconbtn">
+                Kapat
+              </button>
+            </Dialog.Close>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
 
       {/* Desktop: sabit iki rail */}
       <div className="shell__rails">

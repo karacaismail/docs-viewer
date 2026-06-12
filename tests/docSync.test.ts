@@ -74,7 +74,7 @@ describe("doc ↔ üretilmiş veri tutarlılığı", () => {
 
   it("05: axe kapsamı sayısı e2e/a11y.spec.ts PAGES dizisiyle eşleşir", () => {
     const spec = readFileSync(join(ROOT, "e2e", "a11y.spec.ts"), "utf8");
-    const pages = (spec.match(/^\s*"\/docs\//gm) ?? []).length;
+    const pages = (spec.match(/^\s*"\/(?:docs\/|sozluk)/gm) ?? []).length;
     expect(
       num(doc("05-test-plani.md"), /axe-core WCAG 2A\/AA taraması \((\d+) temsilî sayfa/, "05 axe"),
     ).toBe(pages);

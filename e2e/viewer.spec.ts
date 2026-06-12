@@ -181,4 +181,28 @@ test.describe("explanation panel sözleşmesi (kabul #10, 12 §Etkileşim)", () 
     // Yeni sayfada focus h1'dedir — screen reader duyurusunun kanıtı
     await expect(page.getByRole("heading", { level: 1 })).toBeFocused();
   });
+
+  test("sıralı okuma gezgini: Sonraki bağlantısı bir sonraki sayfaya götürür (UX-A1)", async ({ page }) => {
+    await page.goto(FIRST);
+    const pager = page.getByRole("navigation", { name: "Sıralı okuma" });
+    await pager.scrollIntoViewIfNeeded();
+    const next = pager.getByRole("link", { name: /Sonraki/ });
+    await expect(next).toBeVisible();
+    const before = page.url();
+    await next.click();
+    await expect(page).not.toHaveURL(before);
+    await expect(page.getByRole("heading", { level: 1 })).toBeFocused();
+  });
+
+  test("/sozluk dizini: filtre daraltır, ? düğmesi açıklama panelini açar (UX-C10)", async ({ page }) => {
+    await page.goto("/sozluk");
+    await expect(page.getByRole("heading", { level: 1, name: /Sözlük/ })).toBeVisible();
+    const filter = page.getByLabel("Sözlükte terim süz");
+    await filter.fill("archetype");
+    const rows = page.locator(".glossary-list li");
+    await expect(rows.first()).toBeVisible();
+    const first = rows.first();
+    await first.locator("button").click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+  });
 });

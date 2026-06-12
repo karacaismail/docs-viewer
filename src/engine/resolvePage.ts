@@ -26,3 +26,8 @@ export function resolveRef(refId: string): { slug: string; title: string } | und
   const entry = byOldId.get(refId) ?? byId.get(`page-${refId}`);
   return entry ? { slug: entry.slug, title: entry.title } : undefined;
 }
+
+// Hover önizleme kartı (UX-D1) — ref hedefinin tam indeks kaydı (summary dahil)
+export function resolveRefEntry(refId: string): PageIndexEntry | undefined {
+  return byOldId.get(refId) ?? byId.get(`page-${refId}`);
+}

@@ -35,3 +35,7 @@ Aynı block birden çok alandan eşleşirse tek sonuç gösterilir (doc ID zaten
 ## Kabul Kriterleri
 
 Faz 8 test listesi yeşildir; search chunk'ı ana bundle dışındadır; Playwright senaryosu "sorgu yaz → ok ile seç → Enter → doğru block highlight'lı görünür" akışını uçtan uca kanıtlar.
+
+## UX Revizyonu — Arama Yardımcıları (2026-06: 60+ öğrenen odağı)
+
+Arama overlay'ine üç yardımcı eklendi: (1) sonuç türü filtre çipleri (Tümü / İçerik / Terimler — `kind` alanına istemci tarafı süzme; tür filtresi sonuç saklıyorsa boş durumda "Tümü'yü dene" yönlendirmesi); (2) sıfır sonuçta MiniSearch `autoSuggest` ile "Şunu mu demek istediniz" önerileri (gevşek fuzzy 0.4, en çok 3); (3) sorgu boşken "Son açtıkların" listesi (localStorage `son-aramalar`, en çok 5, slug+blockId ile teklenir). Ctrl+K ipucu Rail 1 arama düğmesinde görünür `kbd` çipidir; "?" tuşu (form alanı odakta değilken) klavye kısayolları diyaloğunu açar.

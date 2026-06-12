@@ -12,6 +12,7 @@ export {
   navigation,
   pagesIndex,
 } from "./loadStaticData";
-export { resolvePage, resolvePageById, resolveRef } from "./resolvePage";
-export { resolveTerm, termsOfPage } from "./resolveTerms";
+export * from "./pageOrder";
+export { resolvePage, resolvePageById, resolveRef, resolveRefEntry } from "./resolvePage";
+export { allTerms, resolveTerm, termsOfPage } from "./resolveTerms";
 export { scrollToBlockAnchor } from "./scrollToBlockAnchor";

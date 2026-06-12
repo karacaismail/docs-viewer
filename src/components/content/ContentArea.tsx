@@ -4,6 +4,8 @@ import { Link, useParams, useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
   loadPageBlocks,
+  pageAt,
+  pageNeighbors,
   pageToMarkdown,
   resolvePage,
   resolvePageById,
@@ -12,20 +14,35 @@ import {
 } from "../../engine";
 import type { Page } from "../../schemas";
 import { GlossaryTermChip } from "../glossary/GlossaryTerm";
+import { useUiState } from "../ui/UiState";
 import { ContentRenderer } from "./ContentRenderer";
+import { CurriculumProgress } from "./CurriculumProgress";
+import { ReadingProgress } from "./ReadingProgress";
+
+// Rozet insancıllaştırma (ADR-0008 Rev.2: yeni adlar öne, metafor/tooltip yanında) — ham slug kullanıcıya gösterilmez
+const GRAN_TR: Record<string, { label: string; title: string }> = {
+  kaya: { label: "Kaya", title: "Tanım katmanı: Domain (Module) — SP 21" },
+  "buyuk-tas": { label: "Büyük Taş", title: "Tanım katmanı: Surface/ArcheType işi — SP 13" },
+  "orta-tas": { label: "Orta Taş", title: "Tanım katmanı: View/Projection — SP 8" },
+  "kucuk-tas": { label: "Küçük Taş", title: "Tanım katmanı: Fragment/Section — SP 5" },
+};
+const STATE_TR: Record<string, string> = { wip: "taslak", ok: "tamam", aday: "aday", done: "tamam" };
 
 export function ContentArea() {
+  const ui = useUiState();
   const { section, page: pageSlug } = useParams({ from: "/docs/$section/$page" });
   const hash = useRouterState({ select: (s) => s.location.hash });
   const resolved = resolvePage(section, pageSlug);
   const [page, setPage] = useState<Page | null>(null);
   const h1Ref = useRef<HTMLHeadingElement>(null);
+  const [copied, setCopied] = useState(false);
 
   const entry = resolved.kind === "found" ? resolved.entry : null;
 
   useEffect(() => {
     let alive = true;
     setPage(null);
+    setCopied(false);
     if (entry) {
       void loadPageBlocks(entry.id.slice(5)).then((p) => {
         if (alive && p) setPage(p);
@@ -38,6 +55,13 @@ export function ContentArea() {
 
   useEffect(() => {
     document.title = `${entry?.title ?? "Sayfa bulunamadı"} — Mimari Dokümantasyon`;
+    if (entry) {
+      try {
+        window.localStorage.setItem("son-ziyaret", JSON.stringify({ slug: entry.slug, title: entry.title }));
+      } catch {
+        /* kalıcılık yoksa sessiz geç */
+      }
+    }
     if (!entry) {
       h1Ref.current?.focus();
       return;
@@ -59,8 +83,16 @@ export function ContentArea() {
         </h1>
         <p>
           “{resolved.kind === "not-found" ? resolved.slug : ""}” adresinde bir doküman yok. Sol menüden devam
-          edebilirsiniz.
+          edebilirsiniz — ya da aradığınızı bulmak için:
         </p>
+        <div className="notfound__actions">
+          <button type="button" className="iconbtn" onClick={() => ui.open("search")}>
+            <i className="ph ph-magnifying-glass" aria-hidden /> Aramayı aç
+          </button>
+          <Link to="/sozluk" className="iconbtn">
+            <i className="ph ph-book-open" aria-hidden /> Sözlüğe bak (A-Z)
+          </Link>
+        </div>
       </div>
     );
   }
@@ -80,8 +112,32 @@ export function ContentArea() {
     URL.revokeObjectURL(a.href);
   };
 
+  // MD kopyala (UX-B9): indirme yerine panoya — 60+ için "dosya nereye indi?" sorusunu atlar
+  const copyMd = () => {
+    if (!page) return;
+    const base = `${window.location.origin}${import.meta.env.BASE_URL}`;
+    const md = pageToMarkdown(entry, page.blocks, base);
+    void navigator.clipboard.writeText(md).then(() => {
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2500);
+    });
+  };
+
+  const flat = pageAt(entry.slug);
+  const headings = (page?.blocks ?? []).filter(
+    (b): b is Extract<typeof b, { type: "heading" }> => b.type === "heading" && b.level === 2,
+  );
+
   return (
     <article>
+      <ReadingProgress />
+      {flat?.section && (
+        <nav className="crumbs" aria-label="Konum">
+          <span className="crumbs__section">{flat.section}</span>
+          <span aria-hidden> › </span>
+          <span>{flat.categoryLabel}</span>
+        </nav>
+      )}
       <div className="page-actions">
         <button
           type="button"
@@ -93,18 +149,55 @@ export function ContentArea() {
         >
           <i className="ph ph-download-simple" aria-hidden /> MD
         </button>
+        <button
+          type="button"
+          className="iconbtn"
+          onClick={copyMd}
+          disabled={!page}
+          aria-label="Sayfayı Markdown olarak panoya kopyala"
+          title="Markdown'ı panoya kopyala"
+        >
+          <i className={`ph ${copied ? "ph-check" : "ph-copy"}`} aria-hidden />{" "}
+          {copied ? "Kopyalandı" : "MD kopyala"}
+        </button>
+        <span aria-live="polite" className="sr-only-live">
+          {copied ? "Sayfa içeriği Markdown olarak panoya kopyalandı" : ""}
+        </span>
       </div>
       {(entry.meta?.badge || entry.meta?.state || entry.meta?.granularity) && (
         <div className="meta-row">
           {entry.meta?.badge && <span className="badge">{entry.meta.badge}</span>}
-          {entry.meta?.granularity && <span className="badge">{entry.meta.granularity}</span>}
-          {entry.meta?.state && <span className="badge">{entry.meta.state}</span>}
+          {entry.meta?.granularity && (
+            <span className="badge" title={GRAN_TR[entry.meta.granularity]?.title}>
+              {GRAN_TR[entry.meta.granularity]?.label ?? entry.meta.granularity}
+            </span>
+          )}
+          {entry.meta?.state && (
+            <span className="badge">{STATE_TR[entry.meta.state] ?? entry.meta.state}</span>
+          )}
         </div>
       )}
       <h1 tabIndex={-1} ref={h1Ref}>
         {entry.title}
       </h1>
       {entry.summary && <p className="lead">{entry.summary}</p>}
+
+      {(entry.slug === "egitim/edu-overview" || entry.slug === "egitim/edu-faz-haritasi") && (
+        <CurriculumProgress />
+      )}
+
+      {headings.length >= 4 && (
+        <details className="toc">
+          <summary>Bu sayfada ({headings.length} bölüm)</summary>
+          <ol className="toc__list">
+            {headings.map((h) => (
+              <li key={h.id}>
+                <a href={`#${h.id}`}>{h.text}</a>
+              </li>
+            ))}
+          </ol>
+        </details>
+      )}
 
       {terms.length > 0 && (
         <ul
@@ -127,6 +220,35 @@ export function ContentArea() {
           İçerik yükleniyor…
         </p>
       )}
+
+      {(() => {
+        const nb = pageNeighbors(entry.slug);
+        if (!nb.prev && !nb.next) return null;
+        const linkOf = (it: { slug: string }) => {
+          const [s2, p2] = it.slug.split("/");
+          return { to: "/docs/$section/$page" as const, params: { section: s2, page: p2 } };
+        };
+        return (
+          <nav className="pager" aria-label="Sıralı okuma">
+            {nb.prev ? (
+              <Link {...linkOf(nb.prev)} className="pager__link">
+                <span className="pager__dir">← Önceki</span>
+                <span className="pager__title">{nb.prev.title}</span>
+              </Link>
+            ) : (
+              <span />
+            )}
+            {nb.next && (
+              <Link {...linkOf(nb.next)} className="pager__link pager__link--next">
+                <span className="pager__dir">
+                  Sonraki →{nb.crossesCategory ? ` · Sıradaki bölüm: ${nb.next.categoryLabel}` : ""}
+                </span>
+                <span className="pager__title">{nb.next.title}</span>
+              </Link>
+            )}
+          </nav>
+        );
+      })()}
 
       {related.length > 0 && (
         <nav className="related" aria-label="İlgili sayfalar">

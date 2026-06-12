@@ -1,8 +1,9 @@
 // Tüm inline içeriğin tek render yolu (11 §Renderer 2) — HTML string yok.
 
+import * as Tooltip from "@radix-ui/react-tooltip";
 import { Link } from "@tanstack/react-router";
 import { Fragment } from "react";
-import { resolveRef } from "../../engine";
+import { resolveRefEntry } from "../../engine";
 import type { Segment } from "../../schemas";
 import { GlossaryTermInline } from "../glossary/GlossaryTerm";
 
@@ -31,13 +32,29 @@ function renderSegment(s: Segment) {
         </a>
       );
     case "ref": {
-      const target = resolveRef(s.refId);
+      const target = resolveRefEntry(s.refId);
       if (!target) return s.text; // çözülemezse düz metin (08 §4)
       const [section, page] = target.slug.split("/");
-      return (
+      const link = (
         <Link to="/docs/$section/$page" params={{ section, page }}>
           {target.title}
         </Link>
+      );
+      // Hover önizleme (UX-D1): tıklamadan önce hedefin özeti — 60+ için "bu link beni nereye götürür?" cevabı
+      if (!target.summary) return link;
+      return (
+        <Tooltip.Provider delayDuration={250}>
+          <Tooltip.Root>
+            <Tooltip.Trigger asChild>{link}</Tooltip.Trigger>
+            <Tooltip.Portal>
+              <Tooltip.Content className="ref-preview" sideOffset={6}>
+                <strong>{target.title}</strong>
+                <span>{target.summary}</span>
+                <Tooltip.Arrow className="tooltip-arrow" />
+              </Tooltip.Content>
+            </Tooltip.Portal>
+          </Tooltip.Root>
+        </Tooltip.Provider>
       );
     }
     case "term":

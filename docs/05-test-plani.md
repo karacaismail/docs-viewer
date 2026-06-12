@@ -16,7 +16,7 @@ Vitest + `@testing-library/react` birim/bileşen katmanını, Playwright + `@axe
 | 2. Birim testleri | Engine saf fonksiyonları: normalize, resolve, search document üretimi, anchor çözümü | Sınır değerler: boş dizi, eksik referans, duplicate ID |
 | 3. Bileşen kontrat testleri | Her block bileşeni: verilen veri → beklenen DOM semantiği (heading seviyesi, tablo başlıkları, liste rolleri) | A11y assert'leri dahil |
 | 4. İçerik doğrulama | `src/data/` altındaki gerçek JSON, registry'deki tüm şemalardan geçer; tüm `pageId`/`termId`/`blockId` referansları çözülür | CI'da zorunlu kapı — bozuk içerik build'i kırar |
-| 5. E2E + a11y | Playwright: 320px yatay scroll, klavye akışı (Ctrl+K → ok → Enter → block anchor), focus trap + focus dönüşü, drawer, boş sonuç durumu; axe-core WCAG 2A/AA taraması (7 temsilî sayfa — aday katalog ve KAVRAM şablonları dahil — + panel açıkken), critical/serious = 0 | CI'da zorunlu kapı — `e2e/viewer.spec.ts`, `e2e/a11y.spec.ts` |
+| 5. E2E + a11y | Playwright: 320px yatay scroll, klavye akışı (Ctrl+K → ok → Enter → block anchor), focus trap + focus dönüşü, drawer, boş sonuç durumu; axe-core WCAG 2A/AA taraması (8 temsilî sayfa — aday katalog, KAVRAM şablonları ve /sozluk dizini dahil — + panel açıkken), critical/serious = 0 | CI'da zorunlu kapı — `e2e/viewer.spec.ts`, `e2e/a11y.spec.ts` |
 
 ## 3. Faz Bazlı Test Listesi
 

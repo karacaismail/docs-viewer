@@ -110,7 +110,7 @@ const named = {
       "Scale Primitives",
       "In-tree Core — L1",
       "Stack Ürünleri — L2",
-      "Ürün Ailesi (Rock)",
+      "App (Dağ) — Ürün",
     ];
     const body = layers
       .map((l, i) => {
@@ -138,6 +138,7 @@ const named = {
       "Multi-tenancy day-1",
       "TR uyum birinci sınıf",
       "Anti-stack defteri",
+      "ArcheType = Diferansiyatör",
     ];
     const cx = 400,
       cy = 235,
