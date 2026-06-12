@@ -170,6 +170,8 @@ describe("pageToMarkdown", () => {
       const out = pageToMarkdown(entry, page.blocks, BASE);
       expect(out.startsWith("# "), f).toBe(true);
       expect(out.includes("Kaynak: "), f).toBe(true);
+      // Sınır mührü: 'İlgili sayfalar' bölümü ASLA çıktıya giremez (kullanıcı sözleşmesi)
+      expect(out.includes("İlgili sayfalar"), f).toBe(false);
       count += 1;
     }
     expect(count).toBeGreaterThan(200);
