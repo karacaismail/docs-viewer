@@ -37,3 +37,5 @@ src/components/content/
 ## Kabul Kriterleri
 
 Faz 6 test listesi yeşildir; codebase'de `dangerouslySetInnerHTML` araması sıfır sonuç döner; registry'ye kayıtlı olmayan type dev'de anlaşılır hata üretir; 16 block type'ın tamamı kontrat testlerinde örneklenmiştir (Storybook ilk kapsam dışıdır — ADR-0002, `01B-adr-0002-storybook.md`; bileşenler story-yazımına uygun izole biçimde kalır).
+
+Ek yetenek (11 Haziran 2026): her sayfanın sağ üstündeki **MD dışa aktarma** butonu, 'İlgili sayfalar' öncesi içeriği (başlık + özet + blocks) `engine/blocksToMarkdown` saf fonksiyonuyla Markdown'a çevirip `<stem>.md` olarak indirir; ref segmentleri site linkine çözülür, terimler düz metne iner, tüm 17 block type eşlenir (kontrat: tests/blocksToMarkdown.test.ts).

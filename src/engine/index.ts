@@ -2,6 +2,7 @@
 
 export * from "./basePath";
 export { registerBlock, resolveBlock } from "./blockRegistry";
+export * from "./blocksToMarkdown";
 export { foldTurkish } from "./foldTurkish";
 export {
   glossaryTerms,

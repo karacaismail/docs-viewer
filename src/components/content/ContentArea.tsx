@@ -2,7 +2,14 @@
 
 import { Link, useParams, useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { loadPageBlocks, resolvePage, resolvePageById, scrollToBlockAnchor, termsOfPage } from "../../engine";
+import {
+  loadPageBlocks,
+  pageToMarkdown,
+  resolvePage,
+  resolvePageById,
+  scrollToBlockAnchor,
+  termsOfPage,
+} from "../../engine";
 import type { Page } from "../../schemas";
 import { GlossaryTermChip } from "../glossary/GlossaryTerm";
 import { ContentRenderer } from "./ContentRenderer";
@@ -61,8 +68,32 @@ export function ContentArea() {
   const terms = termsOfPage(entry.id);
   const related = (entry.related ?? []).map(resolvePageById).filter((p) => p !== undefined);
 
+  // MD dışa aktarma: 'İlgili sayfalar' öncesi içerik (başlık+özet+blocks) -> <stem>.md indir
+  const exportMd = () => {
+    if (!page) return;
+    const base = `${window.location.origin}${import.meta.env.BASE_URL}`;
+    const md = pageToMarkdown(entry, page.blocks, base);
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([md], { type: "text/markdown;charset=utf-8" }));
+    a.download = `${entry.slug.split("/")[1] ?? "sayfa"}.md`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
   return (
     <article>
+      <div className="page-actions">
+        <button
+          type="button"
+          className="iconbtn"
+          onClick={exportMd}
+          disabled={!page}
+          aria-label="Sayfayı Markdown olarak dışa aktar"
+          title="Markdown olarak dışa aktar (.md)"
+        >
+          <i className="ph ph-download-simple" aria-hidden /> MD
+        </button>
+      </div>
       {(entry.meta?.badge || entry.meta?.state || entry.meta?.granularity) && (
         <div className="meta-row">
           {entry.meta?.badge && <span className="badge">{entry.meta.badge}</span>}
