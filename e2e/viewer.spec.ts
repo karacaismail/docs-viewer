@@ -138,11 +138,16 @@ test.describe("explanation panel sözleşmesi (kabul #10, 12 §Etkileşim)", () 
     await expect(block.locator("[aria-live=polite]")).toHaveText("Kod panoya kopyalandı");
   });
 
-  test("MD dışa aktarma butonu her sayfada (sağ üst) ve içerik yüklenince aktif", async ({ page }) => {
+  test("MD dışa aktarma: buton aktif, indirilen dosya adı ve içeriği sözleşmeye uyar", async ({ page }) => {
     await page.goto(KERNEL);
     const btn = page.getByRole("button", { name: "Sayfayı Markdown olarak dışa aktar" });
-    await expect(btn).toBeVisible();
     await expect(btn).toBeEnabled();
+    const [download] = await Promise.all([page.waitForEvent("download"), btn.click()]);
+    expect(download.suggestedFilename()).toBe("kernel-authz.md");
+    const path = await download.path();
+    const body = path ? require("node:fs").readFileSync(path, "utf8") : "";
+    expect(body.startsWith("# ")).toBe(true);
+    expect(body).toContain("Kaynak: ");
   });
 
   test("wbs ağacı render edilir — canvas veya erişilebilir fallback (k-wbs)", async ({ page }) => {

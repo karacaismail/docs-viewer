@@ -21,6 +21,7 @@ Bu set, `mimari/` klasöründeki mevcut içeriğin (≈198 cluster JSON + mimari
 | 01J | `01J-adr-0010-surface.md` | ADR-0010: Surface birinci-sınıf — beşli denklem (App/Domain/ArcheType/Surface/Workflow) | Zemin |
 | 01K | `01K-adr-0011-echarts.md` | ADR-0011: ECharts — lazy-chunk'lı WBS görselleştirme bağımlılığı | Zemin |
 | 01L | `01L-adr-0012-llm-baglam.md` | ADR-0012: LLM bağlam paketi — AGENTS.md/CLAUDE.md/llms.txt | Zemin |
+| 01M | `01M-adr-0013-md-export.md` | ADR-0013: MD dışa aktarma — kemikleştirilmiş sözleşme (4 CI kapısı) | Zemin |
 | 02 | `02-icerik-envanteri.md` | Mevcut kaynak dosyaların envanteri ve kaderi | Zemin |
 | 03 | `03-navigation-ia.md` | Rail 1 / Rail 2 bilgi mimarisi, slug ve ID sözleşmeleri | Zemin |
 | 04 | `04-veri-modeli.md` | navigation / pages / glossary / search-index JSON sözleşmeleri | Zemin |
