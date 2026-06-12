@@ -149,6 +149,7 @@ export function SearchOverlay() {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKeyDown}
             role="combobox"
+            aria-label="Dokümanlarda ara"
             aria-expanded={shown.length > 0}
             aria-controls="search-results"
             aria-activedescendant={shown[sel] ? `sr-${sel}` : undefined}

@@ -42,7 +42,7 @@ test.describe("klavye akışı (kabul #7, 13 §Overlay)", () => {
   test("Ctrl+K → sorgu → ok → Enter → block anchor'a iner; Escape kapatır", async ({ page }) => {
     await page.goto(FIRST);
     await page.keyboard.press("Control+k");
-    const input = page.getByRole("combobox");
+    const input = page.getByRole("combobox", { name: "Dokümanlarda ara" });
     await expect(input).toBeFocused();
     await input.fill("outbox");
     await expect(page.getByRole("option").first()).toBeVisible();
@@ -60,15 +60,15 @@ test.describe("klavye akışı (kabul #7, 13 §Overlay)", () => {
 
     // Escape sözleşmesi
     await page.keyboard.press("Control+k");
-    await expect(page.getByRole("combobox")).toBeVisible();
+    await expect(page.getByRole("combobox", { name: "Dokümanlarda ara" })).toBeVisible();
     await page.keyboard.press("Escape");
-    await expect(page.getByRole("combobox")).toBeHidden();
+    await expect(page.getByRole("combobox", { name: "Dokümanlarda ara" })).toBeHidden();
   });
 
   test("boş sonuç durumu duyurulur", async ({ page }) => {
     await page.goto(FIRST);
     await page.keyboard.press("Control+k");
-    await page.getByRole("combobox").fill("xqzwkvbnmasdf");
+    await page.getByRole("combobox", { name: "Dokümanlarda ara" }).fill("xqzwkvbnmasdf");
     await expect(page.getByRole("status")).toContainText("Sonuç bulunamadı");
   });
 });
