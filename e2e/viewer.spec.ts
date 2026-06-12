@@ -1,4 +1,5 @@
 // Kabul kriterleri e2e kanıtları — 14 §2 listesinin otomasyonu
+import { readFileSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
 
 const FIRST = "/docs/egitim/edu-overview";
@@ -145,7 +146,7 @@ test.describe("explanation panel sözleşmesi (kabul #10, 12 §Etkileşim)", () 
     const [download] = await Promise.all([page.waitForEvent("download"), btn.click()]);
     expect(download.suggestedFilename()).toBe("kernel-authz.md");
     const path = await download.path();
-    const body = path ? require("node:fs").readFileSync(path, "utf8") : "";
+    const body = path ? readFileSync(path, "utf8") : "";
     expect(body.startsWith("# ")).toBe(true);
     expect(body).toContain("Kaynak: ");
   });
