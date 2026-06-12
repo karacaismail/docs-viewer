@@ -4,7 +4,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { useNavigate } from "@tanstack/react-router";
 import type MiniSearch from "minisearch";
 import { useEffect, useRef, useState } from "react";
-import { foldTurkish, loadSearchIndex } from "../../engine";
+import { foldTurkish, loadSearchIndex, navigation } from "../../engine";
 import type { SearchDoc } from "../../schemas";
 import { useUiState } from "../ui/UiState";
 
@@ -64,6 +64,7 @@ export function SearchOverlay() {
   const [sel, setSel] = useState(0);
   const [ready, setReady] = useState(false);
   const [kindFilter, setKindFilter] = useState<"all" | "block" | "term">("all");
+  const [catFilter, setCatFilter] = useState<string>("all");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [recents, setRecents] = useState<RecentHit[]>([]);
   const listRef = useRef<HTMLDivElement>(null);
@@ -74,6 +75,7 @@ export function SearchOverlay() {
     setResults([]);
     setSel(0);
     setKindFilter("all");
+    setCatFilter("all");
     setSuggestions([]);
     setRecents(readRecents());
     void getIndex().then(() => setReady(true));
@@ -115,7 +117,8 @@ export function SearchOverlay() {
     void navigate({ to: "/docs/$section/$page", params: { section, page }, hash: r.blockId || undefined });
   };
 
-  const shown = kindFilter === "all" ? results : results.filter((r) => r.kind === kindFilter);
+  const byKind = kindFilter === "all" ? results : results.filter((r) => r.kind === kindFilter);
+  const shown = catFilter === "all" ? byKind : byKind.filter((r) => r.slug.startsWith(`${catFilter}/`));
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {
@@ -173,13 +176,31 @@ export function SearchOverlay() {
                 {label}
               </button>
             ))}
+            <label className="search-cat">
+              Kategori:{" "}
+              <select
+                value={catFilter}
+                onChange={(e) => {
+                  setCatFilter(e.target.value);
+                  setSel(0);
+                }}
+                aria-label="Sonuçları kategoriye göre süz"
+              >
+                <option value="all">Tümü</option>
+                {navigation.categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </label>
           </fieldset>
           <div className="search-results" id="search-results" role="listbox" ref={listRef}>
             {query.trim() && shown.length === 0 && ready && (
               <div className="search-empty" role="status">
                 Sonuç bulunamadı: “{query}”
-                {kindFilter !== "all" && results.length > 0 && (
-                  <p>Bu türde sonuç yok — "Tümü" filtresini dene.</p>
+                {(kindFilter !== "all" || catFilter !== "all") && results.length > 0 && (
+                  <p>Bu süzgeçte sonuç yok — tür ve kategori filtrelerini "Tümü" yap.</p>
                 )}
                 {suggestions.length > 0 && (
                   <p className="search-suggest">

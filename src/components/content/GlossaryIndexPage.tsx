@@ -2,17 +2,22 @@
 // 60+ ilkesi: büyük dokunma hedefleri, açık etiketler, tek sütun okunaklı liste.
 import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { allTerms, foldTurkish, resolvePageById } from "../../engine";
+import { allTerms, foldTurkish, navigation, resolvePageById } from "../../engine";
 import { useUiState } from "../ui/UiState";
 
 export function GlossaryIndexPage() {
   const ui = useUiState();
   const [q, setQ] = useState("");
+  const [cat, setCat] = useState("all");
   const terms = useMemo(() => {
     const fq = foldTurkish(q.trim());
-    const list = allTerms().filter((t) => !fq || foldTurkish(t.label).includes(fq));
+    const list = allTerms().filter((t) => {
+      if (fq && !foldTurkish(t.label).includes(fq)) return false;
+      if (cat !== "all" && !resolvePageById(t.pageId)?.slug.startsWith(`${cat}/`)) return false;
+      return true;
+    });
     return [...list].sort((a, b) => a.label.localeCompare(b.label, "tr"));
-  }, [q]);
+  }, [q, cat]);
 
   const groups = useMemo(() => {
     const m = new Map<string, typeof terms>();
@@ -42,6 +47,21 @@ export function GlossaryIndexPage() {
             className="glossary-filter"
             aria-label="Sözlükte terim süz"
           />
+        </label>{" "}
+        <label>
+          Kategori:{" "}
+          <select
+            value={cat}
+            onChange={(e) => setCat(e.target.value)}
+            aria-label="Terimleri kategoriye göre süz"
+          >
+            <option value="all">Tümü</option>
+            {navigation.categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.label}
+              </option>
+            ))}
+          </select>
         </label>
       </p>
       {groups.map(([letter, items]) => (
