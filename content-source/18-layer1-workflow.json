@@ -114,6 +114,51 @@
         "Agent tetikleyici desteği — `triggered_by: agent` audit metadata'sında",
         "Workflow run state — checkpoint/resume LandX A09 (Agent Orchestration) ile entegre"
       ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "ECA DSL — declarative, no-code (v1'de serbest kod yok)"
+    },
+    {
+      "type": "paragraph",
+      "text": "ECA kuralları **declarative JSON DSL**'dir: event / condition / action. Serbest JS / SQL / shell **yoktur**; action bir **allowlist**'ten seçilir. AI kural önerir, motor doğrular ve uygular (if-else dağıtmak yerine plain JSON; json-rules-engine deseni). Örnek: `{ event: 'record.created', condition: { field:'stok', operator:'equals', value:0 }, action: { type:'set_status', value:'tükendi' } }`."
+    },
+    {
+      "type": "callout",
+      "variant": "info",
+      "label": "ECA türetme kaynakları (AI otomatik önerir)",
+      "body": "Sayısal stok→'0 olunca tükendi + bildirim'; durum/seçim→geçişte audit + opsiyonel bildirim; para→eşik üstü değişimde onay; tarih→yaklaşan/geçmişte hatırlatma; benzersiz→çift kayıt reddi; PII→erişim/dışa-aktarımda audit ({{ref:l1-audit}}); ilişki→bağlı kayıt silinince cascade/restrict; yeni kayıt→arama indeksi, public ise yayın kuyruğu."
+    },
+    {
+      "type": "callout",
+      "variant": "danger",
+      "label": "ECA güvenlik kapısı",
+      "body": "AI'ın ürettiği her kural motorun ECA doğrulamasından geçer: **sonsuz döngü** (kural kuralı tetikler — forward chaining), **yan-tenant erişimi**, **geri-alınamaz yan etki**, **maks zincir derinliği 6**, **idempotency key** zorunlu. Geçmeyen kural canlıya çıkmaz."
+    },
+    {
+      "type": "callout",
+      "variant": "warning",
+      "label": "Dış etkili aksiyon → n8n allowlist + step-up",
+      "body": "E-posta/webhook/ödeme gibi dış-etkili aksiyonlar ECA içinde doğrudan yürütülmez; **allowlist'li bir n8n akışına** delege edilir (HMAC/API-key auth + human-in-the-loop onay). ECA yalnız **tetikler**, yürütmez; parasal/hukuki sonuçta step-up onayı ({{ref:sus-actions}}). openclaw+n8n otomasyon deseni."
+    },
+    {
+      "type": "table",
+      "caption": "ECA mod davranışı",
+      "headers": [
+        "Mod",
+        "Davranış"
+      ],
+      "rows": [
+        [
+          "Otopilot",
+          "güvenli ECA'lar otomatik uygulanır + özet listede gösterilir; parasal/hukuki ECA zorunlu kavşak (tek onay)"
+        ],
+        [
+          "Atölye",
+          "her ECA bir DecisionCard: Uygula / Değiştir / Atla + sub_prompt ('indirim %20'yi geçerse müdür onayına düşür')"
+        ]
+      ]
     }
   ],
   "enrich": {

@@ -250,13 +250,215 @@
     ]
    },
    {
+    "id": "block-layer1-workflow-h-eca-dsl-declarative-no-code-v1-de-serbest-kod-yok",
+    "type": "heading",
+    "level": 2,
+    "text": "ECA DSL — declarative, no-code (v1'de serbest kod yok)"
+   },
+   {
+    "id": "block-layer1-workflow-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "term",
+      "text": "ECA",
+      "termId": "term-eca-layer1-workflow"
+     },
+     {
+      "type": "text",
+      "text": " kuralları "
+     },
+     {
+      "type": "strong",
+      "text": "declarative JSON DSL"
+     },
+     {
+      "type": "text",
+      "text": "'dir: event / condition / action. Serbest JS / SQL / shell "
+     },
+     {
+      "type": "strong",
+      "text": "yoktur"
+     },
+     {
+      "type": "text",
+      "text": "; action bir "
+     },
+     {
+      "type": "strong",
+      "text": "allowlist"
+     },
+     {
+      "type": "text",
+      "text": "'ten seçilir. AI kural önerir, motor doğrular ve uygular (if-else dağıtmak yerine plain JSON; json-rules-engine deseni). Örnek: "
+     },
+     {
+      "type": "code",
+      "text": "{ event: 'record.created', condition: { field:'stok', operator:'equals', value:0 }, action: { type:'set_status', value:'tükendi' } }"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-workflow-co",
+    "type": "callout",
+    "variant": "info",
+    "title": "ECA türetme kaynakları (AI otomatik önerir)",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Sayısal stok→'0 olunca tükendi + bildirim'; durum/seçim→geçişte audit + opsiyonel bildirim; para→eşik üstü değişimde onay; tarih→yaklaşan/geçmişte hatırlatma; benzersiz→çift kayıt reddi; PII→erişim/dışa-aktarımda audit ("
+     },
+     {
+      "type": "ref",
+      "text": "l1-audit",
+      "refId": "l1-audit"
+     },
+     {
+      "type": "text",
+      "text": "); ilişki→bağlı kayıt silinince cascade/restrict; yeni kayıt→arama indeksi, public ise yayın kuyruğu."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-workflow-co-2",
+    "type": "callout",
+    "variant": "danger",
+    "title": "ECA güvenlik kapısı",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI'ın ürettiği her kural motorun ECA doğrulamasından geçer: "
+     },
+     {
+      "type": "strong",
+      "text": "sonsuz döngü"
+     },
+     {
+      "type": "text",
+      "text": " (kural kuralı tetikler — forward chaining), "
+     },
+     {
+      "type": "strong",
+      "text": "yan-tenant erişimi"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "strong",
+      "text": "geri-alınamaz yan etki"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "strong",
+      "text": "maks zincir derinliği 6"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "strong",
+      "text": "idempotency key"
+     },
+     {
+      "type": "text",
+      "text": " zorunlu. Geçmeyen kural canlıya çıkmaz."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-workflow-co-3",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Dış etkili aksiyon → n8n allowlist + step-up",
+    "segments": [
+     {
+      "type": "text",
+      "text": "E-posta/webhook/ödeme gibi dış-etkili aksiyonlar ECA içinde doğrudan yürütülmez; "
+     },
+     {
+      "type": "strong",
+      "text": "allowlist'li bir n8n akışına"
+     },
+     {
+      "type": "text",
+      "text": " delege edilir (HMAC/API-key auth + human-in-the-loop onay). ECA yalnız "
+     },
+     {
+      "type": "strong",
+      "text": "tetikler"
+     },
+     {
+      "type": "text",
+      "text": ", yürütmez; parasal/hukuki sonuçta step-up onayı ("
+     },
+     {
+      "type": "ref",
+      "text": "sus-actions",
+      "refId": "sus-actions"
+     },
+     {
+      "type": "text",
+      "text": "). openclaw+n8n otomasyon deseni."
+     }
+    ]
+   },
+   {
+    "id": "block-layer1-workflow-table",
+    "type": "table",
+    "caption": "ECA mod davranışı",
+    "columns": [
+     "Mod",
+     "Davranış"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Otopilot"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "güvenli ECA'lar otomatik uygulanır + özet listede gösterilir; parasal/hukuki ECA zorunlu kavşak (tek onay)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Atölye"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "her ECA bir DecisionCard: Uygula / Değiştir / Atla + sub_prompt ('indirim %20'yi geçerse müdür onayına düşür')"
+       }
+      ]
+     ]
+    ]
+   },
+   {
     "id": "block-layer1-workflow-h-derinlemesine",
     "type": "heading",
     "level": 2,
     "text": "Derinlemesine"
    },
    {
-    "id": "block-layer1-workflow-p-3",
+    "id": "block-layer1-workflow-p-4",
     "type": "paragraph",
     "segments": [
      {
