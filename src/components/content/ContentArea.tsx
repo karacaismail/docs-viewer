@@ -37,13 +37,6 @@ export function ContentArea() {
   const [page, setPage] = useState<Page | null>(null);
   const h1Ref = useRef<HTMLHeadingElement>(null);
   const [copied, setCopied] = useState(false);
-  const [mdHintSeen, setMdHintSeen] = useState(() => {
-    try {
-      return window.localStorage.getItem("md-aciklama") === "1";
-    } catch {
-      return true;
-    }
-  });
 
   const entry = resolved.kind === "found" ? resolved.entry : null;
 
@@ -111,7 +104,6 @@ export function ContentArea() {
   // MD dışa aktarma: 'İlgili sayfalar' öncesi içerik (başlık+özet+blocks) -> <stem>.md indir
   const exportMd = () => {
     if (!page) return;
-    dismissMdHint();
     const base = `${window.location.origin}${import.meta.env.BASE_URL}`;
     const md = pageToMarkdown(entry, page.blocks, base);
     const a = document.createElement("a");
@@ -122,19 +114,8 @@ export function ContentArea() {
   };
 
   // MD kopyala (UX-B9): indirme yerine panoya — 60+ için "dosya nereye indi?" sorusunu atlar
-  const dismissMdHint = () => {
-    if (mdHintSeen) return;
-    setMdHintSeen(true);
-    try {
-      window.localStorage.setItem("md-aciklama", "1");
-    } catch {
-      /* kalıcılık yoksa oturum içi */
-    }
-  };
-
   const copyMd = () => {
     if (!page) return;
-    dismissMdHint();
     const base = `${window.location.origin}${import.meta.env.BASE_URL}`;
     const md = pageToMarkdown(entry, page.blocks, base);
     void navigator.clipboard.writeText(md).then(() => {
@@ -168,11 +149,11 @@ export function ContentArea() {
           aria-label="Sayfayı Markdown olarak dışa aktar"
           title="Markdown olarak dışa aktar (.md)"
         >
-          <i className="ph ph-download-simple" aria-hidden /> MD
+          <i className="ph ph-download-simple" aria-hidden /> MD indir
         </button>
         <button
           type="button"
-          className="iconbtn"
+          className={`iconbtn${copied ? " is-copied" : ""}`}
           onClick={copyMd}
           disabled={!page}
           aria-label="Sayfayı Markdown olarak panoya kopyala"
@@ -184,12 +165,6 @@ export function ContentArea() {
         <span aria-live="polite" className="sr-only-live">
           {copied ? "Sayfa içeriği Markdown olarak panoya kopyalandı" : ""}
         </span>
-        {!mdHintSeen && (
-          <span className="md-hint">
-            MD = sayfanın metni, yapay zekâya yapıştırılabilir biçimde. Kopyala panoya alır; MD indir dosya
-            olarak kaydeder.
-          </span>
-        )}
       </div>
       {(entry.meta?.badge || entry.meta?.state || entry.meta?.granularity || updatedAt) && (
         <div className="meta-row">
