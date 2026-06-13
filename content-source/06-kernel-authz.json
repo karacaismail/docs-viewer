@@ -298,6 +298,135 @@
     {
       "type": "paragraph",
       "text": "RBAC/ABAC/ReBAC insan yetkisini çözer; sisteme AI ajan eklenince yetki **kesişimle** daraltılır: `etkin = kullanıcı_rolü ∩ agent_capability ∩ tool_scope ∩ aksiyon_riski` (asla birleşim). Ajan **asla principal değildir**, bir aktör adına çalışır (delegasyon, kimliğe bürünme değil). Merkezî politika kapısı her tool çağrısında bu kesişimi hesaplar; DisableProtection sınıfı (RLS/PII/audit/şema kapatma) capability allowlist'ine asla giremez. Aksiyon sınıflandırması {{ref:sus-actions}}."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Capability matrisi — rol × aksiyon (least-privilege)"
+    },
+    {
+      "type": "paragraph",
+      "text": "Rol–aksiyon ızgarası bağlayıcıdır; AI ajan ve MCP istemcisinin etkin yetkisi temsil ettiği kullanıcının yetkisiyle **kesişimdir** (asla aşmaz). DisableProtection sütunu tüm roller için **yasak**tır (hard invariant)."
+    },
+    {
+      "type": "table",
+      "caption": "Capability matrisi (onay = insan onayı; step-up = out-of-band; kesişim = kullanıcı∩capability)",
+      "headers": [
+        "Rol",
+        "Read",
+        "Öner/Taslak",
+        "ApplySchema",
+        "Migration/Delete",
+        "PermissionChange",
+        "PublishPublic",
+        "DisableProtection"
+      ],
+      "rows": [
+        [
+          "Platform Owner",
+          "evet",
+          "evet",
+          "onay",
+          "onay",
+          "evet",
+          "onay",
+          "yasak"
+        ],
+        [
+          "Platform Developer",
+          "evet",
+          "evet",
+          "onay",
+          "onay",
+          "hayır",
+          "hayır",
+          "yasak"
+        ],
+        [
+          "Support Operator",
+          "evet (audit)",
+          "hayır",
+          "hayır",
+          "hayır",
+          "hayır",
+          "hayır",
+          "yasak"
+        ],
+        [
+          "Tenant Owner",
+          "evet",
+          "evet",
+          "onay",
+          "çift-onay",
+          "evet",
+          "step-up",
+          "yasak"
+        ],
+        [
+          "Tenant Admin",
+          "evet",
+          "evet",
+          "onay",
+          "çift-onay",
+          "evet",
+          "step-up",
+          "yasak"
+        ],
+        [
+          "Tenant Builder",
+          "evet",
+          "evet",
+          "onay",
+          "çift-onay",
+          "hayır",
+          "step-up",
+          "yasak"
+        ],
+        [
+          "Tenant End User",
+          "evet",
+          "hayır",
+          "hayır",
+          "hayır",
+          "hayır",
+          "hayır",
+          "yasak"
+        ],
+        [
+          "AI Agent",
+          "kesişim",
+          "öner-only",
+          "hayır (öner→motor)",
+          "hayır",
+          "hayır",
+          "hayır",
+          "yasak"
+        ],
+        [
+          "MCP Client",
+          "kesişim ≤ kullanıcı",
+          "öner-only",
+          "hayır",
+          "hayır",
+          "hayır",
+          "hayır",
+          "yasak"
+        ],
+        [
+          "Background Worker",
+          "evet (tenant ctx)",
+          "hayır",
+          "hayır",
+          "hayır",
+          "hayır",
+          "hayır",
+          "yasak"
+        ]
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "Aksiyon sınıflarının risk/onay/geri-alma ayrıntısı {{ref:sus-actions}}; yetki kesişimi ve agent≠principal {{ref:adr-0015}}."
     }
   ],
   "enrich": {

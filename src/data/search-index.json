@@ -2001,6 +2001,39 @@
    "slug": "kernel/kernel-authz",
    "blockId": "block-kernel-authz-p-15",
    "blockType": "paragraph",
+   "title": "Capability matrisi — rol × aksiyon (least-privilege)",
+   "text": "Rol–aksiyon ızgarası bağlayıcıdır; AI ajan ve MCP istemcisinin etkin yetkisi temsil ettiği kullanıcının yetkisiyle kesişimdir (asla aşmaz). DisableProtection sütunu tüm roller için yasaktır (hard invariant)."
+  },
+  {
+   "id": "search-page-kernel-authz-block-kernel-authz-table",
+   "kind": "block",
+   "pageId": "page-kernel-authz",
+   "pageTitle": "Authorization",
+   "slug": "kernel/kernel-authz",
+   "blockId": "block-kernel-authz-table",
+   "blockType": "table",
+   "title": "Capability matrisi — rol × aksiyon (least-privilege)",
+   "text": "Rol Read Öner/Taslak ApplySchema Migration/Delete PermissionChange PublishPublic DisableProtection Platform Owner evet evet onay onay evet onay yasak Platform Developer evet evet onay onay hayır hayır yasak Support Operator evet (audit) hayır hayır hayır hayır hayır yasak Tenant Owner evet evet onay çift-onay evet step-up yasak Tenant Admin evet evet onay çift-onay evet step-up yasak Tenant Builder evet evet onay çift-onay hayır step-up yasak Tenant End User evet hayır hayır hayır hayır hayır yasak AI Agent kesişim öner-only hayır (öner→motor) hayır hayır hayır yasak MCP Client kesişim ≤ kullanıcı öner-only hayır hayır hayır hayır yasak Background Worker evet (tenant ctx) hayır hayır hayır hayır hayır yasak"
+  },
+  {
+   "id": "search-page-kernel-authz-block-kernel-authz-p-16",
+   "kind": "block",
+   "pageId": "page-kernel-authz",
+   "pageTitle": "Authorization",
+   "slug": "kernel/kernel-authz",
+   "blockId": "block-kernel-authz-p-16",
+   "blockType": "paragraph",
+   "title": "Capability matrisi — rol × aksiyon (least-privilege)",
+   "text": "Aksiyon sınıflarının risk/onay/geri-alma ayrıntısı sus-actions; yetki kesişimi ve agent≠principal adr-0015."
+  },
+  {
+   "id": "search-page-kernel-authz-block-kernel-authz-p-17",
+   "kind": "block",
+   "pageId": "page-kernel-authz",
+   "pageTitle": "Authorization",
+   "slug": "kernel/kernel-authz",
+   "blockId": "block-kernel-authz-p-17",
+   "blockType": "paragraph",
    "title": "Derinlemesine",
    "text": "Kim ne yapabilir? Query layer'a örülmüş — application-level if-check yetmez."
   },
@@ -20034,6 +20067,28 @@
    "text": "Atölye'nin atomu: soru + 'neden önemli' + [a,b,c,d] (her şıkta AI-önerisi rozeti, gerekçe, sonuç önizlemesi) + 'diğer (yaz)' → sub_prompt textarea. Şıklar yetmezse insan kendi şıkkını yazar, AI onu yapıya çevirir; çıktı yine doğrulama kapısından geçer."
   },
   {
+   "id": "search-page-stack-builder-block-stack-builder-p-3",
+   "kind": "block",
+   "pageId": "page-stack-builder",
+   "pageTitle": "Builder Stack",
+   "slug": "stack/stack-builder",
+   "blockId": "block-stack-builder-p-3",
+   "blockType": "paragraph",
+   "title": "Explanation Content Contract — DecisionCard '?' açıklaması",
+   "text": "DecisionCard'daki '?' açıklaması runtime'da LLM tarafından serbest üretilmez; onaylı corpus'tan (glossary + seven-questions overlay) gelir. AI yalnız doğru açıklama anahtarını seçer, metni yazmaz — böylece yanlış/yanıltıcı açıklama ve enjeksiyon yüzeyi kapanır, 60+ için okunabilirlik garanti olur."
+  },
+  {
+   "id": "search-page-stack-builder-block-stack-builder-co-4",
+   "kind": "block",
+   "pageId": "page-stack-builder",
+   "pageTitle": "Builder Stack",
+   "slug": "stack/stack-builder",
+   "blockId": "block-stack-builder-co-4",
+   "blockType": "callout",
+   "title": "Explanation Content Contract — DecisionCard '?' açıklaması",
+   "text": "{ term, context, locale, what, why, how, example, risk, change_later, plain_language_summary }. Her açıklama versiyonlanır ve auditlenir; yanlış açıklama bir içerik hatası olarak düzeltilir, model çıktısı olarak değil. Yedi-soru (Ne/Niçin/Nasıl/Nerede/Ne zaman/Kim/Analoji) bu şemanın corpus karşılığıdır."
+  },
+  {
    "id": "search-page-stack-service-block-stack-service-ozet",
    "kind": "block",
    "pageId": "page-stack-service",
@@ -22397,6 +22452,28 @@
    "blockType": "paragraph",
    "title": "Namespace ve eşzamanlılık (açık karar çözümü)",
    "text": "Namespace: ArcheType adları tenant-scoped'tur; her tenant kendi ad uzayına sahiptir. Rezerve sistem adları bir kayıt defterinde tutulur (yasak-kelime disipliniyle aynı mantık); çakışmada AI otomatik bir son-ek önerir (ör. *Kitap2*) ve kullanıcı onaylar. Eşzamanlılık: iki builder aynı ArcheType'ı düzenlerse ChangeSet baseVersion ile optimistic locking uygulanır; çakışmada son-yazan-kazanır DEĞİL, merge-uyarısı gösterilir ve kullanıcı çözer."
+  },
+  {
+   "id": "search-page-k-sozlesme-block-k-sozlesme-p-5",
+   "kind": "block",
+   "pageId": "page-k-sozlesme",
+   "pageTitle": "Sözleşme Yetenekleri — Pinleme, Üretilmiş Test, Projection",
+   "slug": "kernel/k-sozlesme",
+   "blockId": "block-k-sozlesme-p-5",
+   "blockType": "paragraph",
+   "title": "Operation başına yedi-alan sözleşmesi (doldurulmuş)",
+   "text": "Her ChangeSet operation tipi yedi alanla tanımlıdır; risk sınıfı yukarıdaki tablodadır."
+  },
+  {
+   "id": "search-page-k-sozlesme-block-k-sozlesme-table-2",
+   "kind": "block",
+   "pageId": "page-k-sozlesme",
+   "pageTitle": "Sözleşme Yetenekleri — Pinleme, Üretilmiş Test, Projection",
+   "slug": "kernel/k-sozlesme",
+   "blockId": "block-k-sozlesme-table-2",
+   "blockType": "table",
+   "title": "Operation başına yedi-alan sözleşmesi (doldurulmuş)",
+   "text": "Operation Precondition Invariant Validation Rollback Audit Preview create_archetype ad tenant'ta boş ad benzersiz + RLS gömülü ad/rezerve/tip drop archetype_created boş tablo + scaffold add_field alan yok eski kayıt bozulmaz tip/benzersiz nullable drop field_added yeni alan formda change_field_type alan var veri kaybı yok dönüşüm güvenli expand-contract field_type_changed dönüşüm örneği create_relation hedef ArcheType var döngü yok cascade/restrict seçimi drop + backfill geri relation_created ilişki seçici deprecate_field alan kullanımda okuma sürer bağımlılık taraması geri-aç field_deprecated 'kullanımdan kalkıyor' rozeti remove_field deprecate edilmiş bağlı ECA/Surface yok yıkıcı onay soft-delete 30g + snapshot field_removed veri-kaybı uyarısı migrate_data kaynak/hedef hazır idempotent b"
   },
   {
    "id": "search-page-k-wbs-block-k-wbs-ozet",

@@ -49,6 +49,7 @@ Bu set, `mimari/` klasöründeki mevcut içeriğin (≈198 cluster JSON + mimari
 | 13A | `13A-turkce-arama-normalizasyonu.md` | İ/I lowercase tuzağı + diacritic fold: `processTerm` sözleşmesi, gerçek veri doğrulamasıyla (13'ün bağlayıcı eki) | Faz 8 |
 | 14 | `14-uretim-09-a11y-ve-kabul.md` | Accessibility sözleşmesi ve kabul kriterleri | Faz 9 |
 | 15 | `15-icerik-yazari-rehberi.md` | İçerik yazarının günlük workflow'u: page ekleme, güncelleme, glossary, görsel, üslup | Operasyon |
+| 16 | `16-gereksinim-kabul-b.md` | Gereksinim & Kabul Kriterleri (B) konsolide indeks — AI üretim sözleşme haritası + acceptance | Zemin |
 
 ## Bağlayıcılık
 

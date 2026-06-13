@@ -165,6 +165,120 @@
     {
       "type": "paragraph",
       "text": "**Namespace:** ArcheType adları **tenant-scoped**'tur; her tenant kendi ad uzayına sahiptir. Rezerve sistem adları bir kayıt defterinde tutulur (yasak-kelime disipliniyle aynı mantık); çakışmada AI otomatik bir son-ek önerir (ör. *Kitap2*) ve kullanıcı onaylar. **Eşzamanlılık:** iki builder aynı ArcheType'ı düzenlerse ChangeSet `baseVersion` ile **optimistic locking** uygulanır; çakışmada son-yazan-kazanır DEĞİL, **merge-uyarısı** gösterilir ve kullanıcı çözer."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Operation başına yedi-alan sözleşmesi (doldurulmuş)"
+    },
+    {
+      "type": "paragraph",
+      "text": "Her ChangeSet operation tipi yedi alanla tanımlıdır; risk sınıfı yukarıdaki tablodadır."
+    },
+    {
+      "type": "table",
+      "caption": "Operation × (precondition / invariant / validation / rollback / audit / preview)",
+      "headers": [
+        "Operation",
+        "Precondition",
+        "Invariant",
+        "Validation",
+        "Rollback",
+        "Audit",
+        "Preview"
+      ],
+      "rows": [
+        [
+          "create_archetype",
+          "ad tenant'ta boş",
+          "ad benzersiz + RLS gömülü",
+          "ad/rezerve/tip",
+          "drop",
+          "archetype_created",
+          "boş tablo + scaffold"
+        ],
+        [
+          "add_field",
+          "alan yok",
+          "eski kayıt bozulmaz",
+          "tip/benzersiz",
+          "nullable drop",
+          "field_added",
+          "yeni alan formda"
+        ],
+        [
+          "change_field_type",
+          "alan var",
+          "veri kaybı yok",
+          "dönüşüm güvenli",
+          "expand-contract",
+          "field_type_changed",
+          "dönüşüm örneği"
+        ],
+        [
+          "create_relation",
+          "hedef ArcheType var",
+          "döngü yok",
+          "cascade/restrict seçimi",
+          "drop + backfill geri",
+          "relation_created",
+          "ilişki seçici"
+        ],
+        [
+          "deprecate_field",
+          "alan kullanımda",
+          "okuma sürer",
+          "bağımlılık taraması",
+          "geri-aç",
+          "field_deprecated",
+          "'kullanımdan kalkıyor' rozeti"
+        ],
+        [
+          "remove_field",
+          "deprecate edilmiş",
+          "bağlı ECA/Surface yok",
+          "yıkıcı onay",
+          "soft-delete 30g + snapshot",
+          "field_removed",
+          "veri-kaybı uyarısı"
+        ],
+        [
+          "migrate_data",
+          "kaynak/hedef hazır",
+          "idempotent",
+          "batch + checkpoint",
+          "çift-yaz geri",
+          "data_migrated",
+          "etki + satır sayısı"
+        ],
+        [
+          "create_eca_rule",
+          "alanlar mevcut",
+          "döngü/derinlik≤6",
+          "safety gate",
+          "devre dışı bırak",
+          "eca_created",
+          "kural özeti"
+        ],
+        [
+          "change_permission",
+          "rol mevcut",
+          "koruma kapatılamaz",
+          "admin yetkisi",
+          "ters uygula",
+          "permission_changed",
+          "yeni erişim matrisi"
+        ],
+        [
+          "publish_surface",
+          "ArcheType canlı",
+          "PII/sistem alanı dışta",
+          "public alan seti",
+          "yayını geri çek",
+          "surface_published",
+          "public önizleme"
+        ]
+      ]
     }
   ]
 }
