@@ -6385,6 +6385,96 @@
    "ne_zaman": "Canlı kullanıcısı olan her sistemde, her şema değişikliğinde ve her yayında gözetilir; 'bu işlemi gece mi yapsak' sorusu duyulduğunda asıl cevap budur.",
    "kim": "Mimar süreçleri bu ilkeye göre tasarlar; geliştirici migration'larını kilitlemeyecek şekilde yazar; son kullanıcı en büyük kazanan olduğu halde hiçbir şey fark etmez.",
    "analoji": "Açık kalp ameliyatı yerine stent: hasta (sistem) işlem boyunca uyanık ve çalışır."
+  },
+  "term-changeset-k-sozlesme": {
+   "ne": "AI'ın önerdiği, motorun uyguladığı tipli değişiklik zarfı (operations, risk, rollback, audit).",
+   "nicin": "AI ham SQL'le veri kaybı doğurabilir; tipli zarf geçersiz değişikliği daha kapıda durdurur.",
+   "nasil": "changeSetId/tenantId/baseVersion/createdBy/operations[]/riskLevel/rollbackPlan alanlarıyla doğrulama motorundan geçer.",
+   "nerede": "Kernel write-path; AI öneri üretir, deterministik motor uygular.",
+   "ne_zaman": "Her yapısal değişiklikte (alan/tablo/ilişki/yetki/yayın) ChangeSet üretilir.",
+   "kim": "AI önerir, doğrulama motoru uygular, gerekirse insan onaylar.",
+   "analoji": "Bankada havale fişi: doğrudan kasaya girmezsin, fiş kontrol edilip işlenir."
+  },
+  "term-capability-sus-actions": {
+   "ne": "Bir AI ajanına verilen sınırlı aksiyon kümesi; ajanın yapabileceklerinin tavanı.",
+   "nicin": "Aşırı yetki (excessive agency) kaza ve güvenlik açığı demektir; yetenek daraltılmalı.",
+   "nasil": "Etkin yetki = kullanıcı ∩ agent_capability ∩ tool_scope ∩ aksiyon_riski (kesişim, asla birleşim).",
+   "nerede": "Kernel authz + aksiyon yüzeyi politika kapısı.",
+   "ne_zaman": "Her tool çağrısında merkezî politika kapısında değerlendirilir.",
+   "kim": "Mimar capability matrisini tanımlar; motor her çağrıda zorlar.",
+   "analoji": "Otelde oda kartı: yalnız izinli kapıları açar, ana koridoru değil."
+  },
+  "term-step-up-onay-sus-actions": {
+   "ne": "Yüksek-riskli/dış-etkili aksiyon için ayrı, out-of-band insan onayı.",
+   "nicin": "Geri-alınamaz, parasal ve hukuki işlemler tek tıkla yapılmamalı.",
+   "nasil": "Akışın içinden değil, ayrı/güvenli bir kanaldan onay alınır; Otopilot bile burada durur.",
+   "nerede": "Public yayın, silme, ödeme, otomatik e-posta gibi kavşaklarda.",
+   "ne_zaman": "Aksiyon riski yüksek/yıkıcı/parasal sınıfa girdiğinde.",
+   "kim": "İlgili yetkili insan (tenant-admin ya da kullanıcı) onaylar.",
+   "analoji": "Bankada büyük transferde gelen SMS doğrulaması: ikinci, ayrı kanaldan onay."
+  },
+  "term-aksiyon-taksonomisi-sus-actions": {
+   "ne": "Aksiyonların risk/onay/geri-alma sınıfına göre tablolanması (Read'den DisableProtection'a).",
+   "nicin": "'AI önerir motor uygular' ilkesi somut sınırlar olmadan havada kalır.",
+   "nasil": "Her aksiyon tipi risk sınıfı + AI yapabilir mi + insan onayı + geri-alma sütunlarıyla tanımlanır.",
+   "nerede": "Aksiyon yüzeyi (sus-actions) bağlayıcı tablosu.",
+   "ne_zaman": "Bir AI ajanı sisteme bağlanmadan önce tanımlanmalı.",
+   "kim": "Mimar tasarlar; motor zorlar; denetçi audit'i okur.",
+   "analoji": "Sürücü ehliyeti sınıfları: hangi aracı kimin sürebileceğini tanımlar."
+  },
+  "term-eca-dsl-layer1-workflow": {
+   "ne": "Otomasyon kurallarının serbest kod yerine declarative JSON ile tanımı (event/condition/action).",
+   "nicin": "Serbest kod injection, sonsuz döngü ve geri-alınamaz yan etki riskidir; no-code güvenli olmalı.",
+   "nasil": "event/condition/action JSON; action allowlist'ten; güvenlik kapısı döngü/derinlik/idempotency tarar.",
+   "nerede": "Layer 1 Workflow + ECA motoru; dış etki n8n'e delege.",
+   "ne_zaman": "Alan semantiğinden kural türetilirken (stok 0 → tükendi gibi).",
+   "kim": "AI kural önerir; motor doğrular ve uygular.",
+   "analoji": "Termostat kuralı: 'sıcaklık düşerse ısıt' — basit, kod gerektirmez, sınırlı."
+  },
+  "term-sentetik-onizleme-edu-u15-ux-60-plus": {
+   "ne": "Yapıyı sonuç-önce gösteren, deterministic faker'dan üretilmiş örnek satırlar (LLM değil).",
+   "nicin": "60+ kullanıcı soyut alan listesini değil, çalışan sonucu değerlendirebilir.",
+   "nasil": "Faker locale-farkında ve PII-güvenli üretir; LLM yalnız domain/alan tespiti yapar; 'örnek veri' etiketli.",
+   "nerede": "Otopilot/Atölye önizleme paneli (BuilderFlow).",
+   "ne_zaman": "Taslak kurulduğunda, onaydan önce gösterilir.",
+   "kim": "Sistem üretir; kullanıcı sonucu onaylar.",
+   "analoji": "Mobilya kataloğunda döşenmiş örnek oda: boş kroki yerine yaşanmış hali görürsün."
+  },
+  "term-guven-kalibrasyonu-edu-u15-ux-60-plus": {
+   "ne": "AI kararının güveninin model self-report'undan değil dış sinyalden hesaplanması.",
+   "nicin": "RLHF kalibrasyonu bozar; model emin-ses çıkarır ama bilmiyor olabilir.",
+   "nasil": "Validation geçişi, çok-örnek tutarlılığı, token olasılığı, risk cezası, geçmiş override birleştirilir.",
+   "nerede": "DecisionCard güven çipi ve Otopilot/Atölye eşik kararı.",
+   "ne_zaman": "Eşik: ≥0.80 Otopilot kapalı; 0.60-0.80 Atölye açık; <0.60 aktif seçim.",
+   "kim": "Sistem hesaplar; riskli kararda insan zorunlu seçer.",
+   "analoji": "Sınav öğrencisinin 'eminim' demesi değil, geçmiş karne ve kontrol sorusu güveni verir."
+  },
+  "term-migration-state-machine-edu-u12-migration": {
+   "ne": "Şema değişiminin drafted'tan archived'a kapı-kapı ilerleyen durum makinesi + geri-alma makinesi.",
+   "nicin": "Yarım ya da yıkıcı göç veri kaybı doğurur; her durak bir güvenlik kapısı olmalı.",
+   "nasil": "drafted→validated→...→expanded→backfilled→dual_read→contracted→archived; rollback ayrı makine.",
+   "nerede": "ChangeSet migrate_data/change_field_type operasyonlarının yürütülmesi.",
+   "ne_zaman": "Geri-alınamaz/yıkıcı şema değişiminde (alan tipi, silme, ilişki).",
+   "kim": "Motor yürütür; yüksek riskte insan önizleme onaylar.",
+   "analoji": "Uçuş kontrol listesi: her madde işaretlenmeden sonraki aşamaya geçilmez."
+  },
+  "term-kill-switch-cc-obs-deep": {
+   "ne": "Tenant/AI-agent/MCP düzeyinde tek tıkla durdurma anahtarı.",
+   "nicin": "Sızıntı, maliyet patlaması veya compromise'de saniyeler önemlidir.",
+   "nasil": "Üç ayrı anahtar (tenant/agent/MCP) + feature flag + prompt rollback; her tetikleme auditlenir.",
+   "nerede": "Operasyon paneli; observability runbook'una bağlı.",
+   "ne_zaman": "Incident tespitinde immediate containment adımında.",
+   "kim": "SRE/operasyon ekibi çalıştırır.",
+   "analoji": "Fabrikadaki acil durdurma butonu: tehlike anında her şeyi anında durdurur."
+  },
+  "term-runbook-cc-obs-deep": {
+   "ne": "Incident için adım dizisi: detection→containment→root cause→remediation→review→guardrail update.",
+   "nicin": "Sistem yalnız geliştirilmez, işletilir; olaylar tekrarlanabilir biçimde yönetilmeli.",
+   "nasil": "Her senaryo için tetik, anında müdahale, kök neden, düzeltme, inceleme ve guardrail güncellemesi yazılır.",
+   "nerede": "Observability-deep operasyon bölümü; kill-switch'lerle birlikte.",
+   "ne_zaman": "Olay tespit edildiğinde ve sonrasında post-incident review'da.",
+   "kim": "SRE/operasyon koşar; mimar guardrail'ı günceller.",
+   "analoji": "Yangın tatbikatı talimatı: panik anında değil, önceden yazılmış adımlar izlenir."
   }
  }
 }
