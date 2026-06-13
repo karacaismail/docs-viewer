@@ -1,33 +1,157 @@
 {
- "id": "k-archetype-bayraklari",
- "title": "ArcheType Bayrakları — Zaman ve Veri Yaşamı",
- "subtitle": "Eskiden disiplin gerektiren şeyler artık tanımdaki bir bayrak: bitemporal, pii, retention, audit — kod değil beyan.",
- "cluster": "kernel",
- "order": 93,
- "icon": "ph-flag",
- "granularity": "kaya",
- "state": "wip",
- "badge": "KAVRAM",
- "tags": ["archetype", "bayrak", "bitemporal", "pii", "retention"],
- "related": ["kernel-schema", "k-surface", "sus-bitemporal", "cc-privacy", "layer1-audit", "be-kararlar"],
- "enrich": {
-  "info": "Bugün bir programcı 'maaş geçmişi tutulsun, kişisel veri 2 yıl sonra silinsin, her değişiklik loglansın' isteklerini tek tek kod yazarak yapar. Bizde bunlar ArcheType tanımına yazılan tek kelimelik işaretlerdir — bayrağı koyan davranışı satın alır, davranış kernel'de bir kez doğru yazılmıştır.",
-  "terms": [
-   {"term": "Tanım bayrağı", "meaning": "ArcheType tanımına yazılan tek kelimelik davranış işareti: bitemporal, pii, retention, audit gibi — kod yazılmaz, davranış beyandan türer.", "why": "Disiplin ölçeklenmez, bayrak ölçeklenir: 'her değişikliği logla' kuralını 70 app'te 70 ekibin hatırlaması imkânsızdır; kernel'de bir kez doğru yazılmış davranışı bayrakla satın almak hem jr-öncesi geliştiricinin hem AI'ın hata alanını sıfıra indirir."}
+  "id": "k-archetype-bayraklari",
+  "title": "ArcheType Bayrakları — Zaman ve Veri Yaşamı",
+  "subtitle": "Eskiden disiplin gerektiren şeyler artık tanımdaki bir bayrak: bitemporal, pii, retention, audit — kod değil beyan.",
+  "cluster": "kernel",
+  "order": 93,
+  "icon": "ph-flag",
+  "granularity": "kaya",
+  "state": "wip",
+  "badge": "KAVRAM",
+  "tags": [
+    "archetype",
+    "bayrak",
+    "bitemporal",
+    "pii",
+    "retention"
+  ],
+  "related": [
+    "kernel-schema",
+    "k-surface",
+    "sus-bitemporal",
+    "cc-privacy",
+    "layer1-audit",
+    "be-kararlar"
+  ],
+  "enrich": {
+    "info": "Bugün bir programcı 'maaş geçmişi tutulsun, kişisel veri 2 yıl sonra silinsin, her değişiklik loglansın' isteklerini tek tek kod yazarak yapar. Bizde bunlar ArcheType tanımına yazılan tek kelimelik işaretlerdir — bayrağı koyan davranışı satın alır, davranış kernel'de bir kez doğru yazılmıştır.",
+    "terms": [
+      {
+        "term": "Tanım bayrağı",
+        "meaning": "ArcheType tanımına yazılan tek kelimelik davranış işareti: bitemporal, pii, retention, audit gibi — kod yazılmaz, davranış beyandan türer.",
+        "why": "Disiplin ölçeklenmez, bayrak ölçeklenir: 'her değişikliği logla' kuralını 70 app'te 70 ekibin hatırlaması imkânsızdır; kernel'de bir kez doğru yazılmış davranışı bayrakla satın almak hem jr-öncesi geliştiricinin hem AI'ın hata alanını sıfıra indirir."
+      }
+    ]
+  },
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "Bugün bir programcı \"maaş geçmişi tutulsun, kişisel veri 2 yıl sonra silinsin, her değişiklik loglansın\" isteklerini tek tek **kod yazarak** yapar. Bizde bunlar ArcheType tanımına yazılan **tek kelimelik işaretlerdir**. Yani: eskiden disiplin gerektiren şeyler, artık tanımdaki bir bayrak."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Bayraklar"
+    },
+    {
+      "type": "kv-row",
+      "pairs": [
+        {
+          "key": "bitemporal: true",
+          "value": "Sistem her kayıtta iki tarihi kendiliğinden tutar — 'zam ne zaman geçerli oldu' (valid) ve 'deftere ne zaman yazıldı' (recorded). Geçmişe dönük zam girsen bile iki tarih ayrı durur, muhasebe şaşmaz ({{ref:sus-bitemporal}})"
+        },
+        {
+          "key": "pii: true",
+          "value": "Alan kişisel veri sayılır: loglarda kendiliğinden maskelenir; müşteri 'beni unutun' deyince şifre-anahtarı imha edilir, veri matematiksel olarak okunamaz olur — kayıt iskeleti denetim için kalır (crypto-shredding, be-kararlar E9; {{ref:cc-privacy}})"
+        },
+        {
+          "key": "retention: <süre>",
+          "value": "Yasal minimum silmeyi yasaklar (VUK), mahremiyet maksimumu tutmayı yasaklar (KVKK) — dolap takvimle çalışır, insan hatırlamaz"
+        },
+        {
+          "key": "audit: true",
+          "value": "Her save'de alan diff'i append-only audit kaydına düşer ({{ref:layer1-audit}}); 'kayıt sonradan oynandı' iddiası teknik olarak imkânsızlaşır"
+        },
+        {
+          "key": "translatable",
+          "value": "Alan çok-dilli içerik taşır (be-kararlar E7) — çeviri altyapısı tanımdan kurulur"
+        }
+      ]
+    },
+    {
+      "type": "code",
+      "lang": "yaml",
+      "title": "Bayraklı alan — kod yok, beyan var",
+      "highlightedLines": [
+        4,
+        5
+      ],
+      "content": "archetype: Employee\nfields:\n  - name: maas\n    type: Money\n    bitemporal: true     # geçmişe dönük zam güvenle girilir\n  - name: tckn\n    type: TCKN\n    pii: true            # maskele + unutulma hakkı + envanter\n    retention: 10y       # VUK alt sınırı"
+    },
+    {
+      "type": "callout",
+      "variant": "tip",
+      "label": "Neden bayrak, neden kod değil",
+      "body": "Davranış kernel'de bir kez doğru yazılır; bayrağı koyan onu satın alır. 70 app'in 70 ekibinin aynı disiplini hatırlaması gerekmez — vibecoding'de AI'ın da 'logla, maskele, sakla' kodunu her seferinde yeniden (ve yanlış) üretmesi engellenir."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "PII/KVKK sınıflandırma matrisi"
+    },
+    {
+      "type": "paragraph",
+      "text": "`pii` bayrağı tek bit değil, bir **sınıflandırma matrisidir**: her alan bir hassasiyet sınıfı + işleme kuralı taşır (listede/detayda/public'te davranış + silme rejimi)."
+    },
+    {
+      "type": "table",
+      "caption": "PII sınıflandırma matrisi",
+      "headers": [
+        "Sınıf",
+        "Örnek",
+        "Liste",
+        "Detay",
+        "Public",
+        "Silme"
+      ],
+      "rows": [
+        [
+          "Özel nitelikli",
+          "TC, sağlık, inanç",
+          "gizli",
+          "maskeli + yetki + audit",
+          "yasak",
+          "unutulma hakkı"
+        ],
+        [
+          "İletişim",
+          "e-posta, telefon",
+          "maskeli",
+          "maskeli",
+          "yasak",
+          "talep üzerine"
+        ],
+        [
+          "Finansal",
+          "IBAN, kart",
+          "gizli",
+          "maskeli + audit",
+          "yasak",
+          "yasal saklama"
+        ],
+        [
+          "Davranışsal",
+          "log, konum",
+          "yetkili",
+          "yetkili",
+          "anonimleştir",
+          "retention"
+        ],
+        [
+          "Kamuya açık",
+          "ürün adı, başlık",
+          "açık",
+          "açık",
+          "açık",
+          "serbest"
+        ]
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "warning",
+      "label": "KVKK bağı",
+      "body": "`pii` işaretli alan: listede gizli, detayda maskeli, public'te yasak; 'göster' eylemi audit'e yazılır ({{ref:l1-audit}}); unutulma hakkı silme bu etikete bağlanır ({{ref:cc-privacy}}). Açık rıza/aydınlatma public form akışında zorunludur."
+    }
   ]
- },
- "blocks": [
-  {"type": "paragraph", "text": "Bugün bir programcı \"maaş geçmişi tutulsun, kişisel veri 2 yıl sonra silinsin, her değişiklik loglansın\" isteklerini tek tek **kod yazarak** yapar. Bizde bunlar ArcheType tanımına yazılan **tek kelimelik işaretlerdir**. Yani: eskiden disiplin gerektiren şeyler, artık tanımdaki bir bayrak."},
-  {"type": "heading", "level": 2, "text": "Bayraklar"},
-  {"type": "kv-row", "pairs": [
-   {"key": "bitemporal: true", "value": "Sistem her kayıtta iki tarihi kendiliğinden tutar — 'zam ne zaman geçerli oldu' (valid) ve 'deftere ne zaman yazıldı' (recorded). Geçmişe dönük zam girsen bile iki tarih ayrı durur, muhasebe şaşmaz ({{ref:sus-bitemporal}})"},
-   {"key": "pii: true", "value": "Alan kişisel veri sayılır: loglarda kendiliğinden maskelenir; müşteri 'beni unutun' deyince şifre-anahtarı imha edilir, veri matematiksel olarak okunamaz olur — kayıt iskeleti denetim için kalır (crypto-shredding, be-kararlar E9; {{ref:cc-privacy}})"},
-   {"key": "retention: <süre>", "value": "Yasal minimum silmeyi yasaklar (VUK), mahremiyet maksimumu tutmayı yasaklar (KVKK) — dolap takvimle çalışır, insan hatırlamaz"},
-   {"key": "audit: true", "value": "Her save'de alan diff'i append-only audit kaydına düşer ({{ref:layer1-audit}}); 'kayıt sonradan oynandı' iddiası teknik olarak imkânsızlaşır"},
-   {"key": "translatable", "value": "Alan çok-dilli içerik taşır (be-kararlar E7) — çeviri altyapısı tanımdan kurulur"}
-  ]},
-  {"type": "code", "lang": "yaml", "title": "Bayraklı alan — kod yok, beyan var", "highlightedLines": [4, 5],
-   "content": "archetype: Employee\nfields:\n  - name: maas\n    type: Money\n    bitemporal: true     # geçmişe dönük zam güvenle girilir\n  - name: tckn\n    type: TCKN\n    pii: true            # maskele + unutulma hakkı + envanter\n    retention: 10y       # VUK alt sınırı"},
-  {"type": "callout", "variant": "tip", "label": "Neden bayrak, neden kod değil", "body": "Davranış kernel'de bir kez doğru yazılır; bayrağı koyan onu satın alır. 70 app'in 70 ekibinin aynı disiplini hatırlaması gerekmez — vibecoding'de AI'ın da 'logla, maskele, sakla' kodunu her seferinde yeniden (ve yanlış) üretmesi engellenir."}
- ]
 }

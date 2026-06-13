@@ -442,6 +442,71 @@
       "enrich": {
         "detail": "İki ayrı tablo, iki ayrı erişim deseni. Activity = hot reads, Audit = cold writes + nadir okuma. Birleştirirsen indeks ekonomisi de bozulur."
       }
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "AI-first audit — forensic aktör ayrımı"
+    },
+    {
+      "type": "paragraph",
+      "text": "AI-first sistemde audit 'kim yaptı?' değil **'kararı kim verdi, AI mı önerdi, sistem mi uyguladı?'** ayrımını yazmalı; aksi halde olay sonrası inceleme yapılamaz."
+    },
+    {
+      "type": "table",
+      "caption": "Audit forensic event alanları",
+      "headers": [
+        "Alan",
+        "Neden gerekli"
+      ],
+      "rows": [
+        [
+          "human_actor_id",
+          "işlemin sahibi insan"
+        ],
+        [
+          "agent_id",
+          "hangi AI ajanı önerdi/çağırdı"
+        ],
+        [
+          "model_id + prompt_template_version",
+          "üretilebilirlik / regresyon"
+        ],
+        [
+          "tool_id",
+          "hangi aksiyon çağrıldı"
+        ],
+        [
+          "approval_id",
+          "step-up onayı var mı"
+        ],
+        [
+          "change_set_id",
+          "hangi değişiklik seti"
+        ],
+        [
+          "before_hash / after_hash",
+          "değişiklik bütünlüğü"
+        ],
+        [
+          "risk_score",
+          "o anki risk sınıfı"
+        ],
+        [
+          "source_channel",
+          "UI / API / MCP / background job"
+        ],
+        [
+          "delegation_reason",
+          "kim adına çalışıldı"
+        ]
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "info",
+      "label": "Delegasyon izi",
+      "body": "Agent kullanıcı **adına** çalışır, kimliğe bürünmez; audit hem `human_actor_id` hem `agent_id`'yi ayrı tutar ki 'AI önerdi → insan onayladı → motor uyguladı' zinciri sonradan okunabilsin ({{ref:sus-actions}})."
     }
   ],
   "related": [

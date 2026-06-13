@@ -231,6 +231,33 @@
         "**Schema Routing** — `pg_schema` resolver, connection pool eşleme",
         "**KVKK Madde 7 entegrasyonu** — `Tenant Deletion` (legal_hold_check zorunlu, AI review recommendation)"
       ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "RLS uygulama sözleşmesi (Prisma + PgBouncer)"
+    },
+    {
+      "type": "paragraph",
+      "text": "RLS 'açık' demek yetmez; uygulama sözleşmesi gerekir. Tenant context her istekte **transaction içinde** `SET LOCAL app.tenant_id` ile kurulur — asla `SET`. Desen: `BEGIN; SET LOCAL app.tenant_id = '...'; SET LOCAL app.user_id = '...'; -- sorgular; COMMIT;`"
+    },
+    {
+      "type": "callout",
+      "variant": "danger",
+      "label": "Bağlam sızıntısı (en kritik)",
+      "body": "PgBouncer transaction mode'da bağlantı çok istemci arasında paylaşılır. `SET app.tenant_id` kullanırsan oturum boyu kalır ve bir sonraki tenant senin bağlamını **miras alır** → çapraz-tenant sızıntı. Yalnız `SET LOCAL` (transaction bitince otomatik geri alınır). Bağlam hiç kurulmazsa sorgu **sıfır satır** döner: güvenli varsayılan."
+    },
+    {
+      "type": "list",
+      "ordered": false,
+      "items": [
+        "Tenant context: her request transaction'ında `SET LOCAL` (Prisma `$transaction` + interactive tx).",
+        "Migration: `app_migrator` rolü `BYPASSRLS` — yalnız migration yolunda, migration loglarıyla auditlenir.",
+        "Background job + MCP tool çağrısı: RLS context'i açıkça enjekte edilir; varsayılan bağlam yok = sıfır satır.",
+        "Admin/support tenant switch: ayrı yetki + audit kaydı ({{ref:l1-audit}}).",
+        "Her sorgu tipi RLS'e tabi: search / filter / sort / export / aggregate — istisnasız.",
+        "Test: tenant A↔B sızıntısı her query pattern'inde negatif test (Faz 3 kabul kriteri)."
+      ]
     }
   ],
   "enrich": {
