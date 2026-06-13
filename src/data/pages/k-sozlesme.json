@@ -154,6 +154,367 @@
       "text": ") varlık-düzeyi uygulamasıdır."
      }
     ]
+   },
+   {
+    "id": "block-k-sozlesme-h-changeset-tipli-degisiklik-sozlesmesi-ai-onerir-motor-uygular",
+    "type": "heading",
+    "level": 2,
+    "text": "ChangeSet — tipli değişiklik sözleşmesi (AI önerir, motor uygular)"
+   },
+   {
+    "id": "block-k-sozlesme-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Her yapısal değişiklik ham SQL değil, tipli bir "
+     },
+     {
+      "type": "strong",
+      "text": "ChangeSet"
+     },
+     {
+      "type": "text",
+      "text": " zarfıyla akar: "
+     },
+     {
+      "type": "code",
+      "text": "changeSetId, tenantId, baseVersion, createdBy{actorType: insan|agent|sistem}, source, intent, operations[], riskLevel, requiresApproval, validationResults, rollbackPlan, auditContext"
+     },
+     {
+      "type": "text",
+      "text": ". AI bu zarfı "
+     },
+     {
+      "type": "strong",
+      "text": "önerir"
+     },
+     {
+      "type": "text",
+      "text": "; doğrulama motoru tek yazma yetkisidir. Risk sınıfları aksiyon taksonomisinden gelir ("
+     },
+     {
+      "type": "ref",
+      "text": "sus-actions",
+      "refId": "sus-actions"
+     },
+     {
+      "type": "text",
+      "text": "); üretilmiş uyumluluk testi ("
+     },
+     {
+      "type": "ref",
+      "text": "sus-conformance",
+      "refId": "sus-conformance"
+     },
+     {
+      "type": "text",
+      "text": ") her ChangeSet'i komşu-tenant sızıntısına karşı sınar."
+     }
+    ]
+   },
+   {
+    "id": "block-k-sozlesme-co-2",
+    "type": "callout",
+    "variant": "info",
+    "title": "Operation yedi-alan sözleşmesi",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Her operation tipi yedi alanla tanımlıdır: "
+     },
+     {
+      "type": "strong",
+      "text": "precondition"
+     },
+     {
+      "type": "text",
+      "text": " (uygulanmadan ne doğru olmalı), "
+     },
+     {
+      "type": "strong",
+      "text": "invariant"
+     },
+     {
+      "type": "text",
+      "text": " (sonra ne bozulmamalı), "
+     },
+     {
+      "type": "strong",
+      "text": "validation"
+     },
+     {
+      "type": "text",
+      "text": " (hangi kurallar), "
+     },
+     {
+      "type": "strong",
+      "text": "risk"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "strong",
+      "text": "rollback"
+     },
+     {
+      "type": "text",
+      "text": " (geri-alma stratejisi), "
+     },
+     {
+      "type": "strong",
+      "text": "audit"
+     },
+     {
+      "type": "text",
+      "text": " (hangi olay yazılır), "
+     },
+     {
+      "type": "strong",
+      "text": "preview"
+     },
+     {
+      "type": "text",
+      "text": " (kullanıcı ne görür). Bu yedili olmadan bir operation tanımlı sayılmaz; geçersiz ChangeSet asla uygulanmaz."
+     }
+    ]
+   },
+   {
+    "id": "block-k-sozlesme-table",
+    "type": "table",
+    "caption": "ChangeSet operation tipleri ve geri-alma sınıfı (ADR-0016)",
+    "columns": [
+     "Operation",
+     "Risk",
+     "Geri-alma sınıfı"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "create_archetype"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "orta"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "tersine (drop)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "add_field"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "düşük"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "tersine (nullable drop)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "change_field_type"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "yüksek"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "expand-contract"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "create_relation"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "orta"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "tersine + backfill"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "deprecate_field"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "düşük"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "geri-açılabilir"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "remove_field"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "yıkıcı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "soft-delete 30g + snapshot"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "migrate_data"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "yüksek"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "expand-contract + çift-yaz"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "create_eca_rule"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "orta"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "devre dışı bırak"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "change_permission"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "kritik"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "audit + ters uygula"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "publish_surface"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "yüksek"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "yayını geri çek"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-k-sozlesme-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Üç geri-alma sınıfı:"
+     },
+     {
+      "type": "text",
+      "text": " (1) tersine çevrilebilir (ters operation), (2) expand-contract (şema), (3) telafi-edilemez (snapshot/restore son çare). Hangi sınıfa girdiği migration yaşam döngüsünde belirlenir ("
+     },
+     {
+      "type": "ref",
+      "text": "edu-u12",
+      "refId": "edu-u12"
+     },
+     {
+      "type": "text",
+      "text": ")."
+     }
+    ]
    }
   ]
  }

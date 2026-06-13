@@ -6,7 +6,7 @@
   "sourceId": "sus-actions",
   "slug": "sus/sus-actions",
   "title": "Tipli kinetik aksiyon yüzeyi (AI için)",
-  "summary": "Palantir Ontology: AI ham tabloya değil; tipli, yetkili, audit'li \"action\"lara erişir. Güvenlik + denetlenebilirlik içkin.",
+  "summary": "Palantir Ontology: AI ham tabloya değil; tipli, yetkili, audit'li \"action\"lara erişir. Güvenlik + denetlenebilirlik içkin. Yetki tavanı: agent asla principal değil; etkin yetki = kullanıcı ∩ capability (ADR-0015).",
   "categoryId": "sus",
   "tags": [
    "sustainability",
@@ -197,6 +197,506 @@
      {
       "type": "text",
       "text": " — her biri JSON-Schema imzalı, authz politikasıyla bağlı, audit'e otomatik gider. AI ajan MCP'den bu action'ları çağırır."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-actions-h-yetki-tavani-kesisim-kurali-delegasyon-kimlige-burunme-degil",
+    "type": "heading",
+    "level": 2,
+    "text": "Yetki tavanı: kesişim kuralı (delegasyon, kimliğe bürünme değil)"
+   },
+   {
+    "id": "block-sus-actions-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan "
+     },
+     {
+      "type": "strong",
+      "text": "asla principal değildir"
+     },
+     {
+      "type": "text",
+      "text": ": her oturum bir insan ya da servis aktörü "
+     },
+     {
+      "type": "strong",
+      "text": "adına"
+     },
+     {
+      "type": "text",
+      "text": " çalışır (delegasyon). Etkin yetki bir "
+     },
+     {
+      "type": "strong",
+      "text": "kesişimdir"
+     },
+     {
+      "type": "text",
+      "text": ", asla birleşim: "
+     },
+     {
+      "type": "code",
+      "text": "etkin = kullanıcı_rolü ∩ agent_capability ∩ tool_scope ∩ aksiyon_riski ∩ ortam"
+     },
+     {
+      "type": "text",
+      "text": ". Ajan temsil ettiği aktörün yetkisini aşamaz; ayrıca kendi capability allowlist'iyle daha da daraltılır. Her çağrı merkezî bir politika kapısından geçer ("
+     },
+     {
+      "type": "ref",
+      "text": "k-authz",
+      "refId": "k-authz"
+     },
+     {
+      "type": "text",
+      "text": ")."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-actions-co-2",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Kapatılamaz korumalar (hard invariant)",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Tenant izolasyonu (RLS), PII/KVKK maskeleme, audit ve şema-değişim güvenliğini "
+     },
+     {
+      "type": "strong",
+      "text": "kapatan"
+     },
+     {
+      "type": "text",
+      "text": " bir aksiyon yüzeyde tanımlanamaz; capability allowlist'ine "
+     },
+     {
+      "type": "strong",
+      "text": "asla"
+     },
+     {
+      "type": "text",
+      "text": " giremez. Bu dört koruma beyandan gelir ("
+     },
+     {
+      "type": "ref",
+      "text": "k-surface",
+      "refId": "k-surface"
+     },
+     {
+      "type": "text",
+      "text": " bayrakları) ve aksiyon yüzeyiyle devre dışı bırakılamaz."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-actions-h-aksiyon-taksonomisi-risk-onay-geri-alma",
+    "type": "heading",
+    "level": 2,
+    "text": "Aksiyon taksonomisi — risk, onay, geri alma"
+   },
+   {
+    "id": "block-sus-actions-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Her aksiyon bir risk sınıfı taşır. AI'ın doğrudan yapabileceği işler düşük-riskli ve geri-alınabilir olanlarla sınırlıdır; yüksek-riskli ve yıkıcı işleri "
+     },
+     {
+      "type": "strong",
+      "text": "motor"
+     },
+     {
+      "type": "text",
+      "text": ", yalnız insan onayından sonra uygular."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-actions-table",
+    "type": "table",
+    "caption": "Aksiyon taksonomisi (bağlayıcı; ADR-0015)",
+    "columns": [
+     "Aksiyon",
+     "Risk",
+     "AI doğrudan?",
+     "İnsan onayı",
+     "Geri alma"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Read (şema/veri oku)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "düşük"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "evet"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "hayır"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "gerekmez"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Suggest (ChangeSet öner)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "düşük"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "evet"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "hayır"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "gerekmez"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Draft (taslak oluştur)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "düşük/orta"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "evet"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "hayır"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "silinebilir"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Validate (doğrula)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "düşük"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "motor"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "hayır"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "gerekmez"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "ApplySchema (tablo/alan üret)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "orta/yüksek"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "hayır — motor uygular"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "evet"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "migration ile"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Migration (taşı/dönüştür)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "yüksek"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "hayır"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "evet + önizleme"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "state machine"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "DeleteField (alan sil)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "yüksek/yıkıcı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "hayır"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "çift onay"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "soft-delete 30g"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "PermissionChange (yetki değiştir)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "kritik"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "hayır"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "tenant-admin"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "audit + geri al"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "PublishPublic (public aç)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "yüksek"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "hayır"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "step-up"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "yayını geri çek"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "DisableProtection (RLS/PII/audit kapat)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "yasak"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "hayır"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "izin verilmez"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "—"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-sus-actions-co-3",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Kademeli onay (step-up)",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Dış etkili, parasal, hukuki ya da yıkıcı aksiyonlar (e-posta/webhook gönderimi, ödeme, silme, public yayın) "
+     },
+     {
+      "type": "strong",
+      "text": "out-of-band step-up"
+     },
+     {
+      "type": "text",
+      "text": " ister: onay akışın içinden değil ayrı/güvenli bir kanaldan alınır. Otopilot'ta bile bu kavşaklarda akış durur."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-actions-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Granülerlik bağı: bir aksiyon Büyük Taş'ı aşıyorsa komşuluk kuralıyla bölünür; ECA sözleşmesi "
+     },
+     {
+      "type": "ref",
+      "text": "layer1-workflow",
+      "refId": "layer1-workflow"
+     },
+     {
+      "type": "text",
+      "text": ", üretilmiş uyumluluk testleri "
+     },
+     {
+      "type": "ref",
+      "text": "sus-conformance",
+      "refId": "sus-conformance"
+     },
+     {
+      "type": "text",
+      "text": " ile bağlanır."
      }
     ]
    },

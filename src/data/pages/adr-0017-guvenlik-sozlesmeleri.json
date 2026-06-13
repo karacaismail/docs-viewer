@@ -1,0 +1,181 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-adr-0017-guvenlik-sozlesmeleri",
+  "sourceId": "adr-0017",
+  "slug": "kararlar/adr-0017-guvenlik-sozlesmeleri",
+  "title": "ADR-0017: Güvenlik Sözleşmeleri — RLS/Audit/sub_prompt/PII",
+  "summary": "Karar (geliştirme adımı) — 13 Haziran 2026. Gerekçe + 5N1K eğitim seti.",
+  "categoryId": "kararlar",
+  "tags": [
+   "adr",
+   "karar",
+   "geliştirme-adımı"
+  ],
+  "meta": {},
+  "related": [],
+  "blocks": [
+   {
+    "id": "block-adr-0017-guvenlik-sozlesmeleri-co",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Geliştirme adımı",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu ADR bir geliştirme adımıdır: kararın kendisi + neden öyle olduğu + 5N1K eğitim seti. Kanonik kayıt: "
+     },
+     {
+      "type": "code",
+      "text": "docs/"
+     },
+     {
+      "type": "text",
+      "text": " ADR serisi."
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0017-guvenlik-sozlesmeleri-co-2",
+    "type": "callout",
+    "variant": "info",
+    "title": "Gerekçe",
+    "segments": [
+     {
+      "type": "text",
+      "text": "'Var' denen korumalar prensip seviyesindeydi; uygulama sözleşmesi olmadan çapraz-tenant sızıntı ve prompt injection riski açık kalır."
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0017-guvenlik-sozlesmeleri-h-karar",
+    "type": "heading",
+    "level": 2,
+    "text": "Karar"
+   },
+   {
+    "id": "block-adr-0017-guvenlik-sozlesmeleri-list",
+    "type": "list",
+    "ordered": true,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "RLS: tenant context transaction'da SET LOCAL (asla SET); bağlam yoksa sıfır satır; migration BYPASSRLS auditli."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Audit forensic: human/agent/model/tool/approval/changeset/hash/delegation ayrımı."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "sub_prompt = untrusted input; Rule of Two; red-team corpus reddedilir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "PII sınıflandırma matrisi: sınıf × liste/detay/public/silme."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-adr-0017-guvenlik-sozlesmeleri-h-sonuc-arti-kabul-edilen-maliyet",
+    "type": "heading",
+    "level": 2,
+    "text": "Sonuç (artı / kabul edilen maliyet)"
+   },
+   {
+    "id": "block-adr-0017-guvenlik-sozlesmeleri-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Olumlu: çapraz-tenant sızıntı kapısı, olay-sonrası forensic, katmanlı prompt-injection savunması. Maliyet: SET LOCAL disiplini + capability bakımı."
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0017-guvenlik-sozlesmeleri-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-adr-0017-guvenlik-sozlesmeleri-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "RLS/audit/sub_prompt/PII korumaları uygulama sözleşmesine çevrilir."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Prensip seviyesi koruma çapraz-tenant sızıntı ve injection'ı engellemez."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "SET LOCAL tenant context; forensic audit; untrusted sub_prompt; PII matrisi."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "kernel/kernel-tenancy, layer1/layer1-audit, urunler/s-studio, kernel/k-archetype-bayraklari."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "13 Haziran 2026 (Faz 3)."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mimar tanımlar; CI/test kapıları zorlar."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bankada her veznedarın yalnız kendi kasası: yanlış SET LOCAL = kasaların anahtarını ortak bırakmak."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

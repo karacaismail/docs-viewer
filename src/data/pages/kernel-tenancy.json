@@ -632,13 +632,185 @@
     ]
    },
    {
+    "id": "block-kernel-tenancy-h-rls-uygulama-sozlesmesi-prisma-pgbouncer",
+    "type": "heading",
+    "level": 2,
+    "text": "RLS uygulama sözleşmesi (Prisma + PgBouncer)"
+   },
+   {
+    "id": "block-kernel-tenancy-p-9",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "RLS 'açık' demek yetmez; uygulama sözleşmesi gerekir. Tenant context her istekte "
+     },
+     {
+      "type": "strong",
+      "text": "transaction içinde"
+     },
+     {
+      "type": "text",
+      "text": " "
+     },
+     {
+      "type": "code",
+      "text": "SET LOCAL app.tenant_id"
+     },
+     {
+      "type": "text",
+      "text": " ile kurulur — asla "
+     },
+     {
+      "type": "code",
+      "text": "SET"
+     },
+     {
+      "type": "text",
+      "text": ". Desen: "
+     },
+     {
+      "type": "code",
+      "text": "BEGIN; SET LOCAL app.tenant_id = '...'; SET LOCAL app.user_id = '...'; -- sorgular; COMMIT;"
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-tenancy-co-4",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Bağlam sızıntısı (en kritik)",
+    "segments": [
+     {
+      "type": "text",
+      "text": "PgBouncer transaction mode'da bağlantı çok istemci arasında paylaşılır. "
+     },
+     {
+      "type": "code",
+      "text": "SET app.tenant_id"
+     },
+     {
+      "type": "text",
+      "text": " kullanırsan oturum boyu kalır ve bir sonraki tenant senin bağlamını "
+     },
+     {
+      "type": "strong",
+      "text": "miras alır"
+     },
+     {
+      "type": "text",
+      "text": " → çapraz-tenant sızıntı. Yalnız "
+     },
+     {
+      "type": "code",
+      "text": "SET LOCAL"
+     },
+     {
+      "type": "text",
+      "text": " (transaction bitince otomatik geri alınır). Bağlam hiç kurulmazsa sorgu "
+     },
+     {
+      "type": "strong",
+      "text": "sıfır satır"
+     },
+     {
+      "type": "text",
+      "text": " döner: güvenli varsayılan."
+     }
+    ]
+   },
+   {
+    "id": "block-kernel-tenancy-list-3",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Tenant context: her request transaction'ında "
+      },
+      {
+       "type": "code",
+       "text": "SET LOCAL"
+      },
+      {
+       "type": "text",
+       "text": " (Prisma "
+      },
+      {
+       "type": "code",
+       "text": "$transaction"
+      },
+      {
+       "type": "text",
+       "text": " + interactive tx)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Migration: "
+      },
+      {
+       "type": "code",
+       "text": "app_migrator"
+      },
+      {
+       "type": "text",
+       "text": " rolü "
+      },
+      {
+       "type": "code",
+       "text": "BYPASSRLS"
+      },
+      {
+       "type": "text",
+       "text": " — yalnız migration yolunda, migration loglarıyla auditlenir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Background job + MCP tool çağrısı: RLS context'i açıkça enjekte edilir; varsayılan bağlam yok = sıfır satır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Admin/support tenant switch: ayrı yetki + audit kaydı ("
+      },
+      {
+       "type": "ref",
+       "text": "l1-audit",
+       "refId": "l1-audit"
+      },
+      {
+       "type": "text",
+       "text": ")."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Her sorgu tipi RLS'e tabi: search / filter / sort / export / aggregate — istisnasız."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Test: tenant A↔B sızıntısı her query pattern'inde negatif test (Faz 3 kabul kriteri)."
+      }
+     ]
+    ]
+   },
+   {
     "id": "block-kernel-tenancy-h-derinlemesine",
     "type": "heading",
     "level": 2,
     "text": "Derinlemesine"
    },
    {
-    "id": "block-kernel-tenancy-p-9",
+    "id": "block-kernel-tenancy-p-10",
     "type": "paragraph",
     "segments": [
      {
