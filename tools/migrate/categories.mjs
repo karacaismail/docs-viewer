@@ -13,6 +13,7 @@ export const CATEGORIES = [
   { id: "backend", label: "Backend Tech-Stack", icon: "ph-database", order: 2, section: "İNŞA SIRASI" },
   { id: "frontend", label: "Frontend Tech-Stack", icon: "ph-device-mobile", order: 11, section: "REFERANS" },
   { id: "sus", label: "Sürdürülebilirlik", icon: "ph-infinity", order: 12, section: "REFERANS" },
+  { id: "kararlar", label: "Kararlar (ADR)", icon: "ph-gavel", order: 13, section: "REFERANS" },
 ];
 
 // Dosya prefix → kategori (07A §2; istisnalar tek tabloda)
@@ -33,6 +34,7 @@ export const PREFIX_TO_CATEGORY = {
   landx: "stack", // LandX top-level değil — Stack Ürünleri altında vaka (sahibinden clone)
   edition: "stack",
   be: "backend",
+  adr: "kararlar",
   dx: "dx",
   services: "dx",
   deploy: "build",
