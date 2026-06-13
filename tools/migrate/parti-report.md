@@ -2,7 +2,7 @@
 
 Üretici: tools/migrate (otomatik). "ince why" = longExplanation < 160 karakter — A akışı önceliği.
 
-## Parti 1 (215 kayıt)
+## Parti 1 (218 kayıt)
 - Unit Test (page-edu-u16-test) · **ince why** · analoji tohumu var
 - Integration Test (page-edu-u16-test) · **ince why** · analoji tohumu var
 - E2E (page-edu-u16-test) · analoji tohumu var
@@ -202,6 +202,7 @@
 - Backfill (page-edu-u12-migration) · **ince why** · analoji tohumu var
 - Zero-downtime (page-edu-u12-migration) · **ince why** · analoji tohumu var
 - Forward-only (page-edu-u12-migration) · analoji tohumu var
+- Migration state machine (page-edu-u12-migration) · analoji tohumu var
 - Log Level (page-edu-u13-log) · analoji tohumu var
 - Structured Log (page-edu-u13-log) · analoji tohumu var
 - Correlation ID (page-edu-u13-log) · **ince why** · analoji tohumu var
@@ -218,8 +219,10 @@
 - Kontrast (page-edu-u15-ux-60-plus) · **ince why** · analoji tohumu var
 - Affordance (page-edu-u15-ux-60-plus) · **ince why** · analoji tohumu var
 - Progressive Disclosure (page-edu-u15-ux-60-plus) · analoji tohumu var
+- Sentetik önizleme (page-edu-u15-ux-60-plus) · analoji tohumu var
+- Güven kalibrasyonu (page-edu-u15-ux-60-plus) · analoji tohumu var
 
-## Parti 3 (145 kayıt)
+## Parti 3 (149 kayıt)
 - Primitive (page-overview) · analoji tohumu var
 - Outbox (page-overview) · analoji tohumu var
 - CQRS (page-overview) · analoji tohumu var
@@ -275,9 +278,12 @@
 - RBAC (page-kernel-authz) · analoji tohumu var
 - ABAC (page-kernel-authz) · analoji tohumu var
 - ReBAC (page-kernel-authz) · analoji tohumu var
+- Principal (page-kernel-authz) · analoji tohumu var
+- Delegation (page-kernel-authz) · analoji tohumu var
 - Multi-tenancy (page-kernel-tenancy) · analoji tohumu var
 - Tenant scope (page-kernel-tenancy) · analoji tohumu var
 - Sub-tenant (page-kernel-tenancy) · analoji tohumu var
+- RLS uygulama bağlamı (page-kernel-tenancy) · analoji tohumu var
 - Event Bus (page-kernel-bus) · analoji tohumu var
 - Polyglot (page-kernel-bus) · analoji tohumu var
 - Pub/Sub (page-kernel-bus) · analoji tohumu var
@@ -344,6 +350,7 @@
 - Tanım bayrağı (page-k-archetype-bayraklari)
 - Şema pinleme (page-k-sozlesme)
 - Üretilmiş kontrat testi (page-k-sozlesme)
+- ChangeSet (page-k-sozlesme)
 - Cache-aside (page-scale-cache) · analoji tohumu var
 - Write-through (page-scale-cache) · analoji tohumu var
 - Stampede (page-scale-cache) · analoji tohumu var
@@ -366,7 +373,7 @@
 - Replay Attack (page-scale-webhook) · analoji tohumu var
 - DLQ (page-scale-webhook) · analoji tohumu var
 
-## Parti 4 (131 kayıt)
+## Parti 4 (136 kayıt)
 - Introspectable (page-sus-metadata) · analoji tohumu var
 - Meta-metadata (page-sus-metadata) · analoji tohumu var
 - ServiceNow Glide (page-sus-metadata) · analoji tohumu var
@@ -378,6 +385,8 @@
 - Readiness Probe (page-cc-obs-deep) · analoji tohumu var
 - Healthcheck (page-cc-obs-deep) · analoji tohumu var
 - Status Page (page-cc-obs-deep) · analoji tohumu var
+- Kill switch (page-cc-obs-deep) · **ince why** · analoji tohumu var
+- Runbook (page-cc-obs-deep) · analoji tohumu var
 - i18n (page-cc-i18n-deep) · analoji tohumu var
 - l10n (page-cc-i18n-deep) · analoji tohumu var
 - ICU MessageFormat (page-cc-i18n-deep) · analoji tohumu var
@@ -490,6 +499,9 @@
 - Action (page-sus-actions) · analoji tohumu var
 - MCP (page-sus-actions) · analoji tohumu var
 - Ontology (page-sus-actions) · analoji tohumu var
+- Capability (page-sus-actions) · **ince why** · analoji tohumu var
+- Step-up onay (page-sus-actions) · **ince why** · analoji tohumu var
+- Aksiyon taksonomisi (page-sus-actions) · analoji tohumu var
 - Declarative (page-sus-declarative) · analoji tohumu var
 - Ash (page-sus-declarative) · analoji tohumu var
 - EdgeDB/Gel (page-sus-declarative) · analoji tohumu var
@@ -499,7 +511,7 @@
 - DBOS (page-sus-durable) · analoji tohumu var
 - Temporal (page-sus-durable) · analoji tohumu var
 
-## Parti 5 (111 kayıt)
+## Parti 5 (113 kayıt)
 - Cluster (page-board-rebuilt) · **ince why** · analoji tohumu var
 - Streaming Export (page-l1-export) · analoji tohumu var
 - Presigned URL (page-l1-export) · analoji tohumu var
@@ -534,6 +546,7 @@
 - State machine (page-layer1-workflow) · analoji tohumu var
 - ECA (page-layer1-workflow) · analoji tohumu var
 - Approval chain (page-layer1-workflow) · analoji tohumu var
+- ECA DSL (page-layer1-workflow) · analoji tohumu var
 - Channel-agnostic (page-layer1-notification) · analoji tohumu var
 - WORM (page-layer1-audit) · analoji tohumu var
 - Forensic (page-layer1-audit) · analoji tohumu var
@@ -543,6 +556,7 @@
 - Immutable (page-layer1-audit) · analoji tohumu var
 - Event sourcing (page-layer1-audit) · analoji tohumu var
 - Retention (page-layer1-audit) · analoji tohumu var
+- Audit forensic (page-layer1-audit) · analoji tohumu var
 - BM25 (page-layer1-search) · analoji tohumu var
 - Vector search (page-layer1-search) · analoji tohumu var
 - Hybrid (page-layer1-search) · analoji tohumu var
@@ -716,7 +730,7 @@
 - MRR (page-s-billing) · **ince why** · analoji tohumu var
 - Prorating (page-s-billing) · **ince why** · analoji tohumu var
 
-## Parti 2 — Bağlamsal varyantlar (244 kayıt, 78 label)
+## Parti 2 — Bağlamsal varyantlar (246 kayıt, 79 label)
 - Primitive (page-overview) · analoji tohumu var
 - Outbox (page-overview) · analoji tohumu var
 - CQRS (page-overview) · analoji tohumu var
@@ -766,6 +780,7 @@
 - Projection (page-scale-projections) · analoji tohumu var
 - Presigned URL (page-l1-export) · analoji tohumu var
 - Replay Attack (page-l1-webhook-in) · analoji tohumu var
+- Runbook (page-cc-obs-deep) · analoji tohumu var
 - Edge (page-fe-cdn) · analoji tohumu var
 - Cache Invalidation (page-fe-cdn) · analoji tohumu var
 - Cluster (page-scale-counter) · **ince why** · analoji tohumu var
@@ -933,6 +948,7 @@
 - CI (page-edu-u10-deploy) · **ince why** · analoji tohumu var
 - CD (page-edu-u10-deploy) · **ince why** · analoji tohumu var
 - Canary (page-edu-u10-deploy) · **ince why** · analoji tohumu var
+- Runbook (page-edu-u10-deploy) · **ince why** · analoji tohumu var
 - Decimal (page-edu-u02b-para-tarih) · analoji tohumu var
 - Float (page-edu-u02b-para-tarih) · analoji tohumu var
 - UTC (page-edu-u02b-para-tarih) · analoji tohumu var
