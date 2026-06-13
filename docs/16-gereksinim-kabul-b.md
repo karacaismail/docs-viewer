@@ -22,6 +22,12 @@ ADR-0014 karar dokümanı (A, iteratif) ile gereksinim dokümanını (B, kilitli
 | ECA | `layer1/layer1-workflow` + ADR-0019 | declarative DSL, safety gate (döngü/derinlik-6/idempotency), n8n delegasyonu |
 | Governance & Ops | `crosscut/crosscut-observability` + `crosscut/cc-obs-deep` + ADR-0020 | NIST RMF, model pinleme, runbook, üç kill-switch |
 | Açık kararlar | ADR-0021 | namespace, eşzamanlılık, i18n, kota, public KVKK |
+| Yetkinlik kapısı | `egitim/edu-yetkinlik-modeli` | okudu → gözetimle yaptı → bağımsız yaptı → üretimde işletti |
+| Referans uygulama | `build/build-referans-uygulama` | OrderOps ile tenancy/yetki/migration/hata/restore/deploy kanıtı |
+| Enterprise release | `build/build-enterprise-readiness` | sekiz boyutlu ölçülebilir release matrisi |
+| v1 kapsamı ve destek | `backend/be-v1-kapsam-disi` + `backend/be-destek-matrisi` | tek desteklenen profil; deneysel/yasak ayrımı |
+| AI üretim disiplini | `sus/sus-ai-uretim-sozlesmesi` | üreten onaylayamaz; bağımsız oracle + deterministik kapı |
+| Uzman ve risk | `build/build-uzman-denetimi` + `build/build-risk-defteri` | kilometre taşı review'ları ve yaşayan risk kaydı |
 
 ## Kabul kriteri özeti (acceptance)
 

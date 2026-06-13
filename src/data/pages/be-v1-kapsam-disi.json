@@ -1,0 +1,237 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-be-v1-kapsam-disi",
+  "sourceId": "be-v1-kapsam-disi",
+  "slug": "backend/be-v1-kapsam-disi",
+  "title": "v1 Teslim Profili — Tek Varsayılan ve Kapsam Dışı",
+  "summary": "İlk çalıştırılabilir sürümde kombinasyon patlamasını önleyen tek API, tek deploy, tek kuyruk ve tek kimlik profili.",
+  "categoryId": "backend",
+  "tags": [
+   "v1",
+   "scope",
+   "non-goals",
+   "support"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "ok",
+   "badge": "KARAR"
+  },
+  "owner": "Backend mimarisi sahibi",
+  "reviewer": "Fractional senior mimar",
+  "maturity": "dogrulanmis",
+  "lastVerified": "2026-06-13",
+  "evidence": [
+   "Üç kişilik ekip kapasitesi ve enterprise kanıt önceliği",
+   "be-kararlar varsayılan-basit ilkesi"
+  ],
+  "prerequisites": [
+   "be-kararlar"
+  ],
+  "nonGoals": [
+   "v1 içinde bütün adaptörleri üretmek veya desteklemek.",
+   "Shared hosting, cluster ve multi-region profillerini aynı release hattında doğrulamak."
+  ],
+  "failureModes": [
+   "Arayüzün varlığı hazır implementasyon sanılır ve test edilmemiş taşıyıcı müşteriye açılır."
+  ],
+  "acceptanceCriteria": [
+   "Desteklenen profil temiz makinede tek runbook ile kurulur.",
+   "Kapsam dışı taşıyıcılar runtime seçeneği olarak sunulmaz.",
+   "Adaptör contract testleri gelecek implementasyonları bağlar."
+  ],
+  "operationalImpact": "Test matrisini ve on-call yüzeyini daraltır; temel sözleşmelerin daha derin kanıtlanmasını sağlar.",
+  "externalReviewRequired": true,
+  "related": [
+   "page-be-kararlar",
+   "page-be-deploy-profilleri",
+   "page-build-referans-uygulama",
+   "page-be-destek-matrisi"
+  ],
+  "blocks": [
+   {
+    "id": "block-be-v1-kapsam-disi-table",
+    "type": "table",
+    "caption": "v1 tek desteklenen profil",
+    "columns": [
+     "Alan",
+     "v1 desteklenen",
+     "Arayüz var, implementasyon ertelendi",
+     "v1 yasak"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "API"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "FastAPI içinde tek GraphQL endpoint."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "REST/OpenAPI contract taslağı."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Aynı Domain için çift yazılmış REST + GraphQL davranışı."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Deploy"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Debian üzerinde Docker Compose; Hetzner referans ortamı."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Managed cloud ve cluster DeploymentProvider sözleşmesi."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Shared hosting, Kubernetes, Swarm ve multi-region üretim desteği."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kuyruk"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "PostgreSQL tabanlı kuyruk + outbox polling."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "QueueProvider sözleşmesi."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Celery/Redis, Kafka ve RabbitMQ runtime seçeneği."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kimlik"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "kernel-identity yerel hesap + passkey; federation için yalnız Keycloak OIDC referansı."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "IdentityProvider sözleşmesi."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "SAML ve birden çok haricî sağlayıcı kombinasyonu."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Arama"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "PostgreSQL FTS."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "SearchProvider sözleşmesi."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Haricî arama motorunun üretim desteği."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Dosya"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yerel disk + atomik yazma + off-site rsync yedek."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "StorageProvider sözleşmesi."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Birden çok obje depolama sağlayıcısı."
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-be-v1-kapsam-disi-co",
+    "type": "callout",
+    "variant": "info",
+    "title": "Sözleşme ile destek ayrımı",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bir adaptör interface'inin tanımlı olması müşteriye destek verildiği anlamına gelmez. Destek statüsü ancak contract test, runbook, observability ve restore kanıtı tamamlandığında değişir."
+     }
+    ]
+   }
+  ]
+ }
+}

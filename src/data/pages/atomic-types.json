@@ -17,6 +17,23 @@
    "granularity": "kaya",
    "state": "wip"
   },
+  "owner": "Kernel mimarisi sahibi",
+  "reviewer": "Senior platform ve güvenlik reviewer",
+  "maturity": "taslak",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": [],
+  "nonGoals": [
+   "Bu sayfa tek başına üretim onayı veya uzman incelemesi yerine geçmez."
+  ],
+  "failureModes": [
+   "Tanım, ölçülebilir kabul testi ve sorumlu reviewer olmadan doğrudan üretime uygulanır."
+  ],
+  "acceptanceCriteria": [
+   "Sahip ve reviewer atanmıştır; ilgili otomatik kapılar yeşildir; açık varsayımlar kayıtlıdır."
+  ],
+  "operationalImpact": "Tüm app'lerin güvenlik, izolasyon ve geriye uyumluluk temelini etkiler.",
+  "externalReviewRequired": true,
   "related": [
    "page-kernel-schema",
    "page-crosscut-tr",
@@ -660,6 +677,30 @@
       "type": "text",
       "text": "Money(TRY, Decimal) ile saklanır, KDV hesaplaması doğru, e-arşiv fatura üretiminde kuruş kaymaz."
      }
+    ],
+    "preconditions": [
+     "İlgili tenant, kullanıcı rolü ve test verisi hazırlanmıştır."
+    ],
+    "authorization": "En az yetki ilkesi uygulanır; tenant ve aktör bağlamı işlem öncesi doğrulanır.",
+    "mainFlow": [
+     "Mobil app üzerinden masraf ekler: '149,75 TL kahve'"
+    ],
+    "alternativeFlows": [
+     "Geçerli alternatif girdi aynı yetki ve veri bütünlüğü kurallarıyla tamamlanır."
+    ],
+    "failureFlows": [
+     "Geçersiz girdi veya bağımlılık hatası güvenli biçimde reddedilir; kısmi yazma kalmaz."
+    ],
+    "invariants": [
+     "Tenant izolasyonu, yetki sınırı, veri bütünlüğü ve idempotency korunur."
+    ],
+    "audit": "Aktör, tenant, işlem, sonuç ve correlation id yapılandırılmış audit kaydına yazılır.",
+    "privacy": "Yalnız gerekli veri işlenir; kişisel veri loglarda maskelenir ve saklama politikası uygulanır.",
+    "slo": "İlgili Surface veya Contract için tanımlı p95 gecikme ve hata oranı bütçesi aşılmaz.",
+    "acceptanceTests": [
+     "Ana akış otomatik testte geçer.",
+     "Yetkisiz ve komşu-tenant denemesi sıfır veri döndürür.",
+     "Hata akışında kısmi yazma ve hassas veri sızıntısı oluşmaz."
     ]
    },
    {
@@ -677,6 +718,30 @@
       "type": "text",
       "text": "Phone(E.164) normalize, Email MX-check, TCKN MOD-10 + MOD-9 doğrulaması — yanlış kayıt DB'ye girmez."
      }
+    ],
+    "preconditions": [
+     "İlgili tenant, kullanıcı rolü ve test verisi hazırlanmıştır."
+    ],
+    "authorization": "En az yetki ilkesi uygulanır; tenant ve aktör bağlamı işlem öncesi doğrulanır.",
+    "mainFlow": [
+     "Kayıt formu: telefon, email, TCKN"
+    ],
+    "alternativeFlows": [
+     "Geçerli alternatif girdi aynı yetki ve veri bütünlüğü kurallarıyla tamamlanır."
+    ],
+    "failureFlows": [
+     "Geçersiz girdi veya bağımlılık hatası güvenli biçimde reddedilir; kısmi yazma kalmaz."
+    ],
+    "invariants": [
+     "Tenant izolasyonu, yetki sınırı, veri bütünlüğü ve idempotency korunur."
+    ],
+    "audit": "Aktör, tenant, işlem, sonuç ve correlation id yapılandırılmış audit kaydına yazılır.",
+    "privacy": "Yalnız gerekli veri işlenir; kişisel veri loglarda maskelenir ve saklama politikası uygulanır.",
+    "slo": "İlgili Surface veya Contract için tanımlı p95 gecikme ve hata oranı bütçesi aşılmaz.",
+    "acceptanceTests": [
+     "Ana akış otomatik testte geçer.",
+     "Yetkisiz ve komşu-tenant denemesi sıfır veri döndürür.",
+     "Hata akışında kısmi yazma ve hassas veri sızıntısı oluşmaz."
     ]
    },
    {
@@ -694,6 +759,30 @@
       "type": "text",
       "text": "Tenant-scope check, başka müşterinin ürününe link kuramaz — veri sızıntısı engellenir."
      }
+    ],
+    "preconditions": [
+     "İlgili tenant, kullanıcı rolü ve test verisi hazırlanmıştır."
+    ],
+    "authorization": "En az yetki ilkesi uygulanır; tenant ve aktör bağlamı işlem öncesi doğrulanır.",
+    "mainFlow": [
+     "Reference field ile fatura kalemine ürün bağlar"
+    ],
+    "alternativeFlows": [
+     "Geçerli alternatif girdi aynı yetki ve veri bütünlüğü kurallarıyla tamamlanır."
+    ],
+    "failureFlows": [
+     "Geçersiz girdi veya bağımlılık hatası güvenli biçimde reddedilir; kısmi yazma kalmaz."
+    ],
+    "invariants": [
+     "Tenant izolasyonu, yetki sınırı, veri bütünlüğü ve idempotency korunur."
+    ],
+    "audit": "Aktör, tenant, işlem, sonuç ve correlation id yapılandırılmış audit kaydına yazılır.",
+    "privacy": "Yalnız gerekli veri işlenir; kişisel veri loglarda maskelenir ve saklama politikası uygulanır.",
+    "slo": "İlgili Surface veya Contract için tanımlı p95 gecikme ve hata oranı bütçesi aşılmaz.",
+    "acceptanceTests": [
+     "Ana akış otomatik testte geçer.",
+     "Yetkisiz ve komşu-tenant denemesi sıfır veri döndürür.",
+     "Hata akışında kısmi yazma ve hassas veri sızıntısı oluşmaz."
     ]
    },
    {
@@ -711,6 +800,30 @@
       "type": "text",
       "text": "Vector(1536) ile semantik arama → ilgili kayıtlar → LLM özet, milisaniyede dönüş."
      }
+    ],
+    "preconditions": [
+     "İlgili tenant, kullanıcı rolü ve test verisi hazırlanmıştır."
+    ],
+    "authorization": "En az yetki ilkesi uygulanır; tenant ve aktör bağlamı işlem öncesi doğrulanır.",
+    "mainFlow": [
+     "Kullanıcı 'son ay kritik şikayetleri özetle' der"
+    ],
+    "alternativeFlows": [
+     "Geçerli alternatif girdi aynı yetki ve veri bütünlüğü kurallarıyla tamamlanır."
+    ],
+    "failureFlows": [
+     "Geçersiz girdi veya bağımlılık hatası güvenli biçimde reddedilir; kısmi yazma kalmaz."
+    ],
+    "invariants": [
+     "Tenant izolasyonu, yetki sınırı, veri bütünlüğü ve idempotency korunur."
+    ],
+    "audit": "Aktör, tenant, işlem, sonuç ve correlation id yapılandırılmış audit kaydına yazılır.",
+    "privacy": "Yalnız gerekli veri işlenir; kişisel veri loglarda maskelenir ve saklama politikası uygulanır.",
+    "slo": "İlgili Surface veya Contract için tanımlı p95 gecikme ve hata oranı bütçesi aşılmaz.",
+    "acceptanceTests": [
+     "Ana akış otomatik testte geçer.",
+     "Yetkisiz ve komşu-tenant denemesi sıfır veri döndürür.",
+     "Hata akışında kısmi yazma ve hassas veri sızıntısı oluşmaz."
     ]
    },
    {

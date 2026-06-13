@@ -5,11 +5,13 @@ Bu doküman, viewer yayına girdikten sonra içerikle çalışan kişinin el kit
 ## 1. Yeni Page Eklemek
 
 1. `content-source/` altına yeni cluster JSON dosyası açılır (ADR-0001 §1). Dosya adı sözleşmesi: `NN-kategori-konu.json` — kategori prefix'i `03 §1` tablosundaki Rail 1 eşlemesine uyar; numara yalnızca insan-okur sıralamadır, hiçbir kimliğe sızmaz (07A §2).
-2. Zorunlu alanlar doldurulur: `id`, `title`, `subtitle`, `cluster`, `order`, `icon` (Phosphor adı), `tags`, `blocks`. Pedagojik katman (`enrich.info`, `lesson`, `terms`, `stories`) yeni içerikte de teşvik edilir — glossary ve useCase üretimi bu alanlardan beslenir (07A §4).
+2. Zorunlu içerik alanları doldurulur: `id`, `title`, `subtitle`, `cluster`, `order`, `icon` (Phosphor adı), `tags`, `blocks`. Yönetişim alanları da açıkça yazılır: `owner`, `reviewer`, `maturity`, `lastVerified`, `evidence`, `prerequisites`, `nonGoals`, `failureModes`, `acceptanceCriteria`, `operationalImpact`, `externalReviewRequired`. Eski sayfalara migration güvenli varsayılan ekler; yeni sayfa varsayılana güvenmez.
 3. Block'lar `04 §3` type setiyle yazılır. Serbest metin alanlarında markdown alışkanlığı sınırlıdır: bold/backtick/listeler parse edilir (07B §1), ama yeni içerikte doğrudan yapılandırılmış block kullanmak tercihtir — parse bir telafi mekanizmasıdır, yazım biçimi değil.
 4. Migration çalıştırılır; mutabakat raporu yeni page'in kategori/grup atamasını, üretilen ID'leri ve uyarıları gösterir. Raporun **Uyarılar** bölümü boş değilse PR açılmaz; **Bilinçli düşürmeler / Notlar** bölümü kapı değildir — kayıtlı kararları listeler (örn. table'ın filterable/stateColumn düşürmesi, 07A §3).
 5. Yerel önizlemede kontrol: sayfa Rail 2'de doğru grupta mı, anchor'lar çalışıyor mu, 320px'te taşma var mı.
 6. İçerik PR'ı açılır: yalnızca `content-source/` + üretilmiş `src/data/` dosyaları (12A §5.4 — içerik PR'ı kod PR'ından ayrıdır). CI içerik doğrulama kapısı (05 §2.4) referans bütünlüğünü zorlar.
+
+`enrich.stories` içindeki yeni kullanım hikâyesi şu alanları açıkça taşır: persona/context/outcome, preconditions, authorization, mainFlow, alternativeFlows, failureFlows, invariants, audit, privacy, slo, acceptanceTests. Mutlu akış yazıp geri kalanını migration varsayılanına bırakmak yalnız eski içerik uyumluluğu için kabul edilir.
 
 ## 2. Mevcut Page'i Güncellemek
 

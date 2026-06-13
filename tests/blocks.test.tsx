@@ -94,11 +94,22 @@ describe("pedagojik block kontratları", () => {
           title: "Persona",
           scenario: seg("bağlam"),
           outcome: seg("sonuç"),
+          preconditions: ["hazır"],
+          authorization: "yetkili",
+          mainFlow: ["ana"],
+          alternativeFlows: ["alternatif"],
+          failureFlows: ["hata"],
+          invariants: ["değişmez"],
+          audit: "audit",
+          privacy: "gizlilik",
+          slo: "p95",
+          acceptanceTests: ["test"],
         }}
       />,
     );
     expect(screen.getByText("Persona")).toBeTruthy();
     expect(screen.getByText("sonuç")).toBeTruthy();
+    expect(screen.getByText("Operasyon ve kabul sözleşmesi")).toBeTruthy();
   });
 
   it("caseStudy: title + story", async () => {

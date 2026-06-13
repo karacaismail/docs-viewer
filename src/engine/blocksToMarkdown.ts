@@ -69,6 +69,17 @@ function blockToMd(b: Block, base: string): string {
         `> **${b.title}**`,
         `> ${segsToMd(b.scenario, base)}`,
         b.outcome ? `> → ${segsToMd(b.outcome, base)}` : "",
+        "",
+        `**Önkoşullar:** ${b.preconditions.join("; ")}`,
+        `**Yetki:** ${b.authorization}`,
+        `**Ana akış:** ${b.mainFlow.join("; ")}`,
+        `**Alternatif akışlar:** ${b.alternativeFlows.join("; ")}`,
+        `**Hata akışları:** ${b.failureFlows.join("; ")}`,
+        `**Değişmez kurallar:** ${b.invariants.join("; ")}`,
+        `**Audit:** ${b.audit}`,
+        `**Gizlilik:** ${b.privacy}`,
+        `**SLO:** ${b.slo}`,
+        `**Kabul testleri:** ${b.acceptanceTests.join("; ")}`,
       ]
         .filter(Boolean)
         .join("\n");

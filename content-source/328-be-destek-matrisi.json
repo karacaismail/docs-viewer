@@ -1,0 +1,48 @@
+{
+  "id": "be-destek-matrisi",
+  "title": "Destek Matrisi — Desteklenen, Deneysel, Yasak",
+  "subtitle": "Deployment ve teknoloji kombinasyonlarının açık destek seviyesi, kanıt gereksinimi ve escalation sahibi.",
+  "cluster": "backend",
+  "order": 6,
+  "icon": "ph-lifebuoy",
+  "tags": ["support", "matrix", "deployment", "technology"],
+  "granularity": "kaya",
+  "state": "wip",
+  "owner": "Platform support sahibi",
+  "reviewer": "Senior SRE reviewer",
+  "maturity": "incelemede",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": ["be-v1-kapsam-disi", "be-deploy-profilleri"],
+  "nonGoals": ["Listede olmayan kombinasyona zımni destek vermek.", "Deneysel profili SLA kapsamına almak."],
+  "failureModes": ["Satış veya kurulum ekranı deneysel seçeneği desteklenen gibi sunar."],
+  "acceptanceCriteria": ["Runtime yalnız desteklenen profili varsayılan sunar.", "Her desteklenen satırın contract testi, runbook'u ve on-call sahibi vardır.", "Statü değişikliği ADR ve kanıt gerektirir."],
+  "operationalImpact": "Müşteri beklentisini, test matrisini ve destek ekibinin sorumluluk sınırını belirler.",
+  "externalReviewRequired": true,
+  "related": ["be-v1-kapsam-disi", "be-deploy-profilleri", "build-enterprise-readiness"],
+  "blocks": [
+    {
+      "type": "table",
+      "caption": "v1 destek statüsü",
+      "headers": ["Kombinasyon", "Statü", "Gerekli kanıt", "Destek davranışı"],
+      "rows": [
+        ["Debian + Docker Compose + PostgreSQL", "Desteklenen", "Temiz kurulum, upgrade, rollback, restore ve yük testi.", "P1/P2 on-call ve yayın notu."],
+        ["Hetzner referans ortamı", "Desteklenen", "IaC doğrulama, off-site yedek ve aylık restore.", "Dokümante edilmiş runbook."],
+        ["Yerel geliştirme ortamı", "Desteklenen", "Tek komut bootstrap ve deterministik seed.", "Geliştirici desteği; üretim SLA'sı yok."],
+        ["Haricî S3 uyumlu storage", "Deneysel", "Storage contract testi var; tam restore ve maliyet kanıtı eksik.", "Best effort; üretim önerilmez."],
+        ["Celery/Redis veya haricî broker", "Deneysel değil", "Yalnız interface vardır.", "Kurulum ekranında gösterilmez."],
+        ["Kubernetes/Swarm", "Deneysel değil", "Deployment contract taslağı vardır.", "v1 release artefaktı üretilmez."],
+        ["Shared hosting", "Yasak", "Worker, WAL/PITR ve güvenli sandbox önkoşulları kanıtlanmadı.", "Destek talebi reddedilir; Compose profiline yönlendirilir."],
+        ["Multi-region active-active", "Yasak", "Conflict, residency ve failover kanıtı yok.", "Satış vaadi ve SLA verilemez."]
+      ]
+    },
+    {
+      "type": "kv-row",
+      "pairs": [
+        {"key": "Desteklenen", "value": "CI + release + runbook + observability + on-call + upgrade/restore kanıtı tamam."},
+        {"key": "Deneysel", "value": "İzole pilotta kullanılabilir; SLA yok; açık risk ve geri dönüş yolu var."},
+        {"key": "Yasak", "value": "Bilinen güvenlik/operasyon açığı veya kanıtsız temel semantik nedeniyle kullanılamaz."}
+      ]
+    }
+  ]
+}

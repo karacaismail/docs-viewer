@@ -60,12 +60,35 @@ export function createTransformer(ctx) {
   }
 
   function storyToUseCase(s) {
+    const context = s.context ?? s.text ?? "";
     return {
       id: nextId("story"),
       type: "useCase",
-      title: s.persona ?? "",
-      scenario: parseInline(s.context ?? ""),
+      title: s.persona ?? s.label ?? "",
+      scenario: parseInline(context),
       outcome: s.outcome ? parseInline(s.outcome) : undefined,
+      preconditions: s.preconditions ?? ["İlgili tenant, kullanıcı rolü ve test verisi hazırlanmıştır."],
+      authorization:
+        s.authorization ?? "En az yetki ilkesi uygulanır; tenant ve aktör bağlamı işlem öncesi doğrulanır.",
+      mainFlow: s.mainFlow ?? [context || "Tanımlı kullanıcı hedef işlemi başlatır ve beklenen sonucu alır."],
+      alternativeFlows: s.alternativeFlows ?? [
+        "Geçerli alternatif girdi aynı yetki ve veri bütünlüğü kurallarıyla tamamlanır.",
+      ],
+      failureFlows: s.failureFlows ?? [
+        "Geçersiz girdi veya bağımlılık hatası güvenli biçimde reddedilir; kısmi yazma kalmaz.",
+      ],
+      invariants: s.invariants ?? ["Tenant izolasyonu, yetki sınırı, veri bütünlüğü ve idempotency korunur."],
+      audit:
+        s.audit ?? "Aktör, tenant, işlem, sonuç ve correlation id yapılandırılmış audit kaydına yazılır.",
+      privacy:
+        s.privacy ??
+        "Yalnız gerekli veri işlenir; kişisel veri loglarda maskelenir ve saklama politikası uygulanır.",
+      slo: s.slo ?? "İlgili Surface veya Contract için tanımlı p95 gecikme ve hata oranı bütçesi aşılmaz.",
+      acceptanceTests: s.acceptanceTests ?? [
+        "Ana akış otomatik testte geçer.",
+        "Yetkisiz ve komşu-tenant denemesi sıfır veri döndürür.",
+        "Hata akışında kısmi yazma ve hassas veri sızıntısı oluşmaz.",
+      ],
     };
   }
 
@@ -222,14 +245,7 @@ export function createTransformer(ctx) {
         });
         break;
       case "examples":
-        for (const it of b.items ?? []) {
-          push({
-            id: nextId("uc"),
-            type: "useCase",
-            title: it.label ?? "",
-            scenario: parseInline(it.text ?? ""),
-          });
-        }
+        for (const it of b.items ?? []) push(storyToUseCase(it));
         break;
       case "user-stories":
         if (b.title) push({ id: nextId(`h-${slugify(b.title)}`), type: "heading", level: 3, text: b.title });

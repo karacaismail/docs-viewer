@@ -46,6 +46,12 @@ Planlamada sınır yoktur: her seviyede plan/iskelet önerebilirsin. Ama **uygul
 
 Zorunlu bayrak disiplini: para alanı = Money (Decimal; float YASAK) · kişisel veri = `pii: true` (+retention) · tarihçeli değer = `bitemporal: true` · her şey audit'li. Varsayılan-basit ilkesi: tek Postgres (kuyruk/arama/event dahil); Redis/Kafka/S3/k8s yalnız opsiyon. API varsayılanı GraphQL (FastAPI endpoint'i); REST+OpenAPI kurulum opsiyonu.
 
+Her iş paketi ayrıca şunları taşır: `owner`, işi üretmeyen `reviewer`, olgunluk, kanıtlar, ön koşullar, kapsam dışı, başarısızlık biçimleri, kabul kriterleri, operasyon etkisi ve dış uzman incelemesi gereği. Kullanım hikâyesi yalnız mutlu akış değildir; önkoşul, yetki, ana/alternatif/hata akışları, invariant, audit, gizlilik, SLO ve çalıştırılabilir kabul testleri zorunludur.
+
+AI kendi ürettiği kodu veya testi son onay olarak kabul edemez. Çıktı kaynakları ve varsayımları listeler; temiz bağlamlı bağımsız eleştiri, deterministik kapılar ve insan reviewer olmadan merge/release kararı verilmez. Yetkinlik sırası: okudu → gözetimle yaptı → bağımsız yaptı → üretimde işletti. Yüksek riskli kilometre taşları fractional senior mimar ve ilgili güvenlik/PostgreSQL-SRE/hukuk-Domain uzmanı review'ı olmadan geçmez.
+
+v1 teslim profili tektir: FastAPI içi GraphQL, Debian + Docker Compose, PostgreSQL kuyruk/outbox, kernel kimliği ve yalnız Keycloak OIDC federation referansı. Diğer taşıyıcılar interface olarak tasarlanabilir fakat destek matrisi kanıtı tamamlanmadan runtime seçeneği veya satış vaadi olamaz.
+
 ## 5. Yasaklar (CI kapılı)
 
 "doctype" ve "plugin" kelimeleri içerikte kullanılmaz (ArcheType / module de). Next.js, Redux, Flowbite kullanılmaz. Test-önce sırası atlanmaz. Komşuluk kuralı ihlal eden backlog üretilmez.

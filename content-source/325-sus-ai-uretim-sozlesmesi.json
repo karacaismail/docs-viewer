@@ -1,0 +1,44 @@
+{
+  "id": "sus-ai-uretim-sozlesmesi",
+  "title": "AI Üretim Sözleşmesi — Üreten Onaylayamaz",
+  "subtitle": "Kaynak, varsayım, bağımsız eleştiri ve deterministik kapılarla AI eşliğinde geliştirme disiplini.",
+  "cluster": "sus",
+  "order": 16,
+  "icon": "ph-robot",
+  "tags": ["ai", "vibecoding", "review", "evidence", "governance"],
+  "granularity": "kaya",
+  "state": "ok",
+  "badge": "KARAR",
+  "owner": "AI governance sahibi",
+  "reviewer": "Fractional senior mimar + güvenlik reviewer",
+  "maturity": "dogrulanmis",
+  "lastVerified": "2026-06-13",
+  "evidence": ["ADR-0014", "ADR-0020", "CI test-first sırası"],
+  "prerequisites": ["adr-0014-ai-uretim-karar-paketi", "adr-0020-governance-runbook"],
+  "nonGoals": ["AI modelinin güven skorunu merge onayı saymak.", "Aynı konuşmada üretilen kod ve testleri bağımsız kanıt kabul etmek."],
+  "failureModes": ["AI aynı yanlış varsayımla kodu, testi ve açıklamayı üretir; sahte yeşil sonuç oluşur."],
+  "acceptanceCriteria": ["Her değişiklik kaynak ve varsayım listesi taşır.", "Eleştiri oturumu temiz bağlamda veya farklı reviewer ile yapılır.", "Deterministik testler ve insan onayı olmadan merge edilmez."],
+  "operationalImpact": "AI kaynaklı ortak-hata ve görünmeyen varsayım riskini azaltır.",
+  "externalReviewRequired": true,
+  "related": ["be-sdk", "sus-conformance", "adr-0014-ai-uretim-karar-paketi", "adr-0020-governance-runbook"],
+  "blocks": [
+    {
+      "type": "table",
+      "headers": ["Aşama", "Zorunlu çıktı", "Yasak"],
+      "rows": [
+        ["İş tarifi", "Kapsam, non-goal, invariant, risk sınıfı ve kabul testi.", "Yalnız 'şunu yap' komutu."],
+        ["Üretim", "Değişen dosyalar, kullanılan kaynaklar, varsayımlar ve bilinmeyenler.", "Kernel iç API'sine izinsiz erişim."],
+        ["Öz-eleştiri", "AI kendi diff'inde şüpheli noktaları listeler.", "Öz-eleştiriyi bağımsız review saymak."],
+        ["Bağımsız eleştiri", "Temiz bağlamlı ikinci AI veya işi üretmeyen insan saldırgan review yapar.", "İlk cevabı doğrulayan yönlendirici prompt."],
+        ["Doğrulama", "Tip, lint, birim, property, contract, tenancy, güvenlik ve gerektiğinde yük testleri.", "Testi geçsin diye invariant veya eşiği gevşetmek."],
+        ["Merge", "İnsan reviewer kararı + yeşil CI + rollback planı.", "AI'ın kendi merge veya release kararını vermesi."]
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "danger",
+      "label": "Kırmızı çizgi",
+      "body": "AI tarafından üretilen test, aynı AI çıktısının doğruluğunu tek başına kanıtlamaz. En az bir bağımsız oracle gerekir: mevcut sözleşme, property invariant'ı, golden veri, haricî standart veya işi üretmeyen reviewer."
+    }
+  ]
+}

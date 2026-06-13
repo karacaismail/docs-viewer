@@ -1,0 +1,56 @@
+{
+  "id": "build-enterprise-readiness",
+  "title": "Enterprise Readiness Matrisi — Release Kanıt Kapıları",
+  "subtitle": "Güvenlikten maliyete sekiz boyutta ölçülebilir üretim çıkış kriterleri.",
+  "cluster": "build",
+  "order": 3,
+  "icon": "ph-shield-check",
+  "tags": ["enterprise", "readiness", "release", "slo", "acceptance"],
+  "granularity": "kaya",
+  "state": "wip",
+  "owner": "Release governance sahibi",
+  "reviewer": "Fractional senior mimar + güvenlik + SRE reviewer",
+  "maturity": "incelemede",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": ["build-referans-uygulama", "crosscut-security", "crosscut-observability"],
+  "nonGoals": ["Sertifika logosunu teknik kanıt yerine kullanmak.", "Tüm sektörlerin mevzuatını tek genel kapıyla geçmiş saymak."],
+  "failureModes": ["Release takvimi yaklaşınca kanıtsız kapılar istisna etiketiyle kalıcı biçimde atlanır."],
+  "acceptanceCriteria": ["P0 kapıların tamamı kanıtlıdır.", "İstisnaların sahibi, bitiş tarihi ve telafi kontrolü vardır.", "Release kararı AI tarafından tek başına verilemez."],
+  "operationalImpact": "Üretim yayınının yapılabilir veya durdurulmuş olduğunu tek tabloda belirler.",
+  "externalReviewRequired": true,
+  "related": ["build-enterprise", "build-referans-uygulama", "crosscut-security", "crosscut-observability", "cc-privacy"],
+  "blocks": [
+    {
+      "type": "table",
+      "caption": "Enterprise release matrisi",
+      "headers": ["Boyut", "P0 ölçüt", "Kanıt", "Kapı sahibi"],
+      "rows": [
+        ["Güvenlik", "Kritik/yüksek ASVS bulgusu 0; tenant kaçağı 0; secret taraması temiz.", "Threat model, SAST/DAST, RLS ve bağımsız pentest raporu.", "Security reviewer"],
+        ["Kullanılabilirlik", "Ana görevler 60+ pilotta %90 yardım almadan tamamlanır.", "Aylık 3 kullanıcı usability testi ve görev kaydı.", "UX sahibi"],
+        ["Dayanıklılık", "RPO ≤5 dk, RTO ≤60 dk; aylık restore ve üç aylık failover tatbikatı.", "İmzalı restore/failover raporu.", "SRE"],
+        ["Performans", "Kritik query p95 <300 ms, write p95 <500 ms; hata <%0,1; kapasite payı ≥%30.", "Üretime benzer veriyle k6 ve sorgu planı.", "Performance sahibi"],
+        ["Veri yaşamı", "PII envanteri tam; retention ve silme/anonimleştirme işleri testli.", "DSAR, silme ve legal hold senaryoları.", "Privacy + hukuk"],
+        ["Erişilebilirlik", "WCAG 2.2 AA kritik/ciddi ihlal 0; klavye ana akışları tamam.", "axe + manuel ekran okuyucu ve klavye raporu.", "Accessibility reviewer"],
+        ["Destek", "P1 yanıt ≤15 dk; runbook kapsaması %100; iki kişi kritik operasyonu yürütebilir.", "On-call tatbikatı, escalation ve müşteri iletişim şablonu.", "Support sahibi"],
+        ["Maliyet", "Tenant başı maliyet hedef içinde; bütçe alarmı ve kapasite tahmini mevcut.", "Aylık cost allocation, yük başına birim maliyet ve bütçe alarmı.", "FinOps sahibi"]
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "danger",
+      "label": "Release durdurma kuralı",
+      "body": "Tenant izolasyonu, veri kaybı, kritik güvenlik, doğrulanmamış restore veya mevzuat engeli açıkken release yapılamaz. Takvim ve müşteri baskısı bu beş kapıya istisna üretemez."
+    },
+    {
+      "type": "steps",
+      "title": "Release review akışı",
+      "items": [
+        {"title": "Kanıtı topla", "body": "Her boyut için otomatik çıktı veya imzalı tatbikat raporu bağlanır."},
+        {"title": "Bağımsız review", "body": "İşi üretmeyen reviewer kanıtı yeniden çalıştırır veya örnekler."},
+        {"title": "Risk kararı", "body": "Kalan P1/P2 riskler risk defterine sahip ve tarihle yazılır."},
+        {"title": "Yayın ve gözlem", "body": "Canary sonrası SLI'lar izlenir; eşik aşılırsa otomatik rollback uygulanır."}
+      ]
+    }
+  ]
+}

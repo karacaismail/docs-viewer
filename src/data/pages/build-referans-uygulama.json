@@ -1,0 +1,340 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-build-referans-uygulama",
+  "sourceId": "build-referans-uygulama",
+  "slug": "build/build-referans-uygulama",
+  "title": "Kanonik Referans Uygulama — OrderOps",
+  "summary": "Sipariş yönetimi üzerinden tanımdan deploy'a enterprise foundation kanıtı: tenancy, yetki, workflow, migration, hata, yedek ve gözlem.",
+  "categoryId": "build",
+  "tags": [
+   "referans-uygulama",
+   "order",
+   "enterprise-foundation",
+   "acceptance"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "wip"
+  },
+  "owner": "Referans uygulama sahibi",
+  "reviewer": "Fractional senior mimar + PostgreSQL/SRE reviewer",
+  "maturity": "incelemede",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": [
+   "atomic-types",
+   "kernel-schema",
+   "kernel-tenancy",
+   "kernel-authz",
+   "be-v1-kapsam-disi"
+  ],
+  "nonGoals": [
+   "Tam e-ticaret, ödeme, kargo optimizasyonu veya ürün kataloğu geliştirmek.",
+   "Birden fazla altyapı adaptörünü aynı anda kanıtlamak."
+  ],
+  "failureModes": [
+   "Demo yalnız mutlu akışı gösterir; tenant kaçağı, yarım migration veya restore başarısızlığı gizli kalır."
+  ],
+  "acceptanceCriteria": [
+   "Aşağıdaki sekiz kanıt kapısının tamamı otomatik veya tatbikat kanıtıyla geçer.",
+   "Aynı tanımlar temiz kurulumda deterministik sonuç üretir."
+  ],
+  "operationalImpact": "Kernel ve SDK iddialarının ilk çalıştırılabilir bütünleşik kanıtıdır; diğer app'ler bu kalıbı kopyalar.",
+  "externalReviewRequired": true,
+  "related": [
+   "page-be-sdk",
+   "page-kernel-tenancy",
+   "page-kernel-authz",
+   "page-edu-u12-migration",
+   "page-edu-u20-backup",
+   "page-build-enterprise-readiness",
+   "page-be-v1-kapsam-disi"
+  ],
+  "blocks": [
+   {
+    "id": "block-build-referans-uygulama-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "OrderOps bir MVP değildir; dar kapsamlı fakat üretim davranışları tamamlanmış enterprise foundation referansıdır."
+     }
+    ]
+   },
+   {
+    "id": "block-build-referans-uygulama-table",
+    "type": "table",
+    "caption": "OrderOps yapı ağacı",
+    "columns": [
+     "Seviye",
+     "Tanım",
+     "Çıktı"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Domain"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Order Management"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Contract sınırı ve sahiplik."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "ArcheType"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Order, Customer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tablo, GraphQL, MCP aksiyonları ve varsayılan Surface."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Fragment"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "OrderLine"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Money × quantity satırları; ana kayıtla yaşar."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Workflow"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "draft → pending_approval → approved → cancelled"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Versiyonlu durum makinesi ve geçiş yetkileri."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Surface"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Order List, Order Detail, Approval Queue"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Erişilebilir ve role göre projekte edilmiş ekranlar."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Contract"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "OrderContract v1"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Create, submit, approve, cancel ve query sözleşmesi."
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-build-referans-uygulama-h-sekiz-kanit-kapisi",
+    "type": "heading",
+    "level": 2,
+    "text": "Sekiz kanıt kapısı"
+   },
+   {
+    "id": "block-build-referans-uygulama-chk",
+    "type": "checklist",
+    "title": "Referans uygulama çıkış kapısı",
+    "storageKey": "orderops-evidence-gates",
+    "items": [
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Tanım — ArcheType, Fragment, Workflow, Surface ve Contract şemadan geçer."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Tenancy — Komşu tenant okuma/yazma tüm sorgu yollarında sıfırdır."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Yetki — Rol × aksiyon matrisi ve step-up kuralları testlidir."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Migration — Expand/backfill/contract ve yarıda kesilme testi geçer."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Hata — Retry, idempotency ve DLQ senaryoları kanıtlıdır."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Yedek — Tenant restore tatbikatı RPO/RTO içinde tamamlanır."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Deploy — Docker Compose temiz kurulum, canary ve rollback kanıtlıdır."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Gözlem — Log, metric, trace, dashboard ve alarm runbook'a bağlanır."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-build-referans-uygulama-h-hikayeler",
+    "type": "heading",
+    "level": 2,
+    "text": "Kullanım hikâyeleri"
+   },
+   {
+    "id": "block-build-referans-uygulama-story",
+    "type": "useCase",
+    "title": "Tenant sipariş yöneticisi",
+    "scenario": [
+     {
+      "type": "text",
+      "text": "Yönetici kendi tenant'ında taslak siparişi oluşturur, onaya yollar ve onaylanan siparişin geçmişini görür."
+     }
+    ],
+    "outcome": [
+     {
+      "type": "text",
+      "text": "Sipariş yalnız izinli geçişlerden ilerler; tüm değişiklikler audit edilir."
+     }
+    ],
+    "preconditions": [
+     "Tenant aktiftir.",
+     "Müşteri ve Money para birimi tanımlıdır.",
+     "Kullanıcı OrderManager rolündedir."
+    ],
+    "authorization": "CreateOrder ve SubmitOrder capability'leri tenant bağlamında birlikte doğrulanır.",
+    "mainFlow": [
+     "Sipariş taslak oluşturulur.",
+     "Kalemler eklenir ve toplam Decimal ile hesaplanır.",
+     "Submit aksiyonu workflow'u pending_approval durumuna taşır.",
+     "Onaylayan farklı kullanıcı approved durumuna geçirir."
+    ],
+    "alternativeFlows": [
+     "Onay eşiği altındaki sipariş otomatik onay politikasından geçer.",
+     "İptal edilen sipariş yeni sürüm olarak yeniden oluşturulur."
+    ],
+    "failureFlows": [
+     "Eksik para birimi validation hatası verir.",
+     "Aynı idempotency anahtarı ikinci sipariş üretmez.",
+     "Komşu tenant siparişi bulunamadı gibi davranır."
+    ],
+    "invariants": [
+     "Toplam, kalem toplamına eşittir.",
+     "Onaylayan ile oluşturan yüksek tutarda aynı kişi olamaz.",
+     "Tenant id değiştirilemez.",
+     "Audit kaydı silinemez."
+    ],
+    "audit": "Her aksiyon actor, tenant, önceki durum, sonraki durum, changeset ve correlation id ile kaydedilir.",
+    "privacy": "Müşteri iletişim alanları PII olarak maskelenir; sipariş logları ham iletişim verisi taşımaz.",
+    "slo": "Create ve read p95 <300 ms; submit p95 <500 ms; aylık hata oranı <%0,1.",
+    "acceptanceTests": [
+     "İki tenant izolasyon testi.",
+     "Rol × aksiyon capability matrisi testi.",
+     "Aynı idempotency anahtarıyla tekrar testi.",
+     "Workflow geçersiz geçiş testi.",
+     "Audit bütünlük testi."
+    ]
+   }
+  ]
+ }
+}
