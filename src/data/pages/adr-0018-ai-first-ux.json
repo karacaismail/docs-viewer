@@ -1,0 +1,188 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-adr-0018-ai-first-ux",
+  "sourceId": "adr-0018",
+  "slug": "kararlar/adr-0018-ai-first-ux",
+  "title": "ADR-0018: AI-first UX/UED — İki Mod, Sonuç-önce Önizleme, Güven Kalibrasyonu",
+  "summary": "Karar (geliştirme adımı) — 13 Haziran 2026. Gerekçe + 5N1K eğitim seti.",
+  "categoryId": "kararlar",
+  "tags": [
+   "adr",
+   "karar",
+   "geliştirme-adımı",
+   "ux"
+  ],
+  "meta": {},
+  "related": [],
+  "blocks": [
+   {
+    "id": "block-adr-0018-ai-first-ux-co",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Geliştirme adımı",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu ADR bir geliştirme adımıdır: AI-first UX/UED kararı + gerekçe + 5N1K. Akış sahip sayfalara entegre edildi (yeni sayfa açılmadı)."
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0018-ai-first-ux-co-2",
+    "type": "callout",
+    "variant": "info",
+    "title": "Gerekçe",
+    "segments": [
+     {
+      "type": "text",
+      "text": "v1/v2 doğrusal sihirbazdı; 60+ kitle soyut alan listesini değerlendiremez, model kendi güvenine güvenilmez, her kartta ön-seçim düşünmeden onayı (otomasyon yanlılığı) körükler."
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0018-ai-first-ux-h-karar",
+    "type": "heading",
+    "level": 2,
+    "text": "Karar"
+   },
+   {
+    "id": "block-adr-0018-ai-first-ux-list",
+    "type": "list",
+    "ordered": true,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "İki mod tek motor: Otopilot (AI sürer, sonuç-önce, tek tık) / Atölye (insan sürer, [a,b,c,d] DecisionCard + sub_prompt); insan-kararı kilidi korunur."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Sonuç-önce önizleme: 6 satır sentetik veri "
+      },
+      {
+       "type": "strong",
+       "text": "deterministic faker"
+      },
+      {
+       "type": "text",
+       "text": "'dan (LLM değil), 'örnek veri' etiketli, export-korumalı."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Güven dış sinyalden (validation/self-consistency/token olasılığı/risk/geçmiş); model self-report'u tek başına kullanılmaz; eşik ≥0.80/0.60-0.80/<0.60."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Ön-seçim politikası: PII/parasal/hukuki/yıkıcı kararlarda AI-önerisi ön-seçili gelmez (otomasyon yanlılığına karşı)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Journey state machine (idle→completed) + hata durumları; her hata öğretici mesaj + geri dönüş."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-adr-0018-ai-first-ux-h-sonuc-arti-kabul-edilen-maliyet",
+    "type": "heading",
+    "level": 2,
+    "text": "Sonuç (artı / kabul edilen maliyet)"
+   },
+   {
+    "id": "block-adr-0018-ai-first-ux-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Olumlu: 60+ kitle sonucu görerek onaylar; güven yanılsaması kırılır; otomasyon yanlılığı azaltılır. Maliyet: deterministic faker katmanı + güven sinyal toplama altyapısı; mod tutarlılığı için insan-kararı kilidi gerekir."
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0018-ai-first-ux-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-adr-0018-ai-first-ux-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Konuşmalı üretim iki mod (Otopilot/Atölye), sonuç-önce sentetik önizleme ve dış-sinyalli güven skoruyla tasarlanır."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "60+ kitle soyut şemayı değerlendiremez; model self-report'u güvenilmez; ön-seçim otomasyon yanlılığı doğurur."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tek karar ağacı iki görünüm; sentetik önizleme deterministic faker'dan; güven validation/tutarlılık/risk sinyalinden; riskli kararda ön-seçim yok."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "stack-builder (akış), edu-u15 (üç emniyet), sus-declarative (scaffold)."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "13 Haziran 2026 (Faz 4)."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mimar/UX tasarlar; AI önerir; motor uygular; kullanıcı onaylar."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Otomatik vites (Otopilot) ile manuel vites (Atölye): aynı motor, sürücü tercihi; gösterge paneli (sentetik önizleme) gerçek yol gibi görünür."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}
