@@ -1,7 +1,7 @@
 {
   "id": "sus-actions",
   "title": "Tipli kinetik aksiyon yüzeyi (AI için)",
-  "subtitle": "Palantir Ontology: AI ham tabloya değil; tipli, yetkili, audit'li \"action\"lara erişir. Güvenlik + denetlenebilirlik içkin.",
+  "subtitle": "Palantir Ontology: AI ham tabloya değil; tipli, yetkili, audit'li \"action\"lara erişir. Güvenlik + denetlenebilirlik içkin. Yetki tavanı: agent asla principal değil; etkin yetki = kullanıcı ∩ capability (ADR-0015).",
   "cluster": "sus",
   "order": 8,
   "icon": "ph-lightning",
@@ -87,6 +87,123 @@
     {
       "type": "paragraph",
       "text": "**Bu projeye uygulama:** ArcheType üstüne tipli action layer kurulur. `publish_order`, `approve_invoice`, `cancel_subscription` — her biri JSON-Schema imzalı, authz politikasıyla bağlı, audit'e otomatik gider. AI ajan MCP'den bu action'ları çağırır."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Yetki tavanı: kesişim kuralı (delegasyon, kimliğe bürünme değil)"
+    },
+    {
+      "type": "paragraph",
+      "text": "AI ajan **asla principal değildir**: her oturum bir insan ya da servis aktörü **adına** çalışır (delegasyon). Etkin yetki bir **kesişimdir**, asla birleşim: `etkin = kullanıcı_rolü ∩ agent_capability ∩ tool_scope ∩ aksiyon_riski ∩ ortam`. Ajan temsil ettiği aktörün yetkisini aşamaz; ayrıca kendi capability allowlist'iyle daha da daraltılır. Her çağrı merkezî bir politika kapısından geçer ({{ref:k-authz}})."
+    },
+    {
+      "type": "callout",
+      "variant": "danger",
+      "label": "Kapatılamaz korumalar (hard invariant)",
+      "body": "Tenant izolasyonu (RLS), PII/KVKK maskeleme, audit ve şema-değişim güvenliğini **kapatan** bir aksiyon yüzeyde tanımlanamaz; capability allowlist'ine **asla** giremez. Bu dört koruma beyandan gelir ({{ref:k-surface}} bayrakları) ve aksiyon yüzeyiyle devre dışı bırakılamaz."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Aksiyon taksonomisi — risk, onay, geri alma"
+    },
+    {
+      "type": "paragraph",
+      "text": "Her aksiyon bir risk sınıfı taşır. AI'ın doğrudan yapabileceği işler düşük-riskli ve geri-alınabilir olanlarla sınırlıdır; yüksek-riskli ve yıkıcı işleri **motor**, yalnız insan onayından sonra uygular."
+    },
+    {
+      "type": "table",
+      "caption": "Aksiyon taksonomisi (bağlayıcı; ADR-0015)",
+      "headers": [
+        "Aksiyon",
+        "Risk",
+        "AI doğrudan?",
+        "İnsan onayı",
+        "Geri alma"
+      ],
+      "rows": [
+        [
+          "Read (şema/veri oku)",
+          "düşük",
+          "evet",
+          "hayır",
+          "gerekmez"
+        ],
+        [
+          "Suggest (ChangeSet öner)",
+          "düşük",
+          "evet",
+          "hayır",
+          "gerekmez"
+        ],
+        [
+          "Draft (taslak oluştur)",
+          "düşük/orta",
+          "evet",
+          "hayır",
+          "silinebilir"
+        ],
+        [
+          "Validate (doğrula)",
+          "düşük",
+          "motor",
+          "hayır",
+          "gerekmez"
+        ],
+        [
+          "ApplySchema (tablo/alan üret)",
+          "orta/yüksek",
+          "hayır — motor uygular",
+          "evet",
+          "migration ile"
+        ],
+        [
+          "Migration (taşı/dönüştür)",
+          "yüksek",
+          "hayır",
+          "evet + önizleme",
+          "state machine"
+        ],
+        [
+          "DeleteField (alan sil)",
+          "yüksek/yıkıcı",
+          "hayır",
+          "çift onay",
+          "soft-delete 30g"
+        ],
+        [
+          "PermissionChange (yetki değiştir)",
+          "kritik",
+          "hayır",
+          "tenant-admin",
+          "audit + geri al"
+        ],
+        [
+          "PublishPublic (public aç)",
+          "yüksek",
+          "hayır",
+          "step-up",
+          "yayını geri çek"
+        ],
+        [
+          "DisableProtection (RLS/PII/audit kapat)",
+          "yasak",
+          "hayır",
+          "izin verilmez",
+          "—"
+        ]
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "warning",
+      "label": "Kademeli onay (step-up)",
+      "body": "Dış etkili, parasal, hukuki ya da yıkıcı aksiyonlar (e-posta/webhook gönderimi, ödeme, silme, public yayın) **out-of-band step-up** ister: onay akışın içinden değil ayrı/güvenli bir kanaldan alınır. Otopilot'ta bile bu kavşaklarda akış durur."
+    },
+    {
+      "type": "paragraph",
+      "text": "Granülerlik bağı: bir aksiyon Büyük Taş'ı aşıyorsa komşuluk kuralıyla bölünür; ECA sözleşmesi {{ref:layer1-workflow}}, üretilmiş uyumluluk testleri {{ref:sus-conformance}} ile bağlanır."
     }
   ],
   "related": [

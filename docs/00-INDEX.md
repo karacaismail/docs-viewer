@@ -23,6 +23,7 @@ Bu set, `mimari/` klasöründeki mevcut içeriğin (≈198 cluster JSON + mimari
 | 01L | `01L-adr-0012-llm-baglam.md` | ADR-0012: LLM bağlam paketi — AGENTS.md/CLAUDE.md/llms.txt | Zemin |
 | 01M | `01M-adr-0013-md-export.md` | ADR-0013: MD dışa aktarma — kemikleştirilmiş sözleşme (4 CI kapısı) | Zemin |
 | 01N | `01N-adr-0014-ai-uretim-karar-paketi.md` | ADR-0014: AI üretim karar paketi — karar/gereksinim ayrımı + çelişki mutabakat merdiveni + sahiplik haritası | Zemin |
+| 01O | `01O-adr-0015-aksiyon-taksonomisi-yetki.md` | ADR-0015: aksiyon taksonomisi + agent yetki modeli (kesişim kuralı, step-up, DisableProtection yasağı) | Zemin |
 | 02 | `02-icerik-envanteri.md` | Mevcut kaynak dosyaların envanteri ve kaderi | Zemin |
 | 03 | `03-navigation-ia.md` | Rail 1 / Rail 2 bilgi mimarisi, slug ve ID sözleşmeleri | Zemin |
 | 04 | `04-veri-modeli.md` | navigation / pages / glossary / search-index JSON sözleşmeleri | Zemin |

@@ -36,6 +36,10 @@ Biçim: `<hedef> <seviye> yap|yaz|üret|planla`. **Seviye adı iki dilden de gel
 
 **Çözümleme adımları (her komutta):** (1) seviyeyi tablodan çöz; (2) KOMŞULUK KURALI: her seviye yalnız bir alt komşusuna bağlanır — "Kaya doğrudan Kum'a bağlanamaz"; zincirde atlama varsa planı REDDET ve eksik ara seviyeleri iste; (3) plan ağacını SP'lerle ver; (4) onaydan sonra iskelet üret — SIRA: önce testler, sonra tanımlar, sonra hook gövdeleri.
 
+## 3b. Yetki Tavanı — planlama serbest, uygulama capability-gated (ADR-0015)
+
+Planlamada sınır yoktur: her seviyede plan/iskelet önerebilirsin. Ama **uygulama** tipli aksiyon yüzeyinden geçer ve yetki tavanına tabidir. AI ajan **asla principal değildir**, bir aktör **adına** çalışır; etkin yetki = kullanıcı ∩ agent_capability ∩ tool_scope ∩ aksiyon_riski (asla birleşim). DisableProtection sınıfı (RLS/PII/audit/şema-güvenliği kapatma) hiçbir koşulda önerilemez/uygulanamaz. Yüksek-riskli/dış-etkili aksiyonlar out-of-band step-up onayı ister. Detay: sus-actions + ADR-0015.
+
 ## 4. Çıktı Sözleşmeleri
 
 İskelet (be-sdk): `tests/` İLK üretilir (kırmızı başlar) → `archetypes/*.yaml` → `surfaces/*.yaml` → `workflows/*.yaml` → `manifest.yaml` (izin beyanı; WASM sandbox). AI'ın dokunabildiği yüzey YALNIZ bunlar + saf hook fonksiyonları; kernel iç API'sine dokunulmaz.
