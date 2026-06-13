@@ -55,3 +55,19 @@ Bu karar `11-uretim-06-content-renderer.md` içinde uygulanır ve test planında
 ## Dil Tonu Sözleşmesi
 
 Proje dokümanları ve içerik blokları, emir cümleleri yerine açıklayıcı ve gerekçeli dil kullanır. Teknik kararın ne olduğu, neden tercih edildiği ve hangi problemi çözdüğü anlatılır. Teknik terimler (component, registry, anchor, tooltip) çevrilmez; cümle Türkçe kurulur.
+
+
+## AI Üretim Karar Paketi (ADR-0014…0021) — Kilitli
+
+10–13 Haziran 2026'da eklenen AI-first üretim kararları (tam listesi `00-INDEX.md` 01N–01U):
+
+- **ADR-0014** Karar/gereksinim dokümanı ayrımı + çelişki mutabakat merdiveni.
+- **ADR-0015** Aksiyon taksonomisi + agent yetki modeli (etkin = kullanıcı ∩ capability; agent asla principal değil; DisableProtection yasak).
+- **ADR-0016** ChangeSet operation sözleşmesi + migration/rollback yaşam döngüsü (üç geri-alma sınıfı).
+- **ADR-0017** Güvenlik sözleşmeleri — RLS uygulama (SET LOCAL), audit forensic, sub_prompt untrusted, PII matrisi.
+- **ADR-0018** AI-first UX/UED — iki mod (Otopilot/Atölye), sonuç-önce sentetik önizleme, güven kalibrasyonu, ön-seçim politikası.
+- **ADR-0019** ECA motoru — declarative no-code DSL + güvenlik kapısı + n8n delegasyonu.
+- **ADR-0020** AI governance & model ops (NIST AI RMF) + operations/runbook + üç kill-switch.
+- **ADR-0021** Açık kararlar — namespace, eşzamanlılık (optimistic lock), i18n varsayılanı, tenant kotası, public KVKK rızası.
+
+Not: ADR-0006…0013 (telemetri, terminoloji, granülerlik, ArcheType, Surface, ECharts, LLM-bağlam, MD-export) da `00-INDEX.md`'de kayıtlıdır; bu kütük artık ADR serisinin tamamını `00-INDEX` üzerinden işaret eder.

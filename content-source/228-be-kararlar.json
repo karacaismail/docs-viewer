@@ -1,179 +1,188 @@
 {
- "id": "be-kararlar",
- "title": "Backend Karar Defteri — 24/24",
- "subtitle": "FastAPI meta-framework kernel'inin kilitli backend kararları (11 Haziran 2026) — varsayılan basit, ölçek opsiyonel ilkesiyle.",
- "cluster": "backend",
- "order": 0,
- "icon": "ph-list-checks",
- "granularity": "kaya",
- "state": "wip",
- "badge": "KARAR",
- "tags": [
-  "backend",
-  "fastapi",
-  "karar",
-  "kernel"
- ],
- "related": [
-  "k-terminoloji",
-  "be-mail-zinciri",
-  "be-deploy-profilleri",
-  "sus-lisans",
-  "sus-versioning",
-  "kernel-authz"
- ],
- "enrich": {
-  "info": "Yön veren ilke her kararda aynıdır: WordPress kadar basit varsayılan + Shopify kadar dayanıklı ölçek seçeneği. Varsayılan tek Postgres'te yaşar (kuyruk, arama, event dahil); ölçek isteyen Celery+Redis, Kafka/RabbitMQ, Meilisearch, S3, k8s'i adaptör olarak açar.",
-  "terms": [
-   {
-    "term": "Varsayılan-basit ilkesi",
-    "meaning": "Her altyapı kararında varsayılanın tek Postgres + tek süreçte çalışması; ölçek bileşenlerinin (Redis, Kafka, S3, k8s) opsiyonel adaptör olması.",
-    "why": "WordPress'in benimsenme gücü kurulum basitliğinden gelir; Shopify'ın güveni dayanıklılıktan. İkisini aynı anda istemek çelişki değildir — varsayılan basit kurulur, sözleşmeler ölçek bileşenlerini ilk günden takılabilir kılar."
-   },
-   {
-    "term": "Crypto-shredding",
-    "meaning": "PII'nın tenant/kayıt-başına anahtarla şifrelenmesi; unutulma hakkında verinin değil anahtarın imha edilmesi.",
-    "why": "Bitemporal 'geçmiş silinmez' ilkesi ile KVKK/GDPR 'silinme hakkı' geriliminin barışık çözümü: kayıt iskeleti denetim için kalır, kişisel içerik anahtar yok edilince matematiksel olarak okunamaz olur."
-   }
+  "id": "be-kararlar",
+  "title": "Backend Karar Defteri — 24/24",
+  "subtitle": "FastAPI meta-framework kernel'inin kilitli backend kararları (11 Haziran 2026) — varsayılan basit, ölçek opsiyonel ilkesiyle.",
+  "cluster": "backend",
+  "order": 0,
+  "icon": "ph-list-checks",
+  "granularity": "kaya",
+  "state": "wip",
+  "badge": "KARAR",
+  "tags": [
+    "backend",
+    "fastapi",
+    "karar",
+    "kernel"
+  ],
+  "related": [
+    "k-terminoloji",
+    "be-mail-zinciri",
+    "be-deploy-profilleri",
+    "sus-lisans",
+    "sus-versioning",
+    "kernel-authz"
+  ],
+  "enrich": {
+    "info": "Yön veren ilke her kararda aynıdır: WordPress kadar basit varsayılan + Shopify kadar dayanıklı ölçek seçeneği. Varsayılan tek Postgres'te yaşar (kuyruk, arama, event dahil); ölçek isteyen Celery+Redis, Kafka/RabbitMQ, Meilisearch, S3, k8s'i adaptör olarak açar.",
+    "terms": [
+      {
+        "term": "Varsayılan-basit ilkesi",
+        "meaning": "Her altyapı kararında varsayılanın tek Postgres + tek süreçte çalışması; ölçek bileşenlerinin (Redis, Kafka, S3, k8s) opsiyonel adaptör olması.",
+        "why": "WordPress'in benimsenme gücü kurulum basitliğinden gelir; Shopify'ın güveni dayanıklılıktan. İkisini aynı anda istemek çelişki değildir — varsayılan basit kurulur, sözleşmeler ölçek bileşenlerini ilk günden takılabilir kılar."
+      },
+      {
+        "term": "Crypto-shredding",
+        "meaning": "PII'nın tenant/kayıt-başına anahtarla şifrelenmesi; unutulma hakkında verinin değil anahtarın imha edilmesi.",
+        "why": "Bitemporal 'geçmiş silinmez' ilkesi ile KVKK/GDPR 'silinme hakkı' geriliminin barışık çözümü: kayıt iskeleti denetim için kalır, kişisel içerik anahtar yok edilince matematiksel olarak okunamaz olur."
+      }
+    ]
+  },
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "Bu defter, backend karar raporunun **24/24 kararlaştırılmış** halidir. Her satır bağlayıcıdır; revizyon ADR ister. Kullanıcı notları kararın parçasıdır ve *varsayılan/opsiyon* ayrımını tanımlar."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Çekirdek Kararlar (1–15)"
+    },
+    {
+      "type": "kv-row",
+      "pairs": [
+        {
+          "key": "01 · ORM",
+          "value": "SQLAlchemy 2.0 (Core+ORM); Pydantic v2 ayrı katman"
+        },
+        {
+          "key": "02 · Migration",
+          "value": "Alembic altyapı; migration'ı ArcheType diff'i üretir. Açık araştırma: üretilen migration'ı review eden yerel mini-LLM kapısı (aday modeller sayfa sonunda)"
+        },
+        {
+          "key": "03 · Tenant izolasyonu",
+          "value": "ORM zorunlu scope + Postgres RLS birlikte. Açık araştırma: RLS test stratejisi + bağlantı bağlamı yönetimi seçenekleri"
+        },
+        {
+          "key": "04 · Async sınırı",
+          "value": "FastAPI uçları async; iş mantığı sync saf fonksiyonlar — vibecoding hata alanını daraltır"
+        },
+        {
+          "key": "05 · Kuyruk",
+          "value": "Varsayılan: Postgres-içi kuyruk (procrastinate/pgqueuer). Opsiyon: Celery+Redis — altyapıda gün-1 hazır, kurulumda seçilir"
+        },
+        {
+          "key": "06 · Event bus",
+          "value": "Varsayılan: Outbox + Postgres polling; broker arayüz arkasında. Ölçek opsiyonu: Kafka / RabbitMQ adaptörleri"
+        },
+        {
+          "key": "07 · API üretimi",
+          "value": "REST + GraphQL gün-1. Varsayılan: GraphQL, FastAPI'nin bir endpoint'i; opsiyon: REST+OpenAPI kurulumda sorulur; ölçek opsiyonu: GraphQL ayrı servis (Shopify/GitHub deseni)"
+        },
+        {
+          "key": "08 · Kimlik/SSO",
+          "value": "kernel-identity kendi modeli + Authlib (OIDC/SAML) + gün-1 passkey"
+        },
+        {
+          "key": "09 · Module yükleme",
+          "value": "Gün-1 WASM sandbox. UX çıtası: WordPress module'ü / Chrome extension kurmak kadar basit kurulum akışı"
+        },
+        {
+          "key": "10 · SDK",
+          "value": "sdk app create → ArcheType tanımı + test iskeleti + tipli client; AI yüzeyi yalnız YAML/JSON tanım + saf hook fonksiyonları"
+        },
+        {
+          "key": "11 · AI-native",
+          "value": "MCP kernel'in parçası — her Action otomatik MCP tool'u"
+        },
+        {
+          "key": "12 · Takım zinciri",
+          "value": "Python 3.12+, uv, ruff, pyright strict, pytest; Pydantic v2 her sınırda"
+        },
+        {
+          "key": "13 · Deploy",
+          "value": "Dört profil birinci sınıf: shared hosting (WP-basitliği) / self-host compose / müşterinin k8s-swarm'ı / bizim yönetilen bulut (odoo.sh-frappecloud-wordpress.com modeli) — ayrıntı: be-deploy-profilleri"
+        },
+        {
+          "key": "14 · Lisans",
+          "value": "Kernel AGPLv3 + CLA; SDK/client MIT; Editions ticari (open-core) — ayrıntı: sus-lisans"
+        },
+        {
+          "key": "15 · Geriye uyumluluk",
+          "value": "Gün-1: tarih-versiyon + pinleme + named gate (Stripe deseni — 10 yıllık entegrasyon hâlâ çalışır)"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Tamamlama Kararları (E1–E9)"
+    },
+    {
+      "type": "kv-row",
+      "pairs": [
+        {
+          "key": "E1 · Yetkilendirme",
+          "value": "İki-düzlem: entitlement (Edition'dan beslenir) + ReBAC/ABAC tek PDP kapısından; motor arayüz arkasında"
+        },
+        {
+          "key": "E2 · Observability",
+          "value": "OTel SDK gün-1 (yapılandırılmış log + metrik + trace; tenant_id/correlation zorunlu). Developer-first: Grafana/ELK/OpenSearch/Sentry tamamen opsiyonel dış servis"
+        },
+        {
+          "key": "E3 · Dosya depolama",
+          "value": "Varsayılan: yerel disk + rsync yedek. Gün-1 opsiyon: Kernel Storage sözleşmesi üzerinden S3-uyumlu (Hetzner Object Storage)"
+        },
+        {
+          "key": "E4 · Arama",
+          "value": "Varsayılan: Postgres FTS (WordPress kadar basit). Gün-1 opsiyon: SearchProvider sözleşmesi + Meilisearch (outbox-beslemeli)"
+        },
+        {
+          "key": "E5 · Yedek/DR",
+          "value": "pgBackRest + WAL arşiv (PITR, anlık yedek esas) + off-site Storage Box + aylık restore tatbikatı (n8n). Tenant-bazlı restore senaryoları; kernel'de basit backup/export script'leri"
+        },
+        {
+          "key": "E6 · Secrets",
+          "value": "SOPS + age (git'te şifreli) + Actions secrets; tenant secret'ları DB'de zarf-şifreli (kernel sözleşmesi)"
+        },
+        {
+          "key": "E7 · i18n",
+          "value": "Gün-1 kernel sözleşmesi: string externalization + ICU MessageFormat + CLDR; ArcheType'ta translatable alan tipi"
+        },
+        {
+          "key": "E8 · Rate limit/metering",
+          "value": "Gün-1: Edition'dan beslenen kernel middleware + metering olayları outbox'a; faturalama faz-2. Sertlik ayarları admin panelinden esnek yönetilir"
+        },
+        {
+          "key": "E9 · Veri yaşam döngüsü",
+          "value": "Gün-1: ArcheType'ta PII bayrağı + retention + crypto-shredding ile unutulma hakkı (bitemporal'le barışık). Kapsam yalnız KVKK/GDPR değil: ABD, Avustralya, Kanada, Japonya, MENA, Asya rejimleri ilk günden planda (jurisdiction resolver deseni)"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Açık Araştırma Soruları"
+    },
+    {
+      "type": "callout",
+      "variant": "warning",
+      "label": "02 — Migration review LLM'i",
+      "body": "Üretilen migration'ı kural-tabanlı lint + yerel mini-LLM ile review etme fikri araştırılacak. Aday modeller: Qwen2.5-Coder (7B/14B), DeepSeek-Coder-V2-Lite, Codestral-22B, Llama-3.1-8B-Instruct; koşum: Ollama/vLLM. İlke: LLM karar verici değil, ek gözden geçiren — deterministik kapılar (tip, test, kural) esastır."
+    },
+    {
+      "type": "callout",
+      "variant": "warning",
+      "label": "03 — RLS test ve bağlantı bağlamı",
+      "body": "Seçenekler: (a) SET LOCAL app.tenant_id + transaction-scoped bağlam (pool-uyumlu, önerilen başlangıç); (b) SET ROLE tenant-rolü; (c) ayrı bağlantı havuzları. Test: pgTAP ile policy birim testleri + her ArcheType için 'komşu tenant okuyamaz' üretilmiş (generated) testler + CI'da RLS-kapalı kaçak taraması. Anomali için güvenlik-LLM'i ikincil sinyal — esas savunma deterministik politikalardır."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "AI üretim kararları (ADR-0014…0021)"
+    },
+    {
+      "type": "paragraph",
+      "text": "AI-first üretim hattının bağlayıcı kararları Kararlar/ADR kümesindedir: aksiyon taksonomisi + agent yetki modeli ({{ref:adr-0015}}), ChangeSet + migration ({{ref:adr-0016}}), güvenlik sözleşmeleri RLS/audit/sub_prompt/PII ({{ref:adr-0017}}), AI-first UX iki mod ({{ref:adr-0018}}), ECA declarative DSL ({{ref:adr-0019}}), governance + runbook ({{ref:adr-0020}}), açık kararlar namespace/eşzamanlılık/i18n/kota/public-KVKK ({{ref:adr-0021}}). Karar/gereksinim ayrımı ve çelişki mutabakatı: {{ref:adr-0014}}."
+    }
   ]
- },
- "blocks": [
-  {
-   "type": "paragraph",
-   "text": "Bu defter, backend karar raporunun **24/24 kararlaştırılmış** halidir. Her satır bağlayıcıdır; revizyon ADR ister. Kullanıcı notları kararın parçasıdır ve *varsayılan/opsiyon* ayrımını tanımlar."
-  },
-  {
-   "type": "heading",
-   "level": 2,
-   "text": "Çekirdek Kararlar (1–15)"
-  },
-  {
-   "type": "kv-row",
-   "pairs": [
-    {
-     "key": "01 · ORM",
-     "value": "SQLAlchemy 2.0 (Core+ORM); Pydantic v2 ayrı katman"
-    },
-    {
-     "key": "02 · Migration",
-     "value": "Alembic altyapı; migration'ı ArcheType diff'i üretir. Açık araştırma: üretilen migration'ı review eden yerel mini-LLM kapısı (aday modeller sayfa sonunda)"
-    },
-    {
-     "key": "03 · Tenant izolasyonu",
-     "value": "ORM zorunlu scope + Postgres RLS birlikte. Açık araştırma: RLS test stratejisi + bağlantı bağlamı yönetimi seçenekleri"
-    },
-    {
-     "key": "04 · Async sınırı",
-     "value": "FastAPI uçları async; iş mantığı sync saf fonksiyonlar — vibecoding hata alanını daraltır"
-    },
-    {
-     "key": "05 · Kuyruk",
-     "value": "Varsayılan: Postgres-içi kuyruk (procrastinate/pgqueuer). Opsiyon: Celery+Redis — altyapıda gün-1 hazır, kurulumda seçilir"
-    },
-    {
-     "key": "06 · Event bus",
-     "value": "Varsayılan: Outbox + Postgres polling; broker arayüz arkasında. Ölçek opsiyonu: Kafka / RabbitMQ adaptörleri"
-    },
-    {
-     "key": "07 · API üretimi",
-     "value": "REST + GraphQL gün-1. Varsayılan: GraphQL, FastAPI'nin bir endpoint'i; opsiyon: REST+OpenAPI kurulumda sorulur; ölçek opsiyonu: GraphQL ayrı servis (Shopify/GitHub deseni)"
-    },
-    {
-     "key": "08 · Kimlik/SSO",
-     "value": "kernel-identity kendi modeli + Authlib (OIDC/SAML) + gün-1 passkey"
-    },
-    {
-     "key": "09 · Module yükleme",
-     "value": "Gün-1 WASM sandbox. UX çıtası: WordPress module'ü / Chrome extension kurmak kadar basit kurulum akışı"
-    },
-    {
-     "key": "10 · SDK",
-     "value": "sdk app create → ArcheType tanımı + test iskeleti + tipli client; AI yüzeyi yalnız YAML/JSON tanım + saf hook fonksiyonları"
-    },
-    {
-     "key": "11 · AI-native",
-     "value": "MCP kernel'in parçası — her Action otomatik MCP tool'u"
-    },
-    {
-     "key": "12 · Takım zinciri",
-     "value": "Python 3.12+, uv, ruff, pyright strict, pytest; Pydantic v2 her sınırda"
-    },
-    {
-     "key": "13 · Deploy",
-     "value": "Dört profil birinci sınıf: shared hosting (WP-basitliği) / self-host compose / müşterinin k8s-swarm'ı / bizim yönetilen bulut (odoo.sh-frappecloud-wordpress.com modeli) — ayrıntı: be-deploy-profilleri"
-    },
-    {
-     "key": "14 · Lisans",
-     "value": "Kernel AGPLv3 + CLA; SDK/client MIT; Editions ticari (open-core) — ayrıntı: sus-lisans"
-    },
-    {
-     "key": "15 · Geriye uyumluluk",
-     "value": "Gün-1: tarih-versiyon + pinleme + named gate (Stripe deseni — 10 yıllık entegrasyon hâlâ çalışır)"
-    }
-   ]
-  },
-  {
-   "type": "heading",
-   "level": 2,
-   "text": "Tamamlama Kararları (E1–E9)"
-  },
-  {
-   "type": "kv-row",
-   "pairs": [
-    {
-     "key": "E1 · Yetkilendirme",
-     "value": "İki-düzlem: entitlement (Edition'dan beslenir) + ReBAC/ABAC tek PDP kapısından; motor arayüz arkasında"
-    },
-    {
-     "key": "E2 · Observability",
-     "value": "OTel SDK gün-1 (yapılandırılmış log + metrik + trace; tenant_id/correlation zorunlu). Developer-first: Grafana/ELK/OpenSearch/Sentry tamamen opsiyonel dış servis"
-    },
-    {
-     "key": "E3 · Dosya depolama",
-     "value": "Varsayılan: yerel disk + rsync yedek. Gün-1 opsiyon: Kernel Storage sözleşmesi üzerinden S3-uyumlu (Hetzner Object Storage)"
-    },
-    {
-     "key": "E4 · Arama",
-     "value": "Varsayılan: Postgres FTS (WordPress kadar basit). Gün-1 opsiyon: SearchProvider sözleşmesi + Meilisearch (outbox-beslemeli)"
-    },
-    {
-     "key": "E5 · Yedek/DR",
-     "value": "pgBackRest + WAL arşiv (PITR, anlık yedek esas) + off-site Storage Box + aylık restore tatbikatı (n8n). Tenant-bazlı restore senaryoları; kernel'de basit backup/export script'leri"
-    },
-    {
-     "key": "E6 · Secrets",
-     "value": "SOPS + age (git'te şifreli) + Actions secrets; tenant secret'ları DB'de zarf-şifreli (kernel sözleşmesi)"
-    },
-    {
-     "key": "E7 · i18n",
-     "value": "Gün-1 kernel sözleşmesi: string externalization + ICU MessageFormat + CLDR; ArcheType'ta translatable alan tipi"
-    },
-    {
-     "key": "E8 · Rate limit/metering",
-     "value": "Gün-1: Edition'dan beslenen kernel middleware + metering olayları outbox'a; faturalama faz-2. Sertlik ayarları admin panelinden esnek yönetilir"
-    },
-    {
-     "key": "E9 · Veri yaşam döngüsü",
-     "value": "Gün-1: ArcheType'ta PII bayrağı + retention + crypto-shredding ile unutulma hakkı (bitemporal'le barışık). Kapsam yalnız KVKK/GDPR değil: ABD, Avustralya, Kanada, Japonya, MENA, Asya rejimleri ilk günden planda (jurisdiction resolver deseni)"
-    }
-   ]
-  },
-  {
-   "type": "heading",
-   "level": 2,
-   "text": "Açık Araştırma Soruları"
-  },
-  {
-   "type": "callout",
-   "variant": "warning",
-   "label": "02 — Migration review LLM'i",
-   "body": "Üretilen migration'ı kural-tabanlı lint + yerel mini-LLM ile review etme fikri araştırılacak. Aday modeller: Qwen2.5-Coder (7B/14B), DeepSeek-Coder-V2-Lite, Codestral-22B, Llama-3.1-8B-Instruct; koşum: Ollama/vLLM. İlke: LLM karar verici değil, ek gözden geçiren — deterministik kapılar (tip, test, kural) esastır."
-  },
-  {
-   "type": "callout",
-   "variant": "warning",
-   "label": "03 — RLS test ve bağlantı bağlamı",
-   "body": "Seçenekler: (a) SET LOCAL app.tenant_id + transaction-scoped bağlam (pool-uyumlu, önerilen başlangıç); (b) SET ROLE tenant-rolü; (c) ayrı bağlantı havuzları. Test: pgTAP ile policy birim testleri + her ArcheType için 'komşu tenant okuyamaz' üretilmiş (generated) testler + CI'da RLS-kapalı kaçak taraması. Anomali için güvenlik-LLM'i ikincil sinyal — esas savunma deterministik politikalardır."
-  }
- ]
 }
