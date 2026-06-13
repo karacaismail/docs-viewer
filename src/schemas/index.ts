@@ -132,7 +132,7 @@ export type Block = z.infer<typeof BlockSchema>;
 export type BlockType = Block["type"];
 
 // ---- Page (04 §2) ----
-export const PageSchema = z.object({
+export const PageObjectSchema = z.object({
   id: id("page-"),
   sourceId: z.string().optional(), // eski cluster id — ref/related çözüm anahtarı
   slug: z.string(),
@@ -163,6 +163,35 @@ export const PageSchema = z.object({
   externalReviewRequired: z.boolean(),
   related: z.array(id("page-")).optional(),
   blocks: z.array(BlockSchema),
+});
+
+// Yönetişim dürüstlük değişmezleri (16 B) — "sahte yeşil" hata sınıfını şema
+// seviyesinde kapatır. Alanların VARLIĞI yapısal kapıdır; bu refine TUTARLILIĞI
+// zorlar: olgunluk iddiası kanıt ve doğrulama tarihiyle çelişemez.
+export const PageSchema = PageObjectSchema.superRefine((page, ctx) => {
+  if (page.maturity === "dogrulanmis") {
+    if (page.lastVerified === null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["lastVerified"],
+        message: `'dogrulanmis' sayfa lastVerified tarihi taşımalı (sahte yeşil): ${page.slug}`,
+      });
+    }
+    if (page.evidence.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["evidence"],
+        message: `'dogrulanmis' sayfa en az bir evidence taşımalı (kanıtsız doğrulama): ${page.slug}`,
+      });
+    }
+  }
+  if (page.lastVerified !== null && page.maturity === "taslak") {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["maturity"],
+      message: `lastVerified dolu ama maturity 'taslak' — çelişki: ${page.slug}`,
+    });
+  }
 });
 export type Page = z.infer<typeof PageSchema>;
 
@@ -249,7 +278,7 @@ export type SearchDoc = z.infer<typeof SearchDocSchema>;
 export const SearchIndexSchema = z.object({ schemaVersion: z.string(), documents: z.array(SearchDocSchema) });
 
 // Lazy mimari (14 #15): eager index yalnız metadata taşır; gövde pages/<stem>.json'da
-export const PageIndexEntrySchema = PageSchema.pick({
+export const PageIndexEntrySchema = PageObjectSchema.pick({
   id: true,
   sourceId: true,
   slug: true,

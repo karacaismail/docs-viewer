@@ -24,6 +24,7 @@ src/schemas/
 7. Çapraz referans kontrolleri (navigation→page, term segment→glossary) Zod şemasına gömülmez; bunlar engine'in `validateStaticData` adımında ayrı fonksiyonlardır. Şema yapısal doğruluğu, validator bütünlüğü denetler — sorumluluk ayrımı budur.
 8. Her page sahiplik ve kanıt sözleşmesini zorunlu taşır: `owner`, `reviewer`, `maturity`, `lastVerified`, `evidence`, `prerequisites`, `nonGoals`, `failureModes`, `acceptanceCriteria`, `operationalImpact`, `externalReviewRequired`. Bu ağır alanlar lazy page dosyasında kalır; eager `pages-index.json` performans bütçesini korur.
 9. `useCase` yalnız persona ve mutlu akış değildir. Önkoşul, yetki, ana/alternatif/hata akışları, invariant, audit, gizlilik, SLO ve çalıştırılabilir kabul testleri yapısal olarak zorunludur.
+10. Yönetişim alanlarının **varlığı** yapısal kapıdır; **tutarlılığı** ayrı bir dürüstlük kapısıdır (`tests/governanceHonesty.test.ts` + `PageSchema` refine): `maturity: dogrulanmis` ⇒ `lastVerified` tarihli ve `evidence` boş değil; `lastVerified` dolu ⇒ `maturity ≠ taslak`. Bu, "sahte yeşil" (kanıtsız doğrulama) hata sınıfını içerik olgunlaştıkça kapatır.
 
 ## Edge Case'ler
 
@@ -31,4 +32,4 @@ Boş `blocks` dizisi geçerlidir (iskelet page); boş `segments` dizisi geçersi
 
 ## Kabul Kriterleri
 
-Tüm şema testleri yeşildir; `types.ts` benzeri elle yazılmış tip dosyası yoktur; `tsc --noEmit` temizdir; bilinmeyen block type içeren örnek veri, anlaşılır hata mesajıyla red edilir (hata mesajında page ID ve block index yer alır — fail loudly, ama teşhis edilebilir şekilde).
+Tüm şema testleri yeşildir; `types.ts` benzeri elle yazılmış tip dosyası yoktur; `tsc --noEmit` temizdir; bilinmeyen block type içeren örnek veri, anlaşılır hata mesajıyla red edilir (hata mesajında page ID ve block index yer alır — fail loudly, ama teşhis edilebilir şekilde). `maturity: dogrulanmis` iddiası kanıt ve tarih olmadan şema seviyesinde reddedilir (dürüstlük kapısı).
