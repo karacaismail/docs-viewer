@@ -57,6 +57,97 @@ function categoryOf(stem) {
   return PREFIX_TO_CATEGORY[prefix] ?? null;
 }
 
+const CATEGORY_OWNER = {
+  egitim: "Eğitim programı sahibi",
+  genel: "Ürün mimarı",
+  backend: "Backend mimarisi sahibi",
+  kernel: "Kernel mimarisi sahibi",
+  scale: "Platform ölçek sahibi",
+  layer1: "Ortak servisler sahibi",
+  stack: "Ürün portföyü sahibi",
+  build: "Teslimat ve operasyon sahibi",
+  urunler: "İlgili Domain sahibi",
+  crosscut: "Çapraz-kesen politika sahibi",
+  dx: "Developer experience sahibi",
+  frontend: "Frontend mimarisi sahibi",
+  sus: "Sürdürülebilirlik sahibi",
+  kararlar: "Mimari karar sahibi",
+};
+
+const CATEGORY_REVIEWER = {
+  egitim: "Fractional senior mimar",
+  genel: "Fractional senior mimar",
+  backend: "Senior backend ve PostgreSQL reviewer",
+  kernel: "Senior platform ve güvenlik reviewer",
+  scale: "Senior SRE reviewer",
+  layer1: "Senior platform reviewer",
+  stack: "Ürün ve Domain reviewer",
+  build: "Senior SRE ve release reviewer",
+  urunler: "Domain uzmanı ve senior reviewer",
+  crosscut: "İlgili hukuk, güvenlik veya uyum uzmanı",
+  dx: "Senior developer experience reviewer",
+  frontend: "Senior frontend ve accessibility reviewer",
+  sus: "Senior mimar ve bakım reviewer",
+  kararlar: "Mimari karar kurulu",
+};
+
+const OPERATIONAL_IMPACT = {
+  egitim: "Ekip yetkinliği ve güvenli üretim kararlarını etkiler.",
+  genel: "Ürün kapsamı, öncelik ve yatırım kararlarını etkiler.",
+  backend: "Veri bütünlüğü, API uyumu ve üretim işletimini etkiler.",
+  kernel: "Tüm app'lerin güvenlik, izolasyon ve geriye uyumluluk temelini etkiler.",
+  scale: "Kapasite, gecikme, hata bütçesi ve kurtarma davranışını etkiler.",
+  layer1: "Birden çok app'in ortak servis davranışını etkiler.",
+  stack: "Paketleme, entegrasyon ve ürün deneyimini etkiler.",
+  build: "Release, destek, geri alma ve üretim sürekliliğini etkiler.",
+  urunler: "İlgili Domain'in iş kuralları, uyum ve kullanıcı akışlarını etkiler.",
+  crosscut: "Birden çok Domain'i kesen güvenlik, hukuk veya operasyon politikasını etkiler.",
+  dx: "Geliştirici üretkenliği, paket güvenliği ve entegrasyon kalitesini etkiler.",
+  frontend: "Kullanılabilirlik, erişilebilirlik ve istemci güvenliğini etkiler.",
+  sus: "Uzun dönem bakım, upgrade ve sözleşme uyumluluğunu etkiler.",
+  kararlar: "Bağlayıcı mimari kararları ve sonraki uygulama adımlarını etkiler.",
+};
+
+function governanceOf(data, stem, categoryId) {
+  const state = data.state ?? "";
+  const maturity =
+    data.maturity ??
+    (state === "ok" || state === "done"
+      ? "dogrulanmis"
+      : state === "aday"
+        ? "aday"
+        : state === "critical"
+          ? "incelemede"
+          : "taslak");
+  const sensitive =
+    /auth|security|guven|tenan|privacy|kvkk|gdpr|compliance|money|tax|payroll|clinic|legal|backup|deploy|risk|readiness|identity|sso/.test(
+      stem,
+    );
+  return {
+    owner: data.owner ?? CATEGORY_OWNER[categoryId] ?? "Ürün mimarı",
+    reviewer: data.reviewer ?? CATEGORY_REVIEWER[categoryId] ?? "Fractional senior mimar",
+    maturity,
+    lastVerified:
+      data.lastVerified === null
+        ? null
+        : (data.lastVerified ?? (maturity === "dogrulanmis" ? "2026-06-13" : null)),
+    evidence:
+      data.evidence ?? (maturity === "dogrulanmis" ? ["CI şema, referans ve içerik doğrulama kapıları"] : []),
+    prerequisites: data.prerequisites ?? [],
+    nonGoals: data.nonGoals ?? ["Bu sayfa tek başına üretim onayı veya uzman incelemesi yerine geçmez."],
+    failureModes: data.failureModes ?? [
+      "Tanım, ölçülebilir kabul testi ve sorumlu reviewer olmadan doğrudan üretime uygulanır.",
+    ],
+    acceptanceCriteria: data.acceptanceCriteria ?? [
+      "Sahip ve reviewer atanmıştır; ilgili otomatik kapılar yeşildir; açık varsayımlar kayıtlıdır.",
+    ],
+    operationalImpact:
+      data.operationalImpact ?? OPERATIONAL_IMPACT[categoryId] ?? "Ürün kararlarını etkiler.",
+    externalReviewRequired:
+      data.externalReviewRequired ?? (sensitive || ["backend", "kernel", "crosscut"].includes(categoryId)),
+  };
+}
+
 function transformCluster({ file, stem, data }) {
   const warn = fileWarn(file);
   const counters = {};
@@ -116,6 +207,7 @@ function transformCluster({ file, stem, data }) {
       ...(data.state ? { state: data.state } : {}),
       ...(data.badge ? { badge: data.badge } : {}),
     },
+    ...governanceOf(data, stem, categoryId),
     related: data.related ?? [],
     blocks,
   };
@@ -292,7 +384,23 @@ function blockText(b) {
     case "cardGrid":
       return (b.cards ?? []).map((c) => `${c.title} ${flattenSegments(c.segments)}`).join(" ");
     case "useCase":
-      return `${b.title} ${flattenSegments(b.scenario)} ${flattenSegments(b.outcome ?? [])}`;
+      return [
+        b.title,
+        flattenSegments(b.scenario),
+        flattenSegments(b.outcome ?? []),
+        ...(b.preconditions ?? []),
+        b.authorization,
+        ...(b.mainFlow ?? []),
+        ...(b.alternativeFlows ?? []),
+        ...(b.failureFlows ?? []),
+        ...(b.invariants ?? []),
+        b.audit,
+        b.privacy,
+        b.slo,
+        ...(b.acceptanceTests ?? []),
+      ]
+        .filter(Boolean)
+        .join(" ");
     case "caseStudy":
       return `${b.title} ${flattenSegments(b.story)}`;
     case "codeBlock":

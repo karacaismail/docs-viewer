@@ -1,0 +1,81 @@
+{
+  "id": "edu-yetkinlik-modeli",
+  "title": "Vibecoding Yetkinlik Modeli — Okumadan Üretim İşletimine",
+  "subtitle": "Üç kişilik ekip için dört kanıt seviyesi, uygulamalı sınavlar, görev rotasyonu ve ilerleme kapıları.",
+  "cluster": "egitim",
+  "order": 1,
+  "icon": "ph-student",
+  "tags": ["egitim", "yetkinlik", "vibecoding", "degerlendirme"],
+  "granularity": "kaya",
+  "state": "wip",
+  "owner": "Eğitim programı sahibi",
+  "reviewer": "Fractional senior mimar",
+  "maturity": "incelemede",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": ["edu-overview", "edu-faz-haritasi"],
+  "nonGoals": ["Yaş, ezber veya yalnız okuma süresini yetkinlik kanıtı saymak."],
+  "failureModes": ["Kişi kontrol listesini işaretler fakat aynı görevi yeni bir senaryoda ve yardım almadan yapamaz."],
+  "acceptanceCriteria": ["Her seviye gözlenebilir çıktı ve reviewer imzası taşır.", "Üretim işletimi seviyesi gerçek restore ve incident tatbikatıyla kanıtlanır."],
+  "operationalImpact": "Kimin hangi işi tek başına yapabileceğini ve hangi işte zorunlu gözetim gerektiğini belirler.",
+  "externalReviewRequired": true,
+  "related": ["edu-overview", "edu-faz-haritasi", "edu-u16-test", "edu-u17-git", "edu-u10-deploy"],
+  "enrich": {
+    "info": "Okumak başlangıçtır; ilerleme kanıtı çalışan artefakt, açıklanabilir karar ve kontrollü üretim tatbikatıdır.",
+    "terms": [
+      {
+        "term": "Yetkinlik Kapısı",
+        "meaning": "Bir kişinin sonraki sorumluluk seviyesine geçmeden önce çalışan artefakt ve bağımsız review ile geçtiği ölçülebilir kontrol noktası.",
+        "why": "Okuma ve öz-değerlendirme tek başına üretim yetkisi vermez; geçiş gözlenebilir kanıta bağlanır."
+      }
+    ],
+    "lesson": {
+      "ne": "Dört seviyeli uygulamalı yetkinlik sistemi.",
+      "nicin": "AI çıktısını değerlendirme becerisi yalnız kavram okumayla ölçülemez.",
+      "nasil": "Her seviyede görev, bağımsız gözlem, hata senaryosu ve kanıt paketi kullanılır.",
+      "nerede": "Eğitim Yolu ile her build fazının giriş kapısında.",
+      "ne_zaman": "Yeni faza geçmeden ve kişinin yetki sınırı değişmeden önce.",
+      "kim": "Ekip üyesi görevi yapar; başka ekip üyesi gözlemler; fractional senior mimar kapıyı onaylar.",
+      "analoji": "Ehliyet: kitabı okumak, direksiyonda öğretmenle sürmek, sınavı geçmek ve gerçek trafikte güvenle kullanmak ayrı seviyelerdir."
+    }
+  },
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "Yetkinlik Kapısı, her ekip üyesinin hangi işi yalnız okuyabildiğini, hangisini gözetimle veya bağımsız yapabildiğini ve hangisini üretimde işletebildiğini kanıtla ayırır."
+    },
+    {
+      "type": "table",
+      "caption": "Dört yetkinlik seviyesi",
+      "headers": ["Seviye", "Kişi ne yapar?", "Zorunlu kanıt", "Yetki sınırı"],
+      "rows": [
+        ["1 · Okudu", "Kavramı kendi cümlesiyle açıklar; doğru ve yanlış örneği ayırır.", "Kısa sözlü anlatım + kavram testi.", "Üretim değişikliği yapamaz."],
+        ["2 · Gözetimle yaptı", "Hazır görev kartını izleyerek AI ile değişiklik üretir ve hatayı açıklar.", "Pair oturumu kaydı + yeşil test + reviewer notu.", "Yalnız gözetimli geliştirme ortamı."],
+        ["3 · Bağımsız yaptı", "Yeni fakat benzer görevi parçalar, testleri önce yazar, review bulgularını kapatır.", "PR + test kanıtı + rollback planı + bağımsız review.", "Düşük riskli işi tek başına hazırlayabilir; merge için ikinci kişi gerekir."],
+        ["4 · Üretimde işletti", "Deploy, gözlem, incident müdahalesi, restore ve postmortem yürütür.", "Canary/rollback tatbikatı + restore kanıtı + postmortem.", "Tanımlı runbook kapsamındaki üretim operasyonunu yürütebilir."]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Uygulamalı sınavlar"
+    },
+    {
+      "type": "table",
+      "headers": ["Kapı", "Görev", "Başarısızlık enjeksiyonu", "Geçme ölçütü"],
+      "rows": [
+        ["Veri ve tip", "Money, tarih, PII ve retention alanları olan ArcheType tanımla.", "AI para alanına float önerir.", "Öneriyi reddeder; Decimal ve veri yaşamı testleri geçer."],
+        ["Tenancy ve yetki", "İki tenant ve üç rolle sipariş sorgusu kur.", "Tenant bağlamı bilinçli kaldırılır.", "Komşu tenant verisi sıfır; audit olayı oluşur."],
+        ["Migration", "Zorunlu alanı sıfır kesintiyle ekle.", "Backfill yarıda kesilir.", "Yeniden çalıştırma güvenli; ileri-düzeltme planı kanıtlı."],
+        ["Operasyon", "Yedekten tenant geri yükle.", "Ana veritabanı erişilemez yapılır.", "RPO/RTO hedefi içinde doğrulanmış restore."],
+        ["Güvenlik", "Yetkisiz aksiyon ve prompt injection denemelerini engelle.", "AI kendi testini gevşetmeye çalışır.", "Deterministik kapı değişmez; olay audit'e yazılır."]
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "warning",
+      "label": "Üç kişi için bağımsızlık kuralı",
+      "body": "İşi üreten kişi kendi işinin son reviewer'ı olamaz. Roller her hafta Üreten, Eleştiren ve İşleten olarak döner; yüksek riskli işlerde fractional senior mimar dördüncü göz olur."
+    }
+  ]
+}

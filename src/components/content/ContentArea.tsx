@@ -209,6 +209,43 @@ export function ContentArea() {
         {entry.title}
       </h1>
       {entry.summary && <p className="lead">{entry.summary}</p>}
+      {page && (
+        <details className="governance-panel">
+          <summary>Sayfa yönetişimi ve kabul durumu</summary>
+          <dl>
+            <div>
+              <dt>Sahip</dt>
+              <dd>{page.owner}</dd>
+            </div>
+            <div>
+              <dt>Reviewer</dt>
+              <dd>{page.reviewer}</dd>
+            </div>
+            <div>
+              <dt>Olgunluk</dt>
+              <dd>{page.maturity}</dd>
+            </div>
+            <div>
+              <dt>Son doğrulama</dt>
+              <dd>{page.lastVerified ?? "Henüz doğrulanmadı"}</dd>
+            </div>
+            <div>
+              <dt>Dış inceleme</dt>
+              <dd>{page.externalReviewRequired ? "Zorunlu" : "İç review yeterli"}</dd>
+            </div>
+            <div>
+              <dt>Operasyon etkisi</dt>
+              <dd>{page.operationalImpact}</dd>
+            </div>
+          </dl>
+          <strong>Kabul kriterleri</strong>
+          <ul>
+            {page.acceptanceCriteria.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </details>
+      )}
 
       {(entry.slug === "egitim/edu-overview" || entry.slug === "egitim/edu-faz-haritasi") && (
         <CurriculumProgress />

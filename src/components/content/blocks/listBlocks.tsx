@@ -106,6 +106,14 @@ export function ChecklistBlock({ block }: B<"checklist">) {
 }
 
 export function UseCaseBlock({ block }: B<"useCase">) {
+  const rows = [
+    ["Önkoşullar", block.preconditions],
+    ["Ana akış", block.mainFlow],
+    ["Alternatif akışlar", block.alternativeFlows],
+    ["Hata akışları", block.failureFlows],
+    ["Değişmez kurallar", block.invariants],
+    ["Kabul testleri", block.acceptanceTests],
+  ] as const;
   return (
     <article id={block.id} className="usecase">
       <div className="usecase__title">{block.title}</div>
@@ -117,6 +125,39 @@ export function UseCaseBlock({ block }: B<"useCase">) {
           <SegmentRenderer segments={block.outcome} />
         </div>
       )}
+      <details className="usecase__contract">
+        <summary>Operasyon ve kabul sözleşmesi</summary>
+        <dl>
+          <div>
+            <dt>Yetki</dt>
+            <dd>{block.authorization}</dd>
+          </div>
+          {rows.map(([label, items]) => (
+            <div key={label}>
+              <dt>{label}</dt>
+              <dd>
+                <ul>
+                  {items.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </dd>
+            </div>
+          ))}
+          <div>
+            <dt>Audit</dt>
+            <dd>{block.audit}</dd>
+          </div>
+          <div>
+            <dt>Gizlilik</dt>
+            <dd>{block.privacy}</dd>
+          </div>
+          <div>
+            <dt>SLO</dt>
+            <dd>{block.slo}</dd>
+          </div>
+        </dl>
+      </details>
     </article>
   );
 }

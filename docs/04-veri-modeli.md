@@ -29,6 +29,14 @@ Eager/lazy bölünmesi performans bütçesinin (14 #15) yapısal karşılığıd
 | `tags` | string[] | hayır | Search boost alanı |
 | `sourceId` | string | hayır | Eski cluster id'si — `{{ref:x}}` ve `related` çözüm anahtarı (kaynak veri eski id ile referans verir, 07A §3a) |
 | `meta` | { granularity?, state?, badge? } | hayır | Eski şemadan taşınan rozet bilgisi (07A §2) |
+| `owner`, `reviewer` | string | evet | İçerik sahibi ve işi üretmeyen inceleme rolü |
+| `maturity` | taslak/incelemede/dogrulanmis/deneysel/aday | evet | Sayfanın kanıt olgunluğu; pazarlama statüsü değildir |
+| `lastVerified` | ISO tarih veya null | evet | Son kanıt kontrol tarihi; null = henüz doğrulanmadı |
+| `evidence`, `prerequisites` | string[] | evet | Kanıt bağlantıları ve ön koşullar |
+| `nonGoals`, `failureModes` | string[] | evet | Kapsam dışı ve beklenen başarısızlık biçimleri |
+| `acceptanceCriteria` | string[] | evet | Sayfanın karar veya uygulama kapıları |
+| `operationalImpact` | string | evet | Üretim, destek veya kullanıcı etkisi |
+| `externalReviewRequired` | boolean | evet | Uzman/dış inceleme zorunluluğu |
 
 **`meta.granularity` izinli değer seti (v2 adlarıyla):** `kaya` · `buyuk-tas` · `orta-tas` · `kucuk-tas` — sayfa-iriliği etiketi; iş-kırılımı SP'siyle karıştırılmaz (ADR-0008).
 
@@ -52,7 +60,7 @@ Her block iki ortak alan taşır: `id` (benzersiz, anchor hedefi) ve `type` (dis
 | `codeBlock` | `title?`, `language`, `code`, `showLineNumbers?`, `highlightedLines?`, `copyEnabled?` |
 | `cardGrid` | `cards[]: { icon?, title, segments[] }` |
 | `comparisonTable` | `caption?`, `columns[]`, `rows[]` (boyut/karşılaştırma semantiği) |
-| `useCase` | `title`, `scenario: segments[]`, `outcome?: segments[]` |
+| `useCase` | `title`, `scenario`, `outcome?` + `preconditions`, `authorization`, `mainFlow`, `alternativeFlows`, `failureFlows`, `invariants`, `audit`, `privacy`, `slo`, `acceptanceTests` |
 | `caseStudy` | `title`, `story: segments[]` |
 | `divider` | — |
 | `image` | `src`, `alt`, `caption?` — mevcut içerikte 83 kullanım (07A §3) |
@@ -60,7 +68,7 @@ Her block iki ortak alan taşır: `id` (benzersiz, anchor hedefi) ve `type` (dis
 | `lessonHeader` | `unit`, `title`, `level`, `durationMin`, `prereq[]`, `goals[]` — eğitim üniteleri |
 | `wbsChart` | `title?`, `caption?` — granülerlik WBS ağacı; veri bileşen-içi örnek settir, ECharts dinamik yüklenir (ADR-0011), canvas yoksa erişilebilir liste fallback'i |
 
-Bilinmeyen `type` build hatasıdır; runtime'a asla sızmaz (fail loudly).
+Bilinmeyen `type` build hatasıdır; runtime'a asla sızmaz (fail loudly). Her `useCase` ana akış kadar yetkisiz, alternatif ve hata akışını da taşır; kabul testleri boş bırakılamaz.
 
 ## 4. Segment Modeli (inline içerik)
 

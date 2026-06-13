@@ -1,6 +1,6 @@
 # 07A — Eski Şema → Yeni Block Model Alan Eşleme Tablosu
 
-Bu doküman, migration script'inin (`07-uretim-02-data-migration.md`) yazılmasından önce şart olan resmî alan eşlemesini verir. Tablolar tahmine değil taramaya dayanır: 198 JSON dosyasının tamamı programatik olarak analiz edilmiştir (10 Haziran 2026; 10–11 Haziran'da eklenen 26 aday katalog kaydı ve 38 karar/kavram kaydıyla toplam 262 — yeniler aynı şemayı izler, aday olanlar `state: aday` + `badge` ile işaretlidir). 197 özgün dosya ortak cluster şemasını izler; `ARCHITECTURE-5.json` farklı bir yapıdadır (`$schema`, `meta`, `milestones`…) ve içerik değil spec olduğundan migration kapsamı dışıdır.
+Bu doküman, migration script'inin (`07-uretim-02-data-migration.md`) yazılmasından önce şart olan resmî alan eşlemesini verir. Tablolar tahmine değil taramaya dayanır: kaynak küme programatik olarak analiz edilir (13 Haziran 2026 itibarıyla 197 özgün + 26 aday + 48 karar/kavram kaydıyla toplam 272; ayrıca 1 kapsam dışı dosya). 197 özgün dosya ortak cluster şemasını izler; `ARCHITECTURE-5.json` farklı bir yapıdadır (`$schema`, `meta`, `milestones`…) ve içerik değil spec olduğundan migration kapsamı dışıdır.
 
 ## 1. Eski Cluster Şemasının Resmî Dökümü (kanıt: alan frekansları)
 
@@ -71,7 +71,7 @@ Kritik bulgu: dönüşüm "serbest metin → block" değil, büyük ölçüde **
 | `enrich.detail` | 180 | Block dizisi | Build-time parse: `\n\n` → paragraph sınırı (115 dosyada çok paragraf), `1.` listeler (38) → `stepList`, `-` listeler (54) → `list`, `**`/backtick → segment |
 | `enrich.terms` | 191 | **`glossary.json` kayıtları — otomatik üretim** | `term` → label, `meaning` → shortExplanation, `why` → longExplanation, `abbrev_tr`/`abbrev_of` → longExplanation'a açılım cümlesi. termId = `term-<slug(term)>-<pageId>` — bağlamsallık otomatik sağlanır (aynı term farklı page'de farklı kayıt) |
 | `enrich.lesson` | 197 | `definitionList` block'u ("Bu konu 7 soruda") | Sabit anahtar seti: `ne, nicin, nasil, nerede, ne_zaman, kim, analoji` (+16 dosyada `frontend`, `backend`). Anahtar → Türkçe soru etiketi (term), değer → definition. `analoji` ayrıca glossary `realWorldAnalogy` adayıdır |
-| `enrich.stories` | 139 | `useCase` block'ları | Tek tip şekil: `{persona, context, outcome}` → §3'teki user-stories kuralıyla aynı |
+| `enrich.stories` | 139+ | `useCase` block'ları | `{persona, context, outcome}` korunur; migration ayrıca preconditions, authorization, main/alternative/failure flows, invariants, audit, privacy, SLO ve acceptanceTests alanlarını zorunlu üretir. Yeni hikâyeler bu alanları açıkça yazar; eski hikâyeler güvenli varsayılan sözleşmeyle yükseltilir. |
 
 Bu tablo `07-uretim-02-data-migration.md`'deki bir kuralı revize eder: glossary "tamamen editöryel" değildir. **`enrich.terms` + terms block verisi otomatik taşınır — migration ölçümü 679 bağlamsal kayıt** (item-level enrich dahil; 391 benzersiz label, 29'u çok bağlamlı); editöryel akışlar ve parti planı `12A-glossary-editoryel-plani.md`'dedir. Otomatik label-eşlemenin sınırı 12A §3a'da daraltılarak revize edilmiştir: **aynı page'in kendi kaydına birebir kelime eşleşmesi** yanlış-bağlam riski taşımadığı için migration'da otomatize edilir (paragraph, ilk geçiş); cross-page ve fuzzy eşleme yasak kalır ve yalnızca raporlanır.
 

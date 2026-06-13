@@ -93,6 +93,16 @@ export const BlockSchema = z.discriminatedUnion("type", [
     title: z.string(),
     scenario: segments,
     outcome: segments.optional(),
+    preconditions: z.array(z.string()).min(1),
+    authorization: z.string().min(1),
+    mainFlow: z.array(z.string()).min(1),
+    alternativeFlows: z.array(z.string()).min(1),
+    failureFlows: z.array(z.string()).min(1),
+    invariants: z.array(z.string()).min(1),
+    audit: z.string().min(1),
+    privacy: z.string().min(1),
+    slo: z.string().min(1),
+    acceptanceTests: z.array(z.string()).min(1),
   }),
   base.extend({ type: z.literal("caseStudy"), title: z.string(), story: segments }),
   base.extend({ type: z.literal("divider") }),
@@ -137,6 +147,20 @@ export const PageSchema = z.object({
       badge: z.string().optional(),
     })
     .optional(),
+  owner: z.string().min(1),
+  reviewer: z.string().min(1),
+  maturity: z.enum(["taslak", "incelemede", "dogrulanmis", "deneysel", "aday"]),
+  lastVerified: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable(),
+  evidence: z.array(z.string()),
+  prerequisites: z.array(z.string()),
+  nonGoals: z.array(z.string()).min(1),
+  failureModes: z.array(z.string()).min(1),
+  acceptanceCriteria: z.array(z.string()).min(1),
+  operationalImpact: z.string().min(1),
+  externalReviewRequired: z.boolean(),
   related: z.array(id("page-")).optional(),
   blocks: z.array(BlockSchema),
 });
@@ -225,7 +249,16 @@ export type SearchDoc = z.infer<typeof SearchDocSchema>;
 export const SearchIndexSchema = z.object({ schemaVersion: z.string(), documents: z.array(SearchDocSchema) });
 
 // Lazy mimari (14 #15): eager index yalnız metadata taşır; gövde pages/<stem>.json'da
-export const PageIndexEntrySchema = PageSchema.omit({ blocks: true, tags: true });
+export const PageIndexEntrySchema = PageSchema.pick({
+  id: true,
+  sourceId: true,
+  slug: true,
+  title: true,
+  summary: true,
+  categoryId: true,
+  meta: true,
+  related: true,
+});
 export type PageIndexEntry = z.infer<typeof PageIndexEntrySchema>;
 export const PagesIndexFileSchema = z.object({
   schemaVersion: z.string(),

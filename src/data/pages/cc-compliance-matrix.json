@@ -24,6 +24,23 @@
    "granularity": "kaya",
    "state": "wip"
   },
+  "owner": "Çapraz-kesen politika sahibi",
+  "reviewer": "İlgili hukuk, güvenlik veya uyum uzmanı",
+  "maturity": "taslak",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": [],
+  "nonGoals": [
+   "Bu sayfa tek başına üretim onayı veya uzman incelemesi yerine geçmez."
+  ],
+  "failureModes": [
+   "Tanım, ölçülebilir kabul testi ve sorumlu reviewer olmadan doğrudan üretime uygulanır."
+  ],
+  "acceptanceCriteria": [
+   "Sahip ve reviewer atanmıştır; ilgili otomatik kapılar yeşildir; açık varsayımlar kayıtlıdır."
+  ],
+  "operationalImpact": "Birden çok Domain'i kesen güvenlik, hukuk veya operasyon politikasını etkiler.",
+  "externalReviewRequired": true,
   "related": [
    "page-cc-jurisdiction-resolver",
    "page-cc-privacy",
@@ -1216,6 +1233,30 @@
       "type": "text",
       "text": "DSAR pipeline: n8n tetiklenir, 30 tablodan + Stripe + SendGrid'ten user_id ile veri toplar, ZIP üretir, güvenli link gönderir. Sonrasında erasure: kişisel veri anonymize, fatura kayıtları korunur (10 yıl VUK). 30 dakika içinde tamam. decision_trace audit."
      }
+    ],
+    "preconditions": [
+     "İlgili tenant, kullanıcı rolü ve test verisi hazırlanmıştır."
+    ],
+    "authorization": "En az yetki ilkesi uygulanır; tenant ve aktör bağlamı işlem öncesi doğrulanır.",
+    "mainFlow": [
+     "Hasan Bey'in müşterisinden DSAR talebi: 'Son 5 yılda tüm verimi gönder, sonra sil.' 50 müşterinin birikmiş verisi var; manuel yapsa hafta sürer."
+    ],
+    "alternativeFlows": [
+     "Geçerli alternatif girdi aynı yetki ve veri bütünlüğü kurallarıyla tamamlanır."
+    ],
+    "failureFlows": [
+     "Geçersiz girdi veya bağımlılık hatası güvenli biçimde reddedilir; kısmi yazma kalmaz."
+    ],
+    "invariants": [
+     "Tenant izolasyonu, yetki sınırı, veri bütünlüğü ve idempotency korunur."
+    ],
+    "audit": "Aktör, tenant, işlem, sonuç ve correlation id yapılandırılmış audit kaydına yazılır.",
+    "privacy": "Yalnız gerekli veri işlenir; kişisel veri loglarda maskelenir ve saklama politikası uygulanır.",
+    "slo": "İlgili Surface veya Contract için tanımlı p95 gecikme ve hata oranı bütçesi aşılmaz.",
+    "acceptanceTests": [
+     "Ana akış otomatik testte geçer.",
+     "Yetkisiz ve komşu-tenant denemesi sıfır veri döndürür.",
+     "Hata akışında kısmi yazma ve hassas veri sızıntısı oluşmaz."
     ]
    },
    {
@@ -1241,6 +1282,30 @@
       "type": "text",
       "text": ", CS team görür, MASAK bildirim akışı tetiklenir."
      }
+    ],
+    "preconditions": [
+     "İlgili tenant, kullanıcı rolü ve test verisi hazırlanmıştır."
+    ],
+    "authorization": "En az yetki ilkesi uygulanır; tenant ve aktör bağlamı işlem öncesi doğrulanır.",
+    "mainFlow": [
+     "Yeni müşteri kayıt oldu: 'Acme Trading, Tehran, Iran'. Yusuf Bey sevkiyat öncesi OFAC kontrol etmek istiyor."
+    ],
+    "alternativeFlows": [
+     "Geçerli alternatif girdi aynı yetki ve veri bütünlüğü kurallarıyla tamamlanır."
+    ],
+    "failureFlows": [
+     "Geçersiz girdi veya bağımlılık hatası güvenli biçimde reddedilir; kısmi yazma kalmaz."
+    ],
+    "invariants": [
+     "Tenant izolasyonu, yetki sınırı, veri bütünlüğü ve idempotency korunur."
+    ],
+    "audit": "Aktör, tenant, işlem, sonuç ve correlation id yapılandırılmış audit kaydına yazılır.",
+    "privacy": "Yalnız gerekli veri işlenir; kişisel veri loglarda maskelenir ve saklama politikası uygulanır.",
+    "slo": "İlgili Surface veya Contract için tanımlı p95 gecikme ve hata oranı bütçesi aşılmaz.",
+    "acceptanceTests": [
+     "Ana akış otomatik testte geçer.",
+     "Yetkisiz ve komşu-tenant denemesi sıfır veri döndürür.",
+     "Hata akışında kısmi yazma ve hassas veri sızıntısı oluşmaz."
     ]
    },
    {
@@ -1258,6 +1323,30 @@
       "type": "text",
       "text": "Anonymization pattern: kişisel kolonlar (ad, telefon, email, adres) hash/mask. Fatura tablosu user_id ile bağlı kalır, kişisel veri user tablosunda anonymize. KVKK 'sil' karşılanır (erişilemez), VUK 'sakla' karşılanır (defter sağlam)."
      }
+    ],
+    "preconditions": [
+     "İlgili tenant, kullanıcı rolü ve test verisi hazırlanmıştır."
+    ],
+    "authorization": "En az yetki ilkesi uygulanır; tenant ve aktör bağlamı işlem öncesi doğrulanır.",
+    "mainFlow": [
+     "Müşteri 'verimi sil' dedi. Murat Bey 'sil' tıklarsa fatura kayıtları siliniyor → VUK 10 yıl saklama emrediyor → vergi denetiminde kanıtsız."
+    ],
+    "alternativeFlows": [
+     "Geçerli alternatif girdi aynı yetki ve veri bütünlüğü kurallarıyla tamamlanır."
+    ],
+    "failureFlows": [
+     "Geçersiz girdi veya bağımlılık hatası güvenli biçimde reddedilir; kısmi yazma kalmaz."
+    ],
+    "invariants": [
+     "Tenant izolasyonu, yetki sınırı, veri bütünlüğü ve idempotency korunur."
+    ],
+    "audit": "Aktör, tenant, işlem, sonuç ve correlation id yapılandırılmış audit kaydına yazılır.",
+    "privacy": "Yalnız gerekli veri işlenir; kişisel veri loglarda maskelenir ve saklama politikası uygulanır.",
+    "slo": "İlgili Surface veya Contract için tanımlı p95 gecikme ve hata oranı bütçesi aşılmaz.",
+    "acceptanceTests": [
+     "Ana akış otomatik testte geçer.",
+     "Yetkisiz ve komşu-tenant denemesi sıfır veri döndürür.",
+     "Hata akışında kısmi yazma ve hassas veri sızıntısı oluşmaz."
     ]
    }
   ]

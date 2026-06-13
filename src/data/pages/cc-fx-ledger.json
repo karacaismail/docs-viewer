@@ -21,6 +21,23 @@
    "granularity": "orta-tas",
    "state": "wip"
   },
+  "owner": "Çapraz-kesen politika sahibi",
+  "reviewer": "İlgili hukuk, güvenlik veya uyum uzmanı",
+  "maturity": "taslak",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": [],
+  "nonGoals": [
+   "Bu sayfa tek başına üretim onayı veya uzman incelemesi yerine geçmez."
+  ],
+  "failureModes": [
+   "Tanım, ölçülebilir kabul testi ve sorumlu reviewer olmadan doğrudan üretime uygulanır."
+  ],
+  "acceptanceCriteria": [
+   "Sahip ve reviewer atanmıştır; ilgili otomatik kapılar yeşildir; açık varsayımlar kayıtlıdır."
+  ],
+  "operationalImpact": "Birden çok Domain'i kesen güvenlik, hukuk veya operasyon politikasını etkiler.",
+  "externalReviewRequired": true,
   "related": [
    "page-cc-jurisdiction-resolver",
    "page-stack-accounting",
@@ -844,6 +861,30 @@
       "type": "text",
       "text": "Functional currency TL ise: fatura 100 EUR = 3400 TL (sipariş anı kuru). Tahsilat 3600 TL = 200 TL FX gain. Üç kayıt: order (3400), invoice (3400), payment (3600) + fx_gain (200)."
      }
+    ],
+    "preconditions": [
+     "İlgili tenant, kullanıcı rolü ve test verisi hazırlanmıştır."
+    ],
+    "authorization": "En az yetki ilkesi uygulanır; tenant ve aktör bağlamı işlem öncesi doğrulanır.",
+    "mainFlow": [
+     "Müşteri 100 EUR sipariş verdi (sipariş anı kur: 34 TL = 3400 TL). 1 ay sonra ödedi (tahsilat kuru: 36 TL = 3600 TL). Fatura hangi tutarda?"
+    ],
+    "alternativeFlows": [
+     "Geçerli alternatif girdi aynı yetki ve veri bütünlüğü kurallarıyla tamamlanır."
+    ],
+    "failureFlows": [
+     "Geçersiz girdi veya bağımlılık hatası güvenli biçimde reddedilir; kısmi yazma kalmaz."
+    ],
+    "invariants": [
+     "Tenant izolasyonu, yetki sınırı, veri bütünlüğü ve idempotency korunur."
+    ],
+    "audit": "Aktör, tenant, işlem, sonuç ve correlation id yapılandırılmış audit kaydına yazılır.",
+    "privacy": "Yalnız gerekli veri işlenir; kişisel veri loglarda maskelenir ve saklama politikası uygulanır.",
+    "slo": "İlgili Surface veya Contract için tanımlı p95 gecikme ve hata oranı bütçesi aşılmaz.",
+    "acceptanceTests": [
+     "Ana akış otomatik testte geçer.",
+     "Yetkisiz ve komşu-tenant denemesi sıfır veri döndürür.",
+     "Hata akışında kısmi yazma ve hassas veri sızıntısı oluşmaz."
     ]
    },
    {
@@ -861,6 +902,30 @@
       "type": "text",
       "text": "Refund eski oran üzerinden: 118 TL geri öder (KDV 18 TL). Yeni oranla 120 TL ödese vergi defterinde uyumsuzluk + denetimde sorun."
      }
+    ],
+    "preconditions": [
+     "İlgili tenant, kullanıcı rolü ve test verisi hazırlanmıştır."
+    ],
+    "authorization": "En az yetki ilkesi uygulanır; tenant ve aktör bağlamı işlem öncesi doğrulanır.",
+    "mainFlow": [
+     "Mart'ta 100 TL ürün sattı (KDV %18, fatura 118 TL). Eylül'de iade istendi; KDV bu arada %20'ye çıktı."
+    ],
+    "alternativeFlows": [
+     "Geçerli alternatif girdi aynı yetki ve veri bütünlüğü kurallarıyla tamamlanır."
+    ],
+    "failureFlows": [
+     "Geçersiz girdi veya bağımlılık hatası güvenli biçimde reddedilir; kısmi yazma kalmaz."
+    ],
+    "invariants": [
+     "Tenant izolasyonu, yetki sınırı, veri bütünlüğü ve idempotency korunur."
+    ],
+    "audit": "Aktör, tenant, işlem, sonuç ve correlation id yapılandırılmış audit kaydına yazılır.",
+    "privacy": "Yalnız gerekli veri işlenir; kişisel veri loglarda maskelenir ve saklama politikası uygulanır.",
+    "slo": "İlgili Surface veya Contract için tanımlı p95 gecikme ve hata oranı bütçesi aşılmaz.",
+    "acceptanceTests": [
+     "Ana akış otomatik testte geçer.",
+     "Yetkisiz ve komşu-tenant denemesi sıfır veri döndürür.",
+     "Hata akışında kısmi yazma ve hassas veri sızıntısı oluşmaz."
     ]
    }
   ]

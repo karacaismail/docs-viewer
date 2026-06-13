@@ -1,0 +1,45 @@
+{
+  "id": "be-v1-kapsam-disi",
+  "title": "v1 Teslim Profili — Tek Varsayılan ve Kapsam Dışı",
+  "subtitle": "İlk çalıştırılabilir sürümde kombinasyon patlamasını önleyen tek API, tek deploy, tek kuyruk ve tek kimlik profili.",
+  "cluster": "backend",
+  "order": 5,
+  "icon": "ph-funnel",
+  "tags": ["v1", "scope", "non-goals", "support"],
+  "granularity": "kaya",
+  "state": "ok",
+  "badge": "KARAR",
+  "owner": "Backend mimarisi sahibi",
+  "reviewer": "Fractional senior mimar",
+  "maturity": "dogrulanmis",
+  "lastVerified": "2026-06-13",
+  "evidence": ["Üç kişilik ekip kapasitesi ve enterprise kanıt önceliği", "be-kararlar varsayılan-basit ilkesi"],
+  "prerequisites": ["be-kararlar"],
+  "nonGoals": ["v1 içinde bütün adaptörleri üretmek veya desteklemek.", "Shared hosting, cluster ve multi-region profillerini aynı release hattında doğrulamak."],
+  "failureModes": ["Arayüzün varlığı hazır implementasyon sanılır ve test edilmemiş taşıyıcı müşteriye açılır."],
+  "acceptanceCriteria": ["Desteklenen profil temiz makinede tek runbook ile kurulur.", "Kapsam dışı taşıyıcılar runtime seçeneği olarak sunulmaz.", "Adaptör contract testleri gelecek implementasyonları bağlar."],
+  "operationalImpact": "Test matrisini ve on-call yüzeyini daraltır; temel sözleşmelerin daha derin kanıtlanmasını sağlar.",
+  "externalReviewRequired": true,
+  "related": ["be-kararlar", "be-deploy-profilleri", "build-referans-uygulama", "be-destek-matrisi"],
+  "blocks": [
+    {
+      "type": "table",
+      "caption": "v1 tek desteklenen profil",
+      "headers": ["Alan", "v1 desteklenen", "Arayüz var, implementasyon ertelendi", "v1 yasak"],
+      "rows": [
+        ["API", "FastAPI içinde tek GraphQL endpoint.", "REST/OpenAPI contract taslağı.", "Aynı Domain için çift yazılmış REST + GraphQL davranışı."],
+        ["Deploy", "Debian üzerinde Docker Compose; Hetzner referans ortamı.", "Managed cloud ve cluster DeploymentProvider sözleşmesi.", "Shared hosting, Kubernetes, Swarm ve multi-region üretim desteği."],
+        ["Kuyruk", "PostgreSQL tabanlı kuyruk + outbox polling.", "QueueProvider sözleşmesi.", "Celery/Redis, Kafka ve RabbitMQ runtime seçeneği."],
+        ["Kimlik", "kernel-identity yerel hesap + passkey; federation için yalnız Keycloak OIDC referansı.", "IdentityProvider sözleşmesi.", "SAML ve birden çok haricî sağlayıcı kombinasyonu."],
+        ["Arama", "PostgreSQL FTS.", "SearchProvider sözleşmesi.", "Haricî arama motorunun üretim desteği."],
+        ["Dosya", "Yerel disk + atomik yazma + off-site rsync yedek.", "StorageProvider sözleşmesi.", "Birden çok obje depolama sağlayıcısı."]
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "info",
+      "label": "Sözleşme ile destek ayrımı",
+      "body": "Bir adaptör interface'inin tanımlı olması müşteriye destek verildiği anlamına gelmez. Destek statüsü ancak contract test, runbook, observability ve restore kanıtı tamamlandığında değişir."
+    }
+  ]
+}

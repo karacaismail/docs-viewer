@@ -2,17 +2,17 @@
 
 Bu doküman, `mimari/` klasöründeki mevcut varlıkların sayımını yapar ve her grubun yeni doc viewer'daki rolünü tanımlar. Migration yönergesi (`07-uretim-02-data-migration.md`) bu envanteri girdi kabul eder.
 
-## 1. Cluster JSON Dosyaları (262 dosya — birincil içerik kaynağı; 197 özgün + 26 aday + 38 karar/kavram + 1 kapsam dışı)
+## 1. Cluster JSON Dosyaları (272 dosya — birincil içerik kaynağı; 197 özgün + 26 aday + 48 karar/kavram + 1 kapsam dışı)
 
 Dosya adlandırması `NN-kategori-konu.json` sözleşmesini izler. Kategori prefix'leri ve sayıları:
 
 | Prefix | Adet | İçerik alanı | Yeni IA'daki hedef kategori |
 |---|---|---|---|
-| `edu-*` | 28 | Eğitim üniteleri (u01–u25, overview, test) | Eğitim Yolu |
+| `edu-*` | 29 | Eğitim üniteleri (u01–u25, overview, faz haritası, yetkinlik modeli) | Eğitim Yolu |
 | `s-*` | 72 | Sektör/ürün modülleri (crm, sales, wms, payroll…) + 10 Haziran 2026 aday genişlemesi (comms, mail, channel-hub, scheduling, esign, isg, kvkk, iot) | Ürün Modülleri — Layer 2 |
 | `scale-*` | 15 | Scale primitives (outbox, saga, cache, realtime…) | Scale Primitives |
 | `cc-*` + `crosscut-*` | 17 | Çapraz-kesen konular (i18n, privacy, compliance…) | Çapraz-Kesen |
-| `sus-*` | 15 | Sürdürülebilirlik (versioning, bitemporal, conformance…) | Sürdürülebilirlik |
+| `sus-*` | 16 | Sürdürülebilirlik (versioning, bitemporal, conformance, AI üretim sözleşmesi…) | Sürdürülebilirlik |
 | `stack-*` | 19 | Stack ürün aileleri (commerce, accounting…) + 6 aday yatay stack (workspace, compliance, channel, builder, service, messaging) + 1 taksonomi kavram kaydı (editions) | Stack Ürünleri |
 | `edition-*` | 6 | Editions — UI estetiği ve UX akışı gelişmiş stack paketleri (people, onmuhasebe, storefront, salescrm, creator, randevu); `badge: EDITION` | Stack Ürünleri (Editions grubu) |
 | `dist-*` | 5 | Distributions — sektör paketleri (site, ngo, travel, construction, realestate); `badge: DISTRIBUTION` | Stack Ürünleri (ayrı grup) |
@@ -20,7 +20,7 @@ Dosya adlandırması `NN-kategori-konu.json` sözleşmesini izler. Kategori pref
 | `layer1-*` + `l1-*` | 12 | Layer 1 in-tree servisler (party, file, audit…) | Layer 1 — In-tree |
 | `kernel-*` + `k-*` | 15 (Faz 0 atomic-types dahil) | Layer 0 kernel domain'leri | Kernel — Layer 0 |
 | `landx-*` | 7 | LandX — sahibinden clone vakası (l0–l5) | Stack Ürünleri (vaka grubu; top-level değil) |
-| `be-*` | 4 | Backend Tech-Stack — karar defteri (24/24), mail provider chain, deploy profilleri + entegrasyon matrisi | Backend Tech-Stack |
+| `be-*` | 6 | Backend Tech-Stack — karar defteri, v1 kapsamı, destek matrisi, mail provider chain ve deploy profilleri | Backend Tech-Stack |
 | `dx-*` + `services` | 4 | Module DX, marketplace, dış servisler | DX & Services |
 | Tekil meta dosyalar | ~10 | overview, philosophy, board, atomic-types, build-sequence, anti-patterns, file-layout, product-mapping, deploy-yap | Genel Harita + Build & Deploy |
 

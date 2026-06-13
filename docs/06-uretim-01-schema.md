@@ -22,6 +22,8 @@ src/schemas/
 5. `codeBlock.language` serbest string değil, Shiki'de yüklenecek dillerin enum'udur. Enum gerçek içerik envanterinden kurulur (`07A` §6 + `07B` §2 fence taraması): `python, sql, yaml, typescript, javascript, json, css, html, bash, http, text`. Desteklenmeyen dil build'de yakalanır, runtime'da Shiki hatasına dönüşmez.
 6. Kök dosya şemaları (`NavigationFile`, `PagesFile`, `GlossaryFile`, `SearchIndexFile`) `schemaVersion` alanını zorunlu tutar.
 7. Çapraz referans kontrolleri (navigation→page, term segment→glossary) Zod şemasına gömülmez; bunlar engine'in `validateStaticData` adımında ayrı fonksiyonlardır. Şema yapısal doğruluğu, validator bütünlüğü denetler — sorumluluk ayrımı budur.
+8. Her page sahiplik ve kanıt sözleşmesini zorunlu taşır: `owner`, `reviewer`, `maturity`, `lastVerified`, `evidence`, `prerequisites`, `nonGoals`, `failureModes`, `acceptanceCriteria`, `operationalImpact`, `externalReviewRequired`. Bu ağır alanlar lazy page dosyasında kalır; eager `pages-index.json` performans bütçesini korur.
+9. `useCase` yalnız persona ve mutlu akış değildir. Önkoşul, yetki, ana/alternatif/hata akışları, invariant, audit, gizlilik, SLO ve çalıştırılabilir kabul testleri yapısal olarak zorunludur.
 
 ## Edge Case'ler
 

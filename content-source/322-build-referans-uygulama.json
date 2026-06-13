@@ -1,0 +1,78 @@
+{
+  "id": "build-referans-uygulama",
+  "title": "Kanonik Referans Uygulama — OrderOps",
+  "subtitle": "Sipariş yönetimi üzerinden tanımdan deploy'a enterprise foundation kanıtı: tenancy, yetki, workflow, migration, hata, yedek ve gözlem.",
+  "cluster": "build",
+  "order": 2,
+  "icon": "ph-package",
+  "tags": ["referans-uygulama", "order", "enterprise-foundation", "acceptance"],
+  "granularity": "kaya",
+  "state": "wip",
+  "owner": "Referans uygulama sahibi",
+  "reviewer": "Fractional senior mimar + PostgreSQL/SRE reviewer",
+  "maturity": "incelemede",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": ["atomic-types", "kernel-schema", "kernel-tenancy", "kernel-authz", "be-v1-kapsam-disi"],
+  "nonGoals": ["Tam e-ticaret, ödeme, kargo optimizasyonu veya ürün kataloğu geliştirmek.", "Birden fazla altyapı adaptörünü aynı anda kanıtlamak."],
+  "failureModes": ["Demo yalnız mutlu akışı gösterir; tenant kaçağı, yarım migration veya restore başarısızlığı gizli kalır."],
+  "acceptanceCriteria": ["Aşağıdaki sekiz kanıt kapısının tamamı otomatik veya tatbikat kanıtıyla geçer.", "Aynı tanımlar temiz kurulumda deterministik sonuç üretir."],
+  "operationalImpact": "Kernel ve SDK iddialarının ilk çalıştırılabilir bütünleşik kanıtıdır; diğer app'ler bu kalıbı kopyalar.",
+  "externalReviewRequired": true,
+  "related": ["be-sdk", "kernel-tenancy", "kernel-authz", "edu-u12-migration", "edu-u20-backup", "build-enterprise-readiness"],
+  "enrich": {
+    "info": "OrderOps bir MVP değildir; dar kapsamlı fakat üretim davranışları tamamlanmış enterprise foundation referansıdır.",
+    "stories": [
+      {
+        "persona": "Tenant sipariş yöneticisi",
+        "context": "Yönetici kendi tenant'ında taslak siparişi oluşturur, onaya yollar ve onaylanan siparişin geçmişini görür.",
+        "outcome": "Sipariş yalnız izinli geçişlerden ilerler; tüm değişiklikler audit edilir.",
+        "preconditions": ["Tenant aktiftir.", "Müşteri ve Money para birimi tanımlıdır.", "Kullanıcı OrderManager rolündedir."],
+        "authorization": "CreateOrder ve SubmitOrder capability'leri tenant bağlamında birlikte doğrulanır.",
+        "mainFlow": ["Sipariş taslak oluşturulur.", "Kalemler eklenir ve toplam Decimal ile hesaplanır.", "Submit aksiyonu workflow'u pending_approval durumuna taşır.", "Onaylayan farklı kullanıcı approved durumuna geçirir."],
+        "alternativeFlows": ["Onay eşiği altındaki sipariş otomatik onay politikasından geçer.", "İptal edilen sipariş yeni sürüm olarak yeniden oluşturulur."],
+        "failureFlows": ["Eksik para birimi validation hatası verir.", "Aynı idempotency anahtarı ikinci sipariş üretmez.", "Komşu tenant siparişi bulunamadı gibi davranır."],
+        "invariants": ["Toplam, kalem toplamına eşittir.", "Onaylayan ile oluşturan yüksek tutarda aynı kişi olamaz.", "Tenant id değiştirilemez.", "Audit kaydı silinemez."],
+        "audit": "Her aksiyon actor, tenant, önceki durum, sonraki durum, changeset ve correlation id ile kaydedilir.",
+        "privacy": "Müşteri iletişim alanları PII olarak maskelenir; sipariş logları ham iletişim verisi taşımaz.",
+        "slo": "Create ve read p95 <300 ms; submit p95 <500 ms; aylık hata oranı <%0,1.",
+        "acceptanceTests": ["İki tenant izolasyon testi.", "Rol × aksiyon capability matrisi testi.", "Aynı idempotency anahtarıyla tekrar testi.", "Workflow geçersiz geçiş testi.", "Audit bütünlük testi."]
+      }
+    ]
+  },
+  "blocks": [
+    {
+      "type": "table",
+      "caption": "OrderOps yapı ağacı",
+      "headers": ["Seviye", "Tanım", "Çıktı"],
+      "rows": [
+        ["Domain", "Order Management", "Contract sınırı ve sahiplik."],
+        ["ArcheType", "Order, Customer", "Tablo, GraphQL, MCP aksiyonları ve varsayılan Surface."],
+        ["Fragment", "OrderLine", "Money × quantity satırları; ana kayıtla yaşar."],
+        ["Workflow", "draft → pending_approval → approved → cancelled", "Versiyonlu durum makinesi ve geçiş yetkileri."],
+        ["Surface", "Order List, Order Detail, Approval Queue", "Erişilebilir ve role göre projekte edilmiş ekranlar."],
+        ["Contract", "OrderContract v1", "Create, submit, approve, cancel ve query sözleşmesi."]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Sekiz kanıt kapısı"
+    },
+    {
+      "type": "checklist",
+      "title": "Referans uygulama çıkış kapısı",
+      "storageKey": "orderops-evidence-gates",
+      "items": [
+        {"label": "Tanım", "hint": "ArcheType, Fragment, Workflow, Surface ve Contract şemadan geçer."},
+        {"label": "Tenancy", "hint": "Komşu tenant okuma/yazma tüm sorgu yollarında sıfırdır."},
+        {"label": "Yetki", "hint": "Rol × aksiyon matrisi ve step-up kuralları testlidir."},
+        {"label": "Migration", "hint": "Expand/backfill/contract ve yarıda kesilme testi geçer."},
+        {"label": "Hata", "hint": "Retry, idempotency ve DLQ senaryoları kanıtlıdır."},
+        {"label": "Yedek", "hint": "Tenant restore tatbikatı RPO/RTO içinde tamamlanır."},
+        {"label": "Deploy", "hint": "Docker Compose temiz kurulum, canary ve rollback kanıtlıdır."},
+        {"label": "Gözlem", "hint": "Log, metric, trace, dashboard ve alarm runbook'a bağlanır."}
+      ]
+    }
+  ]
+}

@@ -21,6 +21,23 @@
    "granularity": "orta-tas",
    "state": "wip"
   },
+  "owner": "Çapraz-kesen politika sahibi",
+  "reviewer": "İlgili hukuk, güvenlik veya uyum uzmanı",
+  "maturity": "taslak",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": [],
+  "nonGoals": [
+   "Bu sayfa tek başına üretim onayı veya uzman incelemesi yerine geçmez."
+  ],
+  "failureModes": [
+   "Tanım, ölçülebilir kabul testi ve sorumlu reviewer olmadan doğrudan üretime uygulanır."
+  ],
+  "acceptanceCriteria": [
+   "Sahip ve reviewer atanmıştır; ilgili otomatik kapılar yeşildir; açık varsayımlar kayıtlıdır."
+  ],
+  "operationalImpact": "Birden çok Domain'i kesen güvenlik, hukuk veya operasyon politikasını etkiler.",
+  "externalReviewRequired": true,
   "related": [
    "page-cc-jurisdiction-resolver",
    "page-cc-compliance-matrix",
@@ -1264,6 +1281,30 @@
       "type": "text",
       "text": "Backfill script: IP geo + signup country + payment country sinyallerinden tahmin. 35K (%70) yüksek confidence → otomatik atama. 12K orta → CS team batch onay. 3K düşük → 'profilini güncelle' email + kullanıcı kendisi seçer."
      }
+    ],
+    "preconditions": [
+     "İlgili tenant, kullanıcı rolü ve test verisi hazırlanmıştır."
+    ],
+    "authorization": "En az yetki ilkesi uygulanır; tenant ve aktör bağlamı işlem öncesi doğrulanır.",
+    "mainFlow": [
+     "Resolver canlıya alındı, 50K mevcut kullanıcı var. Her birinin jurisdiction'ı boş."
+    ],
+    "alternativeFlows": [
+     "Geçerli alternatif girdi aynı yetki ve veri bütünlüğü kurallarıyla tamamlanır."
+    ],
+    "failureFlows": [
+     "Geçersiz girdi veya bağımlılık hatası güvenli biçimde reddedilir; kısmi yazma kalmaz."
+    ],
+    "invariants": [
+     "Tenant izolasyonu, yetki sınırı, veri bütünlüğü ve idempotency korunur."
+    ],
+    "audit": "Aktör, tenant, işlem, sonuç ve correlation id yapılandırılmış audit kaydına yazılır.",
+    "privacy": "Yalnız gerekli veri işlenir; kişisel veri loglarda maskelenir ve saklama politikası uygulanır.",
+    "slo": "İlgili Surface veya Contract için tanımlı p95 gecikme ve hata oranı bütçesi aşılmaz.",
+    "acceptanceTests": [
+     "Ana akış otomatik testte geçer.",
+     "Yetkisiz ve komşu-tenant denemesi sıfır veri döndürür.",
+     "Hata akışında kısmi yazma ve hassas veri sızıntısı oluşmaz."
     ]
    },
    {
@@ -1285,6 +1326,30 @@
       "type": "text",
       "text": " oluştur (status=draft). Legal review (Hasan Bey) → reviewed. CTO approve. openclaw deploy (effective_from='2026-07-01T00:00:00+03:00'). 1 Temmuz'a kadar shadow mode'da test. Geçişte sorun yok."
      }
+    ],
+    "preconditions": [
+     "İlgili tenant, kullanıcı rolü ve test verisi hazırlanmıştır."
+    ],
+    "authorization": "En az yetki ilkesi uygulanır; tenant ve aktör bağlamı işlem öncesi doğrulanır.",
+    "mainFlow": [
+     "Yeni KDV oranı 1 Temmuz'da yürürlüğe girecek. Ayşe Hanım config'i güncellemek istiyor."
+    ],
+    "alternativeFlows": [
+     "Geçerli alternatif girdi aynı yetki ve veri bütünlüğü kurallarıyla tamamlanır."
+    ],
+    "failureFlows": [
+     "Geçersiz girdi veya bağımlılık hatası güvenli biçimde reddedilir; kısmi yazma kalmaz."
+    ],
+    "invariants": [
+     "Tenant izolasyonu, yetki sınırı, veri bütünlüğü ve idempotency korunur."
+    ],
+    "audit": "Aktör, tenant, işlem, sonuç ve correlation id yapılandırılmış audit kaydına yazılır.",
+    "privacy": "Yalnız gerekli veri işlenir; kişisel veri loglarda maskelenir ve saklama politikası uygulanır.",
+    "slo": "İlgili Surface veya Contract için tanımlı p95 gecikme ve hata oranı bütçesi aşılmaz.",
+    "acceptanceTests": [
+     "Ana akış otomatik testte geçer.",
+     "Yetkisiz ve komşu-tenant denemesi sıfır veri döndürür.",
+     "Hata akışında kısmi yazma ve hassas veri sızıntısı oluşmaz."
     ]
    },
    {
@@ -1302,6 +1367,30 @@
       "type": "text",
       "text": "Failure mode kicks in: deny-by-default fallback policy. Marketing email skip; çekirdek hizmet (login, checkout) en sıkı kuralla devam. Audit: 5dk boyunca her karar 'resolver_fallback' tagged. SRE alarm geldi, Redis düzeltildi, normal döndü."
      }
+    ],
+    "preconditions": [
+     "İlgili tenant, kullanıcı rolü ve test verisi hazırlanmıştır."
+    ],
+    "authorization": "En az yetki ilkesi uygulanır; tenant ve aktör bağlamı işlem öncesi doğrulanır.",
+    "mainFlow": [
+     "Redis cluster 5 dk crash'lendi. Resolver cache'siz, DB throttled. Bazı kullanıcılar 500 alıyor."
+    ],
+    "alternativeFlows": [
+     "Geçerli alternatif girdi aynı yetki ve veri bütünlüğü kurallarıyla tamamlanır."
+    ],
+    "failureFlows": [
+     "Geçersiz girdi veya bağımlılık hatası güvenli biçimde reddedilir; kısmi yazma kalmaz."
+    ],
+    "invariants": [
+     "Tenant izolasyonu, yetki sınırı, veri bütünlüğü ve idempotency korunur."
+    ],
+    "audit": "Aktör, tenant, işlem, sonuç ve correlation id yapılandırılmış audit kaydına yazılır.",
+    "privacy": "Yalnız gerekli veri işlenir; kişisel veri loglarda maskelenir ve saklama politikası uygulanır.",
+    "slo": "İlgili Surface veya Contract için tanımlı p95 gecikme ve hata oranı bütçesi aşılmaz.",
+    "acceptanceTests": [
+     "Ana akış otomatik testte geçer.",
+     "Yetkisiz ve komşu-tenant denemesi sıfır veri döndürür.",
+     "Hata akışında kısmi yazma ve hassas veri sızıntısı oluşmaz."
     ]
    }
   ]

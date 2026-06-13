@@ -19,6 +19,23 @@
    "granularity": "orta-tas",
    "state": "wip"
   },
+  "owner": "Eğitim programı sahibi",
+  "reviewer": "Fractional senior mimar",
+  "maturity": "taslak",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": [],
+  "nonGoals": [
+   "Bu sayfa tek başına üretim onayı veya uzman incelemesi yerine geçmez."
+  ],
+  "failureModes": [
+   "Tanım, ölçülebilir kabul testi ve sorumlu reviewer olmadan doğrudan üretime uygulanır."
+  ],
+  "acceptanceCriteria": [
+   "Sahip ve reviewer atanmıştır; ilgili otomatik kapılar yeşildir; açık varsayımlar kayıtlıdır."
+  ],
+  "operationalImpact": "Ekip yetkinliği ve güvenli üretim kararlarını etkiler.",
+  "externalReviewRequired": false,
   "related": [
    "page-scale-saga",
    "page-scale-idempotency",
@@ -640,6 +657,30 @@
       "type": "strong",
       "text": "Idempotency key = 'aynı işlem 1 kere işle' garantisi."
      }
+    ],
+    "preconditions": [
+     "İlgili tenant, kullanıcı rolü ve test verisi hazırlanmıştır."
+    ],
+    "authorization": "En az yetki ilkesi uygulanır; tenant ve aktör bağlamı işlem öncesi doğrulanır.",
+    "mainFlow": [
+     "Yusuf Bey 500 TL çekmek istedi. 'İşlem yapılıyor' yazısı uzun sürdü, makine 'hata oluştu' dedi ama parayı verdi. Yusuf Bey emin değil; bir daha denedi. Bu sefer para verdi ama hesaptan 2 kez düşmüş."
+    ],
+    "alternativeFlows": [
+     "Geçerli alternatif girdi aynı yetki ve veri bütünlüğü kurallarıyla tamamlanır."
+    ],
+    "failureFlows": [
+     "Geçersiz girdi veya bağımlılık hatası güvenli biçimde reddedilir; kısmi yazma kalmaz."
+    ],
+    "invariants": [
+     "Tenant izolasyonu, yetki sınırı, veri bütünlüğü ve idempotency korunur."
+    ],
+    "audit": "Aktör, tenant, işlem, sonuç ve correlation id yapılandırılmış audit kaydına yazılır.",
+    "privacy": "Yalnız gerekli veri işlenir; kişisel veri loglarda maskelenir ve saklama politikası uygulanır.",
+    "slo": "İlgili Surface veya Contract için tanımlı p95 gecikme ve hata oranı bütçesi aşılmaz.",
+    "acceptanceTests": [
+     "Ana akış otomatik testte geçer.",
+     "Yetkisiz ve komşu-tenant denemesi sıfır veri döndürür.",
+     "Hata akışında kısmi yazma ve hassas veri sızıntısı oluşmaz."
     ]
    },
    {
@@ -661,6 +702,30 @@
       "type": "strong",
       "text": "Retry'ı çağıran taraf 'aynı işlemi tekrar et' demeli; çağrılan taraf 'aynısını mı?' diye anlamalı."
      }
+    ],
+    "preconditions": [
+     "İlgili tenant, kullanıcı rolü ve test verisi hazırlanmıştır."
+    ],
+    "authorization": "En az yetki ilkesi uygulanır; tenant ve aktör bağlamı işlem öncesi doğrulanır.",
+    "mainFlow": [
+     "Müşteri kart bastı, POS 'iletişim hatası' dedi. Hatice Teyze tekrar bastı, yine hata. 5 kez denedi, sonunda 'tamam' dedi. Ertesi gün hesabında 5 kez 50 TL düşmüş görüyor."
+    ],
+    "alternativeFlows": [
+     "Geçerli alternatif girdi aynı yetki ve veri bütünlüğü kurallarıyla tamamlanır."
+    ],
+    "failureFlows": [
+     "Geçersiz girdi veya bağımlılık hatası güvenli biçimde reddedilir; kısmi yazma kalmaz."
+    ],
+    "invariants": [
+     "Tenant izolasyonu, yetki sınırı, veri bütünlüğü ve idempotency korunur."
+    ],
+    "audit": "Aktör, tenant, işlem, sonuç ve correlation id yapılandırılmış audit kaydına yazılır.",
+    "privacy": "Yalnız gerekli veri işlenir; kişisel veri loglarda maskelenir ve saklama politikası uygulanır.",
+    "slo": "İlgili Surface veya Contract için tanımlı p95 gecikme ve hata oranı bütçesi aşılmaz.",
+    "acceptanceTests": [
+     "Ana akış otomatik testte geçer.",
+     "Yetkisiz ve komşu-tenant denemesi sıfır veri döndürür.",
+     "Hata akışında kısmi yazma ve hassas veri sızıntısı oluşmaz."
     ]
    },
    {
@@ -682,6 +747,30 @@
       "type": "strong",
       "text": "Sonsuz değil, sınırlı."
      }
+    ],
+    "preconditions": [
+     "İlgili tenant, kullanıcı rolü ve test verisi hazırlanmıştır."
+    ],
+    "authorization": "En az yetki ilkesi uygulanır; tenant ve aktör bağlamı işlem öncesi doğrulanır.",
+    "mainFlow": [
+     "Murat Bey kapı kapı tahsil ediyor. 5 dairede yok. Notuna yazdı, 'üç gün sonra tekrar dene'. Üçüncü denemede yine yoksa apartman yönetimine bildiriyor."
+    ],
+    "alternativeFlows": [
+     "Geçerli alternatif girdi aynı yetki ve veri bütünlüğü kurallarıyla tamamlanır."
+    ],
+    "failureFlows": [
+     "Geçersiz girdi veya bağımlılık hatası güvenli biçimde reddedilir; kısmi yazma kalmaz."
+    ],
+    "invariants": [
+     "Tenant izolasyonu, yetki sınırı, veri bütünlüğü ve idempotency korunur."
+    ],
+    "audit": "Aktör, tenant, işlem, sonuç ve correlation id yapılandırılmış audit kaydına yazılır.",
+    "privacy": "Yalnız gerekli veri işlenir; kişisel veri loglarda maskelenir ve saklama politikası uygulanır.",
+    "slo": "İlgili Surface veya Contract için tanımlı p95 gecikme ve hata oranı bütçesi aşılmaz.",
+    "acceptanceTests": [
+     "Ana akış otomatik testte geçer.",
+     "Yetkisiz ve komşu-tenant denemesi sıfır veri döndürür.",
+     "Hata akışında kısmi yazma ve hassas veri sızıntısı oluşmaz."
     ]
    }
   ]
