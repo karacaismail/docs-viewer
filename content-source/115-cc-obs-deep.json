@@ -122,6 +122,59 @@
           "Grafana"
         ]
       ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "AI-first runbook + kill switch"
+    },
+    {
+      "type": "paragraph",
+      "text": "Incident runbook min elemanları: detection trigger → immediate containment → root cause → remediation → post-incident review → guardrail update. Bu sistem yalnız geliştirilmez, işletilir."
+    },
+    {
+      "type": "table",
+      "caption": "Kill-switch ve runbook senaryoları",
+      "headers": [
+        "Senaryo",
+        "Eylem"
+      ],
+      "rows": [
+        [
+          "ChangeSet apply yarıda kaldı",
+          "idempotent yeniden uygula ya da rollback state machine"
+        ],
+        [
+          "Migration 2 saat sürdü",
+          "pause/resume; expand aşamasında durdur, dual-read'de bekle"
+        ],
+        [
+          "Tenant veri sızıntısı şüphesi",
+          "tenant-level kill switch + RLS denetimi + audit forensic"
+        ],
+        [
+          "AI maliyeti patladı",
+          "token-rate circuit breaker + günlük bütçe durdurma"
+        ],
+        [
+          "MCP tool compromise",
+          "MCP server disable switch + capability allowlist iptali"
+        ],
+        [
+          "RLS policy bug",
+          "global koruma; etkilenen tenant'lar için bağlam=sıfır-satır"
+        ],
+        [
+          "Geri alma başarısız",
+          "önceki snapshot'tan restore (son çare)"
+        ]
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "danger",
+      "label": "Üç kill switch + feature flag",
+      "body": "Tenant-level kill switch · AI-agent kill switch · MCP server disable. Ek: feature flag, prompt rollback, traffic reroute. Her biri tek tıkla erişilebilir ve auditlenir."
     }
   ],
   "related": [

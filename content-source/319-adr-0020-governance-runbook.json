@@ -1,0 +1,64 @@
+{
+  "id": "adr-0020",
+  "title": "ADR-0020: AI Governance & Model Ops + Operations/Runbook",
+  "subtitle": "Karar (geliştirme adımı) — 13 Haziran 2026. Gerekçe + 5N1K eğitim seti.",
+  "cluster": "kararlar",
+  "order": 20,
+  "icon": "ph-gauge",
+  "tags": [
+    "adr",
+    "karar",
+    "geliştirme-adımı",
+    "governance"
+  ],
+  "enrich": {
+    "lesson": {
+      "ne": "AI sistem NIST AI RMF (Govern/Map/Measure/Manage) ile yönetilir; model/prompt pinlenir, eval'lenir, runbook+kill-switch ile işletilir.",
+      "nicin": "AI-first sistem governance olmadan zamanla kontrol dışına çıkar; işletilemeyen sistem üretimde çöker.",
+      "nasil": "Versiyon pinleme + rollback, eval dataset, drift+CI gating, maliyet circuit breaker, üç kill-switch, incident runbook.",
+      "nerede": "crosscut/cc-obs (governance), cc-obs-deep (runbook/kill-switch), egitim/edu-u20 (restore).",
+      "ne_zaman": "13 Haziran 2026 (Faz 6).",
+      "kim": "Platform ekibi yönetir; SRE runbook'u koşar; mimar guardrail'ı tanımlar.",
+      "analoji": "Uçak kokpiti: göstergeler (observability), kontrol listesi (runbook), acil kapatma kolu (kill-switch) — pilot uçağı sadece kaldırmaz, güvenle işletir."
+    }
+  },
+  "blocks": [
+    {
+      "type": "callout",
+      "variant": "tip",
+      "label": "Geliştirme adımı",
+      "body": "Bu ADR bir geliştirme adımıdır: AI governance + operasyon kararı + gerekçe + 5N1K. İçerik sahip sayfalara (cc-obs, cc-obs-deep, edu-u20) entegre edildi."
+    },
+    {
+      "type": "callout",
+      "variant": "info",
+      "label": "Gerekçe",
+      "body": "Test ve güvenlik vardı ama governance ve operasyon ayrı ele alınmamıştı. AI-first sistem model drift, maliyet patlaması ve sessiz hata üretebilir; işletme katmanı şart."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Karar"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        "NIST AI RMF dört işlev + dört değerlendirme operasyona indirilir.",
+        "Model + prompt versiyon pinleme (test edilmiş rollback); eval dataset = kalp; drift + CI gating.",
+        "Input/output guardrail (PII/injection/halüsinasyon); tenant verisi eğitime gitmez.",
+        "Maliyet guardrail: günlük bütçe, tenant kotası, token-rate circuit breaker.",
+        "Operasyon: incident runbook + üç kill-switch (tenant/agent/MCP) + feature flag + prompt rollback."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Sonuç (artı / kabul edilen maliyet)"
+    },
+    {
+      "type": "paragraph",
+      "text": "Olumlu: sistem zamanla kontrol dışına çıkmaz; olaylar runbook'la yönetilir; maliyet sınırlı. Maliyet: eval/governance altyapısı + runbook bakımı + kill-switch testleri."
+    }
+  ]
+}

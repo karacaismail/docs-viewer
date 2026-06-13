@@ -4212,6 +4212,17 @@
    "slug": "egitim/edu-u20-backup",
    "blockId": "block-edu-u20-backup-p-2",
    "blockType": "paragraph",
+   "title": "AI üretiminde geri-alma ve restore matrisi",
+   "text": "AI üretim üç geri-alma katmanı kullanır: (1) ChangeSet rollback (tersine operation), (2) soft-delete 30 gün (alan/kayıt), (3) snapshot/PITR restore (telafi-edilemez işlerde son çare — edu-u12). Audit log retention politikası ayrı; büyürse arşivlenir. Sentetik önizleme verisi gerçek veriye karışırsa, 'örnek veri' etiketi + üretim sınırıyla tespit edilip temizlenir. Geri-alma planı her yıkıcı işlemde önceden görünür."
+  },
+  {
+   "id": "search-page-edu-u20-backup-block-edu-u20-backup-p-3",
+   "kind": "block",
+   "pageId": "page-edu-u20-backup",
+   "pageTitle": "Backup Disiplini — felaket önleme",
+   "slug": "egitim/edu-u20-backup",
+   "blockId": "block-edu-u20-backup-p-3",
+   "blockType": "paragraph",
    "title": "Derinlemesine",
    "text": "3-2-1 kuralı (altın standart):"
   },
@@ -4227,12 +4238,12 @@
    "text": "3 kopya verinin 2 farklı fiziksel medya (disk + S3) 1 kopyası coğrafi olarak farklı yerde"
   },
   {
-   "id": "search-page-edu-u20-backup-block-edu-u20-backup-p-3",
+   "id": "search-page-edu-u20-backup-block-edu-u20-backup-p-4",
    "kind": "block",
    "pageId": "page-edu-u20-backup",
    "pageTitle": "Backup Disiplini — felaket önleme",
    "slug": "egitim/edu-u20-backup",
-   "blockId": "block-edu-u20-backup-p-3",
+   "blockId": "block-edu-u20-backup-p-4",
    "blockType": "paragraph",
    "title": "Derinlemesine",
    "text": "Backup türleri:"
@@ -4249,12 +4260,12 @@
    "text": "Full backup: Tüm DB. Haftalık. Incremental: Son backup'tan beri değişen. Günlük. Differential: Son full'dan beri değişen. Günlük. WAL archiving (PITR): Sürekli; her transaction loglanır. Postgres standart."
   },
   {
-   "id": "search-page-edu-u20-backup-block-edu-u20-backup-p-4",
+   "id": "search-page-edu-u20-backup-block-edu-u20-backup-p-5",
    "kind": "block",
    "pageId": "page-edu-u20-backup",
    "pageTitle": "Backup Disiplini — felaket önleme",
    "slug": "egitim/edu-u20-backup",
-   "blockId": "block-edu-u20-backup-p-4",
+   "blockId": "block-edu-u20-backup-p-5",
    "blockType": "paragraph",
    "title": "Derinlemesine",
    "text": "Point-in-Time Recovery (PITR):"
@@ -4271,12 +4282,12 @@
    "text": "'Geçen pazartesi 14:23'ten önceki haline geri dön' diyebilirsin Postgres WAL archive ile mümkün RPO ~saniye seviye"
   },
   {
-   "id": "search-page-edu-u20-backup-block-edu-u20-backup-p-5",
+   "id": "search-page-edu-u20-backup-block-edu-u20-backup-p-6",
    "kind": "block",
    "pageId": "page-edu-u20-backup",
    "pageTitle": "Backup Disiplini — felaket önleme",
    "slug": "egitim/edu-u20-backup",
-   "blockId": "block-edu-u20-backup-p-5",
+   "blockId": "block-edu-u20-backup-p-6",
    "blockType": "paragraph",
    "title": "Derinlemesine",
    "text": "Backup verification (zorunlu):"
@@ -4293,12 +4304,12 @@
    "text": "Backup alındı = yarısı Restore test edildi = tamamı Aylık: restore staging'e, smoke test çalıştır 'Backup işliyor görünüyor' yeterli değil; gerçekten dönüldüğü kanıtlanmalı"
   },
   {
-   "id": "search-page-edu-u20-backup-block-edu-u20-backup-p-6",
+   "id": "search-page-edu-u20-backup-block-edu-u20-backup-p-7",
    "kind": "block",
    "pageId": "page-edu-u20-backup",
    "pageTitle": "Backup Disiplini — felaket önleme",
    "slug": "egitim/edu-u20-backup",
-   "blockId": "block-edu-u20-backup-p-6",
+   "blockId": "block-edu-u20-backup-p-7",
    "blockType": "paragraph",
    "title": "Derinlemesine",
    "text": "Yaygın felaketler:"
@@ -6555,6 +6566,39 @@
    "slug": "crosscut/cc-obs-deep",
    "blockId": "block-cc-obs-deep-p-2",
    "blockType": "paragraph",
+   "title": "AI-first runbook + kill switch",
+   "text": "Incident runbook min elemanları: detection trigger → immediate containment → root cause → remediation → post-incident review → guardrail update. Bu sistem yalnız geliştirilmez, işletilir."
+  },
+  {
+   "id": "search-page-cc-obs-deep-block-cc-obs-deep-table-2",
+   "kind": "block",
+   "pageId": "page-cc-obs-deep",
+   "pageTitle": "Health Check + Readiness/Liveness Probes",
+   "slug": "crosscut/cc-obs-deep",
+   "blockId": "block-cc-obs-deep-table-2",
+   "blockType": "table",
+   "title": "AI-first runbook + kill switch",
+   "text": "Senaryo Eylem ChangeSet apply yarıda kaldı idempotent yeniden uygula ya da rollback state machine Migration 2 saat sürdü pause/resume; expand aşamasında durdur, dual-read'de bekle Tenant veri sızıntısı şüphesi tenant-level kill switch + RLS denetimi + audit forensic AI maliyeti patladı token-rate circuit breaker + günlük bütçe durdurma MCP tool compromise MCP server disable switch + capability allowlist iptali RLS policy bug global koruma; etkilenen tenant'lar için bağlam=sıfır-satır Geri alma başarısız önceki snapshot'tan restore (son çare)"
+  },
+  {
+   "id": "search-page-cc-obs-deep-block-cc-obs-deep-co-3",
+   "kind": "block",
+   "pageId": "page-cc-obs-deep",
+   "pageTitle": "Health Check + Readiness/Liveness Probes",
+   "slug": "crosscut/cc-obs-deep",
+   "blockId": "block-cc-obs-deep-co-3",
+   "blockType": "callout",
+   "title": "AI-first runbook + kill switch",
+   "text": "Tenant-level kill switch · AI-agent kill switch · MCP server disable. Ek: feature flag, prompt rollback, traffic reroute. Her biri tek tıkla erişilebilir ve auditlenir."
+  },
+  {
+   "id": "search-page-cc-obs-deep-block-cc-obs-deep-p-3",
+   "kind": "block",
+   "pageId": "page-cc-obs-deep",
+   "pageTitle": "Health Check + Readiness/Liveness Probes",
+   "slug": "crosscut/cc-obs-deep",
+   "blockId": "block-cc-obs-deep-p-3",
+   "blockType": "paragraph",
    "title": "Derinlemesine",
    "text": "3 farklı endpoint:"
   },
@@ -6570,12 +6614,12 @@
    "text": "/health — genel durum (UI dashboard) /ready — trafik kabul (Load balancer) /live — alive check (Kubernetes)"
   },
   {
-   "id": "search-page-cc-obs-deep-block-cc-obs-deep-p-3",
+   "id": "search-page-cc-obs-deep-block-cc-obs-deep-p-4",
    "kind": "block",
    "pageId": "page-cc-obs-deep",
    "pageTitle": "Health Check + Readiness/Liveness Probes",
    "slug": "crosscut/cc-obs-deep",
-   "blockId": "block-cc-obs-deep-p-3",
+   "blockId": "block-cc-obs-deep-p-4",
    "blockType": "paragraph",
    "title": "Derinlemesine",
    "text": "Farklar:"
@@ -6592,12 +6636,12 @@
    "text": "/ready FAIL = LB trafik göndermez (geçici) /live FAIL = Kubernetes pod öldürür (kalıcı)"
   },
   {
-   "id": "search-page-cc-obs-deep-block-cc-obs-deep-p-4",
+   "id": "search-page-cc-obs-deep-block-cc-obs-deep-p-5",
    "kind": "block",
    "pageId": "page-cc-obs-deep",
    "pageTitle": "Health Check + Readiness/Liveness Probes",
    "slug": "crosscut/cc-obs-deep",
-   "blockId": "block-cc-obs-deep-p-4",
+   "blockId": "block-cc-obs-deep-p-5",
    "blockType": "paragraph",
    "title": "Derinlemesine",
    "text": "Kontroller:"
@@ -6614,12 +6658,12 @@
    "text": "GET /health { status: 'ok', checks: { database: { status: 'ok', latency_ms: 5 }, redis: { status: 'ok', latency_ms: 2 }, stripe: { status: 'degraded', latency_ms: 800 } }, version: '2.4.1', uptime_seconds: 3600 }"
   },
   {
-   "id": "search-page-cc-obs-deep-block-cc-obs-deep-p-5",
+   "id": "search-page-cc-obs-deep-block-cc-obs-deep-p-6",
    "kind": "block",
    "pageId": "page-cc-obs-deep",
    "pageTitle": "Health Check + Readiness/Liveness Probes",
    "slug": "crosscut/cc-obs-deep",
-   "blockId": "block-cc-obs-deep-p-5",
+   "blockId": "block-cc-obs-deep-p-6",
    "blockType": "paragraph",
    "title": "Derinlemesine",
    "text": "Tehlike: /health'da ağır iş = DB yıkılır. SELECT 1 yeter."
@@ -23928,6 +23972,61 @@
    "text": "Ne?: Otomasyon kuralları (ECA) declarative JSON DSL'dir; serbest kod yok, action allowlist'ten seçilir. Niçin?: Serbest kod/SQL/shell güvenlik açığı ve geri-alınamaz yan etki riskidir; no-code kullanıcı güvenle kural kurmalı. Nasıl?: event/condition/action JSON; güvenlik kapısı döngü/yan-tenant/geri-alınamaz/derinlik-6/idempotency tarar; dış etki n8n'e delege. Nerede?: layer1/layer1-workflow + n8n allowlist akışları. Ne zaman?: 13 Haziran 2026 (Faz 5); v1 kapsamı: serbest kod yok. Kim?: AI kural önerir; motor doğrular/uygular; dış etkide insan onayı. Analoji: Termostat: 'sıcaklık 20'nin altına düşerse kaloriferi aç' — basit kural, ama gaz vanasını (dış etki) doğrudan açmaz, yetkili sisteme haber verir."
   },
   {
+   "id": "search-page-adr-0020-governance-runbook-block-adr-0020-governance-runbook-co",
+   "kind": "block",
+   "pageId": "page-adr-0020-governance-runbook",
+   "pageTitle": "ADR-0020: AI Governance & Model Ops + Operations/Runbook",
+   "slug": "kararlar/adr-0020-governance-runbook",
+   "blockId": "block-adr-0020-governance-runbook-co",
+   "blockType": "callout",
+   "title": "ADR-0020: AI Governance & Model Ops + Operations/Runbook",
+   "text": "Bu ADR bir geliştirme adımıdır: AI governance + operasyon kararı + gerekçe + 5N1K. İçerik sahip sayfalara (cc-obs, cc-obs-deep, edu-u20) entegre edildi."
+  },
+  {
+   "id": "search-page-adr-0020-governance-runbook-block-adr-0020-governance-runbook-co-2",
+   "kind": "block",
+   "pageId": "page-adr-0020-governance-runbook",
+   "pageTitle": "ADR-0020: AI Governance & Model Ops + Operations/Runbook",
+   "slug": "kararlar/adr-0020-governance-runbook",
+   "blockId": "block-adr-0020-governance-runbook-co-2",
+   "blockType": "callout",
+   "title": "ADR-0020: AI Governance & Model Ops + Operations/Runbook",
+   "text": "Test ve güvenlik vardı ama governance ve operasyon ayrı ele alınmamıştı. AI-first sistem model drift, maliyet patlaması ve sessiz hata üretebilir; işletme katmanı şart."
+  },
+  {
+   "id": "search-page-adr-0020-governance-runbook-block-adr-0020-governance-runbook-list",
+   "kind": "block",
+   "pageId": "page-adr-0020-governance-runbook",
+   "pageTitle": "ADR-0020: AI Governance & Model Ops + Operations/Runbook",
+   "slug": "kararlar/adr-0020-governance-runbook",
+   "blockId": "block-adr-0020-governance-runbook-list",
+   "blockType": "list",
+   "title": "Karar",
+   "text": "NIST AI RMF dört işlev + dört değerlendirme operasyona indirilir. Model + prompt versiyon pinleme (test edilmiş rollback); eval dataset = kalp; drift + CI gating. Input/output guardrail (PII/injection/halüsinasyon); tenant verisi eğitime gitmez. Maliyet guardrail: günlük bütçe, tenant kotası, token-rate circuit breaker. Operasyon: incident runbook + üç kill-switch (tenant/agent/MCP) + feature flag + prompt rollback."
+  },
+  {
+   "id": "search-page-adr-0020-governance-runbook-block-adr-0020-governance-runbook-p",
+   "kind": "block",
+   "pageId": "page-adr-0020-governance-runbook",
+   "pageTitle": "ADR-0020: AI Governance & Model Ops + Operations/Runbook",
+   "slug": "kararlar/adr-0020-governance-runbook",
+   "blockId": "block-adr-0020-governance-runbook-p",
+   "blockType": "paragraph",
+   "title": "Sonuç (artı / kabul edilen maliyet)",
+   "text": "Olumlu: sistem zamanla kontrol dışına çıkmaz; olaylar runbook'la yönetilir; maliyet sınırlı. Maliyet: eval/governance altyapısı + runbook bakımı + kill-switch testleri."
+  },
+  {
+   "id": "search-page-adr-0020-governance-runbook-block-adr-0020-governance-runbook-lesson",
+   "kind": "block",
+   "pageId": "page-adr-0020-governance-runbook",
+   "pageTitle": "ADR-0020: AI Governance & Model Ops + Operations/Runbook",
+   "slug": "kararlar/adr-0020-governance-runbook",
+   "blockId": "block-adr-0020-governance-runbook-lesson",
+   "blockType": "definitionList",
+   "title": "Bu konu yedi soruda",
+   "text": "Ne?: AI sistem NIST AI RMF (Govern/Map/Measure/Manage) ile yönetilir; model/prompt pinlenir, eval'lenir, runbook+kill-switch ile işletilir. Niçin?: AI-first sistem governance olmadan zamanla kontrol dışına çıkar; işletilemeyen sistem üretimde çöker. Nasıl?: Versiyon pinleme + rollback, eval dataset, drift+CI gating, maliyet circuit breaker, üç kill-switch, incident runbook. Nerede?: crosscut/cc-obs (governance), cc-obs-deep (runbook/kill-switch), egitim/edu-u20 (restore). Ne zaman?: 13 Haziran 2026 (Faz 6). Kim?: Platform ekibi yönetir; SRE runbook'u koşar; mimar guardrail'ı tanımlar. Analoji: Uçak kokpiti: göstergeler (observability), kontrol listesi (runbook), acil kapatma kolu (kill-switch) — pilot uçağı sadece kaldırmaz, güvenle işletir."
+  },
+  {
    "id": "search-page-stack-marketing-block-stack-marketing-ozet",
    "kind": "block",
    "pageId": "page-stack-marketing",
@@ -24352,6 +24451,39 @@
    "pageTitle": "Observability + Performance + DR",
    "slug": "crosscut/crosscut-observability",
    "blockId": "block-crosscut-observability-p-2",
+   "blockType": "paragraph",
+   "title": "AI Governance & Model Ops (NIST AI RMF)",
+   "text": "NIST GenAI profili dört işlev (Govern / Map / Measure / Manage) ve dört değerlendirme (Governance, Content Provenance, Pre-deployment Testing, Incident Disclosure) tanımlar. AI-first sistem bunları operasyona indirir; aksi halde zamanla kontrol dışına çıkar."
+  },
+  {
+   "id": "search-page-crosscut-observability-block-crosscut-observability-list-5",
+   "kind": "block",
+   "pageId": "page-crosscut-observability",
+   "pageTitle": "Observability + Performance + DR",
+   "slug": "crosscut/crosscut-observability",
+   "blockId": "block-crosscut-observability-list-5",
+   "blockType": "list",
+   "title": "AI Governance & Model Ops (NIST AI RMF)",
+   "text": "Model sağlayıcı + versiyon pinleme (test edilmiş rollback switch'i); model değişince regression eval koşar. Prompt template versioning (A/B + registry deployment label'ları); prompt rollback bir runbook eylemidir. Eval dataset = sistemin kalbi: sürekli büyür, kullanıcı feedback'i eval'e geri döner; CI gating'e bağlı. Tenant verisi model eğitimine gitmez; PII prompt'a girmeden maskelenir (input guardrail) + çıktı guardrail (PII/halüsinasyon/toksik/format). Maliyet guardrail: günlük model bütçesi, tenant kotası, token-rate circuit breaker. Drift detection + human-override oranı ölçümü + hallucination tespiti; span-level tracing."
+  },
+  {
+   "id": "search-page-crosscut-observability-block-crosscut-observability-co",
+   "kind": "block",
+   "pageId": "page-crosscut-observability",
+   "pageTitle": "Observability + Performance + DR",
+   "slug": "crosscut/crosscut-observability",
+   "blockId": "block-crosscut-observability-co",
+   "blockType": "callout",
+   "title": "AI Governance & Model Ops (NIST AI RMF)",
+   "text": "NIST GenAI 12 risk (prompt injection, halüsinasyon, hassas veri sızıntısı, ölçekte kötüye kullanım) red-team hedeflerine ve acceptance criteria'ya çevrilir (sus-actions)."
+  },
+  {
+   "id": "search-page-crosscut-observability-block-crosscut-observability-p-3",
+   "kind": "block",
+   "pageId": "page-crosscut-observability",
+   "pageTitle": "Observability + Performance + DR",
+   "slug": "crosscut/crosscut-observability",
+   "blockId": "block-crosscut-observability-p-3",
    "blockType": "paragraph",
    "title": "Derinlemesine",
    "text": "Logging, metrics, tracing, alerting, backup, restore."
