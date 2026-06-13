@@ -12,6 +12,16 @@ async function noHorizontalScroll(page: Page) {
   expect(overflow, "yatay scroll farkı (px)").toBeLessThanOrEqual(0);
 }
 
+async function openReadySearch(page: Page) {
+  await page.getByRole("heading", { level: 1 }).waitFor();
+  await page.keyboard.press("Control+k");
+  const input = page.getByRole("combobox", { name: "Dokümanlarda ara" });
+  await expect(input).toBeVisible();
+  await expect(input).toBeFocused();
+  await expect(input).toHaveAttribute("placeholder", /^Ara/);
+  return input;
+}
+
 test.describe("320px sözleşmesi (kabul #1)", () => {
   test.skip(({ viewport }) => (viewport?.width ?? 9999) > 320, "yalnız mobile-320 projesi");
 
@@ -41,9 +51,7 @@ test.describe("klavye akışı (kabul #7, 13 §Overlay)", () => {
 
   test("Ctrl+K → sorgu → ok → Enter → block anchor'a iner; Escape kapatır", async ({ page }) => {
     await page.goto(FIRST);
-    await page.keyboard.press("Control+k");
-    const input = page.getByRole("combobox", { name: "Dokümanlarda ara" });
-    await expect(input).toBeFocused();
+    const input = await openReadySearch(page);
     await input.fill("outbox");
     await expect(page.locator("#search-results").getByRole("option").first()).toBeVisible();
     // Glossary sonuçları tasarım gereği hash taşımaz (13 §Overlay 4);
@@ -67,9 +75,9 @@ test.describe("klavye akışı (kabul #7, 13 §Overlay)", () => {
 
   test("boş sonuç durumu duyurulur", async ({ page }) => {
     await page.goto(FIRST);
-    await page.keyboard.press("Control+k");
-    await page.getByRole("combobox", { name: "Dokümanlarda ara" }).fill("xqzwkvbnmasdf");
-    await expect(page.getByRole("status")).toContainText("Sonuç bulunamadı");
+    const input = await openReadySearch(page);
+    await input.fill("xqzwkvbnmasdf");
+    await expect(page.locator("#search-results").getByRole("status")).toContainText("Sonuç bulunamadı");
   });
 });
 
