@@ -944,6 +944,30 @@
     "analoji": "Aile fotoğraf albümü gibi — kim göreceğini liste değil akrabalık belirler; yeni kuzen otomatik dahildir."
    }
   },
+  "term-principal-kernel-authz": {
+   "longExplanation": "Bir işlemin asıl yetki sahibi aktör (insan/servis); AI ajan asla principal değildir, onun adına çalışır.\n\nAgent'ın kendi başına yetki sahibi olmasını engeller. Türkçesi: Asıl yetki sahibi.",
+   "sevenQuestions": {
+    "ne": "Bir işlemin asıl yetki sahibi aktör (insan ya da servis); sistemde kararın hesabını veren taraftır.",
+    "nicin": "AI ajan kendi başına principal olursa aşırı otonomi, confused-deputy ve yetki yükseltme riski doğar.",
+    "nasil": "Her oturum bir principal'a bağlanır; ajan onun adına çalışır ve yetkisini asla aşamaz.",
+    "nerede": "Kernel authz + aksiyon yüzeyi politika kapısı; audit'te human_actor_id olarak yazılır.",
+    "ne_zaman": "Her tool çağrısı ve her ChangeSet üretiminde principal kimliği taşınır.",
+    "kim": "Principal bir insan kullanıcı ya da servis hesabıdır; ajan yalnız temsilcidir.",
+    "analoji": "Vekaletname: avukat (ajan) müvekkil (principal) adına iş yapar, ama yetkisi vekaletin sınırını aşamaz."
+   }
+  },
+  "term-delegation-kernel-authz": {
+   "longExplanation": "Bir aktörün yetkisini AI ajana sınırlı biçimde devretmesi; ajan kimliğe bürünmez, adına çalışır ve yetkisini aşamaz.\n\nConfused-deputy ve kimliğe bürünmeyi önler. Türkçesi: Yetki devri.",
+   "sevenQuestions": {
+    "ne": "Bir aktörün yetkisini AI ajana sınırlı biçimde devretmesi; ajan kimliğe bürünmez, adına çalışır.",
+    "nicin": "Kimliğe bürünme (impersonation) izini siler ve yetki sızıntısı yaratır; delegasyon hesap verebilir tutar.",
+    "nasil": "Etkin yetki = kullanıcı ∩ agent_capability kesişimidir; ajan devredilen yetkiyi daraltabilir, genişletemez.",
+    "nerede": "Kernel authz; MCP/geliştirici-AI yolunun yetki tavanı son-kullanıcıdan kısıtlıdır.",
+    "ne_zaman": "Ajan bir kullanıcı adına aksiyon önerirken ve uygularken.",
+    "kim": "Yetkiyi devreden insan/servis; devralan sınırlı yardımcı ajan.",
+    "analoji": "Otel vale anahtarı: arabanı sürebilir ama bagajı açamaz; devredilen yetki kısıtlıdır."
+   }
+  },
   "term-multi-tenancy-kernel-tenancy": {
    "longExplanation": "Tek kod tabanı, birçok müşteri (tenant) hizmet verir.\n\nSaaS'ın temel ekonomisi. Türkçesi: Çoklu kiracılık.\n\nKernel-tenancy bağlamında multi-tenancy gün-1 mimari kararıdır: izolasyon stratejisi (satır bazlı + tenant_id), kota ve fatura sınırı çekirdekte yaşar; hiçbir modül tenant'sız veri yazamaz.",
    "realWorldAnalogy": "Apartman yönetimi gibi — su tesisatı ortak ama her dairenin sayacı ayrı; faturayı sayaç keser, komşu suyunu göremezsin.",
@@ -993,6 +1017,18 @@
     "ne_zaman": "Holding yapısındaki bir müşteri sisteme alınırken ve konsolide rapor ya da politika kalıtımı gerektiğinde karşına çıkar.",
     "kim": "Holding yöneticisi üst tenant'ı yönetir, her şirketin yöneticisi kendi alt-kiracısından sorumludur; mimar ağacın kurallarını, geliştirici de raporların ağaç üzerinden akışını kurar.",
     "analoji": "Holding organizasyon şeması gibi — her şirket kendi defterini tutar, holding hepsinin toplamını görür."
+   }
+  },
+  "term-rls-uygulama-baglami-kernel-tenancy": {
+   "longExplanation": "Her request transaction'ında SET LOCAL ile kurulan tenant bağlamı; bağlam yoksa sorgu sıfır satır döner.\n\nPgBouncer pooling'de çapraz-tenant sızıntıyı engeller. Türkçesi: Tenant context.",
+   "sevenQuestions": {
+    "ne": "Her request transaction'ında SET LOCAL ile kurulan tenant bağlamı; sorguların hangi tenant'a ait olduğunu belirler.",
+    "nicin": "PgBouncer transaction pooling'de SET kullanılırsa bağlam bir sonraki isteğe sızar; çapraz-tenant veri kaçağı olur.",
+    "nasil": "BEGIN; SET LOCAL app.tenant_id=...; sorgular; COMMIT. Bağlam kurulmazsa sorgu sıfır satır döner (güvenli varsayılan).",
+    "nerede": "Postgres RLS policy + Prisma interactive transaction; background job ve MCP çağrıları da bağlamı açıkça enjekte eder.",
+    "ne_zaman": "Her veri erişiminde, sorgudan önce, transaction kapsamında kurulur.",
+    "kim": "Uygulama katmanı kurar; migration user BYPASSRLS ile ayrık ve auditlidir.",
+    "analoji": "Kütüphanede okuma kartı: yalnız kendi rafına erişirsin; kartsız gelirsen hiçbir rafı göremezsin."
    }
   },
   "term-event-bus-kernel-bus": {
@@ -5819,6 +5855,18 @@
     "ne_zaman": "Yeni bir veri tipi sisteme eklenirken saklama süresi de tanımlanır; süre dolduğunda otomatik imha tetiklenir, denetimlerde de politika belgesi olarak gösterilir.",
     "kim": "Süreleri hukuk ve uyum tarafıyla birlikte ürün sahibi belirler, mimar politikayı sisteme bağlar; junior geliştirici veri tipi eklerken bu alanı boş bırakmamayı öğrenir.",
     "analoji": "Eczane reçete arşivi gibi — mevzuat 'beş yıl sakla' der, mahremiyet 'süresi dolanı imha et' der; dolap takvimle çalışır."
+   }
+  },
+  "term-audit-forensic-layer1-audit": {
+   "longExplanation": "Olay sonrası inceleme için human/agent/model/tool/approval/changeset ayrımını yazan denetim şeması.\n\n'Kararı kim verdi, AI mı önerdi, motor mu uyguladı' sorusunu cevaplar. Türkçesi: Adli denetim izi.",
+   "sevenQuestions": {
+    "ne": "Olay sonrası inceleme için human/agent/model/tool/approval/changeset ayrımını yazan denetim şeması.",
+    "nicin": "AI-first sistemde 'kim yaptı' yetmez; kararı insan mı verdi, AI mı önerdi, motor mu uyguladı ayrılmalı.",
+    "nasil": "Her olayda human_actor_id, agent_id, model_id, tool_id, approval_id, change_set_id, before/after_hash yazılır.",
+    "nerede": "Audit katmanı; delegasyon izi ve risk skoru ile birlikte tutulur.",
+    "ne_zaman": "Her aksiyon, ChangeSet ve PII erişiminde; olay incelemesinde okunur.",
+    "kim": "Sistem yazar; denetçi ve incident ekibi okur.",
+    "analoji": "Uçak kara kutusu: kaza sonrası kimin ne zaman ne yaptığını ayrıntılı geri oynatır."
    }
   },
   "term-bm25-layer1-search": {

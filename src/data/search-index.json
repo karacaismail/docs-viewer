@@ -1979,6 +1979,17 @@
    "slug": "kernel/kernel-authz",
    "blockId": "block-kernel-authz-p-14",
    "blockType": "paragraph",
+   "title": "Agent yetki katmanı — kesişim kuralı",
+   "text": "RBAC/ABAC/ReBAC insan yetkisini çözer; sisteme AI ajan eklenince yetki kesişimle daraltılır: etkin = kullanıcı_rolü ∩ agent_capability ∩ tool_scope ∩ aksiyon_riski (asla birleşim). Ajan asla principal değildir, bir aktör adına çalışır (delegasyon, kimliğe bürünme değil). Merkezî politika kapısı her tool çağrısında bu kesişimi hesaplar; DisableProtection sınıfı (RLS/PII/audit/şema kapatma) capability allowlist'ine asla giremez. Aksiyon sınıflandırması sus-actions."
+  },
+  {
+   "id": "search-page-kernel-authz-block-kernel-authz-p-15",
+   "kind": "block",
+   "pageId": "page-kernel-authz",
+   "pageTitle": "Authorization",
+   "slug": "kernel/kernel-authz",
+   "blockId": "block-kernel-authz-p-15",
+   "blockType": "paragraph",
    "title": "Derinlemesine",
    "text": "Kim ne yapabilir? Query layer'a örülmüş — application-level if-check yetmez."
   },
@@ -3156,6 +3167,17 @@
    "slug": "scale/scale-outbox",
    "blockId": "block-scale-outbox-p-6",
    "blockType": "paragraph",
+   "title": "ChangeSet/ECA ve outbox",
+   "text": "ChangeSet apply ve ECA'nın dış etkileri (bildirim, public yayın kuyruğu) outbox ile dual-write tutarlılığı içinde yürür: veri yazımı ile olay yayını aynı transaction'da kaydedilir, sonra güvenle iletilir. 'Yeni kayıt → arama indeksine ekle / public ise yayın kuyruğu' ECA'sı (layer1-workflow) outbox üzerinden çalışır; mesaj kaybı/çift gönderim olmaz."
+  },
+  {
+   "id": "search-page-scale-outbox-block-scale-outbox-p-7",
+   "kind": "block",
+   "pageId": "page-scale-outbox",
+   "pageTitle": "Transactional Outbox",
+   "slug": "scale/scale-outbox",
+   "blockId": "block-scale-outbox-p-7",
+   "blockType": "paragraph",
    "title": "Derinlemesine",
    "text": "Dual-write problem'inin tek doğru çözümü. Save pipeline'a örülü."
   },
@@ -4058,6 +4080,39 @@
    "slug": "egitim/edu-u19-owasp",
    "blockId": "block-edu-u19-owasp-p-2",
    "blockType": "paragraph",
+   "title": "OWASP LLM Top 10 (2025) — AI-first ek riskler",
+   "text": "Klasik web OWASP'ının yanına, LLM uygulamalarına özgü on risk gelir; bu sistemde her birinin bir savunma sahibi vardır."
+  },
+  {
+   "id": "search-page-edu-u19-owasp-block-edu-u19-owasp-table-2",
+   "kind": "block",
+   "pageId": "page-edu-u19-owasp",
+   "pageTitle": "Güvenlik Tuzakları — OWASP Top 10",
+   "slug": "egitim/edu-u19-owasp",
+   "blockId": "block-edu-u19-owasp-table-2",
+   "blockType": "table",
+   "title": "OWASP LLM Top 10 (2025) — AI-first ek riskler",
+   "text": "Risk Bu sistemdeki savunma LLM01 Prompt Injection sub_prompt untrusted + ChangeSet kapısı (s-studio) LLM02 Sensitive Information Disclosure PII matrisi + maskeleme (cc-privacy) LLM03 Supply Chain model/prompt versiyon pinleme (cc-obs) LLM04 Data & Model Poisoning sentetik veri deterministic faker; tenant verisi eğitime gitmez LLM05 Improper Output Handling tipli ChangeSet + çıktı guardrail (sus-actions) LLM06 Excessive Agency capability kesişimi + aksiyon taksonomisi (sus-actions) LLM07 System Prompt Leakage prompt registry + sub_prompt sınırı LLM08 Vector/Embedding Weaknesses tenant-RLS hibrit aramaya da uygulanır (k-tenancy) LLM09 Misinformation güven kalibrasyonu (dış sinyal) + insan onayı LLM10 Unbounded Consumption maliyet circuit breaker + kota (cc-obs-deep)"
+  },
+  {
+   "id": "search-page-edu-u19-owasp-block-edu-u19-owasp-co-3",
+   "kind": "block",
+   "pageId": "page-edu-u19-owasp",
+   "pageTitle": "Güvenlik Tuzakları — OWASP Top 10",
+   "slug": "egitim/edu-u19-owasp",
+   "blockId": "block-edu-u19-owasp-co-3",
+   "blockType": "callout",
+   "title": "OWASP LLM Top 10 (2025) — AI-first ek riskler",
+   "text": "Prompt injection OWASP LLM listesinde üst üste birinci. Tek savunma yetmez: provenance ayrımı (trusted talimat ↔ untrusted veri), capability daraltma, deterministik politika LLM dışında, egress kısıtı — katmanlı."
+  },
+  {
+   "id": "search-page-edu-u19-owasp-block-edu-u19-owasp-p-3",
+   "kind": "block",
+   "pageId": "page-edu-u19-owasp",
+   "pageTitle": "Güvenlik Tuzakları — OWASP Top 10",
+   "slug": "egitim/edu-u19-owasp",
+   "blockId": "block-edu-u19-owasp-p-3",
+   "blockType": "paragraph",
    "title": "Derinlemesine",
    "text": "OWASP Top 10 (2021):"
   },
@@ -4073,12 +4128,12 @@
    "text": "Broken Access Control (IDOR): /api/order/123 istek atınca başkasının siparişini görme. Çözüm: her endpoint kullanıcı yetkisini DB'de doğrular. Cryptographic Failures: Parolayı MD5'le hash'leme, https kullanmama. Çözüm: bcrypt/argon2, HTTPS zorunlu. Injection (SQL/NoSQL/Command): WHERE name = '${userInput}' = saldırgan yazılır SQL çalışır. Çözüm: prepared statement (WHERE name = $1). Insecure Design: Şifre sıfırlama maili sınırsız → spam. Çözüm: rate limit + token TTL. Security Misconfiguration: Default parolalar, açık port'lar, debug mode prod'da. Çözüm: checklist + Trivy/Snyk tarama. Vulnerable Components: 3 yıllık library, bilinen CVE. Çözüm: Dependabot + haftalık update. Authentication Failures: Brute force, parola reuse. Çözüm: rate limit + MFA + breach password check. Software & Data "
   },
   {
-   "id": "search-page-edu-u19-owasp-block-edu-u19-owasp-p-3",
+   "id": "search-page-edu-u19-owasp-block-edu-u19-owasp-p-4",
    "kind": "block",
    "pageId": "page-edu-u19-owasp",
    "pageTitle": "Güvenlik Tuzakları — OWASP Top 10",
    "slug": "egitim/edu-u19-owasp",
-   "blockId": "block-edu-u19-owasp-p-3",
+   "blockId": "block-edu-u19-owasp-p-4",
    "blockType": "paragraph",
    "title": "Derinlemesine",
    "text": "XSS (Cross-Site Scripting): Saldırgan kullanıcının tarayıcısında JS çalıştırır."
@@ -4095,12 +4150,12 @@
    "text": "Stored: yorum alanına <script> yazılır, herkes etkilenir Reflected: URL parametre'ye yazılır, tıklayan etkilenir DOM: Frontend innerHTML saldırgan input'la dolar Çözüm: Framework auto-escape (React, Vue varsayılan) + CSP header"
   },
   {
-   "id": "search-page-edu-u19-owasp-block-edu-u19-owasp-p-4",
+   "id": "search-page-edu-u19-owasp-block-edu-u19-owasp-p-5",
    "kind": "block",
    "pageId": "page-edu-u19-owasp",
    "pageTitle": "Güvenlik Tuzakları — OWASP Top 10",
    "slug": "egitim/edu-u19-owasp",
-   "blockId": "block-edu-u19-owasp-p-4",
+   "blockId": "block-edu-u19-owasp-p-5",
    "blockType": "paragraph",
    "title": "Derinlemesine",
    "text": "CSRF (Cross-Site Request Forgery): Saldırgan başka sitedeyken senin siteye istek attırır."
@@ -8733,6 +8788,17 @@
    "slug": "scale/scale-saga",
    "blockId": "block-scale-saga-p-4",
    "blockType": "paragraph",
+   "title": "ChangeSet geri-alma ve saga telafisi",
+   "text": "Çok-adımlı ya da dış-etkili değişimde geri-alma teknik bir snapshot restore değil, saga telafisidir (iş-mantığı tersi: refund/iptal). Bazı etkiler telafi edilemez (gönderilmiş e-posta) — bu yüzden geri-alınamaz aksiyonlar akışın sonuna konur. Üç geri-alma sınıfı (tersine / expand-contract / telafi-edilemez) ChangeSet sözleşmesinde tanımlıdır (k-sozlesme)."
+  },
+  {
+   "id": "search-page-scale-saga-block-scale-saga-p-5",
+   "kind": "block",
+   "pageId": "page-scale-saga",
+   "pageTitle": "Saga + Compensation",
+   "slug": "scale/scale-saga",
+   "blockId": "block-scale-saga-p-5",
+   "blockType": "paragraph",
    "title": "Derinlemesine",
    "text": "Cross-aggregate transaction. Adım fail ederse önceki adımları geri al."
   },
@@ -9678,6 +9744,17 @@
    "pageTitle": "Idempotency Keys",
    "slug": "scale/scale-idempotency",
    "blockId": "block-scale-idempotency-p-2",
+   "blockType": "paragraph",
+   "title": "ChangeSet ve ECA idempotency",
+   "text": "Her ChangeSet (k-sozlesme) ve her ECA tetiklenişi (layer1-workflow) bir idempotency key taşır: aynı işlem tekrar uygulansa bile yan etki bir kez gerçekleşir. ECA güvenlik kapısındaki döngü kesici (maks zincir derinliği 6) ile idempotency birlikte çalışır; forward-chaining'in çift-tetikleme riskini kapatır."
+  },
+  {
+   "id": "search-page-scale-idempotency-block-scale-idempotency-p-3",
+   "kind": "block",
+   "pageId": "page-scale-idempotency",
+   "pageTitle": "Idempotency Keys",
+   "slug": "scale/scale-idempotency",
+   "blockId": "block-scale-idempotency-p-3",
    "blockType": "paragraph",
    "title": "Derinlemesine",
    "text": "Aynı istek iki kez geldi sonuç değişmesin. Webhook retry, payment, third-party API."
@@ -31188,6 +31265,17 @@
    "text": "Versiyon tarihleri: framework/contracts/versions.py İsimli kapılar: framework/contracts/gates.py Dönüşüm modülleri: framework/contracts/response_transforms/*.py İlk sürüm: İlk dış entegratör doğduğu gün (eşik)"
   },
   {
+   "id": "search-page-sus-versioning-block-sus-versioning-p-2",
+   "kind": "block",
+   "pageId": "page-sus-versioning",
+   "pageTitle": "Tarih-tabanlı versiyonlama + dönüşüm katmanı",
+   "slug": "sus/sus-versioning",
+   "blockId": "block-sus-versioning-p-2",
+   "blockType": "paragraph",
+   "title": "ChangeSet ve tarih-tabanlı API versiyonlama",
+   "text": "ArcheType değişimi ChangeSet'le yapılır (k-sozlesme); eski entegrasyonlar response-transform ile pinli sürümde yaşamaya devam eder ('Invoice'un Haziran-2026 hali'). deprecate_field operation'ı yıkıcı değildir (geri-açılabilir); remove_field yıkıcıdır → soft-delete + onay. Her değişiklik audit'lenir ve sürümlenir (l1-audit)."
+  },
+  {
    "id": "search-page-sus-versioning-block-sus-versioning-lesson-2",
    "kind": "block",
    "pageId": "page-sus-versioning",
@@ -31716,6 +31804,17 @@
    "text": "Disiplin: her deprecation = bir codemod. CI'da codemod-check.yml yeni deprecation'ı görür ve karşılığında codemod dosyası yoksa PR'ı bloke eder. Bu disiplin sayesinde Drupal contrib eklenti uyum oranı %98'e çıktı."
   },
   {
+   "id": "search-page-sus-codemod-block-sus-codemod-p-2",
+   "kind": "block",
+   "pageId": "page-sus-codemod",
+   "pageTitle": "Otomatik upgrade — kendini-yükselten döngü",
+   "slug": "sus/sus-codemod",
+   "blockId": "block-sus-codemod-p-2",
+   "blockType": "paragraph",
+   "title": "ChangeSet ve kendini-yükselten codemod",
+   "text": "Şema/tanım değişimleri tipli ChangeSet olarak akar (k-sozlesme); codemod (AST/Rector/LibCST) eski tanımları yeni şemaya deterministik taşır. AI dönüşümü önerir, codemod uygular, motor doğrular — serbest elle düzenleme değil. Migration yaşam döngüsü (edu-u12) ile expand-contract: ekle → çift-yaz → backfill → daralt."
+  },
+  {
    "id": "search-page-sus-codemod-block-sus-codemod-lesson",
    "kind": "block",
    "pageId": "page-sus-codemod",
@@ -32064,6 +32163,17 @@
    "slug": "crosscut/cc-privacy",
    "blockId": "block-cc-privacy-p-2",
    "blockType": "paragraph",
+   "title": "AI üretiminde KVKK bağı",
+   "text": "AI ile üretilen her ArcheType'ta PII sınıflandırma matrisine bağlanır (k-archetype-bayraklari): pii alan listede gizli, detayda maskeli, public'te yasaktır; 'göster' eylemi audit'e yazılır (l1-audit); unutulma hakkı silme bu etikete bağlıdır. sub_prompt'tan ya da çıktı guardrail'ından PII sızıntısı engellenir. Açık kalan karar: public form veri topluyorsa aydınlatma metni + açık rıza akışı bu sürümde mi yoksa ayrı fazda mı — hukuki yüzey netleştirilmeli."
+  },
+  {
+   "id": "search-page-cc-privacy-block-cc-privacy-p-3",
+   "kind": "block",
+   "pageId": "page-cc-privacy",
+   "pageTitle": "KVKK + GDPR — somut implementasyon",
+   "slug": "crosscut/cc-privacy",
+   "blockId": "block-cc-privacy-p-3",
+   "blockType": "paragraph",
    "title": "Derinlemesine",
    "text": "KVKK + GDPR 6 zorunlu özellik:"
   },
@@ -32079,17 +32189,6 @@
    "text": "Right to be Forgotten (silme talebi) — kullanıcı 'verimi silin' der; 30 gün içinde gerçek silme + audit logu Data Portability (veri verme) — kullanıcı 'tüm verimi indir' der; JSON/CSV export Consent Management (rıza paneli) — pazarlama, analitik, çerez için ayrı rıza; iptal edebilir Data Retention Policy (saklama süresi) — fatura 10 yıl, log 90 gün; otomatik silme Breach Notification (ihlal bildirimi) — sızıntı tespit edilince 72 saat içinde KVKK/EDPB'ye + kullanıcıya DSAR (Data Subject Access Request) — kullanıcı 'verim ne, kim erişti' sorgusu; 1 ay içinde cevap"
   },
   {
-   "id": "search-page-cc-privacy-block-cc-privacy-p-3",
-   "kind": "block",
-   "pageId": "page-cc-privacy",
-   "pageTitle": "KVKK + GDPR — somut implementasyon",
-   "slug": "crosscut/cc-privacy",
-   "blockId": "block-cc-privacy-p-3",
-   "blockType": "paragraph",
-   "title": "Derinlemesine",
-   "text": "Pseudonymization (takma ad): PII (kişisel bilgi) hash'lendi → analitiğe gönder. Geri çözülemez."
-  },
-  {
    "id": "search-page-cc-privacy-block-cc-privacy-p-4",
    "kind": "block",
    "pageId": "page-cc-privacy",
@@ -32098,7 +32197,7 @@
    "blockId": "block-cc-privacy-p-4",
    "blockType": "paragraph",
    "title": "Derinlemesine",
-   "text": "Anonymization (anonimleştirme): PII tamamen kaldırıldı; istatistik için bile geri çözülemez."
+   "text": "Pseudonymization (takma ad): PII (kişisel bilgi) hash'lendi → analitiğe gönder. Geri çözülemez."
   },
   {
    "id": "search-page-cc-privacy-block-cc-privacy-p-5",
@@ -32107,6 +32206,17 @@
    "pageTitle": "KVKK + GDPR — somut implementasyon",
    "slug": "crosscut/cc-privacy",
    "blockId": "block-cc-privacy-p-5",
+   "blockType": "paragraph",
+   "title": "Derinlemesine",
+   "text": "Anonymization (anonimleştirme): PII tamamen kaldırıldı; istatistik için bile geri çözülemez."
+  },
+  {
+   "id": "search-page-cc-privacy-block-cc-privacy-p-6",
+   "kind": "block",
+   "pageId": "page-cc-privacy",
+   "pageTitle": "KVKK + GDPR — somut implementasyon",
+   "slug": "crosscut/cc-privacy",
+   "blockId": "block-cc-privacy-p-6",
    "blockType": "paragraph",
    "title": "Derinlemesine",
    "text": "Mimari etki:"
@@ -32915,6 +33025,17 @@
    "text": "Bu projeye uygulama: Mevcut Saga + Outbox primitive'leri DBOS Transact üstüne oturur. Doküman zaten \"DBOS (Postgres-native, ek altyapı yok)\" diyor — somutlaştırması yapılır."
   },
   {
+   "id": "search-page-sus-durable-block-sus-durable-p-2",
+   "kind": "block",
+   "pageId": "page-sus-durable",
+   "pageTitle": "Postgres-native durable execution",
+   "slug": "sus/sus-durable",
+   "blockId": "block-sus-durable-p-2",
+   "blockType": "paragraph",
+   "title": "ChangeSet apply — durable execution",
+   "text": "ChangeSet uygulama (k-sozlesme) tek atomik adım değil, durum makineli bir süreçtir (edu-u12); durable execution (DBOS / Postgres checkpoint) sayesinde yarıda kalmaz, idempotent biçimde kaldığı yerden devam eder. Migration durakları (expanded/backfilled/contracted) checkpoint'lenir; bash/işlem ölse bile süreç tutarlı kalır."
+  },
+  {
    "id": "search-page-sus-durable-block-sus-durable-lesson-2",
    "kind": "block",
    "pageId": "page-sus-durable",
@@ -33575,6 +33696,28 @@
    "text": "ReBAC İzin, kayıtlar arası ilişkilerden türer (sahip, takım üyesi). İzin, kayıtlar arası ilişkilerden türer (sahip, takım üyesi).\n\nGoogle Docs paylaşım modeli. Açılımı: Relationship-Based Access Control. Türkçesi: İlişki bazlı erişim.\n\nKernel-authz bağlamında ReBAC üçüncü modeldir: izin, kayıtlar arası ilişkiden (sahibi, takım üyesi, paylaşılan) türetilir. Doküman ve kayıt paylaşımı senaryolarının doğal dili budur."
   },
   {
+   "id": "search-term-term-principal-kernel-authz",
+   "kind": "term",
+   "pageId": "page-kernel-authz",
+   "pageTitle": "Authorization",
+   "slug": "kernel/kernel-authz",
+   "blockId": "",
+   "blockType": "term",
+   "title": "Principal",
+   "text": "Principal Bir işlemin asıl yetki sahibi aktör (insan/servis); AI ajan asla principal değildir, onun adına çalışır. Bir işlemin asıl yetki sahibi aktör (insan/servis); AI ajan asla principal değildir, onun adına çalışır.\n\nAgent'ın kendi başına yetki sahibi olmasını engeller. Türkçesi: Asıl yetki sahibi."
+  },
+  {
+   "id": "search-term-term-delegation-kernel-authz",
+   "kind": "term",
+   "pageId": "page-kernel-authz",
+   "pageTitle": "Authorization",
+   "slug": "kernel/kernel-authz",
+   "blockId": "",
+   "blockType": "term",
+   "title": "Delegation",
+   "text": "Delegation Bir aktörün yetkisini AI ajana sınırlı biçimde devretmesi; ajan kimliğe bürünmez, adına çalışır ve yetkisini aşamaz. Bir aktörün yetkisini AI ajana sınırlı biçimde devretmesi; ajan kimliğe bürünmez, adına çalışır ve yetkisini aşamaz.\n\nConfused-deputy ve kimliğe bürünmeyi önler. Türkçesi: Yetki devri."
+  },
+  {
    "id": "search-term-term-multi-tenancy-kernel-tenancy",
    "kind": "term",
    "pageId": "page-kernel-tenancy",
@@ -33606,6 +33749,17 @@
    "blockType": "term",
    "title": "Sub-tenant",
    "text": "Sub-tenant Bir kiracının altındaki iş birimi (örn: holding altı şirketler). Bir kiracının altındaki iş birimi (örn: holding altı şirketler).\n\nMuhasebede konsolide rapor için gerekli. Türkçesi: Alt-kiracı.\n\nKernel-tenancy bağlamında sub-tenant hiyerarşi sözleşmesidir: holding-şirket-şube zinciri tek tenant ağacında modellenir; yetki ve rapor konsolidasyonu ağaç üzerinden akar."
+  },
+  {
+   "id": "search-term-term-rls-uygulama-baglami-kernel-tenancy",
+   "kind": "term",
+   "pageId": "page-kernel-tenancy",
+   "pageTitle": "Tenancy",
+   "slug": "kernel/kernel-tenancy",
+   "blockId": "",
+   "blockType": "term",
+   "title": "RLS uygulama bağlamı",
+   "text": "RLS uygulama bağlamı Her request transaction'ında SET LOCAL ile kurulan tenant bağlamı; bağlam yoksa sorgu sıfır satır döner. Her request transaction'ında SET LOCAL ile kurulan tenant bağlamı; bağlam yoksa sorgu sıfır satır döner.\n\nPgBouncer pooling'de çapraz-tenant sızıntıyı engeller. Türkçesi: Tenant context."
   },
   {
    "id": "search-term-term-event-bus-kernel-bus",
@@ -37049,6 +37203,17 @@
    "blockType": "term",
    "title": "Retention",
    "text": "Retention Verinin yasal/iş gereği saklanması gereken minimum/maksimum süre. Verinin yasal/iş gereği saklanması gereken minimum/maksimum süre.\n\nMali 10 yıl, KVKK 'gereken kadar'; aşıldıktan sonra silme zorunlu olabilir. Türkçesi: Saklama süresi.\n\nAudit bağlamında retention, iki yönlü süredir: yasal minimum (VUK 5-10 yıl) silmeyi yasaklar, KVKK maksimumu tutmayı yasaklar; politika veri-tipine göre tanımlanır ve otomatik uygulanır — insan hatırlamaz, sistem süre tutar."
+  },
+  {
+   "id": "search-term-term-audit-forensic-layer1-audit",
+   "kind": "term",
+   "pageId": "page-layer1-audit",
+   "pageTitle": "Audit + Activity",
+   "slug": "layer1/layer1-audit",
+   "blockId": "",
+   "blockType": "term",
+   "title": "Audit forensic",
+   "text": "Audit forensic Olay sonrası inceleme için human/agent/model/tool/approval/changeset ayrımını yazan denetim şeması. Olay sonrası inceleme için human/agent/model/tool/approval/changeset ayrımını yazan denetim şeması.\n\n'Kararı kim verdi, AI mı önerdi, motor mu uyguladı' sorusunu cevaplar. Türkçesi: Adli denetim izi."
   },
   {
    "id": "search-term-term-bm25-layer1-search",

@@ -6475,6 +6475,42 @@
    "ne_zaman": "Olay tespit edildiğinde ve sonrasında post-incident review'da.",
    "kim": "SRE/operasyon koşar; mimar guardrail'ı günceller.",
    "analoji": "Yangın tatbikatı talimatı: panik anında değil, önceden yazılmış adımlar izlenir."
+  },
+  "term-principal-kernel-authz": {
+   "ne": "Bir işlemin asıl yetki sahibi aktör (insan ya da servis); sistemde kararın hesabını veren taraftır.",
+   "nicin": "AI ajan kendi başına principal olursa aşırı otonomi, confused-deputy ve yetki yükseltme riski doğar.",
+   "nasil": "Her oturum bir principal'a bağlanır; ajan onun adına çalışır ve yetkisini asla aşamaz.",
+   "nerede": "Kernel authz + aksiyon yüzeyi politika kapısı; audit'te human_actor_id olarak yazılır.",
+   "ne_zaman": "Her tool çağrısı ve her ChangeSet üretiminde principal kimliği taşınır.",
+   "kim": "Principal bir insan kullanıcı ya da servis hesabıdır; ajan yalnız temsilcidir.",
+   "analoji": "Vekaletname: avukat (ajan) müvekkil (principal) adına iş yapar, ama yetkisi vekaletin sınırını aşamaz."
+  },
+  "term-delegation-kernel-authz": {
+   "ne": "Bir aktörün yetkisini AI ajana sınırlı biçimde devretmesi; ajan kimliğe bürünmez, adına çalışır.",
+   "nicin": "Kimliğe bürünme (impersonation) izini siler ve yetki sızıntısı yaratır; delegasyon hesap verebilir tutar.",
+   "nasil": "Etkin yetki = kullanıcı ∩ agent_capability kesişimidir; ajan devredilen yetkiyi daraltabilir, genişletemez.",
+   "nerede": "Kernel authz; MCP/geliştirici-AI yolunun yetki tavanı son-kullanıcıdan kısıtlıdır.",
+   "ne_zaman": "Ajan bir kullanıcı adına aksiyon önerirken ve uygularken.",
+   "kim": "Yetkiyi devreden insan/servis; devralan sınırlı yardımcı ajan.",
+   "analoji": "Otel vale anahtarı: arabanı sürebilir ama bagajı açamaz; devredilen yetki kısıtlıdır."
+  },
+  "term-rls-uygulama-baglami-kernel-tenancy": {
+   "ne": "Her request transaction'ında SET LOCAL ile kurulan tenant bağlamı; sorguların hangi tenant'a ait olduğunu belirler.",
+   "nicin": "PgBouncer transaction pooling'de SET kullanılırsa bağlam bir sonraki isteğe sızar; çapraz-tenant veri kaçağı olur.",
+   "nasil": "BEGIN; SET LOCAL app.tenant_id=...; sorgular; COMMIT. Bağlam kurulmazsa sorgu sıfır satır döner (güvenli varsayılan).",
+   "nerede": "Postgres RLS policy + Prisma interactive transaction; background job ve MCP çağrıları da bağlamı açıkça enjekte eder.",
+   "ne_zaman": "Her veri erişiminde, sorgudan önce, transaction kapsamında kurulur.",
+   "kim": "Uygulama katmanı kurar; migration user BYPASSRLS ile ayrık ve auditlidir.",
+   "analoji": "Kütüphanede okuma kartı: yalnız kendi rafına erişirsin; kartsız gelirsen hiçbir rafı göremezsin."
+  },
+  "term-audit-forensic-layer1-audit": {
+   "ne": "Olay sonrası inceleme için human/agent/model/tool/approval/changeset ayrımını yazan denetim şeması.",
+   "nicin": "AI-first sistemde 'kim yaptı' yetmez; kararı insan mı verdi, AI mı önerdi, motor mu uyguladı ayrılmalı.",
+   "nasil": "Her olayda human_actor_id, agent_id, model_id, tool_id, approval_id, change_set_id, before/after_hash yazılır.",
+   "nerede": "Audit katmanı; delegasyon izi ve risk skoru ile birlikte tutulur.",
+   "ne_zaman": "Her aksiyon, ChangeSet ve PII erişiminde; olay incelemesinde okunur.",
+   "kim": "Sistem yazar; denetçi ve incident ekibi okur.",
+   "analoji": "Uçak kara kutusu: kaza sonrası kimin ne zaman ne yaptığını ayrıntılı geri oynatır."
   }
  }
 }

@@ -289,6 +289,15 @@
       "type": "paragraph",
       "text": "**Field-level + Row-level Security** (I04): `Field Mask Policy` (redact/partial/hash/encrypt) + `Row-level Filter` (CEL/JSONLogic/Python sandbox). Authorization Decision her zaman audit log'a düşer.",
       "enrich": {}
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Agent yetki katmanı — kesişim kuralı"
+    },
+    {
+      "type": "paragraph",
+      "text": "RBAC/ABAC/ReBAC insan yetkisini çözer; sisteme AI ajan eklenince yetki **kesişimle** daraltılır: `etkin = kullanıcı_rolü ∩ agent_capability ∩ tool_scope ∩ aksiyon_riski` (asla birleşim). Ajan **asla principal değildir**, bir aktör adına çalışır (delegasyon, kimliğe bürünme değil). Merkezî politika kapısı her tool çağrısında bu kesişimi hesaplar; DisableProtection sınıfı (RLS/PII/audit/şema kapatma) capability allowlist'ine asla giremez. Aksiyon sınıflandırması {{ref:sus-actions}}."
     }
   ],
   "enrich": {
@@ -325,6 +334,18 @@
         "abbrev_tr": "İlişki bazlı erişim",
         "meaning": "İzin, kayıtlar arası ilişkilerden türer (sahip, takım üyesi).",
         "why": "Google Docs paylaşım modeli."
+      },
+      {
+        "term": "Principal",
+        "abbrev_tr": "Asıl yetki sahibi",
+        "meaning": "Bir işlemin asıl yetki sahibi aktör (insan/servis); AI ajan asla principal değildir, onun adına çalışır.",
+        "why": "Agent'ın kendi başına yetki sahibi olmasını engeller."
+      },
+      {
+        "term": "Delegation",
+        "abbrev_tr": "Yetki devri",
+        "meaning": "Bir aktörün yetkisini AI ajana sınırlı biçimde devretmesi; ajan kimliğe bürünmez, adına çalışır ve yetkisini aşamaz.",
+        "why": "Confused-deputy ve kimliğe bürünmeyi önler."
       }
     ],
     "stories": [
