@@ -29,6 +29,7 @@ Bu set, `mimari/` klasöründeki mevcut içeriğin (≈198 cluster JSON + mimari
 | 01R | `01R-adr-0018-ai-first-ux.md` | ADR-0018: AI-first UX/UED — iki mod (Otopilot/Atölye), sonuç-önce sentetik önizleme, güven kalibrasyonu, ön-seçim politikası | Zemin |
 | 01S | `01S-adr-0019-eca-dsl.md` | ADR-0019: ECA motoru — declarative no-code DSL + güvenlik kapısı (döngü/yan-tenant/derinlik-6/idempotency) + n8n delegasyonu | Zemin |
 | 01T | `01T-adr-0020-governance-runbook.md` | ADR-0020: AI governance & model ops (NIST AI RMF) + operations/runbook + üç kill-switch | Zemin |
+| 01U | `01U-adr-0021-acik-kararlar.md` | ADR-0021: açık kararların çözümü — namespace, eşzamanlılık (optimistic lock), i18n varsayılanı, tenant kotası, public KVKK rızası | Zemin |
 | 02 | `02-icerik-envanteri.md` | Mevcut kaynak dosyaların envanteri ve kaderi | Zemin |
 | 03 | `03-navigation-ia.md` | Rail 1 / Rail 2 bilgi mimarisi, slug ve ID sözleşmeleri | Zemin |
 | 04 | `04-veri-modeli.md` | navigation / pages / glossary / search-index JSON sözleşmeleri | Zemin |
