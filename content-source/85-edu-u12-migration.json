@@ -183,6 +183,63 @@
       "variant": "tip",
       "label": "Migration testing",
       "body": "Üretim verisinin anonimleştirilmiş kopyasını staging'e yükle. Migration'ı orada çalıştır. **Süresini ölç.** 10 dakikadan uzunsa batch boyutunu küçült. 'Hızlı bittiğine sevin' = üretimde sürpriz."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Migration yaşam döngüsü — durum makinesi"
+    },
+    {
+      "type": "paragraph",
+      "text": "Bir migration ChangeSet'i ({{ref:k-sozlesme}}) tek adımda değil, durum makinesiyle ilerler; her durak bir kapıdır ve yarım yapı kalmaz."
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        "drafted (taslak)",
+        "validated (doğrulandı)",
+        "impact_analyzed (etki analizi)",
+        "preview_generated (önizleme)",
+        "approved (onaylandı)",
+        "preflight_checked (uçuş öncesi)",
+        "expanded (genişletildi)",
+        "backfilled (geri-dolduruldu)",
+        "dual_read_enabled (çift-okuma açık)",
+        "contract_ready (daralmaya hazır)",
+        "contracted (daraltıldı)",
+        "verified (doğrulandı)",
+        "archived (arşivlendi)"
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Geri-alma durum makinesi"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        "rollback_requested",
+        "rollback_impact_analyzed",
+        "rollback_approved",
+        "rollback_executed",
+        "rollback_verified",
+        "closed (kapandı: başarı ya da olay)"
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "warning",
+      "label": "Telafi-edilemez işlemler (saga dersi)",
+      "body": "Bazı etkiler geri alınamaz: gönderilmiş e-posta geri çağrılamaz. Saga telafisi (refund/iptal) teknik restore değil **iş-mantığı tersidir**; telafi edilemeyen işlerde tek çare önceki snapshot'tan restore'dur. Bu yüzden geri-alınamaz aksiyonlar akışın **sonuna**, tüm hatalı olabilen adımlardan sonra konur."
+    },
+    {
+      "type": "callout",
+      "variant": "info",
+      "label": "Veri varken geri alma",
+      "body": "Canlı + veri girilmiş yapıda alan silme gerçek silme değil **soft-delete + 30 gün saklama**'dır; pencere içinde geri-açılabilir. expand-contract döngüsü: ekle → çift-yaz → backfill (1k–10k satır/parti, partiler arası bekleme) → daralt (eski kolonu düşür, çoğu modern DB'de yalnız metadata)."
     }
   ],
   "related": [

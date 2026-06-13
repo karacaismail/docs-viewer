@@ -1,30 +1,155 @@
 {
- "id": "k-sozlesme",
- "title": "Sözleşme Yetenekleri — Pinleme, Üretilmiş Test, Projection",
- "subtitle": "Üç parça: şema pinleme (tarife modeli — 10 yıllık entegrasyon kırılmaz), tanımdan doğan kontrat testleri, salt-okur Projection-ArcheType.",
- "cluster": "kernel",
- "order": 94,
- "icon": "ph-seal-check",
- "granularity": "kaya",
- "state": "wip",
- "badge": "KAVRAM",
- "tags": ["archetype", "sozlesme", "pinleme", "kontrat-testi", "projection"],
- "related": ["kernel-schema", "k-surface", "sus-versioning", "sus-conformance", "scale-projections", "be-kararlar"],
- "enrich": {
-  "info": "ArcheType yalnız üretmez, söz verir: şeması tarih-pinlenebilir (eski tüketiciye eski biçim), kontrat testleri tanımdan doğar (tanım varsa sınavı da var) ve okuma modelleri bildirimsel Projection olarak yaşar (bozulursa kaynaktan yeniden dökülür).",
-  "terms": [
-   {"term": "Şema pinleme", "meaning": "Bir entegrasyonun ArcheType'ın belirli tarihli haline sabitlenmesi: 'ben Invoice'un Haziran-2026 haline göre yazıldım' der; alanlar değişse de ona eski biçimde cevap dönülür.", "why": "Telefon tarifesi modeli: yeni tarifeler çıkar, eski müşteri kendi tarifesinde kalır. Stripe'ın API'de yaptığını varlık tanımına indirmek, 10 yıllık entegrasyonu kırmadan şema evrimine izin verir — geliştirici güveninin (ve fiyatlama gücünün) temeli."},
-   {"term": "Üretilmiş kontrat testi", "meaning": "Her ArcheType tanımıyla birlikte sistemin kendi ürettiği sınav soruları: 'komşu müşterinin verisini okuyabiliyor muyum', 'API golden yanıtı değişti mi' — geliştirici yazmaz, tanımdan doğar.", "why": "Tanım varsa testi de var: kontrat güvencesi insan disiplinine bırakılmaz. Vibecoding'de asıl kapı budur — AI'ın ürettiği her parça, doğduğu anda tanımdan türetilmiş sınava girer ({{ref:sus-conformance}})."}
+  "id": "k-sozlesme",
+  "title": "Sözleşme Yetenekleri — Pinleme, Üretilmiş Test, Projection",
+  "subtitle": "Üç parça: şema pinleme (tarife modeli — 10 yıllık entegrasyon kırılmaz), tanımdan doğan kontrat testleri, salt-okur Projection-ArcheType.",
+  "cluster": "kernel",
+  "order": 94,
+  "icon": "ph-seal-check",
+  "granularity": "kaya",
+  "state": "wip",
+  "badge": "KAVRAM",
+  "tags": [
+    "archetype",
+    "sozlesme",
+    "pinleme",
+    "kontrat-testi",
+    "projection"
+  ],
+  "related": [
+    "kernel-schema",
+    "k-surface",
+    "sus-versioning",
+    "sus-conformance",
+    "scale-projections",
+    "be-kararlar"
+  ],
+  "enrich": {
+    "info": "ArcheType yalnız üretmez, söz verir: şeması tarih-pinlenebilir (eski tüketiciye eski biçim), kontrat testleri tanımdan doğar (tanım varsa sınavı da var) ve okuma modelleri bildirimsel Projection olarak yaşar (bozulursa kaynaktan yeniden dökülür).",
+    "terms": [
+      {
+        "term": "Şema pinleme",
+        "meaning": "Bir entegrasyonun ArcheType'ın belirli tarihli haline sabitlenmesi: 'ben Invoice'un Haziran-2026 haline göre yazıldım' der; alanlar değişse de ona eski biçimde cevap dönülür.",
+        "why": "Telefon tarifesi modeli: yeni tarifeler çıkar, eski müşteri kendi tarifesinde kalır. Stripe'ın API'de yaptığını varlık tanımına indirmek, 10 yıllık entegrasyonu kırmadan şema evrimine izin verir — geliştirici güveninin (ve fiyatlama gücünün) temeli."
+      },
+      {
+        "term": "Üretilmiş kontrat testi",
+        "meaning": "Her ArcheType tanımıyla birlikte sistemin kendi ürettiği sınav soruları: 'komşu müşterinin verisini okuyabiliyor muyum', 'API golden yanıtı değişti mi' — geliştirici yazmaz, tanımdan doğar.",
+        "why": "Tanım varsa testi de var: kontrat güvencesi insan disiplinine bırakılmaz. Vibecoding'de asıl kapı budur — AI'ın ürettiği her parça, doğduğu anda tanımdan türetilmiş sınava girer ({{ref:sus-conformance}})."
+      }
+    ]
+  },
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "ArcheType'ın gücü yalnız üretmek değil **söz vermektir**. Üç sözleşme yeteneği vardır ve üçü de tanımdan türer — kod değil beyan."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Üç Parça"
+    },
+    {
+      "type": "kv-row",
+      "pairs": [
+        {
+          "key": "1 · Şema pinleme",
+          "value": "Telefon tarifesi gibi: yeni tarifeler çıkarsan da eski müşteri kendi tarifesinde kalır. Entegrasyon 'Invoice'un Haziran-2026 hali' der; alanlar değişse de ona eski biçimde cevap dönülür — response transform eskiyi yaşatır ({{ref:sus-versioning}})"
+        },
+        {
+          "key": "2 · Üretilmiş kontrat testi",
+          "value": "Her ArcheType tanımladığında sistem kendi sınav sorularını da üretir: 'komşu müşterinin verisini okuyabiliyor muyum?' testi sen yazmadan doğar — tanım varsa testi de var ({{ref:sus-conformance}})"
+        },
+        {
+          "key": "3 · Projection-ArcheType",
+          "value": "Rapor ekranları için 'şu iki varlığın özetini birleştir, salt-okur' diyen ayrı tanım: projection_of: [Order, Shipment]. Bozulursa silinir, kaynaktan yeniden dökülür — yevmiye defteri ↔ mizan ilişkisi ({{ref:scale-projections}}; yüzey tarafı {{ref:k-surface}})"
+        }
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "tip",
+      "label": "Bütünün resmi",
+      "body": "Pinleme geçmişe söz verir (kırmam), üretilmiş test bugüne söz verir (sızdırmam), Projection geleceğe söz verir (raporun kaynağı her zaman yeniden kurulabilir). Üçü birden 'Don't break userspace' anayasasının ({{ref:sus-bc-policy}}) varlık-düzeyi uygulamasıdır."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "ChangeSet — tipli değişiklik sözleşmesi (AI önerir, motor uygular)"
+    },
+    {
+      "type": "paragraph",
+      "text": "Her yapısal değişiklik ham SQL değil, tipli bir **ChangeSet** zarfıyla akar: `changeSetId, tenantId, baseVersion, createdBy{actorType: insan|agent|sistem}, source, intent, operations[], riskLevel, requiresApproval, validationResults, rollbackPlan, auditContext`. AI bu zarfı **önerir**; doğrulama motoru tek yazma yetkisidir. Risk sınıfları aksiyon taksonomisinden gelir ({{ref:sus-actions}}); üretilmiş uyumluluk testi ({{ref:sus-conformance}}) her ChangeSet'i komşu-tenant sızıntısına karşı sınar."
+    },
+    {
+      "type": "callout",
+      "variant": "info",
+      "label": "Operation yedi-alan sözleşmesi",
+      "body": "Her operation tipi yedi alanla tanımlıdır: **precondition** (uygulanmadan ne doğru olmalı), **invariant** (sonra ne bozulmamalı), **validation** (hangi kurallar), **risk**, **rollback** (geri-alma stratejisi), **audit** (hangi olay yazılır), **preview** (kullanıcı ne görür). Bu yedili olmadan bir operation tanımlı sayılmaz; geçersiz ChangeSet asla uygulanmaz."
+    },
+    {
+      "type": "table",
+      "caption": "ChangeSet operation tipleri ve geri-alma sınıfı (ADR-0016)",
+      "headers": [
+        "Operation",
+        "Risk",
+        "Geri-alma sınıfı"
+      ],
+      "rows": [
+        [
+          "create_archetype",
+          "orta",
+          "tersine (drop)"
+        ],
+        [
+          "add_field",
+          "düşük",
+          "tersine (nullable drop)"
+        ],
+        [
+          "change_field_type",
+          "yüksek",
+          "expand-contract"
+        ],
+        [
+          "create_relation",
+          "orta",
+          "tersine + backfill"
+        ],
+        [
+          "deprecate_field",
+          "düşük",
+          "geri-açılabilir"
+        ],
+        [
+          "remove_field",
+          "yıkıcı",
+          "soft-delete 30g + snapshot"
+        ],
+        [
+          "migrate_data",
+          "yüksek",
+          "expand-contract + çift-yaz"
+        ],
+        [
+          "create_eca_rule",
+          "orta",
+          "devre dışı bırak"
+        ],
+        [
+          "change_permission",
+          "kritik",
+          "audit + ters uygula"
+        ],
+        [
+          "publish_surface",
+          "yüksek",
+          "yayını geri çek"
+        ]
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "**Üç geri-alma sınıfı:** (1) tersine çevrilebilir (ters operation), (2) expand-contract (şema), (3) telafi-edilemez (snapshot/restore son çare). Hangi sınıfa girdiği migration yaşam döngüsünde belirlenir ({{ref:edu-u12}})."
+    }
   ]
- },
- "blocks": [
-  {"type": "paragraph", "text": "ArcheType'ın gücü yalnız üretmek değil **söz vermektir**. Üç sözleşme yeteneği vardır ve üçü de tanımdan türer — kod değil beyan."},
-  {"type": "heading", "level": 2, "text": "Üç Parça"},
-  {"type": "kv-row", "pairs": [
-   {"key": "1 · Şema pinleme", "value": "Telefon tarifesi gibi: yeni tarifeler çıkarsan da eski müşteri kendi tarifesinde kalır. Entegrasyon 'Invoice'un Haziran-2026 hali' der; alanlar değişse de ona eski biçimde cevap dönülür — response transform eskiyi yaşatır ({{ref:sus-versioning}})"},
-   {"key": "2 · Üretilmiş kontrat testi", "value": "Her ArcheType tanımladığında sistem kendi sınav sorularını da üretir: 'komşu müşterinin verisini okuyabiliyor muyum?' testi sen yazmadan doğar — tanım varsa testi de var ({{ref:sus-conformance}})"},
-   {"key": "3 · Projection-ArcheType", "value": "Rapor ekranları için 'şu iki varlığın özetini birleştir, salt-okur' diyen ayrı tanım: projection_of: [Order, Shipment]. Bozulursa silinir, kaynaktan yeniden dökülür — yevmiye defteri ↔ mizan ilişkisi ({{ref:scale-projections}}; yüzey tarafı {{ref:k-surface}})"}
-  ]},
-  {"type": "callout", "variant": "tip", "label": "Bütünün resmi", "body": "Pinleme geçmişe söz verir (kırmam), üretilmiş test bugüne söz verir (sızdırmam), Projection geleceğe söz verir (raporun kaynağı her zaman yeniden kurulabilir). Üçü birden 'Don't break userspace' anayasasının ({{ref:sus-bc-policy}}) varlık-düzeyi uygulamasıdır."}
- ]
 }
