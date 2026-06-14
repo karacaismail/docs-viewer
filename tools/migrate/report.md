@@ -1,14 +1,14 @@
 # Migration Mutabakat Raporu
 
-Kaynak dosya: 279 (+1 kapsam dışı) | Üretilen page: 279 | Atlanan: 0
-Glossary kaydı: 729 | Search document: 3874
+Kaynak dosya: 278 (+1 kapsam dışı) | Üretilen page: 278 | Atlanan: 0
+Glossary kaydı: 728 | Search document: 3863
 
 ## Kategori dağılımı
 - backend: 6
 - build: 17
 - crosscut: 17
 - dx: 4
-- egitim: 35
+- egitim: 34
 - frontend: 9
 - genel: 2
 - kararlar: 21
@@ -22,18 +22,17 @@ Glossary kaydı: 729 | Search document: 3874
 ## Kayıp görsel varlıklar (0) — 07B §1 fallback aktif
 
 ## Glossary zenginleştirme (12A Parti 1 — Eğitim Yolu)
-Zenginleştirilen kayıt: 554 (sayfa-kapsamlı: 378) | Overlay'de karşılığı olmayan label: 7
-Segment bağlama (B akışı, tüm kategoriler): 470 bağlı terim | bağlı page: 177/279 | egitim: 34/35
+Zenginleştirilen kayıt: 554 (sayfa-kapsamlı: 378) | Overlay'de karşılığı olmayan label: 6
+Segment bağlama (B akışı, tüm kategoriler): 469 bağlı terim | bağlı page: 176/278 | egitim: 33/34
 - eşleşmedi: Yetkinlik Kapısı
 - eşleşmedi: Boş sayfa sendromu
-- eşleşmedi: Vibecoding Waterfall
 - eşleşmedi: Bitiş kapısı
 - eşleşmedi: Migration state machine
 - eşleşmedi: Sentetik önizleme
 - eşleşmedi: Güven kalibrasyonu
 
 ## Yedi Soru genellemesi (12A §6 — tüm terimler)
-Yedi soru kaydı: 729/729 | Eksik: 0
+Yedi soru kaydı: 728/728 | Eksik: 0
 
 ## Uyarılar (0)
 
