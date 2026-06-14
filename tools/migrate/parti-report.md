@@ -517,7 +517,7 @@
 - DBOS (page-sus-durable) · analoji tohumu var
 - Temporal (page-sus-durable) · analoji tohumu var
 
-## Parti 5 (113 kayıt)
+## Parti 5 (102 kayıt)
 - Cluster (page-board-rebuilt) · **ince why** · analoji tohumu var
 - Streaming Export (page-l1-export) · analoji tohumu var
 - Presigned URL (page-l1-export) · analoji tohumu var
@@ -601,17 +601,6 @@
 - Cluster (page-product-mapping) · **ince why** · analoji tohumu var
 - Cluster (page-build-sequence) · **ince why** · analoji tohumu var
 - Cluster (page-anti-patterns) · **ince why** · analoji tohumu var
-- Cluster (page-landx-overview) · **ince why** · analoji tohumu var
-- Cluster (page-landx-l0-kernel) · **ince why** · analoji tohumu var
-- Cluster (page-landx-l1-identity) · **ince why** · analoji tohumu var
-- Cluster (page-landx-l2-agent) · **ince why** · analoji tohumu var
-- GraphQL (page-landx-l3-application) · analoji tohumu var
-- REST (page-landx-l3-application) · analoji tohumu var
-- Webhook (page-landx-l3-application) · analoji tohumu var
-- Cluster (page-landx-l3-application) · **ince why** · analoji tohumu var
-- KVKK (page-landx-l4-compliance) · analoji tohumu var
-- Cluster (page-landx-l4-compliance) · **ince why** · analoji tohumu var
-- Cluster (page-landx-l5-operations) · **ince why** · analoji tohumu var
 - Cluster (page-fe-locked-decisions) · **ince why** · analoji tohumu var
 - Cluster (page-fe-monorepo) · **ince why** · analoji tohumu var
 - Cluster (page-fe-core-ui) · **ince why** · analoji tohumu var
@@ -736,7 +725,7 @@
 - MRR (page-s-billing) · **ince why** · analoji tohumu var
 - Prorating (page-s-billing) · **ince why** · analoji tohumu var
 
-## Parti 2 — Bağlamsal varyantlar (246 kayıt, 79 label)
+## Parti 2 — Bağlamsal varyantlar (234 kayıt, 78 label)
 - Primitive (page-overview) · analoji tohumu var
 - Outbox (page-overview) · analoji tohumu var
 - CQRS (page-overview) · analoji tohumu var
@@ -886,17 +875,6 @@
 - Cluster (page-product-mapping) · **ince why** · analoji tohumu var
 - Cluster (page-build-sequence) · **ince why** · analoji tohumu var
 - Cluster (page-anti-patterns) · **ince why** · analoji tohumu var
-- Cluster (page-landx-overview) · **ince why** · analoji tohumu var
-- Cluster (page-landx-l0-kernel) · **ince why** · analoji tohumu var
-- Cluster (page-landx-l1-identity) · **ince why** · analoji tohumu var
-- Cluster (page-landx-l2-agent) · **ince why** · analoji tohumu var
-- GraphQL (page-landx-l3-application) · analoji tohumu var
-- REST (page-landx-l3-application) · analoji tohumu var
-- Webhook (page-landx-l3-application) · analoji tohumu var
-- Cluster (page-landx-l3-application) · **ince why** · analoji tohumu var
-- KVKK (page-landx-l4-compliance) · analoji tohumu var
-- Cluster (page-landx-l4-compliance) · **ince why** · analoji tohumu var
-- Cluster (page-landx-l5-operations) · **ince why** · analoji tohumu var
 - Cluster (page-fe-locked-decisions) · **ince why** · analoji tohumu var
 - Cluster (page-fe-monorepo) · **ince why** · analoji tohumu var
 - Cluster (page-fe-core-ui) · **ince why** · analoji tohumu var
@@ -974,7 +952,6 @@
 - Pub/Sub (page-scale-realtime) · analoji tohumu var
 - Presence (page-scale-realtime) · analoji tohumu var
 - Contract (page-sus-boundaries) · analoji tohumu var
-- Webhook (page-scale-webhook) · analoji tohumu var
 - Replay Attack (page-scale-webhook) · analoji tohumu var
 - DLQ (page-scale-webhook) · analoji tohumu var
 - Canary (page-cc-rollout) · analoji tohumu var

@@ -14,7 +14,7 @@ Bu doküman, glossary iş yükünü ölçülebilir hale getirir: ne otomatik gel
 | `shortExplanation` kaynağı (`meaning`) | Median 55 karakter — tooltip için yeterli |
 | `longExplanation` kaynağı (`why`) | **Median 50 karakter — panel için ince**; editöryel zenginleştirmenin ana nedeni |
 
-Kategori dağılımı (term/dosya): edu 210/28 · s 102/64 · cc 80/14 · scale 47/15 · sus 42/12 · l1+layer1 37/12 · kernel+k 31/8 · fe 13/9 · stack 12/12 · kalan ~38. *(10–11 Haziran genişlemesindeki 26 aday kayıt bilinçli terimsizdir — `state: aday`; terim yükü ürünleşme kararıyla gelir.)*
+Kategori dağılımı (term/dosya): edu 210/28 · s 102/64 · cc 80/14 · scale 47/15 · sus 42/12 · l1+layer1 37/12 · kernel+k 31/8 · fe 13/9 · stack 12/12 · kalan ~38. *(10–11 Haziran genişlemesindeki 27 aday kayıt bilinçli terimsizdir — `state: aday`; terim yükü ürünleşme kararıyla gelir.)*
 
 ## 2. İş Tanımları
 

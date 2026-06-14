@@ -1,11 +1,11 @@
 # Migration Mutabakat Raporu
 
-Kaynak dosya: 280 (+1 kapsam dışı) | Üretilen page: 280 | Atlanan: 0
-Glossary kaydı: 729 | Search document: 4026
+Kaynak dosya: 275 (+1 kapsam dışı) | Üretilen page: 275 | Atlanan: 0
+Glossary kaydı: 718 | Search document: 3933
 
 ## Kategori dağılımı
 - backend: 6
-- build: 17
+- build: 18
 - crosscut: 17
 - dx: 4
 - egitim: 35
@@ -15,15 +15,15 @@ Glossary kaydı: 729 | Search document: 4026
 - kernel: 16
 - layer1: 12
 - scale: 15
-- stack: 37
+- stack: 31
 - sus: 17
 - urunler: 72
 
 ## Kayıp görsel varlıklar (0) — 07B §1 fallback aktif
 
 ## Glossary zenginleştirme (12A Parti 1 — Eğitim Yolu)
-Zenginleştirilen kayıt: 554 (sayfa-kapsamlı: 378) | Overlay'de karşılığı olmayan label: 7
-Segment bağlama (B akışı, tüm kategoriler): 470 bağlı terim | bağlı page: 177/280 | egitim: 34/35
+Zenginleştirilen kayıt: 550 (sayfa-kapsamlı: 374) | Overlay'de karşılığı olmayan label: 7
+Segment bağlama (B akışı, tüm kategoriler): 463 bağlı terim | bağlı page: 173/275 | egitim: 34/35
 - eşleşmedi: Yetkinlik Kapısı
 - eşleşmedi: Boş sayfa sendromu
 - eşleşmedi: Vibecoding Waterfall
@@ -33,7 +33,7 @@ Segment bağlama (B akışı, tüm kategoriler): 470 bağlı terim | bağlı pag
 - eşleşmedi: Güven kalibrasyonu
 
 ## Yedi Soru genellemesi (12A §6 — tüm terimler)
-Yedi soru kaydı: 729/729 | Eksik: 0
+Yedi soru kaydı: 718/718 | Eksik: 0
 
 ## Uyarılar (0)
 

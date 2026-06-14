@@ -92,8 +92,8 @@ describe("doc ↔ üretilmiş veri tutarlılığı", () => {
   });
 });
 
-it("02: karar/kavram sayısı aritmetik olarak tutar (toplam - 202 özgün - aday)", () => {
+it("02: karar/kavram sayısı aritmetik olarak tutar (toplam - 196 özgün - aday)", () => {
   const d = doc("02-icerik-envanteri.md");
   const kk = num(d, /\+ (\d+) karar\/kavram \+ 1 kapsam dışı/, "02 karar/kavram");
-  expect(kk).toBe(pagesIndex.pages.length - 202 - adayCount);
+  expect(kk).toBe(pagesIndex.pages.length - 196 - adayCount);
 });

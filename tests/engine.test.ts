@@ -55,9 +55,9 @@ describe("bağlamsal glossary (12 §Çözümleme)", () => {
   });
 });
 
-it("resolvePage stem-fallback: taşınan kategorinin eski slug'ı içerik render eder (landx -> stack)", async () => {
+it("resolvePage stem-fallback: taşınan kategorinin eski slug'ı içerik render eder (dist -> stack)", async () => {
   const { resolvePage } = await import("../src/engine");
-  const r = resolvePage("landx", "landx-overview");
+  const r = resolvePage("dist", "dist-realestate");
   expect(r.kind).toBe("found");
-  if (r.kind === "found") expect(r.entry.slug).toBe("stack/landx-overview");
+  if (r.kind === "found") expect(r.entry.slug).toBe("stack/dist-realestate");
 });
