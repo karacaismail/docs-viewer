@@ -554,10 +554,10 @@
 - Approval chain (page-layer1-workflow) · analoji tohumu var
 - ECA DSL (page-layer1-workflow) · analoji tohumu var
 - Channel-agnostic (page-layer1-notification) · analoji tohumu var
-- Stack ürünü (page-dist-education) · **ince why** · analoji tohumu var
-- Stack ürünü (page-dist-clinic) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-dist-education) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-dist-clinic) · **ince why** · analoji tohumu var
 - CiviCRM (page-dist-membership) · analoji tohumu var
-- Stack ürünü (page-dist-restaurant) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-dist-restaurant) · **ince why** · analoji tohumu var
 - Clio (page-dist-legal) · analoji tohumu var
 - WORM (page-layer1-audit) · analoji tohumu var
 - Forensic (page-layer1-audit) · analoji tohumu var
@@ -652,7 +652,7 @@
 - Reverse Logistics (page-s-dropshipping) · **ince why** · analoji tohumu var
 - Supplier SLA (page-s-dropshipping) · **ince why** · analoji tohumu var
 - Kyriba (page-s-treasury) · analoji tohumu var
-- Stack ürünü (page-s-consolidation) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-consolidation) · **ince why** · analoji tohumu var
 - Subscription Box (page-s-subscription-commerce) · **ince why** · analoji tohumu var
 - Replenishment (page-s-subscription-commerce) · **ince why** · analoji tohumu var
 - Pause/Skip (page-s-subscription-commerce) · **ince why** · analoji tohumu var
@@ -670,24 +670,24 @@
 - Trust / Verification (page-s-classifieds) · **ince why** · analoji tohumu var
 - GMV / Komisyon (page-s-classifieds) · **ince why** · analoji tohumu var
 - Manhattan (page-s-wms) · analoji tohumu var
-- Stack ürünü (page-s-tms) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-tms) · **ince why** · analoji tohumu var
 - Samsara (page-s-fleet) · analoji tohumu var
-- Stack ürünü (page-s-demand-planning) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-demand-planning) · **ince why** · analoji tohumu var
 - Coupa (page-s-procurement) · analoji tohumu var
-- Stack ürünü (page-s-quality) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-quality) · **ince why** · analoji tohumu var
 - UpKeep (page-s-cmms) · analoji tohumu var
-- Stack ürünü (page-s-traceability) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-traceability) · **ince why** · analoji tohumu var
 - ServiceTitan (page-s-fsm) · analoji tohumu var
 - TR Lokalizasyon (page-s-payroll) · analoji tohumu var
 - Greenhouse (page-s-ats) · analoji tohumu var
 - AI özellik (page-s-ats) · **ince why** · analoji tohumu var
-- Stack ürünü (page-s-onboarding) · **ince why** · analoji tohumu var
-- Stack ürünü (page-s-performance) · **ince why** · analoji tohumu var
-- Stack ürünü (page-s-workforce) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-onboarding) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-performance) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-workforce) · **ince why** · analoji tohumu var
 - DocuSign (page-s-clm) · analoji tohumu var
 - AI özellik (page-s-clm) · **ince why** · analoji tohumu var
 - Salesforce CPQ (page-s-cpq) · analoji tohumu var
-- Stack ürünü (page-s-loyalty) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-loyalty) · **ince why** · analoji tohumu var
 - PSD2 SCA (page-s-payment-methods) · analoji tohumu var
 - SEPA (page-s-payment-methods) · analoji tohumu var
 - BKM Express (page-s-payment-methods) · **ince why** · analoji tohumu var
@@ -696,10 +696,10 @@
 - MoR (page-s-payment-methods) · **ince why** · analoji tohumu var
 - Akeneo (page-s-pim) · analoji tohumu var
 - Mirakl (page-s-marketplace) · analoji tohumu var
-- Stack ürünü (page-s-dms) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-dms) · **ince why** · analoji tohumu var
 - Confluence (page-s-wiki) · analoji tohumu var
 - Discourse (page-s-community) · analoji tohumu var
-- Stack ürünü (page-s-event) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-event) · **ince why** · analoji tohumu var
 - Typeform (page-s-survey) · analoji tohumu var
 - AI özellik (page-s-survey) · **ince why** · analoji tohumu var
 - Glean (page-s-rag) · analoji tohumu var
@@ -707,15 +707,15 @@
 - AI özellik (page-s-bi) · **ince why** · analoji tohumu var
 - Airbyte (page-s-etl) · analoji tohumu var
 - Datadog (page-s-observability) · analoji tohumu var
-- Stack ürünü (page-s-predictive) · **ince why** · analoji tohumu var
-- Stack ürünü (page-s-doc-matching) · **ince why** · analoji tohumu var
-- Stack ürünü (page-s-conversational) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-predictive) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-doc-matching) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-conversational) · **ince why** · analoji tohumu var
 - Frappe (page-s-studio) · analoji tohumu var
-- Stack ürünü (page-s-bpm) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-bpm) · **ince why** · analoji tohumu var
 - Zapier (page-s-ipaas) · analoji tohumu var
 - OpenFGA (page-s-iam) · analoji tohumu var
-- Stack ürünü (page-s-audit) · **ince why** · analoji tohumu var
-- Stack ürünü (page-s-i18n) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-audit) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-i18n) · **ince why** · analoji tohumu var
 - AppFolio (page-s-property) · analoji tohumu var
 - TR Lokalizasyon (page-s-property) · analoji tohumu var
 - TR Lokalizasyon (page-s-incentive) · analoji tohumu var
@@ -790,18 +790,18 @@
 - AI özellik (page-s-sales) · **ince why** · analoji tohumu var
 - AI özellik (page-s-inventory) · **ince why** · analoji tohumu var
 - Idempotency (page-scale-idempotency) · analoji tohumu var
-- Stack ürünü (page-s-consolidation) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-consolidation) · **ince why** · analoji tohumu var
 - TR Lokalizasyon (page-s-tax-compliance) · analoji tohumu var
-- Stack ürünü (page-s-tms) · **ince why** · analoji tohumu var
-- Stack ürünü (page-s-demand-planning) · **ince why** · analoji tohumu var
-- Stack ürünü (page-s-quality) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-tms) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-demand-planning) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-quality) · **ince why** · analoji tohumu var
 - Jurisdiction (page-cc-jurisdiction-resolver) · analoji tohumu var
 - Decision Trace (page-cc-jurisdiction-resolver) · analoji tohumu var
 - Data Residency (page-cc-jurisdiction-resolver) · analoji tohumu var
 - Deny-by-Default (page-cc-jurisdiction-resolver) · analoji tohumu var
 - ICU MessageFormat (page-cc-i18n-standards) · analoji tohumu var
 - Pseudo-localization (page-cc-i18n-standards) · analoji tohumu var
-- Stack ürünü (page-s-traceability) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-traceability) · **ince why** · analoji tohumu var
 - Functional Currency (page-cc-fx-ledger) · analoji tohumu var
 - KVKK (page-cc-compliance-matrix) · analoji tohumu var
 - GDPR (page-cc-compliance-matrix) · analoji tohumu var
@@ -809,31 +809,31 @@
 - TR Lokalizasyon (page-s-payroll) · analoji tohumu var
 - AI özellik (page-s-ats) · **ince why** · analoji tohumu var
 - E.164 (page-cc-identity-models) · analoji tohumu var
-- Stack ürünü (page-s-onboarding) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-onboarding) · **ince why** · analoji tohumu var
 - Backfill (page-cc-resolver-ops) · analoji tohumu var
 - Cache Invalidation (page-cc-resolver-ops) · analoji tohumu var
 - Deny-by-Default (page-cc-resolver-ops) · analoji tohumu var
 - Decision Trace (page-cc-resolver-ops) · analoji tohumu var
-- Stack ürünü (page-s-performance) · **ince why** · analoji tohumu var
-- Stack ürünü (page-s-workforce) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-performance) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-workforce) · **ince why** · analoji tohumu var
 - AI özellik (page-s-clm) · **ince why** · analoji tohumu var
-- Stack ürünü (page-s-loyalty) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-loyalty) · **ince why** · analoji tohumu var
 - Pseudo-localization (page-cc-cultural-ux) · analoji tohumu var
-- Stack ürünü (page-s-dms) · **ince why** · analoji tohumu var
-- Stack ürünü (page-s-event) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-dms) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-event) · **ince why** · analoji tohumu var
 - AI özellik (page-s-survey) · **ince why** · analoji tohumu var
 - AI özellik (page-s-bi) · **ince why** · analoji tohumu var
-- Stack ürünü (page-s-predictive) · **ince why** · analoji tohumu var
-- Stack ürünü (page-s-doc-matching) · **ince why** · analoji tohumu var
-- Stack ürünü (page-s-conversational) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-predictive) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-doc-matching) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-conversational) · **ince why** · analoji tohumu var
 - Frappe (page-s-studio) · analoji tohumu var
-- Stack ürünü (page-s-bpm) · **ince why** · analoji tohumu var
-- Stack ürünü (page-s-audit) · **ince why** · analoji tohumu var
-- Stack ürünü (page-s-i18n) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-bpm) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-audit) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-s-i18n) · **ince why** · analoji tohumu var
 - TR Lokalizasyon (page-s-property) · analoji tohumu var
-- Stack ürünü (page-dist-education) · **ince why** · analoji tohumu var
-- Stack ürünü (page-dist-clinic) · **ince why** · analoji tohumu var
-- Stack ürünü (page-dist-restaurant) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-dist-education) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-dist-clinic) · **ince why** · analoji tohumu var
+- SaaS ürünü (page-dist-restaurant) · **ince why** · analoji tohumu var
 - TR Lokalizasyon (page-s-incentive) · analoji tohumu var
 - BM25 (page-layer1-search) · analoji tohumu var
 - GraphQL (page-layer1-misc) · analoji tohumu var

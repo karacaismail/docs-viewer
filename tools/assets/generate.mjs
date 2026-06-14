@@ -109,7 +109,7 @@ const named = {
       "Kernel — Layer 0",
       "Scale Primitives",
       "In-tree Core — L1",
-      "Stack Ürünleri — L2",
+      "SaaS Products — L2",
       "App (Dağ) — Ürün",
     ];
     const body = layers

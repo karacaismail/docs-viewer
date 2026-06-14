@@ -1,7 +1,7 @@
 # Migration Mutabakat Raporu
 
 Kaynak dosya: 291 (+1 kapsam dışı) | Üretilen page: 291 | Atlanan: 0
-Glossary kaydı: 718 | Search document: 3996
+Glossary kaydı: 718 | Search document: 4000
 
 ## Kategori dağılımı
 - backend: 6

@@ -31,7 +31,7 @@ export const PREFIX_TO_CATEGORY = {
   crosscut: "crosscut",
   sus: "sus",
   fe: "frontend",
-  landx: "stack", // LandX top-level değil — Stack Ürünleri altında vaka (sahibinden clone)
+  landx: "stack", // LandX top-level değil — SaaS Products altında vaka (sahibinden clone)
   edition: "stack",
   be: "backend",
   adr: "kararlar",

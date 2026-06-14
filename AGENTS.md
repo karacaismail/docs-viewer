@@ -11,6 +11,7 @@ Bu dosya, bu projede çalışan HER AI ajanının bağlayıcı sözleşmesidir. 
 - Yapı ekseni: **Domain > ArcheType > Fragment > Atom**. Fragment = ana kayıtla yaşayan satırlı parça (eski dünyadaki child table). Atom = en küçük bildirimsel bileşen (kural/kısıt).
 - Yan eksen: **Workflow** (durum makinesi; ArcheType'tan bağımsız versiyonlanır, tenant'a pinlenir) · **Surface** (her sayfa bir Surface'tir; 1+ ArcheType'ı projekte eder; `surface: none` = headless) · **Contract** (Domain sınırının API kapısı).
 - Taksonomi: **Stack** ⊂ **Edition** (aynı kod, gelişmiş UI/UX + GTM) ⊂ **Distribution** (edition + config + sektör içeriği).
+- **SaaS Products** = bu kataloğun şemsiyesi: Stacks + Editions + Distributions paketleri VE Ürün Modülleri (s-*) birlikte SaaS ürünleridir; modüller paketleri oluşturan yapı taşlarıdır ve kendileri de SaaS ürünüdür.
 
 ## 2. Granülerlik Zinciri — Eş Anlam Tablosu (komut çözümleme anahtarı)
 
