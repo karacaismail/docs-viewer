@@ -60,35 +60,17 @@ export function RailOne({
   );
 }
 
-// Alt blok (UX): Devam et · Sözlük · yazı boyutu · geri bildirim · AI sözleşmesi — 60+ için açık metinli
-const FONT_KEY = "yazi-boyutu";
-const FONT_STEPS = ["100%", "112.5%", "125%"];
+// Alt blok (UX): Devam et · Sözlük · Issue · AI sözleşmesi — 60+ için açık metinli
 function RailFooter({ onNavigate }: { onNavigate?: () => void }) {
   const [last, setLast] = useState<{ slug: string; title: string } | null>(null);
-  const [font, setFont] = useState(0);
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem("son-ziyaret");
       if (raw) setLast(JSON.parse(raw));
-      const f = Number(window.localStorage.getItem(FONT_KEY) ?? "0");
-      if (f > 0 && f < FONT_STEPS.length) {
-        setFont(f);
-        document.documentElement.style.fontSize = FONT_STEPS[f];
-      }
     } catch {
       /* yok say */
     }
   }, []);
-  const setFontStep = (i: number) => {
-    const idx = Math.max(0, Math.min(FONT_STEPS.length - 1, i));
-    setFont(idx);
-    document.documentElement.style.fontSize = FONT_STEPS[idx];
-    try {
-      window.localStorage.setItem(FONT_KEY, String(idx));
-    } catch {
-      /* yok say */
-    }
-  };
   const [ls, lp] = (last?.slug ?? "/").split("/");
   return (
     <div className="rail1__footer">
@@ -106,37 +88,16 @@ function RailFooter({ onNavigate }: { onNavigate?: () => void }) {
         <i className="ph ph-book-open-text" aria-hidden />
         <span>Sözlük (A-Z)</span>
       </Link>
-      <fieldset className="rail1__fontrow">
-        <legend>Yazı boyutu</legend>
-        <button
-          type="button"
-          className="iconbtn"
-          aria-label="Yazıyı küçült"
-          onClick={() => setFontStep(font - 1)}
-          disabled={font === 0}
-        >
-          A−
-        </button>
-        <button
-          type="button"
-          className="iconbtn"
-          aria-label="Yazıyı büyüt"
-          onClick={() => setFontStep(font + 1)}
-          disabled={font === FONT_STEPS.length - 1}
-        >
-          A+
-        </button>
-      </fieldset>
       <a
         className="rail1__meta"
         href="https://github.com/karacaismail/docs-viewer/issues/new"
         target="_blank"
         rel="noreferrer"
       >
-        <i className="ph ph-chat-circle-text" aria-hidden /> Geri bildirim / hata bildir
+        <i className="ph ph-chat-circle-text" aria-hidden /> Issue ekle
       </a>
       <span className="rail1__meta rail1__meta--static">
-        <i className="ph ph-clock" aria-hidden /> Site güncellendi: {__BUILD_DATE__}
+        <i className="ph ph-clock" aria-hidden /> Update: {__BUILD_DATE__}
       </span>
       <a
         className="rail1__meta"
