@@ -19,18 +19,20 @@ export function RailOne({
   return (
     <nav className={plain ? undefined : "rail1"} aria-label="Ana kategoriler">
       {!plain && (
-        <div className="rail1__brand">
-          Mimari Doküman
+        <>
+          <div className="rail1__brand">Mimari Doküman</div>
           <button
             type="button"
-            className="iconbtn"
-            aria-label="Ara (Cmd+K)"
+            className="iconbtn btn-solid rail1__search"
+            aria-label="Ara (Ctrl+K)"
             onClick={() => ui.open("search")}
-            style={{ float: "right" }}
           >
-            <i className="ph ph-magnifying-glass" aria-hidden /> <kbd className="kbdchip">Ctrl+K</kbd>
+            <span className="rail1__search-text">
+              <i className="ph ph-magnifying-glass" aria-hidden /> Ara
+            </span>
+            <kbd className="kbdchip">Ctrl+K</kbd>
           </button>
-        </div>
+        </>
       )}
       {navigation.categories.map((c, i) => {
         const [section, page] = firstSlugOf(c.id).split("/");

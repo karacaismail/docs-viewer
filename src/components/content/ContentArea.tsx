@@ -143,7 +143,7 @@ export function ContentArea() {
       <div className="page-actions">
         <button
           type="button"
-          className="iconbtn"
+          className="iconbtn btn-solid"
           onClick={exportMd}
           disabled={!page}
           aria-label="Sayfayı Markdown olarak dışa aktar"
@@ -153,7 +153,7 @@ export function ContentArea() {
         </button>
         <button
           type="button"
-          className={`iconbtn${copied ? " is-copied" : ""}`}
+          className={`iconbtn btn-solid${copied ? " is-copied" : ""}`}
           onClick={copyMd}
           disabled={!page}
           aria-label="Sayfayı Markdown olarak panoya kopyala"
