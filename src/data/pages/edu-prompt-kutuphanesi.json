@@ -359,6 +359,139 @@
     "title": "Faz 6 · İşletim — dayanıklılık ve taşınabilirlik",
     "language": "text",
     "code": "FAZ 6 · İŞLETİM — ne zaman: üretimde ayakta tutarken; her sürüm öncesi gözden geçir.\n\nROL: SRE + sürüm yöneticisi.\nGÖREV: [SİSTEM] için dayanıklılık, taşınabilirlik ve geriye-uyum kur.\nÜRET:\n- Yedek + GERÇEK restore tatbikatı (yedek almak yetmez; geri yükleme denenir).\n- Migration geri-alma (Alembic downgrade) testi; veri kaybı yok.\n- Veri taşınabilirliği (en büyük benimseme kaldıracı — UX odaklı): export/import standardı\n  — içerik + medya + ayarlar, DB-bağımsız dump, kurulumlar arası taşıma, WordPress'ten içe aktarma.\n- Olay runbook'u: tipik arıza → adım adım çözüm.\n- Sürümleme/geriye-uyum: SemVer; minor'da deprecate, major'da kaldır; HEM veri HEM API uyumunu koru.\n  İyi örnek: WordPress (yıllarca uyumlu), Stripe (10+ yıllık API hâlâ çalışır).\n  Kötü örnek: Drupal 8 (toptan kırdı, pazar kaybetti) — TEKRARLAMA.\n\nKISIT: Geriye uyumu sessizce kırma; kırılacaksa deprecation + uyumluluk katmanı + duyuru.\nÇIKTI: backup/restore + export/import + runbook + sürüm politikası (küçük PR).\nKABUL (DoD): restore tatbikatı yapılmış; migration geri alınabilir; export/import çalışır; runbook + SemVer politikası yazılı."
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-h-seviye-prompt-lari-granulerlik-zinciri-insa-sirasi",
+    "type": "heading",
+    "level": 2,
+    "text": "Seviye prompt'ları — granülerlik zinciri (inşa sırası)"
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Aşağıdaki prompt'lar PARAMETRİKtir: tek tek 300+ prompt yazmak yerine, her granülerlik seviyesi için bir şablonu köşeli alanları doldurarak yüzlerce ArcheType'a uygularsın. İnşa sırası: kernel önce ve bir kez → core → app → module → ArcheType/Surface → View → Fragment/Use Case → Component → Atom. Komşuluk kuralı: her seviye yalnız bir alt komşusuna bağlanır; atlama varsa AI planı reddeder. Bu seviye prompt'ları faz prompt'larıyla (7–11) birlikte kullanılır: önce seviyeyi seç, sonra fazı uygula."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-h-prompt-12-kernel-katmani-layer-0-ilk-ve-bir-kez",
+    "type": "heading",
+    "level": 2,
+    "text": "Prompt 12 — Kernel katmanı (Layer 0) · ilk ve bir kez"
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-code-13",
+    "type": "codeBlock",
+    "title": "Seviye: Kernel (Layer 0)",
+    "language": "text",
+    "code": "SEVİYE: KERNEL — sistemin kalbi/beyni; EN ÖNCE ve bir kez kurulur. Komşu: yok (taban).\nROL: Kernel mimarı. OKU: kernel/k-* sayfaları, be-kararlar, be-sdk.\nGÖREV: [KERNEL YETENEĞİ] (örn. identity / tenancy / authz / ArcheType engine / bus / audit) için EN KÜÇÜK çalışan dilimi.\nKISIT: Bu yalnız çekirdek altyapıdır; ürün özelliği değil. Tenant izolasyonu (RLS) ve audit gün-1 zorunlu.\nÇIKTI (be-sdk sırası): testler ÖNCE (kırmızı) → çekirdek sözleşme → uygulama. Küçük PR + kanıt.\nKABUL (DoD): yetenek uçtan uca testle çalışır; RLS bağlam yoksa sıfır satır; tip+lint+test temiz."
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-h-prompt-13-core-app-cekirdegi-app-basina-tek-degismez",
+    "type": "heading",
+    "level": 2,
+    "text": "Prompt 13 — Core (app çekirdeği) · app başına tek, değişmez"
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-code-14",
+    "type": "codeBlock",
+    "title": "Seviye: Core",
+    "language": "text",
+    "code": "SEVİYE: CORE — bir app'in kalbi (Drupal core gibi); app başına TEK ve değişmez. Komşu: App (üst), Module (alt).\nROL: App çekirdeği mimarı. OKU: kernel sözleşmeleri, ilgili app'in domain haritası.\nGÖREV: [APP] core'unun değişmez sözleşmesini tanımla (paylaşılan ArcheType'lar, örn. Party; ortak workflow/surface kuralları).\nKISIT: Core'a iş-modülü mantığı koyma; o module'lere ait. Kernel iç API'sine dokunma.\nÇIKTI: testler önce → core ArcheType sözleşmeleri → manifest. Küçük PR.\nKABUL (DoD): core sözleşmeleri test edilir; module'ler core'u bozmadan genişletebilir (contract testi)."
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-h-prompt-14-app-dag-stack-paketleme",
+    "type": "heading",
+    "level": 2,
+    "text": "Prompt 14 — App (Dağ) · stack paketleme"
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-code-15",
+    "type": "codeBlock",
+    "title": "Seviye: App (Dağ)",
+    "language": "text",
+    "code": "SEVİYE: APP (Dağ) — kernel üstünde bir/birden çok stack'i TEK PANELDE paketleyen ürün. Komşu: Domain/Module (alt).\nROL: Ürün mimarı. OKU: AGENTS.md komut grameri, stack/edition sayfaları, ilgili core.\nGÖREV: [APP] (örn. CRM) için Dağ→Atom plan ağacını çıkar: Domain'lere (Kaya) böl, her Domain'de ArcheType'ları işaretle, SP'leri yapraktan topla.\nKISIT: Komşuluk: App doğrudan ArcheType'a atlayamaz; önce Domain. Plan onaylanmadan iskelet üretme.\nÇIKTI: plan ağacı (SP'lerle) + onaydan sonra be-sdk iskeleti (testler önce).\nKABUL (DoD): tüm app default-entegre gelir (paylaşılan ArcheType'lar); plan komşuluk kuralına uyar; SP toplamı tutar."
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-h-prompt-15-module-domain-kaya",
+    "type": "heading",
+    "level": 2,
+    "text": "Prompt 15 — Module / Domain (Kaya)"
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-code-16",
+    "type": "codeBlock",
+    "title": "Seviye: Module (Kaya)",
+    "language": "text",
+    "code": "SEVİYE: MODULE / DOMAIN (Kaya) — genişletme birimi (bounded context); eski dünyanın eklenti kavramının yerini alır (kanonik ad: module). Komşu: App (üst), Surface/ArcheType (alt).\nROL: Domain mimarı. OKU: app plan ağacı, core sözleşmeleri.\nGÖREV: [MODULE] için sınırı, sahip olduğu ArcheType'ları ve Contract (API kapısı) tanımını çıkar.\nKISIT: Başka module'ün tablosuna doğrudan dokunma; Contract üzerinden konuş. Capability manifesti (izinler) zorunlu.\nÇIKTI: testler önce → ArcheType listesi + Contract + manifest. Küçük PR.\nKABUL (DoD): module ayrı yüklenip kaldırılabilir; Alembic branch + downgrade yolu var; capability deny-by-default."
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-h-prompt-16-archetype-surface-buyuk-tas",
+    "type": "heading",
+    "level": 2,
+    "text": "Prompt 16 — ArcheType + Surface (Büyük Taş)"
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-code-17",
+    "type": "codeBlock",
+    "title": "Seviye: ArcheType + Surface",
+    "language": "text",
+    "code": "SEVİYE: ARCHETYPE (Büyük Taş) — bildirimsel varlık; tablo+API+MCP tool+varsayılan Surface'i ÜRETİR (kanonik ad: ArcheType, eski veri-tanımı kavramı değil). Komşu: Module (üst), Fragment/View (alt).\nROL: Veri mimarı. OKU: kernel ArcheType engine, k-granulerlik, k-surface.\nGÖREV: [ARCHETYPE] (örn. Order) bildirimsel tanımı + projekte eden Surface.\nKISIT: Alan bayrakları zorunlu: para=Money (Decimal; float yasak), kişisel veri=pii(+retention), tarihçeli=bitemporal, her şey audit'li. Surface 1+ ArcheType projekte eder; headless ise surface:none.\nÇIKTI: testler önce → archetypes/*.yaml → surfaces/*.yaml. Küçük PR.\nKABUL (DoD): ArcheType'tan tablo+API+MCP+Surface üretilir; bayraklar doğru; tenant-scoped testler yeşil."
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-h-prompt-17-view-projection-orta-tas",
+    "type": "heading",
+    "level": 2,
+    "text": "Prompt 17 — View / Projection (Orta Taş)"
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-code-18",
+    "type": "codeBlock",
+    "title": "Seviye: View / Projection",
+    "language": "text",
+    "code": "SEVİYE: VIEW / PROJECTION (Orta Taş) — bir Büyük Taş altındaki liste/alt-sayfa + endpoint grubu. Komşu: Surface (üst), Fragment (alt).\nROL: Surface geliştirici. OKU: ilgili ArcheType + Surface.\nGÖREV: [VIEW] (örn. açık siparişler listesi) için projeksiyon + endpoint grubu.\nKISIT: Liste uçları keyset (cursor) pagination; OFFSET yok. Yetki/tenant filtresi zorunlu.\nÇIKTI: testler önce → view/endpoint tanımı. Küçük PR.\nKABUL (DoD): liste tenant-scoped, sayfalanır, negatif yetki testi geçer."
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-h-prompt-18-fragment-use-case-kucuk-tas",
+    "type": "heading",
+    "level": 2,
+    "text": "Prompt 18 — Fragment / Use Case (Küçük Taş)"
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-code-19",
+    "type": "codeBlock",
+    "title": "Seviye: Fragment / Use Case",
+    "language": "text",
+    "code": "SEVİYE: FRAGMENT / USE CASE (Küçük Taş) — ana kayıtla yaşayan satırlı parça (eski child table) veya tek kullanım hikâyesi. Komşu: View (üst), Component (alt).\nROL: Geliştirici. OKU: ilgili ArcheType + View.\nGÖREV: [FRAGMENT/USE CASE] (örn. sipariş satırı / 'siparişi onayla') tanımı.\nKISIT: Use case yalnız mutlu akış değil: önkoşul, yetki, ana/alternatif/hata akışı, invariant, audit, gizlilik, SLO, çalıştırılabilir kabul testi zorunlu.\nÇIKTI: testler önce (negatif dahil) → fragment/hook. Küçük PR.\nKABUL (DoD): ana + hata akışı testli; invariant korunur; audit kaydı üretilir."
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-h-prompt-19-component-endpoint-kum-tanesi",
+    "type": "heading",
+    "level": 2,
+    "text": "Prompt 19 — Component / Endpoint (Kum Tanesi)"
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-code-20",
+    "type": "codeBlock",
+    "title": "Seviye: Component / Endpoint",
+    "language": "text",
+    "code": "SEVİYE: COMPONENT / ENDPOINT (Kum Tanesi) — tek bileşen veya tek API endpoint (alan seviyesi). Komşu: Fragment (üst), Atom (alt).\nROL: Geliştirici. OKU: ilgili Fragment/Use Case.\nGÖREV: [COMPONENT/ENDPOINT] için en küçük uygulanabilir parça.\nKISIT: async def içinde bloklama yok; girdi Pydantic v2 ile doğrulanır; ilgili ilişkiler lazy='raise' + açık eager.\nÇIKTI: testler önce → endpoint/bileşen. Küçük PR.\nKABUL (DoD): birim+entegrasyon testi yeşil; sözleşme (response_model) net."
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-h-prompt-20-atom-rule-en-kucuk-bildirimsel-birim",
+    "type": "heading",
+    "level": 2,
+    "text": "Prompt 20 — Atom (Rule) · en küçük bildirimsel birim"
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-code-21",
+    "type": "codeBlock",
+    "title": "Seviye: Atom (Rule)",
+    "language": "text",
+    "code": "SEVİYE: ATOM (Rule) — en küçük bildirimsel bileşen: kural/kısıt/validation/policy. Komşu: Component (üst); alt yok.\nROL: Geliştirici. OKU: ilgili Component/Endpoint.\nGÖREV: [ATOM] (örn. 'tutar > 0' kuralı / RLS policy / validation) bildirimsel tanımı.\nKISIT: Kuralı koda gömme; bildirimsel (manifest/policy) tut. Kernel iç API'sine dokunma.\nÇIKTI: testler önce → kural tanımı. Küçük PR.\nKABUL (DoD): kural hem pozitif hem negatif testle doğrulanır; ihlal anlaşılır hata verir."
    }
   ]
  }
