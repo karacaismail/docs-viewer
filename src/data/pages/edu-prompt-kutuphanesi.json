@@ -53,6 +53,7 @@
    "page-be-sdk",
    "page-edu-u16-test",
    "page-edu-u17-git",
+   "page-edu-waterfall-yol-haritasi",
    "page-edu-faz-haritasi"
   ],
   "blocks": [
@@ -293,6 +294,71 @@
     "title": "PR açıklaması ve sonraki kişiye devir",
     "language": "text",
     "code": "Bu iterasyonu kapatmak için mevcut diff ve test sonuçlarından kanıt paketi üret.\n\nŞu başlıkları doldur:\n- Amaç: tek cümle.\n- Kapsam / non-goal.\n- Değişen davranış ve dosyalar.\n- Önce kırmızı, sonra yeşil test kanıtı.\n- Lint, type-check, test, build ve gerekiyorsa e2e sonucu.\n- Güvenlik/tenant/PII etkisi.\n- Migration ve rollback etkisi.\n- Açık varsayımlar ve kalan riskler.\n- Reviewer'ın özellikle yeniden çalıştıracağı üç kontrol.\n- Sonraki iterasyon için yalnız bir önerilen görev.\n\nEksik kanıt varsa 'tamamlandı' deme; eksik kapıyı açıkça yaz."
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-h-prompt-7-gereksinim-fazi-hik-ye-kapsam-disi-kabul-testi",
+    "type": "heading",
+    "level": 2,
+    "text": "Prompt 7 — Gereksinim fazı: hikâye + kapsam dışı + kabul testi"
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-code-8",
+    "type": "codeBlock",
+    "title": "Faz 1 · Gereksinim — kod yazmadan önce",
+    "language": "text",
+    "code": "FAZ 1 · GEREKSİNİM — ne zaman: yeni bir dikey dilime başlarken, kod yazmadan önce.\n\nROL: Kıdemli analist. AGENTS.md ve waterfall yol haritası sözleşmesini uygula.\nOKU: AGENTS.md, ilgili kernel/be-kararlar sayfaları, benzer mevcut kullanım hikâyeleri.\n\nGÖREV (tek dilim): [HEDEF DİLİM] için kullanım hikâyesini ve kapsam dışını yaz.\nÜRET:\n- Kullanım hikâyesi: önkoşul, yetki, ana akış, alternatif akış, hata akışı, invariant, audit, gizlilik, SLO.\n- Kapsam dışı (non-goals): bu dilimde BİLİNÇLİ yapılmayacaklar.\n- Çalıştırılabilir kabul testleri: pytest/Gherkin; ÖNCE KIRMIZI (henüz uygulama yok).\n\nKISIT: Kod yazma. Şema/tasarım kararı verme (sonraki faz). Kapsamı büyütme.\nÇIKTI: kullanım hikâyesi dosyası + kırmızı kabul testleri (küçük PR).\nKABUL (DoD): ana akış + hata akışı + kabul testi yazılı; kapsam dışı açıkça listelenmiş."
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-h-prompt-8-tasarim-fazi-archetype-surface-workflow",
+    "type": "heading",
+    "level": 2,
+    "text": "Prompt 8 — Tasarım fazı: ArcheType + Surface + Workflow"
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-code-9",
+    "type": "codeBlock",
+    "title": "Faz 2 · Tasarım — uygulamadan önce",
+    "language": "text",
+    "code": "FAZ 2 · TASARIM — ne zaman: gereksinim kapısı geçtikten sonra, uygulamadan önce.\n\nROL: Veri ve sınır mimarı. AGENTS.md granülerlik + komşuluk kuralını uygula.\nOKU: kernel/k-granulerlik, kernel/k-surface, backend/be-kararlar, be-sdk.\n\nGÖREV: [DİLİM] için bildirimsel tasarımı çıkar (henüz uygulama yok).\nÜRET:\n- ArcheType taslağı: Domain > ArcheType > Fragment > Atom. Alan bayrakları:\n  para = Money (Decimal; float YASAK), kişisel veri = pii (+retention),\n  tarihçeli değer = bitemporal, her şey audit'li.\n- Surface taslağı (hangi ArcheType'ı projekte eder) ve Workflow (durum makinesi).\n- Veri katmanı: SQLAlchemy 2.0 async + Alembic. (Prisma Python istemcisi 15 Nisan 2025'te\n  arşivlendi/bakımı durdu — KULLANMA.) PostgreSQL hedefi korunur.\n- Çok-kiracılık: PostgreSQL Row-Level Security planı; modül-başına Alembic branch + downgrade yolu.\n\nKISIT: İş mantığı/uygulama yazma. Komşuluk kuralını ihlal etme (Kaya doğrudan Kum'a\nbağlanamaz); ara seviye eksikse planı reddet ve iste.\nÇIKTI: archetype/surface/workflow taslakları + migration planı (küçük PR).\nKABUL (DoD): Money/pii/bitemporal/audit işaretli; komşuluk kuralı ihlali yok; migration geri-alma yolu tanımlı."
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-h-prompt-9-dogrulama-fazi-negatif-guvenlik-cok-kiracilik",
+    "type": "heading",
+    "level": 2,
+    "text": "Prompt 9 — Doğrulama fazı: negatif + güvenlik + çok-kiracılık"
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-code-10",
+    "type": "codeBlock",
+    "title": "Faz 4 · Doğrulama — dağıtımdan önce",
+    "language": "text",
+    "code": "FAZ 4 · DOĞRULAMA — ne zaman: inşa (Prompt 2–3) yeşil olduktan sonra, dağıtımdan önce.\n\nROL: Saldırgan test/güvenlik mühendisi. Mutlu yol KANIT DEĞİLDİR.\nGÖREV: [DİLİM] için mutlu yol dışını kanıtla.\nÜRET:\n- Negatif akış testleri: geçersiz girdi, yetkisiz erişim, eşzamanlılık, sınır değerler.\n- Güvenlik: auth/RBAC negatif testleri; dosya yükleme (web root DIŞI + yeniden adlandır +\n  içerik/MIME doğrula); raw SQL YASAK → ORM parametreli sorgu.\n- Çok-kiracılık izolasyonu: bir kiracının verisi diğerine SIZMADIĞINI testle kanıtla (RLS).\n- API fuzz: Schemathesis OpenAPI'den \"--checks all\". Saf fonksiyonlara Hypothesis property testi.\n- Performans kapısı: \"async def\" içinde bloklama yok (Ruff ASYNC); N+1 yok (ilişkiler lazy=\"raise\");\n  liste uçları keyset (cursor) pagination.\n\nKISIT: Yeni özellik ekleme. Testi zayıflatıp/silip yeşil yapma.\nÇIKTI: negatif/güvenlik/izolasyon test paketi + bulgular (küçük PR).\nKABUL (DoD): negatif testler geçer; a11y kritik/ciddi ihlal yok; kiracı izolasyonu testle kanıtlı."
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-h-prompt-10-dagitim-fazi-hetzner-deploy-rollback",
+    "type": "heading",
+    "level": 2,
+    "text": "Prompt 10 — Dağıtım fazı: Hetzner deploy + rollback"
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-code-11",
+    "type": "codeBlock",
+    "title": "Faz 5 · Dağıtım — tekrarlanabilir yayın",
+    "language": "text",
+    "code": "FAZ 5 · DAĞITIM — ne zaman: doğrulama kapısı geçtikten sonra.\n\nROL: Release/altyapı mühendisi.\nORTAM: geliştirme macOS M4 (ARM64), üretim Hetzner Debian + AMD EPYC (x86_64).\nGÖREV: [DİLİM] için tekrarlanabilir yayın kur.\nÜRET:\n- Multi-arch imaj: native arm64 + amd64 runner (QEMU emülasyonundan KAÇIN — dramatik yavaş);\n  buildx manifest list.\n- Tek-dosya docker compose (app + PostgreSQL); reverse proxy (Nginx/Caddy);\n  Uvicorn veya Gunicorn + UvicornWorker.\n- Private repo → GHCR → sunucu pull; secrets GitHub OIDC/encrypted, KODDAN AYRI\n  (frontend'de \"VITE_\" ile secret expose ETME — bundle'a sızar).\n- Rollback yolu: bir önceki imaja dönüş denenir ve belgelenir.\n\nKISIT: Sırrı koda/loga yazma. Test edilmemiş deploy'u \"bitti\" sayma.\nÇIKTI: CI/CD workflow + compose + deploy/rollback runbook (küçük PR).\nKABUL (DoD): aynı commit temiz ortamda yeşil; rollback denenmiş; sır yönetimi ayrı."
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-h-prompt-11-isletim-fazi-yedek-restore-export-import-geriye-uyum",
+    "type": "heading",
+    "level": 2,
+    "text": "Prompt 11 — İşletim fazı: yedek/restore + export/import + geriye-uyum"
+   },
+   {
+    "id": "block-edu-prompt-kutuphanesi-code-12",
+    "type": "codeBlock",
+    "title": "Faz 6 · İşletim — dayanıklılık ve taşınabilirlik",
+    "language": "text",
+    "code": "FAZ 6 · İŞLETİM — ne zaman: üretimde ayakta tutarken; her sürüm öncesi gözden geçir.\n\nROL: SRE + sürüm yöneticisi.\nGÖREV: [SİSTEM] için dayanıklılık, taşınabilirlik ve geriye-uyum kur.\nÜRET:\n- Yedek + GERÇEK restore tatbikatı (yedek almak yetmez; geri yükleme denenir).\n- Migration geri-alma (Alembic downgrade) testi; veri kaybı yok.\n- Veri taşınabilirliği (en büyük benimseme kaldıracı — UX odaklı): export/import standardı\n  — içerik + medya + ayarlar, DB-bağımsız dump, kurulumlar arası taşıma, WordPress'ten içe aktarma.\n- Olay runbook'u: tipik arıza → adım adım çözüm.\n- Sürümleme/geriye-uyum: SemVer; minor'da deprecate, major'da kaldır; HEM veri HEM API uyumunu koru.\n  İyi örnek: WordPress (yıllarca uyumlu), Stripe (10+ yıllık API hâlâ çalışır).\n  Kötü örnek: Drupal 8 (toptan kırdı, pazar kaybetti) — TEKRARLAMA.\n\nKISIT: Geriye uyumu sessizce kırma; kırılacaksa deprecation + uyumluluk katmanı + duyuru.\nÇIKTI: backup/restore + export/import + runbook + sürüm politikası (küçük PR).\nKABUL (DoD): restore tatbikatı yapılmış; migration geri alınabilir; export/import çalışır; runbook + SemVer politikası yazılı."
    }
   ]
  }

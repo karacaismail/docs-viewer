@@ -1,153 +1,233 @@
 {
-  "id": "edu-prompt-kutuphanesi",
-  "title": "Kopyala–Çalıştır Prompt Kütüphanesi",
-  "subtitle": "Claude, Cursor ve Antigravity için başlangıç, test-önce üretim, bağımsız review, CI düzeltme ve teslim promptları.",
-  "cluster": "egitim",
-  "order": 0.5,
-  "icon": "ph-copy",
-  "granularity": "kaya",
-  "state": "wip",
-  "badge": "PROMPT",
-  "tags": ["prompt", "claude", "cursor", "antigravity", "vibecoding"],
-  "owner": "Eğitim programı sahibi",
-  "reviewer": "Fractional senior mimar",
-  "maturity": "incelemede",
-  "lastVerified": null,
-  "evidence": [],
-  "prerequisites": ["edu-baslangic-rotasi"],
-  "nonGoals": [
-    "Tek promptla bütün platformu üretmek.",
-    "AI aracına merge, release veya üretim kararı vermek.",
-    "Araç adını kalite güvencesi saymak."
-  ],
-  "failureModes": [
-    "Köşeli parantezli alanlar doldurulmadan prompt gönderilir ve AI yanlış kapsam varsayar.",
-    "Üretim ve review aynı konuşmada yürütülür; aynı varsayım iki kez doğru sanılır.",
-    "CI kırmızı iken semptomu gizlemek için test veya eşik gevşetilir."
-  ],
-  "acceptanceCriteria": [
-    "Her prompt tek görev, açık non-goal ve çalıştırılabilir doğrulama komutu taşır.",
-    "Üretim ve bağımsız review farklı oturum veya farklı kişi tarafından yürütülür.",
-    "Prompt çıktısı dosya listesi, varsayım, test sonucu ve açık risklerle kapanır."
-  ],
-  "operationalImpact": "Üç kişinin farklı AI araçlarında aynı iş tarifini ve aynı kalite kapılarını kullanmasını sağlar.",
-  "externalReviewRequired": true,
-  "related": [
-    "edu-baslangic-rotasi",
-    "build-ilk-dikey-dilim",
-    "build-iterasyon-ritueli",
-    "sus-ai-uretim-sozlesmesi",
-    "be-sdk",
-    "edu-u16-test",
-    "edu-u17-git"
-  ],
-  "enrich": {
-    "info": "Araç değişebilir; görev sözleşmesi değişmez. Aşağıdaki promptlar Claude, Cursor ve Antigravity'de aynı kalite kapılarıyla kullanılmak üzere yazılmıştır.",
-    "terms": [
-      {
-        "term": "Görev Kartı",
-        "meaning": "AI'a verilecek tek işi hedef, kapsam, non-goal, invariant, kabul testleri, doğrulama komutları ve durdurma koşuluyla kapalı biçimde tarif eden kısa sözleşme.",
-        "why": "Geniş ve belirsiz prompt AI'ın varsayım alanını büyütür; görev kartı hem üretimi küçültür hem reviewer'ın neyi doğrulayacağını görünür yapar."
-      }
-    ]
-  },
-  "blocks": [
-    {
-      "type": "paragraph",
-      "text": "Her geliştirme bir Görev Kartı ile başlar. Araç yalnız bu kartın sınırında üretir; reviewer aynı kartı kullanarak sonucu bağımsız biçimde denetler."
-    },
-    {
-      "type": "callout",
-      "variant": "info",
-      "label": "Kullanım kuralı",
-      "body": "Önce `Buradan Başla` rotasını tamamla. Bir oturumda yalnız bir prompt kullan. `[GÖREV]`, `[KAPSAM]` ve `[KOMUTLAR]` alanlarını doldur. AI ek soru sormadan repodan bulabiliyorsa bulsun; yıkıcı veya yanlış repo riski varsa dursun."
-    },
-    {
-      "type": "table",
-      "caption": "Araçlara göre aynı ritim",
-      "headers": ["Araç", "Üretim oturumu", "Review oturumu"],
-      "rows": [
-        ["Claude", "Repo kökünde yeni konuşma aç; önce Prompt 0, sonra tek uygulama promptu.", "Yeni konuşma aç; yalnız görev kartı, diff ve test çıktısını Prompt 4 ile ver."],
-        ["Cursor", "Repo kökünü workspace yap; Agent oturumunda tek görev kartı kullan.", "Yeni Agent konuşmasında değişiklik yapmadan önce bulguları iste."],
-        ["Antigravity", "Workspace kökünde planı ve komutları aynı görev sınırıyla yürüt.", "Ayrı görev oturumunda Prompt 4 ile saldırgan review yap."]
-      ]
-    },
-    {
-      "type": "heading",
-      "level": 2,
-      "text": "Prompt 0 — Repoyu tanı, henüz değiştirme"
-    },
-    {
-      "type": "code",
-      "lang": "text",
-      "title": "Her yeni repo ve her yeni araç oturumunda",
-      "content": "Bu repoda geliştirme yapacağız. Önce yalnız inceleme yap; dosya değiştirme.\n\n1. Repo kökündeki AGENTS.md, CLAUDE.md, README ve workflow dosyalarını oku.\n2. Git durumunu, kullanılan dil/araç zincirini, test-lint-typecheck-build komutlarını çıkar.\n3. Bu repo docs-viewer ise runtime kodu ekleme; yanlış repo olduğunu açıkça söyle.\n4. [GÖREV] için mevcut sahip dosyaları, bağımlılıkları, riskleri ve en küçük uygulanabilir diff'i belirle.\n5. Çıktını şu başlıklarla ver: Mevcut Gerçek, Önerilen Küçük Plan, Değişecek Dosyalar, Testler, Riskler, Açık Varsayımlar.\n\nHenüz kod yazma. Plan bir oturumda tamamlanabilecek kadar küçük değilse böl."
-    },
-    {
-      "type": "heading",
-      "level": 2,
-      "text": "Prompt 1 — İlk runtime iskeleti"
-    },
-    {
-      "type": "code",
-      "lang": "text",
-      "title": "İterasyon 0: health + test + CI",
-      "content": "AGENTS.md ve repo sözleşmelerini uygula. Bu görev hedef runtime reposundadır; repo docs-viewer ise hiçbir runtime dosyası eklemeden dur.\n\nHEDEF\nPython 3.12+, uv ve FastAPI ile en küçük çalışan iskeleti kur. GET /health isteği 200 ve {\"status\":\"ok\"} döndürsün. Aynı davranış pytest ile doğrulansın ve GitHub Actions temiz ortamda çalıştırsın.\n\nSIRA\n1. Önce başarısız testi yaz ve çalıştır; kırmızı çıktıyı göster.\n2. Sonra yalnız testi geçirecek uygulamayı yaz.\n3. Ruff ve pyright strict ayarlarını ekle.\n4. CI içinde uv sync, ruff, pyright ve pytest çalıştır.\n5. Tüm komutları çalıştır; sonuçları raporla.\n\nKAPSAM DIŞI\nPostgreSQL, login, tenant, GraphQL, UI, Redis, kuyruk, deploy ve ürün özellikleri.\n\nBİTİŞ\nDeğişen dosyalar, kırmızı→yeşil test kanıtı, komut çıktısı özeti, varsayımlar ve açık riskler. Testi veya type-check eşiğini geçmek için gevşetme yapma."
-    },
-    {
-      "type": "heading",
-      "level": 2,
-      "text": "Prompt 2 — Genel test-önce görev kartı"
-    },
-    {
-      "type": "code",
-      "lang": "text",
-      "title": "Her küçük geliştirmede doldur",
-      "content": "AGENTS.md sözleşmesini uygula ve işi uçtan uca tamamla.\n\nGÖREV: [TEK DAVRANIŞ]\nKAPSAM: [DEĞİŞEBİLECEK DOSYA/KATMAN]\nNON-GOAL: [BU TURDA YAPILMAYACAKLAR]\nINVARIANT: [ASLA BOZULMAYACAK KURAL]\nKABUL TESTLERİ:\n- [ANA AKIŞ]\n- [HATA AKIŞI]\n- [YETKİ/TENANT NEGATİF TESTİ, İLGİLİYSE]\nDOĞRULAMA KOMUTLARI: [TEST, LINT, TYPECHECK, BUILD]\n\nÇALIŞMA SIRASI\n1. Mevcut kodu ve test desenini oku.\n2. Testleri önce ekle; beklenen kırmızı sonucu doğrula.\n3. En küçük uygulamayı yap.\n4. İlgisiz refactor ve yeni bağımlılık ekleme.\n5. Tüm doğrulama komutlarını çalıştır.\n6. Diff'i kendi kendine eleştir; testi geçsin diye sözleşme gevşetilmiş mi kontrol et.\n7. Sonuçta değişen dosyaları, testleri, varsayımları ve kalan riskleri yaz.\n\nİki denemede çözülemeyen hata olursa yeni kod eklemeyi bırak; en küçük yeniden üretimi ve kök neden hipotezlerini çıkar."
-    },
-    {
-      "type": "heading",
-      "level": 2,
-      "text": "Prompt 3 — OrderOps ilk dikey dilimi"
-    },
-    {
-      "type": "code",
-      "lang": "text",
-      "title": "İterasyon 4: tenant-kapsamlı create/list",
-      "content": "Kanonik OrderOps referansına göre yalnız ilk dikey dilimi üret.\n\nGÖREV\nCustomer, Order ve OrderLine için en küçük tanımları oluştur; PostgreSQL'e yaz; GraphQL üzerinden order oluştur ve listele. Her kayıt tenant_id taşısın. Tenant A kullanıcısı Tenant B kaydını okuyamasın veya ona bağlanamasın.\n\nZORUNLU SIRA\n1. Önce acceptance testleri: başarılı create/list, eksik currency reddi, toplam invariantı, komşu tenant read/write reddi.\n2. Sonra ArcheType/tanım şemaları.\n3. Sonra migration ve repository.\n4. Sonra GraphQL resolver.\n5. Son olarak audit olayı.\n\nKAPSAM DIŞI\nÖdeme, stok, kargo, indirim, tam auth sistemi, UI, dış kuyruk ve performans optimizasyonu.\n\nBİTİŞ\nTestler, migration ileri/geri planı, örnek GraphQL isteği/yanıtı, audit kaydı ve çalıştırılan komutlar. Tenant negatif testi yoksa görev bitmiş değildir."
-    },
-    {
-      "type": "heading",
-      "level": 2,
-      "text": "Prompt 4 — Bağımsız saldırgan review"
-    },
-    {
-      "type": "code",
-      "lang": "text",
-      "title": "İşi üretmeyen kişi veya temiz AI oturumu",
-      "content": "Aşağıdaki görev kartını, diff'i ve test çıktısını bağımsız reviewer olarak incele. İlk çözümü savunma; yanlış olduğunu varsayarak kanıt ara. Şimdilik dosya değiştirme.\n\nÖNCELİK SIRASI\n1. Tenant/yetki/PII sızıntısı ve veri kaybı.\n2. Kabul kriterini gerçekten ölçmeyen veya sahte yeşil test.\n3. Para, tarih, migration, idempotency ve eşzamanlılık hatası.\n4. Gereksiz kapsam, gizli bağımlılık ve AGENTS.md ihlali.\n5. Eksik hata akışı, rollback ve gözlem kanıtı.\n\nHer bulgu için önem seviyesi, dosya/satır, nasıl yeniden üretileceği ve en küçük düzeltmeyi yaz. Bulgu yoksa bunu açıkça söyle ve kalan test boşluklarını listele. Review sonunda yalnız gerçekten gerekli düzeltmeler için uygulanabilir bir görev kartı üret."
-    },
-    {
-      "type": "heading",
-      "level": 2,
-      "text": "Prompt 5 — CI kırmızı, yalnız kök nedeni düzelt"
-    },
-    {
-      "type": "code",
-      "lang": "text",
-      "title": "Başarısız workflow loguyla kullan",
-      "content": "Bu görev yalnız aşağıdaki CI hatasının kök nedenini düzeltmektir.\n\nHATA LOGU:\n[LOGUN İLGİLİ BÖLÜMÜ]\n\nKURALLAR\n- Önce aynı hatayı yerelde yeniden üret.\n- Kök nedeni test, kod, ortam veya veri olarak sınıflandır.\n- Test beklentisini, coverage eşiğini, güvenlik kontrolünü veya lint kuralını gevşetme.\n- İlgisiz dosyaları değiştirme; yeni bağımlılık ancak zorunluysa gerekçelendir.\n- Düzeltmeden sonra başarısız komutu ve tam doğrulama zincirini tekrar çalıştır.\n\nSONUÇ\nKök neden, değişen dosyalar, önce/sonra davranışı, çalıştırılan komutlar ve tekrar oluşmasını engelleyen test."
-    },
-    {
-      "type": "heading",
-      "level": 2,
-      "text": "Prompt 6 — İterasyonu kapat ve devret"
-    },
-    {
-      "type": "code",
-      "lang": "text",
-      "title": "PR açıklaması ve sonraki kişiye devir",
-      "content": "Bu iterasyonu kapatmak için mevcut diff ve test sonuçlarından kanıt paketi üret.\n\nŞu başlıkları doldur:\n- Amaç: tek cümle.\n- Kapsam / non-goal.\n- Değişen davranış ve dosyalar.\n- Önce kırmızı, sonra yeşil test kanıtı.\n- Lint, type-check, test, build ve gerekiyorsa e2e sonucu.\n- Güvenlik/tenant/PII etkisi.\n- Migration ve rollback etkisi.\n- Açık varsayımlar ve kalan riskler.\n- Reviewer'ın özellikle yeniden çalıştıracağı üç kontrol.\n- Sonraki iterasyon için yalnız bir önerilen görev.\n\nEksik kanıt varsa 'tamamlandı' deme; eksik kapıyı açıkça yaz."
-    }
+ "id": "edu-prompt-kutuphanesi",
+ "title": "Kopyala–Çalıştır Prompt Kütüphanesi",
+ "subtitle": "Claude, Cursor ve Antigravity için başlangıç, test-önce üretim, bağımsız review, CI düzeltme ve teslim promptları.",
+ "cluster": "egitim",
+ "order": 0.5,
+ "icon": "ph-copy",
+ "granularity": "kaya",
+ "state": "wip",
+ "badge": "PROMPT",
+ "tags": [
+  "prompt",
+  "claude",
+  "cursor",
+  "antigravity",
+  "vibecoding"
+ ],
+ "owner": "Eğitim programı sahibi",
+ "reviewer": "Fractional senior mimar",
+ "maturity": "incelemede",
+ "lastVerified": null,
+ "evidence": [],
+ "prerequisites": [
+  "edu-baslangic-rotasi"
+ ],
+ "nonGoals": [
+  "Tek promptla bütün platformu üretmek.",
+  "AI aracına merge, release veya üretim kararı vermek.",
+  "Araç adını kalite güvencesi saymak."
+ ],
+ "failureModes": [
+  "Köşeli parantezli alanlar doldurulmadan prompt gönderilir ve AI yanlış kapsam varsayar.",
+  "Üretim ve review aynı konuşmada yürütülür; aynı varsayım iki kez doğru sanılır.",
+  "CI kırmızı iken semptomu gizlemek için test veya eşik gevşetilir."
+ ],
+ "acceptanceCriteria": [
+  "Her prompt tek görev, açık non-goal ve çalıştırılabilir doğrulama komutu taşır.",
+  "Üretim ve bağımsız review farklı oturum veya farklı kişi tarafından yürütülür.",
+  "Prompt çıktısı dosya listesi, varsayım, test sonucu ve açık risklerle kapanır."
+ ],
+ "operationalImpact": "Üç kişinin farklı AI araçlarında aynı iş tarifini ve aynı kalite kapılarını kullanmasını sağlar.",
+ "externalReviewRequired": true,
+ "related": [
+  "edu-baslangic-rotasi",
+  "build-ilk-dikey-dilim",
+  "build-iterasyon-ritueli",
+  "sus-ai-uretim-sozlesmesi",
+  "be-sdk",
+  "edu-u16-test",
+  "edu-u17-git",
+  "edu-waterfall-yol-haritasi"
+ ],
+ "enrich": {
+  "info": "Araç değişebilir; görev sözleşmesi değişmez. Aşağıdaki promptlar Claude, Cursor ve Antigravity'de aynı kalite kapılarıyla kullanılmak üzere yazılmıştır.",
+  "terms": [
+   {
+    "term": "Görev Kartı",
+    "meaning": "AI'a verilecek tek işi hedef, kapsam, non-goal, invariant, kabul testleri, doğrulama komutları ve durdurma koşuluyla kapalı biçimde tarif eden kısa sözleşme.",
+    "why": "Geniş ve belirsiz prompt AI'ın varsayım alanını büyütür; görev kartı hem üretimi küçültür hem reviewer'ın neyi doğrulayacağını görünür yapar."
+   }
   ]
+ },
+ "blocks": [
+  {
+   "type": "paragraph",
+   "text": "Her geliştirme bir Görev Kartı ile başlar. Araç yalnız bu kartın sınırında üretir; reviewer aynı kartı kullanarak sonucu bağımsız biçimde denetler."
+  },
+  {
+   "type": "callout",
+   "variant": "info",
+   "label": "Kullanım kuralı",
+   "body": "Önce `Buradan Başla` rotasını tamamla. Bir oturumda yalnız bir prompt kullan. `[GÖREV]`, `[KAPSAM]` ve `[KOMUTLAR]` alanlarını doldur. AI ek soru sormadan repodan bulabiliyorsa bulsun; yıkıcı veya yanlış repo riski varsa dursun."
+  },
+  {
+   "type": "table",
+   "caption": "Araçlara göre aynı ritim",
+   "headers": [
+    "Araç",
+    "Üretim oturumu",
+    "Review oturumu"
+   ],
+   "rows": [
+    [
+     "Claude",
+     "Repo kökünde yeni konuşma aç; önce Prompt 0, sonra tek uygulama promptu.",
+     "Yeni konuşma aç; yalnız görev kartı, diff ve test çıktısını Prompt 4 ile ver."
+    ],
+    [
+     "Cursor",
+     "Repo kökünü workspace yap; Agent oturumunda tek görev kartı kullan.",
+     "Yeni Agent konuşmasında değişiklik yapmadan önce bulguları iste."
+    ],
+    [
+     "Antigravity",
+     "Workspace kökünde planı ve komutları aynı görev sınırıyla yürüt.",
+     "Ayrı görev oturumunda Prompt 4 ile saldırgan review yap."
+    ]
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Prompt 0 — Repoyu tanı, henüz değiştirme"
+  },
+  {
+   "type": "code",
+   "lang": "text",
+   "title": "Her yeni repo ve her yeni araç oturumunda",
+   "content": "Bu repoda geliştirme yapacağız. Önce yalnız inceleme yap; dosya değiştirme.\n\n1. Repo kökündeki AGENTS.md, CLAUDE.md, README ve workflow dosyalarını oku.\n2. Git durumunu, kullanılan dil/araç zincirini, test-lint-typecheck-build komutlarını çıkar.\n3. Bu repo docs-viewer ise runtime kodu ekleme; yanlış repo olduğunu açıkça söyle.\n4. [GÖREV] için mevcut sahip dosyaları, bağımlılıkları, riskleri ve en küçük uygulanabilir diff'i belirle.\n5. Çıktını şu başlıklarla ver: Mevcut Gerçek, Önerilen Küçük Plan, Değişecek Dosyalar, Testler, Riskler, Açık Varsayımlar.\n\nHenüz kod yazma. Plan bir oturumda tamamlanabilecek kadar küçük değilse böl."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Prompt 1 — İlk runtime iskeleti"
+  },
+  {
+   "type": "code",
+   "lang": "text",
+   "title": "İterasyon 0: health + test + CI",
+   "content": "AGENTS.md ve repo sözleşmelerini uygula. Bu görev hedef runtime reposundadır; repo docs-viewer ise hiçbir runtime dosyası eklemeden dur.\n\nHEDEF\nPython 3.12+, uv ve FastAPI ile en küçük çalışan iskeleti kur. GET /health isteği 200 ve {\"status\":\"ok\"} döndürsün. Aynı davranış pytest ile doğrulansın ve GitHub Actions temiz ortamda çalıştırsın.\n\nSIRA\n1. Önce başarısız testi yaz ve çalıştır; kırmızı çıktıyı göster.\n2. Sonra yalnız testi geçirecek uygulamayı yaz.\n3. Ruff ve pyright strict ayarlarını ekle.\n4. CI içinde uv sync, ruff, pyright ve pytest çalıştır.\n5. Tüm komutları çalıştır; sonuçları raporla.\n\nKAPSAM DIŞI\nPostgreSQL, login, tenant, GraphQL, UI, Redis, kuyruk, deploy ve ürün özellikleri.\n\nBİTİŞ\nDeğişen dosyalar, kırmızı→yeşil test kanıtı, komut çıktısı özeti, varsayımlar ve açık riskler. Testi veya type-check eşiğini geçmek için gevşetme yapma."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Prompt 2 — Genel test-önce görev kartı"
+  },
+  {
+   "type": "code",
+   "lang": "text",
+   "title": "Her küçük geliştirmede doldur",
+   "content": "AGENTS.md sözleşmesini uygula ve işi uçtan uca tamamla.\n\nGÖREV: [TEK DAVRANIŞ]\nKAPSAM: [DEĞİŞEBİLECEK DOSYA/KATMAN]\nNON-GOAL: [BU TURDA YAPILMAYACAKLAR]\nINVARIANT: [ASLA BOZULMAYACAK KURAL]\nKABUL TESTLERİ:\n- [ANA AKIŞ]\n- [HATA AKIŞI]\n- [YETKİ/TENANT NEGATİF TESTİ, İLGİLİYSE]\nDOĞRULAMA KOMUTLARI: [TEST, LINT, TYPECHECK, BUILD]\n\nÇALIŞMA SIRASI\n1. Mevcut kodu ve test desenini oku.\n2. Testleri önce ekle; beklenen kırmızı sonucu doğrula.\n3. En küçük uygulamayı yap.\n4. İlgisiz refactor ve yeni bağımlılık ekleme.\n5. Tüm doğrulama komutlarını çalıştır.\n6. Diff'i kendi kendine eleştir; testi geçsin diye sözleşme gevşetilmiş mi kontrol et.\n7. Sonuçta değişen dosyaları, testleri, varsayımları ve kalan riskleri yaz.\n\nİki denemede çözülemeyen hata olursa yeni kod eklemeyi bırak; en küçük yeniden üretimi ve kök neden hipotezlerini çıkar."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Prompt 3 — OrderOps ilk dikey dilimi"
+  },
+  {
+   "type": "code",
+   "lang": "text",
+   "title": "İterasyon 4: tenant-kapsamlı create/list",
+   "content": "Kanonik OrderOps referansına göre yalnız ilk dikey dilimi üret.\n\nGÖREV\nCustomer, Order ve OrderLine için en küçük tanımları oluştur; PostgreSQL'e yaz; GraphQL üzerinden order oluştur ve listele. Her kayıt tenant_id taşısın. Tenant A kullanıcısı Tenant B kaydını okuyamasın veya ona bağlanamasın.\n\nZORUNLU SIRA\n1. Önce acceptance testleri: başarılı create/list, eksik currency reddi, toplam invariantı, komşu tenant read/write reddi.\n2. Sonra ArcheType/tanım şemaları.\n3. Sonra migration ve repository.\n4. Sonra GraphQL resolver.\n5. Son olarak audit olayı.\n\nKAPSAM DIŞI\nÖdeme, stok, kargo, indirim, tam auth sistemi, UI, dış kuyruk ve performans optimizasyonu.\n\nBİTİŞ\nTestler, migration ileri/geri planı, örnek GraphQL isteği/yanıtı, audit kaydı ve çalıştırılan komutlar. Tenant negatif testi yoksa görev bitmiş değildir."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Prompt 4 — Bağımsız saldırgan review"
+  },
+  {
+   "type": "code",
+   "lang": "text",
+   "title": "İşi üretmeyen kişi veya temiz AI oturumu",
+   "content": "Aşağıdaki görev kartını, diff'i ve test çıktısını bağımsız reviewer olarak incele. İlk çözümü savunma; yanlış olduğunu varsayarak kanıt ara. Şimdilik dosya değiştirme.\n\nÖNCELİK SIRASI\n1. Tenant/yetki/PII sızıntısı ve veri kaybı.\n2. Kabul kriterini gerçekten ölçmeyen veya sahte yeşil test.\n3. Para, tarih, migration, idempotency ve eşzamanlılık hatası.\n4. Gereksiz kapsam, gizli bağımlılık ve AGENTS.md ihlali.\n5. Eksik hata akışı, rollback ve gözlem kanıtı.\n\nHer bulgu için önem seviyesi, dosya/satır, nasıl yeniden üretileceği ve en küçük düzeltmeyi yaz. Bulgu yoksa bunu açıkça söyle ve kalan test boşluklarını listele. Review sonunda yalnız gerçekten gerekli düzeltmeler için uygulanabilir bir görev kartı üret."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Prompt 5 — CI kırmızı, yalnız kök nedeni düzelt"
+  },
+  {
+   "type": "code",
+   "lang": "text",
+   "title": "Başarısız workflow loguyla kullan",
+   "content": "Bu görev yalnız aşağıdaki CI hatasının kök nedenini düzeltmektir.\n\nHATA LOGU:\n[LOGUN İLGİLİ BÖLÜMÜ]\n\nKURALLAR\n- Önce aynı hatayı yerelde yeniden üret.\n- Kök nedeni test, kod, ortam veya veri olarak sınıflandır.\n- Test beklentisini, coverage eşiğini, güvenlik kontrolünü veya lint kuralını gevşetme.\n- İlgisiz dosyaları değiştirme; yeni bağımlılık ancak zorunluysa gerekçelendir.\n- Düzeltmeden sonra başarısız komutu ve tam doğrulama zincirini tekrar çalıştır.\n\nSONUÇ\nKök neden, değişen dosyalar, önce/sonra davranışı, çalıştırılan komutlar ve tekrar oluşmasını engelleyen test."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Prompt 6 — İterasyonu kapat ve devret"
+  },
+  {
+   "type": "code",
+   "lang": "text",
+   "title": "PR açıklaması ve sonraki kişiye devir",
+   "content": "Bu iterasyonu kapatmak için mevcut diff ve test sonuçlarından kanıt paketi üret.\n\nŞu başlıkları doldur:\n- Amaç: tek cümle.\n- Kapsam / non-goal.\n- Değişen davranış ve dosyalar.\n- Önce kırmızı, sonra yeşil test kanıtı.\n- Lint, type-check, test, build ve gerekiyorsa e2e sonucu.\n- Güvenlik/tenant/PII etkisi.\n- Migration ve rollback etkisi.\n- Açık varsayımlar ve kalan riskler.\n- Reviewer'ın özellikle yeniden çalıştıracağı üç kontrol.\n- Sonraki iterasyon için yalnız bir önerilen görev.\n\nEksik kanıt varsa 'tamamlandı' deme; eksik kapıyı açıkça yaz."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Prompt 7 — Gereksinim fazı: hikâye + kapsam dışı + kabul testi"
+  },
+  {
+   "type": "code",
+   "lang": "text",
+   "title": "Faz 1 · Gereksinim — kod yazmadan önce",
+   "content": "FAZ 1 · GEREKSİNİM — ne zaman: yeni bir dikey dilime başlarken, kod yazmadan önce.\n\nROL: Kıdemli analist. AGENTS.md ve waterfall yol haritası sözleşmesini uygula.\nOKU: AGENTS.md, ilgili kernel/be-kararlar sayfaları, benzer mevcut kullanım hikâyeleri.\n\nGÖREV (tek dilim): [HEDEF DİLİM] için kullanım hikâyesini ve kapsam dışını yaz.\nÜRET:\n- Kullanım hikâyesi: önkoşul, yetki, ana akış, alternatif akış, hata akışı, invariant, audit, gizlilik, SLO.\n- Kapsam dışı (non-goals): bu dilimde BİLİNÇLİ yapılmayacaklar.\n- Çalıştırılabilir kabul testleri: pytest/Gherkin; ÖNCE KIRMIZI (henüz uygulama yok).\n\nKISIT: Kod yazma. Şema/tasarım kararı verme (sonraki faz). Kapsamı büyütme.\nÇIKTI: kullanım hikâyesi dosyası + kırmızı kabul testleri (küçük PR).\nKABUL (DoD): ana akış + hata akışı + kabul testi yazılı; kapsam dışı açıkça listelenmiş."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Prompt 8 — Tasarım fazı: ArcheType + Surface + Workflow"
+  },
+  {
+   "type": "code",
+   "lang": "text",
+   "title": "Faz 2 · Tasarım — uygulamadan önce",
+   "content": "FAZ 2 · TASARIM — ne zaman: gereksinim kapısı geçtikten sonra, uygulamadan önce.\n\nROL: Veri ve sınır mimarı. AGENTS.md granülerlik + komşuluk kuralını uygula.\nOKU: kernel/k-granulerlik, kernel/k-surface, backend/be-kararlar, be-sdk.\n\nGÖREV: [DİLİM] için bildirimsel tasarımı çıkar (henüz uygulama yok).\nÜRET:\n- ArcheType taslağı: Domain > ArcheType > Fragment > Atom. Alan bayrakları:\n  para = Money (Decimal; float YASAK), kişisel veri = pii (+retention),\n  tarihçeli değer = bitemporal, her şey audit'li.\n- Surface taslağı (hangi ArcheType'ı projekte eder) ve Workflow (durum makinesi).\n- Veri katmanı: SQLAlchemy 2.0 async + Alembic. (Prisma Python istemcisi 15 Nisan 2025'te\n  arşivlendi/bakımı durdu — KULLANMA.) PostgreSQL hedefi korunur.\n- Çok-kiracılık: PostgreSQL Row-Level Security planı; modül-başına Alembic branch + downgrade yolu.\n\nKISIT: İş mantığı/uygulama yazma. Komşuluk kuralını ihlal etme (Kaya doğrudan Kum'a\nbağlanamaz); ara seviye eksikse planı reddet ve iste.\nÇIKTI: archetype/surface/workflow taslakları + migration planı (küçük PR).\nKABUL (DoD): Money/pii/bitemporal/audit işaretli; komşuluk kuralı ihlali yok; migration geri-alma yolu tanımlı."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Prompt 9 — Doğrulama fazı: negatif + güvenlik + çok-kiracılık"
+  },
+  {
+   "type": "code",
+   "lang": "text",
+   "title": "Faz 4 · Doğrulama — dağıtımdan önce",
+   "content": "FAZ 4 · DOĞRULAMA — ne zaman: inşa (Prompt 2–3) yeşil olduktan sonra, dağıtımdan önce.\n\nROL: Saldırgan test/güvenlik mühendisi. Mutlu yol KANIT DEĞİLDİR.\nGÖREV: [DİLİM] için mutlu yol dışını kanıtla.\nÜRET:\n- Negatif akış testleri: geçersiz girdi, yetkisiz erişim, eşzamanlılık, sınır değerler.\n- Güvenlik: auth/RBAC negatif testleri; dosya yükleme (web root DIŞI + yeniden adlandır +\n  içerik/MIME doğrula); raw SQL YASAK → ORM parametreli sorgu.\n- Çok-kiracılık izolasyonu: bir kiracının verisi diğerine SIZMADIĞINI testle kanıtla (RLS).\n- API fuzz: Schemathesis OpenAPI'den \"--checks all\". Saf fonksiyonlara Hypothesis property testi.\n- Performans kapısı: \"async def\" içinde bloklama yok (Ruff ASYNC); N+1 yok (ilişkiler lazy=\"raise\");\n  liste uçları keyset (cursor) pagination.\n\nKISIT: Yeni özellik ekleme. Testi zayıflatıp/silip yeşil yapma.\nÇIKTI: negatif/güvenlik/izolasyon test paketi + bulgular (küçük PR).\nKABUL (DoD): negatif testler geçer; a11y kritik/ciddi ihlal yok; kiracı izolasyonu testle kanıtlı."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Prompt 10 — Dağıtım fazı: Hetzner deploy + rollback"
+  },
+  {
+   "type": "code",
+   "lang": "text",
+   "title": "Faz 5 · Dağıtım — tekrarlanabilir yayın",
+   "content": "FAZ 5 · DAĞITIM — ne zaman: doğrulama kapısı geçtikten sonra.\n\nROL: Release/altyapı mühendisi.\nORTAM: geliştirme macOS M4 (ARM64), üretim Hetzner Debian + AMD EPYC (x86_64).\nGÖREV: [DİLİM] için tekrarlanabilir yayın kur.\nÜRET:\n- Multi-arch imaj: native arm64 + amd64 runner (QEMU emülasyonundan KAÇIN — dramatik yavaş);\n  buildx manifest list.\n- Tek-dosya docker compose (app + PostgreSQL); reverse proxy (Nginx/Caddy);\n  Uvicorn veya Gunicorn + UvicornWorker.\n- Private repo → GHCR → sunucu pull; secrets GitHub OIDC/encrypted, KODDAN AYRI\n  (frontend'de \"VITE_\" ile secret expose ETME — bundle'a sızar).\n- Rollback yolu: bir önceki imaja dönüş denenir ve belgelenir.\n\nKISIT: Sırrı koda/loga yazma. Test edilmemiş deploy'u \"bitti\" sayma.\nÇIKTI: CI/CD workflow + compose + deploy/rollback runbook (küçük PR).\nKABUL (DoD): aynı commit temiz ortamda yeşil; rollback denenmiş; sır yönetimi ayrı."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Prompt 11 — İşletim fazı: yedek/restore + export/import + geriye-uyum"
+  },
+  {
+   "type": "code",
+   "lang": "text",
+   "title": "Faz 6 · İşletim — dayanıklılık ve taşınabilirlik",
+   "content": "FAZ 6 · İŞLETİM — ne zaman: üretimde ayakta tutarken; her sürüm öncesi gözden geçir.\n\nROL: SRE + sürüm yöneticisi.\nGÖREV: [SİSTEM] için dayanıklılık, taşınabilirlik ve geriye-uyum kur.\nÜRET:\n- Yedek + GERÇEK restore tatbikatı (yedek almak yetmez; geri yükleme denenir).\n- Migration geri-alma (Alembic downgrade) testi; veri kaybı yok.\n- Veri taşınabilirliği (en büyük benimseme kaldıracı — UX odaklı): export/import standardı\n  — içerik + medya + ayarlar, DB-bağımsız dump, kurulumlar arası taşıma, WordPress'ten içe aktarma.\n- Olay runbook'u: tipik arıza → adım adım çözüm.\n- Sürümleme/geriye-uyum: SemVer; minor'da deprecate, major'da kaldır; HEM veri HEM API uyumunu koru.\n  İyi örnek: WordPress (yıllarca uyumlu), Stripe (10+ yıllık API hâlâ çalışır).\n  Kötü örnek: Drupal 8 (toptan kırdı, pazar kaybetti) — TEKRARLAMA.\n\nKISIT: Geriye uyumu sessizce kırma; kırılacaksa deprecation + uyumluluk katmanı + duyuru.\nÇIKTI: backup/restore + export/import + runbook + sürüm politikası (küçük PR).\nKABUL (DoD): restore tatbikatı yapılmış; migration geri alınabilir; export/import çalışır; runbook + SemVer politikası yazılı."
+  }
+ ]
 }
