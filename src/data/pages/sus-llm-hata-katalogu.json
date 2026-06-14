@@ -1,0 +1,411 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-sus-llm-hata-katalogu",
+  "sourceId": "sus-llm-hata-katalogu",
+  "slug": "sus/sus-llm-hata-katalogu",
+  "title": "LLM Hata Kataloğu — Sınıflar ve Mevcut Önlemler",
+  "summary": "AI üretilen kodun tekrar eden hata sınıfları ve her birinin bu projedeki mevcut kapı/önlemle eşlenmesi. Yeni felsefe değil; sözleşmenin somut tamamlayıcısı.",
+  "categoryId": "sus",
+  "tags": [
+   "llm",
+   "hata-katalogu",
+   "ai-uretim",
+   "onlem",
+   "vibecoding"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "wip",
+   "badge": "AI ÜRETİM"
+  },
+  "owner": "AI üretim sözleşmesi sahibi",
+  "reviewer": "Fractional senior mimar + güvenlik reviewer",
+  "maturity": "incelemede",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": [
+   "sus-ai-uretim-sozlesmesi"
+  ],
+  "nonGoals": [
+   "AI'ı yasaklamak veya yeni bir geliştirme felsefesine pivot etmek.",
+   "Mevcut kapıların yerine yeni araç zinciri önermek.",
+   "Hata sınıflarını teorik anlatıp önlemsiz bırakmak."
+  ],
+  "failureModes": [
+   "Hata sınıfı tanınır ama hangi mevcut kapının onu yakaladığı belirsiz kalır; geliştirici savunmasız üretir.",
+   "AI çıktısı testten geçtiği için 'doğru' sanılır; sahte yeşil veya happy-path-only kod üretime sızar.",
+   "Aynı hata iki kez 'düzelt' denerek döngüye girer ve her turda yeni açık eklenir."
+  ],
+  "acceptanceCriteria": [
+   "Her hata sınıfı, projede onu yakalayan somut mevcut önlemle (kapı, kural veya sayfa) eşlenmiştir.",
+   "Geliştirici, bir AI çıktısını kabul etmeden önce uygulanacak kontrol listesine sahiptir.",
+   "Sayfa yeni terminoloji veya araç getirmez; mevcut sözleşme ve kapılarla tutarlıdır."
+  ],
+  "operationalImpact": "60+ vibecoding ekibinin AI çıktısını kör kabul etmesini engeller; her hata sınıfını mevcut bir savunmaya bağlayarak güvenli hızı korur.",
+  "externalReviewRequired": true,
+  "related": [
+   "page-sus-ai-uretim-sozlesmesi",
+   "page-be-sdk",
+   "page-edu-prompt-kutuphanesi",
+   "page-edu-waterfall-yol-haritasi",
+   "page-sus-conformance",
+   "page-adr-0020-governance-runbook"
+  ],
+  "blocks": [
+   {
+    "id": "block-sus-llm-hata-katalogu-co",
+    "type": "callout",
+    "variant": "info",
+    "title": "Bu sayfa ne için",
+    "segments": [
+     {
+      "type": "code",
+      "text": "AI Üretim Sözleşmesi"
+     },
+     {
+      "type": "text",
+      "text": " (Üreten Onaylayamaz) NEDEN'i verir; bu sayfa NE'yi verir: AI'ın tekrar eden hata sınıfları ve her birini bu projede zaten yakalayan önlem. Yeni kural icat etmez; mevcut kapıları hata sınıflarına bağlar."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-llm-hata-katalogu-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI üretilen kodun hataları çoğunlukla sözdizimsel değil anlamsaldır: derlenir, testten geçer ama yanlış davranır. Bu yüzden linter ve test tek başına yetmez. Aşağıdaki tablo her sınıfı, projede onu yakalayan somut önlemle eşler; böylece geliştirici hangi kapının kendisini koruduğunu bilir."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-llm-hata-katalogu-h-hata-sinifi-mevcut-onlem",
+    "type": "heading",
+    "level": 2,
+    "text": "Hata sınıfı → mevcut önlem"
+   },
+   {
+    "id": "block-sus-llm-hata-katalogu-table",
+    "type": "table",
+    "caption": "Her AI hata sınıfı bu projede zaten bir kapıya bağlıdır",
+    "columns": [
+     "Hata sınıfı",
+     "Nasıl görünür",
+     "Mevcut önlem (bu proje)"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Halüsinasyon / slopsquatting"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Var olmayan paket/API; uydurma import"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Lockfile (uv.lock / package-lock) + yeni bağımlılık insan onayı; mypy/tsc olmayan sembolü yakalar"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Eski / güncel olmayan API"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "SQLAlchemy 1.x Query, Pydantic v1, process.env"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "AGENTS.md sürüm kuralları (SQLAlchemy 2.0 async, Pydantic v2, Vite import.meta.env) + lint"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Bağlam kaybı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Uzun oturumda kararları unutma, tutarsızlık"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Oturum başına tek görev; ilerlemeyi dosyaya dök + temiz oturum (iterasyon ritüeli)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Sahte tamamlama"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "TODO/stub bırakıp 'bitti' der"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "DoD kapısı + bağımsız eleştiri + 'çalıştığını kanıtla' (diff + test çıktısı)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Sahte yeşil (reward hacking)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Testi zayıflatıp/değiştirip geçirme"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Testler commit'li/salt-okunur + governanceHonesty kapısı + test-önce sıra"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Dalkavukluk / aşırı güven"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yanlışı onaylama; kesin dille sunma"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Üreten ≠ Eleştiren (bağımsız oturum); nötr soru; her çıktıyı test/lint ile doğrula"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Aşırı / eksik mühendislik"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Gereksiz soyutlama veya yalnız happy-path"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Minimum karmaşıklık kuralı + kapsam dışı listesi + edge-case kabul testleri"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kapsam kayması / çalışanı bozma"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "İstenmeyen değişiklik; ilgisiz refactor"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Küçük atomik PR + komşuluk kuralı + zorunlu git diff review"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Next.js bulaşması"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "next/* import, App Router, 'use client'"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "fe anti-stack (Next.js yasak) + lint no-restricted-imports kuralı"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "async bloklama / N+1"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "async def içinde senkron I/O; lazy load"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Doğrulama fazı kapısı (Prompt 9): Ruff ASYNC + ilişkiler lazy='raise' + keyset pagination"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-sus-llm-hata-katalogu-co-2",
+    "type": "callout",
+    "variant": "warning",
+    "title": "İterasyon paradoksu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI'a 'düzelt' dedikçe yeni açık ekleyebilir; aynı hatayı tanıdığını sanıp aynı yanlış çözümü tekrarlar (pattern locking). Kural: iki başarısız denemeden sonra dur, bağlamı temizle, farklı yaklaşım dene veya insana devret. AI çıktısının doğruluğu için tek otorite testtir, modelin kesinlik dili değil."
+     }
+    ]
+   },
+   {
+    "id": "block-sus-llm-hata-katalogu-h-ai-ciktisi-kabul-kapisi",
+    "type": "heading",
+    "level": 2,
+    "text": "AI çıktısı kabul kapısı"
+   },
+   {
+    "id": "block-sus-llm-hata-katalogu-chk",
+    "type": "checklist",
+    "title": "Bir AI çıktısını kabul etmeden önce",
+    "storageKey": "llm-cikti-kabul-kapisi",
+    "items": [
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Kanıt var — Diff + test çıktısı görüldü; 'tamamlandı' iddiası kanıtla doğrulandı."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Sahte yeşil değil — Test zayıflatılmadı/silinmedi; testler commit'li ve değişmedi."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Bağımsız eleştiri — İşi üretmeyen kişi veya temiz AI oturumu diff'e saldırdı."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Kapsam dar — Yalnız istenen değişti; ilgisiz dosya/refactor yok."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Yeni bağımlılık onaylı — Eklenen paket gerçek, lockfile'da pinli, gerekçeli."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Faz DoD'si geçti — İlgili waterfall fazının bitiş kapısı kanıtla işaretli."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-sus-llm-hata-katalogu-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bağlam: bu katalog "
+     },
+     {
+      "type": "code",
+      "text": "AI Üretim Sözleşmesi"
+     },
+     {
+      "type": "text",
+      "text": "'nin uygulama tarafıdır; promptlar "
+     },
+     {
+      "type": "code",
+      "text": "Kopyala–Çalıştır Prompt Kütüphanesi"
+     },
+     {
+      "type": "text",
+      "text": "'nde, faz kapıları "
+     },
+     {
+      "type": "code",
+      "text": "Waterfall Yol Haritası"
+     },
+     {
+      "type": "text",
+      "text": "'ndadır. Yeni hata sınıfı görülürse önce buradaki bir mevcut önleme bağlanır; önlem yoksa sözleşmeye eklenir."
+     }
+    ]
+   }
+  ]
+ }
+}

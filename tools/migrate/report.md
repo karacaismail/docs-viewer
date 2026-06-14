@@ -1,7 +1,7 @@
 # Migration Mutabakat Raporu
 
-Kaynak dosya: 277 (+1 kapsam dışı) | Üretilen page: 277 | Atlanan: 0
-Glossary kaydı: 728 | Search document: 3855
+Kaynak dosya: 278 (+1 kapsam dışı) | Üretilen page: 278 | Atlanan: 0
+Glossary kaydı: 728 | Search document: 3861
 
 ## Kategori dağılımı
 - backend: 6
@@ -16,14 +16,14 @@ Glossary kaydı: 728 | Search document: 3855
 - layer1: 12
 - scale: 15
 - stack: 37
-- sus: 16
+- sus: 17
 - urunler: 72
 
 ## Kayıp görsel varlıklar (0) — 07B §1 fallback aktif
 
 ## Glossary zenginleştirme (12A Parti 1 — Eğitim Yolu)
 Zenginleştirilen kayıt: 554 (sayfa-kapsamlı: 378) | Overlay'de karşılığı olmayan label: 6
-Segment bağlama (B akışı, tüm kategoriler): 469 bağlı terim | bağlı page: 176/277 | egitim: 33/34
+Segment bağlama (B akışı, tüm kategoriler): 469 bağlı terim | bağlı page: 176/278 | egitim: 33/34
 - eşleşmedi: Yetkinlik Kapısı
 - eşleşmedi: Boş sayfa sendromu
 - eşleşmedi: Bitiş kapısı
