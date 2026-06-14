@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for engine/resolveTerms.ts</title>
+    <title>Code coverage report for engine/basePath.ts</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../prettify.css" />
     <link rel="stylesheet" href="../base.css" />
@@ -19,34 +19,34 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../index.html">All files</a> / <a href="index.html">engine</a> resolveTerms.ts</h1>
+        <h1><a href="../index.html">All files</a> / <a href="index.html">engine</a> basePath.ts</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">88.23% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>15/17</span>
+                <span class='fraction'>7/7</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">57.14% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>4/7</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
-                <span class="quiet">Branches</span>
-                <span class='fraction'>6/6</span>
-            </div>
-        
-            
-            <div class='fl pad1y space-right2'>
-                <span class="strong">66.66% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>2/3</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">88.23% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>15/17</span>
+                <span class='fraction'>7/7</span>
             </div>
         
             
@@ -77,67 +77,34 @@
 <a name='L12'></a><a href='#L12'>12</a>
 <a name='L13'></a><a href='#L13'>13</a>
 <a name='L14'></a><a href='#L14'>14</a>
-<a name='L15'></a><a href='#L15'>15</a>
-<a name='L16'></a><a href='#L16'>16</a>
-<a name='L17'></a><a href='#L17'>17</a>
-<a name='L18'></a><a href='#L18'>18</a>
-<a name='L19'></a><a href='#L19'>19</a>
-<a name='L20'></a><a href='#L20'>20</a>
-<a name='L21'></a><a href='#L21'>21</a>
-<a name='L22'></a><a href='#L22'>22</a>
-<a name='L23'></a><a href='#L23'>23</a>
-<a name='L24'></a><a href='#L24'>24</a>
-<a name='L25'></a><a href='#L25'>25</a>
-<a name='L26'></a><a href='#L26'>26</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L15'></a><a href='#L15'>15</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">3645x</span>
-<span class="cline-any cline-yes">3645x</span>
-<span class="cline-any cline-yes">3645x</span>
-<span class="cline-any cline-yes">3645x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">28x</span>
-<span class="cline-any cline-yes">28x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">282x</span>
-<span class="cline-any cline-yes">282x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// Bağlamsal glossary çözümü — eşleşme yalnız termId üzerinden (12 §Çözümleme)
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// GitHub Pages alt-dizin yayını (ADR-0003): uygulama-içi mutlak yollar BASE_URL ile öneklenir,
+// router pathname'i base'den arındırılarak okunur. Kök yayında ikisi de no-op'tur.
 &nbsp;
-import type { GlossaryTerm } from "../schemas";
-import { glossaryTerms } from "./loadStaticData";
+const BASE = (import.meta.env.<span class="branch-0 cbranch-no" title="branch not covered" >BASE_URL ?? "/").r</span>eplace(/\/$/, "");
 &nbsp;
-const byId = new Map(glossaryTerms.map((t) =&gt; [t.id, t]));
-const byPage = new Map&lt;string, GlossaryTerm[]&gt;();
-for (const t of glossaryTerms) {
-  const list = byPage.get(t.pageId) ?? [];
-  list.push(t);
-  byPage.set(t.pageId, list);
+/** "/assets/x.svg" → "&lt;base&gt;/assets/x.svg" (kökte değişmez). Göreli/dış URL'e dokunmaz. */
+export function withBase(src: string): string {
+  return src.startsWith("/") ? `${BASE}${src}` : src;
 }
 &nbsp;
-export function resolveTerm(termId: string): GlossaryTerm | undefined {
-  return byId.get(termId);
+/** Router pathname'inden base önekini düşürür: "/docs-viewer/docs/a/b" → "/docs/a/b". */
+export function stripBase(pathname: string): string {
+  return <span class="branch-0 cbranch-no" title="branch not covered" >BASE &amp;&amp; pathname.startsWith(BASE<span class="branch-0 cbranch-no" title="branch not covered" >) ? p</span>athname.slice(BASE.length) || "/" : p</span>athname;
 }
-&nbsp;
-export function termsOfPage(pageId: string): GlossaryTerm[] {
-  return byPage.get(pageId) ?? [];
-}
-&nbsp;
-/** Global sözlük görünümü (UX-C10) için tüm terimler. */
-export <span class="fstat-no" title="function not covered" >function allTerms(): GlossaryTerm[] {</span>
-<span class="cstat-no" title="statement not covered" >  return glossaryTerms;</span>
-<span class="cstat-no" title="statement not covered" >}</span>
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->

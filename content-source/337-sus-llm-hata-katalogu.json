@@ -1,0 +1,175 @@
+{
+ "id": "sus-llm-hata-katalogu",
+ "title": "LLM Hata Kataloğu — Sınıflar ve Mevcut Önlemler",
+ "subtitle": "AI üretilen kodun tekrar eden hata sınıfları ve her birinin bu projedeki mevcut kapı/önlemle eşlenmesi. Yeni felsefe değil; sözleşmenin somut tamamlayıcısı.",
+ "cluster": "sus",
+ "order": 17,
+ "icon": "ph-bug-beetle",
+ "granularity": "kaya",
+ "state": "wip",
+ "badge": "AI ÜRETİM",
+ "tags": [
+  "llm",
+  "hata-katalogu",
+  "ai-uretim",
+  "onlem",
+  "vibecoding"
+ ],
+ "owner": "AI üretim sözleşmesi sahibi",
+ "reviewer": "Fractional senior mimar + güvenlik reviewer",
+ "maturity": "incelemede",
+ "lastVerified": null,
+ "evidence": [],
+ "prerequisites": [
+  "sus-ai-uretim-sozlesmesi"
+ ],
+ "nonGoals": [
+  "AI'ı yasaklamak veya yeni bir geliştirme felsefesine pivot etmek.",
+  "Mevcut kapıların yerine yeni araç zinciri önermek.",
+  "Hata sınıflarını teorik anlatıp önlemsiz bırakmak."
+ ],
+ "failureModes": [
+  "Hata sınıfı tanınır ama hangi mevcut kapının onu yakaladığı belirsiz kalır; geliştirici savunmasız üretir.",
+  "AI çıktısı testten geçtiği için 'doğru' sanılır; sahte yeşil veya happy-path-only kod üretime sızar.",
+  "Aynı hata iki kez 'düzelt' denerek döngüye girer ve her turda yeni açık eklenir."
+ ],
+ "acceptanceCriteria": [
+  "Her hata sınıfı, projede onu yakalayan somut mevcut önlemle (kapı, kural veya sayfa) eşlenmiştir.",
+  "Geliştirici, bir AI çıktısını kabul etmeden önce uygulanacak kontrol listesine sahiptir.",
+  "Sayfa yeni terminoloji veya araç getirmez; mevcut sözleşme ve kapılarla tutarlıdır."
+ ],
+ "operationalImpact": "60+ vibecoding ekibinin AI çıktısını kör kabul etmesini engeller; her hata sınıfını mevcut bir savunmaya bağlayarak güvenli hızı korur.",
+ "externalReviewRequired": true,
+ "related": [
+  "sus-ai-uretim-sozlesmesi",
+  "be-sdk",
+  "edu-prompt-kutuphanesi",
+  "edu-waterfall-yol-haritasi",
+  "sus-conformance",
+  "adr-0020-governance-runbook"
+ ],
+ "blocks": [
+  {
+   "type": "callout",
+   "variant": "info",
+   "label": "Bu sayfa ne için",
+   "body": "`AI Üretim Sözleşmesi` (Üreten Onaylayamaz) NEDEN'i verir; bu sayfa NE'yi verir: AI'ın tekrar eden hata sınıfları ve her birini bu projede zaten yakalayan önlem. Yeni kural icat etmez; mevcut kapıları hata sınıflarına bağlar."
+  },
+  {
+   "type": "paragraph",
+   "text": "AI üretilen kodun hataları çoğunlukla sözdizimsel değil anlamsaldır: derlenir, testten geçer ama yanlış davranır. Bu yüzden linter ve test tek başına yetmez. Aşağıdaki tablo her sınıfı, projede onu yakalayan somut önlemle eşler; böylece geliştirici hangi kapının kendisini koruduğunu bilir."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Hata sınıfı → mevcut önlem"
+  },
+  {
+   "type": "table",
+   "caption": "Her AI hata sınıfı bu projede zaten bir kapıya bağlıdır",
+   "headers": [
+    "Hata sınıfı",
+    "Nasıl görünür",
+    "Mevcut önlem (bu proje)"
+   ],
+   "rows": [
+    [
+     "Halüsinasyon / slopsquatting",
+     "Var olmayan paket/API; uydurma import",
+     "Lockfile (uv.lock / package-lock) + yeni bağımlılık insan onayı; mypy/tsc olmayan sembolü yakalar"
+    ],
+    [
+     "Eski / güncel olmayan API",
+     "SQLAlchemy 1.x Query, Pydantic v1, process.env",
+     "AGENTS.md sürüm kuralları (SQLAlchemy 2.0 async, Pydantic v2, Vite import.meta.env) + lint"
+    ],
+    [
+     "Bağlam kaybı",
+     "Uzun oturumda kararları unutma, tutarsızlık",
+     "Oturum başına tek görev; ilerlemeyi dosyaya dök + temiz oturum (iterasyon ritüeli)"
+    ],
+    [
+     "Sahte tamamlama",
+     "TODO/stub bırakıp 'bitti' der",
+     "DoD kapısı + bağımsız eleştiri + 'çalıştığını kanıtla' (diff + test çıktısı)"
+    ],
+    [
+     "Sahte yeşil (reward hacking)",
+     "Testi zayıflatıp/değiştirip geçirme",
+     "Testler commit'li/salt-okunur + governanceHonesty kapısı + test-önce sıra"
+    ],
+    [
+     "Dalkavukluk / aşırı güven",
+     "Yanlışı onaylama; kesin dille sunma",
+     "Üreten ≠ Eleştiren (bağımsız oturum); nötr soru; her çıktıyı test/lint ile doğrula"
+    ],
+    [
+     "Aşırı / eksik mühendislik",
+     "Gereksiz soyutlama veya yalnız happy-path",
+     "Minimum karmaşıklık kuralı + kapsam dışı listesi + edge-case kabul testleri"
+    ],
+    [
+     "Kapsam kayması / çalışanı bozma",
+     "İstenmeyen değişiklik; ilgisiz refactor",
+     "Küçük atomik PR + komşuluk kuralı + zorunlu git diff review"
+    ],
+    [
+     "Next.js bulaşması",
+     "next/* import, App Router, 'use client'",
+     "fe anti-stack (Next.js yasak) + lint no-restricted-imports kuralı"
+    ],
+    [
+     "async bloklama / N+1",
+     "async def içinde senkron I/O; lazy load",
+     "Doğrulama fazı kapısı (Prompt 9): Ruff ASYNC + ilişkiler lazy='raise' + keyset pagination"
+    ]
+   ]
+  },
+  {
+   "type": "callout",
+   "variant": "warning",
+   "label": "İterasyon paradoksu",
+   "body": "AI'a 'düzelt' dedikçe yeni açık ekleyebilir; aynı hatayı tanıdığını sanıp aynı yanlış çözümü tekrarlar (pattern locking). Kural: iki başarısız denemeden sonra dur, bağlamı temizle, farklı yaklaşım dene veya insana devret. AI çıktısının doğruluğu için tek otorite testtir, modelin kesinlik dili değil."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "AI çıktısı kabul kapısı"
+  },
+  {
+   "type": "checklist",
+   "title": "Bir AI çıktısını kabul etmeden önce",
+   "storageKey": "llm-cikti-kabul-kapisi",
+   "items": [
+    {
+     "label": "Kanıt var",
+     "hint": "Diff + test çıktısı görüldü; 'tamamlandı' iddiası kanıtla doğrulandı."
+    },
+    {
+     "label": "Sahte yeşil değil",
+     "hint": "Test zayıflatılmadı/silinmedi; testler commit'li ve değişmedi."
+    },
+    {
+     "label": "Bağımsız eleştiri",
+     "hint": "İşi üretmeyen kişi veya temiz AI oturumu diff'e saldırdı."
+    },
+    {
+     "label": "Kapsam dar",
+     "hint": "Yalnız istenen değişti; ilgisiz dosya/refactor yok."
+    },
+    {
+     "label": "Yeni bağımlılık onaylı",
+     "hint": "Eklenen paket gerçek, lockfile'da pinli, gerekçeli."
+    },
+    {
+     "label": "Faz DoD'si geçti",
+     "hint": "İlgili waterfall fazının bitiş kapısı kanıtla işaretli."
+    }
+   ]
+  },
+  {
+   "type": "paragraph",
+   "text": "Bağlam: bu katalog `AI Üretim Sözleşmesi`'nin uygulama tarafıdır; promptlar `Kopyala–Çalıştır Prompt Kütüphanesi`'nde, faz kapıları `Waterfall Yol Haritası`'ndadır. Yeni hata sınıfı görülürse önce buradaki bir mevcut önleme bağlanır; önlem yoksa sözleşmeye eklenir."
+  }
+ ]
+}

@@ -2,13 +2,13 @@
 
 Bu doküman, `mimari/` klasöründeki mevcut varlıkların sayımını yapar ve her grubun yeni doc viewer'daki rolünü tanımlar. Migration yönergesi (`07-uretim-02-data-migration.md`) bu envanteri girdi kabul eder.
 
-## 1. Cluster JSON Dosyaları (278 dosya — birincil içerik kaynağı; 199 özgün + 26 aday + 52 karar/kavram + 1 kapsam dışı)
+## 1. Cluster JSON Dosyaları (280 dosya — birincil içerik kaynağı; 201 özgün + 26 aday + 52 karar/kavram + 1 kapsam dışı)
 
 Dosya adlandırması `NN-kategori-konu.json` sözleşmesini izler. Kategori prefix'leri ve sayıları:
 
 | Prefix | Adet | İçerik alanı | Yeni IA'daki hedef kategori |
 |---|---|---|---|
-| `edu-*` | 31 | Eğitim üniteleri (u01–u25, başlangıç rotası, prompt kütüphanesi, overview, faz haritası, yetkinlik modeli) | Eğitim Yolu |
+| `edu-*` | 33 | Eğitim üniteleri (u01–u25, başlangıç rotası, prompt kütüphanesi, overview, faz haritası, yetkinlik modeli) | Eğitim Yolu |
 | `s-*` | 72 | Sektör/ürün modülleri (crm, sales, wms, payroll…) + 10 Haziran 2026 aday genişlemesi (comms, mail, channel-hub, scheduling, esign, isg, kvkk, iot) | Ürün Modülleri — Layer 2 |
 | `scale-*` | 15 | Scale primitives (outbox, saga, cache, realtime…) | Scale Primitives |
 | `cc-*` + `crosscut-*` | 17 | Çapraz-kesen konular (i18n, privacy, compliance…) | Çapraz-Kesen |

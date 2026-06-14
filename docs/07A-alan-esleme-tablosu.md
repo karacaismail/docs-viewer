@@ -1,19 +1,19 @@
 # 07A — Eski Şema → Yeni Block Model Alan Eşleme Tablosu
 
-Bu doküman, migration script'inin (`07-uretim-02-data-migration.md`) yazılmasından önce şart olan resmî alan eşlemesini verir. Tablolar tahmine değil taramaya dayanır: kaynak küme programatik olarak analiz edilir (14 Haziran 2026 itibarıyla 199 özgün + 26 aday + 52 karar/kavram kaydıyla toplam 278; ayrıca 1 kapsam dışı dosya). 199 özgün dosya ortak cluster şemasını izler; `ARCHITECTURE-5.json` farklı bir yapıdadır (`$schema`, `meta`, `milestones`…) ve içerik değil spec olduğundan migration kapsamı dışıdır.
+Bu doküman, migration script'inin (`07-uretim-02-data-migration.md`) yazılmasından önce şart olan resmî alan eşlemesini verir. Tablolar tahmine değil taramaya dayanır: kaynak küme programatik olarak analiz edilir (14 Haziran 2026 itibarıyla 201 özgün + 26 aday + 52 karar/kavram kaydıyla toplam 280; ayrıca 1 kapsam dışı dosya). 201 özgün dosya ortak cluster şemasını izler; `ARCHITECTURE-5.json` farklı bir yapıdadır (`$schema`, `meta`, `milestones`…) ve içerik değil spec olduğundan migration kapsamı dışıdır.
 
 ## 1. Eski Cluster Şemasının Resmî Dökümü (kanıt: alan frekansları)
 
-| Alan | Tip | Adet/197 | İçerik |
+| Alan | Tip | Adet/199 | İçerik |
 |---|---|---|---|
-| `id` | string | 197 | Cluster kimliği |
-| `title` / `subtitle` | string | 197 / 196 | Başlık ve özet |
-| `cluster` | string | 197 | Eski group ID |
-| `order` | int | 197 | Group içi sıra |
-| `icon` | string | 197 | Phosphor ikon adı |
-| `tags` | string[] | 197 | Etiketler |
-| `blocks` | Block[] | 197 | **Mevcut veri zaten block tabanlı** — 21 eski block type |
-| `enrich` | object | 197 | Pedagojik katman: `info`, `detail`, `terms`, `lesson`, `stories` |
+| `id` | string | 199 | Cluster kimliği |
+| `title` / `subtitle` | string | 199 / 198 | Başlık ve özet |
+| `cluster` | string | 199 | Eski group ID |
+| `order` | int | 199 | Group içi sıra |
+| `icon` | string | 199 | Phosphor ikon adı |
+| `tags` | string[] | 199 | Etiketler |
+| `blocks` | Block[] | 199 | **Mevcut veri zaten block tabanlı** — 21 eski block type |
+| `enrich` | object | 199 | Pedagojik katman: `info`, `detail`, `terms`, `lesson`, `stories` |
 | `granularity` / `state` | string | 129 / 129 | Kaya/taş/kum ölçeği; wip/done durumu |
 | `related` | string[] | 95 | İlgili cluster ID'leri |
 | `layer` / `badge` | string | 38 / 37 | Katman etiketi; rozet |

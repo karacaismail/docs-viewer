@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">88.88% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>15/15</span>
+                <span class='fraction'>16/18</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>12/12</span>
+                <span class='fraction'>13/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">75% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>3/3</span>
+                <span class='fraction'>3/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">88.88% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>15/15</span>
+                <span class='fraction'>16/18</span>
             </div>
         
             
@@ -89,58 +89,79 @@
 <a name='L24'></a><a href='#L24'>24</a>
 <a name='L25'></a><a href='#L25'>25</a>
 <a name='L26'></a><a href='#L26'>26</a>
-<a name='L27'></a><a href='#L27'>27</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-yes">7x</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// Slug -&gt; page; bulunamazsa fallback model (08 §4 — UI hata yönetimi yazmaz)
-import { pages } from "./loadStaticData";
-import type { Page } from "../schemas";
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">336x</span>
+<span class="cline-any cline-yes">336x</span>
+<span class="cline-any cline-yes">336x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// Slug -&gt; index entry (sync, metadata); gövde loadPageBlocks ile lazy gelir.
+// Bulunamazsa fallback model (08 §4 — UI hata yönetimi yazmaz).
 &nbsp;
-export type ResolvedPage =
-  | { kind: "found"; page: Page }
-  | { kind: "not-found"; slug: string };
+import type { PageIndexEntry } from "../schemas";
+import { pagesIndex } from "./loadStaticData";
 &nbsp;
-const bySlug = new Map(pages.map((p) =&gt; [p.slug, p]));
-const byId = new Map(pages.map((p) =&gt; [p.id, p]));
-const byOldId = new Map(pages.filter((p) =&gt; p.sourceId).map((p) =&gt; [p.sourceId as string, p]));
+export type ResolvedPage = { kind: "found"; entry: PageIndexEntry } | { kind: "not-found"; slug: string };
+&nbsp;
+const bySlug = new Map(pagesIndex.map((p) =&gt; [p.slug, p]));
+const byId = new Map(pagesIndex.map((p) =&gt; [p.id, p]));
+const byOldId = new Map(pagesIndex.filter((p) =&gt; p.sourceId).map((p) =&gt; [p.sourceId as string, p]));
 &nbsp;
 export function resolvePage(section: string, pageSlug: string): ResolvedPage {
-  const page = bySlug.get(`${section}/${pageSlug}`);
-  return page ? { kind: "found", page } : { kind: "not-found", slug: `${section}/${pageSlug}` };
+  // Stem-fallback: kategori taşınmalarında (örn. landx -&gt; stack, 03 §2) eski
+  // bölümlü derin linkler kırılmaz — sayfa stem'inden çözülür, içerik render edilir.
+  const entry = bySlug.get(`${section}/${pageSlug}`) ?? byId.get(`page-${pageSlug}`);
+  return entry ? { kind: "found", entry } : { kind: "not-found", slug: `${section}/${pageSlug}` };
 }
 &nbsp;
-export function resolvePageById(pageId: string): Page | undefined {
+export function resolvePageById(pageId: string): PageIndexEntry | undefined {
   return byId.get(pageId);
 }
 &nbsp;
 // {{ref:x}} çözümü — eski cluster id veya stem -&gt; slug; çözülemezse undefined (düz metne düşer)
 export function resolveRef(refId: string): { slug: string; title: string } | undefined {
-  const page = byOldId.get(refId) ?? byId.get(`page-${refId}`);
-  return page ? { slug: page.slug, title: page.title } : undefined;
+  const entry = byOldId.get(refId) ?? byId.get(`page-${refId}`);
+  return entry ? { slug: entry.slug, title: entry.title } : undefined;
 }
+&nbsp;
+// Hover önizleme kartı (UX-D1) — ref hedefinin tam indeks kaydı (summary dahil)
+export <span class="fstat-no" title="function not covered" >function resolveRefEntry(refId: string): PageIndexEntry | undefined {</span>
+<span class="cstat-no" title="statement not covered" >  return byOldId.get(refId) ?? byId.get(`page-${refId}`);</span>
+<span class="cstat-no" title="statement not covered" >}</span>
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -148,7 +169,7 @@ export function resolveRef(refId: string): { slug: string; title: string } | und
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-10T19:47:25.755Z
+                at 2026-06-14T15:02:02.732Z
             </div>
         <script src="../prettify.js"></script>
         <script>
