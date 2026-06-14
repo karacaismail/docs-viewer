@@ -1,0 +1,158 @@
+{
+  "id": "build-ilk-dikey-dilim",
+  "title": "İlk Dikey Dilim — Money'den OrderOps'a",
+  "subtitle": "Spec'ten çalışan sisteme köprü: küçük runtime iskeleti, atomik tipler, ArcheType okuyucu ve tenant-kapsamlı ilk sipariş akışı.",
+  "cluster": "build",
+  "order": 1,
+  "icon": "ph-path",
+  "granularity": "kaya",
+  "state": "wip",
+  "badge": "YÜRÜYÜŞ",
+  "tags": ["walking-skeleton", "orderops", "runtime", "test-first"],
+  "owner": "Runtime bootstrap sahibi",
+  "reviewer": "Fractional senior mimar + PostgreSQL reviewer",
+  "maturity": "incelemede",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": ["edu-baslangic-rotasi", "be-v1-kapsam-disi", "be-kararlar"],
+  "nonGoals": [
+    "İlk dilimde tam ERP, CRM veya e-ticaret ürünü üretmek.",
+    "Redis, Kafka, Kubernetes, çoklu API ve çoklu storage adaptörlerini açmak.",
+    "İlk kullanıcı ekranını enterprise hazır ürün kanıtı saymak."
+  ],
+  "failureModes": [
+    "Ekip yatay biçimde aylarca altyapı yazar; kullanıcı davranışına ulaşamaz.",
+    "OrderOps tek büyük görev olarak AI'a verilir; hangi kararın hangi testle kanıtlandığı kaybolur.",
+    "Mutlu akış çalışır fakat komşu tenant, yanlış para birimi ve yarım migration senaryoları sınanmaz."
+  ],
+  "acceptanceCriteria": [
+    "Her iterasyon tek bir gözlenebilir davranış ve önce yazılmış kabul testi taşır.",
+    "İterasyon 4 sonunda iki tenant'lı order create/list akışı yerelde ve CI'da çalışır.",
+    "Runtime temiz kurulum komutları üçüncü kişi tarafından yeniden çalıştırılmıştır.",
+    "Daha sonraki OrderOps kanıt kapılarına geçiş için eksikler açık backlog olarak kayıtlıdır."
+  ],
+  "operationalImpact": "Külliyattaki tip, kernel, tenancy, API ve deploy kararlarını ilk kez aynı çalışan zincirde sınar.",
+  "externalReviewRequired": true,
+  "related": [
+    "edu-baslangic-rotasi",
+    "edu-prompt-kutuphanesi",
+    "build-iterasyon-ritueli",
+    "build-referans-uygulama",
+    "atomic-types",
+    "be-sdk",
+    "be-v1-kapsam-disi",
+    "kernel-tenancy"
+  ],
+  "enrich": {
+    "info": "Dikey dilim, bütün katmanlardan geçen dar bir davranıştır. Amaç çok kod değil; dokümandaki kararların aynı çalışan akışta birbirine bağlanabildiğini erken kanıtlamaktır.",
+    "lesson": {
+      "ne": "İlk runtime reposunu OrderOps'a taşıyan dokuz küçük iterasyonluk yürüyüştür.",
+      "nicin": "Spec, çalışan test ve API'ye dönüşmeden mimari iddia olarak kalır.",
+      "nasil": "Her iterasyon bir öncekinin çalışan kanıtı üstüne eklenir; test, tanım, uygulama ve işletim sırası değişmez.",
+      "nerede": "Ayrı meta-framework runtime reposunda ve GitHub Actions hattında.",
+      "ne_zaman": "Eğitim başlangıç rotasından hemen sonra, ürün stack'lerine başlamadan önce.",
+      "kim": "Üç kişi dönen rollerle üretir, eleştirir ve temiz ortamda işletir.",
+      "analoji": "Tünel kazarken iki ucu aynı anda büyütmek yerine önce ince bir pilot tünel açılır; kaya yapısı görülür, sonra güvenle genişletilir."
+    }
+  },
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "Kanonik hedef {{ref:build-referans-uygulama}} içindeki OrderOps'tur; bu sayfa o hedefin **ilk çalışan parçasını** tarif eder. Önce health ve Money, sonra tanım okuyucu, ardından PostgreSQL + tenant-kapsamlı create/list. Workflow, restore, canary ve tam enterprise kapıları sonraki dilimlerdir."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Dokuz iterasyonluk kesin sıra"
+    },
+    {
+      "type": "table",
+      "caption": "Her satır ayrı görev kartı ve ayrı PR'dır",
+      "headers": ["İterasyon", "Üretilen tek davranış", "Önce yazılacak test", "Bitti kanıtı"],
+      "rows": [
+        ["0 · Bootstrap", "`/health` çalışan FastAPI + uv + CI.", "Health 200 ve sabit JSON.", "Test/lint/type-check yeşil; curl cevabı."],
+        ["1 · Money", "Decimal tutar + ISO para birimi value object.", "0.1+0.2 doğruluğu, farklı currency reddi, float reddi.", "Property örnekleri ve pyright strict."],
+        ["2 · Zaman ve kimlik", "UTC DateTime ve sıralı Identifier atomları.", "Naive datetime reddi, timezone dönüşümü, kimlik benzersizliği.", "Atomik tip kataloğu testli."],
+        ["3 · Tanım okuyucu", "En küçük ArcheType YAML/JSON şemasını Pydantic ile doğrula.", "Geçerli Order kabul; bilinmeyen tip/alan ve eksik tenant bayrağı reddi.", "Tanımdan tipli nesne üretiliyor."],
+        ["4 · Order veri dilimi", "Customer, Order, OrderLine için SQLAlchemy + Alembic.", "Toplam invariantı, eksik currency, migration upgrade/downgrade.", "PostgreSQL temiz kurulumda tablolar oluşuyor."],
+        ["5 · Tenant izolasyonu", "Transaction-scope tenant context + RLS.", "Tenant A, B'nin kaydını okuyamaz/yazamaz/bağlayamaz.", "Negatif testler gerçek Postgres üzerinde yeşil."],
+        ["6 · GraphQL", "Order create ve list için tek GraphQL endpoint.", "Başarılı create/list, validation hatası, komşu tenant görünmezliği.", "Örnek istek/yanıt ve API testi."],
+        ["7 · Audit + idempotency", "Create aksiyonu audit ve tekrar koruması üretir.", "Aynı anahtar ikinci order üretmez; audit actor/tenant taşır.", "Tek kayıt + tek audit kanıtı."],
+        ["8 · İşletim", "Docker Compose, seed, CI ve Hetzner-benzeri Debian runbook.", "Temiz makine bootstrap ve ikinci kez güvenli çalıştırma.", "İşleten kişi sıfırdan kurar; log ve rollback notu hazır."]
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "warning",
+      "label": "Sıra atlama yok",
+      "body": "İterasyon 3 tanım okuyucusu yokken Order tablolarını elle çoğaltma; İterasyon 5 tenant testi yokken public API'ye geçme; İterasyon 8 temiz kurulum kanıtı yokken yeni ürün stack'ine başlama. Her satır yalnız bir alt komşusuna bağlanır."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "İterasyon 1 çalışılmış örnek — Money"
+    },
+    {
+      "type": "steps",
+      "title": "Prompt'tan yeşil kanıta",
+      "items": [
+        {
+          "title": "Görev kartı",
+          "body": "Tek davranış: aynı currency içindeki iki Money değeri doğru toplanır. Non-goal: döviz kuru, vergi, fiyat listesi ve veritabanı."
+        },
+        {
+          "title": "Kırmızı test",
+          "body": "Decimal doğruluğu, currency uyuşmazlığı ve float girdisinin reddi yazılır. Money sınıfı yokken testin doğru nedenle kırıldığı görülür."
+        },
+        {
+          "title": "En küçük gövde",
+          "body": "Tutar Decimal, currency doğrulanmış kısa kod olur; toplama yalnız aynı currency ile çalışır. ORM veya API eklenmez."
+        },
+        {
+          "title": "Bağımsız eleştiri",
+          "body": "Reviewer sessiz float dönüşümü, yanlış quantize, negatif tutar varsayımı ve mutability riskini arar."
+        },
+        {
+          "title": "Kanıt paketi",
+          "body": "Test komutu, type-check, değişen dosyalar, kabul edilen/ertelenen kararlar ve sonraki tek görev kaydedilir."
+        }
+      ]
+    },
+    {
+      "type": "code",
+      "lang": "text",
+      "title": "İterasyon 4 sonundaki hedef ağaç",
+      "content": "meta-framework/\n├── pyproject.toml\n├── compose.yaml\n├── src/\n│   ├── app/main.py\n│   ├── kernel/types/money.py\n│   ├── kernel/types/datetime.py\n│   ├── kernel/types/identifier.py\n│   ├── kernel/archetype/schema.py\n│   └── orderops/\n│       ├── archetypes/{customer,order}.yaml\n│       ├── models.py\n│       └── repository.py\n├── migrations/\n├── tests/\n│   ├── test_health.py\n│   ├── test_money.py\n│   ├── test_archetype_schema.py\n│   ├── test_order_model.py\n│   └── test_tenant_isolation.py\n└── .github/workflows/ci.yml"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Bu dilim bilinçli olarak neyi yapmaz?"
+    },
+    {
+      "type": "list",
+      "items": [
+        "Tam kimlik federasyonu, SAML ve çoklu sağlayıcı.",
+        "Redis, Celery, Kafka, RabbitMQ veya haricî arama motoru.",
+        "Ödeme, stok, kargo, indirim, vergi ve fatura davranışı.",
+        "Admin paneli, mobil uygulama veya görsel tasarım sistemi.",
+        "Kubernetes, multi-region ve yüksek trafik optimizasyonu.",
+        "AI ajanının doğrudan veri yazması; bütün yazma davranışı tipli uygulama yüzeyinden geçer."
+      ]
+    },
+    {
+      "type": "checklist",
+      "title": "İlk dikey dilim çıkış kapısı",
+      "storageKey": "ilk-dikey-dilim-cikis",
+      "items": [
+        {"label": "Tek komut kurulum", "hint": "Temiz makinede bağımlılıklar ve Postgres ayağa kalkıyor."},
+        {"label": "Test-önce geçmişi", "hint": "Her iterasyonda kırmızı→yeşil kanıt var."},
+        {"label": "İki tenant", "hint": "Okuma, yazma ve reference yollarında sızıntı sıfır."},
+        {"label": "Money invariantı", "hint": "Float yok; currency uyuşmazlığı reddediliyor."},
+        {"label": "API davranışı", "hint": "Create/list gerçek Postgres ile çalışıyor."},
+        {"label": "Bağımsız işletim", "hint": "İşi üretmeyen kişi temiz ortamda kurup doğruladı."},
+        {"label": "Yeşil CI", "hint": "Aynı commit bütün kapılardan geçti."}
+      ]
+    }
+  ]
+}

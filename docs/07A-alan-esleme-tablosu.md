@@ -1,6 +1,6 @@
 # 07A — Eski Şema → Yeni Block Model Alan Eşleme Tablosu
 
-Bu doküman, migration script'inin (`07-uretim-02-data-migration.md`) yazılmasından önce şart olan resmî alan eşlemesini verir. Tablolar tahmine değil taramaya dayanır: kaynak küme programatik olarak analiz edilir (13 Haziran 2026 itibarıyla 197 özgün + 26 aday + 48 karar/kavram kaydıyla toplam 272; ayrıca 1 kapsam dışı dosya). 197 özgün dosya ortak cluster şemasını izler; `ARCHITECTURE-5.json` farklı bir yapıdadır (`$schema`, `meta`, `milestones`…) ve içerik değil spec olduğundan migration kapsamı dışıdır.
+Bu doküman, migration script'inin (`07-uretim-02-data-migration.md`) yazılmasından önce şart olan resmî alan eşlemesini verir. Tablolar tahmine değil taramaya dayanır: kaynak küme programatik olarak analiz edilir (14 Haziran 2026 itibarıyla 197 özgün + 26 aday + 52 karar/kavram kaydıyla toplam 276; ayrıca 1 kapsam dışı dosya). 197 özgün dosya ortak cluster şemasını izler; `ARCHITECTURE-5.json` farklı bir yapıdadır (`$schema`, `meta`, `milestones`…) ve içerik değil spec olduğundan migration kapsamı dışıdır.
 
 ## 1. Eski Cluster Şemasının Resmî Dökümü (kanıt: alan frekansları)
 
