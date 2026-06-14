@@ -67,6 +67,20 @@ export const PRODUCT_GROUPS = [
 ];
 
 export const PRODUCT_GROUP_MAP = {
+  "ap-automation": "fin",
+  "retail-execution": "cx",
+  "fraud-trust": "op",
+  "ai-governance": "platform",
+  "cyber-grc": "platform",
+  "kyc-aml": "fin",
+  esg: "data",
+  "ai-voice": "data",
+  "revenue-copilot": "cx",
+  "ai-catalog": "data",
+  rpa: "platform",
+  pmo: "op",
+  "data-catalog": "data",
+  "data-cleansing": "data",
   crm: "op",
   sales: "op",
   pos: "op",
