@@ -1,0 +1,647 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-build-iterasyon-ritueli",
+  "sourceId": "build-iterasyon-ritueli",
+  "slug": "build/build-iterasyon-ritueli",
+  "title": "Üç Kişilik İterasyon Ritüeli — Üret, Eleştir, İşlet",
+  "summary": "Görev seçimi, rol rotasyonu, Bitti Tanımı, hata kurtarma ve kanıt paketiyle junior vibecoding çalışma sistemi.",
+  "categoryId": "build",
+  "tags": [
+   "iteration",
+   "dod",
+   "review",
+   "debug",
+   "team"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "wip",
+   "badge": "RUNBOOK"
+  },
+  "owner": "Teslimat ve operasyon sahibi",
+  "reviewer": "Fractional senior mimar",
+  "maturity": "incelemede",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": [
+   "edu-baslangic-rotasi",
+   "edu-prompt-kutuphanesi",
+   "sus-ai-uretim-sozlesmesi"
+  ],
+  "nonGoals": [
+   "Üç kişiyi ayrı uzmanlık adalarına kalıcı olarak bölmek.",
+   "AI'ın öz-eleştirisini bağımsız review yerine kullanmak.",
+   "Takvim baskısıyla kırmızı CI veya eksik rollback planını kabul etmek."
+  ],
+  "failureModes": [
+   "Aynı kişi işi tarif eder, üretir, review eder ve deploy eder; ortak hata görünmez kalır.",
+   "Görev birkaç granülerlik seviyesini atlar; PR büyür ve doğrulanamaz.",
+   "Hata çözülmediğinde AI'a tekrar tekrar aynı geniş prompt gönderilir; diff ve belirsizlik büyür."
+  ],
+  "acceptanceCriteria": [
+   "Her görev kartında tek hedef, non-goal, invariant, kabul testi ve doğrulama komutları vardır.",
+   "Üreten, Eleştiren ve İşleten rolleri her iterasyonda isimlidir ve haftalık döner.",
+   "Bitti Tanımı bütün maddeleri kanıtlanmadan görev tamamlandı sayılmaz.",
+   "İki başarısız düzeltme sonrası hata-kurtarma protokolü uygulanır."
+  ],
+  "operationalImpact": "Ekibin AI hızını kontrol altında tutar; review, devretme, debug ve deploy sorumluluklarını görünür hale getirir.",
+  "externalReviewRequired": true,
+  "related": [
+   "page-edu-baslangic-rotasi",
+   "page-edu-prompt-kutuphanesi",
+   "page-build-ilk-dikey-dilim",
+   "page-edu-yetkinlik-modeli",
+   "page-build-uzman-denetimi",
+   "page-build-risk-defteri",
+   "page-sus-ai-uretim-sozlesmesi",
+   "page-edu-faz-haritasi"
+  ],
+  "blocks": [
+   {
+    "id": "block-build-iterasyon-ritueli-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Üç kişi az değildir; roller birbirinden ayrılırsa üç bağımsız kontrol noktasıdır. Aynı kişi aynı hafta hem Üreten hem son Eleştiren olamaz."
+     }
+    ]
+   },
+   {
+    "id": "block-build-iterasyon-ritueli-table",
+    "type": "table",
+    "caption": "Haftalık rol rotasyonu",
+    "columns": [
+     "Hafta",
+     "Kişi A",
+     "Kişi B",
+     "Kişi C"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "1"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Üreten"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Eleştiren"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "İşleten"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "2"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "İşleten"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Üreten"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Eleştiren"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "3"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Eleştiren"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "İşleten"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Üreten"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-build-iterasyon-ritueli-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Rol ayrımı",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Üreten kişi kendi PR'ını açıklayabilir ve öz-eleştiri yapabilir; fakat son review imzasını veremez. İşleten kişi, Üreten'in açık terminalini devralmaz: README/runbook üzerinden temiz terminalde aynı sonucu yeniden üretir."
+     }
+    ]
+   },
+   {
+    "id": "block-build-iterasyon-ritueli-h-bir-iterasyonun-bes-gunu",
+    "type": "heading",
+    "level": 2,
+    "text": "Bir iterasyonun beş günü"
+   },
+   {
+    "id": "block-build-iterasyon-ritueli-h-kucuk-gorev-icin-sure-kisalabilir-sira-degismez",
+    "type": "heading",
+    "level": 3,
+    "text": "Küçük görev için süre kısalabilir; sıra değişmez"
+   },
+   {
+    "id": "block-build-iterasyon-ritueli-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "1 · Seç ve küçült",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Backlog'dan yalnız bir komşu seviye seçilir. Görev bir cümlede anlatılamıyor veya 20'den fazla dosya öngörüyorsa bölünür. Non-goal ve durdurma koşulu yazılır."
+       }
+      ]
+     },
+     {
+      "title": "2 · Test-önce üret",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Üreten, Prompt 2 ile testleri önce yazar; kırmızı sonucu görür; en küçük gövdeyi ekler; yerel kapıları çalıştırır."
+       }
+      ]
+     },
+     {
+      "title": "3 · Temiz bağlamlı eleştiri",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Eleştiren, Prompt 4 ile güvenlik, veri, sahte yeşil test ve kapsam ihlali arar. Önce bulgular yazılır; düzeltme ayrı küçük görev olarak uygulanır."
+       }
+      ]
+     },
+     {
+      "title": "4 · Temiz ortamda işlet",
+      "segments": [
+       {
+        "type": "text",
+        "text": "İşleten kurulum, migration, seed, API ve rollback adımlarını runbook'tan tekrarlar. Eksik adımı Üreten'in sözlü yardımıyla kapatmak yerine runbook'a geri yazar."
+       }
+      ]
+     },
+     {
+      "title": "5 · Kanıtla ve kapat",
+      "segments": [
+       {
+        "type": "text",
+        "text": "PR açıklaması Prompt 6 ile doldurulur. CI yeşil, review kapalı ve rollback etkisi kayıtlıysa merge edilir; site/servis doğrulanır ve sonraki tek görev seçilir."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-build-iterasyon-ritueli-h-kopyalanabilir-gorev-karti",
+    "type": "heading",
+    "level": 2,
+    "text": "Kopyalanabilir görev kartı"
+   },
+   {
+    "id": "block-build-iterasyon-ritueli-code",
+    "type": "codeBlock",
+    "title": "Issue veya PR başına tek kart",
+    "language": "text",
+    "code": "GÖREV: [tek gözlenebilir davranış]\nSEVİYE: [Atom / Toz / Kum / Küçük Taş / Büyük Taş]\nSAHİP: [Üreten]\nREVIEWER: [Eleştiren]\nİŞLETEN: [İşleten]\n\nKAPSAM:\n- [değişebilecek katman/dosyalar]\n\nNON-GOAL:\n- [bu turda kesin yapılmayacaklar]\n\nINVARIANT:\n- [asla bozulmayacak güvenlik/veri kuralı]\n\nKABUL TESTLERİ:\n- [ana akış]\n- [hata akışı]\n- [yetkisiz/komşu tenant akışı, ilgiliyse]\n\nDOĞRULAMA:\n- [lint]\n- [type-check]\n- [test]\n- [build/e2e]\n\nROLLBACK:\n- [geri alma veya ileri-düzeltme yolu]\n\nDURDURMA KOŞULU:\n- [hangi bulguda iş durur ve uzman çağrılır]"
+   },
+   {
+    "id": "block-build-iterasyon-ritueli-h-bitti-tanimi-dod",
+    "type": "heading",
+    "level": 2,
+    "text": "Bitti Tanımı (DoD)"
+   },
+   {
+    "id": "block-build-iterasyon-ritueli-table-2",
+    "type": "table",
+    "columns": [
+     "Kapı",
+     "Zorunlu kanıt",
+     "Geçmezse"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kapsam"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Diff yalnız görev kartındaki davranışı değiştirir."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Görev bölünür; ilgisiz değişiklik çıkarılır."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Test"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "En az ana + hata akışı; ilgiliyse tenant/yetki negatif testi."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tamamlandı etiketi verilmez."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kod kalitesi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Lint, type-check ve repo sözleşmeleri yeşil."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kural gevşetilmez; kök neden düzeltilir."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Review"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "İşi üretmeyen kişi bütün bulguları kapatır."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Merge edilmez."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "İşletim"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Temiz ortam kurulum ve davranış tekrar edilmiş."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Runbook düzeltilir ve yeniden denenir."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Geri dönüş"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Rollback veya ileri-düzeltme yolu yazılı."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Migration/deploy yapılmaz."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kanıt paketi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Komutlar, sonuçlar, varsayımlar ve riskler PR'da."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Devir kabul edilmez."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "CI/CD"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Remote CI yeşil; yayın hedefi doğrulanmış."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "İterasyon açık kalır."
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-build-iterasyon-ritueli-h-hata-kurtarma-protokolu",
+    "type": "heading",
+    "level": 2,
+    "text": "Hata-kurtarma protokolü"
+   },
+   {
+    "id": "block-build-iterasyon-ritueli-h-iki-deneme-kurali",
+    "type": "heading",
+    "level": 3,
+    "text": "İki deneme kuralı"
+   },
+   {
+    "id": "block-build-iterasyon-ritueli-steps-2",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "Hata çıktısını koru",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Logu kısaltmadan önce ham çıktıyı kaydet; hangi komut, commit ve ortamda oluştuğunu yaz."
+       }
+      ]
+     },
+     {
+      "title": "En küçük yeniden üretim",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Tam uygulama yerine tek test, tek istek veya tek migration adımıyla hatayı yeniden üret."
+       }
+      ]
+     },
+     {
+      "title": "Kök neden sınıfı",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Hatanın test, uygulama, veri, ortam, sözleşme veya haricî bağımlılık kaynaklı olduğunu kanıtla."
+       }
+      ]
+     },
+     {
+      "title": "İki küçük düzeltme sınırı",
+      "segments": [
+       {
+        "type": "text",
+        "text": "İki odaklı düzeltme başarısızsa üçüncü rastgele değişiklik yapılmaz. Eleştiren veya dış uzman yeni hipotez üretir."
+       }
+      ]
+     },
+     {
+      "title": "Geri dön ve öğrenmeyi yaz",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Son yeşil commit'e dön; kök neden ve önleyici testi risk defteri/runbook'a ekle."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-build-iterasyon-ritueli-co-2",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Uzman çağırma eşiği",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Tenant sızıntısı, veri kaybı, geri alınamayan migration, para invariantı, kimlik/yetki, KVKK/mevzuat veya iki kez tekrarlayan üretim incident'ında ekip tek başına devam etmez; "
+     },
+     {
+      "type": "ref",
+      "text": "build-uzman-denetimi",
+      "refId": "build-uzman-denetimi"
+     },
+     {
+      "type": "text",
+      "text": " kapısı çalışır."
+     }
+    ]
+   },
+   {
+    "id": "block-build-iterasyon-ritueli-chk",
+    "type": "checklist",
+    "title": "PR kapanış kontrolü",
+    "storageKey": "uc-kisilik-iterasyon-dod",
+    "items": [
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Görev kartı tam — Hedef, non-goal, invariant ve durdurma koşulu var."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Kırmızı→yeşil kanıt — Test uygulamadan önce doğru nedenle kırıldı."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Bağımsız review — Üreten dışındaki kişi onayladı."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Temiz ortam — İşleten kurulum ve davranışı yeniden üretti."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Rollback — Geri dönüş veya ileri-düzeltme yazılı."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "CI/CD — Remote kapılar ve yayın doğrulaması yeşil."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-build-iterasyon-ritueli-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-build-iterasyon-ritueli-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her küçük geliştirme için tekrar edilen ekip çalışma protokolüdür."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Vibecoding kodu hızlandırır, fakat yanlış varsayımı da hızlandırabilir; rol ayrımı ve kanıt paketi bunu görünür yapar."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tek görev kartı seçilir, roller atanır, test-önce üretim yapılır, temiz bağlamlı review ve temiz ortam işletiminden sonra kapanır."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "GitHub issue/PR kaydı, AI oturumları ve CI/CD hattında."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her iterasyonda; görev bir saatlik Atom da olsa birkaç günlük ArcheType dilimi de olsa."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Üç ekip üyesi dönen rollerle; yüksek riskte dış uzman dördüncü göz olarak."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Uçuş ekibi: pilot uçağı kullanır, yardımcı pilot kontrolleri çaprazlar, yer ekibi uçağın yeniden güvenle kalkabildiğini doğrular."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

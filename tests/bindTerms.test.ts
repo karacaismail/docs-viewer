@@ -25,7 +25,7 @@ function termSegmentsOf(p: Page): Extract<Segment, { type: "term" }>[] {
 describe("term segment bağlama (Parti 1-B)", () => {
   const edu = pages.filter((p) => p.categoryId === "egitim");
 
-  it("egitim sayfalarının neredeyse tamamında term segmenti var (revize kapsam: 27/28)", () => {
+  it("egitim sayfalarının neredeyse tamamında term segmenti var", () => {
     const bound = edu.filter((p) => termSegmentsOf(p).length > 0);
     expect(bound.length).toBeGreaterThanOrEqual(edu.length - 1);
   });

@@ -1,0 +1,621 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-edu-baslangic-rotasi",
+  "sourceId": "edu-baslangic-rotasi",
+  "slug": "egitim/edu-baslangic-rotasi",
+  "title": "Buradan Başla — Gün 1 İlk Çalışan Kanıt",
+  "summary": "Üç kişilik 60+ ekip için ilk 90 dakika: doğru repo, tek küçük hedef, çalışan test, yerel API ve yeşil CI.",
+  "categoryId": "egitim",
+  "tags": [
+   "baslangic",
+   "gun-1",
+   "vibecoding",
+   "ilk-basari"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "wip",
+   "badge": "BAŞLA"
+  },
+  "owner": "Eğitim programı sahibi",
+  "reviewer": "Fractional senior mimar",
+  "maturity": "incelemede",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": [],
+  "nonGoals": [
+   "İlk gün CRM, muhasebe veya 70 ürünün tamamını üretmek.",
+   "docs-viewer reposunun içine hedef runtime kodu eklemek.",
+   "Çalışmayan büyük bir iskeleti başarı saymak."
+  ],
+  "failureModes": [
+   "Ekip yalnız doküman okur, fakat terminalde çalışan tek bir kanıt üretmeden haftalar geçirir.",
+   "AI'a geniş bir ürün komutu verilir; yüzlerce dosyalık, doğrulanamayan bir değişiklik oluşur.",
+   "Üç kişi aynı işi aynı anda değiştirir ve kimin ürettiği, kimin eleştirdiği belirsiz kalır."
+  ],
+  "acceptanceCriteria": [
+   "Hedef runtime repo ile docs-viewer repo birbirinden açıkça ayrılmıştır.",
+   "İlk test önce kırmızı, uygulamadan sonra yeşil görülmüştür.",
+   "Yerel health endpoint'i cevap verir; lint, type-check ve test komutları geçer.",
+   "Değişiklik küçük bir PR ve kanıt paketiyle kapanır."
+  ],
+  "operationalImpact": "Ekibin teoriden çalışan sisteme geçişini başlatır ve sonraki bütün iterasyonlar için tekrar edilebilir iş ritmi kurar.",
+  "externalReviewRequired": true,
+  "related": [
+   "page-edu-prompt-kutuphanesi",
+   "page-build-ilk-dikey-dilim",
+   "page-build-iterasyon-ritueli",
+   "page-edu-overview",
+   "page-edu-faz-haritasi",
+   "page-build-referans-uygulama",
+   "page-sus-ai-uretim-sozlesmesi"
+  ],
+  "blocks": [
+   {
+    "id": "block-edu-baslangic-rotasi-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "İlk başarı, büyük ürün ekranı değildir. Doğru repoda bir testin önce kırmızı, sonra yeşil olması; API'nin yerelde cevap vermesi ve aynı commit'in CI'da geçmesidir."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-baslangic-rotasi-co",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Önce doğru repo",
+    "segments": [
+     {
+      "type": "code",
+      "text": "docs-viewer"
+     },
+     {
+      "type": "text",
+      "text": " çalışan ürünün kendisi değildir; ürünün anayasasını ve yapım sırasını gösterir. Runtime kodu ayrı repoda yaşar. Bu rehberde geçici çalışma adı "
+     },
+     {
+      "type": "code",
+      "text": "meta-framework"
+     },
+     {
+      "type": "text",
+      "text": " kullanılır; gerçek repo adı farklıysa promptlardaki adı değiştir."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-baslangic-rotasi-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu rotanın hedefi "
+     },
+     {
+      "type": "term",
+      "text": "İlk Çalışan Kanıt",
+      "termId": "term-ilk-calisan-kanit-edu-baslangic-rotasi"
+     },
+     {
+      "type": "text",
+      "text": " üretmektir: bir testin doğru nedenle kırıldığını, küçük uygulamayla yeşile döndüğünü ve aynı sonucun temiz CI ortamında tekrarlandığını görmek."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-baslangic-rotasi-table",
+    "type": "table",
+    "caption": "İlk oturumda üç rol",
+    "columns": [
+     "Rol",
+     "Bu oturumdaki işi",
+     "Yapmayacağı şey"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Üreten"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Görev kartını AI'a verir, test ve uygulamayı küçük diff olarak üretir."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kendi çıktısının son onayını vermez."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Eleştiren"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Ayrı oturumda diff, test ve varsayımlara saldırır."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yeni özellik ekleyerek kapsamı büyütmez."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "İşleten"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Temiz terminalde kurulum, test, API ve CI adımlarını tekrarlar."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Üreten kişinin makinesinde çalıştı sözünü kanıt saymaz."
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-baslangic-rotasi-h-ilk-90-dakika",
+    "type": "heading",
+    "level": 2,
+    "text": "İlk 90 dakika"
+   },
+   {
+    "id": "block-edu-baslangic-rotasi-h-tek-oturum-tek-kucuk-zafer",
+    "type": "heading",
+    "level": 3,
+    "text": "Tek oturum, tek küçük zafer"
+   },
+   {
+    "id": "block-edu-baslangic-rotasi-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "0–10 dk · Rolleri ve hedefi yaz",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Bugünün tek hedefi: Python 3.12 + uv tabanlı küçük FastAPI uygulaması, "
+       },
+       {
+        "type": "code",
+        "text": "/health"
+       },
+       {
+        "type": "text",
+        "text": " cevabı, bir kırmızı→yeşil test ve GitHub Actions. CRM ekranı, login, ödeme, kuyruk ve yönetim paneli kapsam dışıdır."
+       }
+      ]
+     },
+     {
+      "title": "10–20 dk · Repo doğrulaması yap",
+      "segments": [
+       {
+        "type": "text",
+        "text": "AI'a yalnız okuma promptunu ver. "
+       },
+       {
+        "type": "code",
+        "text": "AGENTS.md"
+       },
+       {
+        "type": "text",
+        "text": ", karar sayfaları, mevcut dosyalar ve Git durumu okunur. Repo "
+       },
+       {
+        "type": "code",
+        "text": "docs-viewer"
+       },
+       {
+        "type": "text",
+        "text": " ise runtime geliştirmesi durdurulur; ayrı "
+       },
+       {
+        "type": "code",
+        "text": "meta-framework"
+       },
+       {
+        "type": "text",
+        "text": " repo hazırlanır."
+       }
+      ]
+     },
+     {
+      "title": "20–35 dk · Testi önce yazdır",
+      "segments": [
+       {
+        "type": "code",
+        "text": "GET /health"
+       },
+       {
+        "type": "text",
+        "text": " için 200 ve "
+       },
+       {
+        "type": "code",
+        "text": "{\"status\":\"ok\"}"
+       },
+       {
+        "type": "text",
+        "text": " bekleyen test oluşturulur. Test çalıştırılır ve endpoint henüz olmadığı için kırmızı sonuç kanıt olarak kaydedilir."
+       }
+      ]
+     },
+     {
+      "title": "35–55 dk · En küçük uygulamayı üret",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Yalnız testi geçirecek FastAPI uygulaması, "
+       },
+       {
+        "type": "code",
+        "text": "pyproject.toml"
+       },
+       {
+        "type": "text",
+        "text": " ve gerekli ayarlar eklenir. Yeni altyapı, soyutlama veya ürün özelliği eklenmez."
+       }
+      ]
+     },
+     {
+      "title": "55–70 dk · Yerelde doğrula",
+      "segments": [
+       {
+        "type": "code",
+        "text": "uv run pytest"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "uv run ruff check ."
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "code",
+        "text": "uv run pyright"
+       },
+       {
+        "type": "text",
+        "text": " ve yerel "
+       },
+       {
+        "type": "code",
+        "text": "/health"
+       },
+       {
+        "type": "text",
+        "text": " isteği çalıştırılır. Çıktıların tamamı görev kaydına eklenir."
+       }
+      ]
+     },
+     {
+      "title": "70–80 dk · Bağımsız eleştiri",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Eleştiren kişi yeni konuşma açar; üretim konuşmasını kopyalamadan yalnız görev kartı + diff + test çıktısını verir. Gereksiz dosya, gevşetilmiş test ve gizli varsayım aranır."
+       }
+      ]
+     },
+     {
+      "title": "80–90 dk · PR ve CI",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Küçük commit gönderilir; CI aynı komutları temiz ortamda çalıştırır. Yeşil CI ve Eleştiren onayı olmadan görev bitmiş sayılmaz."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-baslangic-rotasi-code",
+    "type": "codeBlock",
+    "title": "İlk başarıyı kanıtlayan komutlar",
+    "language": "bash",
+    "code": "uv sync\nuv run pytest\nuv run ruff check .\nuv run pyright\nuv run uvicorn src.app.main:app --host 127.0.0.1 --port 8000\n# ayrı terminal:\ncurl -fsS http://127.0.0.1:8000/health"
+   },
+   {
+    "id": "block-edu-baslangic-rotasi-chk",
+    "type": "checklist",
+    "title": "Gün 1 bitiş kapısı",
+    "storageKey": "gun-1-ilk-calisan-kanit",
+    "items": [
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Doğru repo — Runtime kodu docs-viewer içine yazılmadı."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Kırmızı kanıt — Uygulamadan önce başarısız test çıktısı görüldü."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Yeşil kanıt — Test, lint ve type-check temiz."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Çalışan davranış — "
+       },
+       {
+        "type": "code",
+        "text": "/health"
+       },
+       {
+        "type": "text",
+        "text": " yerelde beklenen JSON'u döndürüyor."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Bağımsız review — İşi üretmeyen kişi diff'i ve testleri inceledi."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "CI — Aynı commit GitHub Actions içinde geçti."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-baslangic-rotasi-co-2",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Dur ve küçült",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI 20'den fazla dosya değiştirmek, yeni servis eklemek veya test beklentisini gevşetmek istiyorsa görevi durdur. Hedefi tek davranışa indir. Aynı hata iki denemede çözülmediyse üçüncü deneme yeni kod yazmak değil, kök neden ve en küçük yeniden üretim istemektir."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-baslangic-rotasi-h-sonraki-sira",
+    "type": "heading",
+    "level": 2,
+    "text": "Sonraki sıra"
+   },
+   {
+    "id": "block-edu-baslangic-rotasi-table-2",
+    "type": "table",
+    "columns": [
+     "İterasyon",
+     "Tek hedef",
+     "Geçiş kanıtı"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "0"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Runtime bootstrap + health + CI."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Bu sayfadaki altı maddelik kapı."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "1"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Money/Decimal atomu."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kuruş doğruluğu, para birimi uyumsuzluğu ve yanlış tip testleri."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "2"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "DateTime + Identifier atomları."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "UTC/IANA ve sıralı kimlik testleri."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "3"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "En küçük ArcheType tanım okuyucusu."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Geçerli tanım kabul, bilinmeyen alan ve tip reddi."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "4"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "OrderOps'un ilk tenant-kapsamlı create/list dilimi."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "İki tenant negatif testi + GraphQL davranışı + audit kanıtı."
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-baslangic-rotasi-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-edu-baslangic-rotasi-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk çalışma oturumunun adım adım rotasıdır."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Başlangıç belirsizliği büyük prompt ve büyük hata üretir; küçük çalışan kanıt ekibe gerçek geri bildirim verir."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Üç rol atanır, tek görev kartı seçilir, test önce yazılır, küçük uygulama yapılır ve kanıt paketiyle kapatılır."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Hedef runtime reposunun kökünde; docs-viewer yalnız kanonik rehber olarak açık kalır."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her ekip üyesi ilk kez geliştirmeye başlamadan önce ve yeni makine kurulduğunda."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Üreten kişi AI aracını kullanır; Eleştiren kişi ayrı bağlamda diff'i inceler; İşleten kişi komutları sıfırdan tekrarlar."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yeni araba kullanmayı öğrenirken ilk hedef şehirler arası yol değil; aracı çalıştırmak, fren yapmak ve aynı kısa parkuru güvenle tamamlamaktır."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

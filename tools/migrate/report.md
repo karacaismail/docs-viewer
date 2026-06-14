@@ -1,14 +1,14 @@
 # Migration Mutabakat Raporu
 
-Kaynak dosya: 271 (+1 kapsam dışı) | Üretilen page: 271 | Atlanan: 0
-Glossary kaydı: 724 | Search document: 3781
+Kaynak dosya: 275 (+1 kapsam dışı) | Üretilen page: 275 | Atlanan: 0
+Glossary kaydı: 726 | Search document: 3823
 
 ## Kategori dağılımı
 - backend: 6
-- build: 15
+- build: 17
 - crosscut: 17
 - dx: 4
-- egitim: 30
+- egitim: 32
 - frontend: 9
 - genel: 2
 - kararlar: 21
@@ -22,15 +22,15 @@ Glossary kaydı: 724 | Search document: 3781
 ## Kayıp görsel varlıklar (0) — 07B §1 fallback aktif
 
 ## Glossary zenginleştirme (12A Parti 1 — Eğitim Yolu)
-Zenginleştirilen kayıt: 552 (sayfa-kapsamlı: 378) | Overlay'de karşılığı olmayan label: 4
-Segment bağlama (B akışı, tüm kategoriler): 465 bağlı terim | bağlı page: 172/271 | egitim: 29/30
+Zenginleştirilen kayıt: 554 (sayfa-kapsamlı: 378) | Overlay'de karşılığı olmayan label: 4
+Segment bağlama (B akışı, tüm kategoriler): 467 bağlı terim | bağlı page: 174/275 | egitim: 31/32
 - eşleşmedi: Yetkinlik Kapısı
 - eşleşmedi: Migration state machine
 - eşleşmedi: Sentetik önizleme
 - eşleşmedi: Güven kalibrasyonu
 
 ## Yedi Soru genellemesi (12A §6 — tüm terimler)
-Yedi soru kaydı: 724/724 | Eksik: 0
+Yedi soru kaydı: 726/726 | Eksik: 0
 
 ## Uyarılar (0)
 

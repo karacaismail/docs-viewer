@@ -1,0 +1,630 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-build-ilk-dikey-dilim",
+  "sourceId": "build-ilk-dikey-dilim",
+  "slug": "build/build-ilk-dikey-dilim",
+  "title": "İlk Dikey Dilim — Money'den OrderOps'a",
+  "summary": "Spec'ten çalışan sisteme köprü: küçük runtime iskeleti, atomik tipler, ArcheType okuyucu ve tenant-kapsamlı ilk sipariş akışı.",
+  "categoryId": "build",
+  "tags": [
+   "walking-skeleton",
+   "orderops",
+   "runtime",
+   "test-first"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "wip",
+   "badge": "YÜRÜYÜŞ"
+  },
+  "owner": "Runtime bootstrap sahibi",
+  "reviewer": "Fractional senior mimar + PostgreSQL reviewer",
+  "maturity": "incelemede",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": [
+   "edu-baslangic-rotasi",
+   "be-v1-kapsam-disi",
+   "be-kararlar"
+  ],
+  "nonGoals": [
+   "İlk dilimde tam ERP, CRM veya e-ticaret ürünü üretmek.",
+   "Redis, Kafka, Kubernetes, çoklu API ve çoklu storage adaptörlerini açmak.",
+   "İlk kullanıcı ekranını enterprise hazır ürün kanıtı saymak."
+  ],
+  "failureModes": [
+   "Ekip yatay biçimde aylarca altyapı yazar; kullanıcı davranışına ulaşamaz.",
+   "OrderOps tek büyük görev olarak AI'a verilir; hangi kararın hangi testle kanıtlandığı kaybolur.",
+   "Mutlu akış çalışır fakat komşu tenant, yanlış para birimi ve yarım migration senaryoları sınanmaz."
+  ],
+  "acceptanceCriteria": [
+   "Her iterasyon tek bir gözlenebilir davranış ve önce yazılmış kabul testi taşır.",
+   "İterasyon 4 sonunda iki tenant'lı order create/list akışı yerelde ve CI'da çalışır.",
+   "Runtime temiz kurulum komutları üçüncü kişi tarafından yeniden çalıştırılmıştır.",
+   "Daha sonraki OrderOps kanıt kapılarına geçiş için eksikler açık backlog olarak kayıtlıdır."
+  ],
+  "operationalImpact": "Külliyattaki tip, kernel, tenancy, API ve deploy kararlarını ilk kez aynı çalışan zincirde sınar.",
+  "externalReviewRequired": true,
+  "related": [
+   "page-edu-baslangic-rotasi",
+   "page-edu-prompt-kutuphanesi",
+   "page-build-iterasyon-ritueli",
+   "page-build-referans-uygulama",
+   "page-atomic-types",
+   "page-be-sdk",
+   "page-be-v1-kapsam-disi",
+   "page-kernel-tenancy",
+   "page-edu-faz-haritasi"
+  ],
+  "blocks": [
+   {
+    "id": "block-build-ilk-dikey-dilim-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Dikey dilim, bütün katmanlardan geçen dar bir davranıştır. Amaç çok kod değil; dokümandaki kararların aynı çalışan akışta birbirine bağlanabildiğini erken kanıtlamaktır."
+     }
+    ]
+   },
+   {
+    "id": "block-build-ilk-dikey-dilim-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Kanonik hedef "
+     },
+     {
+      "type": "ref",
+      "text": "build-referans-uygulama",
+      "refId": "build-referans-uygulama"
+     },
+     {
+      "type": "text",
+      "text": " içindeki OrderOps'tur; bu sayfa o hedefin "
+     },
+     {
+      "type": "strong",
+      "text": "ilk çalışan parçasını"
+     },
+     {
+      "type": "text",
+      "text": " tarif eder. Önce health ve Money, sonra tanım okuyucu, ardından PostgreSQL + tenant-kapsamlı create/list. Workflow, restore, canary ve tam enterprise kapıları sonraki dilimlerdir."
+     }
+    ]
+   },
+   {
+    "id": "block-build-ilk-dikey-dilim-h-dokuz-iterasyonluk-kesin-sira",
+    "type": "heading",
+    "level": 2,
+    "text": "Dokuz iterasyonluk kesin sıra"
+   },
+   {
+    "id": "block-build-ilk-dikey-dilim-table",
+    "type": "table",
+    "caption": "Her satır ayrı görev kartı ve ayrı PR'dır",
+    "columns": [
+     "İterasyon",
+     "Üretilen tek davranış",
+     "Önce yazılacak test",
+     "Bitti kanıtı"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "0 · Bootstrap"
+       }
+      ],
+      [
+       {
+        "type": "code",
+        "text": "/health"
+       },
+       {
+        "type": "text",
+        "text": " çalışan FastAPI + uv + CI."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Health 200 ve sabit JSON."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Test/lint/type-check yeşil; curl cevabı."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "1 · Money"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Decimal tutar + ISO para birimi value object."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "0.1+0.2 doğruluğu, farklı currency reddi, float reddi."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Property örnekleri ve pyright strict."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "2 · Zaman ve kimlik"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "UTC DateTime ve sıralı Identifier atomları."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Naive datetime reddi, timezone dönüşümü, kimlik benzersizliği."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Atomik tip kataloğu testli."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "3 · Tanım okuyucu"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "En küçük ArcheType YAML/JSON şemasını Pydantic ile doğrula."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Geçerli Order kabul; bilinmeyen tip/alan ve eksik tenant bayrağı reddi."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tanımdan tipli nesne üretiliyor."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "4 · Order veri dilimi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Customer, Order, OrderLine için SQLAlchemy + Alembic."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Toplam invariantı, eksik currency, migration upgrade/downgrade."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "PostgreSQL temiz kurulumda tablolar oluşuyor."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "5 · Tenant izolasyonu"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Transaction-scope tenant context + RLS."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tenant A, B'nin kaydını okuyamaz/yazamaz/bağlayamaz."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Negatif testler gerçek Postgres üzerinde yeşil."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "6 · GraphQL"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Order create ve list için tek GraphQL endpoint."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Başarılı create/list, validation hatası, komşu tenant görünmezliği."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Örnek istek/yanıt ve API testi."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "7 · Audit + idempotency"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Create aksiyonu audit ve tekrar koruması üretir."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Aynı anahtar ikinci order üretmez; audit actor/tenant taşır."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tek kayıt + tek audit kanıtı."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "8 · İşletim"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Docker Compose, seed, CI ve Hetzner-benzeri Debian runbook."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Temiz makine bootstrap ve ikinci kez güvenli çalıştırma."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "İşleten kişi sıfırdan kurar; log ve rollback notu hazır."
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-build-ilk-dikey-dilim-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Sıra atlama yok",
+    "segments": [
+     {
+      "type": "text",
+      "text": "İterasyon 3 tanım okuyucusu yokken Order tablolarını elle çoğaltma; İterasyon 5 tenant testi yokken public API'ye geçme; İterasyon 8 temiz kurulum kanıtı yokken yeni ürün stack'ine başlama. Her satır yalnız bir alt komşusuna bağlanır."
+     }
+    ]
+   },
+   {
+    "id": "block-build-ilk-dikey-dilim-h-iterasyon-1-calisilmis-ornek-money",
+    "type": "heading",
+    "level": 2,
+    "text": "İterasyon 1 çalışılmış örnek — Money"
+   },
+   {
+    "id": "block-build-ilk-dikey-dilim-h-prompt-tan-yesil-kanita",
+    "type": "heading",
+    "level": 3,
+    "text": "Prompt'tan yeşil kanıta"
+   },
+   {
+    "id": "block-build-ilk-dikey-dilim-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "Görev kartı",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Tek davranış: aynı currency içindeki iki Money değeri doğru toplanır. Non-goal: döviz kuru, vergi, fiyat listesi ve veritabanı."
+       }
+      ]
+     },
+     {
+      "title": "Kırmızı test",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Decimal doğruluğu, currency uyuşmazlığı ve float girdisinin reddi yazılır. Money sınıfı yokken testin doğru nedenle kırıldığı görülür."
+       }
+      ]
+     },
+     {
+      "title": "En küçük gövde",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Tutar Decimal, currency doğrulanmış kısa kod olur; toplama yalnız aynı currency ile çalışır. ORM veya API eklenmez."
+       }
+      ]
+     },
+     {
+      "title": "Bağımsız eleştiri",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Reviewer sessiz float dönüşümü, yanlış quantize, negatif tutar varsayımı ve mutability riskini arar."
+       }
+      ]
+     },
+     {
+      "title": "Kanıt paketi",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Test komutu, type-check, değişen dosyalar, kabul edilen/ertelenen kararlar ve sonraki tek görev kaydedilir."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-build-ilk-dikey-dilim-code",
+    "type": "codeBlock",
+    "title": "İterasyon 4 sonundaki hedef ağaç",
+    "language": "text",
+    "code": "meta-framework/\n├── pyproject.toml\n├── compose.yaml\n├── src/\n│   ├── app/main.py\n│   ├── kernel/types/money.py\n│   ├── kernel/types/datetime.py\n│   ├── kernel/types/identifier.py\n│   ├── kernel/archetype/schema.py\n│   └── orderops/\n│       ├── archetypes/{customer,order}.yaml\n│       ├── models.py\n│       └── repository.py\n├── migrations/\n├── tests/\n│   ├── test_health.py\n│   ├── test_money.py\n│   ├── test_archetype_schema.py\n│   ├── test_order_model.py\n│   └── test_tenant_isolation.py\n└── .github/workflows/ci.yml"
+   },
+   {
+    "id": "block-build-ilk-dikey-dilim-h-bu-dilim-bilincli-olarak-neyi-yapmaz",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu dilim bilinçli olarak neyi yapmaz?"
+   },
+   {
+    "id": "block-build-ilk-dikey-dilim-list",
+    "type": "list",
+    "ordered": false,
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Tam kimlik federasyonu, SAML ve çoklu sağlayıcı."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Redis, Celery, Kafka, RabbitMQ veya haricî arama motoru."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Ödeme, stok, kargo, indirim, vergi ve fatura davranışı."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Admin paneli, mobil uygulama veya görsel tasarım sistemi."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Kubernetes, multi-region ve yüksek trafik optimizasyonu."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "AI ajanının doğrudan veri yazması; bütün yazma davranışı tipli uygulama yüzeyinden geçer."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-build-ilk-dikey-dilim-chk",
+    "type": "checklist",
+    "title": "İlk dikey dilim çıkış kapısı",
+    "storageKey": "ilk-dikey-dilim-cikis",
+    "items": [
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Tek komut kurulum — Temiz makinede bağımlılıklar ve Postgres ayağa kalkıyor."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Test-önce geçmişi — Her iterasyonda kırmızı→yeşil kanıt var."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "İki tenant — Okuma, yazma ve reference yollarında sızıntı sıfır."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Money invariantı — Float yok; currency uyuşmazlığı reddediliyor."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "API davranışı — Create/list gerçek Postgres ile çalışıyor."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Bağımsız işletim — İşi üretmeyen kişi temiz ortamda kurup doğruladı."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Yeşil CI — Aynı commit bütün kapılardan geçti."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-build-ilk-dikey-dilim-h-yedi-soruda",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu konu yedi soruda"
+   },
+   {
+    "id": "block-build-ilk-dikey-dilim-lesson",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ne?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İlk runtime reposunu OrderOps'a taşıyan dokuz küçük iterasyonluk yürüyüştür."
+       }
+      ]
+     },
+     {
+      "term": "Niçin?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Spec, çalışan test ve API'ye dönüşmeden mimari iddia olarak kalır."
+       }
+      ]
+     },
+     {
+      "term": "Nasıl?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her iterasyon bir öncekinin çalışan kanıtı üstüne eklenir; test, tanım, uygulama ve işletim sırası değişmez."
+       }
+      ]
+     },
+     {
+      "term": "Nerede?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Ayrı meta-framework runtime reposunda ve GitHub Actions hattında."
+       }
+      ]
+     },
+     {
+      "term": "Ne zaman?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Eğitim başlangıç rotasından hemen sonra, ürün stack'lerine başlamadan önce."
+       }
+      ]
+     },
+     {
+      "term": "Kim?",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Üç kişi dönen rollerle üretir, eleştirir ve temiz ortamda işletir."
+       }
+      ]
+     },
+     {
+      "term": "Analoji",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tünel kazarken iki ucu aynı anda büyütmek yerine önce ince bir pilot tünel açılır; kaya yapısı görülür, sonra güvenle genişletilir."
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}
