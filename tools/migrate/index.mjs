@@ -151,8 +151,23 @@ function governanceOf(data, stem, categoryId) {
 // Katalogdan otomatik build-prompt (B): üretilebilir granülerlikteki ürün/platform
 // sayfalarına seviye-eşli, kopyalanabilir bir build-prompt enjekte eder. Doc/karar/
 // eğitim sayfaları hariç. Çıktı şeması: heading + codeBlock(language:text, copyEnabled).
-const BUILD_LEVEL = { kaya: "Module (Kaya)", "orta-tas": "View (Orta Taş)", "buyuk-tas": "ArcheType (Büyük Taş)" };
-const BUILD_EXCLUDE = new Set(["edu", "egitim", "sus", "kararlar", "dx", "landx", "meta", "atomic", "build", "genel"]);
+const BUILD_LEVEL = {
+  kaya: "Module (Kaya)",
+  "orta-tas": "View (Orta Taş)",
+  "buyuk-tas": "ArcheType (Büyük Taş)",
+};
+const BUILD_EXCLUDE = new Set([
+  "edu",
+  "egitim",
+  "sus",
+  "kararlar",
+  "dx",
+  "landx",
+  "meta",
+  "atomic",
+  "build",
+  "genel",
+]);
 function buildUnitPromptBlocks(stem, data, nextId) {
   const g = data.granularity;
   if (!BUILD_LEVEL[g] || BUILD_EXCLUDE.has(data.cluster)) return [];
@@ -162,8 +177,7 @@ function buildUnitPromptBlocks(stem, data, nextId) {
     "be-sdk sırası: testler ÖNCE (kırmızı) → yaml taslaklar → uygulama. Küçük PR + kanıt. Komşuluk kuralını ihlal etme.";
   let body;
   if (g === "buyuk-tas") {
-    body =
-`SEVİYE: ArcheType (Büyük Taş) · birim: ${title}
+    body = `SEVİYE: ArcheType (Büyük Taş) · birim: ${title}
 ROL: Veri mimarı. OKU: bu sayfa (${stem}), kernel ArcheType engine, k-granulerlik, k-surface, ilgili module.
 GÖREV: "${title}" için bildirimsel ArcheType(ler) + projekte eden Surface üret.
 KISIT: Alan bayrakları zorunlu — para=Money (Decimal; float yasak), kişisel veri=pii(+retention), tarihçeli=bitemporal, her şey audit'li. Kernel iç API'sine dokunma.
@@ -171,8 +185,7 @@ KISIT: Alan bayrakları zorunlu — para=Money (Decimal; float yasak), kişisel 
 KABUL (DoD): tablo+API+MCP+Surface üretilir; bayraklar doğru; tenant-scoped + negatif yetki testleri yeşil.
 ${common}`;
   } else if (g === "kaya") {
-    body =
-`SEVİYE: Module / Domain (Kaya) · birim: ${title}
+    body = `SEVİYE: Module / Domain (Kaya) · birim: ${title}
 ROL: Domain mimarı. OKU: bu sayfa (${stem}), ilgili app plan ağacı, core sözleşmeleri.
 GÖREV: "${title}" module sınırını, sahip olduğu ArcheType'ları ve Contract (API kapısı) tanımını çıkar.
 KISIT: Başka module'ün tablosuna dokunma; Contract üzerinden konuş. Capability manifesti deny-by-default.
@@ -180,8 +193,7 @@ KISIT: Başka module'ün tablosuna dokunma; Contract üzerinden konuş. Capabili
 KABUL (DoD): module ayrı yüklenip kaldırılabilir; capability izinleri açık; contract testi yeşil.
 ${common}`;
   } else {
-    body =
-`SEVİYE: View / Projection (Orta Taş) · birim: ${title}
+    body = `SEVİYE: View / Projection (Orta Taş) · birim: ${title}
 ROL: Surface geliştirici. OKU: bu sayfa (${stem}), ilgili ArcheType + Surface.
 GÖREV: "${title}" için projeksiyon/liste + endpoint grubu üret.
 KISIT: Liste uçları keyset (cursor) pagination; OFFSET yok. Yetki/tenant filtresi zorunlu. async def içinde bloklama yok.
@@ -191,7 +203,14 @@ ${common}`;
   }
   return [
     { id: nextId("h-uret"), type: "heading", level: 2, text: "Bu birimi üret — kopyalanabilir prompt" },
-    { id: nextId("uret-prompt"), type: "codeBlock", title: `${BUILD_LEVEL[g]} build prompt'u`, language: "text", code: body, copyEnabled: true },
+    {
+      id: nextId("uret-prompt"),
+      type: "codeBlock",
+      title: `${BUILD_LEVEL[g]} build prompt'u`,
+      language: "text",
+      code: body,
+      copyEnabled: true,
+    },
   ];
 }
 
