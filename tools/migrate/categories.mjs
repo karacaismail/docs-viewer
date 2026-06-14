@@ -5,7 +5,7 @@ export const CATEGORIES = [
   { id: "kernel", label: "Kernel — Layer 0", icon: "ph-cube", order: 3, section: "İNŞA SIRASI" },
   { id: "scale", label: "Scale Primitives", icon: "ph-trend-up", order: 4, section: "İNŞA SIRASI" },
   { id: "layer1", label: "Layer 1 — In-tree", icon: "ph-stack", order: 5, section: "İNŞA SIRASI" },
-  { id: "stack", label: "Stack Ürünleri", icon: "ph-package", order: 6, section: "İNŞA SIRASI" },
+  { id: "stack", label: "SaaS Products", icon: "ph-package", order: 6, section: "İNŞA SIRASI" },
   { id: "urunler", label: "Ürün Modülleri", icon: "ph-squares-four", order: 8, section: "REFERANS" },
   { id: "crosscut", label: "Çapraz-Kesen", icon: "ph-arrows-out", order: 9, section: "REFERANS" },
   { id: "dx", label: "DX & Services", icon: "ph-puzzle-piece", order: 10, section: "REFERANS" },

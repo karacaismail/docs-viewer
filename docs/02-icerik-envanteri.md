@@ -13,13 +13,13 @@ Dosya adlandırması `NN-kategori-konu.json` sözleşmesini izler. Kategori pref
 | `scale-*` | 15 | Scale primitives (outbox, saga, cache, realtime…) | Scale Primitives |
 | `cc-*` + `crosscut-*` | 17 | Çapraz-kesen konular (i18n, privacy, compliance…) | Çapraz-Kesen |
 | `sus-*` | 16 | Sürdürülebilirlik (versioning, bitemporal, conformance, AI üretim sözleşmesi…) | Sürdürülebilirlik |
-| `stack-*` | 19 | Stack ürün aileleri (commerce, accounting…) + 6 aday yatay stack (workspace, compliance, channel, builder, service, messaging) + 1 taksonomi kavram kaydı (editions) | Stack Ürünleri |
-| `edition-*` | 6 | Editions — UI estetiği ve UX akışı gelişmiş stack paketleri (people, onmuhasebe, storefront, salescrm, creator, randevu); `badge: EDITION` | Stack Ürünleri (Editions grubu) |
-| `dist-*` | 5 | Distributions — sektör paketleri (site, ngo, travel, construction, realestate); `badge: DISTRIBUTION` | Stack Ürünleri (ayrı grup) |
+| `stack-*` | 19 | Stack ürün aileleri (commerce, accounting…) + 6 aday yatay stack (workspace, compliance, channel, builder, service, messaging) + 1 taksonomi kavram kaydı (editions) | SaaS Products |
+| `edition-*` | 6 | Editions — UI estetiği ve UX akışı gelişmiş stack paketleri (people, onmuhasebe, storefront, salescrm, creator, randevu); `badge: EDITION` | SaaS Products (Editions grubu) |
+| `dist-*` | 5 | Distributions — sektör paketleri (site, ngo, travel, construction, realestate); `badge: DISTRIBUTION` | SaaS Products (ayrı grup) |
 | `fe-*` | 9 | Frontend tech-stack kararları | Frontend Tech-Stack |
 | `layer1-*` + `l1-*` | 12 | Layer 1 in-tree servisler (party, file, audit…) | Layer 1 — In-tree |
 | `kernel-*` + `k-*` | 15 (Faz 0 atomic-types dahil) | Layer 0 kernel domain'leri | Kernel — Layer 0 |
-| `landx-*` | 7 | LandX — sahibinden clone vakası (l0–l5) | Stack Ürünleri (vaka grubu; top-level değil) |
+| `landx-*` | 7 | LandX — sahibinden clone vakası (l0–l5) | SaaS Products (vaka grubu; top-level değil) |
 | `be-*` | 6 | Backend Tech-Stack — karar defteri, v1 kapsamı, destek matrisi, mail provider chain ve deploy profilleri | Backend Tech-Stack |
 | `dx-*` + `services` | 4 | Module DX, marketplace, dış servisler | DX & Services |
 | Tekil meta dosyalar | ~10 | overview, philosophy, board, atomic-types, build-sequence, anti-patterns, file-layout, product-mapping, deploy-yap | Genel Harita + Build & Deploy |
