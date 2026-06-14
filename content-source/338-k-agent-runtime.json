@@ -1,0 +1,141 @@
+{
+ "id": "k-agent-runtime",
+ "title": "Agent Runtime — MCP, Araç Kaydı, Bellek, Orkestrasyon",
+ "subtitle": "Framework'ün agent-native farklılaşma noktası: ArcheType action'larını MCP tool olarak servis eden, agent kimliği/belleği/orkestrasyonu sağlayan 11 modüllük çekirdek katman.",
+ "cluster": "kernel",
+ "order": 7,
+ "icon": "ph-robot",
+ "granularity": "kaya",
+ "state": "wip",
+ "badge": "AGENT",
+ "tags": [
+  "agent",
+  "mcp",
+  "llm",
+  "runtime",
+  "vector",
+  "orchestration"
+ ],
+ "owner": "Kernel / Agent runtime sahibi",
+ "reviewer": "Fractional senior mimar + güvenlik reviewer",
+ "maturity": "incelemede",
+ "lastVerified": null,
+ "evidence": [],
+ "prerequisites": [
+  "kernel-authz",
+  "kernel-tenancy"
+ ],
+ "nonGoals": [
+  "Tek bir LLM sağlayıcısına kilitlenmek.",
+  "Agent'ı kullanıcıyla aynı yetkiye sahip saymak (kesişim modeli zorunlu).",
+  "Bu katmanı bir ürün/stack gibi paketlemek; bu kernel-seviyesi yatay yetenektir."
+ ],
+ "failureModes": [
+  "Agent, kullanıcı yetkisini aşan bir tool çağırır (privilege escalation); capability kesişimi uygulanmamıştır.",
+  "Tool'lar side-effect/blast-radius anotasyonu olmadan expose edilir; yıkıcı işlem onaysız çalışır.",
+  "Bellek katmanı PII temizliği yapmadan uzun-dönem saklar; gizlilik ihlali."
+ ],
+ "acceptanceCriteria": [
+  "Her agent çağrısında etkin yetki = kullanıcı_yetki ∩ agent_scope ∩ session_limit; privilege escalation testi sıfır.",
+  "Her tool input/output şeması + side-effect/idempotency/blast-radius/cost-class anotasyonu taşır.",
+  "LLM sağlayıcı soyutlaması fallback + retry + circuit breaker ile çalışır; tek sağlayıcıya bağımlılık yok."
+ ],
+ "operationalImpact": "Tüm app'lerin AI/agent yeteneğinin güvenlik, maliyet ve gözlemlenebilirlik temelini belirler.",
+ "externalReviewRequired": true,
+ "related": [
+  "s-ai",
+  "kernel-authz",
+  "k-bus",
+  "sus-ai-uretim-sozlesmesi",
+  "l1-search",
+  "scale-realtime"
+ ],
+ "enrich": {
+  "info": "Diğer framework'ler (Frappe/Odoo/Drupal) tarihsel olarak insan-öncelikli. Bu katman agent'ı birinci sınıf vatandaş yapar: her ArcheType action'ı otomatik MCP tool olur, agent kullanıcıdan ayrı yetkilendirilir (kesişim modeli), bellek tenant-izolasyonlu, her LLM çağrısı maliyet+kalite ile izlenir."
+ },
+ "blocks": [
+  {
+   "type": "callout",
+   "variant": "info",
+   "label": "Bu katman ne",
+   "body": "Agent Runtime, kernel-seviyesi yatay bir yetenektir (ürün/stack değil). 11 modül; ArcheType action'larını MCP tool olarak servis eder, agent kimliği/yetki/bellek/orkestrasyonunu sağlar. AI Üretim Sözleşmesi ve `s-ai` ile birlikte okunur."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "On bir modül"
+  },
+  {
+   "type": "table",
+   "caption": "Agent Runtime modül kataloğu (A01-A11)",
+   "headers": [
+    "Modül",
+    "Sorumluluk",
+    "Anahtar yetenekler"
+   ],
+   "rows": [
+    [
+     "A01 · MCP Server Framework",
+     "Modül tool'larını MCP endpoint olarak servis et (stdio/sse/streaming-http).",
+     "Endpoint yönetimi, initialize handshake, discovery, tool invocation, streaming"
+    ],
+    [
+     "A02 · Tool Registry & Discovery",
+     "Tool'ların merkezi kataloğu + güvenlik anotasyonu.",
+     "input/output şema, side-effect bayrakları (read_only/idempotent/destructive/requires_confirmation/blast_radius/cost_class), sürümleme, semantik arama"
+    ],
+    [
+     "A03 · Agent Identity & Capability Scopes",
+     "Agent kimliği + yetki kesişimi: kullanıcı_yetki ∩ agent_scope ∩ session_limit.",
+     "capability pack, agent-user binding, session limit/throttle, tool execution sandbox, ihlal/incident"
+    ],
+    [
+     "A04 · Agent Memory Layer",
+     "Kısa/uzun/epizodik/prosedürel bellek; hibrit retrieval.",
+     "short/long/episodic/procedural memory, PII temizliği (memory hygiene)"
+    ],
+    [
+     "A05 · Vector Store & Embedding",
+     "pgvector tabanlı embedding + hibrit arama. Eşdeğer: l1-search.",
+     "embedding model registry, hybrid search (vector+BM25+filter), reindex (dual-write/blue-green), HNSW istatistik"
+    ],
+    [
+     "A06 · Prompt Library & Versioning",
+     "Prompt'u kod gibi versiyonla: A/B, eval, drift, rollout.",
+     "prompt tanımı, A/B test, eval suite, rollout/rollback, drift detection"
+    ],
+    [
+     "A07 · LLM Provider Abstraction",
+     "Sağlayıcıları tek soyutlamada birleştir (Anthropic/OpenAI/Azure/Bedrock/Ollama).",
+     "provider registry, model catalog, routing/fallback, retry/circuit breaker, streaming adapter"
+    ],
+    [
+     "A08 · LLM Observability & Cost",
+     "Her çağrı: token, latency, maliyet, trace, hallucination skoru.",
+     "LLM trace/span, cost attribution (tenant/agent/feature), quality signals, replay/debug"
+    ],
+    [
+     "A09 · Agent Orchestration & Workflow",
+     "Çok-adımlı agent görevleri: plan-execute-reflect, checkpoint/resume, human-in-the-loop.",
+     "workflow (react/plan_execute/multi_agent/router/dag), execution run, checkpoint&resume, HITL, multi-agent"
+    ],
+    [
+     "A10 · Streaming & SSE Primitives",
+     "Token/araç/adım stream'leri için birleşik SSE/WebSocket.",
+     "stream channel, reconnect/resume, backpressure/buffering, transport (SSE/WS)"
+    ],
+    [
+     "A11 · Conversation & Session",
+     "Konuşma geçmişi, multi-turn context, threading, branching/forking.",
+     "conversation, messages/threading, context window compaction, paylaşım"
+    ]
+   ]
+  },
+  {
+   "type": "callout",
+   "variant": "tip",
+   "label": "Agent-first ayrım",
+   "body": "A02 her ArcheType action'ını otomatik MCP tool yapar; A03 agent'ı kullanıcıdan ayrı yetkilendirir (kesişim); A04 tenant-izolasyonlu bellek; A05 her save'de otomatik embedding; A06 prompt'u kod gibi versiyonlar; A07 cost-optimal LLM routing; A08 her çağrıyı maliyet+kalite ile izler; A09 durable agent workflow (DBOS/Temporal deseni). Bu yetenekler insan-öncelikli framework'lerde yoktur."
+  }
+ ]
+}

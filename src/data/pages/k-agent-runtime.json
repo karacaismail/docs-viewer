@@ -1,0 +1,357 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-k-agent-runtime",
+  "sourceId": "k-agent-runtime",
+  "slug": "kernel/k-agent-runtime",
+  "title": "Agent Runtime — MCP, Araç Kaydı, Bellek, Orkestrasyon",
+  "summary": "Framework'ün agent-native farklılaşma noktası: ArcheType action'larını MCP tool olarak servis eden, agent kimliği/belleği/orkestrasyonu sağlayan 11 modüllük çekirdek katman.",
+  "categoryId": "kernel",
+  "tags": [
+   "agent",
+   "mcp",
+   "llm",
+   "runtime",
+   "vector",
+   "orchestration"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "wip",
+   "badge": "AGENT"
+  },
+  "owner": "Kernel / Agent runtime sahibi",
+  "reviewer": "Fractional senior mimar + güvenlik reviewer",
+  "maturity": "incelemede",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": [
+   "kernel-authz",
+   "kernel-tenancy"
+  ],
+  "nonGoals": [
+   "Tek bir LLM sağlayıcısına kilitlenmek.",
+   "Agent'ı kullanıcıyla aynı yetkiye sahip saymak (kesişim modeli zorunlu).",
+   "Bu katmanı bir ürün/stack gibi paketlemek; bu kernel-seviyesi yatay yetenektir."
+  ],
+  "failureModes": [
+   "Agent, kullanıcı yetkisini aşan bir tool çağırır (privilege escalation); capability kesişimi uygulanmamıştır.",
+   "Tool'lar side-effect/blast-radius anotasyonu olmadan expose edilir; yıkıcı işlem onaysız çalışır.",
+   "Bellek katmanı PII temizliği yapmadan uzun-dönem saklar; gizlilik ihlali."
+  ],
+  "acceptanceCriteria": [
+   "Her agent çağrısında etkin yetki = kullanıcı_yetki ∩ agent_scope ∩ session_limit; privilege escalation testi sıfır.",
+   "Her tool input/output şeması + side-effect/idempotency/blast-radius/cost-class anotasyonu taşır.",
+   "LLM sağlayıcı soyutlaması fallback + retry + circuit breaker ile çalışır; tek sağlayıcıya bağımlılık yok."
+  ],
+  "operationalImpact": "Tüm app'lerin AI/agent yeteneğinin güvenlik, maliyet ve gözlemlenebilirlik temelini belirler.",
+  "externalReviewRequired": true,
+  "related": [
+   "page-stack-ai",
+   "page-kernel-authz",
+   "page-kernel-bus",
+   "page-sus-ai-uretim-sozlesmesi",
+   "page-layer1-search",
+   "page-scale-realtime"
+  ],
+  "blocks": [
+   {
+    "id": "block-k-agent-runtime-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Diğer framework'ler (Frappe/Odoo/Drupal) tarihsel olarak insan-öncelikli. Bu katman agent'ı birinci sınıf vatandaş yapar: her ArcheType action'ı otomatik MCP tool olur, agent kullanıcıdan ayrı yetkilendirilir (kesişim modeli), bellek tenant-izolasyonlu, her LLM çağrısı maliyet+kalite ile izlenir."
+     }
+    ]
+   },
+   {
+    "id": "block-k-agent-runtime-co",
+    "type": "callout",
+    "variant": "info",
+    "title": "Bu katman ne",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Agent Runtime, kernel-seviyesi yatay bir yetenektir (ürün/stack değil). 11 modül; ArcheType action'larını MCP tool olarak servis eder, agent kimliği/yetki/bellek/orkestrasyonunu sağlar. AI Üretim Sözleşmesi ve "
+     },
+     {
+      "type": "code",
+      "text": "s-ai"
+     },
+     {
+      "type": "text",
+      "text": " ile birlikte okunur."
+     }
+    ]
+   },
+   {
+    "id": "block-k-agent-runtime-h-on-bir-modul",
+    "type": "heading",
+    "level": 2,
+    "text": "On bir modül"
+   },
+   {
+    "id": "block-k-agent-runtime-table",
+    "type": "table",
+    "caption": "Agent Runtime modül kataloğu (A01-A11)",
+    "columns": [
+     "Modül",
+     "Sorumluluk",
+     "Anahtar yetenekler"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "A01 · MCP Server Framework"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Modül tool'larını MCP endpoint olarak servis et (stdio/sse/streaming-http)."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Endpoint yönetimi, initialize handshake, discovery, tool invocation, streaming"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A02 · Tool Registry & Discovery"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tool'ların merkezi kataloğu + güvenlik anotasyonu."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "input/output şema, side-effect bayrakları (read_only/idempotent/destructive/requires_confirmation/blast_radius/cost_class), sürümleme, semantik arama"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A03 · Agent Identity & Capability Scopes"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Agent kimliği + yetki kesişimi: kullanıcı_yetki ∩ agent_scope ∩ session_limit."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "capability pack, agent-user binding, session limit/throttle, tool execution sandbox, ihlal/incident"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A04 · Agent Memory Layer"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kısa/uzun/epizodik/prosedürel bellek; hibrit retrieval."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "short/long/episodic/procedural memory, PII temizliği (memory hygiene)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A05 · Vector Store & Embedding"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "pgvector tabanlı embedding + hibrit arama. Eşdeğer: l1-search."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "embedding model registry, hybrid search (vector+BM25+filter), reindex (dual-write/blue-green), HNSW istatistik"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A06 · Prompt Library & Versioning"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Prompt'u kod gibi versiyonla: A/B, eval, drift, rollout."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "prompt tanımı, A/B test, eval suite, rollout/rollback, drift detection"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A07 · LLM Provider Abstraction"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sağlayıcıları tek soyutlamada birleştir (Anthropic/OpenAI/Azure/Bedrock/Ollama)."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "provider registry, model catalog, routing/fallback, retry/circuit breaker, streaming adapter"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A08 · LLM Observability & Cost"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Her çağrı: token, latency, maliyet, trace, hallucination skoru."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "LLM trace/span, cost attribution (tenant/agent/feature), quality signals, replay/debug"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A09 · Agent Orchestration & Workflow"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Çok-adımlı agent görevleri: plan-execute-reflect, checkpoint/resume, human-in-the-loop."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "workflow (react/plan_execute/multi_agent/router/dag), execution run, checkpoint&resume, HITL, multi-agent"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A10 · Streaming & SSE Primitives"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Token/araç/adım stream'leri için birleşik SSE/WebSocket."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "stream channel, reconnect/resume, backpressure/buffering, transport (SSE/WS)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A11 · Conversation & Session"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Konuşma geçmişi, multi-turn context, threading, branching/forking."
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "conversation, messages/threading, context window compaction, paylaşım"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-k-agent-runtime-co-2",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Agent-first ayrım",
+    "segments": [
+     {
+      "type": "text",
+      "text": "A02 her ArcheType action'ını otomatik MCP tool yapar; A03 agent'ı kullanıcıdan ayrı yetkilendirir (kesişim); A04 tenant-izolasyonlu bellek; A05 her save'de otomatik embedding; A06 prompt'u kod gibi versiyonlar; A07 cost-optimal LLM routing; A08 her çağrıyı maliyet+kalite ile izler; A09 durable agent workflow (DBOS/Temporal deseni). Bu yetenekler insan-öncelikli framework'lerde yoktur."
+     }
+    ]
+   },
+   {
+    "id": "block-k-agent-runtime-h-uret",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu birimi üret — kopyalanabilir prompt"
+   },
+   {
+    "id": "block-k-agent-runtime-uret-prompt",
+    "type": "codeBlock",
+    "title": "Module (Kaya) build prompt'u",
+    "language": "text",
+    "code": "SEVİYE: Module / Domain (Kaya) · birim: Agent Runtime — MCP, Araç Kaydı, Bellek, Orkestrasyon\nROL: Domain mimarı. OKU: bu sayfa (k-agent-runtime), ilgili app plan ağacı, core sözleşmeleri.\nGÖREV: \"Agent Runtime — MCP, Araç Kaydı, Bellek, Orkestrasyon\" module sınırını, sahip olduğu ArcheType'ları ve Contract (API kapısı) tanımını çıkar.\nKISIT: Başka module'ün tablosuna dokunma; Contract üzerinden konuş. Capability manifesti deny-by-default.\nÇIKTI: testler önce → ArcheType listesi + Contract + manifest + Alembic branch (downgrade yolu).\nKABUL (DoD): module ayrı yüklenip kaldırılabilir; capability izinleri açık; contract testi yeşil.\nÖNCE faz prompt'larını uygula (Prompt 7 Gereksinim, Prompt 8 Tasarım), sonra İnşa/Doğrulama. be-sdk sırası: testler ÖNCE (kırmızı) → yaml taslaklar → uygulama. Küçük PR + kanıt. Komşuluk kuralını ihlal etme.",
+    "copyEnabled": true
+   }
+  ]
+ }
+}

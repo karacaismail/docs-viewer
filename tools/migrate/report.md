@@ -1,7 +1,7 @@
 # Migration Mutabakat Raporu
 
-Kaynak dosya: 279 (+1 kapsam dışı) | Üretilen page: 279 | Atlanan: 0
-Glossary kaydı: 729 | Search document: 4021
+Kaynak dosya: 280 (+1 kapsam dışı) | Üretilen page: 280 | Atlanan: 0
+Glossary kaydı: 729 | Search document: 4026
 
 ## Kategori dağılımı
 - backend: 6
@@ -12,7 +12,7 @@ Glossary kaydı: 729 | Search document: 4021
 - frontend: 9
 - genel: 2
 - kararlar: 21
-- kernel: 15
+- kernel: 16
 - layer1: 12
 - scale: 15
 - stack: 37
@@ -23,7 +23,7 @@ Glossary kaydı: 729 | Search document: 4021
 
 ## Glossary zenginleştirme (12A Parti 1 — Eğitim Yolu)
 Zenginleştirilen kayıt: 554 (sayfa-kapsamlı: 378) | Overlay'de karşılığı olmayan label: 7
-Segment bağlama (B akışı, tüm kategoriler): 470 bağlı terim | bağlı page: 177/279 | egitim: 34/35
+Segment bağlama (B akışı, tüm kategoriler): 470 bağlı terim | bağlı page: 177/280 | egitim: 34/35
 - eşleşmedi: Yetkinlik Kapısı
 - eşleşmedi: Boş sayfa sendromu
 - eşleşmedi: Vibecoding Waterfall

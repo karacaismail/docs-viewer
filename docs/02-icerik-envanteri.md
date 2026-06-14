@@ -2,7 +2,7 @@
 
 Bu doküman, `mimari/` klasöründeki mevcut varlıkların sayımını yapar ve her grubun yeni doc viewer'daki rolünü tanımlar. Migration yönergesi (`07-uretim-02-data-migration.md`) bu envanteri girdi kabul eder.
 
-## 1. Cluster JSON Dosyaları (280 dosya — birincil içerik kaynağı; 201 özgün + 26 aday + 52 karar/kavram + 1 kapsam dışı)
+## 1. Cluster JSON Dosyaları (281 dosya — birincil içerik kaynağı; 202 özgün + 26 aday + 52 karar/kavram + 1 kapsam dışı)
 
 Dosya adlandırması `NN-kategori-konu.json` sözleşmesini izler. Kategori prefix'leri ve sayıları:
 
