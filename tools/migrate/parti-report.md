@@ -517,7 +517,7 @@
 - DBOS (page-sus-durable) · analoji tohumu var
 - Temporal (page-sus-durable) · analoji tohumu var
 
-## Parti 5 (102 kayıt)
+## Parti 5 (107 kayıt)
 - Cluster (page-board-rebuilt) · **ince why** · analoji tohumu var
 - Streaming Export (page-l1-export) · analoji tohumu var
 - Presigned URL (page-l1-export) · analoji tohumu var
@@ -554,6 +554,11 @@
 - Approval chain (page-layer1-workflow) · analoji tohumu var
 - ECA DSL (page-layer1-workflow) · analoji tohumu var
 - Channel-agnostic (page-layer1-notification) · analoji tohumu var
+- Stack ürünü (page-dist-education) · **ince why** · analoji tohumu var
+- Stack ürünü (page-dist-clinic) · **ince why** · analoji tohumu var
+- CiviCRM (page-dist-membership) · analoji tohumu var
+- Stack ürünü (page-dist-restaurant) · **ince why** · analoji tohumu var
+- Clio (page-dist-legal) · analoji tohumu var
 - WORM (page-layer1-audit) · analoji tohumu var
 - Forensic (page-layer1-audit) · analoji tohumu var
 - Blast radius (page-layer1-audit) · analoji tohumu var
@@ -621,7 +626,7 @@
 - API Key (page-dx-api-gateway) · analoji tohumu var
 - Developer Portal (page-dx-api-gateway) · analoji tohumu var
 
-## Parti 6 (102 kayıt)
+## Parti 6 (97 kayıt)
 - Salesforce (page-s-crm) · analoji tohumu var
 - AI özellik (page-s-crm) · **ince why** · analoji tohumu var
 - Odoo Sales (page-s-sales) · analoji tohumu var
@@ -713,12 +718,7 @@
 - Stack ürünü (page-s-i18n) · **ince why** · analoji tohumu var
 - AppFolio (page-s-property) · analoji tohumu var
 - TR Lokalizasyon (page-s-property) · analoji tohumu var
-- Stack ürünü (page-s-education) · **ince why** · analoji tohumu var
-- Stack ürünü (page-s-clinic) · **ince why** · analoji tohumu var
-- CiviCRM (page-s-membership) · analoji tohumu var
-- Stack ürünü (page-s-restaurant) · **ince why** · analoji tohumu var
 - TR Lokalizasyon (page-s-incentive) · analoji tohumu var
-- Clio (page-s-legaltech) · analoji tohumu var
 - Subscription (page-s-billing) · **ince why** · analoji tohumu var
 - Trial (page-s-billing) · **ince why** · analoji tohumu var
 - Dunning (page-s-billing) · **ince why** · analoji tohumu var
@@ -831,9 +831,9 @@
 - Stack ürünü (page-s-audit) · **ince why** · analoji tohumu var
 - Stack ürünü (page-s-i18n) · **ince why** · analoji tohumu var
 - TR Lokalizasyon (page-s-property) · analoji tohumu var
-- Stack ürünü (page-s-education) · **ince why** · analoji tohumu var
-- Stack ürünü (page-s-clinic) · **ince why** · analoji tohumu var
-- Stack ürünü (page-s-restaurant) · **ince why** · analoji tohumu var
+- Stack ürünü (page-dist-education) · **ince why** · analoji tohumu var
+- Stack ürünü (page-dist-clinic) · **ince why** · analoji tohumu var
+- Stack ürünü (page-dist-restaurant) · **ince why** · analoji tohumu var
 - TR Lokalizasyon (page-s-incentive) · analoji tohumu var
 - BM25 (page-layer1-search) · analoji tohumu var
 - GraphQL (page-layer1-misc) · analoji tohumu var

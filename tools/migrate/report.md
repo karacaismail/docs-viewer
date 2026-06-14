@@ -15,9 +15,9 @@ Glossary kaydı: 718 | Search document: 3996
 - kernel: 16
 - layer1: 12
 - scale: 15
-- stack: 34
+- stack: 39
 - sus: 17
-- urunler: 86
+- urunler: 81
 
 ## Kayıp görsel varlıklar (0) — 07B §1 fallback aktif
 

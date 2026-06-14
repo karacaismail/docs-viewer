@@ -125,7 +125,6 @@ export const PRODUCT_GROUP_MAP = {
   community: "content",
   event: "content",
   survey: "content",
-  membership: "content",
   rag: "data",
   bi: "data",
   etl: "data",
@@ -148,9 +147,5 @@ export const PRODUCT_GROUP_MAP = {
   kvkk: "platform",
   iot: "data",
   property: "vertical",
-  education: "vertical",
-  clinic: "vertical",
-  restaurant: "vertical",
   incentive: "vertical",
-  legaltech: "vertical",
 };
