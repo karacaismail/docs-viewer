@@ -40,7 +40,12 @@
   "related": [
    "page-edu-u11-hata-yonetimi",
    "page-crosscut-observability",
-   "page-sus-conformance"
+   "page-sus-conformance",
+   "page-sus-ai-uretim-sozlesmesi",
+   "page-sus-llm-hata-katalogu",
+   "page-build-uzman-denetimi",
+   "page-fe-test-tooling",
+   "page-edu-prompt-kutuphanesi"
   ],
   "blocks": [
    {
@@ -291,13 +296,699 @@
     ]
    },
    {
+    "id": "block-edu-u16-test-h-on-test-ilkesi-ai-uretiminde",
+    "type": "heading",
+    "level": 2,
+    "text": "On test ilkesi (AI üretiminde)"
+   },
+   {
+    "id": "block-edu-u16-test-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu ilkeler AI Üretim Sözleşmesi'nin (Üreten Onaylayamaz) test tarafıdır: insan ürün sözünü yazar, AI taslak üretir, testler görünür davranışı doğrular, CI gerçeği belirler."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u16-test-chk",
+    "type": "checklist",
+    "title": "Her özellikten önce/sonra kontrol",
+    "storageKey": "test-on-ilke",
+    "items": [
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Kabul kriteri olmadan yazdırma — Kabul kriteri metni yoksa AI'ya ekran veya test yazdırma."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Yolculuk geçmeden 'tamam' deme — Kullanıcı yolculuğu (E2E) geçmeden yeni özelliği tamam sayma."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Kırmızı CI varken kabul etme — CI kırmızıyken AI çıktısını doğru kabul etme."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Snapshot'ı el ile onayla — Görsel snapshot güncellemesi otomatik değil, incelemeli kabul edilir."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "GraphQL gün-1 koruması — Depth guard + auth guard açmadan üretime çıkma."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "PWA = davranış — PWA'yı skor değil davranış olarak test et."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "320px / 1rem taban — Mobilde ana akışı 320 CSS piksel ve 1rem tabanı ile tasarla."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Sonuca bağla, iç ayrıntıya değil — Testi kullanıcının gördüğü sonuca bağla."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Üretilen-uygulamayı ayrı test et — Platform yeşil olabilir ama ürettiği uygulama bozuk olabilir."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "AI kendi ödevini notlayamaz — Doğrulama deterministik ve üretici-modelden bağımsız olmalı."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u16-test-co-3",
+    "type": "callout",
+    "variant": "info",
+    "title": "Determinizm altyapısı — her şeyden önce",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Diğer tüm katmanlar bunun üstüne kurulur: gerçek Postgres (testcontainers; sabit imaj etiketi, asla 'latest' değil), Hypothesis settings(derandomize=True), freezegun ile donuk saat (datetime.now() serbest değil), PYTHONHASHSEED=0 + sabit seed, her test transaction içinde çalışıp rollback. Bir test rastgele geçip rastgele kalıyorsa o test yoktur."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u16-test-h-tur-katalogu-mvp-den-enterprise-a",
+    "type": "heading",
+    "level": 2,
+    "text": "Tür kataloğu — MVP'den enterprise'a"
+   },
+   {
+    "id": "block-edu-u16-test-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Mevcut MVP yaklaşımımız (yukarıdaki piramit) sağlam taban; aşağıdaki katalog onu enterprise'a taşır. 'Bizde' sütunu: VAR = kapı/araç mevcut, kısmi = var ama derinleşmeli, EKLE = entegre edilecek."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u16-test-table-2",
+    "type": "table",
+    "caption": "Test türleri × katman × bizdeki durum",
+    "columns": [
+     "Tür",
+     "Katman",
+     "Kritik",
+     "Araç (seçim)",
+     "Bizde"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Determinizm altyapısı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "altyapı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "kritik"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "testcontainers + freezegun + Hypothesis derandomize"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "EKLE"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kabul kriteri (BDD)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "frontend"
+       }
+      ],
+      [],
+      [
+       {
+        "type": "text",
+        "text": "pytest-bdd"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "kısmi"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kullanıcı yolculuğu (E2E)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "frontend"
+       }
+      ],
+      [],
+      [
+       {
+        "type": "text",
+        "text": "Playwright"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "VAR"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Bileşen testleri"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "frontend"
+       }
+      ],
+      [],
+      [
+       {
+        "type": "text",
+        "text": "Vitest + RTL"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "VAR"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "API entegrasyon"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "backend"
+       }
+      ],
+      [],
+      [
+       {
+        "type": "text",
+        "text": "httpx.AsyncClient + pytest-asyncio"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "kısmi"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Property-based / generative"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "backend"
+       }
+      ],
+      [],
+      [
+       {
+        "type": "text",
+        "text": "Hypothesis / fast-check"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "EKLE"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Şema / API fuzzing"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "graphql"
+       }
+      ],
+      [],
+      [
+       {
+        "type": "text",
+        "text": "Schemathesis"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "VAR"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Codegen golden / snapshot"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "backend"
+       }
+      ],
+      [],
+      [
+       {
+        "type": "text",
+        "text": "Syrupy / inline-snapshot"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "kısmi (docSync golden)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Migration / veri bütünlüğü"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "db"
+       }
+      ],
+      [],
+      [
+       {
+        "type": "text",
+        "text": "pytest-alembic / alembic-verify"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "EKLE"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Çok-kiracılı izolasyon + BOLA"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "güvenlik"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "kritik"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "RLS + resolver + property-based"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "kısmi (RLS var)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "GraphQL'e özgü güvenlik"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "graphql"
+       }
+      ],
+      [],
+      [
+       {
+        "type": "text",
+        "text": "graphql-cop / clairvoyance / InQL + depth/auth guard"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "EKLE"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Görsel regresyon"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "frontend"
+       }
+      ],
+      [],
+      [
+       {
+        "type": "text",
+        "text": "Playwright toHaveScreenshot / Chromatic"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "VAR"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Erişilebilirlik"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "frontend"
+       }
+      ],
+      [],
+      [
+       {
+        "type": "text",
+        "text": "@axe-core/playwright"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "VAR"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kontrat testi (şema + tüketici)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "graphql"
+       }
+      ],
+      [],
+      [
+       {
+        "type": "text",
+        "text": "GraphQL Inspector/Hive + Pact (JS)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "EKLE"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Üretilen-uygulama altın yolu"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "altyapı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "kritik"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "golden fixtures (model→kod/şema/migration→çalışan GraphQL)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "EKLE"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Mutation testing"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ai-doğrulama"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "kritik"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "mutmut / cosmic-ray / Stryker"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "EKLE"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Yük / performans"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "backend"
+       }
+      ],
+      [],
+      [
+       {
+        "type": "text",
+        "text": "k6 / Locust"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "kısmi"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "PWA testleri"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "pwa"
+       }
+      ],
+      [],
+      [
+       {
+        "type": "text",
+        "text": "Lighthouse CI + Vite PWA aracı (davranış)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "EKLE"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u16-test-co-4",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Üretilen-uygulama altın yolu (en kritik EKLE)",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Meta-framework'ün en sinsi hatası: 'platform yeşil, ürettiği uygulama bozuk.' Tek panzehir: motoru ve çıktıyı AYRI test et. Model tanımı → kod/şema/migration → çalışan GraphQL zincirini uçtan uca koşan en az 3 temsilî altın uygulama (çok-kiracılı, dosya-yüklemeli, rol-tabanlı). Bu katman yeşil olmadan release yok. Bizdeki governanceHonesty 'sahte yeşil' kapısının üretim-tarafı karşılığıdır."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u16-test-co-5",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Testin testi: mutation testing (EKLE)",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI kendi testini yazıp kendi notluyor (self-preference bias). Bağımsız hakem: koda kasıtlı mutant enjekte et; testler yakalayamazsa testler zayıftır. mutmut/Stryker yalnız çekirdek modüllerde (codegen, izin, validasyon), periyodik (haftalık), hedef skor %80+. Sağ kalan mutantlar 'bu testleri güçlendir' diye AI'a beslenir. Yüksek coverage'in yalancı güvenini ifşa eder."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u16-test-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Karar noktaları (alternatifli): determinizm = testcontainers (SQLite taklit değil); migration = Alembic (Prisma Python arşiv); property = Hypothesis; E2E = Playwright (Cypress değil); mutation = mutmut/Stryker; yük = k6/Locust; orkestrasyon = n8n (deterministik) + openclaw (karar). Detay: AI Üretim Sözleşmesi, LLM Hata Kataloğu, Doğrulama fazı promptu (Prompt 9)."
+     }
+    ]
+   },
+   {
     "id": "block-edu-u16-test-h-derinlemesine",
     "type": "heading",
     "level": 2,
     "text": "Derinlemesine"
    },
    {
-    "id": "block-edu-u16-test-p-2",
+    "id": "block-edu-u16-test-p-5",
     "type": "paragraph",
     "segments": [
      {
@@ -313,7 +1004,7 @@
     "code": "    /\\\n   /  \\   e2e   (%10) — yavaş, gerçek tarayıcı/cihaz\n  /----\\\n /      \\  integration (%20) — gerçek DB, gerçek HTTP\n/--------\\\n           unit (%70) — mock'lı, milisaniye"
    },
    {
-    "id": "block-edu-u16-test-p-3",
+    "id": "block-edu-u16-test-p-6",
     "type": "paragraph",
     "segments": [
      {
@@ -327,7 +1018,7 @@
     ]
    },
    {
-    "id": "block-edu-u16-test-p-4",
+    "id": "block-edu-u16-test-p-7",
     "type": "paragraph",
     "segments": [
      {
@@ -341,7 +1032,7 @@
     ]
    },
    {
-    "id": "block-edu-u16-test-p-5",
+    "id": "block-edu-u16-test-p-8",
     "type": "paragraph",
     "segments": [
      {
@@ -355,7 +1046,7 @@
     ]
    },
    {
-    "id": "block-edu-u16-test-p-6",
+    "id": "block-edu-u16-test-p-9",
     "type": "paragraph",
     "segments": [
      {
@@ -369,7 +1060,7 @@
     ]
    },
    {
-    "id": "block-edu-u16-test-p-7",
+    "id": "block-edu-u16-test-p-10",
     "type": "paragraph",
     "segments": [
      {
@@ -422,7 +1113,7 @@
     ]
    },
    {
-    "id": "block-edu-u16-test-p-8",
+    "id": "block-edu-u16-test-p-11",
     "type": "paragraph",
     "segments": [
      {
@@ -436,7 +1127,7 @@
     ]
    },
    {
-    "id": "block-edu-u16-test-p-9",
+    "id": "block-edu-u16-test-p-12",
     "type": "paragraph",
     "segments": [
      {

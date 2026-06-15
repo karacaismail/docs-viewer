@@ -1,155 +1,386 @@
 {
-  "id": "edu-u16",
-  "title": "Test Piramidi — kodun hata yapmadığını kanıtlamak",
-  "subtitle": "Üst seviye: az ve yavaş e2e. Orta: integration. Tabandaki çoğunluk: unit. Tersi piramit = çöker.",
-  "cluster": "edu",
-  "order": 19,
-  "icon": "ph-test-tube",
-  "granularity": "orta-tas",
-  "state": "wip",
-  "tags": [
-    "education",
-    "testing",
-    "pyramid",
-    "unit",
-    "integration",
-    "e2e"
+ "id": "edu-u16",
+ "title": "Test Piramidi — kodun hata yapmadığını kanıtlamak",
+ "subtitle": "Üst seviye: az ve yavaş e2e. Orta: integration. Tabandaki çoğunluk: unit. Tersi piramit = çöker.",
+ "cluster": "edu",
+ "order": 19,
+ "icon": "ph-test-tube",
+ "granularity": "orta-tas",
+ "state": "wip",
+ "tags": [
+  "education",
+  "testing",
+  "pyramid",
+  "unit",
+  "integration",
+  "e2e"
+ ],
+ "enrich": {
+  "info": "Unit (en çok, en hızlı), integration (orta), e2e (az, en yavaş). Mock vs stub farkı. Snapshot test ne işe yarar.",
+  "detail": "**Test piramidi (Mike Cohn, 2009):**\n\n```\n    /\\\n   /  \\   e2e   (%10) — yavaş, gerçek tarayıcı/cihaz\n  /----\\\n /      \\  integration (%20) — gerçek DB, gerçek HTTP\n/--------\\\n           unit (%70) — mock'lı, milisaniye\n```\n\n**Neden ters piramit kötü?**\nE2e çok = tek bug → 100 test fail → kaynak yanlış yere bakar. Yavaş suite = developer test çalıştırmaz.\n\n**Unit test = saf fonksiyon testi**: Database, network, file system YOK. Vitest/Jest ile <100ms.\n\n**Integration test = parça birleşim**: Gerçek DB (test database), gerçek HTTP server. Saniye seviyesi.\n\n**E2e test = kullanıcı yolu**: Playwright ile gerçek tarayıcı, gerçek form doldurma. Dakika seviyesi.\n\n**Mock vs Stub:**\n- **Stub**: Sahte cevap döner (`stripe.charge` 'success' döner).\n- **Mock**: Çağrı yapıldığını da doğrular (`stripe.charge` 1 kez 100 TL ile çağrıldı mı?).\n\n**Snapshot test**: 'Bu output bir kez doğru kaydedildi; bir daha değişmemeli' garantisi.\n\n**Coverage hedefleri (60+ junior altı için makul):**\n- Unit: %80\n- Integration: kritik flow %100\n- E2e: 5-10 happy path",
+  "terms": [
+   {
+    "term": "Unit Test",
+    "abbrev_tr": "Birim testi",
+    "meaning": "Tek fonksiyonun doğru çalıştığını test eder. Bağımlılıklar mock'lanır.",
+    "why": "En hızlı, en çok yazılır; bug erken yakalanır."
+   },
+   {
+    "term": "Integration Test",
+    "abbrev_tr": "Bütünleşme testi",
+    "meaning": "Birden fazla parçanın birlikte çalışmasını test eder (örn. API + DB).",
+    "why": "Tek tek doğru, beraber yanlış olabilir."
+   },
+   {
+    "term": "E2E",
+    "abbrev_of": "End-to-End",
+    "abbrev_tr": "Uçtan uca",
+    "meaning": "Kullanıcı bakış açısıyla tam akışı test eder (Playwright).",
+    "why": "Gerçek kullanıcı deneyimini kanıtlar; ama yavaş ve kırılgan."
+   },
+   {
+    "term": "Mock",
+    "abbrev_tr": "Sahte nesne",
+    "meaning": "Test sırasında gerçek bağımlılığı yerine geçen sahte nesne.",
+    "why": "Gerçek banka API'sini test'te çağırma; çift faturalama riski yok."
+   },
+   {
+    "term": "Snapshot",
+    "abbrev_tr": "Anlık görüntü",
+    "meaning": "Output'un ilk çalışan halini kaydet; sonraki çalışmalarda farklı çıkarsa fail.",
+    "why": "Tasarım/output değişimini görünür kılar."
+   }
   ],
-  "enrich": {
-    "info": "Unit (en çok, en hızlı), integration (orta), e2e (az, en yavaş). Mock vs stub farkı. Snapshot test ne işe yarar.",
-    "detail": "**Test piramidi (Mike Cohn, 2009):**\n\n```\n    /\\\n   /  \\   e2e   (%10) — yavaş, gerçek tarayıcı/cihaz\n  /----\\\n /      \\  integration (%20) — gerçek DB, gerçek HTTP\n/--------\\\n           unit (%70) — mock'lı, milisaniye\n```\n\n**Neden ters piramit kötü?**\nE2e çok = tek bug → 100 test fail → kaynak yanlış yere bakar. Yavaş suite = developer test çalıştırmaz.\n\n**Unit test = saf fonksiyon testi**: Database, network, file system YOK. Vitest/Jest ile <100ms.\n\n**Integration test = parça birleşim**: Gerçek DB (test database), gerçek HTTP server. Saniye seviyesi.\n\n**E2e test = kullanıcı yolu**: Playwright ile gerçek tarayıcı, gerçek form doldurma. Dakika seviyesi.\n\n**Mock vs Stub:**\n- **Stub**: Sahte cevap döner (`stripe.charge` 'success' döner).\n- **Mock**: Çağrı yapıldığını da doğrular (`stripe.charge` 1 kez 100 TL ile çağrıldı mı?).\n\n**Snapshot test**: 'Bu output bir kez doğru kaydedildi; bir daha değişmemeli' garantisi.\n\n**Coverage hedefleri (60+ junior altı için makul):**\n- Unit: %80\n- Integration: kritik flow %100\n- E2e: 5-10 happy path",
-    "terms": [
-      {
-        "term": "Unit Test",
-        "abbrev_tr": "Birim testi",
-        "meaning": "Tek fonksiyonun doğru çalıştığını test eder. Bağımlılıklar mock'lanır.",
-        "why": "En hızlı, en çok yazılır; bug erken yakalanır."
-      },
-      {
-        "term": "Integration Test",
-        "abbrev_tr": "Bütünleşme testi",
-        "meaning": "Birden fazla parçanın birlikte çalışmasını test eder (örn. API + DB).",
-        "why": "Tek tek doğru, beraber yanlış olabilir."
-      },
-      {
-        "term": "E2E",
-        "abbrev_of": "End-to-End",
-        "abbrev_tr": "Uçtan uca",
-        "meaning": "Kullanıcı bakış açısıyla tam akışı test eder (Playwright).",
-        "why": "Gerçek kullanıcı deneyimini kanıtlar; ama yavaş ve kırılgan."
-      },
-      {
-        "term": "Mock",
-        "abbrev_tr": "Sahte nesne",
-        "meaning": "Test sırasında gerçek bağımlılığı yerine geçen sahte nesne.",
-        "why": "Gerçek banka API'sini test'te çağırma; çift faturalama riski yok."
-      },
-      {
-        "term": "Snapshot",
-        "abbrev_tr": "Anlık görüntü",
-        "meaning": "Output'un ilk çalışan halini kaydet; sonraki çalışmalarda farklı çıkarsa fail.",
-        "why": "Tasarım/output değişimini görünür kılar."
-      }
-    ],
-    "stories": [
-      {
-        "persona": "Aşçı Hatice Teyze (62) — yeni baklava reçetesi",
-        "context": "Yeni reçetede 5 adım var: hamur, şerbet, ceviz, fırın, soğutma. Her adımı tek tek tadıyor (unit test). Sonra hep birlikte deniyor (integration). Sonra eşi+çocuklar yiyiyor (e2e).",
-        "outcome": "Sadece sonu denese tek tat. Adım adım tat olmasa hata nerede bilmez. Üç katman birlikte."
-      },
-      {
-        "persona": "Berber Mehmet Usta (60) — yeni saç sistemi",
-        "context": "Yeni saç tekniği öğrendi. Önce kuklası üzerinde denedi (unit). Sonra çırakta denedi (integration). Sonra normal müşteride (e2e).",
-        "outcome": "Direkt müşteride denese hata felaketti. Aşamalı test = güvenli ilerleyiş."
-      }
-    ],
-    "lesson": {
-      "ne": "Yazılımın doğru çalıştığını kanıtlayan otomatik kontrol mekanizması. 3 katman: küçük birim (unit) → birleşim (integration) → kullanıcı yolu (e2e).",
-      "nicin": "Test yoksa her değişiklik 'çalışıyor mu?' belirsizliği. Test varsa 5 saniyede 1000 senaryo kontrol edilir.",
-      "nasil": "1) Her yeni fonksiyon için unit test. 2) Kritik API endpoint'i için integration test. 3) Happy path için e2e. 4) Coverage hedefini CI'da zorla.",
-      "nerede": "Vitest (unit + integration), Playwright (e2e). CI'da her PR'da çalışır.",
-      "ne_zaman": "Test ÖNCE yaz (TDD) veya kodla birlikte. Sonradan yazılan test = yazılmıyor.",
-      "kim": "Geliştirici kendi testini yazar; tech lead coverage hedefini koyar; CI zorlar.",
-      "frontend": {
-        "yer": "Component test (Vitest + Testing Library), e2e (Playwright).",
-        "gereklilik": "Her component için 'render olur mu' + happy path interaction.",
-        "ornek": "`render(<LoginForm />); userEvent.type(emailInput, 'ad@x.com'); expect(submitBtn).toBeEnabled();`"
-      },
-      "backend": {
-        "yer": "Vitest unit + supertest integration. Test DB (Postgres test container).",
-        "gereklilik": "Her endpoint için: 200 happy path + 400/401/500 sad path.",
-        "ornek": "`test('POST /orders → 201', async () => { const r = await request(app).post('/orders').send({...}); expect(r.status).toBe(201); });`"
-      },
-      "analoji": "Restoran: aşçı malzemeyi tek tek kontrol eder (unit), yemeği tabakta tadar (integration), garson servis öncesi son bakar (e2e)."
-    }
+  "stories": [
+   {
+    "persona": "Aşçı Hatice Teyze (62) — yeni baklava reçetesi",
+    "context": "Yeni reçetede 5 adım var: hamur, şerbet, ceviz, fırın, soğutma. Her adımı tek tek tadıyor (unit test). Sonra hep birlikte deniyor (integration). Sonra eşi+çocuklar yiyiyor (e2e).",
+    "outcome": "Sadece sonu denese tek tat. Adım adım tat olmasa hata nerede bilmez. Üç katman birlikte."
+   },
+   {
+    "persona": "Berber Mehmet Usta (60) — yeni saç sistemi",
+    "context": "Yeni saç tekniği öğrendi. Önce kuklası üzerinde denedi (unit). Sonra çırakta denedi (integration). Sonra normal müşteride (e2e).",
+    "outcome": "Direkt müşteride denese hata felaketti. Aşamalı test = güvenli ilerleyiş."
+   }
+  ],
+  "lesson": {
+   "ne": "Yazılımın doğru çalıştığını kanıtlayan otomatik kontrol mekanizması. 3 katman: küçük birim (unit) → birleşim (integration) → kullanıcı yolu (e2e).",
+   "nicin": "Test yoksa her değişiklik 'çalışıyor mu?' belirsizliği. Test varsa 5 saniyede 1000 senaryo kontrol edilir.",
+   "nasil": "1) Her yeni fonksiyon için unit test. 2) Kritik API endpoint'i için integration test. 3) Happy path için e2e. 4) Coverage hedefini CI'da zorla.",
+   "nerede": "Vitest (unit + integration), Playwright (e2e). CI'da her PR'da çalışır.",
+   "ne_zaman": "Test ÖNCE yaz (TDD) veya kodla birlikte. Sonradan yazılan test = yazılmıyor.",
+   "kim": "Geliştirici kendi testini yazar; tech lead coverage hedefini koyar; CI zorlar.",
+   "frontend": {
+    "yer": "Component test (Vitest + Testing Library), e2e (Playwright).",
+    "gereklilik": "Her component için 'render olur mu' + happy path interaction.",
+    "ornek": "`render(<LoginForm />); userEvent.type(emailInput, 'ad@x.com'); expect(submitBtn).toBeEnabled();`"
+   },
+   "backend": {
+    "yer": "Vitest unit + supertest integration. Test DB (Postgres test container).",
+    "gereklilik": "Her endpoint için: 200 happy path + 400/401/500 sad path.",
+    "ornek": "`test('POST /orders → 201', async () => { const r = await request(app).post('/orders').send({...}); expect(r.status).toBe(201); });`"
+   },
+   "analoji": "Restoran: aşçı malzemeyi tek tek kontrol eder (unit), yemeği tabakta tadar (integration), garson servis öncesi son bakar (e2e)."
+  }
+ },
+ "blocks": [
+  {
+   "type": "paragraph",
+   "text": "**Test piramidinin özü:** *çok ve hızlı küçük testler altta, az ve yavaş e2e üstte.* Ters çevirirsen suite 30 dk sürer, kimse çalıştırmaz, bug üretime gider."
   },
-  "blocks": [
+  {
+   "type": "callout",
+   "variant": "warning",
+   "label": "Ters piramit tuzağı",
+   "body": "Yeni başlayan ekip 'her şeyi e2e ile test edelim' der. 200 e2e test = 45 dk suite. Kimse çalıştırmaz. Bug fark edilmez. **Önce unit, sonra integration, en üstte e2e.**"
+  },
+  {
+   "type": "callout",
+   "variant": "tip",
+   "label": "Vibecoding ipucu",
+   "body": "AI ajan'a: *'Order service için: 1) Unit test her fonksiyon için (mock'lı DB). 2) Integration test POST /orders endpoint (gerçek test DB). 3) E2e Playwright: kullanıcı login → ürün seç → ödeme. Coverage %80 hedef.'*"
+  },
+  {
+   "type": "heading",
+   "level": 4,
+   "text": "Test türü → ne zaman"
+  },
+  {
+   "type": "table",
+   "headers": [
+    "Tür",
+    "Hız",
+    "Sayı",
+    "Ne test eder?"
+   ],
+   "rows": [
+    [
+     "Unit",
+     "<100ms",
+     "%70 (yüzlerce)",
+     "Saf fonksiyon"
+    ],
+    [
+     "Integration",
+     "saniye",
+     "%20 (onlarca)",
+     "API endpoint + DB"
+    ],
+    [
+     "E2E",
+     "dakika",
+     "%10 (5-15)",
+     "Kullanıcı akışı"
+    ],
+    [
+     "Visual regression",
+     "saniye",
+     "Component başına",
+     "UI değişimi"
+    ],
+    [
+     "Load test",
+     "dakikalar",
+     "Release öncesi",
+     "Performans"
+    ]
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "On test ilkesi (AI üretiminde)"
+  },
+  {
+   "type": "paragraph",
+   "text": "Bu ilkeler AI Üretim Sözleşmesi'nin (Üreten Onaylayamaz) test tarafıdır: insan ürün sözünü yazar, AI taslak üretir, testler görünür davranışı doğrular, CI gerçeği belirler."
+  },
+  {
+   "type": "checklist",
+   "title": "Her özellikten önce/sonra kontrol",
+   "storageKey": "test-on-ilke",
+   "items": [
     {
-      "type": "paragraph",
-      "text": "**Test piramidinin özü:** *çok ve hızlı küçük testler altta, az ve yavaş e2e üstte.* Ters çevirirsen suite 30 dk sürer, kimse çalıştırmaz, bug üretime gider."
+     "label": "Kabul kriteri olmadan yazdırma",
+     "hint": "Kabul kriteri metni yoksa AI'ya ekran veya test yazdırma."
     },
     {
-      "type": "callout",
-      "variant": "warning",
-      "label": "Ters piramit tuzağı",
-      "body": "Yeni başlayan ekip 'her şeyi e2e ile test edelim' der. 200 e2e test = 45 dk suite. Kimse çalıştırmaz. Bug fark edilmez. **Önce unit, sonra integration, en üstte e2e.**"
+     "label": "Yolculuk geçmeden 'tamam' deme",
+     "hint": "Kullanıcı yolculuğu (E2E) geçmeden yeni özelliği tamam sayma."
     },
     {
-      "type": "callout",
-      "variant": "tip",
-      "label": "Vibecoding ipucu",
-      "body": "AI ajan'a: *'Order service için: 1) Unit test her fonksiyon için (mock'lı DB). 2) Integration test POST /orders endpoint (gerçek test DB). 3) E2e Playwright: kullanıcı login → ürün seç → ödeme. Coverage %80 hedef.'*"
+     "label": "Kırmızı CI varken kabul etme",
+     "hint": "CI kırmızıyken AI çıktısını doğru kabul etme."
     },
     {
-      "type": "heading",
-      "level": 4,
-      "text": "Test türü → ne zaman"
+     "label": "Snapshot'ı el ile onayla",
+     "hint": "Görsel snapshot güncellemesi otomatik değil, incelemeli kabul edilir."
     },
     {
-      "type": "table",
-      "headers": [
-        "Tür",
-        "Hız",
-        "Sayı",
-        "Ne test eder?"
-      ],
-      "rows": [
-        [
-          "Unit",
-          "<100ms",
-          "%70 (yüzlerce)",
-          "Saf fonksiyon"
-        ],
-        [
-          "Integration",
-          "saniye",
-          "%20 (onlarca)",
-          "API endpoint + DB"
-        ],
-        [
-          "E2E",
-          "dakika",
-          "%10 (5-15)",
-          "Kullanıcı akışı"
-        ],
-        [
-          "Visual regression",
-          "saniye",
-          "Component başına",
-          "UI değişimi"
-        ],
-        [
-          "Load test",
-          "dakikalar",
-          "Release öncesi",
-          "Performans"
-        ]
-      ]
+     "label": "GraphQL gün-1 koruması",
+     "hint": "Depth guard + auth guard açmadan üretime çıkma."
+    },
+    {
+     "label": "PWA = davranış",
+     "hint": "PWA'yı skor değil davranış olarak test et."
+    },
+    {
+     "label": "320px / 1rem taban",
+     "hint": "Mobilde ana akışı 320 CSS piksel ve 1rem tabanı ile tasarla."
+    },
+    {
+     "label": "Sonuca bağla, iç ayrıntıya değil",
+     "hint": "Testi kullanıcının gördüğü sonuca bağla."
+    },
+    {
+     "label": "Üretilen-uygulamayı ayrı test et",
+     "hint": "Platform yeşil olabilir ama ürettiği uygulama bozuk olabilir."
+    },
+    {
+     "label": "AI kendi ödevini notlayamaz",
+     "hint": "Doğrulama deterministik ve üretici-modelden bağımsız olmalı."
     }
-  ],
-  "related": [
-    "edu-u11",
-    "cc-obs",
-    "sus-conformance"
-  ]
+   ]
+  },
+  {
+   "type": "callout",
+   "variant": "info",
+   "label": "Determinizm altyapısı — her şeyden önce",
+   "body": "Diğer tüm katmanlar bunun üstüne kurulur: gerçek Postgres (testcontainers; sabit imaj etiketi, asla 'latest' değil), Hypothesis settings(derandomize=True), freezegun ile donuk saat (datetime.now() serbest değil), PYTHONHASHSEED=0 + sabit seed, her test transaction içinde çalışıp rollback. Bir test rastgele geçip rastgele kalıyorsa o test yoktur."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Tür kataloğu — MVP'den enterprise'a"
+  },
+  {
+   "type": "paragraph",
+   "text": "Mevcut MVP yaklaşımımız (yukarıdaki piramit) sağlam taban; aşağıdaki katalog onu enterprise'a taşır. 'Bizde' sütunu: VAR = kapı/araç mevcut, kısmi = var ama derinleşmeli, EKLE = entegre edilecek."
+  },
+  {
+   "type": "table",
+   "caption": "Test türleri × katman × bizdeki durum",
+   "headers": [
+    "Tür",
+    "Katman",
+    "Kritik",
+    "Araç (seçim)",
+    "Bizde"
+   ],
+   "rows": [
+    [
+     "Determinizm altyapısı",
+     "altyapı",
+     "kritik",
+     "testcontainers + freezegun + Hypothesis derandomize",
+     "EKLE"
+    ],
+    [
+     "Kabul kriteri (BDD)",
+     "frontend",
+     "",
+     "pytest-bdd",
+     "kısmi"
+    ],
+    [
+     "Kullanıcı yolculuğu (E2E)",
+     "frontend",
+     "",
+     "Playwright",
+     "VAR"
+    ],
+    [
+     "Bileşen testleri",
+     "frontend",
+     "",
+     "Vitest + RTL",
+     "VAR"
+    ],
+    [
+     "API entegrasyon",
+     "backend",
+     "",
+     "httpx.AsyncClient + pytest-asyncio",
+     "kısmi"
+    ],
+    [
+     "Property-based / generative",
+     "backend",
+     "",
+     "Hypothesis / fast-check",
+     "EKLE"
+    ],
+    [
+     "Şema / API fuzzing",
+     "graphql",
+     "",
+     "Schemathesis",
+     "VAR"
+    ],
+    [
+     "Codegen golden / snapshot",
+     "backend",
+     "",
+     "Syrupy / inline-snapshot",
+     "kısmi (docSync golden)"
+    ],
+    [
+     "Migration / veri bütünlüğü",
+     "db",
+     "",
+     "pytest-alembic / alembic-verify",
+     "EKLE"
+    ],
+    [
+     "Çok-kiracılı izolasyon + BOLA",
+     "güvenlik",
+     "kritik",
+     "RLS + resolver + property-based",
+     "kısmi (RLS var)"
+    ],
+    [
+     "GraphQL'e özgü güvenlik",
+     "graphql",
+     "",
+     "graphql-cop / clairvoyance / InQL + depth/auth guard",
+     "EKLE"
+    ],
+    [
+     "Görsel regresyon",
+     "frontend",
+     "",
+     "Playwright toHaveScreenshot / Chromatic",
+     "VAR"
+    ],
+    [
+     "Erişilebilirlik",
+     "frontend",
+     "",
+     "@axe-core/playwright",
+     "VAR"
+    ],
+    [
+     "Kontrat testi (şema + tüketici)",
+     "graphql",
+     "",
+     "GraphQL Inspector/Hive + Pact (JS)",
+     "EKLE"
+    ],
+    [
+     "Üretilen-uygulama altın yolu",
+     "altyapı",
+     "kritik",
+     "golden fixtures (model→kod/şema/migration→çalışan GraphQL)",
+     "EKLE"
+    ],
+    [
+     "Mutation testing",
+     "ai-doğrulama",
+     "kritik",
+     "mutmut / cosmic-ray / Stryker",
+     "EKLE"
+    ],
+    [
+     "Yük / performans",
+     "backend",
+     "",
+     "k6 / Locust",
+     "kısmi"
+    ],
+    [
+     "PWA testleri",
+     "pwa",
+     "",
+     "Lighthouse CI + Vite PWA aracı (davranış)",
+     "EKLE"
+    ]
+   ]
+  },
+  {
+   "type": "callout",
+   "variant": "warning",
+   "label": "Üretilen-uygulama altın yolu (en kritik EKLE)",
+   "body": "Meta-framework'ün en sinsi hatası: 'platform yeşil, ürettiği uygulama bozuk.' Tek panzehir: motoru ve çıktıyı AYRI test et. Model tanımı → kod/şema/migration → çalışan GraphQL zincirini uçtan uca koşan en az 3 temsilî altın uygulama (çok-kiracılı, dosya-yüklemeli, rol-tabanlı). Bu katman yeşil olmadan release yok. Bizdeki governanceHonesty 'sahte yeşil' kapısının üretim-tarafı karşılığıdır."
+  },
+  {
+   "type": "callout",
+   "variant": "tip",
+   "label": "Testin testi: mutation testing (EKLE)",
+   "body": "AI kendi testini yazıp kendi notluyor (self-preference bias). Bağımsız hakem: koda kasıtlı mutant enjekte et; testler yakalayamazsa testler zayıftır. mutmut/Stryker yalnız çekirdek modüllerde (codegen, izin, validasyon), periyodik (haftalık), hedef skor %80+. Sağ kalan mutantlar 'bu testleri güçlendir' diye AI'a beslenir. Yüksek coverage'in yalancı güvenini ifşa eder."
+  },
+  {
+   "type": "paragraph",
+   "text": "Karar noktaları (alternatifli): determinizm = testcontainers (SQLite taklit değil); migration = Alembic (Prisma Python arşiv); property = Hypothesis; E2E = Playwright (Cypress değil); mutation = mutmut/Stryker; yük = k6/Locust; orkestrasyon = n8n (deterministik) + openclaw (karar). Detay: AI Üretim Sözleşmesi, LLM Hata Kataloğu, Doğrulama fazı promptu (Prompt 9)."
+  }
+ ],
+ "related": [
+  "edu-u11",
+  "cc-obs",
+  "sus-conformance",
+  "sus-ai-uretim-sozlesmesi",
+  "sus-llm-hata-katalogu",
+  "build-uzman-denetimi",
+  "fe-test-tooling",
+  "edu-prompt-kutuphanesi"
+ ]
 }
