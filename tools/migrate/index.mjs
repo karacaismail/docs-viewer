@@ -162,7 +162,6 @@ const BUILD_EXCLUDE = new Set([
   "sus",
   "kararlar",
   "dx",
-  "landx",
   "meta",
   "atomic",
   "build",
@@ -372,14 +371,10 @@ function buildNavigation(results) {
       const editions = of(
         (r) => r.page.id.startsWith("page-edition-") || r.page.id === "page-stack-editions",
       );
-      const landx = of((r) => r.page.id.startsWith("page-landx-"));
       groups = [
         { id: "stacks", label: "Stacks", order: 0, items: stacks },
         ...(dists.length ? [{ id: "dist", label: "Distributions", order: 1, items: dists }] : []),
         ...(editions.length ? [{ id: "editions", label: "Editions", order: 2, items: editions }] : []),
-        ...(landx.length
-          ? [{ id: "landx", label: "LandX — sahibinden clone (vaka)", order: 3, items: landx }]
-          : []),
       ];
     } else {
       groups = [{ id: "tumu", label: "Tümü", order: 0, items: sortItems(pages, c.id === "egitim") }];
@@ -679,7 +674,6 @@ const PARTI_OF = {
   dx: 5,
   build: 5,
   frontend: 5,
-  landx: 5,
   urunler: 6,
 };
 const labelPages = new Map();

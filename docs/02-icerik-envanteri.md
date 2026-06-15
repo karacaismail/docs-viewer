@@ -19,7 +19,6 @@ Dosya adlandırması `NN-kategori-konu.json` sözleşmesini izler. Kategori pref
 | `fe-*` | 9 | Frontend tech-stack kararları | Frontend Tech-Stack |
 | `layer1-*` + `l1-*` | 12 | Layer 1 in-tree servisler (party, file, audit…) | Layer 1 — In-tree |
 | `kernel-*` + `k-*` | 15 (Faz 0 atomic-types dahil) | Layer 0 kernel domain'leri | Kernel — Layer 0 |
-| `landx-*` | 7 | LandX — sahibinden clone vakası (l0–l5) | SaaS Products (vaka grubu; top-level değil) |
 | `be-*` | 6 | Backend Tech-Stack — karar defteri, v1 kapsamı, destek matrisi, mail provider chain ve deploy profilleri | Backend Tech-Stack |
 | `dx-*` + `services` | 4 | Module DX, marketplace, dış servisler | DX & Services |
 | Tekil meta dosyalar | ~10 | overview, philosophy, board, atomic-types, build-sequence, anti-patterns, file-layout, product-mapping, deploy-yap | Genel Harita + Build & Deploy |
