@@ -156,17 +156,7 @@ const BUILD_LEVEL = {
   "orta-tas": "View (Orta Taş)",
   "buyuk-tas": "ArcheType (Büyük Taş)",
 };
-const BUILD_EXCLUDE = new Set([
-  "edu",
-  "egitim",
-  "sus",
-  "kararlar",
-  "dx",
-  "meta",
-  "atomic",
-  "build",
-  "genel",
-]);
+const BUILD_EXCLUDE = new Set(["edu", "egitim", "sus", "kararlar", "dx", "meta", "atomic", "build", "genel"]);
 function buildUnitPromptBlocks(stem, data, nextId) {
   const g = data.granularity;
   if (!BUILD_LEVEL[g] || BUILD_EXCLUDE.has(data.cluster)) return [];
