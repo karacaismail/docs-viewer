@@ -1,0 +1,347 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-fe-theme",
+  "sourceId": "fe-theme",
+  "slug": "frontend/fe-theme",
+  "title": "Theme — Sunum Buildable'ı (SDK üçüncü artefakt)",
+  "summary": "SDK'nın app ve module'den sonra üçüncü buildable'ı: token seti + Surface şablonları + a11y/perf bütçesi. Edition'ı görsel olarak gerçekleştirir; kod/iş mantığı değiştirmez.",
+  "categoryId": "frontend",
+  "tags": [
+   "theme",
+   "tema",
+   "sdk",
+   "token",
+   "sunum",
+   "edition"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "wip",
+   "badge": "Frontend"
+  },
+  "owner": "Frontend mimarisi sahibi",
+  "reviewer": "Senior frontend ve accessibility reviewer",
+  "maturity": "taslak",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": [],
+  "nonGoals": [
+   "Bu sayfa tek başına üretim onayı veya uzman incelemesi yerine geçmez."
+  ],
+  "failureModes": [
+   "Tanım, ölçülebilir kabul testi ve sorumlu reviewer olmadan doğrudan üretime uygulanır."
+  ],
+  "acceptanceCriteria": [
+   "Sahip ve reviewer atanmıştır; ilgili otomatik kapılar yeşildir; açık varsayımlar kayıtlıdır."
+  ],
+  "operationalImpact": "Kullanılabilirlik, erişilebilirlik ve istemci güvenliğini etkiler.",
+  "externalReviewRequired": false,
+  "related": [
+   "page-be-sdk",
+   "page-dx-cli",
+   "page-dx-marketplace",
+   "page-stack-editions",
+   "page-cc-cultural-ux",
+   "page-fe-cdn",
+   "page-k-terminoloji"
+  ],
+  "blocks": [
+   {
+    "id": "block-fe-theme-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Theme, SDK'nın geliştirici-cephesindeki üçüncü buildable'ıdır (app, module, theme). Edition kavramının (aynı kod, gelişmiş UI/UX) sunum mekanizmasını verir: kodu/iş mantığını değil, yalnız token/layout/sunumu değiştirir."
+     }
+    ]
+   },
+   {
+    "id": "block-fe-theme-co",
+    "type": "callout",
+    "variant": "info",
+    "title": "Ne + sınır",
+    "segments": [
+     {
+      "type": "text",
+      "text": "App değil module değil — sunum buildable'ı. sdk theme create ile iskeletlenir. Edition'ı görsel olarak gerçekleştirir; core module'e ve iş mantığına DOKUNMAZ. Yalnız token (renk/spacing/tipografi), Surface şablon override'ı ve a11y/perf bütçesi içinde sunumu değiştirir. Çok-kiracılı: tenant/Edition başına theme pinlenir."
+     }
+    ]
+   },
+   {
+    "id": "block-fe-theme-h-kapsam-theme-neyi-sahiplenir",
+    "type": "heading",
+    "level": 2,
+    "text": "Kapsam — theme neyi sahiplenir"
+   },
+   {
+    "id": "block-fe-theme-table",
+    "type": "table",
+    "caption": "Yetenek → nasıl",
+    "columns": [
+     "Yetenek",
+     "Nasıl"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Token seti"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Renk/spacing/tipografi token'ları (tokens.css deseni); tek kaynaktan tema değişkenleri"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Surface şablonları"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Surface layout/bileşen sunum override'ları; iş mantığı değil yalnız görünüm"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "a11y bütçesi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kontrast + dokunma hedefi + odak; axe kapısından geçer"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "perf bütçesi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Eager CSS/JS bütçesi; size-limit kapısı"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Edition bağı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Bir Edition bir theme'i pinler; Distribution theme'i içerir"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-fe-theme-h-archetype-lar-capability-manifesti",
+    "type": "heading",
+    "level": 2,
+    "text": "ArcheType'lar + capability manifesti"
+   },
+   {
+    "id": "block-fe-theme-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "ArcheType'lar",
+      "definition": [
+       {
+        "type": "text",
+        "text": "ThemeTokens (renk/spacing/tipografi), SurfaceTemplate (sunum override), ThemeManifest (uyum + izin)"
+       }
+      ]
+     },
+     {
+      "term": "Capability (deny-by-default)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "yalnız sunum (token + şablon) yazma; iş mantığına / core module'e / kernel iç API'sine DOKUNMAZ; pii üretmez"
+       }
+      ]
+     },
+     {
+      "term": "Bayraklar",
+      "definition": [
+       {
+        "type": "text",
+        "text": "token değişiklikleri audit'li + versiyonlu; a11y/perf deterministik kapı"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-fe-theme-h-gelistirme-plani-test-first-be-sdk-sirasi",
+    "type": "heading",
+    "level": 2,
+    "text": "Geliştirme planı — test-first (be-sdk sırası)"
+   },
+   {
+    "id": "block-fe-theme-h-once-testler-kirmizi-tanim-uygulama",
+    "type": "heading",
+    "level": 3,
+    "text": "Önce testler (kırmızı) → tanım → uygulama"
+   },
+   {
+    "id": "block-fe-theme-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "1 · Testler ÖNCE",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Kabul: (a) token değişimi yalnız sunumu etkiler, iş mantığı testleri kırılmaz; (b) a11y kontrast/odak axe'ten geçer; (c) perf bütçesi size-limit'i aşmaz; (d) Edition pin'i doğru theme'i çözer; (e) tenant izolasyonu (theme karışmaz)."
+       }
+      ]
+     },
+     {
+      "title": "2 · Tanım",
+      "segments": [
+       {
+        "type": "text",
+        "text": "theme/tokens.yaml + surface-template'ler + theme-manifest.yaml (uyum + izin beyanı)."
+       }
+      ]
+     },
+     {
+      "title": "3 · Surface + Contract",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Surface sunum override'ları; Contract yok (theme headless değil, sunum katmanı)."
+       }
+      ]
+     },
+     {
+      "title": "4 · Manifest",
+      "segments": [
+       {
+        "type": "text",
+        "text": "deny-by-default: yalnız sunum yazma; iş mantığı/kernel erişimi yok (WASM sandbox)."
+       }
+      ]
+     },
+     {
+      "title": "5 · Kabul kapısı",
+      "segments": [
+       {
+        "type": "text",
+        "text": "axe + size-limit + deterministik testler + reviewer. AI yalnız token/şablona dokunur."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-fe-theme-h-yol-haritasi",
+    "type": "heading",
+    "level": 2,
+    "text": "Yol haritası"
+   },
+   {
+    "id": "block-fe-theme-h-asama-kapilari",
+    "type": "heading",
+    "level": 3,
+    "text": "Aşama kapıları"
+   },
+   {
+    "id": "block-fe-theme-steps-2",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "MVP",
+      "segments": [
+       {
+        "type": "text",
+        "text": "sdk theme create + token seti + Surface şablon + axe/size-limit kapıları."
+       }
+      ]
+     },
+     {
+      "title": "Faz 2",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Edition pin + Distribution paketleme + marketplace dağıtımı (dx-marketplace)."
+       }
+      ]
+     },
+     {
+      "title": "Faz 3",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Çoklu dil/RTL token varyantı (cc-i18n) + theme A/B (l1-experiment ile)."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-fe-theme-co-2",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Riskler / sınır",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Theme iş mantığı değiştirmez — aksi core module değişmezliğini bozar. Token dışı 'kod' temaya sızarsa Edition sınırı bozulur. Anti-stack: yasak kütüphaneler kullanılmaz; token-tabanlı, React 19 + Radix uyumlu. a11y/perf bütçesi atlanamaz."
+     }
+    ]
+   },
+   {
+    "id": "block-fe-theme-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Theme, SDK üçlüsünün (app/module/theme) sunum ayağıdır; Edition'ı (stack-editions) gerçekleştirir, marketplace'te (dx-marketplace) dağıtılır, sdk theme create (be-sdk/dx-cli) ile üretilir."
+     }
+    ]
+   },
+   {
+    "id": "block-fe-theme-h-uret",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu birimi üret — kopyalanabilir prompt"
+   },
+   {
+    "id": "block-fe-theme-uret-prompt",
+    "type": "codeBlock",
+    "title": "Module (Kaya) build prompt'u",
+    "language": "text",
+    "code": "SEVİYE: Module / Domain (Kaya) · birim: Theme — Sunum Buildable'ı (SDK üçüncü artefakt)\nROL: Domain mimarı. OKU: bu sayfa (fe-theme), ilgili app plan ağacı, core sözleşmeleri.\nGÖREV: \"Theme — Sunum Buildable'ı (SDK üçüncü artefakt)\" module sınırını, sahip olduğu ArcheType'ları ve Contract (API kapısı) tanımını çıkar.\nKISIT: Başka module'ün tablosuna dokunma; Contract üzerinden konuş. Capability manifesti deny-by-default.\nÇIKTI: testler önce → ArcheType listesi + Contract + manifest + Alembic branch (downgrade yolu).\nKABUL (DoD): module ayrı yüklenip kaldırılabilir; capability izinleri açık; contract testi yeşil.\nÖNCE faz prompt'larını uygula (Prompt 7 Gereksinim, Prompt 8 Tasarım), sonra İnşa/Doğrulama. be-sdk sırası: testler ÖNCE (kırmızı) → yaml taslaklar → uygulama. Küçük PR + kanıt. Komşuluk kuralını ihlal etme.",
+    "copyEnabled": true
+   }
+  ]
+ }
+}

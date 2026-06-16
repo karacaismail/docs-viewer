@@ -26,15 +26,15 @@ describe("içerik doğrulama kapısı", () => {
     expect(r.success).toBe(true);
   });
 
-  it("pages-index.json şemadan geçer (300 entry)", () => {
+  it("pages-index.json şemadan geçer (301 entry)", () => {
     const r = PagesIndexFileSchema.safeParse(pagesIndex);
     if (!r.success) console.error(r.error.issues.slice(0, 5));
     expect(r.success).toBe(true);
-    expect(r.success && r.data.pages.length).toBe(300);
+    expect(r.success && r.data.pages.length).toBe(301);
   });
 
-  it("300 page dosyasının tamamı şemadan geçer; block ID'ler page içinde benzersiz (03 §4)", () => {
-    expect(pageFiles.length).toBe(300);
+  it("301 page dosyasının tamamı şemadan geçer; block ID'ler page içinde benzersiz (03 §4)", () => {
+    expect(pageFiles.length).toBe(301);
     for (const f of pageFiles) {
       const data = JSON.parse(readFileSync(join(PAGES_DIR, f), "utf8"));
       const r = PageFileSchema.safeParse(data);

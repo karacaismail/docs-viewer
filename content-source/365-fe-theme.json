@@ -1,0 +1,51 @@
+{
+ "id": "fe-theme",
+ "title": "Theme — Sunum Buildable'ı (SDK üçüncü artefakt)",
+ "subtitle": "SDK'nın app ve module'den sonra üçüncü buildable'ı: token seti + Surface şablonları + a11y/perf bütçesi. Edition'ı görsel olarak gerçekleştirir; kod/iş mantığı değiştirmez.",
+ "cluster": "frontend",
+ "layer": "L1",
+ "order": 30,
+ "icon": "ph-palette",
+ "granularity": "kaya",
+ "state": "wip",
+ "badge": "Frontend",
+ "tags": ["theme","tema","sdk","token","sunum","edition"],
+ "related": ["be-sdk","dx-cli","dx-marketplace","stack-editions","cc-cultural-ux","fe-cdn","k-terminoloji"],
+ "enrich": {
+  "info": "Theme, SDK'nın geliştirici-cephesindeki üçüncü buildable'ıdır (app, module, theme). Edition kavramının (aynı kod, gelişmiş UI/UX) sunum mekanizmasını verir: kodu/iş mantığını değil, yalnız token/layout/sunumu değiştirir."
+ },
+ "blocks": [
+  {"type":"callout","variant":"info","label":"Ne + sınır","body":"App değil module değil — sunum buildable'ı. sdk theme create ile iskeletlenir. Edition'ı görsel olarak gerçekleştirir; core module'e ve iş mantığına DOKUNMAZ. Yalnız token (renk/spacing/tipografi), Surface şablon override'ı ve a11y/perf bütçesi içinde sunumu değiştirir. Çok-kiracılı: tenant/Edition başına theme pinlenir."},
+  {"type":"heading","level":2,"text":"Kapsam — theme neyi sahiplenir"},
+  {"type":"table","caption":"Yetenek → nasıl","headers":["Yetenek","Nasıl"],
+   "rows":[
+    ["Token seti","Renk/spacing/tipografi token'ları (tokens.css deseni); tek kaynaktan tema değişkenleri"],
+    ["Surface şablonları","Surface layout/bileşen sunum override'ları; iş mantığı değil yalnız görünüm"],
+    ["a11y bütçesi","Kontrast + dokunma hedefi + odak; axe kapısından geçer"],
+    ["perf bütçesi","Eager CSS/JS bütçesi; size-limit kapısı"],
+    ["Edition bağı","Bir Edition bir theme'i pinler; Distribution theme'i içerir"]
+   ]},
+  {"type":"heading","level":2,"text":"ArcheType'lar + capability manifesti"},
+  {"type":"kv-row","pairs":[
+    {"key":"ArcheType'lar","value":"ThemeTokens (renk/spacing/tipografi), SurfaceTemplate (sunum override), ThemeManifest (uyum + izin)"},
+    {"key":"Capability (deny-by-default)","value":"yalnız sunum (token + şablon) yazma; iş mantığına / core module'e / kernel iç API'sine DOKUNMAZ; pii üretmez"},
+    {"key":"Bayraklar","value":"token değişiklikleri audit'li + versiyonlu; a11y/perf deterministik kapı"}
+   ]},
+  {"type":"heading","level":2,"text":"Geliştirme planı — test-first (be-sdk sırası)"},
+  {"type":"steps","title":"Önce testler (kırmızı) → tanım → uygulama","items":[
+    {"title":"1 · Testler ÖNCE","body":"Kabul: (a) token değişimi yalnız sunumu etkiler, iş mantığı testleri kırılmaz; (b) a11y kontrast/odak axe'ten geçer; (c) perf bütçesi size-limit'i aşmaz; (d) Edition pin'i doğru theme'i çözer; (e) tenant izolasyonu (theme karışmaz)."},
+    {"title":"2 · Tanım","body":"theme/tokens.yaml + surface-template'ler + theme-manifest.yaml (uyum + izin beyanı)."},
+    {"title":"3 · Surface + Contract","body":"Surface sunum override'ları; Contract yok (theme headless değil, sunum katmanı)."},
+    {"title":"4 · Manifest","body":"deny-by-default: yalnız sunum yazma; iş mantığı/kernel erişimi yok (WASM sandbox)."},
+    {"title":"5 · Kabul kapısı","body":"axe + size-limit + deterministik testler + reviewer. AI yalnız token/şablona dokunur."}
+   ]},
+  {"type":"heading","level":2,"text":"Yol haritası"},
+  {"type":"steps","title":"Aşama kapıları","items":[
+    {"title":"MVP","body":"sdk theme create + token seti + Surface şablon + axe/size-limit kapıları."},
+    {"title":"Faz 2","body":"Edition pin + Distribution paketleme + marketplace dağıtımı (dx-marketplace)."},
+    {"title":"Faz 3","body":"Çoklu dil/RTL token varyantı (cc-i18n) + theme A/B (l1-experiment ile)."}
+   ]},
+  {"type":"callout","variant":"warning","label":"Riskler / sınır","body":"Theme iş mantığı değiştirmez — aksi core module değişmezliğini bozar. Token dışı 'kod' temaya sızarsa Edition sınırı bozulur. Anti-stack: yasak kütüphaneler kullanılmaz; token-tabanlı, React 19 + Radix uyumlu. a11y/perf bütçesi atlanamaz."},
+  {"type":"paragraph","text":"Theme, SDK üçlüsünün (app/module/theme) sunum ayağıdır; Edition'ı (stack-editions) gerçekleştirir, marketplace'te (dx-marketplace) dağıtılır, sdk theme create (be-sdk/dx-cli) ile üretilir."}
+ ]
+}

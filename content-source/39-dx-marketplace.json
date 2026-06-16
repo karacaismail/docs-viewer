@@ -84,7 +84,52 @@
       "label": "Marketplace flywheel",
       "body": "O01 (observability + SLO) → güvenilirlik, O02 (marketplace) → keşif (developer + tenant arz/talep), O03 (security review + sandbox cert) → güvenlik (untrusted modül sandboxing). **Üçü birlikte** Shopify App Store + VS Code Marketplace + Apple App Store sağlam üçgenini kurar. Hiçbiri tek başına yetmez.",
       "enrich": {}
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Üç artefakt dağıtımı"
+    },
+    {
+      "type": "paragraph",
+      "text": "Marketplace yalnız module değil, SDK'nın ürettiği üç artefaktı da dağıtır: app, module ve theme. Her artefakt semantik versiyonlanır, manifest'iyle (izin beyanı) yayınlanır ve kurulum hedefe (backend/web; ileride mobile/extension interface) göre paketlenir."
+    },
+    {
+      "type": "table",
+      "caption": "Artefakt → dağıtım",
+      "headers": [
+        "Artefakt",
+        "Ne dağıtılır",
+        "Versiyon/uyum"
+      ],
+      "rows": [
+        [
+          "App",
+          "SDK_APP paketi (core + ilk modüller)",
+          "semver; kernel uyum aralığı"
+        ],
+        [
+          "Module",
+          "Custom module paketi (WASM sandbox; izin manifesti)",
+          "semver; app/core uyum aralığı"
+        ],
+        [
+          "Theme",
+          "Token seti + Surface şablonları",
+          "semver; Edition/Surface uyum aralığı — {{ref:fe-theme}}"
+        ]
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "info",
+      "label": "Manifest + izin",
+      "body": "Her yayın deny-by-default capability manifesti taşır; kurulum öncesi izinler beyan edilir. Theme yalnız sunum (token/şablon) izniyle sınırlıdır, iş mantığına dokunamaz."
     }
+  ],
+  "related": [
+    "fe-theme",
+    "be-sdk"
   ],
   "enrich": {
     "info": "Dışarıdan geliştiricilerin yazdığı eklentilerin satıldığı dijital pazaryeri.",

@@ -7,6 +7,8 @@ Bu dosya, bu projede çalışan HER AI ajanının bağlayıcı sözleşmesidir. 
 - **Kernel** = sistemin kalbi/beyni (Linux kernel gibi). **Core** = bir app'in kalbi (Drupal core gibi; app başına TEK, değişmez core module).
 - **App** = kernel üstünde, bir veya birden çok stack'i (gerekirse edition katmanıyla) TEK PANELDE paketleyen ürün; tek stack tek başına app olabilir. Tüm app'ler birbirine varsayılan entegre gelir (paylaşılan ArcheType'lar, örn. Party).
 - **Module** = genişletme birimi (Drupal dili). YASAK KELİME: "plugin". 
+- **SDK** = kernel üstü geliştirme altyapısı (sözleşme + tipli iskelet üretici + CLI + yerel dev-env). Üç buildable üretir: **app**, **module**, **theme**. Runtime'ı kernel sağlar; SDK ve AI kernel iç API'sine dokunamaz. Geliştirici klonlar, tek komutla (sdk up) tüm ortamı kurar.
+- **Theme** = yatay sunum buildable'ı (token seti + Surface şablonları). Edition'ı (aynı kod, gelişmiş UI/UX) görsel olarak GERÇEKLEŞTİRİR; kodu/iş mantığını/core module'ü değiştirmez. Theme ≠ Edition (Edition = satılabilir paket, Theme = sunum mekanizması).
 - **ArcheType** = bildirimsel varlık tanımı; tablo+API+MCP tool+varsayılan Surface'i ÜRETİR. YASAK KELİME: "doctype" (Frappe'nin kendi kavramına atıf hariç).
 - Yapı ekseni: **Domain > ArcheType > Fragment > Atom**. Fragment = ana kayıtla yaşayan satırlı parça (eski dünyadaki child table). Atom = en küçük bildirimsel bileşen (kural/kısıt).
 - Yan eksen: **Workflow** (durum makinesi; ArcheType'tan bağımsız versiyonlanır, tenant'a pinlenir) · **Surface** (her sayfa bir Surface'tir; 1+ ArcheType'ı projekte eder; `surface: none` = headless) · **Contract** (Domain sınırının API kapısı).
@@ -34,6 +36,7 @@ Biçim: `<hedef> <seviye> yap|yaz|üret|planla`. **Seviye adı iki dilden de gel
 - "crm **dağ** yap" ≡ "crm **app**'i yaz" → CRM app'ini Dağ→Atom zinciriyle planla: Domain'lere (Kaya) böl, her Domain'de ArcheType'ları (BT) çıkar, SP'leri yapraktan topla.
 - "listing **orta taş** yap" ≡ "listing **view**'ını üret" → bir Büyük Taş altındaki liste view'ı + endpoint grubu.
 - "employee **archetype**'ı yaz" ≡ "employee **büyük taş** yap" → ArcheType tanımı + Fragment/alan/bayrak/Atom yaprakları + üretilecek Surface notu.
+- "theme **yap**|**üret**" → bir Edition'ın sunum katmanını (token + Surface şablon) iskeletler; iş mantığına dokunmaz, yalnız sunum + a11y/perf bütçesi. (Komşuluk: theme yatay eksende Surface sunumudur; granülerlik zincirine atlama eklemez.)
 
 **Çözümleme adımları (her komutta):** (1) seviyeyi tablodan çöz; (2) KOMŞULUK KURALI: her seviye yalnız bir alt komşusuna bağlanır — "Kaya doğrudan Kum'a bağlanamaz"; zincirde atlama varsa planı REDDET ve eksik ara seviyeleri iste; (3) plan ağacını SP'lerle ver; (4) onaydan sonra iskelet üret — SIRA: önce testler, sonra tanımlar, sonra hook gövdeleri.
 

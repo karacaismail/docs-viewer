@@ -21,7 +21,9 @@
   "sus-lisans",
   "edu-faz-haritasi",
   "k-granulerlik",
-  "k-surface"
+  "k-surface",
+  "fe-theme",
+  "be-deploy-profilleri"
  ],
  "enrich": {
   "info": "Karar 10'un tasarımı: SDK, app/module geliştirmenin tek kapısıdır ve MIT lisanslıdır — lisans mimarisindeki API-boundary'nin (sus-lisans) teknik gövdesi budur. Vibecoding-uyumluluk pazarlama sözü değil tasarım kısıtıdır: AI'a açılan yüzey yalnız bildirimsel tanım + saf fonksiyondur.",
@@ -34,6 +36,12 @@
   ]
  },
  "blocks": [
+  {
+   "type": "callout",
+   "variant": "info",
+   "label": "Kurulum — klon → tek komut → dev-env",
+   "body": "Geliştirici GitHub'dan kiti klonlar; tek komutla (sdk up / npx <kit> init) tüm yerel geliştirme ortamı ayağa kalkar: Docker Compose ile Debian + PostgreSQL (kuyruk/arama/event dahil tek Postgres) + FastAPI içi GraphQL + Keycloak OIDC referansı + seed. macOS'ta geliştir, Hetzner/Debian + GitHub private repo ile deploy. Bu hat {{ref:be-deploy-profilleri}} v1 profiliyle aynıdır; SDK onu reçeteler."
+  },
   {
    "type": "paragraph",
    "text": "App geliştirecek kişi SDK ile geliştirir (k-terminoloji sözleşmesi). SDK'nın iki müşterisi vardır ve ikisi aynı yüzeyi kullanır: **jr-öncesi geliştirici** (eğitim yolundan gelir — {{ref:edu-faz-haritasi}}) ve **AI** (vibecoding). Yüzey bilinçle dardır: kernel iç API'si SDK'dan sızmaz; sızsaydı hem AGPL sınırı bulanır (sus-lisans) hem AI'ın hata alanı büyürdü."
@@ -90,6 +98,75 @@
    "variant": "tip",
    "label": "İş tarifi dili",
    "body": "SDK'ya (ve AI'a) iş, granülerlik diliyle tarif edilir: 'crm dağ yap', 'listing orta taş yap' — seviye sözleşmeleri ve SP katsayıları {{ref:k-granulerlik}} sayfasındadır; komşuluk kuralını ihlal eden tarif iskelet üretmeden reddedilir."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Üç buildable — tek CLI yüzeyi"
+  },
+  {
+   "type": "table",
+   "caption": "Komut → üretir",
+   "headers": [
+    "Komut",
+    "Üretir"
+   ],
+   "rows": [
+    [
+     "sdk app create <ad>",
+     "SDK_APP iskeleti: core module + ilk ArcheType'lar + Surface'ler + manifest (bu sayfadaki akış)"
+    ],
+    [
+     "sdk module create <ad>",
+     "Custom module iskeleti: hook contract + test harness + manifest ({{ref:dx-cli}})"
+    ],
+    [
+     "sdk theme create <ad>",
+     "Theme iskeleti: token seti + Surface şablonları + a11y/perf bütçesi ({{ref:fe-theme}})"
+    ]
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Hedefler (targets)"
+  },
+  {
+   "type": "table",
+   "caption": "Hedef → durum",
+   "headers": [
+    "Hedef",
+    "Durum",
+    "Not"
+   ],
+   "rows": [
+    [
+     "Backend",
+     "v1",
+     "FastAPI içi GraphQL, PostgreSQL, Keycloak OIDC"
+    ],
+    [
+     "Frontend (web)",
+     "v1",
+     "React 19 + TanStack Router + Radix (anti-stack: yasak kütüphaneler kullanılmaz)"
+    ],
+    [
+     "Mobile (iOS/Android)",
+     "interface (roadmap)",
+     "Contract/headless API üstünde; destek-matrisi kanıtı olmadan runtime/satış vaadi yok"
+    ],
+    [
+     "Chrome extension",
+     "interface (roadmap)",
+     "Aynı Contract yüzeyi; kurulum basitliği hedefi"
+    ]
+   ]
+  },
+  {
+   "type": "callout",
+   "variant": "warning",
+   "label": "Sınır korunur",
+   "body": "SDK genişlese de AI yalnız archetypes/*.yaml, hooks/*.py (saf fonksiyon), tests/* ve theme token'larına dokunur; kernel iç API'si kapalıdır. Mobile/extension hedefleri interface'tir; v1 profili backend + web'dir."
   }
  ]
 }
