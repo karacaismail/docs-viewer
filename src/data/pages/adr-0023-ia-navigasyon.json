@@ -1,0 +1,159 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-adr-0023-ia-navigasyon",
+  "sourceId": "adr-0023",
+  "slug": "kararlar/adr-0023-ia-navigasyon",
+  "title": "ADR-0023: Navigasyon/IA Prensipleri — Tek Birincil Eksen + Facet",
+  "summary": "Rail 1 çoklu-eksen karışıklığı yerine tek birincil eksen (yolculuk/inşa) + facet'ler; granülerlik breadcrumb ve tipli ilişki aşamalı; prefix-coupling teknik borç.",
+  "categoryId": "kararlar",
+  "tags": [
+   "adr",
+   "ia",
+   "navigasyon",
+   "kümeleme",
+   "hiyerarşi"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "wip",
+   "badge": "KARAR"
+  },
+  "owner": "Mimari karar sahibi",
+  "reviewer": "Mimari karar kurulu",
+  "maturity": "taslak",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": [],
+  "nonGoals": [
+   "Bu sayfa tek başına üretim onayı veya uzman incelemesi yerine geçmez."
+  ],
+  "failureModes": [
+   "Tanım, ölçülebilir kabul testi ve sorumlu reviewer olmadan doğrudan üretime uygulanır."
+  ],
+  "acceptanceCriteria": [
+   "Sahip ve reviewer atanmıştır; ilgili otomatik kapılar yeşildir; açık varsayımlar kayıtlıdır."
+  ],
+  "operationalImpact": "Bağlayıcı mimari kararları ve sonraki uygulama adımlarını etkiler.",
+  "externalReviewRequired": false,
+  "related": [
+   "page-adr-0008-granulerlik",
+   "page-k-granulerlik",
+   "page-k-terminoloji"
+  ],
+  "blocks": [
+   {
+    "id": "block-adr-0023-ia-navigasyon-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Navigasyon bilgi mimarisi (IA) için bağlayıcı prensip kararı; mevcut çoklu-eksen Rail 1 sorununu adresler."
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0023-ia-navigasyon-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Durum",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kabul (wip) — aşamalı uygulanır"
+       }
+      ]
+     },
+     {
+      "term": "Bağlam",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Rail 1 tek düzeyde ~7 eksen karıştırıyor (pedagoji, tech-stack, mimari katman, ürün, süreç, kalite, karar); granülerlik modellenmiyor; kategori dosya-prefix'ine bağlı"
+       }
+      ]
+     },
+     {
+      "term": "Karar",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tek BİRİNCİL eksen = yolculuk/inşa (Öğren→Çekirdek→Üret→İşlet); diğer eksenler (tech-stack, domain, olgunluk) FACET; granülerlik (App→Module→ArcheType) ikincil breadcrumb"
+       }
+      ]
+     },
+     {
+      "term": "Sonuç",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tech-stack simetrik (backend+frontend bitişik); ilişki düz liste yerine tipli kenar (belongs-to/uses/extends); prefix-coupling açık categoryId metadata'sına gevşetilir"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0023-ia-navigasyon-h-uygulama-asamalari",
+    "type": "heading",
+    "level": 2,
+    "text": "Uygulama aşamaları"
+   },
+   {
+    "id": "block-adr-0023-ia-navigasyon-h-asamali-uygulama",
+    "type": "heading",
+    "level": 3,
+    "text": "Aşamalı uygulama"
+   },
+   {
+    "id": "block-adr-0023-ia-navigasyon-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "Faz 1 (yapıldı)",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Tech-stack simetrisi: backend+frontend REFERANS'ta bitişik 'Tech-Stack'; İNŞA SIRASI saf build (kernel→scale→layer1→stack→build). Bu ADR + 03-navigation-ia güncellendi."
+       }
+      ]
+     },
+     {
+      "title": "Faz 2 (kod)",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Tipli ilişki şeması (related → {type,target}) + sayfa içi 'Ait olduğu Module / Kullanan App' bağlam kutusu + granülerlik breadcrumb bileşeni."
+       }
+      ]
+     },
+     {
+      "title": "Faz 3 (migrate)",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Prefix-coupling gevşetme: sayfa kendi categoryId/granularity'sini taşır; ad değişimi IA'yı kırmaz; kategori değişiminde slug 301 (l1-redirect)."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0023-ia-navigasyon-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Risk / borç",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Faz 2-3 src/engine/components/schemas + migrate dokunur, kademeli ve testli yapılmalı (deterministik gate + a11y + slug kararlılığı). 'Yeni sayfa nereye girer' yönetişim kuralı eklenmeli, yoksa eksen kayması büyür."
+     }
+    ]
+   }
+  ]
+ }
+}

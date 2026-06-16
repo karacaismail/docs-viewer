@@ -1,0 +1,373 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-dx-workflow",
+  "sourceId": "dx-workflow",
+  "slug": "dx/dx-workflow",
+  "title": "Geliştirici İş Akışı — Uçtan Uca (gap'ler kapalı)",
+  "summary": "Bilgisayar hazırla → SDK → ArcheType/theme üret + app/module kompoze → CI/CD → deploy → yayın → yaşam döngüsü. Test-first zorunlu; mutlu-yol değil tam akış.",
+  "categoryId": "dx",
+  "tags": [
+   "workflow",
+   "geliştirici",
+   "sdk",
+   "ci-cd",
+   "deploy",
+   "test-first"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "wip",
+   "badge": "DX"
+  },
+  "owner": "Developer experience sahibi",
+  "reviewer": "Senior developer experience reviewer",
+  "maturity": "taslak",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": [],
+  "nonGoals": [
+   "Bu sayfa tek başına üretim onayı veya uzman incelemesi yerine geçmez."
+  ],
+  "failureModes": [
+   "Tanım, ölçülebilir kabul testi ve sorumlu reviewer olmadan doğrudan üretime uygulanır."
+  ],
+  "acceptanceCriteria": [
+   "Sahip ve reviewer atanmıştır; ilgili otomatik kapılar yeşildir; açık varsayımlar kayıtlıdır."
+  ],
+  "operationalImpact": "Geliştirici üretkenliği, paket güvenliği ve entegrasyon kalitesini etkiler.",
+  "externalReviewRequired": false,
+  "related": [
+   "page-be-sdk",
+   "page-dx-cli",
+   "page-be-deploy-profilleri",
+   "page-cc-obs-deep",
+   "page-edu-u17-git",
+   "page-adr-0024-dev-workflow",
+   "page-fe-theme"
+  ],
+  "blocks": [
+   {
+    "id": "block-dx-workflow-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Geliştiricinin uçtan uca akışı. Eksik anlatılan 'mutlu yol'a karşı kalite/yönetişim, ortam-paritesi, sır, migration, deploy-sonrası ops ve yayın aşamalarını kapsar. Tek-komut ArcheType/theme üretir; app/module kompozisyondur."
+     }
+    ]
+   },
+   {
+    "id": "block-dx-workflow-co",
+    "type": "callout",
+    "variant": "info",
+    "title": "İlke",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Akış mutlu-yol iskeleti değildir: test-first, review, CI gate'leri, insan onayı (AI kendini onaylayamaz), ortam-paritesi, sır yönetimi, migration ve deploy-sonrası ops dahildir. Tek-komut yalnız ArcheType ve theme üretir; app/module geliştirici kompozisyonudur."
+     }
+    ]
+   },
+   {
+    "id": "block-dx-workflow-h-asamalar-0-9-ve-kapatilan-gap-ler",
+    "type": "heading",
+    "level": 2,
+    "text": "Aşamalar (0–9) ve kapatılan gap'ler"
+   },
+   {
+    "id": "block-dx-workflow-table",
+    "type": "table",
+    "caption": "Aşama → yapılan → kapatılan gap",
+    "columns": [
+     "Aşama",
+     "Ne yapılır",
+     "Kapatılan gap / unknown-unknown"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "0 Erişim"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "SDK erişimi/lisans + sürüm seçimi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kernel uyum aralığı; yetki"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "1 Bilgisayar"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Önkoşullar: Docker + runtime sürümleri"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Ortam-paritesi (macOS M-serisi ↔ Debian/AMD; platform-bağımlı ikili tuzağı); container"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "2 SDK + sdk up"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tek-komut dev-env (Docker Compose) + seed"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yerel identity (Keycloak); sır/.env yönetimi"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "3 Geliştir"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "TEST ÖNCE → ArcheType (sdk archetype: tek komut + çok-aşamalı AI) / theme; app/module kompoze"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Capability manifest; AI vibecoding + insan reviewer; sdk check (tip + tenant-izolasyon + conformance)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "4 Entegrasyon"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Trunk-based kısa dal + küçük PR + review + lint"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Migration prod→dev; sessiz (exception fırlatmayan) runtime hatası; KVKK'lı test verisi"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "5 CI/CD"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Gate'ler: lint+test+build+e2e+a11y+size+coverage"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "CI sırları; deploy profili (Debian+Docker Compose); rollback"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "6 Push"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Branch koruma + semver etiket"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Gözden geçirme zorunlu; merge öncesi yeşil CI"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "7 Deploy"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hetzner/Debian teslim"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tenant provisioning; observability/log; cache invalidation; mavi-yeşil/canary"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "8 Yayın"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Marketplace: ArcheType/theme/module/app"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Uyum aralığı; izin manifesti"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "9 Yaşam döngüsü"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yükseltme + bakım"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kernel/SDK upgrade yolu; breaking-change politikası; destek-matrisi (mobile/extension interface); yedek/DR; çoklu-geliştirici"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-dx-workflow-h-uc-buyuk-eksik-blok-gap-ozeti",
+    "type": "heading",
+    "level": 2,
+    "text": "Üç büyük eksik blok (gap özeti)"
+   },
+   {
+    "id": "block-dx-workflow-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "(i) Kalite/yönetişim",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Test-first, review, CI gate'leri, insan onayı — belirtilen akışta hiç yoktu"
+       }
+      ]
+     },
+     {
+      "term": "(ii) Ortam & sır & migration",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Platform-paritesi, .env/sır, prod→dev migration, seed"
+       }
+      ]
+     },
+     {
+      "term": "(iii) Deploy-sonrası + yayın",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tenant, observability, marketplace yayını, upgrade/breaking-change, DR"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-dx-workflow-co-2",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Sık atlanan",
+    "segments": [
+     {
+      "type": "text",
+      "text": "En tehlikeli iki nokta: (1) test-first'ün atlanması (akış 'geliştir' deyip testi sonraya bırakıyor); (2) sessiz runtime hatası (çalışıyor ama yanlış) — bunlar gate'siz fark edilmez. Detay "
+     },
+     {
+      "type": "ref",
+      "text": "cc-obs-deep",
+      "refId": "cc-obs-deep"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "ref",
+      "text": "edu-u17",
+      "refId": "edu-u17"
+     },
+     {
+      "type": "text",
+      "text": ", karar "
+     },
+     {
+      "type": "ref",
+      "text": "adr-0024",
+      "refId": "adr-0024"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   }
+  ]
+ }
+}

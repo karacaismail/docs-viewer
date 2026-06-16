@@ -1,0 +1,38 @@
+{
+ "id": "dx-workflow",
+ "title": "Geliştirici İş Akışı — Uçtan Uca (gap'ler kapalı)",
+ "subtitle": "Bilgisayar hazırla → SDK → ArcheType/theme üret + app/module kompoze → CI/CD → deploy → yayın → yaşam döngüsü. Test-first zorunlu; mutlu-yol değil tam akış.",
+ "cluster": "dx",
+ "order": 5,
+ "icon": "ph-flow-arrow",
+ "granularity": "kaya",
+ "state": "wip",
+ "badge": "DX",
+ "tags": ["workflow","geliştirici","sdk","ci-cd","deploy","test-first"],
+ "related": ["be-sdk","dx-cli","be-deploy-profilleri","cc-obs-deep","edu-u17","adr-0024","fe-theme"],
+ "enrich": {"info": "Geliştiricinin uçtan uca akışı. Eksik anlatılan 'mutlu yol'a karşı kalite/yönetişim, ortam-paritesi, sır, migration, deploy-sonrası ops ve yayın aşamalarını kapsar. Tek-komut ArcheType/theme üretir; app/module kompozisyondur."},
+ "blocks": [
+  {"type":"callout","variant":"info","label":"İlke","body":"Akış mutlu-yol iskeleti değildir: test-first, review, CI gate'leri, insan onayı (AI kendini onaylayamaz), ortam-paritesi, sır yönetimi, migration ve deploy-sonrası ops dahildir. Tek-komut yalnız ArcheType ve theme üretir; app/module geliştirici kompozisyonudur."},
+  {"type":"heading","level":2,"text":"Aşamalar (0–9) ve kapatılan gap'ler"},
+  {"type":"table","caption":"Aşama → yapılan → kapatılan gap","headers":["Aşama","Ne yapılır","Kapatılan gap / unknown-unknown"],
+   "rows":[
+    ["0 Erişim","SDK erişimi/lisans + sürüm seçimi","Kernel uyum aralığı; yetki"],
+    ["1 Bilgisayar","Önkoşullar: Docker + runtime sürümleri","Ortam-paritesi (macOS M-serisi ↔ Debian/AMD; platform-bağımlı ikili tuzağı); container"],
+    ["2 SDK + sdk up","Tek-komut dev-env (Docker Compose) + seed","Yerel identity (Keycloak); sır/.env yönetimi"],
+    ["3 Geliştir","TEST ÖNCE → ArcheType (sdk archetype: tek komut + çok-aşamalı AI) / theme; app/module kompoze","Capability manifest; AI vibecoding + insan reviewer; sdk check (tip + tenant-izolasyon + conformance)"],
+    ["4 Entegrasyon","Trunk-based kısa dal + küçük PR + review + lint","Migration prod→dev; sessiz (exception fırlatmayan) runtime hatası; KVKK'lı test verisi"],
+    ["5 CI/CD","Gate'ler: lint+test+build+e2e+a11y+size+coverage","CI sırları; deploy profili (Debian+Docker Compose); rollback"],
+    ["6 Push","Branch koruma + semver etiket","Gözden geçirme zorunlu; merge öncesi yeşil CI"],
+    ["7 Deploy","Hetzner/Debian teslim","Tenant provisioning; observability/log; cache invalidation; mavi-yeşil/canary"],
+    ["8 Yayın","Marketplace: ArcheType/theme/module/app","Uyum aralığı; izin manifesti"],
+    ["9 Yaşam döngüsü","Yükseltme + bakım","Kernel/SDK upgrade yolu; breaking-change politikası; destek-matrisi (mobile/extension interface); yedek/DR; çoklu-geliştirici"]
+   ]},
+  {"type":"heading","level":2,"text":"Üç büyük eksik blok (gap özeti)"},
+  {"type":"kv-row","pairs":[
+    {"key":"(i) Kalite/yönetişim","value":"Test-first, review, CI gate'leri, insan onayı — belirtilen akışta hiç yoktu"},
+    {"key":"(ii) Ortam & sır & migration","value":"Platform-paritesi, .env/sır, prod→dev migration, seed"},
+    {"key":"(iii) Deploy-sonrası + yayın","value":"Tenant, observability, marketplace yayını, upgrade/breaking-change, DR"}
+   ]},
+  {"type":"callout","variant":"warning","label":"Sık atlanan","body":"En tehlikeli iki nokta: (1) test-first'ün atlanması (akış 'geliştir' deyip testi sonraya bırakıyor); (2) sessiz runtime hatası (çalışıyor ama yanlış) — bunlar gate'siz fark edilmez. Detay {{ref:cc-obs-deep}}, {{ref:edu-u17}}, karar {{ref:adr-0024}}."}
+ ]
+}

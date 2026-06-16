@@ -10,10 +10,10 @@ export const CATEGORIES = [
   { id: "crosscut", label: "Çapraz-Kesen", icon: "ph-arrows-out", order: 9, section: "REFERANS" },
   { id: "dx", label: "DX & Services", icon: "ph-puzzle-piece", order: 10, section: "REFERANS" },
   { id: "build", label: "Build & Deploy", icon: "ph-flag-banner", order: 7, section: "İNŞA SIRASI" },
-  { id: "backend", label: "Backend Tech-Stack", icon: "ph-database", order: 2, section: "İNŞA SIRASI" },
-  { id: "frontend", label: "Frontend Tech-Stack", icon: "ph-device-mobile", order: 11, section: "REFERANS" },
-  { id: "sus", label: "Sürdürülebilirlik", icon: "ph-infinity", order: 12, section: "REFERANS" },
-  { id: "kararlar", label: "Kararlar (ADR)", icon: "ph-gavel", order: 13, section: "REFERANS" },
+  { id: "backend", label: "Backend Tech-Stack", icon: "ph-database", order: 11, section: "REFERANS" },
+  { id: "frontend", label: "Frontend Tech-Stack", icon: "ph-device-mobile", order: 12, section: "REFERANS" },
+  { id: "sus", label: "Sürdürülebilirlik", icon: "ph-infinity", order: 13, section: "REFERANS" },
+  { id: "kararlar", label: "Kararlar (ADR)", icon: "ph-gavel", order: 14, section: "REFERANS" },
 ];
 
 // Dosya prefix → kategori (07A §2; istisnalar tek tabloda)

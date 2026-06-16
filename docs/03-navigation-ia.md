@@ -16,15 +16,16 @@ Bu doküman, iki seviyeli navigasyonun bilgi mimarisini ve URL/ID sözleşmeleri
 | 7 | `crosscut` | Çapraz-Kesen | `ph-arrows-out` | `cc-*`, `crosscut-*` | 17 |
 | 8 | `dx` | DX & Services | `ph-puzzle-piece` | `dx-*`, services | 4 |
 | 9 | `build` | Build & Deploy | `ph-flag-banner` | build, deploy, file-layout, product-mapping, anti-patterns | 5 |
-| 10 | `backend` | Backend Tech-Stack | `ph-database` | `be-*` | 3 |
-| 10 | `frontend` | Frontend Tech-Stack | `ph-device-mobile` | `fe-*` | 9 |
-| 12 | `sus` | Sürdürülebilirlik | `ph-infinity` | `sus-*` | 12 |
+| 11 | `backend` | Backend Tech-Stack | `ph-database` | `be-*` | 3 |
+| 12 | `frontend` | Frontend Tech-Stack | `ph-device-mobile` | `fe-*` | 9 |
+| 13 | `sus` | Sürdürülebilirlik | `ph-infinity` | `sus-*` | 12 |
+| 14 | `kararlar` | Kararlar (ADR) | `ph-gavel` | `adr-*` | — |
 
 Kategori ataması elle yapılmaz; migration script'i dosya prefix'inden üretir ve istisnalar tek bir mapping tablosunda tutulur. Engine, kategori sayısına ve adına bağımlı kod içermez — `menu_hiyerarsi_audit.md` madde 4.2'deki "tamamen veri-tabanlı" ilkesi korunur.
 
 ### Rail 1 Bölümleri
 
-Rail 1 düz liste değildir; kategoriler üç bölüm başlığı altında akar (bilişsel yük 13 maddeden 3 kümeye iner): **BAŞLANGIÇ** (Eğitim Yolu, Genel Harita) · **İNŞA SIRASI** (Backend Tech-Stack → Kernel → Scale → Layer 1 → Stack → Build & Deploy — kararlar inşanın girdisidir, bu yüzden bölümün başındadır; Faz 0 Kernel'in ilk maddesi, Faz 6-7 Build & Deploy altındadır) · **REFERANS** (Ürün Modülleri, Çapraz-Kesen, Frontend Tech-Stack, DX & Services, Sürdürülebilirlik). Bölüm bilgisi `navigation.json`'da kategori-başına `section` alanıdır; sırası kategori `order`'ından gelir ve bölümler bitişiktir. Faz 0 (Atomik Tipler) Kernel kategorisinin ilk maddesidir (eski `genel/` linki stem-fallback ile çalışır); Eğitim Yolu'nun ikinci maddesi `edu-faz-haritasi` üniteleri Faz 0-7'ye eşler (vibecoding hazırlık eşiği). `board-rebuilt` ARŞİV rozetlidir.
+Rail 1 düz liste değildir; kategoriler üç bölüm başlığı altında akar (bilişsel yük 14 maddeden 3 kümeye iner): **BAŞLANGIÇ** (Eğitim Yolu, Genel Harita) · **İNŞA SIRASI** (Kernel → Scale → Layer 1 → Stack → Build & Deploy — saf inşa anlatısıdır; Faz 0 Kernel'in ilk maddesi, Faz 6-7 Build & Deploy altındadır) · **REFERANS** (Ürün Modülleri, Çapraz-Kesen, DX & Services, Backend Tech-Stack, Frontend Tech-Stack, Sürdürülebilirlik, Kararlar — Backend ve Frontend Tech-Stack burada bitişiktir). Bölüm bilgisi `navigation.json`'da kategori-başına `section` alanıdır; sırası kategori `order`'ından gelir ve bölümler bitişiktir. Faz 0 (Atomik Tipler) Kernel kategorisinin ilk maddesidir (eski `genel/` linki stem-fallback ile çalışır); Eğitim Yolu'nun ikinci maddesi `edu-faz-haritasi` üniteleri Faz 0-7'ye eşler (vibecoding hazırlık eşiği). `board-rebuilt` ARŞİV rozetlidir.
 
 ## 2. Rail 2 — Accordion Grupları
 
@@ -72,3 +73,13 @@ navigation.json
 ```
 
 Bu yapının Zod şeması `06-uretim-01-schema.md`'de tanımlanır; navigation'da referans verilen her `pageId`'nin `pages.json`'da var olması CI'da doğrulanır (kırık referans build'i kırar).
+
+## 8. IA Prensipleri (ADR-0023)
+
+Rail 1 tek birincil eksende kümelenir: **yolculuk/inşa** (Öğren → Çekirdek → Üret → İşlet). Diğer eksenler — tech-stack, domain, olgunluk — **facet** (filtre) olarak ele alınır, ayrı top-level kategori değil. Bu, Rail 1'in ~7 ayrı eksene dağılması sorununu giderir.
+
+**Tech-stack simetrisi (Faz 1, yapıldı):** Backend ve Frontend Tech-Stack artık REFERANS bölümünde bitişiktir; İNŞA SIRASI saf inşa anlatısıdır (Kernel → Scale → Layer 1 → SaaS Products → Build & Deploy).
+
+**İlişki ve hiyerarşi (Faz 2, kod):** Düz `related[]` yerine tipli kenarlar (belongs-to / uses / extends); sayfa içi "Ait olduğu Module · Kullanan App" bağlam kutusu; granülerlik breadcrumb (App › Module › ArcheType).
+
+**Prefix-coupling (Faz 3, migrate):** Kategori dosya-prefix'inden üretiliyor; bu teknik borçtur. Sayfa kendi `categoryId`/granularity'sini taşımalı; ad değişimi IA'yı kırmamalı, kategori değişiminde slug 301 ile korunmalı. Ayrıca "yeni sayfa nereye girer" yönetişim kuralı tanımlanmalı.

@@ -1,0 +1,29 @@
+{
+ "id": "adr-0023",
+ "title": "ADR-0023: Navigasyon/IA Prensipleri — Tek Birincil Eksen + Facet",
+ "subtitle": "Rail 1 çoklu-eksen karışıklığı yerine tek birincil eksen (yolculuk/inşa) + facet'ler; granülerlik breadcrumb ve tipli ilişki aşamalı; prefix-coupling teknik borç.",
+ "cluster": "kararlar",
+ "order": 23,
+ "icon": "ph-gavel",
+ "granularity": "kaya",
+ "state": "wip",
+ "badge": "KARAR",
+ "tags": ["adr","ia","navigasyon","kümeleme","hiyerarşi"],
+ "related": ["adr-0008","k-granulerlik","k-terminoloji"],
+ "enrich": {"info": "Navigasyon bilgi mimarisi (IA) için bağlayıcı prensip kararı; mevcut çoklu-eksen Rail 1 sorununu adresler."},
+ "blocks": [
+  {"type":"kv-row","pairs":[
+    {"key":"Durum","value":"Kabul (wip) — aşamalı uygulanır"},
+    {"key":"Bağlam","value":"Rail 1 tek düzeyde ~7 eksen karıştırıyor (pedagoji, tech-stack, mimari katman, ürün, süreç, kalite, karar); granülerlik modellenmiyor; kategori dosya-prefix'ine bağlı"},
+    {"key":"Karar","value":"Tek BİRİNCİL eksen = yolculuk/inşa (Öğren→Çekirdek→Üret→İşlet); diğer eksenler (tech-stack, domain, olgunluk) FACET; granülerlik (App→Module→ArcheType) ikincil breadcrumb"},
+    {"key":"Sonuç","value":"Tech-stack simetrik (backend+frontend bitişik); ilişki düz liste yerine tipli kenar (belongs-to/uses/extends); prefix-coupling açık categoryId metadata'sına gevşetilir"}
+   ]},
+  {"type":"heading","level":2,"text":"Uygulama aşamaları"},
+  {"type":"steps","title":"Aşamalı uygulama","items":[
+    {"title":"Faz 1 (yapıldı)","body":"Tech-stack simetrisi: backend+frontend REFERANS'ta bitişik 'Tech-Stack'; İNŞA SIRASI saf build (kernel→scale→layer1→stack→build). Bu ADR + 03-navigation-ia güncellendi."},
+    {"title":"Faz 2 (kod)","body":"Tipli ilişki şeması (related → {type,target}) + sayfa içi 'Ait olduğu Module / Kullanan App' bağlam kutusu + granülerlik breadcrumb bileşeni."},
+    {"title":"Faz 3 (migrate)","body":"Prefix-coupling gevşetme: sayfa kendi categoryId/granularity'sini taşır; ad değişimi IA'yı kırmaz; kategori değişiminde slug 301 (l1-redirect)."}
+   ]},
+  {"type":"callout","variant":"warning","label":"Risk / borç","body":"Faz 2-3 src/engine/components/schemas + migrate dokunur, kademeli ve testli yapılmalı (deterministik gate + a11y + slug kararlılığı). 'Yeni sayfa nereye girer' yönetişim kuralı eklenmeli, yoksa eksen kayması büyür."}
+ ]
+}
