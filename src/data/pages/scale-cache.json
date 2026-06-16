@@ -39,7 +39,8 @@
   "related": [
    "page-scale-counter",
    "page-scale-projections",
-   "page-crosscut-observability"
+   "page-crosscut-observability",
+   "page-adr-0022-archetype-storage"
   ],
   "blocks": [
    {
@@ -288,13 +289,83 @@
     ]
    },
    {
+    "id": "block-scale-cache-h-yazma-sonrasi-kapsamli-invalidation",
+    "type": "heading",
+    "level": 2,
+    "text": "Yazma sonrası kapsamlı invalidation"
+   },
+   {
+    "id": "block-scale-cache-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bir tablo/kayıt güncellendiğinde YALNIZ ilgili tablo/anahtarın cache'i invalidate edilir — tüm cache değil. Geniş 'flush all' anti-pattern'dir; gereksiz cache-miss fırtınası ve gecikme yaratır. ArcheType hibrit depolamada ("
+     },
+     {
+      "type": "ref",
+      "text": "k-archetype-storage",
+      "refId": "k-archetype-storage"
+     },
+     {
+      "type": "text",
+      "text": ") JSONB satırı güncellenince yalnız o varlık + ona bağlı projeksiyon anahtarları düşürülür."
+     }
+    ]
+   },
+   {
+    "id": "block-scale-cache-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ölçek",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Redis tek düğüm → yük artınca Redis Cluster (shard + replica)"
+       }
+      ]
+     },
+     {
+      "term": "Invalidation kuralı",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tablo/kayıt yazımı → yalnız ilgili anahtar(lar) düşer; bağımlı projeksiyon anahtarları haritalanır"
+       }
+      ]
+     },
+     {
+      "term": "Tutarlılık",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Write-through veya write-behind; stale okuma penceresi audit'li; kritik yolda read-after-write"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-scale-cache-co-3",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Anti-pattern",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Her yazımda tüm cache'i temizlemek (flush all) YASAK gibi davranılmalı; cache-stampede riski. Anahtar bazlı, bağımlılık-haritalı invalidation kullan. Cache, doğruluk kaynağı değildir; kaynak Postgres."
+     }
+    ]
+   },
+   {
     "id": "block-scale-cache-h-derinlemesine",
     "type": "heading",
     "level": 2,
     "text": "Derinlemesine"
    },
    {
-    "id": "block-scale-cache-p-2",
+    "id": "block-scale-cache-p-3",
     "type": "paragraph",
     "segments": [
      {
@@ -367,7 +438,7 @@
     ]
    },
    {
-    "id": "block-scale-cache-p-3",
+    "id": "block-scale-cache-p-4",
     "type": "paragraph",
     "segments": [
      {
@@ -397,7 +468,7 @@
     ]
    },
    {
-    "id": "block-scale-cache-p-4",
+    "id": "block-scale-cache-p-5",
     "type": "paragraph",
     "segments": [
      {

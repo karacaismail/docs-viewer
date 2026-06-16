@@ -128,6 +128,38 @@
           "-"
         ]
       ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Yazma sonrası kapsamlı invalidation"
+    },
+    {
+      "type": "paragraph",
+      "text": "Bir tablo/kayıt güncellendiğinde YALNIZ ilgili tablo/anahtarın cache'i invalidate edilir — tüm cache değil. Geniş 'flush all' anti-pattern'dir; gereksiz cache-miss fırtınası ve gecikme yaratır. ArcheType hibrit depolamada ({{ref:k-archetype-storage}}) JSONB satırı güncellenince yalnız o varlık + ona bağlı projeksiyon anahtarları düşürülür."
+    },
+    {
+      "type": "kv-row",
+      "pairs": [
+        {
+          "key": "Ölçek",
+          "value": "Redis tek düğüm → yük artınca Redis Cluster (shard + replica)"
+        },
+        {
+          "key": "Invalidation kuralı",
+          "value": "Tablo/kayıt yazımı → yalnız ilgili anahtar(lar) düşer; bağımlı projeksiyon anahtarları haritalanır"
+        },
+        {
+          "key": "Tutarlılık",
+          "value": "Write-through veya write-behind; stale okuma penceresi audit'li; kritik yolda read-after-write"
+        }
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "warning",
+      "label": "Anti-pattern",
+      "body": "Her yazımda tüm cache'i temizlemek (flush all) YASAK gibi davranılmalı; cache-stampede riski. Anahtar bazlı, bağımlılık-haritalı invalidation kullan. Cache, doğruluk kaynağı değildir; kaynak Postgres."
     }
   ],
   "related": [

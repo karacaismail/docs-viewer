@@ -92,19 +92,19 @@
       "type": "callout",
       "variant": "critical",
       "label": "Tek tablo + type switching YASAK",
-      "body": "`if (type == 'invoice') doA else if (type == 'contract') doB` anti-pattern. Bu projede YAPILMAZ. Doğru pattern: **ArcheType engine tablo-per-tip generate eder** + **davranış kuralı varsa policy modül Strategy** + **sadece etiketse value object enum**."
+      "body": "`if (type == 'invoice') doA else if (type == 'contract') doB` anti-pattern. Bu projede YAPILMAZ. Doğru pattern: **ArcheType engine VARSAYILAN olarak paylaşılan şema + JSONB'ye yazar (tablo-per-tip değil); yalnız yüksek-hacimli ArcheType opt-in fiziksel tabloya terfi eder** + **davranış kuralı varsa policy modül Strategy** + **sadece etiketse value object enum**. Tip ayrımı runtime metadata/Strategy ile yapılır, if/else type-switching YASAK."
     },
     {
       "type": "callout",
       "variant": "info",
       "label": "Klasik DDD 3 yaklaşımı — meta-framework karşılığı",
-      "body": "DDD'nin 3 doğru yaklaşımı bu projede **runtime metadata olarak** yaşar:\n\n1. **Ayrı aggregate** (Invoice, Contract ayrı) → **ArcheType tablo-per-tip generation**\n2. **Strategy pattern** (DocumentPolicy) → **Policy modül metadata'dan yüklenir**\n3. **Value object** (DocumentType) → **DocCategory enum**\n\nÜçü birlikte yaşar. Her durumda doğru pattern uygulanır."
+      "body": "DDD'nin 3 doğru yaklaşımı bu projede **runtime metadata olarak** yaşar:\n\n1. **Ayrı aggregate** (Invoice, Contract ayrı) → **ArcheType paylaşılan-şema+JSONB (opt-in tablo terfisi)**\n2. **Strategy pattern** (DocumentPolicy) → **Policy modül metadata'dan yüklenir**\n3. **Value object** (DocumentType) → **DocCategory enum**\n\nÜçü birlikte yaşar. Her durumda doğru pattern uygulanır."
     },
     {
       "type": "callout",
       "variant": "tip",
       "label": "Vibecoding ipucu",
-      "body": "AI ajan'a: *'Yeni ArcheType tanımlanırsa: tabXxx tablosu DDL ile generate edilir, controller/policy class auto-discover (Strategy), CRUD API + admin form auto-render. if/else type-switching YASAK. Tipe göre davranış varsa DocPolicy interface implementasyonu (e.g. InvoicePolicy implements DocPolicy).'*"
+      "body": "AI ajan'a: *'Yeni ArcheType tanımlanırsa: VARSAYILAN olarak paylaşılan şema + JSONB alan kullan, otomatik tabXxx tablosu YARATMA (dinamik DDL yok); controller/policy class auto-discover (Strategy), CRUD API + admin form auto-render. if/else type-switching YASAK. Tipe göre davranış varsa DocPolicy interface implementasyonu (e.g. InvoicePolicy implements DocPolicy). Yalnız yüksek-hacimli ArcheType için açık opt-in fiziksel tabloya terfi.'*"
     },
     {
       "type": "heading",
@@ -122,7 +122,7 @@
         [
           "Farklı kurallar + farklı yaşam",
           "Ayrı aggregate",
-          "ArcheType tablo-per-tip"
+          "ArcheType paylaşılan-şema+JSONB (opt-in tablo terfisi)"
         ],
         [
           "Aynı kavram + tipe göre davranış",
@@ -144,6 +144,53 @@
     {
       "type": "paragraph",
       "text": "İleri bağ: bildirimsel ArcheType yaklaşımının AI ile üretim tarafı — tipli aksiyon yüzeyi ({{ref:sus-actions}}), ChangeSet sözleşmesi ({{ref:k-sozlesme}}) ve konuşmalı üretim ({{ref:adr-0018}}) — bu birimin pratikteki devamıdır."
+    },
+    {
+      "type": "heading",
+      "level": 4,
+      "text": "Neden tablo-per-tip terk edildi (eleştiri)"
+    },
+    {
+      "type": "table",
+      "caption": "Tablo-per-tip sorunu → hibrit çözüm",
+      "headers": [
+        "Sorun",
+        "Hibrit çözüm"
+      ],
+      "rows": [
+        [
+          "DB şişmesi + yük altında performans",
+          "Sabit az sayıda paylaşılan tablo; değişken alanlar JSONB (GIN index)"
+        ],
+        [
+          "Kompleks işlemde aşırı join",
+          "Çekirdek ilişkiler FK ile dikkatli kurulur; tip-tablosu patlaması yok"
+        ],
+        [
+          "Her tabloya sürekli index",
+          "Index sabit şema + JSONB GIN'de yoğunlaşır, yüzlerce tabloya dağılmaz"
+        ],
+        [
+          "Ortamlar arası (prod/dev/beta) migrate zorluğu",
+          "Şema sabit; ArcheType değişikliği veri/metadata, DDL değil → migrate basitleşir"
+        ],
+        [
+          "Müşteri tablo yaratınca yatay büyüme (DB yorulur)",
+          "Müşteri/son-kullanıcı tablo YARATAMAZ; JSONB ile çözülür, yatay tablo büyümesi olmaz"
+        ]
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "critical",
+      "label": "if/else neden YASAK?",
+      "body": "Tip üzerinde if/else dispatch (`if type==invoice ... else if contract ...`) her yeni tipte tüm switch'lere dokunmayı gerektirir → open/closed ihlali, uzun vadede kombinatoryel KAOS. DDD'ye 'convert' çözümü tip-başına ayrı aggregate/sınıf demektir; bu da tip/tablo patlamasını (terk ettiğimiz tablo-per-tip sorununu) geri getirir. Doğru orta yol: davranış runtime metadata/Strategy-Policy olarak yaşar (DDD Strategy pattern'i, sınıf-per-tip değil)."
+    },
+    {
+      "type": "callout",
+      "variant": "tip",
+      "label": "Vibecoding ipucu (güncel)",
+      "body": "AI'a: 'Yeni ArcheType → paylaşılan şema + JSONB alan; otomatik tabXxx tablosu YARATMA. Tip davranışı policy/Strategy auto-discover. if/else type-switching YASAK. Yalnız yüksek-hacimli ArcheType için açık opt-in fiziksel tablo.' Detay {{ref:k-archetype-storage}}, {{ref:adr-0022}}."
     }
   ],
   "related": [

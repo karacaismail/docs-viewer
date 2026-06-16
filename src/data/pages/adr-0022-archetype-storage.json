@@ -1,0 +1,216 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-adr-0022-archetype-storage",
+  "sourceId": "adr-0022",
+  "slug": "kararlar/adr-0022-archetype-storage",
+  "title": "ADR-0022: ArcheType Depolama — Tablo-per-tip Yerine Hibrit",
+  "summary": "Tablo-per-tip generation kararı geri çevrildi. Yeni karar: paylaşılan şema + JSONB varsayılan, yüksek-hacimli ArcheType için opt-in fiziksel tablo.",
+  "categoryId": "kararlar",
+  "tags": [
+   "adr",
+   "archetype",
+   "depolama",
+   "jsonb",
+   "hibrit"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "wip",
+   "badge": "KARAR"
+  },
+  "owner": "Mimari karar sahibi",
+  "reviewer": "Mimari karar kurulu",
+  "maturity": "taslak",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": [],
+  "nonGoals": [
+   "Bu sayfa tek başına üretim onayı veya uzman incelemesi yerine geçmez."
+  ],
+  "failureModes": [
+   "Tanım, ölçülebilir kabul testi ve sorumlu reviewer olmadan doğrudan üretime uygulanır."
+  ],
+  "acceptanceCriteria": [
+   "Sahip ve reviewer atanmıştır; ilgili otomatik kapılar yeşildir; açık varsayımlar kayıtlıdır."
+  ],
+  "operationalImpact": "Bağlayıcı mimari kararları ve sonraki uygulama adımlarını etkiler.",
+  "externalReviewRequired": false,
+  "related": [
+   "page-k-archetype-storage",
+   "page-kernel-schema",
+   "page-edu-u25-doctype-vs-ddd",
+   "page-adr-0007-terminoloji",
+   "page-scale-cache"
+  ],
+  "blocks": [
+   {
+    "id": "block-adr-0022-archetype-storage-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "ADR-0022: ArcheType depolamasında tablo-per-tip (Frappe deseni) yerine hibrit model kararı."
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0022-archetype-storage-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Durum",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kabul (wip) — önceki tablo-per-tip kararını ("
+       },
+       {
+        "type": "ref",
+        "text": "edu-u25",
+        "refId": "edu-u25"
+       },
+       {
+        "type": "text",
+        "text": ") geri çevirir"
+       }
+      ]
+     },
+     {
+      "term": "Bağlam",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tablo-per-tip: DB şişmesi, aşırı join, sürekli index, ortamlar arası migrate zorluğu, müşteri kaynaklı yatay tablo büyümesi (DB yorulur)"
+       }
+      ]
+     },
+     {
+      "term": "Karar",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Hibrit: VARSAYILAN paylaşılan şema + JSONB + FK; OPT-IN fiziksel tablo yalnız yüksek-hacimli ArcheType için"
+       }
+      ]
+     },
+     {
+      "term": "Sonuç",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Dinamik DDL yok; müşteri tablo yaratamaz; tip dispatch runtime metadata/Strategy (if-else yasak); migrate veri/metadata seviyesinde"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0022-archetype-storage-h-secenekler-ve-gerekce",
+    "type": "heading",
+    "level": 2,
+    "text": "Seçenekler ve gerekçe"
+   },
+   {
+    "id": "block-adr-0022-archetype-storage-table",
+    "type": "table",
+    "caption": "Değerlendirilen seçenekler",
+    "columns": [
+     "Seçenek",
+     "Neden seçilmedi/seçildi"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Tablo-per-tip (eski)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Reddedildi: DB şişmesi + yatay büyüme + migrate zorluğu"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "EAV (tam dinamik)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Reddedildi: kompleks sorguda ağır join/performans, raporlama zor"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Hibrit (seçildi)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Paylaşılan şema+JSONB esnekliği + opt-in tablo ile yüksek-hacim performansı; dengeli"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "if/else type-switch"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "YASAK: open/closed ihlali, kombinatoryel kaos; dispatch metadata/Strategy ile"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-adr-0022-archetype-storage-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Trade-off",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Hibrit iki kod yolu getirir (paylaşılan + opt-in tablo); terfi kriteri net ve izlenir olmalı. JSONB raporlamada projection/materialized view gerektirebilir ("
+     },
+     {
+      "type": "ref",
+      "text": "scale-projections",
+      "refId": "scale-projections"
+     },
+     {
+      "type": "text",
+      "text": "). Detay implementasyon "
+     },
+     {
+      "type": "ref",
+      "text": "k-archetype-storage",
+      "refId": "k-archetype-storage"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   }
+  ]
+ }
+}

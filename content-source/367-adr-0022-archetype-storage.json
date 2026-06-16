@@ -1,0 +1,31 @@
+{
+ "id": "adr-0022",
+ "title": "ADR-0022: ArcheType Depolama — Tablo-per-tip Yerine Hibrit",
+ "subtitle": "Tablo-per-tip generation kararı geri çevrildi. Yeni karar: paylaşılan şema + JSONB varsayılan, yüksek-hacimli ArcheType için opt-in fiziksel tablo.",
+ "cluster": "kararlar",
+ "order": 22,
+ "icon": "ph-gavel",
+ "granularity": "kaya",
+ "state": "wip",
+ "badge": "KARAR",
+ "tags": ["adr","archetype","depolama","jsonb","hibrit"],
+ "related": ["k-archetype-storage","k-schema","edu-u25","adr-0007","scale-cache"],
+ "enrich": {"info": "ADR-0022: ArcheType depolamasında tablo-per-tip (Frappe deseni) yerine hibrit model kararı."},
+ "blocks": [
+  {"type":"kv-row","pairs":[
+    {"key":"Durum","value":"Kabul (wip) — önceki tablo-per-tip kararını ({{ref:edu-u25}}) geri çevirir"},
+    {"key":"Bağlam","value":"Tablo-per-tip: DB şişmesi, aşırı join, sürekli index, ortamlar arası migrate zorluğu, müşteri kaynaklı yatay tablo büyümesi (DB yorulur)"},
+    {"key":"Karar","value":"Hibrit: VARSAYILAN paylaşılan şema + JSONB + FK; OPT-IN fiziksel tablo yalnız yüksek-hacimli ArcheType için"},
+    {"key":"Sonuç","value":"Dinamik DDL yok; müşteri tablo yaratamaz; tip dispatch runtime metadata/Strategy (if-else yasak); migrate veri/metadata seviyesinde"}
+   ]},
+  {"type":"heading","level":2,"text":"Seçenekler ve gerekçe"},
+  {"type":"table","caption":"Değerlendirilen seçenekler","headers":["Seçenek","Neden seçilmedi/seçildi"],
+   "rows":[
+    ["Tablo-per-tip (eski)","Reddedildi: DB şişmesi + yatay büyüme + migrate zorluğu"],
+    ["EAV (tam dinamik)","Reddedildi: kompleks sorguda ağır join/performans, raporlama zor"],
+    ["Hibrit (seçildi)","Paylaşılan şema+JSONB esnekliği + opt-in tablo ile yüksek-hacim performansı; dengeli"],
+    ["if/else type-switch","YASAK: open/closed ihlali, kombinatoryel kaos; dispatch metadata/Strategy ile"]
+   ]},
+  {"type":"callout","variant":"warning","label":"Trade-off","body":"Hibrit iki kod yolu getirir (paylaşılan + opt-in tablo); terfi kriteri net ve izlenir olmalı. JSONB raporlamada projection/materialized view gerektirebilir ({{ref:scale-projections}}). Detay implementasyon {{ref:k-archetype-storage}}."}
+ ]
+}

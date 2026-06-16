@@ -382,13 +382,83 @@
     ]
    },
    {
+    "id": "block-cc-obs-deep-h-migration-sessiz-runtime-hatasi-loglama",
+    "type": "heading",
+    "level": 2,
+    "text": "Migration, sessiz runtime hatası, loglama"
+   },
+   {
+    "id": "block-cc-obs-deep-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Ortamlar arası (prod → dev/beta) veri/şema taşımada migration tool zorunludur; her adım loglanır ve geri-alınabilir olmalıdır. En kritik sınıf EXCEPTION FIRLATMAYAN runtime hatalarıdır: uygulama çalışır ama beklenen davranışı üretmez ya da kullanıcının istediği sonuç gerçekleşmez — bunlar stack-trace bırakmaz, yalnız davranışsal sinyalle (beklenen↔gerçekleşen fark) yakalanır."
+     }
+    ]
+   },
+   {
+    "id": "block-cc-obs-deep-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Migration",
+      "definition": [
+       {
+        "type": "text",
+        "text": "prod→dev/beta veri taşıma migration tool ile; her adım loglu + geri-alınabilir; determinizm testi"
+       }
+      ]
+     },
+     {
+      "term": "Sessiz runtime hatası",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Exception yok ama sonuç yanlış → beklenen-sonuç sözleşmesi (invariant/SLO) + iş-olayı doğrulaması + anomali tespiti"
+       }
+      ]
+     },
+     {
+      "term": "Loglama",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yapılandırılmış (structured) log + korelasyon ID; iş invariant ihlali WARN/ERROR; PII maskeli"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-cc-obs-deep-co-4",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Sessiz hata = en tehlikeli",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Exception fırlatan hata görünür; asıl risk 'çalışıyor ama yanlış'tır. Önlem: kritik akışlarda beklenen-çıktı invariant'ları + iş-metriği izleme (ör. dönüşüm/oluşturma sayıları), runtime'da metadata dispatch sonucunun doğrulanması ("
+     },
+     {
+      "type": "ref",
+      "text": "k-archetype-storage",
+      "refId": "k-archetype-storage"
+     },
+     {
+      "type": "text",
+      "text": "). Migration'da prod→dev kopyada anonimleştirme zorunlu."
+     }
+    ]
+   },
+   {
     "id": "block-cc-obs-deep-h-derinlemesine",
     "type": "heading",
     "level": 2,
     "text": "Derinlemesine"
    },
    {
-    "id": "block-cc-obs-deep-p-3",
+    "id": "block-cc-obs-deep-p-4",
     "type": "paragraph",
     "segments": [
      {
@@ -443,7 +513,7 @@
     ]
    },
    {
-    "id": "block-cc-obs-deep-p-4",
+    "id": "block-cc-obs-deep-p-5",
     "type": "paragraph",
     "segments": [
      {
@@ -472,7 +542,7 @@
     ]
    },
    {
-    "id": "block-cc-obs-deep-p-5",
+    "id": "block-cc-obs-deep-p-6",
     "type": "paragraph",
     "segments": [
      {
@@ -488,7 +558,7 @@
     "code": "GET /health\n{\n  status: 'ok',\n  checks: {\n    database: { status: 'ok', latency_ms: 5 },\n    redis: { status: 'ok', latency_ms: 2 },\n    stripe: { status: 'degraded', latency_ms: 800 }\n  },\n  version: '2.4.1',\n  uptime_seconds: 3600\n}"
    },
    {
-    "id": "block-cc-obs-deep-p-6",
+    "id": "block-cc-obs-deep-p-7",
     "type": "paragraph",
     "segments": [
      {

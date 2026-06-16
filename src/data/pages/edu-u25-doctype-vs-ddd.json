@@ -44,7 +44,8 @@
    "page-sus-timi",
    "page-philosophy",
    "page-edu-u04-veritabani",
-   "page-edu-u04b-veri-tasarim"
+   "page-edu-u04b-veri-tasarim",
+   "page-adr-0022-archetype-storage"
   ],
   "blocks": [
    {
@@ -132,7 +133,7 @@
      },
      {
       "type": "strong",
-      "text": "ArcheType engine tablo-per-tip generate eder"
+      "text": "ArcheType engine VARSAYILAN olarak paylaşılan şema + JSONB'ye yazar (tablo-per-tip değil); yalnız yüksek-hacimli ArcheType opt-in fiziksel tabloya terfi eder"
      },
      {
       "type": "text",
@@ -152,7 +153,7 @@
      },
      {
       "type": "text",
-      "text": "."
+      "text": ". Tip ayrımı runtime metadata/Strategy ile yapılır, if/else type-switching YASAK."
      }
     ]
    },
@@ -184,7 +185,7 @@
      },
      {
       "type": "strong",
-      "text": "ArcheType tablo-per-tip generation"
+      "text": "ArcheType paylaşılan-şema+JSONB (opt-in tablo terfisi)"
      },
      {
       "type": "text",
@@ -232,7 +233,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "AI ajan'a: *'Yeni ArcheType tanımlanırsa: tabXxx tablosu DDL ile generate edilir, controller/policy class auto-discover (Strategy), CRUD API + admin form auto-render. if/else type-switching YASAK. Tipe göre davranış varsa DocPolicy interface implementasyonu (e.g. InvoicePolicy implements DocPolicy).'*"
+      "text": "AI ajan'a: *'Yeni ArcheType tanımlanırsa: VARSAYILAN olarak paylaşılan şema + JSONB alan kullan, otomatik tabXxx tablosu YARATMA (dinamik DDL yok); controller/policy class auto-discover (Strategy), CRUD API + admin form auto-render. if/else type-switching YASAK. Tipe göre davranış varsa DocPolicy interface implementasyonu (e.g. InvoicePolicy implements DocPolicy). Yalnız yüksek-hacimli ArcheType için açık opt-in fiziksel tabloya terfi.'*"
      }
     ]
    },
@@ -267,7 +268,7 @@
       [
        {
         "type": "text",
-        "text": "ArcheType tablo-per-tip"
+        "text": "ArcheType paylaşılan-şema+JSONB (opt-in tablo terfisi)"
        }
       ]
      ],
@@ -367,6 +368,161 @@
      {
       "type": "text",
       "text": ") — bu birimin pratikteki devamıdır."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-h-neden-tablo-per-tip-terk-edildi-elestiri",
+    "type": "heading",
+    "level": 4,
+    "text": "Neden tablo-per-tip terk edildi (eleştiri)"
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-table-2",
+    "type": "table",
+    "caption": "Tablo-per-tip sorunu → hibrit çözüm",
+    "columns": [
+     "Sorun",
+     "Hibrit çözüm"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "DB şişmesi + yük altında performans"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sabit az sayıda paylaşılan tablo; değişken alanlar JSONB (GIN index)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kompleks işlemde aşırı join"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Çekirdek ilişkiler FK ile dikkatli kurulur; tip-tablosu patlaması yok"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Her tabloya sürekli index"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Index sabit şema + JSONB GIN'de yoğunlaşır, yüzlerce tabloya dağılmaz"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Ortamlar arası (prod/dev/beta) migrate zorluğu"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Şema sabit; ArcheType değişikliği veri/metadata, DDL değil → migrate basitleşir"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Müşteri tablo yaratınca yatay büyüme (DB yorulur)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Müşteri/son-kullanıcı tablo YARATAMAZ; JSONB ile çözülür, yatay tablo büyümesi olmaz"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-co-4",
+    "type": "callout",
+    "variant": "danger",
+    "title": "if/else neden YASAK?",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Tip üzerinde if/else dispatch ("
+     },
+     {
+      "type": "code",
+      "text": "if type==invoice ... else if contract ..."
+     },
+     {
+      "type": "text",
+      "text": ") her yeni tipte tüm switch'lere dokunmayı gerektirir → open/closed ihlali, uzun vadede kombinatoryel KAOS. DDD'ye 'convert' çözümü tip-başına ayrı "
+     },
+     {
+      "type": "term",
+      "text": "aggregate",
+      "termId": "term-aggregate-edu-u25-doctype-vs-ddd"
+     },
+     {
+      "type": "text",
+      "text": "/sınıf demektir; bu da tip/tablo patlamasını (terk ettiğimiz tablo-per-tip sorununu) geri getirir. Doğru orta yol: davranış runtime metadata/Strategy-Policy olarak yaşar (DDD "
+     },
+     {
+      "type": "term",
+      "text": "Strategy pattern",
+      "termId": "term-strategy-pattern-edu-u25-doctype-vs-ddd"
+     },
+     {
+      "type": "text",
+      "text": "'i, sınıf-per-tip değil)."
+     }
+    ]
+   },
+   {
+    "id": "block-edu-u25-doctype-vs-ddd-co-5",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Vibecoding ipucu (güncel)",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI'a: 'Yeni ArcheType → paylaşılan şema + JSONB alan; otomatik tabXxx tablosu YARATMA. Tip davranışı policy/Strategy auto-discover. if/else type-switching YASAK. Yalnız yüksek-hacimli ArcheType için açık opt-in fiziksel tablo.' Detay "
+     },
+     {
+      "type": "ref",
+      "text": "k-archetype-storage",
+      "refId": "k-archetype-storage"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "ref",
+      "text": "adr-0022",
+      "refId": "adr-0022"
+     },
+     {
+      "type": "text",
+      "text": "."
      }
     ]
    },
@@ -513,7 +669,7 @@
     ]
    },
    {
-    "id": "block-edu-u25-doctype-vs-ddd-table-2",
+    "id": "block-edu-u25-doctype-vs-ddd-table-3",
     "type": "table",
     "columns": [
      "Klasik DDD",
@@ -796,16 +952,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "ArcheType ≠ tek tablo + type switching. Klasik DDD'nin 3 yaklaşımı (ayrı "
-       },
-       {
-        "type": "term",
-        "text": "aggregate",
-        "termId": "term-aggregate-edu-u25-doctype-vs-ddd"
-       },
-       {
-        "type": "text",
-        "text": " / Strategy / value object) runtime metadata olarak yaşar."
+        "text": "ArcheType ≠ tek tablo + type switching. Klasik DDD'nin 3 yaklaşımı (ayrı aggregate / Strategy / value object) runtime metadata olarak yaşar."
        }
       ]
      },

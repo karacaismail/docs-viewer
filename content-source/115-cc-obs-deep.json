@@ -187,6 +187,38 @@
       "variant": "danger",
       "label": "Üç kill switch + feature flag",
       "body": "Tenant-level kill switch · AI-agent kill switch · MCP server disable. Ek: feature flag, prompt rollback, traffic reroute. Her biri tek tıkla erişilebilir ve auditlenir."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Migration, sessiz runtime hatası, loglama"
+    },
+    {
+      "type": "paragraph",
+      "text": "Ortamlar arası (prod → dev/beta) veri/şema taşımada migration tool zorunludur; her adım loglanır ve geri-alınabilir olmalıdır. En kritik sınıf EXCEPTION FIRLATMAYAN runtime hatalarıdır: uygulama çalışır ama beklenen davranışı üretmez ya da kullanıcının istediği sonuç gerçekleşmez — bunlar stack-trace bırakmaz, yalnız davranışsal sinyalle (beklenen↔gerçekleşen fark) yakalanır."
+    },
+    {
+      "type": "kv-row",
+      "pairs": [
+        {
+          "key": "Migration",
+          "value": "prod→dev/beta veri taşıma migration tool ile; her adım loglu + geri-alınabilir; determinizm testi"
+        },
+        {
+          "key": "Sessiz runtime hatası",
+          "value": "Exception yok ama sonuç yanlış → beklenen-sonuç sözleşmesi (invariant/SLO) + iş-olayı doğrulaması + anomali tespiti"
+        },
+        {
+          "key": "Loglama",
+          "value": "Yapılandırılmış (structured) log + korelasyon ID; iş invariant ihlali WARN/ERROR; PII maskeli"
+        }
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "warning",
+      "label": "Sessiz hata = en tehlikeli",
+      "body": "Exception fırlatan hata görünür; asıl risk 'çalışıyor ama yanlış'tır. Önlem: kritik akışlarda beklenen-çıktı invariant'ları + iş-metriği izleme (ör. dönüşüm/oluşturma sayıları), runtime'da metadata dispatch sonucunun doğrulanması ({{ref:k-archetype-storage}}). Migration'da prod→dev kopyada anonimleştirme zorunlu."
     }
   ],
   "related": [

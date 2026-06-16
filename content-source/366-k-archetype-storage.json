@@ -1,0 +1,44 @@
+{
+ "id": "k-archetype-storage",
+ "title": "ArcheType Depolama — Hibrit Model",
+ "subtitle": "Tablo-per-tip YOK, if-else YOK. Varsayılan: paylaşılan şema + JSONB + FK; yalnız yüksek-hacimli ArcheType opt-in fiziksel tabloya terfi eder. Dinamik DDL yok, müşteri tablo yaratamaz.",
+ "cluster": "layer0",
+ "layer": "kernel",
+ "order": 16,
+ "icon": "ph-database",
+ "granularity": "kaya",
+ "state": "wip",
+ "badge": "Kernel — Karar",
+ "tags": ["archetype","depolama","jsonb","hibrit","performans","schema"],
+ "related": ["k-schema","adr-0022","edu-u25","scale-cache","cc-obs-deep","k-terminoloji"],
+ "enrich": {"info": "Frappe tarzı tablo-per-tip deseni terk edildi; yerine hibrit: paylaşılan şema + JSONB varsayılan, opt-in fiziksel tablo istisna. Tip davranışı runtime metadata/Strategy (if-else değil)."},
+ "blocks": [
+  {"type":"callout","variant":"info","label":"Karar","body":"ArcheType verisi VARSAYILAN olarak paylaşılan çekirdek şemaya + değişken alanlar JSONB kolonuna yazılır; FK ilişkilerle bağlanır. Otomatik tabXxx tablosu YARATILMAZ; dinamik DDL yok; son müşteri tablo yaratamaz. Yüksek-hacimli/performans-kritik ArcheType açık kararla fiziksel tabloya terfi eder (opt-in)."},
+  {"type":"heading","level":2,"text":"Neden hibrit (tablo-per-tip eleştirisi)"},
+  {"type":"table","caption":"Tablo-per-tip sorunu → hibrit çözüm","headers":["Sorun","Hibrit çözüm"],
+   "rows":[
+    ["DB şişmesi + yük altında performans","Az sayıda sabit paylaşılan tablo; değişken alan JSONB (GIN index)"],
+    ["Kompleks işlemde aşırı join","FK ilişkiler dikkatli; tip-tablosu patlaması yok"],
+    ["Her tabloya sürekli index","Index sabit şema + JSONB GIN'de; yüzlerce tabloya dağılmaz"],
+    ["Ortamlar arası migrate (prod/dev/beta)","Şema sabit; ArcheType değişikliği veri/metadata (DDL değil) → migrate kolay"],
+    ["Müşteri tablo yaratınca yatay büyüme","Müşteri tablo YARATAMAZ; JSONB ile çözülür; DB'yi yoran yatay tablo büyümesi yok"]
+   ]},
+  {"type":"heading","level":2,"text":"Model + sınır"},
+  {"type":"kv-row","pairs":[
+    {"key":"Varsayılan","value":"Paylaşılan şema + JSONB (değişken/özel alan) + FK; metadata-driven"},
+    {"key":"Opt-in terfi","value":"Yüksek hacim → açık kararla fiziksel tablo; izlenir, varsayılan değil"},
+    {"key":"Dispatch","value":"Tip davranışı runtime metadata/Strategy-Policy; if/else type-switching YASAK"},
+    {"key":"Index/Cache","value":"Sabit kolon B-tree, JSONB GIN; tablo güncellenince yalnız ilgili anahtar cache invalidate ({{ref:scale-cache}})"}
+   ]},
+  {"type":"heading","level":2,"text":"Geliştirme planı — test-first"},
+  {"type":"steps","title":"Önce testler (kırmızı) → tanım → uygulama","items":[
+    {"title":"1 · Testler ÖNCE","body":"Kabul: (a) yeni ArcheType DDL/tablo YARATMAZ (şema değişmez); (b) JSONB alan GIN index ile sorgulanır, plan seq-scan değil; (c) opt-in terfi yalnız açık bayrakla; (d) tip dispatch metadata ile, kodda if/else type-switch yok; (e) tenant izolasyonu (RLS) JSONB satırlarda da geçerli."},
+    {"title":"2 · Şema + metadata","body":"Paylaşılan tablolar + JSONB kolon + ArcheType metadata kaydı (alan tanımları); FK ilişki haritası."},
+    {"title":"3 · Dispatch","body":"Strategy/Policy auto-discover; davranış metadata'dan çözülür."},
+    {"title":"4 · Opt-in terfi yolu","body":"Yüksek-hacim ArcheType → fiziksel tablo migrasyonu + veri taşıma + geri-alma planı."},
+    {"title":"5 · Kabul kapısı","body":"Performans testi (JSONB GIN plan), tenant-izolasyon testi, migrate determinizmi + PostgreSQL-SRE reviewer."}
+   ]},
+  {"type":"callout","variant":"warning","label":"Riskler","body":"JSONB aşırı kullanımı şemasız kaosa kayabilir → ortak alanlar sabit kolonda, yalnız değişken alan JSONB. Opt-in terfi iki kod yolu yaratır → terfi kriteri net + izlenir. Raporlama JSONB'de zor olabilir → materialized view/projection ({{ref:scale-projections}})."},
+  {"type":"paragraph","text":"Karar kaydı {{ref:adr-0022}}; şema bağlamı {{ref:k-schema}}; eski tablo-per-tip tartışması {{ref:edu-u25}}; cache {{ref:scale-cache}}."}
+ ]
+}

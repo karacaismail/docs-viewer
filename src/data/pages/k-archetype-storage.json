@@ -1,0 +1,364 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-k-archetype-storage",
+  "sourceId": "k-archetype-storage",
+  "slug": "kernel/k-archetype-storage",
+  "title": "ArcheType Depolama — Hibrit Model",
+  "summary": "Tablo-per-tip YOK, if-else YOK. Varsayılan: paylaşılan şema + JSONB + FK; yalnız yüksek-hacimli ArcheType opt-in fiziksel tabloya terfi eder. Dinamik DDL yok, müşteri tablo yaratamaz.",
+  "categoryId": "kernel",
+  "tags": [
+   "archetype",
+   "depolama",
+   "jsonb",
+   "hibrit",
+   "performans",
+   "schema"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "wip",
+   "badge": "Kernel — Karar"
+  },
+  "owner": "Kernel mimarisi sahibi",
+  "reviewer": "Senior platform ve güvenlik reviewer",
+  "maturity": "taslak",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": [],
+  "nonGoals": [
+   "Bu sayfa tek başına üretim onayı veya uzman incelemesi yerine geçmez."
+  ],
+  "failureModes": [
+   "Tanım, ölçülebilir kabul testi ve sorumlu reviewer olmadan doğrudan üretime uygulanır."
+  ],
+  "acceptanceCriteria": [
+   "Sahip ve reviewer atanmıştır; ilgili otomatik kapılar yeşildir; açık varsayımlar kayıtlıdır."
+  ],
+  "operationalImpact": "Tüm app'lerin güvenlik, izolasyon ve geriye uyumluluk temelini etkiler.",
+  "externalReviewRequired": true,
+  "related": [
+   "page-kernel-schema",
+   "page-adr-0022-archetype-storage",
+   "page-edu-u25-doctype-vs-ddd",
+   "page-scale-cache",
+   "page-cc-obs-deep",
+   "page-k-terminoloji"
+  ],
+  "blocks": [
+   {
+    "id": "block-k-archetype-storage-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Frappe tarzı tablo-per-tip deseni terk edildi; yerine hibrit: paylaşılan şema + JSONB varsayılan, opt-in fiziksel tablo istisna. Tip davranışı runtime metadata/Strategy (if-else değil)."
+     }
+    ]
+   },
+   {
+    "id": "block-k-archetype-storage-co",
+    "type": "callout",
+    "variant": "info",
+    "title": "Karar",
+    "segments": [
+     {
+      "type": "text",
+      "text": "ArcheType verisi VARSAYILAN olarak paylaşılan çekirdek şemaya + değişken alanlar JSONB kolonuna yazılır; FK ilişkilerle bağlanır. Otomatik tabXxx tablosu YARATILMAZ; dinamik DDL yok; son müşteri tablo yaratamaz. Yüksek-hacimli/performans-kritik ArcheType açık kararla fiziksel tabloya terfi eder (opt-in)."
+     }
+    ]
+   },
+   {
+    "id": "block-k-archetype-storage-h-neden-hibrit-tablo-per-tip-elestirisi",
+    "type": "heading",
+    "level": 2,
+    "text": "Neden hibrit (tablo-per-tip eleştirisi)"
+   },
+   {
+    "id": "block-k-archetype-storage-table",
+    "type": "table",
+    "caption": "Tablo-per-tip sorunu → hibrit çözüm",
+    "columns": [
+     "Sorun",
+     "Hibrit çözüm"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "DB şişmesi + yük altında performans"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Az sayıda sabit paylaşılan tablo; değişken alan JSONB (GIN index)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kompleks işlemde aşırı join"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "FK ilişkiler dikkatli; tip-tablosu patlaması yok"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Her tabloya sürekli index"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Index sabit şema + JSONB GIN'de; yüzlerce tabloya dağılmaz"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Ortamlar arası migrate (prod/dev/beta)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Şema sabit; ArcheType değişikliği veri/metadata (DDL değil) → migrate kolay"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Müşteri tablo yaratınca yatay büyüme"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Müşteri tablo YARATAMAZ; JSONB ile çözülür; DB'yi yoran yatay tablo büyümesi yok"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-k-archetype-storage-h-model-sinir",
+    "type": "heading",
+    "level": 2,
+    "text": "Model + sınır"
+   },
+   {
+    "id": "block-k-archetype-storage-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Varsayılan",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Paylaşılan şema + JSONB (değişken/özel alan) + FK; metadata-driven"
+       }
+      ]
+     },
+     {
+      "term": "Opt-in terfi",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yüksek hacim → açık kararla fiziksel tablo; izlenir, varsayılan değil"
+       }
+      ]
+     },
+     {
+      "term": "Dispatch",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tip davranışı runtime metadata/Strategy-Policy; if/else type-switching YASAK"
+       }
+      ]
+     },
+     {
+      "term": "Index/Cache",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sabit kolon B-tree, JSONB GIN; tablo güncellenince yalnız ilgili anahtar cache invalidate ("
+       },
+       {
+        "type": "ref",
+        "text": "scale-cache",
+        "refId": "scale-cache"
+       },
+       {
+        "type": "text",
+        "text": ")"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-k-archetype-storage-h-gelistirme-plani-test-first",
+    "type": "heading",
+    "level": 2,
+    "text": "Geliştirme planı — test-first"
+   },
+   {
+    "id": "block-k-archetype-storage-h-once-testler-kirmizi-tanim-uygulama",
+    "type": "heading",
+    "level": 3,
+    "text": "Önce testler (kırmızı) → tanım → uygulama"
+   },
+   {
+    "id": "block-k-archetype-storage-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "1 · Testler ÖNCE",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Kabul: (a) yeni ArcheType DDL/tablo YARATMAZ (şema değişmez); (b) JSONB alan GIN index ile sorgulanır, plan seq-scan değil; (c) opt-in terfi yalnız açık bayrakla; (d) tip dispatch metadata ile, kodda if/else type-switch yok; (e) tenant izolasyonu (RLS) JSONB satırlarda da geçerli."
+       }
+      ]
+     },
+     {
+      "title": "2 · Şema + metadata",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Paylaşılan tablolar + JSONB kolon + ArcheType metadata kaydı (alan tanımları); FK ilişki haritası."
+       }
+      ]
+     },
+     {
+      "title": "3 · Dispatch",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Strategy/Policy auto-discover; davranış metadata'dan çözülür."
+       }
+      ]
+     },
+     {
+      "title": "4 · Opt-in terfi yolu",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Yüksek-hacim ArcheType → fiziksel tablo migrasyonu + veri taşıma + geri-alma planı."
+       }
+      ]
+     },
+     {
+      "title": "5 · Kabul kapısı",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Performans testi (JSONB GIN plan), tenant-izolasyon testi, migrate determinizmi + PostgreSQL-SRE reviewer."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-k-archetype-storage-co-2",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Riskler",
+    "segments": [
+     {
+      "type": "text",
+      "text": "JSONB aşırı kullanımı şemasız kaosa kayabilir → ortak alanlar sabit kolonda, yalnız değişken alan JSONB. Opt-in terfi iki kod yolu yaratır → terfi kriteri net + izlenir. Raporlama JSONB'de zor olabilir → materialized view/projection ("
+     },
+     {
+      "type": "ref",
+      "text": "scale-projections",
+      "refId": "scale-projections"
+     },
+     {
+      "type": "text",
+      "text": ")."
+     }
+    ]
+   },
+   {
+    "id": "block-k-archetype-storage-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Karar kaydı "
+     },
+     {
+      "type": "ref",
+      "text": "adr-0022",
+      "refId": "adr-0022"
+     },
+     {
+      "type": "text",
+      "text": "; şema bağlamı "
+     },
+     {
+      "type": "ref",
+      "text": "k-schema",
+      "refId": "k-schema"
+     },
+     {
+      "type": "text",
+      "text": "; eski tablo-per-tip tartışması "
+     },
+     {
+      "type": "ref",
+      "text": "edu-u25",
+      "refId": "edu-u25"
+     },
+     {
+      "type": "text",
+      "text": "; cache "
+     },
+     {
+      "type": "ref",
+      "text": "scale-cache",
+      "refId": "scale-cache"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-k-archetype-storage-h-uret",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu birimi üret — kopyalanabilir prompt"
+   },
+   {
+    "id": "block-k-archetype-storage-uret-prompt",
+    "type": "codeBlock",
+    "title": "Module (Kaya) build prompt'u",
+    "language": "text",
+    "code": "SEVİYE: Module / Domain (Kaya) · birim: ArcheType Depolama — Hibrit Model\nROL: Domain mimarı. OKU: bu sayfa (k-archetype-storage), ilgili app plan ağacı, core sözleşmeleri.\nGÖREV: \"ArcheType Depolama — Hibrit Model\" module sınırını, sahip olduğu ArcheType'ları ve Contract (API kapısı) tanımını çıkar.\nKISIT: Başka module'ün tablosuna dokunma; Contract üzerinden konuş. Capability manifesti deny-by-default.\nÇIKTI: testler önce → ArcheType listesi + Contract + manifest + Alembic branch (downgrade yolu).\nKABUL (DoD): module ayrı yüklenip kaldırılabilir; capability izinleri açık; contract testi yeşil.\nÖNCE faz prompt'larını uygula (Prompt 7 Gereksinim, Prompt 8 Tasarım), sonra İnşa/Doğrulama. be-sdk sırası: testler ÖNCE (kırmızı) → yaml taslaklar → uygulama. Küçük PR + kanıt. Komşuluk kuralını ihlal etme.",
+    "copyEnabled": true
+   }
+  ]
+ }
+}
