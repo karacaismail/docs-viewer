@@ -1,8 +1,8 @@
-// Term etkileşimi — 12 §3 birebir: hover/focus tooltip + `!` kısa açıklama (Popover,
-// mobile tap dahil) + `?` uzun açıklama paneli. Görsel boyut küçük, dokunma hedefi
-// padding/margin telafisiyle ≥44px (12 §Etkileşim 3).
+// Term etkileşimi — hover/focus tooltip kısa açıklamayı taşır (alt çizgili terimin
+// kendisine bağlı); ayrı `!` kontrolü kaldırıldı (tooltip ile tekrarlıydı). `?` uzun
+// açıklama panelini açar. Görsel boyut küçük, dokunma hedefi padding/margin
+// telafisiyle ≥44px (12 §Etkileşim 3).
 
-import * as Popover from "@radix-ui/react-popover";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { resolveTerm } from "../../engine";
 import type { GlossaryTerm } from "../../schemas";
@@ -42,7 +42,7 @@ function TermTooltip({
   );
 }
 
-// Inline term segment'i — noktalı underline + !/? ikili kontrol (12 §3)
+// Inline term segment'i — noktalı underline (kısa açıklama tooltip'i terime bağlı) + `?` panel kontrolü (12 §3)
 export function GlossaryTermInline({ termId, text }: { termId: string; text: string }) {
   const ui = useUiState();
   const term = resolveTerm(termId);
@@ -52,19 +52,6 @@ export function GlossaryTermInline({ termId, text }: { termId: string; text: str
       <TermTooltip term={term} className="term">
         {text}
       </TermTooltip>
-      <Popover.Root>
-        <Popover.Trigger asChild>
-          <button type="button" className="term-ctl" aria-label={`${term.label} — kısa açıklama`}>
-            !
-          </button>
-        </Popover.Trigger>
-        <Popover.Portal>
-          <Popover.Content className="tooltip" sideOffset={6}>
-            {term.shortExplanation}
-            <Popover.Arrow style={{ fill: "var(--color-border-strong)" }} />
-          </Popover.Content>
-        </Popover.Portal>
-      </Popover.Root>
       <button
         type="button"
         className="term-ctl"
