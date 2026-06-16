@@ -1,0 +1,96 @@
+{
+ "id": "l1-redirect",
+ "title": "Redirect & URL Yönetimi",
+ "subtitle": "Layer 1 in-tree modül: 301/302/410 yöneticisi, URL alias/slug (pathauto), kanonik birleştirme, döngü/zincir denetimi. Slug değişimi link-equity kaybetmeden taşınır.",
+ "cluster": "layer1",
+ "layer": "L1",
+ "order": 16,
+ "icon": "ph-arrow-bend-up-right",
+ "granularity": "kaya",
+ "state": "wip",
+ "badge": "Layer 1 — In-tree",
+ "tags": ["redirect", "url", "slug", "pathauto", "technical-seo", "frontpages"],
+ "related": ["l1-seo", "l1-sitemap", "l1-pseo", "k-surface", "fe-cdn"],
+ "enrich": {
+  "info": "Frontpages ailesinin URL-yaşam-döngüsü ayağı. ArcheType slug'ı değiştiğinde ya da kayıt silindiğinde keşfedilebilirlik kırılmasın diye 301/410 ve alias'ı yönetir. Ayrı modül çünkü yönlendirme tablosu yazma + döngü denetimi sorumluluğu l1-seo render'ından ayrı."
+ },
+ "blocks": [
+  {
+   "type": "callout",
+   "variant": "info",
+   "label": "Ne + aktivasyon",
+   "body": "App değil module. Public Surface'i olan app'lerde aktif (iç back-office'te opsiyonel). Slug üretimi ArcheType alanlarından (pathauto deseni); slug değişiminde eski → yeni 301 otomatik kaydedilir; kayıt silindiğinde 410. Tenant-scoped, RLS."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Kapsam — modülün ürettiği"
+  },
+  {
+   "type": "table",
+   "caption": "Yetenek → nasıl → öncelik",
+   "headers": ["Yetenek", "Nasıl", "Öncelik"],
+   "rows": [
+    ["301/302 yönetimi", "Eski→yeni eşleme tablosu; slug değişiminde otomatik kayıt; manuel kural ekleme", "P0"],
+    ["410 Gone", "Silinen ArcheType kaydı için soft-404 yerine net 410; sitemap'ten düşürme bağı", "P0"],
+    ["URL alias / slug (pathauto)", "ArcheType alanlarından desenli slug üretimi; çakışma çözümü; çoklu dil slug", "P1"],
+    ["Kanonik birleştirme", "Trailing slash, case, parametre normalizasyonu → tek kanonik URL", "P1"],
+    ["Döngü/zincir denetimi", "Yönlendirme zinciri >2 ve döngü tespiti; build/CI uyarısı", "P1"]
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "ArcheType'lar + capability manifesti"
+  },
+  {
+   "type": "kv-row",
+   "pairs": [
+    {"key": "ArcheType'lar", "value": "Redirect (from/to/status/reason), UrlAlias (pattern→slug), CanonicalRule (normalizasyon politikası)"},
+    {"key": "Capability (deny-by-default)", "value": "yalnız yönlendirme tablosu + alias yazma; çalışma-zamanı yönlendirme edge'de (fe-cdn) ya da prerender manifesti; pii üretmez"},
+    {"key": "Bayraklar", "value": "tüm kurallar audit'li; from/to bitemporal (tarihçe — hangi tarihte hangi hedef); döngü denetimi deterministik kapı"}
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Geliştirme planı — test-first (be-sdk sırası)"
+  },
+  {
+   "type": "steps",
+   "title": "Önce testler (kırmızı) → tanım → uygulama",
+   "items": [
+    {"title": "1 · Testler ÖNCE (kırmızı başlar)", "body": "Kabul: (a) slug değişimi → eski URL 301 yeni'ye; (b) silinen kayıt → 410; (c) zincir A→B→C → A doğrudan C'ye sadeleşir; (d) döngü A→B→A reddedilir (CI kırmızı); (e) kanonik: /x/ ve /X aynı kanonik'e; (f) tenant izolasyonu. Edge: dış backlink'li eski URL korunur (kayıt silinse de 301/410 yaşar)."},
+    {"title": "2 · ArcheType YAML taslakları", "body": "archetypes/redirect.yaml, url-alias.yaml, canonical-rule.yaml — status enum, reason, pattern dili; bitemporal:true; audit:true."},
+    {"title": "3 · Surface + Contract", "body": "Admin Surface: redirect tablosu CRUD + içe aktarma (CSV). Contract: çözüm fonksiyonu (path → 301/410/None) edge ve prerender tarafından çağrılır."},
+    {"title": "4 · Workflow + manifest", "body": "workflows/slug-change.yaml (ArcheType slug change → otomatik 301 + sitemap düşür). manifest.yaml: tablo yazma + edge config beyanı."},
+    {"title": "5 · Saf hook gövdeleri", "body": "slug üreteci (pattern→slug), zincir sadeleştirici, döngü dedektörü — saf fonksiyonlar."},
+    {"title": "6 · Kabul kapısı", "body": "deterministik testler + reviewer; performans: çözüm O(1) lookup (edge cache)."}
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Yol haritası"
+  },
+  {
+   "type": "steps",
+   "title": "Aşama kapıları",
+   "items": [
+    {"title": "MVP (P0)", "body": "301/410 tablosu + slug-change otomasyonu + sitemap düşürme bağı."},
+    {"title": "Faz 2 (P1)", "body": "pathauto alias + kanonik normalizasyon + döngü/zincir CI kapısı."},
+    {"title": "Faz 3 (enterprise)", "body": "çoklu dil slug + dış backlink koruması + edge-level yönlendirme (fe-cdn)."}
+   ]
+  },
+  {
+   "type": "callout",
+   "variant": "warning",
+   "label": "Riskler",
+   "body": "Yönlendirme döngüsü → CI kapısı zorunlu. Aşırı zincir (>2) link-equity ve hız kaybı → sadeleştirme. Kanonik yanlış birleştirme indexleme kaybı → testle koru. Edge ve prerender arasında çözüm tutarlılığı tek kaynaktan (Contract)."
+  },
+  {
+   "type": "paragraph",
+   "text": "Sitemap'ten URL düşürme l1-sitemap ile, meta/canonical etiketi l1-seo ile koordine. Bu modül yalnız URL yaşam döngüsünü (301/410/alias/kanonik) sahiplenir."
+  }
+ ]
+}

@@ -119,6 +119,7 @@ export const PRODUCT_GROUP_MAP = {
   loyalty: "cx",
   pim: "cx",
   marketplace: "cx",
+  "product-feed": "cx",
   dms: "content",
   wiki: "content",
   community: "content",

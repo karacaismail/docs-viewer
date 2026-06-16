@@ -1,0 +1,385 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-l1-experiment",
+  "sourceId": "l1-experiment",
+  "slug": "layer1/l1-experiment",
+  "title": "Experiment & CRO — A/B, MVT, Feature-Flag Deney",
+  "summary": "Layer 1 in-tree modül: Surface varyantı + Experiment ArcheType ile A/B, MVT ve feature-flag deneyleri; dönüşüm ölçümü l1-analytics'e bağlı. Enterprise CRO yeteneği (P2).",
+  "categoryId": "layer1",
+  "tags": [
+   "experiment",
+   "cro",
+   "ab-test",
+   "mvt",
+   "feature-flag",
+   "frontpages"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "wip",
+   "badge": "Layer 1 — In-tree"
+  },
+  "owner": "Ortak servisler sahibi",
+  "reviewer": "Senior platform reviewer",
+  "maturity": "taslak",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": [],
+  "nonGoals": [
+   "Bu sayfa tek başına üretim onayı veya uzman incelemesi yerine geçmez."
+  ],
+  "failureModes": [
+   "Tanım, ölçülebilir kabul testi ve sorumlu reviewer olmadan doğrudan üretime uygulanır."
+  ],
+  "acceptanceCriteria": [
+   "Sahip ve reviewer atanmıştır; ilgili otomatik kapılar yeşildir; açık varsayımlar kayıtlıdır."
+  ],
+  "operationalImpact": "Birden çok app'in ortak servis davranışını etkiler.",
+  "externalReviewRequired": false,
+  "related": [
+   "page-l1-analytics",
+   "page-l1-tagmanager",
+   "page-l1-pseo",
+   "page-cc-privacy",
+   "page-fe-test-tooling"
+  ],
+  "blocks": [
+   {
+    "id": "block-l1-experiment-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Ölçüm & tag ailesinin optimizasyon ayağı. Deney (varyant atama + maruziyet) ile ölçüm (l1-analytics) ayrı tutulur: bu modül kimin hangi varyantı gördüğünü ve istatistiksel kararı yönetir; dönüşüm verisini analytics'ten okur. Enterprise olgunluk (P2); MVP'de gerekmez ama büyük ölçekte CRO için kritik."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-experiment-co",
+    "type": "callout",
+    "variant": "info",
+    "title": "Ne + sınır",
+    "segments": [
+     {
+      "type": "text",
+      "text": "App değil module. Surface varyantı + deterministik varyant atama (tutarlı kullanıcı deneyimi) + maruziyet kaydı; dönüşüm ölçümü l1-analytics'ten. Consent kapsamında çalışır (cc-privacy). Feature-flag deneyi server-side; istatistiksel anlamlılık kapısı."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-experiment-h-kapsam-modulun-urettigi",
+    "type": "heading",
+    "level": 2,
+    "text": "Kapsam — modülün ürettiği"
+   },
+   {
+    "id": "block-l1-experiment-table",
+    "type": "table",
+    "caption": "Yetenek → nasıl → öncelik",
+    "columns": [
+     "Yetenek",
+     "Nasıl",
+     "Öncelik"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "A/B testi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "İki varyant + deterministik atama (hash) + maruziyet kaydı; sonuç l1-analytics"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "P2"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "MVT (çok değişkenli)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Faktör kombinasyonu; örneklem bölme; etkileşim analizi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "P2"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Feature-flag deney"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Server-side flag + kademeli açma (rollout) + kill-switch"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "P2"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "İstatistiksel karar"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Anlamlılık/güç kapısı; erken durdurma koruması; kazanan ilanı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "P2"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "pSEO/AEO şablon deneyi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Şablon varyantı testi (l1-pseo ile); başlık/şema varyantı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "P3"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-l1-experiment-h-archetype-lar-capability-manifesti",
+    "type": "heading",
+    "level": 2,
+    "text": "ArcheType'lar + capability manifesti"
+   },
+   {
+    "id": "block-l1-experiment-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "ArcheType'lar",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Experiment (hipotez/varyant/metrik/örneklem), Variant (Surface override), ExposureEvent (maruziyet), FeatureFlag (rollout/kill-switch)"
+       }
+      ]
+     },
+     {
+      "term": "Capability (deny-by-default)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "varyant atama + maruziyet kaydı; dönüşümü l1-analytics'ten OKUR (kendi pii ölçümü yok); consent kapsamında; kernel iç API'sine dokunmaz"
+       }
+      ]
+     },
+     {
+      "term": "Bayraklar",
+      "definition": [
+       {
+        "type": "text",
+        "text": "deney + karar audit'li; maruziyet pii sınırı (anonim/consent); istatistiksel kapı deterministik"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-l1-experiment-h-gelistirme-plani-test-first-be-sdk-sirasi",
+    "type": "heading",
+    "level": 2,
+    "text": "Geliştirme planı — test-first (be-sdk sırası)"
+   },
+   {
+    "id": "block-l1-experiment-h-once-testler-kirmizi-tanim-uygulama",
+    "type": "heading",
+    "level": 3,
+    "text": "Önce testler (kırmızı) → tanım → uygulama"
+   },
+   {
+    "id": "block-l1-experiment-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "1 · Testler ÖNCE (kırmızı başlar)",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Kabul: (a) deterministik atama: aynı kullanıcı hep aynı varyant; (b) örneklem oranı korunur (50/50 ±tolerans); (c) maruziyet bir kez kaydedilir; (d) istatistiksel kapı erken-durdurmayı reddeder; (e) kill-switch anında tüm trafiği kontrole çeker; (f) consent yoksa anonim/atlanır. Edge: deney bitince kazanan varyant kalıcılaşır."
+       }
+      ]
+     },
+     {
+      "title": "2 · ArcheType YAML taslakları",
+      "segments": [
+       {
+        "type": "text",
+        "text": "archetypes/experiment.yaml, variant.yaml, exposure-event.yaml, feature-flag.yaml — metrik/örneklem/anlamlılık alanları; audit:true; pii sınırı."
+       }
+      ]
+     },
+     {
+      "title": "3 · Surface + Contract",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Admin Surface: deney kurulumu + canlı sonuç + karar. Contract: varyant-atama fonksiyonu (kullanıcı→varyant), maruziyet kaydı, flag okuma (server-side)."
+       }
+      ]
+     },
+     {
+      "title": "4 · Workflow + manifest",
+      "segments": [
+       {
+        "type": "text",
+        "text": "workflows/experiment-lifecycle.yaml (taslak→çalışır→anlamlılık→karar→kalıcılaştır/geri-al). manifest.yaml: l1-analytics okuma + Surface override beyanı."
+       }
+      ]
+     },
+     {
+      "title": "5 · Saf hook gövdeleri",
+      "segments": [
+       {
+        "type": "text",
+        "text": "hash-tabanlı atama, örneklem bölücü, anlamlılık hesaplayıcı — saf, deterministik fonksiyonlar."
+       }
+      ]
+     },
+     {
+      "title": "6 · Kabul kapısı",
+      "segments": [
+       {
+        "type": "text",
+        "text": "deterministik testler + veri/istatistik reviewer (p-hacking/erken durdurma) + reviewer. AI kendi sonucunu onaylamaz."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-l1-experiment-h-yol-haritasi",
+    "type": "heading",
+    "level": 2,
+    "text": "Yol haritası"
+   },
+   {
+    "id": "block-l1-experiment-h-asama-kapilari",
+    "type": "heading",
+    "level": 3,
+    "text": "Aşama kapıları"
+   },
+   {
+    "id": "block-l1-experiment-steps-2",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "Faz 1 (P2)",
+      "segments": [
+       {
+        "type": "text",
+        "text": "A/B testi + deterministik atama + maruziyet + l1-analytics dönüşüm bağı + istatistiksel kapı."
+       }
+      ]
+     },
+     {
+      "title": "Faz 2 (P2)",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Feature-flag rollout + kill-switch + kazanan kalıcılaştırma."
+       }
+      ]
+     },
+     {
+      "title": "Faz 3 (P3)",
+      "segments": [
+       {
+        "type": "text",
+        "text": "MVT + etkileşim analizi + pSEO/AEO şablon deneyi + sequential test."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-l1-experiment-co-2",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Riskler",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Erken durdurma / p-hacking → istatistiksel kapı zorunlu. Tutarsız atama kullanıcı deneyimini bozar → deterministik hash. SEO için cloaking riski (arama botuna farklı içerik) → bot tutarlılığı; varyantlar kanonik altında. Consent dışı izleme yok. MVP'de gereksiz (P2) — erken karmaşıklık eklenmez."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-experiment-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Dönüşüm ölçümü l1-analytics'te, etiket taşıma l1-tagmanager'da, rıza cc-privacy'de. Bu modül yalnız varyant atama + deney yaşam döngüsü + istatistiksel kararı sahiplenir."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-experiment-h-uret",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu birimi üret — kopyalanabilir prompt"
+   },
+   {
+    "id": "block-l1-experiment-uret-prompt",
+    "type": "codeBlock",
+    "title": "Module (Kaya) build prompt'u",
+    "language": "text",
+    "code": "SEVİYE: Module / Domain (Kaya) · birim: Experiment & CRO — A/B, MVT, Feature-Flag Deney\nROL: Domain mimarı. OKU: bu sayfa (l1-experiment), ilgili app plan ağacı, core sözleşmeleri.\nGÖREV: \"Experiment & CRO — A/B, MVT, Feature-Flag Deney\" module sınırını, sahip olduğu ArcheType'ları ve Contract (API kapısı) tanımını çıkar.\nKISIT: Başka module'ün tablosuna dokunma; Contract üzerinden konuş. Capability manifesti deny-by-default.\nÇIKTI: testler önce → ArcheType listesi + Contract + manifest + Alembic branch (downgrade yolu).\nKABUL (DoD): module ayrı yüklenip kaldırılabilir; capability izinleri açık; contract testi yeşil.\nÖNCE faz prompt'larını uygula (Prompt 7 Gereksinim, Prompt 8 Tasarım), sonra İnşa/Doğrulama. be-sdk sırası: testler ÖNCE (kırmızı) → yaml taslaklar → uygulama. Küçük PR + kanıt. Komşuluk kuralını ihlal etme.",
+    "copyEnabled": true
+   }
+  ]
+ }
+}

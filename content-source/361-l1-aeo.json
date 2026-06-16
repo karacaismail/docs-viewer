@@ -1,0 +1,96 @@
+{
+ "id": "l1-aeo",
+ "title": "AEO / GEO / LLMO — AI Motorlarına Görünürlük",
+ "subtitle": "Layer 1 in-tree modül: yapılandırılmış cevap blokları, FAQ/HowTo schema, llms.txt, temiz semantik HTML. Hedef: AI Overviews + ChatGPT/Perplexity/Gemini/Claude kaynak olarak atıf versin. Buzzword değil, yetenek.",
+ "cluster": "layer1",
+ "layer": "L1",
+ "order": 18,
+ "icon": "ph-robot",
+ "granularity": "kaya",
+ "state": "wip",
+ "badge": "Layer 1 — In-tree",
+ "tags": ["aeo", "geo", "llmo", "aio", "llms-txt", "answer-engine", "frontpages"],
+ "related": ["l1-seo", "l1-pseo", "k-agent-runtime", "k-schema", "cc-i18n-standards"],
+ "enrich": {
+  "info": "Frontpages ailesinin yeni-nesil ayağı (2026 kritik). Klasik SEO tıklama için sıralar; AEO/GEO sentezlenmiş cevapta KAYNAK olarak seçilmeyi hedefler. Ayrı modül çünkü cevap-yapısı + llms.txt + atıf-sinyali, l1-seo'nun klasik meta/schema render'ından farklı bir editöryel+teknik sorumluluktur. Terminoloji (AEO/GEO/LLMO/AIO) sektörde oturmamış — modül buzzword değil yeteneği uygular."
+ },
+ "blocks": [
+  {
+   "type": "callout",
+   "variant": "info",
+   "label": "Ne + aktivasyon",
+   "body": "App değil module. Public Surface'i olan app'lerde aktif. Yapılandırılmış cevap + FAQ/HowTo schema + llms.txt üretir; projede llms.txt zemini zaten var. Çıktı: AI Overviews cevap kutusu ve LLM yanıtlarında atıf alma olasılığını artıran temiz, semantik, kaynak-gösterilebilir içerik."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Kapsam — modülün ürettiği (taksonomi eşlemesi)"
+  },
+  {
+   "type": "table",
+   "caption": "Disiplin → nasıl → hedef yüzey → öncelik",
+   "headers": ["Disiplin", "Nasıl", "Hedef yüzey"],
+   "rows": [
+    ["AEO (Answer Engine)", "Soru-cevap blokları + FAQPage/HowTo/QAPage schema; öne-çıkan-snippet uyumlu kısa cevap", "AI Overviews, featured snippet"],
+    ["GEO (Generative Engine)", "Atıf-dostu yapı: net iddia + kaynak + tarih + özet; temiz semantik HTML", "ChatGPT, Perplexity, Gemini, Claude"],
+    ["LLMO", "llms.txt + içerik erişim politikası; tarama-dostu temiz markup", "LLM çıkarım katmanı"],
+    ["AIO (AI Overviews)", "Yapılandırılmış özet + entity netliği (schema.org sameAs/about)", "Google AI Overviews kutusu"],
+    ["Entity / E-E-A-T sinyali", "Yazar/kurum/kaynak schema (Organization/Person/about); güncellik tarihi", "Tüm AI yüzeyleri"]
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "ArcheType'lar + capability manifesti"
+  },
+  {
+   "type": "kv-row",
+   "pairs": [
+    {"key": "ArcheType'lar", "value": "AnswerBlock (soru/öz-cevap/detay), FaqSchema (FAQPage/HowTo/QAPage), LlmsTxtPolicy (erişim + öne çıkan içerik), EntityProfile (about/sameAs/yazar)"},
+    {"key": "Capability (deny-by-default)", "value": "render-only (schema + cevap bloğu + llms.txt yazma); pii üretmez; kernel iç API'sine dokunmaz; içerik üretiminde k-agent-runtime opsiyonel (capability-gated)"},
+    {"key": "Bayraklar", "value": "cevaplar audit'li (kaynak + tarih); güncellik tarihi bitemporal; AI-üretimi taslak insan onayından geçer"}
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Geliştirme planı — test-first (be-sdk sırası)"
+  },
+  {
+   "type": "steps",
+   "title": "Önce testler (kırmızı) → tanım → uygulama",
+   "items": [
+    {"title": "1 · Testler ÖNCE (kırmızı başlar)", "body": "Kabul: (a) AnswerBlock → geçerli FAQPage/HowTo JSON-LD (Rich Results doğrulaması); (b) llms.txt geçerli formatta + yalnız public içerik listeler; (c) entity schema sameAs/about çözülür; (d) cevap bloğu semantik HTML (heading/dl) — HTML string render YASAK; (e) güncellik tarihi her cevapta. Edge: kaynaksız iddia üretilmez (E-E-A-T kapısı)."},
+    {"title": "2 · ArcheType YAML taslakları", "body": "archetypes/answer-block.yaml, faq-schema.yaml, llms-txt-policy.yaml, entity-profile.yaml — schema tipi enum, kaynak/tarih zorunlu; audit:true."},
+    {"title": "3 · Surface + Contract", "body": "Public Surface'e cevap bloğu + JSON-LD enjeksiyonu; GET /llms.txt. Admin Surface: cevap editörü + Rich Results önizleme."},
+    {"title": "4 · Workflow + manifest", "body": "workflows/answer-publish.yaml (taslak → insan onay → yayınla → schema+llms.txt güncelle). manifest.yaml: render + llms.txt yazma + (opsiyonel) agent çağrısı beyanı."},
+    {"title": "5 · Saf hook gövdeleri", "body": "AnswerBlock → JSON-LD serileştirici, llms.txt üreteci, entity çözücü — saf fonksiyonlar; Shiki/HTML-string yok."},
+    {"title": "6 · Kabul kapısı", "body": "Rich Results + deterministik testler + içerik/SEO uzman incelemesi. AI-üretimi cevaplar insan reviewer onayı olmadan yayınlanmaz."}
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Yol haritası"
+  },
+  {
+   "type": "steps",
+   "title": "Aşama kapıları",
+   "items": [
+    {"title": "MVP (P0)", "body": "AnswerBlock + FAQPage/HowTo schema + güncel llms.txt + temiz semantik HTML."},
+    {"title": "Faz 2 (P1)", "body": "Entity/E-E-A-T sinyali (Organization/Person/about/sameAs) + güncellik tarihi otomasyonu."},
+    {"title": "Faz 3 (enterprise)", "body": "k-agent-runtime ile cevap taslağı üretimi (insan onaylı) + AI-görünürlük ölçümü (l1-analytics referral attribution)."}
+   ]
+  },
+  {
+   "type": "callout",
+   "variant": "warning",
+   "label": "Riskler",
+   "body": "Terminoloji bulanıklığı (AEO/GEO/LLMO %31 tutarlılık) → buzzword değil yetenek uygulanır. Kaynaksız/yanlış cevap E-E-A-T ve güven kaybı → kaynak+tarih+insan onayı zorunlu. AI-üretimi içerik denetimsiz yayınlanmaz. HTML string render yasak (XSS + semantik kaybı)."
+  },
+  {
+   "type": "paragraph",
+   "text": "Klasik meta/schema l1-seo'da; bu modül cevap-yapısı + AI-atıf sinyalini sahiplenir. pSEO sayfaları bu modülün cevap bloklarıyla zenginleşir; ölçüm (AI referral) l1-analytics'tedir."
+  }
+ ]
+}

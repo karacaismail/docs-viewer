@@ -1,0 +1,385 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-l1-redirect",
+  "sourceId": "l1-redirect",
+  "slug": "layer1/l1-redirect",
+  "title": "Redirect & URL Yönetimi",
+  "summary": "Layer 1 in-tree modül: 301/302/410 yöneticisi, URL alias/slug (pathauto), kanonik birleştirme, döngü/zincir denetimi. Slug değişimi link-equity kaybetmeden taşınır.",
+  "categoryId": "layer1",
+  "tags": [
+   "redirect",
+   "url",
+   "slug",
+   "pathauto",
+   "technical-seo",
+   "frontpages"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "wip",
+   "badge": "Layer 1 — In-tree"
+  },
+  "owner": "Ortak servisler sahibi",
+  "reviewer": "Senior platform reviewer",
+  "maturity": "taslak",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": [],
+  "nonGoals": [
+   "Bu sayfa tek başına üretim onayı veya uzman incelemesi yerine geçmez."
+  ],
+  "failureModes": [
+   "Tanım, ölçülebilir kabul testi ve sorumlu reviewer olmadan doğrudan üretime uygulanır."
+  ],
+  "acceptanceCriteria": [
+   "Sahip ve reviewer atanmıştır; ilgili otomatik kapılar yeşildir; açık varsayımlar kayıtlıdır."
+  ],
+  "operationalImpact": "Birden çok app'in ortak servis davranışını etkiler.",
+  "externalReviewRequired": false,
+  "related": [
+   "page-l1-seo",
+   "page-l1-sitemap",
+   "page-l1-pseo",
+   "page-k-surface",
+   "page-fe-cdn"
+  ],
+  "blocks": [
+   {
+    "id": "block-l1-redirect-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Frontpages ailesinin URL-yaşam-döngüsü ayağı. ArcheType slug'ı değiştiğinde ya da kayıt silindiğinde keşfedilebilirlik kırılmasın diye 301/410 ve alias'ı yönetir. Ayrı modül çünkü yönlendirme tablosu yazma + döngü denetimi sorumluluğu l1-seo render'ından ayrı."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-redirect-co",
+    "type": "callout",
+    "variant": "info",
+    "title": "Ne + aktivasyon",
+    "segments": [
+     {
+      "type": "text",
+      "text": "App değil module. Public Surface'i olan app'lerde aktif (iç back-office'te opsiyonel). Slug üretimi ArcheType alanlarından (pathauto deseni); slug değişiminde eski → yeni 301 otomatik kaydedilir; kayıt silindiğinde 410. Tenant-scoped, RLS."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-redirect-h-kapsam-modulun-urettigi",
+    "type": "heading",
+    "level": 2,
+    "text": "Kapsam — modülün ürettiği"
+   },
+   {
+    "id": "block-l1-redirect-table",
+    "type": "table",
+    "caption": "Yetenek → nasıl → öncelik",
+    "columns": [
+     "Yetenek",
+     "Nasıl",
+     "Öncelik"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "301/302 yönetimi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Eski→yeni eşleme tablosu; slug değişiminde otomatik kayıt; manuel kural ekleme"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "P0"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "410 Gone"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Silinen ArcheType kaydı için soft-404 yerine net 410; sitemap'ten düşürme bağı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "P0"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "URL alias / slug (pathauto)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ArcheType alanlarından desenli slug üretimi; çakışma çözümü; çoklu dil slug"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "P1"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kanonik birleştirme"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Trailing slash, case, parametre normalizasyonu → tek kanonik URL"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "P1"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Döngü/zincir denetimi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yönlendirme zinciri >2 ve döngü tespiti; build/CI uyarısı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "P1"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-l1-redirect-h-archetype-lar-capability-manifesti",
+    "type": "heading",
+    "level": 2,
+    "text": "ArcheType'lar + capability manifesti"
+   },
+   {
+    "id": "block-l1-redirect-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "ArcheType'lar",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Redirect (from/to/status/reason), UrlAlias (pattern→slug), CanonicalRule (normalizasyon politikası)"
+       }
+      ]
+     },
+     {
+      "term": "Capability (deny-by-default)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "yalnız yönlendirme tablosu + alias yazma; çalışma-zamanı yönlendirme edge'de (fe-cdn) ya da prerender manifesti; pii üretmez"
+       }
+      ]
+     },
+     {
+      "term": "Bayraklar",
+      "definition": [
+       {
+        "type": "text",
+        "text": "tüm kurallar audit'li; from/to bitemporal (tarihçe — hangi tarihte hangi hedef); döngü denetimi deterministik kapı"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-l1-redirect-h-gelistirme-plani-test-first-be-sdk-sirasi",
+    "type": "heading",
+    "level": 2,
+    "text": "Geliştirme planı — test-first (be-sdk sırası)"
+   },
+   {
+    "id": "block-l1-redirect-h-once-testler-kirmizi-tanim-uygulama",
+    "type": "heading",
+    "level": 3,
+    "text": "Önce testler (kırmızı) → tanım → uygulama"
+   },
+   {
+    "id": "block-l1-redirect-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "1 · Testler ÖNCE (kırmızı başlar)",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Kabul: (a) slug değişimi → eski URL 301 yeni'ye; (b) silinen kayıt → 410; (c) zincir A→B→C → A doğrudan C'ye sadeleşir; (d) döngü A→B→A reddedilir (CI kırmızı); (e) kanonik: /x/ ve /X aynı kanonik'e; (f) tenant izolasyonu. Edge: dış backlink'li eski URL korunur (kayıt silinse de 301/410 yaşar)."
+       }
+      ]
+     },
+     {
+      "title": "2 · ArcheType YAML taslakları",
+      "segments": [
+       {
+        "type": "text",
+        "text": "archetypes/redirect.yaml, url-alias.yaml, canonical-rule.yaml — status enum, reason, pattern dili; bitemporal:true; audit:true."
+       }
+      ]
+     },
+     {
+      "title": "3 · Surface + Contract",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Admin Surface: redirect tablosu CRUD + içe aktarma (CSV). Contract: çözüm fonksiyonu (path → 301/410/None) edge ve prerender tarafından çağrılır."
+       }
+      ]
+     },
+     {
+      "title": "4 · Workflow + manifest",
+      "segments": [
+       {
+        "type": "text",
+        "text": "workflows/slug-change.yaml (ArcheType slug change → otomatik 301 + sitemap düşür). manifest.yaml: tablo yazma + edge config beyanı."
+       }
+      ]
+     },
+     {
+      "title": "5 · Saf hook gövdeleri",
+      "segments": [
+       {
+        "type": "text",
+        "text": "slug üreteci (pattern→slug), zincir sadeleştirici, döngü dedektörü — saf fonksiyonlar."
+       }
+      ]
+     },
+     {
+      "title": "6 · Kabul kapısı",
+      "segments": [
+       {
+        "type": "text",
+        "text": "deterministik testler + reviewer; performans: çözüm O(1) lookup (edge cache)."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-l1-redirect-h-yol-haritasi",
+    "type": "heading",
+    "level": 2,
+    "text": "Yol haritası"
+   },
+   {
+    "id": "block-l1-redirect-h-asama-kapilari",
+    "type": "heading",
+    "level": 3,
+    "text": "Aşama kapıları"
+   },
+   {
+    "id": "block-l1-redirect-steps-2",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "MVP (P0)",
+      "segments": [
+       {
+        "type": "text",
+        "text": "301/410 tablosu + slug-change otomasyonu + sitemap düşürme bağı."
+       }
+      ]
+     },
+     {
+      "title": "Faz 2 (P1)",
+      "segments": [
+       {
+        "type": "text",
+        "text": "pathauto alias + kanonik normalizasyon + döngü/zincir CI kapısı."
+       }
+      ]
+     },
+     {
+      "title": "Faz 3 (enterprise)",
+      "segments": [
+       {
+        "type": "text",
+        "text": "çoklu dil slug + dış backlink koruması + edge-level yönlendirme (fe-cdn)."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-l1-redirect-co-2",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Riskler",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Yönlendirme döngüsü → CI kapısı zorunlu. Aşırı zincir (>2) link-equity ve hız kaybı → sadeleştirme. Kanonik yanlış birleştirme indexleme kaybı → testle koru. Edge ve prerender arasında çözüm tutarlılığı tek kaynaktan (Contract)."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-redirect-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Sitemap'ten URL düşürme l1-sitemap ile, meta/canonical etiketi l1-seo ile koordine. Bu modül yalnız URL yaşam döngüsünü (301/410/alias/kanonik) sahiplenir."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-redirect-h-uret",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu birimi üret — kopyalanabilir prompt"
+   },
+   {
+    "id": "block-l1-redirect-uret-prompt",
+    "type": "codeBlock",
+    "title": "Module (Kaya) build prompt'u",
+    "language": "text",
+    "code": "SEVİYE: Module / Domain (Kaya) · birim: Redirect & URL Yönetimi\nROL: Domain mimarı. OKU: bu sayfa (l1-redirect), ilgili app plan ağacı, core sözleşmeleri.\nGÖREV: \"Redirect & URL Yönetimi\" module sınırını, sahip olduğu ArcheType'ları ve Contract (API kapısı) tanımını çıkar.\nKISIT: Başka module'ün tablosuna dokunma; Contract üzerinden konuş. Capability manifesti deny-by-default.\nÇIKTI: testler önce → ArcheType listesi + Contract + manifest + Alembic branch (downgrade yolu).\nKABUL (DoD): module ayrı yüklenip kaldırılabilir; capability izinleri açık; contract testi yeşil.\nÖNCE faz prompt'larını uygula (Prompt 7 Gereksinim, Prompt 8 Tasarım), sonra İnşa/Doğrulama. be-sdk sırası: testler ÖNCE (kırmızı) → yaml taslaklar → uygulama. Küçük PR + kanıt. Komşuluk kuralını ihlal etme.",
+    "copyEnabled": true
+   }
+  ]
+ }
+}

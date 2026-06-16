@@ -1,0 +1,96 @@
+{
+ "id": "s-product-feed",
+ "title": "Product Feed — Merchant & Catalog Besleme",
+ "subtitle": "Stack ürün modülü: Google Merchant / Meta Catalog / pazaryeri ürün feed üretimi (XML/TSV), öznitelik eşleme, geçerlilik denetimi, delta güncelleme. Paid media ve social commerce'in ürün-veri köprüsü.",
+ "cluster": "customer-revenue",
+ "layer": "L2",
+ "order": 30,
+ "icon": "ph-shopping-cart",
+ "granularity": "kaya",
+ "state": "wip",
+ "badge": "Ürün modülü",
+ "tags": ["product-feed", "merchant", "catalog", "shopping", "social-commerce", "frontpages"],
+ "related": ["l1-seo", "l1-analytics", "stack-channel", "s-commerce", "s-social-commerce"],
+ "enrich": {
+  "info": "Frontpages ailesinin e-ticaret ayağı — Layer 1 değil, Stack ürün modülüdür (commerce ArcheType'larına bağlı). Keşfedilebilirlik organik yüzeyi (l1-seo/pSEO) üretirken, bu modül ücretli/sosyal kanalların gerektirdiği yapılandırılmış ürün feed'ini üretir. Paid media (SEM/Shopping) kapsam dışıdır; bu modül yalnız feed + dönüşüm köprüsünü verir."
+ },
+ "blocks": [
+  {
+   "type": "callout",
+   "variant": "info",
+   "label": "Ne + aktivasyon",
+   "body": "App değil module; yalnız commerce/storefront/marketplace app'lerde aktif (ürün ArcheType'ı varsa). Ürün/varyant kayıtlarından Google Merchant ve Meta Catalog feed'i üretir; stack-channel ile pazaryeri kanallarına, l1-analytics ile dönüşüm/UTM'e bağlanır. Tenant-scoped."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Kapsam — modülün ürettiği"
+  },
+  {
+   "type": "table",
+   "caption": "Yetenek → nasıl → öncelik",
+   "headers": ["Yetenek", "Nasıl", "Öncelik"],
+   "rows": [
+    ["Merchant/Catalog feed", "Ürün+varyant ArcheType → Google Merchant XML + Meta Catalog; zorunlu öznitelik eşleme", "P0"],
+    ["Öznitelik eşleme", "Yerel alan → kanal taksonomisi (GTIN/brand/condition/availability/price)", "P0"],
+    ["Geçerlilik denetimi", "Kanal politikası ön-doğrulama (eksik/yanlış alan); ret öncesi uyarı", "P1"],
+    ["Delta güncelleme", "Fiyat/stok değişiminde artımlı feed + scheduled tam yeniden üretim", "P1"],
+    ["Çok-kanal + çok-ülke", "Kanal/ülke/dil başına feed varyantı (para birimi, dil, fiyat)", "P2"]
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "ArcheType'lar + capability manifesti"
+  },
+  {
+   "type": "kv-row",
+   "pairs": [
+    {"key": "ArcheType'lar", "value": "ProductFeed (kanal/format/kapsam), FeedChannel (Merchant/Meta/pazaryeri), AttributeMap (yerel→kanal), FeedValidationRule"},
+    {"key": "Capability (deny-by-default)", "value": "feed dosyası üretimi/yayını (dar yol); kanal API'ye yalnız allowlist; Money alanı Decimal (float YASAK); pii üretmez"},
+    {"key": "Bağlar", "value": "ürün verisi → s-commerce; kanal yayını → stack-channel; dönüşüm/UTM → l1-analytics; organik schema → l1-seo"}
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Geliştirme planı — test-first (be-sdk sırası)"
+  },
+  {
+   "type": "steps",
+   "title": "Önce testler (kırmızı) → tanım → uygulama",
+   "items": [
+    {"title": "1 · Testler ÖNCE (kırmızı başlar)", "body": "Kabul: (a) ürün → geçerli Merchant XML (zorunlu öznitelikler dolu); (b) eksik GTIN/price → geçerlilik denetimi yakalar (kanal reddinden önce); (c) fiyat Money/Decimal — float yok; (d) delta: yalnız değişen ürün artımlı feed'de; (e) çok-ülke: doğru para birimi/dil; (f) tenant izolasyonu. Edge: yayından kalkan ürün feed'den düşer."},
+    {"title": "2 · ArcheType YAML taslakları", "body": "archetypes/product-feed.yaml, feed-channel.yaml, attribute-map.yaml, feed-validation-rule.yaml — Money:true; audit:true; kanal taksonomi enum."},
+    {"title": "3 · Surface + Contract", "body": "Admin Surface: feed kapsam + öznitelik eşleme + geçerlilik raporu. Contract: feed üretim tetikleyici + GET feed endpoint (kanal çeker) + delta push."},
+    {"title": "4 · Workflow + manifest", "body": "workflows/feed-sync.yaml (ürün değişimi → delta → doğrula → yayınla/uyar). manifest.yaml: kanal API allowlist + feed yazma beyanı."},
+    {"title": "5 · Saf hook gövdeleri", "body": "öznitelik eşleyici (yerel→kanal), feed serileştirici, geçerlilik denetleyici — saf fonksiyonlar."},
+    {"title": "6 · Kabul kapısı", "body": "deterministik testler + reviewer + kanal politikası uzman kontrolü (Merchant disapproval riski)."}
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Yol haritası"
+  },
+  {
+   "type": "steps",
+   "title": "Aşama kapıları",
+   "items": [
+    {"title": "MVP (P0)", "body": "Google Merchant + Meta Catalog feed + öznitelik eşleme + Money/Decimal disiplini."},
+    {"title": "Faz 2 (P1)", "body": "Geçerlilik ön-denetimi + delta güncelleme + scheduled tam yeniden üretim."},
+    {"title": "Faz 3 (enterprise)", "body": "Çok-kanal/çok-ülke feed varyantı + stack-channel pazaryeri kanalları + dönüşüm geri-besleme (l1-analytics)."}
+   ]
+  },
+  {
+   "type": "callout",
+   "variant": "warning",
+   "label": "Riskler",
+   "body": "Eksik/yanlış öznitelik → kanal reddi (Merchant disapproval) → yayından önce geçerlilik kapısı. Fiyat float = para hatası → Money/Decimal zorunlu. Stok-fiyat gecikmesi → delta + sık senkron. Paid media kampanya yürütme bu modülde DEĞİL; yalnız feed + dönüşüm köprüsü."
+  },
+  {
+   "type": "paragraph",
+   "text": "Bu Layer 1 değil Stack ürün modülüdür (s-*): commerce ArcheType'larına bağımlı. Organik keşif l1-seo/l1-pseo'da; ücretli/sosyal kanalın ürün-veri köprüsü burada; kampanya yürütme kapsam dışı."
+  }
+ ]
+}

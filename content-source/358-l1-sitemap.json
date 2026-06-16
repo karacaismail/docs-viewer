@@ -1,0 +1,96 @@
+{
+ "id": "l1-sitemap",
+ "title": "Sitemap & Robots — Indexability Motoru",
+ "subtitle": "Layer 1 in-tree modül: ArcheType kayıtlarından otomatik sitemap.xml + sitemap index, robots.txt, IndexNow/ping. l1-seo çekirdeğinden ayrı; tek sorumluluğu 'arama motoru bu sayfaları görsün'.",
+ "cluster": "layer1",
+ "layer": "L1",
+ "order": 15,
+ "icon": "ph-sitemap",
+ "granularity": "kaya",
+ "state": "wip",
+ "badge": "Layer 1 — In-tree",
+ "tags": ["sitemap", "robots", "indexnow", "technical-seo", "keşfedilebilirlik", "frontpages"],
+ "related": ["l1-seo", "l1-redirect", "l1-pseo", "k-surface", "fe-cdn", "l1-analytics"],
+ "enrich": {
+  "info": "Frontpages ailesinin Technical-SEO ayağı. l1-seo meta/schema üretir; bu modül o sayfaların keşif yüzeyini (sitemap/robots) ve arama motoru bildirimini (IndexNow) yönetir. Ayrı modül çünkü sorumluluk (keşif dosyası üretimi + dosya yazma yetkisi) ile manifest (dar dosya-yolu yazma) l1-seo render'ından farklı."
+ },
+ "blocks": [
+  {
+   "type": "callout",
+   "variant": "info",
+   "label": "Ne + aktivasyon",
+   "body": "App değil module. Bir app'in public Surface'i varsa modül o tenant için sitemap.xml + sitemap index + robots.txt üretir; public Surface yoksa yüklenmez (varsayılan-kapalı). Çok-kiracılı: her tenant kendi domain'i altında kendi sitemap'ini alır (RLS). Build-time prerender hattına bağlıdır."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Kapsam — modülün ürettiği"
+  },
+  {
+   "type": "table",
+   "caption": "Yetenek → nasıl → öncelik",
+   "headers": ["Yetenek", "Nasıl", "Öncelik"],
+   "rows": [
+    ["sitemap.xml", "Public ArcheType kayıtlarından lastmod/changefreq/priority ile otomatik üretim; >50k URL'de sitemap index'e böler", "P0"],
+    ["robots.txt", "noindex/allow/disallow politikası; iç back-office Surface'leri otomatik disallow; sitemap referansı", "P0"],
+    ["IndexNow / ping", "Yeni/değişen URL'de Bing/Yandex IndexNow + Google ping; rate-limit'li kuyruk", "P1"],
+    ["Image/Video/News sitemap", "Medya ArcheType alanından ek sitemap türleri", "P2"],
+    ["hreflang sitemap", "Çoklu dil tenant'ta alternatif dil bağları (cc-i18n-standards ile)", "P1"]
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "ArcheType'lar + capability manifesti"
+  },
+  {
+   "type": "kv-row",
+   "pairs": [
+    {"key": "ArcheType'lar", "value": "SitemapPolicy (kapsam/changefreq/priority kuralı), RobotsPolicy (allow/disallow/noindex), IndexNowConfig (anahtar + sağlayıcı allowlist)"},
+    {"key": "Capability (deny-by-default)", "value": "dar dosya-yolu yazma (yalnız /sitemap*.xml, /robots.txt); IndexNow için network allowlist (Bing/Yandex/Google); pii üretmez; kernel iç API'sine dokunmaz"},
+    {"key": "Bayraklar", "value": "politika değişiklikleri audit'li; tenant özel domain bitemporal; üretim build-time + olay-tetikli yeniden üretim"}
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Geliştirme planı — test-first (be-sdk sırası)"
+  },
+  {
+   "type": "steps",
+   "title": "Önce testler (kırmızı) → tanım → uygulama",
+   "items": [
+    {"title": "1 · Testler ÖNCE (kırmızı başlar)", "body": "Kabul testleri: (a) public ArcheType kaydı → sitemap'te tam bir <url>; (b) iç Surface → sitemap'te YOK + robots disallow; (c) >50k URL → geçerli sitemap index; (d) tenant izolasyonu: tenant-A sitemap'i tenant-B URL'i içermez; (e) IndexNow yalnız allowlist domain'e POST; (f) XML şema/lastmod ISO-8601 doğrulaması. Edge: silinen kayıt sonraki üretimde düşer (410 ile l1-redirect bağı)."},
+    {"title": "2 · ArcheType YAML taslakları", "body": "archetypes/sitemap-policy.yaml, robots-policy.yaml, indexnow-config.yaml — alanlar, kısıtlar (Atom), varsayılanlar; pii:false; audit:true."},
+    {"title": "3 · Surface + Contract", "body": "surface: none (headless üretici). Contract: GET /sitemap.xml, /sitemap-{n}.xml, /robots.txt (public, cache-control); admin Surface yalnız politika düzenleme."},
+    {"title": "4 · Workflow + manifest", "body": "workflows/sitemap-regen.yaml (build-time + ArcheType change event → debounce → regen → IndexNow ping). manifest.yaml: dar dosya-yolu + network allowlist beyanı (WASM sandbox)."},
+    {"title": "5 · Saf hook gövdeleri", "body": "üretim hook'u: ArcheType engine'den public kayıt akışı → XML serileştirme. AI yalnız bu saf fonksiyonlara + YAML'lara dokunur; kernel iç API'sine dokunmaz."},
+    {"title": "6 · Kabul kapısı", "body": "deterministik testler yeşil + bağımsız reviewer + PostgreSQL-SRE notu (büyük tenant'ta üretim maliyeti). AI kendi çıktısını son onay sayamaz."}
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Yol haritası (MVP → enterprise)"
+  },
+  {
+   "type": "steps",
+   "title": "Aşama kapıları",
+   "items": [
+    {"title": "MVP (P0)", "body": "sitemap.xml + robots.txt build-time üretimi; iç Surface otomatik disallow; tenant izolasyonu."},
+    {"title": "Faz 2 (P1)", "body": "IndexNow/ping kuyruğu; hreflang sitemap; olay-tetikli yeniden üretim (debounce)."},
+    {"title": "Faz 3 (enterprise)", "body": "sitemap index (>50k URL); image/video/news sitemap; CDN edge cache invalidation (fe-cdn ile)."}
+   ]
+  },
+  {
+   "type": "callout",
+   "variant": "warning",
+   "label": "Riskler",
+   "body": "Ön koşul: build-time prerender hattı — yoksa keşif yüzeyi tutarsız. Büyük tenant'ta tam yeniden üretim maliyetli → olay-tetikli artımlı üretim. IndexNow anahtar sızıntısı → tenant-scoped sır + allowlist. Silinen URL sitemap'te kalırsa soft-404 riski → l1-redirect 410 bağı zorunlu."
+  },
+  {
+   "type": "paragraph",
+   "text": "Meta/schema/OG l1-seo'da; 301/410 ve slug l1-redirect'te; ölçüm l1-analytics'te. Bu modül yalnız keşif yüzeyini (sitemap/robots/IndexNow) sahiplenir."
+  }
+ ]
+}

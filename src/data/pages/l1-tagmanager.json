@@ -1,0 +1,385 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-l1-tagmanager",
+  "sourceId": "l1-tagmanager",
+  "slug": "layer1/l1-tagmanager",
+  "title": "Tag Manager — Etiket Konteyneri (server-side öncelikli)",
+  "summary": "Layer 1 in-tree modül: tüm pazarlama/ölçüm etiketlerinin tek taşıyıcısı. Tercihen server-side GTM; onaylı tag allowlist; custom-HTML XSS vektörü kapalı. Analytics ve consent'ten ayrı sorumluluk.",
+  "categoryId": "layer1",
+  "tags": [
+   "tagmanager",
+   "gtm",
+   "server-side",
+   "etiket",
+   "ölçüm",
+   "frontpages"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "wip",
+   "badge": "Layer 1 — In-tree"
+  },
+  "owner": "Ortak servisler sahibi",
+  "reviewer": "Senior platform reviewer",
+  "maturity": "taslak",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": [],
+  "nonGoals": [
+   "Bu sayfa tek başına üretim onayı veya uzman incelemesi yerine geçmez."
+  ],
+  "failureModes": [
+   "Tanım, ölçülebilir kabul testi ve sorumlu reviewer olmadan doğrudan üretime uygulanır."
+  ],
+  "acceptanceCriteria": [
+   "Sahip ve reviewer atanmıştır; ilgili otomatik kapılar yeşildir; açık varsayımlar kayıtlıdır."
+  ],
+  "operationalImpact": "Birden çok app'in ortak servis davranışını etkiler.",
+  "externalReviewRequired": false,
+  "related": [
+   "page-l1-analytics",
+   "page-l1-experiment",
+   "page-cc-privacy",
+   "page-cc-notification-consent",
+   "page-fe-cdn"
+  ],
+  "blocks": [
+   {
+    "id": "block-l1-tagmanager-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Ölçüm & tag ailesinin taşıyıcı ayağı. Tag-enjeksiyonu (render), ölçüm (l1-analytics, pii veri) ve rıza (cc-privacy, yasal kapı) FARKLI sorumluluklardır — birini diğerine gömmek anti-pattern'dir (Magento/WP de ayrı tutar). Bu modül yalnız etiket konteynerini ve enjeksiyonunu sahiplenir; consent kapısından geçmeyen etiket yüklenmez."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-tagmanager-co",
+    "type": "callout",
+    "variant": "info",
+    "title": "Ne + sınır",
+    "segments": [
+     {
+      "type": "text",
+      "text": "App değil module. l1-analytics'ten AYRI: bu modül etiketin TAŞIYICISIDIR (container), ölçümün kendisi değil. cc-privacy consent'i ön koşuldur — rıza yoksa pazarlama etiketi enjekte edilmez (yalnız zorunlu/transactional). Güvenlik için server-side GTM önceliklidir; custom-HTML tag varsayılan kapalı."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-tagmanager-h-kapsam-modulun-urettigi",
+    "type": "heading",
+    "level": 2,
+    "text": "Kapsam — modülün ürettiği"
+   },
+   {
+    "id": "block-l1-tagmanager-table",
+    "type": "table",
+    "caption": "Yetenek → nasıl → öncelik",
+    "columns": [
+     "Yetenek",
+     "Nasıl",
+     "Öncelik"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Etiket konteyneri"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tek container; tag'ler tanımlı tetikleyici/değişkenle yönetilir; sürümleme"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "P0"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Server-side GTM"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tarayıcı yerine sunucu tarafı container; veri sızıntısı + reklam-engelleyici dayanıklılığı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "P1"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Onaylı tag allowlist"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yalnız allowlist'teki sağlayıcı/etiket; custom-HTML kapalı (deny-by-default)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "P0 — güvenlik"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Consent eşlemesi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Her tag bir consent kategorisine bağlı (analytics/marketing/functional); rıza yoksa yüklenmez"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "P0"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "dataLayer sözleşmesi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Standart olay şeması (l1-analytics + l1-experiment ile paylaşılan)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "P1"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-l1-tagmanager-h-archetype-lar-capability-manifesti",
+    "type": "heading",
+    "level": 2,
+    "text": "ArcheType'lar + capability manifesti"
+   },
+   {
+    "id": "block-l1-tagmanager-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "ArcheType'lar",
+      "definition": [
+       {
+        "type": "text",
+        "text": "TagContainer (sürüm + ortam), Tag (sağlayıcı/tetikleyici/consent-kategori), TagAllowlist (izinli sağlayıcılar), DataLayerSchema"
+       }
+      ]
+     },
+     {
+      "term": "Capability (deny-by-default)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "yalnız allowlist tag enjeksiyonu; custom-HTML YASAK; network allowlist; rıza-kapısı zorunlu; pii TOPLAMAZ (taşır, ölçmez)"
+       }
+      ]
+     },
+     {
+      "term": "Bayraklar",
+      "definition": [
+       {
+        "type": "text",
+        "text": "tag değişimi audit'li + sürümlü; consent kategorisi her tag'de zorunlu alan; server-side tercih"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-l1-tagmanager-h-gelistirme-plani-test-first-be-sdk-sirasi",
+    "type": "heading",
+    "level": 2,
+    "text": "Geliştirme planı — test-first (be-sdk sırası)"
+   },
+   {
+    "id": "block-l1-tagmanager-h-once-testler-kirmizi-tanim-uygulama",
+    "type": "heading",
+    "level": 3,
+    "text": "Önce testler (kırmızı) → tanım → uygulama"
+   },
+   {
+    "id": "block-l1-tagmanager-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "1 · Testler ÖNCE (kırmızı başlar)",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Kabul: (a) consent yokken marketing tag enjekte EDİLMEZ; (b) allowlist dışı sağlayıcı reddedilir; (c) custom-HTML tag tanımı CI'da reddedilir (XSS kapısı); (d) dataLayer olayı şemadan geçer; (e) tenant izolasyonu (tag'ler karışmaz); (f) tag sürüm geri-alma çalışır. Edge: reklam-engelleyici altında server-side yol."
+       }
+      ]
+     },
+     {
+      "title": "2 · ArcheType YAML taslakları",
+      "segments": [
+       {
+        "type": "text",
+        "text": "archetypes/tag-container.yaml, tag.yaml, tag-allowlist.yaml, datalayer-schema.yaml — consent-kategori zorunlu; audit:true."
+       }
+      ]
+     },
+     {
+      "title": "3 · Surface + Contract",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Admin Surface: container/tag yönetimi + consent eşleme + önizleme. Contract: enjeksiyon kararı (tag, consent-state) → yükle/atla; server-side endpoint."
+       }
+      ]
+     },
+     {
+      "title": "4 · Workflow + manifest",
+      "segments": [
+       {
+        "type": "text",
+        "text": "workflows/tag-publish.yaml (taslak → onay → sürüm yayınla). manifest.yaml: dar network allowlist + custom-HTML yasağı beyanı (WASM sandbox)."
+       }
+      ]
+     },
+     {
+      "title": "5 · Saf hook gövdeleri",
+      "segments": [
+       {
+        "type": "text",
+        "text": "enjeksiyon-karar fonksiyonu (consent+allowlist), dataLayer doğrulayıcı — saf fonksiyonlar."
+       }
+      ]
+     },
+     {
+      "title": "6 · Kabul kapısı",
+      "segments": [
+       {
+        "type": "text",
+        "text": "deterministik testler + güvenlik reviewer (XSS/sızıntı) + hukuk-Domain (KVKK consent). AI kendi çıktısını onaylamaz."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-l1-tagmanager-h-yol-haritasi",
+    "type": "heading",
+    "level": 2,
+    "text": "Yol haritası"
+   },
+   {
+    "id": "block-l1-tagmanager-h-asama-kapilari",
+    "type": "heading",
+    "level": 3,
+    "text": "Aşama kapıları"
+   },
+   {
+    "id": "block-l1-tagmanager-steps-2",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "MVP (P0)",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Container + onaylı tag allowlist + consent eşlemesi (cc-privacy bağı) + custom-HTML yasağı."
+       }
+      ]
+     },
+     {
+      "title": "Faz 2 (P1)",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Server-side GTM + standart dataLayer sözleşmesi + sürüm geri-alma."
+       }
+      ]
+     },
+     {
+      "title": "Faz 3 (enterprise)",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Çoklu ortam (dev/stage/prod) + tenant başına container + reklam-engelleyici dayanıklı server-side yol."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-l1-tagmanager-co-2",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Riskler",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Custom-HTML tag = XSS vektörü → varsayılan kapalı, server-side + allowlist zorunlu. Consent atlama (KVKK ihlali) → rıza ön koşul, cc-privacy kapısı. Tag çoğalması sayfa hızını düşürür → server-side + denetim. Bu modül ölçmez (l1-analytics), rıza vermez (cc-privacy); yalnız taşır."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-tagmanager-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Ölçüm l1-analytics'te, deney l1-experiment'te, rıza cc-privacy/cc-notification-consent'te. Bu modül paylaşılan dataLayer sözleşmesiyle üçünü besleyen taşıyıcıdır."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-tagmanager-h-uret",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu birimi üret — kopyalanabilir prompt"
+   },
+   {
+    "id": "block-l1-tagmanager-uret-prompt",
+    "type": "codeBlock",
+    "title": "Module (Kaya) build prompt'u",
+    "language": "text",
+    "code": "SEVİYE: Module / Domain (Kaya) · birim: Tag Manager — Etiket Konteyneri (server-side öncelikli)\nROL: Domain mimarı. OKU: bu sayfa (l1-tagmanager), ilgili app plan ağacı, core sözleşmeleri.\nGÖREV: \"Tag Manager — Etiket Konteyneri (server-side öncelikli)\" module sınırını, sahip olduğu ArcheType'ları ve Contract (API kapısı) tanımını çıkar.\nKISIT: Başka module'ün tablosuna dokunma; Contract üzerinden konuş. Capability manifesti deny-by-default.\nÇIKTI: testler önce → ArcheType listesi + Contract + manifest + Alembic branch (downgrade yolu).\nKABUL (DoD): module ayrı yüklenip kaldırılabilir; capability izinleri açık; contract testi yeşil.\nÖNCE faz prompt'larını uygula (Prompt 7 Gereksinim, Prompt 8 Tasarım), sonra İnşa/Doğrulama. be-sdk sırası: testler ÖNCE (kırmızı) → yaml taslaklar → uygulama. Küçük PR + kanıt. Komşuluk kuralını ihlal etme.",
+    "copyEnabled": true
+   }
+  ]
+ }
+}

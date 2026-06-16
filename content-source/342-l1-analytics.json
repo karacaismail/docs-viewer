@@ -1,7 +1,7 @@
 {
  "id": "l1-analytics",
  "title": "Pazarlama Ölçümü / Analytics + Deney",
- "subtitle": "Layer 1 in-tree ölçüm modülü: web analytics + KVKK consent, UTM/attribution yakalama, CRO/A-B/MVT deney, heatmap. Ziyaretçi verisi pii sınırı bu modülde izole.",
+ "subtitle": "Ölçüm ailesinin ÇEKİRDEĞİ (Layer 1 in-tree): web analytics, UTM/attribution yakalama, heatmap, dönüşüm. Etiket taşıma→l1-tagmanager, CRO/A-B/MVT→l1-experiment, rıza→cc-privacy. Ziyaretçi pii sınırı bu modülde izole.",
  "cluster": "layer1",
  "layer": "L1",
  "order": 14,
@@ -19,13 +19,17 @@
  ],
  "related": [
   "l1-seo",
+  "l1-tagmanager",
+  "l1-experiment",
   "cc-privacy",
+  "cc-notification-consent",
   "s-crm",
+  "s-product-feed",
   "fe-tooling",
   "k-agent-runtime"
  ],
  "enrich": {
-  "info": "Keşfedilebilirliğin (l1-seo) ikiz bounded-context'i: ölçüm. Ayrı modül çünkü veri (ziyaretçi olayları, pii) ve manifest (consent + network allowlist) sınırı SEO render'dan farklı."
+  "info": "Keşfedilebilirliğin (l1-seo) ikiz bounded-context'i: ölçüm ailesinin çekirdeği. Etiket TAŞIMA (l1-tagmanager), DENEY (l1-experiment) ve RIZA (cc-privacy/cc-notification-consent) ayrı modüllerdir — bu çekirdek yalnız ölçüm/attribution'ı sahiplenir. Ayrı tutulur çünkü veri (pii) ve manifest (consent + network allowlist) sınırı SEO render'dan farklı."
  },
  "blocks": [
   {
@@ -57,7 +61,7 @@
     ],
     [
      "CRO / A-B / MVT",
-     "Surface varyant + Experiment ArcheType; sonuç ölçümü"
+     "→ l1-experiment modülüne ayrıldı; bu çekirdek yalnız dönüşüm sonucunu ölçer"
     ],
     [
      "Heatmap / Session",
@@ -79,7 +83,7 @@
    "pairs": [
     {
      "key": "ArcheType'lar",
-     "value": "AnalyticsConfig (pii+consent), Event/Conversion, CampaignUtm, AttributionModel, Experiment (A/B/MVT), HeatmapConfig"
+     "value": "AnalyticsConfig (pii+consent), Event/Conversion, CampaignUtm, AttributionModel, HeatmapConfig. (Experiment→l1-experiment, TagContainer→l1-tagmanager)"
     },
     {
      "key": "Capability (deny-by-default)",

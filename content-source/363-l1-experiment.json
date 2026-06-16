@@ -1,0 +1,96 @@
+{
+ "id": "l1-experiment",
+ "title": "Experiment & CRO — A/B, MVT, Feature-Flag Deney",
+ "subtitle": "Layer 1 in-tree modül: Surface varyantı + Experiment ArcheType ile A/B, MVT ve feature-flag deneyleri; dönüşüm ölçümü l1-analytics'e bağlı. Enterprise CRO yeteneği (P2).",
+ "cluster": "layer1",
+ "layer": "L1",
+ "order": 20,
+ "icon": "ph-flask",
+ "granularity": "kaya",
+ "state": "wip",
+ "badge": "Layer 1 — In-tree",
+ "tags": ["experiment", "cro", "ab-test", "mvt", "feature-flag", "frontpages"],
+ "related": ["l1-analytics", "l1-tagmanager", "l1-pseo", "cc-privacy", "fe-tooling"],
+ "enrich": {
+  "info": "Ölçüm & tag ailesinin optimizasyon ayağı. Deney (varyant atama + maruziyet) ile ölçüm (l1-analytics) ayrı tutulur: bu modül kimin hangi varyantı gördüğünü ve istatistiksel kararı yönetir; dönüşüm verisini analytics'ten okur. Enterprise olgunluk (P2); MVP'de gerekmez ama büyük ölçekte CRO için kritik."
+ },
+ "blocks": [
+  {
+   "type": "callout",
+   "variant": "info",
+   "label": "Ne + sınır",
+   "body": "App değil module. Surface varyantı + deterministik varyant atama (tutarlı kullanıcı deneyimi) + maruziyet kaydı; dönüşüm ölçümü l1-analytics'ten. Consent kapsamında çalışır (cc-privacy). Feature-flag deneyi server-side; istatistiksel anlamlılık kapısı."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Kapsam — modülün ürettiği"
+  },
+  {
+   "type": "table",
+   "caption": "Yetenek → nasıl → öncelik",
+   "headers": ["Yetenek", "Nasıl", "Öncelik"],
+   "rows": [
+    ["A/B testi", "İki varyant + deterministik atama (hash) + maruziyet kaydı; sonuç l1-analytics", "P2"],
+    ["MVT (çok değişkenli)", "Faktör kombinasyonu; örneklem bölme; etkileşim analizi", "P2"],
+    ["Feature-flag deney", "Server-side flag + kademeli açma (rollout) + kill-switch", "P2"],
+    ["İstatistiksel karar", "Anlamlılık/güç kapısı; erken durdurma koruması; kazanan ilanı", "P2"],
+    ["pSEO/AEO şablon deneyi", "Şablon varyantı testi (l1-pseo ile); başlık/şema varyantı", "P3"]
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "ArcheType'lar + capability manifesti"
+  },
+  {
+   "type": "kv-row",
+   "pairs": [
+    {"key": "ArcheType'lar", "value": "Experiment (hipotez/varyant/metrik/örneklem), Variant (Surface override), ExposureEvent (maruziyet), FeatureFlag (rollout/kill-switch)"},
+    {"key": "Capability (deny-by-default)", "value": "varyant atama + maruziyet kaydı; dönüşümü l1-analytics'ten OKUR (kendi pii ölçümü yok); consent kapsamında; kernel iç API'sine dokunmaz"},
+    {"key": "Bayraklar", "value": "deney + karar audit'li; maruziyet pii sınırı (anonim/consent); istatistiksel kapı deterministik"}
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Geliştirme planı — test-first (be-sdk sırası)"
+  },
+  {
+   "type": "steps",
+   "title": "Önce testler (kırmızı) → tanım → uygulama",
+   "items": [
+    {"title": "1 · Testler ÖNCE (kırmızı başlar)", "body": "Kabul: (a) deterministik atama: aynı kullanıcı hep aynı varyant; (b) örneklem oranı korunur (50/50 ±tolerans); (c) maruziyet bir kez kaydedilir; (d) istatistiksel kapı erken-durdurmayı reddeder; (e) kill-switch anında tüm trafiği kontrole çeker; (f) consent yoksa anonim/atlanır. Edge: deney bitince kazanan varyant kalıcılaşır."},
+    {"title": "2 · ArcheType YAML taslakları", "body": "archetypes/experiment.yaml, variant.yaml, exposure-event.yaml, feature-flag.yaml — metrik/örneklem/anlamlılık alanları; audit:true; pii sınırı."},
+    {"title": "3 · Surface + Contract", "body": "Admin Surface: deney kurulumu + canlı sonuç + karar. Contract: varyant-atama fonksiyonu (kullanıcı→varyant), maruziyet kaydı, flag okuma (server-side)."},
+    {"title": "4 · Workflow + manifest", "body": "workflows/experiment-lifecycle.yaml (taslak→çalışır→anlamlılık→karar→kalıcılaştır/geri-al). manifest.yaml: l1-analytics okuma + Surface override beyanı."},
+    {"title": "5 · Saf hook gövdeleri", "body": "hash-tabanlı atama, örneklem bölücü, anlamlılık hesaplayıcı — saf, deterministik fonksiyonlar."},
+    {"title": "6 · Kabul kapısı", "body": "deterministik testler + veri/istatistik reviewer (p-hacking/erken durdurma) + reviewer. AI kendi sonucunu onaylamaz."}
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Yol haritası"
+  },
+  {
+   "type": "steps",
+   "title": "Aşama kapıları",
+   "items": [
+    {"title": "Faz 1 (P2)", "body": "A/B testi + deterministik atama + maruziyet + l1-analytics dönüşüm bağı + istatistiksel kapı."},
+    {"title": "Faz 2 (P2)", "body": "Feature-flag rollout + kill-switch + kazanan kalıcılaştırma."},
+    {"title": "Faz 3 (P3)", "body": "MVT + etkileşim analizi + pSEO/AEO şablon deneyi + sequential test."}
+   ]
+  },
+  {
+   "type": "callout",
+   "variant": "warning",
+   "label": "Riskler",
+   "body": "Erken durdurma / p-hacking → istatistiksel kapı zorunlu. Tutarsız atama kullanıcı deneyimini bozar → deterministik hash. SEO için cloaking riski (arama botuna farklı içerik) → bot tutarlılığı; varyantlar kanonik altında. Consent dışı izleme yok. MVP'de gereksiz (P2) — erken karmaşıklık eklenmez."
+  },
+  {
+   "type": "paragraph",
+   "text": "Dönüşüm ölçümü l1-analytics'te, etiket taşıma l1-tagmanager'da, rıza cc-privacy'de. Bu modül yalnız varyant atama + deney yaşam döngüsü + istatistiksel kararı sahiplenir."
+  }
+ ]
+}

@@ -1,0 +1,96 @@
+{
+ "id": "l1-pseo",
+ "title": "Programmatic SEO — ArcheType → Toplu Sayfa Üretimi",
+ "subtitle": "Layer 1 in-tree modül ve framework'ün killer farkı: ArcheType + şablon → binlerce optimize public sayfa (ilan/ürün/portföy/kurs), kalite kapısıyla. Rakiplerin elle yaptığını üretir.",
+ "cluster": "layer1",
+ "layer": "L1",
+ "order": 17,
+ "icon": "ph-stack-plus",
+ "granularity": "kaya",
+ "state": "wip",
+ "badge": "Layer 1 — In-tree",
+ "tags": ["pseo", "programmatic-seo", "şablon", "üretim", "frontpages", "killer-feature"],
+ "related": ["l1-seo", "l1-sitemap", "l1-aeo", "k-surface", "k-schema", "dist-sahibinden", "stack-cms"],
+ "enrich": {
+  "info": "Frontpages ailesinin üretici çekirdek farkı. ArcheType→Surface üretici motoru programatik SEO için doğal zemindir: her ilan/ürün/portföy/kurs kaydı, şablondan optimize bir public sayfaya dönüşür. Ayrı modül çünkü toplu üretim + ince-içerik kalite kapısı, l1-seo'nun tekil meta render'ından farklı bir sorumluluktur."
+ },
+ "blocks": [
+  {
+   "type": "callout",
+   "variant": "info",
+   "label": "Ne + aktivasyon",
+   "body": "App değil module; framework'ün rekabet avantajı. Public ArcheType + PseoTemplate tanımlıysa modül her kayıt için bir public Surface üretir. Killer kullanım: classifieds (dist-sahibinden), real-estate, e-ticaret, eğitim katalog. Kalite kapısı OLMADAN aktifleşmez (ince-içerik cezası riski). Build-time prerender'a bağlı."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Kapsam — modülün ürettiği"
+  },
+  {
+   "type": "table",
+   "caption": "Yetenek → nasıl → öncelik",
+   "headers": ["Yetenek", "Nasıl", "Öncelik"],
+   "rows": [
+    ["Şablon → toplu sayfa", "PseoTemplate (ArcheType başına) + kayıt verisi → optimize public Surface üretimi", "P0"],
+    ["İçerik kalite kapısı", "Min. özgün veri/alan eşiği, tekrar/ince-içerik tespiti; geçemeyen kayıt noindex'te kalır", "P0 — zorunlu"],
+    ["Faceted/koleksiyon sayfaları", "Filtre kombinasyonlarından küme sayfaları (şehir+kategori); kanonik/parametre disiplini", "P1"],
+    ["İç bağlantı örgüsü", "Otomatik related/breadcrumb/hub-spoke iç link üretimi (otorite akışı)", "P1"],
+    ["Şablon varyantı + i18n", "Çoklu dil şablon (cc-i18n-standards); A/B şablon (l1-experiment)", "P2"]
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "ArcheType'lar + capability manifesti"
+  },
+  {
+   "type": "kv-row",
+   "pairs": [
+    {"key": "ArcheType'lar", "value": "PseoTemplate (kaynak ArcheType + slot eşleme + schema tipi), QualityGate (eşik kuralları/Atom), CollectionRule (faceted küme + kanonik)"},
+    {"key": "Capability (deny-by-default)", "value": "üretim hook'u (l1-seo + l1-sitemap'i besler); kalite kapısı geçmeden indexlenmez; pii üretmez; kernel iç API'sine dokunmaz"},
+    {"key": "Bayraklar", "value": "üretim deterministik + audit'li; kalite kapısı deterministik test kapısı; şablon değişimi versiyonlu"}
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Geliştirme planı — test-first (be-sdk sırası)"
+  },
+  {
+   "type": "steps",
+   "title": "Önce testler (kırmızı) → tanım → uygulama",
+   "items": [
+    {"title": "1 · Testler ÖNCE (kırmızı başlar)", "body": "Kabul: (a) 1 ArcheType kaydı → 1 geçerli optimize Surface (title/meta/schema dolu); (b) kalite eşiğini geçemeyen kayıt → noindex + sitemap dışı; (c) determinizm: aynı veri → aynı sayfa (byte-stable); (d) iç link örgüsü çözülebilir (kırık link yok); (e) faceted kanonik doğru (parametre patlaması indexlenmez); (f) tenant izolasyonu. Edge: yetersiz veri → üretim atlanır, log'a düşer."},
+    {"title": "2 · ArcheType YAML taslakları", "body": "archetypes/pseo-template.yaml, quality-gate.yaml, collection-rule.yaml — slot eşleme, eşik kuralları, schema tipi; audit:true."},
+    {"title": "3 · Surface + Contract", "body": "Üretilen public Surface'ler (kayıt başına). Admin Surface: şablon editörü + kalite-kapısı önizleme + kapsam (hangi ArcheType). Contract: üretim tetikleyici + dry-run rapor."},
+    {"title": "4 · Workflow + manifest", "body": "workflows/pseo-build.yaml (kayıt değişimi → kalite kapısı → üret/atla → sitemap+seo besle). manifest.yaml: üretim yetkisi + besleme beyanı."},
+    {"title": "5 · Saf hook gövdeleri", "body": "şablon doldurucu (kayıt→Surface), kalite skorlayıcı, iç-link örücü — saf, deterministik fonksiyonlar."},
+    {"title": "6 · Kabul kapısı", "body": "deterministik testler + reviewer + SEO uzman incelemesi (ince-içerik politikası). Kalite kapısı insan örneklem denetimiyle doğrulanır; AI kendi çıktısını onaylamaz."}
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Yol haritası"
+  },
+  {
+   "type": "steps",
+   "title": "Aşama kapıları",
+   "items": [
+    {"title": "MVP (P0)", "body": "Tek ArcheType için şablon → sayfa üretimi + kalite kapısı + l1-seo/l1-sitemap besleme."},
+    {"title": "Faz 2 (P1)", "body": "Faceted koleksiyon sayfaları + iç-link örgüsü + çoklu ArcheType kapsamı."},
+    {"title": "Faz 3 (enterprise)", "body": "Çoklu dil şablon + A/B şablon (l1-experiment) + büyük ölçek artımlı üretim (milyon+ sayfa)."}
+   ]
+  },
+  {
+   "type": "callout",
+   "variant": "warning",
+   "label": "Riskler",
+   "body": "İnce-içerik (thin content) Google spam politikası cezası → kalite kapısı ZORUNLU, atlanamaz; boş şablon sayfa üretilmez. Faceted parametre patlaması crawl bütçesi tüketir → kanonik/noindex disiplini. Şablon homojenliği → varyasyon + gerçek veri zorunlu. Ön koşul: prerender hattı."
+  },
+  {
+   "type": "paragraph",
+   "text": "Meta/schema l1-seo'dan, keşif yüzeyi l1-sitemap'ten, cevap/FAQ schema l1-aeo'dan gelir; bu modül üretim + kalite kapısını sahiplenir. Framework farkı: rakipler bunu elle yapar, biz ArcheType'tan üretiriz."
+  }
+ ]
+}
