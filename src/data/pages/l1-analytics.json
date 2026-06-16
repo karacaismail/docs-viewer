@@ -1,0 +1,272 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-l1-analytics",
+  "sourceId": "l1-analytics",
+  "slug": "layer1/l1-analytics",
+  "title": "Pazarlama Ölçümü / Analytics + Deney",
+  "summary": "Layer 1 in-tree ölçüm modülü: web analytics + KVKK consent, UTM/attribution yakalama, CRO/A-B/MVT deney, heatmap. Ziyaretçi verisi pii sınırı bu modülde izole.",
+  "categoryId": "layer1",
+  "tags": [
+   "analytics",
+   "cro",
+   "ab-test",
+   "attribution",
+   "consent",
+   "ölçüm"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "wip",
+   "badge": "Layer 1 — In-tree"
+  },
+  "owner": "Ortak servisler sahibi",
+  "reviewer": "Senior platform reviewer",
+  "maturity": "taslak",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": [],
+  "nonGoals": [
+   "Bu sayfa tek başına üretim onayı veya uzman incelemesi yerine geçmez."
+  ],
+  "failureModes": [
+   "Tanım, ölçülebilir kabul testi ve sorumlu reviewer olmadan doğrudan üretime uygulanır."
+  ],
+  "acceptanceCriteria": [
+   "Sahip ve reviewer atanmıştır; ilgili otomatik kapılar yeşildir; açık varsayımlar kayıtlıdır."
+  ],
+  "operationalImpact": "Birden çok app'in ortak servis davranışını etkiler.",
+  "externalReviewRequired": false,
+  "related": [
+   "page-l1-seo",
+   "page-cc-privacy",
+   "page-s-crm",
+   "page-fe-test-tooling",
+   "page-k-agent-runtime"
+  ],
+  "blocks": [
+   {
+    "id": "block-l1-analytics-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Keşfedilebilirliğin (l1-seo) ikiz bounded-context'i: ölçüm. Ayrı modül çünkü veri (ziyaretçi olayları, pii) ve manifest (consent + network allowlist) sınırı SEO render'dan farklı."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-analytics-co",
+    "type": "callout",
+    "variant": "info",
+    "title": "Ne + sınır",
+    "segments": [
+     {
+      "type": "text",
+      "text": "App değil module. SEO render'dan AYRI tutulur çünkü pii sınırı farklı: ziyaretçi verisi pii:true (+retention), analytics consent-gated, network allowlist (yalnız GA/Plausible/Matomo). Tenant-scoped, RLS."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-analytics-h-kapsam-olcum-deney-katman-2",
+    "type": "heading",
+    "level": 2,
+    "text": "Kapsam — ölçüm + deney (Katman 2)"
+   },
+   {
+    "id": "block-l1-analytics-table",
+    "type": "table",
+    "caption": "Disiplin → modül nasıl sağlar",
+    "columns": [
+     "Disiplin",
+     "Nasıl"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Web Analytics"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "GA4/Plausible/Matomo enjeksiyonu (config ArcheType); KVKK consent kapısı"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "UTM / Attribution"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kampanya parametresi yakalama; first/last/multi-touch model; CRM'e besleme"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "CRO / A-B / MVT"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Surface varyant + Experiment ArcheType; sonuç ölçümü"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Heatmap / Session"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Clarity vb. enjeksiyon (consent-gated)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Conversion tracking"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Dönüşüm olayı + paid media endpoint'lerine (yalnız veri)"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-l1-analytics-h-archetype-lar-capability-manifesti",
+    "type": "heading",
+    "level": 2,
+    "text": "ArcheType'lar + capability manifesti"
+   },
+   {
+    "id": "block-l1-analytics-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "ArcheType'lar",
+      "definition": [
+       {
+        "type": "text",
+        "text": "AnalyticsConfig (pii+consent), Event/Conversion, CampaignUtm, AttributionModel, Experiment (A/B/MVT), HeatmapConfig"
+       }
+      ]
+     },
+     {
+      "term": "Capability (deny-by-default)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "analytics network allowlist; consent yoksa iz toplama yok; pii üretir → retention + audit zorunlu"
+       }
+      ]
+     },
+     {
+      "term": "Bağlar",
+      "definition": [
+       {
+        "type": "text",
+        "text": "consent/privacy → crosscut; lead → s-crm; konuşma → k-agent-runtime"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-l1-analytics-h-yol-haritasi",
+    "type": "heading",
+    "level": 2,
+    "text": "Yol haritası"
+   },
+   {
+    "id": "block-l1-analytics-h-asama-kapilari",
+    "type": "heading",
+    "level": 3,
+    "text": "Aşama kapıları"
+   },
+   {
+    "id": "block-l1-analytics-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "MVP (P0)",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Analytics enjeksiyonu + KVKK consent kapısı + temel dönüşüm olayı + UTM yakalama."
+       }
+      ]
+     },
+     {
+      "title": "Faz 2 (P1)",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Attribution modeli + A-B testing/Experiment + heatmap."
+       }
+      ]
+     },
+     {
+      "title": "Faz 3 (enterprise)",
+      "segments": [
+       {
+        "type": "text",
+        "text": "MVT, incrementality/geo-holdout, marketing-mix sinyali, tenant başına dashboard."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-l1-analytics-co-2",
+    "type": "callout",
+    "variant": "warning",
+    "title": "KVKK / risk",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Tüm iz toplama consent-gated; ziyaretçi verisi pii:true + retention; rıza olmadan analytics/heatmap çalışmaz. Ölçüm modülü reklam YÜRÜTMEZ (paid media kapsam dışı); yalnız dönüşüm/UTM verisi sağlar."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-analytics-h-uret",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu birimi üret — kopyalanabilir prompt"
+   },
+   {
+    "id": "block-l1-analytics-uret-prompt",
+    "type": "codeBlock",
+    "title": "Module (Kaya) build prompt'u",
+    "language": "text",
+    "code": "SEVİYE: Module / Domain (Kaya) · birim: Pazarlama Ölçümü / Analytics + Deney\nROL: Domain mimarı. OKU: bu sayfa (l1-analytics), ilgili app plan ağacı, core sözleşmeleri.\nGÖREV: \"Pazarlama Ölçümü / Analytics + Deney\" module sınırını, sahip olduğu ArcheType'ları ve Contract (API kapısı) tanımını çıkar.\nKISIT: Başka module'ün tablosuna dokunma; Contract üzerinden konuş. Capability manifesti deny-by-default.\nÇIKTI: testler önce → ArcheType listesi + Contract + manifest + Alembic branch (downgrade yolu).\nKABUL (DoD): module ayrı yüklenip kaldırılabilir; capability izinleri açık; contract testi yeşil.\nÖNCE faz prompt'larını uygula (Prompt 7 Gereksinim, Prompt 8 Tasarım), sonra İnşa/Doğrulama. be-sdk sırası: testler ÖNCE (kırmızı) → yaml taslaklar → uygulama. Küçük PR + kanıt. Komşuluk kuralını ihlal etme.",
+    "copyEnabled": true
+   }
+  ]
+ }
+}

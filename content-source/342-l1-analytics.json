@@ -1,0 +1,124 @@
+{
+ "id": "l1-analytics",
+ "title": "Pazarlama Ölçümü / Analytics + Deney",
+ "subtitle": "Layer 1 in-tree ölçüm modülü: web analytics + KVKK consent, UTM/attribution yakalama, CRO/A-B/MVT deney, heatmap. Ziyaretçi verisi pii sınırı bu modülde izole.",
+ "cluster": "layer1",
+ "layer": "L1",
+ "order": 14,
+ "icon": "ph-chart-bar",
+ "granularity": "kaya",
+ "state": "wip",
+ "badge": "Layer 1 — In-tree",
+ "tags": [
+  "analytics",
+  "cro",
+  "ab-test",
+  "attribution",
+  "consent",
+  "ölçüm"
+ ],
+ "related": [
+  "l1-seo",
+  "cc-privacy",
+  "s-crm",
+  "fe-tooling",
+  "k-agent-runtime"
+ ],
+ "enrich": {
+  "info": "Keşfedilebilirliğin (l1-seo) ikiz bounded-context'i: ölçüm. Ayrı modül çünkü veri (ziyaretçi olayları, pii) ve manifest (consent + network allowlist) sınırı SEO render'dan farklı."
+ },
+ "blocks": [
+  {
+   "type": "callout",
+   "variant": "info",
+   "label": "Ne + sınır",
+   "body": "App değil module. SEO render'dan AYRI tutulur çünkü pii sınırı farklı: ziyaretçi verisi pii:true (+retention), analytics consent-gated, network allowlist (yalnız GA/Plausible/Matomo). Tenant-scoped, RLS."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Kapsam — ölçüm + deney (Katman 2)"
+  },
+  {
+   "type": "table",
+   "caption": "Disiplin → modül nasıl sağlar",
+   "headers": [
+    "Disiplin",
+    "Nasıl"
+   ],
+   "rows": [
+    [
+     "Web Analytics",
+     "GA4/Plausible/Matomo enjeksiyonu (config ArcheType); KVKK consent kapısı"
+    ],
+    [
+     "UTM / Attribution",
+     "Kampanya parametresi yakalama; first/last/multi-touch model; CRM'e besleme"
+    ],
+    [
+     "CRO / A-B / MVT",
+     "Surface varyant + Experiment ArcheType; sonuç ölçümü"
+    ],
+    [
+     "Heatmap / Session",
+     "Clarity vb. enjeksiyon (consent-gated)"
+    ],
+    [
+     "Conversion tracking",
+     "Dönüşüm olayı + paid media endpoint'lerine (yalnız veri)"
+    ]
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "ArcheType'lar + capability manifesti"
+  },
+  {
+   "type": "kv-row",
+   "pairs": [
+    {
+     "key": "ArcheType'lar",
+     "value": "AnalyticsConfig (pii+consent), Event/Conversion, CampaignUtm, AttributionModel, Experiment (A/B/MVT), HeatmapConfig"
+    },
+    {
+     "key": "Capability (deny-by-default)",
+     "value": "analytics network allowlist; consent yoksa iz toplama yok; pii üretir → retention + audit zorunlu"
+    },
+    {
+     "key": "Bağlar",
+     "value": "consent/privacy → crosscut; lead → s-crm; konuşma → k-agent-runtime"
+    }
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Yol haritası"
+  },
+  {
+   "type": "steps",
+   "title": "Aşama kapıları",
+   "items": [
+    {
+     "title": "MVP (P0)",
+     "body": "Analytics enjeksiyonu + KVKK consent kapısı + temel dönüşüm olayı + UTM yakalama."
+    },
+    {
+     "title": "Faz 2 (P1)",
+     "body": "Attribution modeli + A-B testing/Experiment + heatmap."
+    },
+    {
+     "title": "Faz 3 (enterprise)",
+     "body": "MVT, incrementality/geo-holdout, marketing-mix sinyali, tenant başına dashboard."
+    }
+   ]
+  },
+  {
+   "type": "callout",
+   "variant": "warning",
+   "label": "KVKK / risk",
+   "body": "Tüm iz toplama consent-gated; ziyaretçi verisi pii:true + retention; rıza olmadan analytics/heatmap çalışmaz. Ölçüm modülü reklam YÜRÜTMEZ (paid media kapsam dışı); yalnız dönüşüm/UTM verisi sağlar."
+  }
+ ]
+}

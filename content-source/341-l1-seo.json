@@ -1,0 +1,158 @@
+{
+ "id": "l1-seo",
+ "title": "Keşfedilebilirlik / SEO Motoru",
+ "subtitle": "App'lerin public Surface'lerini bulunabilir kılan Layer 1 in-tree modül: technical+on-page SEO, schema.org, pSEO üretimi, AEO/GEO/LLMO, hreflang, OpenGraph. Public Surface flag ile otomatik aktif.",
+ "cluster": "layer1",
+ "layer": "L1",
+ "order": 13,
+ "icon": "ph-magnifying-glass-plus",
+ "granularity": "kaya",
+ "state": "wip",
+ "badge": "Layer 1 — In-tree",
+ "tags": [
+  "seo",
+  "pseo",
+  "schema",
+  "aeo",
+  "geo",
+  "keşfedilebilirlik",
+  "frontpages"
+ ],
+ "related": [
+  "k-surface",
+  "k-schema",
+  "k-agent-runtime",
+  "stack-cms",
+  "dist-sahibinden",
+  "fe-cdn",
+  "cc-i18n-standards",
+  "l1-analytics"
+ ],
+ "enrich": {
+  "info": "Frontpages geliştirmesi tek modül değil iki bounded-context'tir: keşfedilebilirlik (bu sayfa) ve ölçüm (l1-analytics). Bu modül 'bulunmak' için public yüzeyi yapısal üretir; kampanya yürütmez."
+ },
+ "blocks": [
+  {
+   "type": "callout",
+   "variant": "info",
+   "label": "Ne + aktivasyon",
+   "body": "App değil module. Bir Surface public:true ise modül o Surface için meta + JSON-LD + sitemap kaydı üretir; app'in public Surface'i yoksa yüklenmez (varsayılan-kapalı). Çok-kiracılı: SEO config tenant-scoped (özel domain, hreflang, analytics ID), RLS."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Kapsam — modülün ürettiği (Katman 1)"
+  },
+  {
+   "type": "table",
+   "caption": "Disiplin → modül nasıl sağlar → öncelik",
+   "headers": [
+    "Disiplin",
+    "Nasıl",
+    "Öncelik"
+   ],
+   "rows": [
+    [
+     "Technical SEO",
+     "Otomatik sitemap.xml (ArcheType'lardan), robots, canonical, redirect yöneticisi",
+     "P0"
+    ],
+    [
+     "On-Page SEO",
+     "title/meta/H1/iç-bağlantı Surface alanlarından",
+     "P0"
+    ],
+    [
+     "Structured data (schema.org)",
+     "ArcheType tipi → schema tipi: Product/Offer, JobPosting, LocalBusiness, Event, FAQ, Article, RealEstateListing, MedicalClinic",
+     "P0"
+    ],
+    [
+     "pSEO (Programmatic SEO)",
+     "ArcheType + şablon → toplu optimize public sayfa (ilan/ürün/portföy/kurs); üretici çekirdeğe doğal",
+     "P0 — killer feature"
+    ],
+    [
+     "AEO/GEO/LLMO",
+     "Yapılandırılmış cevap + FAQ schema + llms.txt + temiz semantik HTML → AI motorları kaynak gösterir",
+     "P1"
+    ],
+    [
+     "International SEO",
+     "hreflang + çoklu dil/tenant (cc-i18n-standards)",
+     "P1"
+    ],
+    [
+     "E-commerce SEO",
+     "Product/Offer/AggregateRating schema",
+     "P1"
+    ],
+    [
+     "OpenGraph / Twitter Card",
+     "Sosyal önizleme meta + OG görsel şablonu",
+     "P1"
+    ],
+    [
+     "Image/Video SEO",
+     "alt/caption ArcheType medya alanından; video schema",
+     "P2"
+    ]
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "ArcheType'lar + capability manifesti"
+  },
+  {
+   "type": "kv-row",
+   "pairs": [
+    {
+     "key": "ArcheType'lar",
+     "value": "SeoProfile (Surface başına), StructuredDataMap (ArcheType→schema), Redirect, Hreflang, SitemapPolicy, OgImageTemplate, PseoTemplate"
+    },
+    {
+     "key": "Capability (deny-by-default)",
+     "value": "meta/JSON-LD render; sitemap/robots YAZMA; kernel iç API'sine dokunmaz; pii üretmez"
+    },
+    {
+     "key": "Bayraklar",
+     "value": "SEO değişiklikleri audit'li; tenant özel domain bitemporal"
+    }
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Yol haritası (MVP → enterprise)"
+  },
+  {
+   "type": "steps",
+   "title": "Aşama kapıları",
+   "items": [
+    {
+     "title": "MVP (P0)",
+     "body": "Technical SEO (sitemap/robots/canonical/meta) + schema.org çekirdek tipler + OpenGraph + prerender hattı (ön koşul) + Core Web Vitals (var) + llms.txt (var)."
+    },
+    {
+     "title": "Faz 2 (P1)",
+     "body": "ArcheType başına pSEO şablonları + kalite kapısı; hreflang/i18n; e-commerce Product/Offer schema; image SEO."
+    },
+    {
+     "title": "Faz 3 (enterprise)",
+     "body": "AEO/GEO/LLMO yapılandırılmış cevaplar + FAQ schema; redirect yöneticisi; tenant özel domain SEO; multi-region."
+    }
+   ]
+  },
+  {
+   "type": "callout",
+   "variant": "warning",
+   "label": "Riskler",
+   "body": "Ön koşul: SSR-yok kararı → build-time prerender olmadan SEO/AEO çalışmaz. pSEO ince-içerik riski: üretilen sayfa gerçek veri/değer taşımalı (kalite kapısı; boş şablon cezalandırılır). Yalnız white-hat; parasite/barnacle/black-hat yasak. AEO/GEO buzzword değil, yetenek (structured data + llms.txt) uygulanır."
+  },
+  {
+   "type": "paragraph",
+   "text": "Ölçüm/CRO/attribution bu modülde değil, ikiz modül l1-analytics'tedir (pii sınırı ayrı). Katman 2 bağları: lead form → s-crm, email/SMS/push → be-mail-zinciri/s-email-sms/fe-ai-rt, social/shopping → stack-channel, chatbot → k-agent-runtime. Katman 3 (paid media, influencer, ABM, PR, event, ASO) kapsam dışıdır."
+  }
+ ]
+}

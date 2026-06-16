@@ -1,0 +1,397 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-l1-seo",
+  "sourceId": "l1-seo",
+  "slug": "layer1/l1-seo",
+  "title": "Keşfedilebilirlik / SEO Motoru",
+  "summary": "App'lerin public Surface'lerini bulunabilir kılan Layer 1 in-tree modül: technical+on-page SEO, schema.org, pSEO üretimi, AEO/GEO/LLMO, hreflang, OpenGraph. Public Surface flag ile otomatik aktif.",
+  "categoryId": "layer1",
+  "tags": [
+   "seo",
+   "pseo",
+   "schema",
+   "aeo",
+   "geo",
+   "keşfedilebilirlik",
+   "frontpages"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "wip",
+   "badge": "Layer 1 — In-tree"
+  },
+  "owner": "Ortak servisler sahibi",
+  "reviewer": "Senior platform reviewer",
+  "maturity": "taslak",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": [],
+  "nonGoals": [
+   "Bu sayfa tek başına üretim onayı veya uzman incelemesi yerine geçmez."
+  ],
+  "failureModes": [
+   "Tanım, ölçülebilir kabul testi ve sorumlu reviewer olmadan doğrudan üretime uygulanır."
+  ],
+  "acceptanceCriteria": [
+   "Sahip ve reviewer atanmıştır; ilgili otomatik kapılar yeşildir; açık varsayımlar kayıtlıdır."
+  ],
+  "operationalImpact": "Birden çok app'in ortak servis davranışını etkiler.",
+  "externalReviewRequired": false,
+  "related": [
+   "page-k-surface",
+   "page-kernel-schema",
+   "page-k-agent-runtime",
+   "page-stack-cms",
+   "page-dist-sahibinden",
+   "page-fe-cdn",
+   "page-cc-i18n-standards",
+   "page-l1-analytics"
+  ],
+  "blocks": [
+   {
+    "id": "block-l1-seo-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Frontpages geliştirmesi tek modül değil iki bounded-context'tir: keşfedilebilirlik (bu sayfa) ve ölçüm (l1-analytics). Bu modül 'bulunmak' için public yüzeyi yapısal üretir; kampanya yürütmez."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-seo-co",
+    "type": "callout",
+    "variant": "info",
+    "title": "Ne + aktivasyon",
+    "segments": [
+     {
+      "type": "text",
+      "text": "App değil module. Bir Surface public:true ise modül o Surface için meta + JSON-LD + sitemap kaydı üretir; app'in public Surface'i yoksa yüklenmez (varsayılan-kapalı). Çok-kiracılı: SEO config tenant-scoped (özel domain, hreflang, analytics ID), RLS."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-seo-h-kapsam-modulun-urettigi-katman-1",
+    "type": "heading",
+    "level": 2,
+    "text": "Kapsam — modülün ürettiği (Katman 1)"
+   },
+   {
+    "id": "block-l1-seo-table",
+    "type": "table",
+    "caption": "Disiplin → modül nasıl sağlar → öncelik",
+    "columns": [
+     "Disiplin",
+     "Nasıl",
+     "Öncelik"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Technical SEO"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Otomatik sitemap.xml (ArcheType'lardan), robots, canonical, redirect yöneticisi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "P0"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "On-Page SEO"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "title/meta/H1/iç-bağlantı Surface alanlarından"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "P0"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Structured data (schema.org)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ArcheType tipi → schema tipi: Product/Offer, JobPosting, LocalBusiness, Event, FAQ, Article, RealEstateListing, MedicalClinic"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "P0"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "pSEO (Programmatic SEO)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ArcheType + şablon → toplu optimize public sayfa (ilan/ürün/portföy/kurs); üretici çekirdeğe doğal"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "P0 — killer feature"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "AEO/GEO/LLMO"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yapılandırılmış cevap + FAQ schema + llms.txt + temiz semantik HTML → AI motorları kaynak gösterir"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "P1"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "International SEO"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "hreflang + çoklu dil/tenant (cc-i18n-standards)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "P1"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "E-commerce SEO"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Product/Offer/AggregateRating schema"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "P1"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "OpenGraph / Twitter Card"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sosyal önizleme meta + OG görsel şablonu"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "P1"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Image/Video SEO"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "alt/caption ArcheType medya alanından; video schema"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "P2"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-l1-seo-h-archetype-lar-capability-manifesti",
+    "type": "heading",
+    "level": 2,
+    "text": "ArcheType'lar + capability manifesti"
+   },
+   {
+    "id": "block-l1-seo-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "ArcheType'lar",
+      "definition": [
+       {
+        "type": "text",
+        "text": "SeoProfile (Surface başına), StructuredDataMap (ArcheType→schema), Redirect, Hreflang, SitemapPolicy, OgImageTemplate, PseoTemplate"
+       }
+      ]
+     },
+     {
+      "term": "Capability (deny-by-default)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "meta/JSON-LD render; sitemap/robots YAZMA; kernel iç API'sine dokunmaz; pii üretmez"
+       }
+      ]
+     },
+     {
+      "term": "Bayraklar",
+      "definition": [
+       {
+        "type": "text",
+        "text": "SEO değişiklikleri audit'li; tenant özel domain bitemporal"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-l1-seo-h-yol-haritasi-mvp-enterprise",
+    "type": "heading",
+    "level": 2,
+    "text": "Yol haritası (MVP → enterprise)"
+   },
+   {
+    "id": "block-l1-seo-h-asama-kapilari",
+    "type": "heading",
+    "level": 3,
+    "text": "Aşama kapıları"
+   },
+   {
+    "id": "block-l1-seo-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "MVP (P0)",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Technical SEO (sitemap/robots/canonical/meta) + schema.org çekirdek tipler + OpenGraph + prerender hattı (ön koşul) + Core Web Vitals (var) + llms.txt (var)."
+       }
+      ]
+     },
+     {
+      "title": "Faz 2 (P1)",
+      "segments": [
+       {
+        "type": "text",
+        "text": "ArcheType başına pSEO şablonları + kalite kapısı; hreflang/i18n; e-commerce Product/Offer schema; image SEO."
+       }
+      ]
+     },
+     {
+      "title": "Faz 3 (enterprise)",
+      "segments": [
+       {
+        "type": "text",
+        "text": "AEO/GEO/LLMO yapılandırılmış cevaplar + FAQ schema; redirect yöneticisi; tenant özel domain SEO; multi-region."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-l1-seo-co-2",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Riskler",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Ön koşul: SSR-yok kararı → build-time prerender olmadan SEO/AEO çalışmaz. pSEO ince-içerik riski: üretilen sayfa gerçek veri/değer taşımalı (kalite kapısı; boş şablon cezalandırılır). Yalnız white-hat; parasite/barnacle/black-hat yasak. AEO/GEO buzzword değil, yetenek (structured data + llms.txt) uygulanır."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-seo-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Ölçüm/CRO/attribution bu modülde değil, ikiz modül l1-analytics'tedir (pii sınırı ayrı). Katman 2 bağları: lead form → s-crm, email/SMS/push → be-mail-zinciri/s-email-sms/fe-ai-rt, social/shopping → stack-channel, chatbot → k-agent-runtime. Katman 3 (paid media, influencer, ABM, PR, event, ASO) kapsam dışıdır."
+     }
+    ]
+   },
+   {
+    "id": "block-l1-seo-h-uret",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu birimi üret — kopyalanabilir prompt"
+   },
+   {
+    "id": "block-l1-seo-uret-prompt",
+    "type": "codeBlock",
+    "title": "Module (Kaya) build prompt'u",
+    "language": "text",
+    "code": "SEVİYE: Module / Domain (Kaya) · birim: Keşfedilebilirlik / SEO Motoru\nROL: Domain mimarı. OKU: bu sayfa (l1-seo), ilgili app plan ağacı, core sözleşmeleri.\nGÖREV: \"Keşfedilebilirlik / SEO Motoru\" module sınırını, sahip olduğu ArcheType'ları ve Contract (API kapısı) tanımını çıkar.\nKISIT: Başka module'ün tablosuna dokunma; Contract üzerinden konuş. Capability manifesti deny-by-default.\nÇIKTI: testler önce → ArcheType listesi + Contract + manifest + Alembic branch (downgrade yolu).\nKABUL (DoD): module ayrı yüklenip kaldırılabilir; capability izinleri açık; contract testi yeşil.\nÖNCE faz prompt'larını uygula (Prompt 7 Gereksinim, Prompt 8 Tasarım), sonra İnşa/Doğrulama. be-sdk sırası: testler ÖNCE (kırmızı) → yaml taslaklar → uygulama. Küçük PR + kanıt. Komşuluk kuralını ihlal etme.",
+    "copyEnabled": true
+   }
+  ]
+ }
+}
