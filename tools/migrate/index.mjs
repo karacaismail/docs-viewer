@@ -51,7 +51,10 @@ function readClusters() {
   });
 }
 
-function categoryOf(stem) {
+function categoryOf(stem, data) {
+  // ADR-0023 Faz 3 — prefix-coupling gevşetme: sayfa kendi categoryId'sini açıkça beyan
+  // edebilir; aksi halde stem-override, sonra dosya-prefix'i kullanılır (geriye uyumlu).
+  if (data?.categoryId) return data.categoryId;
   if (STEM_OVERRIDES[stem]) return STEM_OVERRIDES[stem];
   const prefix = stem.split("-")[0];
   return PREFIX_TO_CATEGORY[prefix] ?? null;
@@ -248,7 +251,7 @@ function transformCluster({ file, stem, data }) {
   blocks.push(...buildUnitPromptBlocks(stem, data, nextId));
   collectTerms(data.enrich?.terms);
 
-  const categoryId = categoryOf(stem);
+  const categoryId = categoryOf(stem, data);
   const pageId = `page-${stem}`;
   const page = {
     id: pageId,

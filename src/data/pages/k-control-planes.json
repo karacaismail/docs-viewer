@@ -1,0 +1,357 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-k-control-planes",
+  "sourceId": "k-control-planes",
+  "slug": "kernel/k-control-planes",
+  "title": "Dört Boyut — Kontrol Düzlemleri (Control Planes)",
+  "summary": "Platform dört ayrı düzlem/panel ve dört ayrı kitle: Ops/DevOps (Boyut 1), Developer-admin (Boyut 2), Tenant/Müşteri-admin (Boyut 3), Public/Frontpages (Boyut 4). Module developer'da özelleştirilir; ArcheType müşteride prompt ile oluşturulur.",
+  "categoryId": "kernel",
+  "tags": [
+   "control-plane",
+   "panel",
+   "boyut",
+   "developer",
+   "tenant",
+   "frontpages"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "wip",
+   "badge": "Mimari Model"
+  },
+  "owner": "Kernel mimarisi sahibi",
+  "reviewer": "Senior platform ve güvenlik reviewer",
+  "maturity": "taslak",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": [],
+  "nonGoals": [
+   "Bu sayfa tek başına üretim onayı veya uzman incelemesi yerine geçmez."
+  ],
+  "failureModes": [
+   "Tanım, ölçülebilir kabul testi ve sorumlu reviewer olmadan doğrudan üretime uygulanır."
+  ],
+  "acceptanceCriteria": [
+   "Sahip ve reviewer atanmıştır; ilgili otomatik kapılar yeşildir; açık varsayımlar kayıtlıdır."
+  ],
+  "operationalImpact": "Tüm app'lerin güvenlik, izolasyon ve geriye uyumluluk temelini etkiler.",
+  "externalReviewRequired": true,
+  "related": [
+   "page-k-surface",
+   "page-be-sdk",
+   "page-be-deploy-profilleri",
+   "page-k-agent-runtime",
+   "page-sus-actions",
+   "page-l1-seo",
+   "page-dx-workflow",
+   "page-k-terminoloji"
+  ],
+  "blocks": [
+   {
+    "id": "block-k-control-planes-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Mimari, kitle ve sorumluluğa göre dört kontrol düzlemine ayrılır. Her düzlem ayrı panel, ayrı kullanıcı, ayrı yetki. Module ve ArcheType'ın hangi düzlemde özelleştirildiği/oluşturulduğu bu modelle netleşir."
+     }
+    ]
+   },
+   {
+    "id": "block-k-control-planes-co",
+    "type": "callout",
+    "variant": "info",
+    "title": "Dört düzlem",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Platform tek panel değildir; dört ayrı kontrol düzlemi (panel) ve dört ayrı kitle içerir. Her düzlem ayrı yetki tavanına tabidir (ADR-0015): ops, developer, müşteri ve public yüzey farklı güven sınırlarıdır."
+     }
+    ]
+   },
+   {
+    "id": "block-k-control-planes-h-boyut-1-4",
+    "type": "heading",
+    "level": 2,
+    "text": "Boyut 1–4"
+   },
+   {
+    "id": "block-k-control-planes-table",
+    "type": "table",
+    "caption": "Düzlem → kitle → ne yapılır → benzer",
+    "columns": [
+     "Boyut",
+     "Kitle",
+     "Ne yapılır",
+     "Benzer"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "1 · Ops/DevOps"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Operatör/SRE"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Hosting, CI/CD, devops süreçleri; dağıtım/ölçek yönetimi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Frappe Press, cPanel"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "2 · Developer-admin"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "SaaS geliştiriciler"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Code-base customization; ArcheType arka-planı düzenleme; DB tarafı (join/relations/views) yüzlerce işlem manuel"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Drupal/Frappe/Django admin (Drupal Views)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "3 · Tenant/Müşteri-admin"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "SaaS müşterileri"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kendi süreçlerini yönetir; ArcheType'ı PROMPT ile oluşturur (capability-gated)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "SaaS admin paneli"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "4 · Public/Frontpages"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Ziyaretçi (anonim)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yayınlanan sayfalar: StoreFront, frontpages, landing, blog"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Storefront / CMS public"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-k-control-planes-h-module-vs-archetype-hangi-duzlemde",
+    "type": "heading",
+    "level": 2,
+    "text": "Module vs ArcheType — hangi düzlemde"
+   },
+   {
+    "id": "block-k-control-planes-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Module (Kaya)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Boyut 2'de geliştirici tarafından özelleştirilir; Boyut 3'te müşteri tarafından KULLANILIR"
+       }
+      ]
+     },
+     {
+      "term": "ArcheType (Büyük Taş)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Boyut 2'de geliştirici arka-planını düzenler; Boyut 3'te müşteri PROMPT ile oluşturur (tek komut + çok-aşamalı AI)"
+       }
+      ]
+     },
+     {
+      "term": "Public yüzey",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Boyut 4: Surface'in public projeksiyonu (l1-seo ailesi: meta/schema/sitemap)"
+       }
+      ]
+     },
+     {
+      "term": "Ops",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Boyut 1: be-deploy profilleri + CI/CD + ölçek"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-k-control-planes-co-2",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Güvenlik sınırı (Boyut 3)",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Müşterinin prompt ile ArcheType oluşturması serbest DDL/kod DEĞİLDİR: tipli, capability-gated, hibrit depolama (paylaşılan şema + JSONB; tablo-per-tip yok). Agent asla principal değil; etkin yetki = kullanıcı ∩ capability ∩ tool_scope ∩ risk (ADR-0015, sus-actions). DisableProtection sınıfı önerilemez/uygulanamaz."
+     }
+    ]
+   },
+   {
+    "id": "block-k-control-planes-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bağlar: Boyut 1 "
+     },
+     {
+      "type": "ref",
+      "text": "be-deploy-profilleri",
+      "refId": "be-deploy-profilleri"
+     },
+     {
+      "type": "text",
+      "text": "; Boyut 2 "
+     },
+     {
+      "type": "ref",
+      "text": "be-sdk",
+      "refId": "be-sdk"
+     },
+     {
+      "type": "text",
+      "text": " + DB manipülasyon "
+     },
+     {
+      "type": "ref",
+      "text": "k-schema",
+      "refId": "k-schema"
+     },
+     {
+      "type": "text",
+      "text": "; Boyut 3 "
+     },
+     {
+      "type": "ref",
+      "text": "k-agent-runtime",
+      "refId": "k-agent-runtime"
+     },
+     {
+      "type": "text",
+      "text": " + "
+     },
+     {
+      "type": "ref",
+      "text": "sus-actions",
+      "refId": "sus-actions"
+     },
+     {
+      "type": "text",
+      "text": "; Boyut 4 "
+     },
+     {
+      "type": "ref",
+      "text": "l1-seo",
+      "refId": "l1-seo"
+     },
+     {
+      "type": "text",
+      "text": "; projeksiyon "
+     },
+     {
+      "type": "ref",
+      "text": "k-surface",
+      "refId": "k-surface"
+     },
+     {
+      "type": "text",
+      "text": "; uçtan uca akış "
+     },
+     {
+      "type": "ref",
+      "text": "dx-workflow",
+      "refId": "dx-workflow"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-k-control-planes-h-uret",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu birimi üret — kopyalanabilir prompt"
+   },
+   {
+    "id": "block-k-control-planes-uret-prompt",
+    "type": "codeBlock",
+    "title": "Module (Kaya) build prompt'u",
+    "language": "text",
+    "code": "SEVİYE: Module / Domain (Kaya) · birim: Dört Boyut — Kontrol Düzlemleri (Control Planes)\nROL: Domain mimarı. OKU: bu sayfa (k-control-planes), ilgili app plan ağacı, core sözleşmeleri.\nGÖREV: \"Dört Boyut — Kontrol Düzlemleri (Control Planes)\" module sınırını, sahip olduğu ArcheType'ları ve Contract (API kapısı) tanımını çıkar.\nKISIT: Başka module'ün tablosuna dokunma; Contract üzerinden konuş. Capability manifesti deny-by-default.\nÇIKTI: testler önce → ArcheType listesi + Contract + manifest + Alembic branch (downgrade yolu).\nKABUL (DoD): module ayrı yüklenip kaldırılabilir; capability izinleri açık; contract testi yeşil.\nÖNCE faz prompt'larını uygula (Prompt 7 Gereksinim, Prompt 8 Tasarım), sonra İnşa/Doğrulama. be-sdk sırası: testler ÖNCE (kırmızı) → yaml taslaklar → uygulama. Küçük PR + kanıt. Komşuluk kuralını ihlal etme.",
+    "copyEnabled": true
+   }
+  ]
+ }
+}

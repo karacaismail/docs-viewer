@@ -1,0 +1,35 @@
+{
+ "id": "k-control-planes",
+ "title": "Dört Boyut — Kontrol Düzlemleri (Control Planes)",
+ "subtitle": "Platform dört ayrı düzlem/panel ve dört ayrı kitle: Ops/DevOps (Boyut 1), Developer-admin (Boyut 2), Tenant/Müşteri-admin (Boyut 3), Public/Frontpages (Boyut 4). Module developer'da özelleştirilir; ArcheType müşteride prompt ile oluşturulur.",
+ "cluster": "kernel",
+ "layer": "kernel",
+ "order": 17,
+ "icon": "ph-squares-four",
+ "granularity": "kaya",
+ "state": "wip",
+ "badge": "Mimari Model",
+ "tags": ["control-plane","panel","boyut","developer","tenant","frontpages"],
+ "related": ["k-surface","be-sdk","be-deploy-profilleri","k-agent-runtime","sus-actions","l1-seo","dx-workflow"],
+ "enrich": {"info": "Mimari, kitle ve sorumluluğa göre dört kontrol düzlemine ayrılır. Her düzlem ayrı panel, ayrı kullanıcı, ayrı yetki. Module ve ArcheType'ın hangi düzlemde özelleştirildiği/oluşturulduğu bu modelle netleşir."},
+ "blocks": [
+  {"type":"callout","variant":"info","label":"Dört düzlem","body":"Platform tek panel değildir; dört ayrı kontrol düzlemi (panel) ve dört ayrı kitle içerir. Her düzlem ayrı yetki tavanına tabidir (ADR-0015): ops, developer, müşteri ve public yüzey farklı güven sınırlarıdır."},
+  {"type":"heading","level":2,"text":"Boyut 1–4"},
+  {"type":"table","caption":"Düzlem → kitle → ne yapılır → benzer","headers":["Boyut","Kitle","Ne yapılır","Benzer"],
+   "rows":[
+    ["1 · Ops/DevOps","Operatör/SRE","Hosting, CI/CD, devops süreçleri; dağıtım/ölçek yönetimi","Frappe Press, cPanel"],
+    ["2 · Developer-admin","SaaS geliştiriciler","Code-base customization; ArcheType arka-planı düzenleme; DB tarafı (join/relations/views) yüzlerce işlem manuel","Drupal/Frappe/Django admin (Drupal Views)"],
+    ["3 · Tenant/Müşteri-admin","SaaS müşterileri","Kendi süreçlerini yönetir; ArcheType'ı PROMPT ile oluşturur (capability-gated)","SaaS admin paneli"],
+    ["4 · Public/Frontpages","Ziyaretçi (anonim)","Yayınlanan sayfalar: StoreFront, frontpages, landing, blog","Storefront / CMS public"]
+   ]},
+  {"type":"heading","level":2,"text":"Module vs ArcheType — hangi düzlemde"},
+  {"type":"kv-row","pairs":[
+    {"key":"Module (Kaya)","value":"Boyut 2'de geliştirici tarafından özelleştirilir; Boyut 3'te müşteri tarafından KULLANILIR"},
+    {"key":"ArcheType (Büyük Taş)","value":"Boyut 2'de geliştirici arka-planını düzenler; Boyut 3'te müşteri PROMPT ile oluşturur (tek komut + çok-aşamalı AI)"},
+    {"key":"Public yüzey","value":"Boyut 4: Surface'in public projeksiyonu (l1-seo ailesi: meta/schema/sitemap)"},
+    {"key":"Ops","value":"Boyut 1: be-deploy profilleri + CI/CD + ölçek"}
+   ]},
+  {"type":"callout","variant":"warning","label":"Güvenlik sınırı (Boyut 3)","body":"Müşterinin prompt ile ArcheType oluşturması serbest DDL/kod DEĞİLDİR: tipli, capability-gated, hibrit depolama (paylaşılan şema + JSONB; tablo-per-tip yok). Agent asla principal değil; etkin yetki = kullanıcı ∩ capability ∩ tool_scope ∩ risk (ADR-0015, sus-actions). DisableProtection sınıfı önerilemez/uygulanamaz."},
+  {"type":"paragraph","text":"Bağlar: Boyut 1 {{ref:be-deploy-profilleri}}; Boyut 2 {{ref:be-sdk}} + DB manipülasyon {{ref:k-schema}}; Boyut 3 {{ref:k-agent-runtime}} + {{ref:sus-actions}}; Boyut 4 {{ref:l1-seo}}; projeksiyon {{ref:k-surface}}; uçtan uca akış {{ref:dx-workflow}}."}
+ ]
+}
