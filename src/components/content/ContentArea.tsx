@@ -28,6 +28,15 @@ const GRAN_TR: Record<string, { label: string; title: string }> = {
   "kucuk-tas": { label: "Küçük Taş", title: "Tanım katmanı: Fragment/Section — SP 5" },
 };
 const STATE_TR: Record<string, string> = { wip: "taslak", ok: "tamam", aday: "aday", done: "tamam" };
+// ADR-0023 Faz 2 — tipli ilişki etiketleri.
+const REL_TR: Record<string, string> = {
+  "belongs-to": "Ait olduğu",
+  uses: "Kullanır",
+  "depends-on": "Bağımlı",
+  extends: "Genişletir",
+  sibling: "Kardeş",
+  supersedes: "Geçersiz kılar",
+};
 
 export function ContentArea() {
   const ui = useUiState();
@@ -180,6 +189,32 @@ export function ContentArea() {
           {updatedAt && <span className="updated-at">Son güncelleme: {updatedAt}</span>}
         </div>
       )}
+      {entry.meta?.breadcrumb && entry.meta.breadcrumb.length > 1 && (
+        <nav className="granularity-breadcrumb" aria-label="Granülerlik konumu">
+          {entry.meta.breadcrumb.map((b, i) => {
+            const isSelf = i === (entry.meta?.breadcrumb?.length ?? 0) - 1;
+            const tp = resolvePageById(b.id);
+            const crumb =
+              isSelf || !tp ? (
+                <span className="crumb crumb--self">{b.title}</span>
+              ) : (
+                <Link
+                  to="/docs/$section/$page"
+                  params={{ section: tp.slug.split("/")[0], page: tp.slug.split("/")[1] }}
+                  className="crumb"
+                >
+                  {b.title}
+                </Link>
+              );
+            return (
+              <span key={b.id}>
+                {crumb}
+                {!isSelf && <span aria-hidden> › </span>}
+              </span>
+            );
+          })}
+        </nav>
+      )}
       <h1 tabIndex={-1} ref={h1Ref}>
         {entry.title}
       </h1>
@@ -289,6 +324,43 @@ export function ContentArea() {
           </nav>
         );
       })()}
+
+      {entry.relations && entry.relations.length > 0 && (
+        <nav className="relations" aria-label="İlişkiler">
+          <h2>İlişkiler</h2>
+          {Object.entries(
+            entry.relations.reduce<Record<string, { type: string; target: string }[]>>((acc, rel) => {
+              const list = acc[rel.type] ?? [];
+              list.push(rel);
+              acc[rel.type] = list;
+              return acc;
+            }, {}),
+          ).map(([type, rels]) => (
+            <div key={type} className="relations__group">
+              <h3>{REL_TR[type] ?? type}</h3>
+              <div className="cardgrid">
+                {rels.map((rel) => {
+                  const p = resolvePageById(rel.target);
+                  if (!p) return null;
+                  const [s, pg] = p.slug.split("/");
+                  return (
+                    <Link
+                      key={rel.target}
+                      to="/docs/$section/$page"
+                      params={{ section: s, page: pg }}
+                      className="card"
+                      style={{ textDecoration: "none" }}
+                    >
+                      <div className="card__title">{p.title}</div>
+                      <span style={{ color: "var(--color-text-secondary)" }}>{p.summary}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </nav>
+      )}
 
       {related.length > 0 && (
         <nav className="related" aria-label="İlgili sayfalar">

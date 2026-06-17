@@ -132,6 +132,17 @@ export type Block = z.infer<typeof BlockSchema>;
 export type BlockType = Block["type"];
 
 // ---- Page (04 §2) ----
+// ADR-0023 Faz 2 — tipli ilişki taksonomisi (related düz listesinin üstüne).
+export const RelationTypeSchema = z.enum([
+  "belongs-to",
+  "uses",
+  "depends-on",
+  "extends",
+  "sibling",
+  "supersedes",
+]);
+export type RelationType = z.infer<typeof RelationTypeSchema>;
+
 export const PageObjectSchema = z.object({
   id: id("page-"),
   sourceId: z.string().optional(), // eski cluster id — ref/related çözüm anahtarı
@@ -145,8 +156,21 @@ export const PageObjectSchema = z.object({
       granularity: z.string().optional(),
       state: z.string().optional(),
       badge: z.string().optional(),
+      // ADR-0023 Faz 2 — parent zincirinden üretilen granülerlik breadcrumb'ı (App › … › self).
+      breadcrumb: z
+        .array(
+          z.object({
+            id: id("page-"),
+            title: z.string(),
+            granularity: z.string().optional(),
+          }),
+        )
+        .optional(),
     })
     .optional(),
+  // ADR-0023 Faz 2 — kompozisyon ebeveyni + tipli ilişkiler (her ikisi opsiyonel; geriye uyumlu).
+  parent: id("page-").optional(),
+  relations: z.array(z.object({ type: RelationTypeSchema, target: id("page-") })).optional(),
   owner: z.string().min(1),
   reviewer: z.string().min(1),
   maturity: z.enum(["taslak", "incelemede", "dogrulanmis", "deneysel", "aday"]),
@@ -287,6 +311,8 @@ export const PageIndexEntrySchema = PageObjectSchema.pick({
   categoryId: true,
   meta: true,
   related: true,
+  parent: true,
+  relations: true,
 });
 export type PageIndexEntry = z.infer<typeof PageIndexEntrySchema>;
 export const PagesIndexFileSchema = z.object({
