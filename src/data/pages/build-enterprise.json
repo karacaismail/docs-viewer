@@ -204,7 +204,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Faz 6 — Enterprise Multi-Product Operasyonu — birincil yetenek",
+      "term": "Tenant başına app aktivasyonu",
       "definition": [
        {
         "type": "strong",
@@ -212,25 +212,42 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "App aç/kapa entitlement düzleminden okunur (be-kararlar E1) — kod dağıtımı değil yetki kaydı."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Edition-tabanlı entitlement",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Hangi tenant hangi app'in hangi Edition'ında: yetki + kota + UI özellik bayrakları tek kaynaktan türer."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "Çok-ürün lisanslama",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "Suite paket fiyatlama, koltuk havuzu app'ler arası paylaşımlı; metering olayları (E8) faturaya akar."
+       }
+      ]
+     },
+     {
+      "term": "Tek kimlik / tek iptal",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "k-sso federasyonu tüm app'lere tek oturum; işten çıkış tek iptalle tüm app'lerden düşürür."
        }
       ]
      }
@@ -418,15 +435,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "App aktivasyonu entitlement düzleminden okunur; yetki kaydı yoksa app erişimi deny-by-default — kod dağıtımı yetki yerine geçmez. Tek-iptal kritik: işten çıkış tek aksiyonla tüm app'lerden düşürmeli; bir app'te artık oturum kalması yetki sızıntısı. Paylaşımlı Party tüm app'lerde aynı; tenant RLS sınırı korunur — bir app'in verisi diğer tenant'a sızmaz. Metering olayları (E8) faturaya akarken idempotent; çift sayım = yanlış fatura. Uyum raporları (E9 rejim matrisi) tenant-bazlı; çapraz-tenant rapor sızıntısı engellenir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -480,15 +489,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Entitlement lookup hot path (her app girişinde) — tenant+app+edition cache (kısa TTL + aktivasyon değişiminde invalidation); kota panosu sorguları keyset; metering olayları batch agregasyon (gerçek-zaman fatura satırı değil)."
        }
       ]
      },
@@ -784,7 +785,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Faz 6 — Enterprise Multi-Product Operasyonu",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Faz 6 — Enterprise Multi-Product Operasyonu\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: employee.offboarded\n  when: \"tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"tenant.admin\"\n    - not loop_detected\naction:\n  - emit: identity.revoke_all_apps   # tek iptal, tüm app, outbox\n  - emit: entitlement.seat_released   # koltuk havuzuna iade\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{employee}:offboard\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -924,6 +925,18 @@
     ]
    },
    {
+    "id": "block-build-enterprise-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Entitlement kaydı olmayan tenant app'i açamaz (aktivasyon = yetki, deploy değil). Offboarding tek aksiyonla tüm app'lerden oturum düşürür; hiçbir app'te artık erişim kalmaz. Aynı Party iki app'te tek kayıt; tenant RLS sınırında komşu tenant verisi görünmez. Metering olayı çift işlenmez (idempotency) — fatura satırı bir kez."
+     }
+    ]
+   },
+   {
     "id": "block-build-enterprise-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -942,7 +955,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Build Sırası'nın (5 stage) üstüne oturan 6. faz; 'tüm app'ler tek panelden, varsayılan entegre' kernel vaadini operasyon disiplinine çevirir. Aynı Party CRM'de müşteri, ERP'de cari, Comms'ta kişi — entegrasyon burada kanıtlanır."
        }
       ]
      },
@@ -951,16 +964,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Paylaşımlı Party + tenancy (RLS) kernel'den; entitlement düzlemi aktivasyonu yetki kaydı olarak tutar — kod deploy'u değil; tek-iptal kernel kimlik iptalini tüm app'lere yayar."
        }
       ]
      },
@@ -969,7 +973,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Core app sözleşmesi değişmez; entitlement core'a app-aktif mi sorusunu yetki kaydından cevaplatır."
        }
       ]
      },
@@ -978,7 +982,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "k-sso (federasyon, tek oturum), s-billing (suite fatura, metering→fatura), entitlement (E1) module'leri birlikte; rejim matrisi (E9) uyum raporu; yalnız Contract."
        }
       ]
      },
@@ -987,7 +991,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Salesforce-clone + Workday-clone + DocuSign-clone tek sözleşme/kimlik/faturayla; iki app'in tek panelde paylaşımlı Party + tek faturayla gerçek müşteride çalışması = çıkış kriteri."
        }
       ]
      }
@@ -1000,13 +1004,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-build-enterprise-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-build-enterprise-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "k-sso: tek SSO oturumu tüm app'lere; tek iptal tüm app'lerden düşürür (deprovisioning)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-billing: suite paket fiyat + koltuk havuzu + metering (E8) olayları faturaya; Edition gelir hattı (sus-lisans) burada ölçülür."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Entitlement (be-kararlar E1): app aktivasyonu + kota + UI özellik bayrağı tek kaynaktan; Edition'dan beslenir."
+      }
+     ]
     ]
    },
    {

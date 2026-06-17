@@ -1,0 +1,55 @@
+{
+ "featureDefs": [
+  {
+   "name": "RevenueContract + PerformanceObligation ArcheType'ları",
+   "desc": "ASC 606 / IFRS 15 beş-adım modeli: sözleşme -> edim yükümlülüğü -> işlem bedeli -> tahsis -> tanıma. Her edim ayrı tanıma takvimi tutar.",
+   "critical": true
+  },
+  {
+   "name": "Tahsis (allocation) motoru",
+   "desc": "İşlem bedelini bağımsız satış fiyatına (SSP) göre edim yükümlülüklerine dağıtır; indirim/iskonto orantılı yayılır. Tümü Money (Decimal) — float YASAK.",
+   "critical": true
+  },
+  {
+   "name": "Tanıma takvimi (recognition schedule)",
+   "desc": "Zaman-içinde (point-in-time vs over-time) tanıma; ertelenmiş gelir (deferred) ve tahakkuk eden gelir (accrued) bitemporal kayıt."
+  },
+  {
+   "name": "Değişiklik (contract modification) ileri/geri işleme",
+   "desc": "Sözleşme değişimi prospektif mi kümülatif düzeltme mi — kural-tabanlı; geçmiş tanıma audit zincirinde değişmez kalır."
+  },
+  {
+   "name": "GL postlama köprüsü",
+   "desc": "Tanıma olayı yevmiye fişine (deferred->earned) Contract üzerinden; çift-kayıt invariant'ı doğrulanır."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-2 finans ürünü olarak kernel ile zorunlu (kimlik/tenancy/audit); fatura/abonelik/muhasebe modülleriyle yalnız Contract üzerinden.",
+  "kernel": "Kimlik, tenancy (RLS) ve değişmez audit kernel'den; revenue kendi ArcheType şemasını kernel engine ile tanımlar. Para = Money (Decimal 20,4) + ISO 4217 currency.",
+  "core": "Finans app core'una bağlı; core module değişmez, revenue recognition bir Domain (Büyük Taş) olarak core sözleşmelerine uyar.",
+  "modules": "s-billing/abonelik modülünden 'invoiced/charged' olayını tüketir; FX & Ledger (cc-fx-ledger) çapraz para birimi için; muhasebe GL'ine yevmiye olayı yayar — yalnız Contract.",
+  "apps": "Subscription Analytics ve Billing app'leri aynı RevenueContract'ı paylaşır; çift gelir tanıması yok (idempotent)."
+ },
+ "moduleUsage": [
+  "Billing app: fatura kesimi -> revenue.contract_billed olayı; deferred gelir açılır.",
+  "Subscription Analytics app: tanınan/ertelenmiş gelir köprüsünden ARR/MRR ve waterfall okur.",
+  "Accounting/Ledger app: recognition.posted olayından yevmiye fişi (deferred->earned) üretir.",
+  "FX & Ledger module: sözleşme para birimi != raporlama para birimi olduğunda dönüşüm + kur farkı."
+ ],
+ "ecaExample": "trigger:\n  event: revenue.period_closed\n  when: \"tenant_scoped AND obligation.method == 'over_time'\"\ncondition:\n  all:\n    - actor.capability >= \"revenue.recognize\"\n    - not loop_detected\n    - schedule.amount is Money    # Decimal, currency-tagged\naction:\n  - emit: ledger.journal_requested   # deferred -> earned, outbox idempotent\n  - record: recognized_revenue { bitemporal: true }\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{contract}:{obligation}:{period}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Sözleşme bedeli ve tanıma tutarları finansal kayıt — RLS tenant-scoped; tutar alanları Money/Decimal, float ile aritmetik testten geçemez.",
+  "Tanınan gelir geçmişi değişmez audit zinciri (A08): kapanan dönem geriye düzeltilemez, yalnız ileri düzeltme; kim/ne zaman/correlation kaydı zorunlu.",
+  "ASC 606 / IFRS 15 hesap invariant'ları (toplam tahsis == işlem bedeli) deny-by-default kapı; ihlal eden post reddedilir."
+ ],
+ "perfNotes": {
+  "code": "Tahsis ve tanıma saf fonksiyon (Strategy: point-in-time | over-time); if (method==...) yerine runtime dispatch. SSP tahsisi deterministik.",
+  "perf": "Dönem-kapanış toplu tanıma asenkron worker (batch); sözleşme/dönem indeksleri; tanıma takvimi sorguları keyset pagination — OFFSET yok."
+ },
+ "testNotes": [
+  "toplam(edim tahsisi) == işlem bedeli, kuruşu kuruşuna (Decimal); float tortusu sıfır.",
+  "Komşu-tenant RevenueContract sorgusu sıfır döndürür.",
+  "Aynı (sözleşme, edim, dönem) ikinci kez tanınamaz (idempotency) — çift gelir yok.",
+  "Kapanan dönem geriye yazılamaz; yalnız prospektif düzeltme audit'e işler."
+ ]
+}

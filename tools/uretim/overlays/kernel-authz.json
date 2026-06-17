@@ -1,0 +1,59 @@
+{
+ "featureDefs": [
+  {
+   "name": "Query-layer authz injection",
+   "desc": "permission_query_conditions her SELECT'e WHERE AND'ler; geliştirici elle 'SELECT *' yazsa bile yalnız izinli satır gelir. Application-level if-check yetmez.",
+   "critical": true
+  },
+  {
+   "name": "OpenFGA-style relation tuple modeli",
+   "desc": "Zanzibar deseni (user/organization/document ilişkileri); check(user, viewer, document) tuple store'dan türer — ReBAC kanonik yüzeyi.",
+   "critical": true
+  },
+  {
+   "name": "PostgreSQL Row-Level Security",
+   "desc": "tenant_isolation policy + SET LOCAL app.tenant_id; OpenFGA app-layer kararının altına defense-in-depth katmanı.",
+   "critical": true
+  },
+  {
+   "name": "Field-level security (permlevel)",
+   "desc": "ArcheType metadata'da permlevel ile alan gizleme; ör. salary yalnız HR rolüne (Field Mask: redact/partial/hash/encrypt)."
+  },
+  {
+   "name": "Agent yetki kesişimi",
+   "desc": "etkin_yetki = user_perms ∩ agent_scope ∩ session_limits; kesişim boşsa tool çağrılamaz, privilege escalation matematiksel olarak imkânsız."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — authz KESİNLİKLE module olamaz, query layer'a örülmesi zorunludur; bir geliştirici tek WHERE'i unutsa tüm tenant verisi sızar.",
+  "kernel": "Kernel'in çekirdek invariant'ı: k-identity 'kim'i çözer, authz 'ne yapabilir'i; her sorgu kararı audit log'a düşer. k-tenancy RLS ile birlikte defense-in-depth.",
+  "core": "App core'una bağlanır; her ArcheType'ın capability scope'u tanımdan türer (ADR-0010: her ArcheType otomatik MCP tool). Aksiyon sınıflandırması sus-actions ile ortak.",
+  "modules": "Tüm Layer-2 module/stack'ler authz yüzeyini Contract üzerinden tüketir; kendi izin if-check'i yazmaz, permission_query_conditions hook'una kayıt eder.",
+  "apps": "Sales/HRMS/Drive app'leri aynı OpenFGA tuple store + RLS'i paylaşır; resource sharing (Drive pattern) tuple ekleyerek per-resource ACL kurar."
+ },
+ "moduleUsage": [
+  "Drive: dosya paylaşımı document:photo.viewer = user:bob tuple'ı ekler; çoklu ReBAC (link/kişi/klasör/org-wide).",
+  "HRMS: maaş alanı permlevel=1 ile yalnız HR'a; yönetici direct report'larını ReBAC ile görür.",
+  "Sales: sales_order_conditions ile temsilci yalnız kendi siparişini; Sales Manager kısıtsız.",
+  "Healthcare: doktor yalnız kendi hastasını; break-glass erişimi audit log'a kırmızı flag düşürür."
+ ],
+ "ecaExample": "trigger:\n  event: tool.invocation_requested\n  when: \"actor.is_agent == true\"\ncondition:\n  all:\n    - effective_perm = user_perms ∩ agent_scope ∩ session_limits\n    - effective_perm != EMPTY            # kesişim boşsa reddet\n    - action.class != \"DisableProtection\" # RLS/PII/audit kapatma asla allowlist'te değil\n    - not loop_detected\naction:\n  - authorize: tool_call\n  - emit: authz.decision_logged          # her karar audit'e\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{actor}:{tool}:{resource}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Deny-by-default: DisableProtection sütunu tüm roller için hard-invariant yasak; capability allowlist'e asla giremez.",
+  "Agent asla principal değildir — bir aktör adına delegasyonla çalışır (kimliğe bürünme değil); confused-deputy önlenir.",
+  "Application-level filter tuzağı: db.query('SELECT *') sonra Python'da filter = 10M satırda bellek patlar + sızıntı riski; query layer otomatik WHERE'e çevirir.",
+  "PgBouncer transaction mode'da SET LOCAL kullan (tx scope); session değişkeni cross-tenant leak'i imkânsızlaştırır.",
+  "RBAC+ABAC+ReBAC birlikte: refund 1000 TL üstü insan onayı, 10K üstü CFO step-up (out-of-band)."
+ ],
+ "perfNotes": {
+  "code": "OpenFGA 'List Objects' API ile izinli ID kümesi; tuple store check'i in-process Python lib + opsiyonel sidecar (gRPC).",
+  "perf": "RLS overhead tenant_id index varsa %2-5; field mask redact/hash projeksiyon anında. LandX A03: scope drift tespit <1sn, scope binding accuracy %100, privilege escalation 0."
+ },
+ "testNotes": [
+  "Komşu-tenant sorgusu sıfır satır döndürür (RLS + query injection birlikte).",
+  "Elle yazılmış 'SELECT * FROM tabSalesOrder' bile WHERE injected — izinsiz satır dönmez.",
+  "Agent kesişimi boş olduğunda tool çağrısı reddedilir (privilege escalation = 0).",
+  "DisableProtection talebi her rol için reddedilir (hard-invariant).",
+  "salary alanı Employee rolüne permlevel kapısıyla görünmez; HR'a görünür."
+ ]
+}

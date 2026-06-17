@@ -324,7 +324,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "SGK Teşvik Otomasyonu — çekirdek yetenek",
+      "term": "SGK Teşvik hesaplama motoru",
       "definition": [
        {
         "type": "strong",
@@ -332,41 +332,42 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Çalışan + sigorta kolu + teşvik kanunu → uygunluk + indirim tutarı; Segika muadili TR yerelleştirme çekirdeği."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Teşvik kanun kataloğu",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Yürürlükteki teşvik kodları (5510, 7103, 6111 vb.) + koşulları; mevzuat değişimi versiyonlanır."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "SGK e-bildirge entegrasyonu",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Aylık prim ve hizmet belgesi ile teşvik beyanı; SGK kurumsal arayüzüyle senkron."
+       }
+      ]
+     },
+     {
+      "term": "Uygunluk denetim raporu",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Hangi çalışan hangi teşvike uygun, kaçırılan teşvik tutarı; mali müşavir için icmal."
        }
       ]
      }
@@ -554,15 +555,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Çalışan TC/SGK no/maaş pii=true + Money (+retention, KVKK); RLS tenant-scoped (gerekirse company_id ikinci eksen) — büro mükellefleri karıştıramaz. Teşvik beyanı SGK'ya gönderim capability deny-by-default + audit; yetkisiz beyan engellenir. Bordro tutarları bitemporal: geçmişe dönük mevzuat/düzeltme kayıt zamanı + geçerlilik zamanıyla izlenir, üzerine yazılmaz. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -590,15 +583,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Teşvik hesabı çalışan başına deterministik kanun lookup; (tenant_id, company_id, period) indeksi; dönem kapanışı asenkron batch."
        }
       ]
      },
@@ -616,15 +601,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Aylık dönem kapanışında toplu hesap worker'da; mali müşavir icmali keyset pagination."
        }
       ]
      },
@@ -920,7 +897,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — SGK Teşvik Otomasyonu",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — SGK Teşvik Otomasyonu\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: payroll.period_closed\ncondition:\n  all:\n    - actor.capability >= \"incentive.calculate\"\n    - tenant_scoped AND company_scoped\n    - not loop_detected\naction:\n  - calculate: sgk_incentive   # kanun kataloğu\n  - emit: accounting.incentive_posted   # outbox, idempotent\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{company}:{period}:incentive\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1060,6 +1037,18 @@
     ]
    },
    {
+    "id": "block-s-incentive-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Komşu-tenant/komşu-mükellef bordro+teşvik sorgusu sıfır döndürür. Aynı dönem ikinci kez kapanınca teşvik tek kez hesaplanır (idempotency). Mevzuat versiyonu: geçmiş dönem eski kanun katsayısıyla, yeni dönem yeni katsayıyla hesaplanmalı (bitemporal). Yetkisiz kullanıcı SGK beyanı gönderemez (capability deny testi)."
+     }
+    ]
+   },
+   {
     "id": "block-s-incentive-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1078,7 +1067,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Layer-2 SaaS ürünü; GİB/SGK/EİDS/KVKK mevzuatına baştan uyumlu, yetki/audit/event-bus framework'ten gelir."
        }
       ]
      },
@@ -1087,16 +1076,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Tenancy iki seviyeli olabilir (mali müşavir bürosu + mükellef şirket); Identity, Audit (teşvik beyanı izi) kernel'den; bordro verisi Money + bitemporal."
        }
       ]
      },
@@ -1105,7 +1085,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "App core'una bağlı; SGK Teşvik bir Domain (Kaya) olarak core sözleşmelerine uyar, core module değişmez."
        }
       ]
      },
@@ -1114,7 +1094,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Bordro/HRMS module'ünden çalışan + prim verisini tüketir; teşvik sonucu muhasebe (gider/indirim) modülüne yalnız Contract ile yayar."
        }
       ]
      },
@@ -1123,7 +1103,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "HRMS + Muhasebe app'leri aynı çalışan + bordro kaydını paylaşır; teşvik tek kaynaktan hesaplanır, çift kayıt yok."
        }
       ]
      }
@@ -1136,13 +1116,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-incentive-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-incentive-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "HRMS/Bordro app: çalışan SGK günü + prim → teşvik motoruna girdi; işe alım teşvik uygunluğunu tetikler."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Muhasebe app: hesaplanan teşvik indirimi → gider/mahsup kaydı."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Mali müşavir senaryosu: tek panelden 12 mükellefin teşvik icmali (iki seviyeli tenancy)."
+      }
+     ]
     ]
    },
    {

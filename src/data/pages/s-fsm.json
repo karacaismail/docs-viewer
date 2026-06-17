@@ -355,7 +355,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Field Service — çekirdek yetenek",
+      "term": "İş Emri (Job) ArcheType'ı",
       "definition": [
        {
         "type": "strong",
@@ -363,41 +363,51 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Müşteri + adres + hizmet + atanan teknisyen + durum; FSM çekirdeği — ServiceTitan/Jobber muadili planlama varlığı."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Planlama + Rota optimizasyonu",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Teknisyen müsaitliği + coğrafi yakınlık → gün içi rota; randevu penceresi çakışması engellenir."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Mobil teknisyen uygulaması",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Saha cihazında iş emri, check-in/check-out, fotoğraf, müşteri imzası; offline-first senkron."
+       }
+      ]
+     },
+     {
+      "term": "İş emri durum makinesi",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "draft → scheduled → dispatched → in_progress → completed → invoiced; tenant'a pinli, ArcheType'tan bağımsız versiyonlanır."
+       }
+      ]
+     },
+     {
+      "term": "TR muhasebe entegrasyonu",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tamamlanan iş → fatura; Türk muhasebe ürünleriyle aynı platformda — ServiceTitan'ın TR boşluğu."
        }
       ]
      }
@@ -585,15 +595,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Müşteri adresi + telefon pii=true (+retention); RLS tenant-scoped — başka tenant'ın iş emri/müşterisi görülmez. Mobil teknisyen yetkisi capability deny-by-default: teknisyen yalnız atandığı iş emrini görür/günceller, tüm tenant verisini değil. Saha fotoğrafı/imza audit'lenir; offline senkronda idempotency key ile çift kayıt engellenir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -621,15 +623,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "İş emri listesi keyset (cursor) pagination; (tenant_id, teknisyen, tarih) indeksi; rota optimizasyonu asenkron worker."
        }
       ]
      },
@@ -647,15 +641,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Mobil offline-first: yerel kuyruk + senkron; rota hesabı arka planda, UI bloklamaz."
        }
       ]
      },
@@ -951,7 +937,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Field Service",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Field Service\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: job.status_changed\n  when: \"to == 'completed' AND tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"fsm.job.complete\"\n    - not loop_detected\naction:\n  - emit: accounting.invoice_requested   # outbox, idempotent\n  - notify: [\"customer\"]                  # ETK/İYS kapısı\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{job_id}:completed\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1091,6 +1077,18 @@
     ]
    },
    {
+    "id": "block-s-fsm-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Komşu-tenant iş emri/müşteri sorgusu sıfır döndürür. Teknisyen yalnız kendi atanmış iş emrini görebilir (capability testi). Aynı job 'completed' ikinci kez tetiklenince tek fatura üretir (idempotency). Offline check-in iki kez senkron olsa tek kayıt oluşur."
+     }
+    ]
+   },
+   {
     "id": "block-s-fsm-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1109,7 +1107,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Layer-2 SaaS ürünü; kendi ArcheType'larını ve UI'sını tanımlar ama yetki/audit/event-bus/tenancy framework'ten gelir, yeniden icat etmez."
        }
       ]
      },
@@ -1118,16 +1116,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Tenancy (her iş emri tenant_id ile izole, RLS), Identity (teknisyen + müşteri kimliği), Audit (saha aksiyonu izi) kernel'den miras."
        }
       ]
      },
@@ -1136,7 +1125,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "App core'una bağlı; FSM bir Domain (Kaya) olarak core sözleşmelerine uyar, core module değişmez."
        }
       ]
      },
@@ -1145,7 +1134,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Scheduling/route module'lerini tüketir; tamamlanan iş olayını muhasebe (faturalama) ve CRM (müşteri geçmişi) modüllerine yalnız Contract ile yayar."
        }
       ]
      },
@@ -1154,7 +1143,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Helpdesk app'i saha hizmeti gerektiren ticket'ı FSM iş emrine dönüştürür; aynı müşteri kaydını paylaşır, çift kayıt yok."
        }
       ]
      }
@@ -1167,13 +1156,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-fsm-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-fsm-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Helpdesk app: 'yerinde servis' gereken ticket → FSM job; SLA timer iş emri tamamlanınca durur."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Muhasebe app: completed job → fatura + tahsilat; döviz değil TL fiyatlandırma."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Notification: dispatched event → teknisyene push, müşteriye 'teknisyen yolda' SMS (İYS opt-in)."
+      }
+     ]
     ]
    },
    {

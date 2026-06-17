@@ -2388,15 +2388,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Capability deny-by-default: şema yazma yetkisi (archetype:schema:write) açıkça verilmedikçe ArcheType/field tanımı değiştirilemez; son müşteri tablo yaratamaz. Permission engine archetype_permission satırlarını okuyup query layer'a otomatik tenant+role WHERE injekte eder; RLS ile çok-kiracılı izolasyon zorunlu. Password fieldtype encrypted-at-rest ve asla düz gösterilmez; pii/money alanları audit ve purpose-binding kapsamında işlenir. Submittable ArcheType'larda docstatus=1 sonrası alanlar değişmez (financial integrity); yalnız on_update_after_submit ile açıkça izinli alanlar mutasyona uğrar. Dinamik DDL ve otomatik tablo-per-tip generation yasak — saldırı yüzeyi (keyfi DDL) ve şema şişmesi engellenir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -2424,15 +2416,16 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
+        "text": "Birincil alanlar fiziksel kolon (B-tree index + FK constraint); değişken alanlar JSONB üstünde GIN index. JSON-her-şey (WP postmeta/"
        },
        {
-        "type": "code",
-        "text": "if (type==...)"
+        "type": "term",
+        "text": "EAV",
+        "termId": "term-eav-kernel-schema"
        },
        {
         "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": ") WHERE/ORDER BY/JOIN performansını çökertir."
        }
       ]
      },
@@ -2450,15 +2443,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "ArcheType tanımı → çalışır API <60sn hedefi; sabit kolon sorguları index'li, JSONB sorguları GIN ile sınırlı kalır; cache invalidation scale-cache deseninde tetiklenir."
        }
       ]
      },
@@ -2754,7 +2739,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Schema / Metadata Engine (ArcheType)",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Schema / Metadata Engine (ArcheType)\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: archetype.changeset.proposed\ncondition:\n  all:\n    - actor.capability >= \"archetype:schema:write\"\n    - changeset.compatibility_score >= 80\n    - not breaking_change_without_migration\naction:\n  - emit: archetype.contract.snapshot\n  - emit: schema.introspection.refresh\nguards:\n  max_depth: 6\n  idempotency_key: \"archetype:{name}:{version}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -2894,6 +2879,18 @@
     ]
    },
    {
+    "id": "block-kernel-schema-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Golden: bir ArcheType tanımının ürettiği DB tablo + REST/GraphQL + Surface + audit + hook noktalarının %100 kapsama ile doğrulanması. Permission injection testi: tenant-scope'suz/role'süz sorgunun WHERE injekte edilmeden geçemediğini kanıtla. Migration/Schema diff testi: compatibility_score hesabı ve breaking_change tespitinin AI önerisinden bağımsız oracle ile doğrulanması. Substrat-bağımsızlık (TIMI hedefi): archetype_contract snapshot'ları ile geriye-uyumluluk testleri — altta DB değişse de ArcheType API'si kırılmaz. Submittable integrity testi: submit sonrası kilitli alan mutasyonunun reddedildiğini doğrula."
+     }
+    ]
+   },
+   {
     "id": "block-kernel-schema-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -2912,7 +2909,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "ArcheType motoru çekirdeğin #1 parçası; tüm üst katmanlar (identity, authz, tenancy, workflow) kendini bu şema motoru üstüne ArcheType olarak tanımlar — çıkarılırsa framework kalmaz."
        }
       ]
      },
@@ -2921,16 +2918,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "ArcheType tanımı (archetype + archetype_field + archetype_permission + custom_field + property_setter) tek metadata kaynağıdır; tip dispatch'i Strategy/Policy ile yapılır, if/else type-switching ve dinamik DDL YASAK."
        }
       ]
      },
@@ -2939,7 +2927,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Varsayılan depolama hibrit: paylaşılan/sabit çekirdek şema + değişken alanlar için JSONB + dikkatli FK; yüksek hacimli ArcheType açık kararla fiziksel tabloya opt-in terfi eder (ADR-0022)."
        }
       ]
      },
@@ -2948,7 +2936,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Her module kendi ArcheType'larını beyan eder; tanım kaydedildiği anda REST/GraphQL/Surface/audit/search/hook noktaları türetilir — module geliştirici migration/deploy yazmaz."
        }
       ]
      },
@@ -2957,7 +2945,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "App'ler ArcheType Surface'leri (list/form/kanban/calendar/gantt) üstünden veri görür; capability deny-by-default permission engine query layer'a WHERE injekte eder."
        }
       ]
      }

@@ -1,0 +1,48 @@
+{
+ "featureDefs": [
+  {
+   "name": "Sadeleştirilmiş Surface seti (jargonsuz)",
+   "desc": "Aynı Accounting ArcheType'ları üzerine 'kestiğim/aldığım faturalar' dilinde liste/form Surface'leri; muhasebe jargonu gizli. Yeni ArcheType/alan EKLEMEZ — yalnız yüzey.",
+   "critical": true
+  },
+  {
+   "name": "5-dakika e-fatura onboarding sihirbazı",
+   "desc": "İlk e-fatura + banka bağlantısı için adımlı kurulum akışı; capability-gated, hata tolere; parent stack'in core'unu değiştirmez."
+  },
+  {
+   "name": "Tek-sayfa nakit görünümü (Projection)",
+   "desc": "Defter/fatura kaynaklarından türetilen salt-okur özet ekran; bozulursa kaynaktan yeniden dökülür."
+  },
+  {
+   "name": "Muhasebeciye salt-okur davet",
+   "desc": "Harici muhasebeciye tenant-scoped, deny-by-default salt-okur capability; yazma yetkisi açıkça verilmedikçe yok."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet ama yalnız UX katmanında — Edition fonksiyon eklemez; aynı core module seti ve kod parent Accounting stack'ten gelir. Fark UI estetiği, UX akışı ve pazara-çıkış paketindedir (landing/fiyat/onboarding).",
+  "kernel": "Kimlik, tenancy (RLS), audit ve ArcheType engine değişmez biçimde parent stack üzerinden kernel'den gelir; Edition kendi kerneline sahip değildir.",
+  "core": "Temel {{ref:stack-accounting}} core'udur (defter/fatura/vergi); core module ve sözleşmeleri değişmez. Yeni ihtiyaç çıkarsa Edition'a değil parent stack'e gider.",
+  "modules": "Parent stack'in mevcut module'lerini (Accounting/e-Belge) AYNEN tüketir; ek module beyan etmez — yalnız Contract.",
+  "apps": "Accounting app'inin SMB self-serve paketlenmesi; aynı veri ve ArcheType'lar üzerine farklı Surface/onboarding sunar, çift kayıt yok."
+ },
+ "moduleUsage": [
+  "stack-accounting: defter/fatura/vergi core'unu olduğu gibi tüketir; Edition yalnız Surface ve onboarding ekler.",
+  "e-Belge module: e-fatura/e-arşiv akışını sihirbaz üzerinden tetikler (dış-etkili → allowlist'li akış + step-up).",
+  "Banka bağlantısı: salt-okur veri çekimi consent kapısıyla; sırlar encrypted-at-rest."
+ ],
+ "ecaExample": "trigger:\n  event: onboarding.first_einvoice_requested\n  when: tenant_scoped\ncondition:\n  all:\n    - actor.capability >= \"accounting.einvoice.issue\"\n    - not loop_detected\naction:\n  - delegate: einvoice.issue_flow          # allowlist'li akış, HMAC auth\n  - notify: [\"owner-surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:onboarding:first_einvoice\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Edition yeni güven sınırı açmaz; tüm yetki parent stack capability'leri + RLS üzerinden — sadeleştirilmiş UI yetki tavanını GENİŞLETMEZ.",
+  "Muhasebeci daveti deny-by-default salt-okur; yazma capability'si açıkça verilmedikçe veriyi değiştiremez; tenant-scoped.",
+  "e-fatura/banka dış-etkili aksiyonları ECA içinde yürütülmez; allowlist'li akışa delege + parasal/hukuki sonuçta step-up."
+ ],
+ "perfNotes": {
+  "perf": "Sadeleştirilmiş liste/özet Surface'leri keyset (cursor) pagination; tek-sayfa nakit görünümü materialized/continuous-aggregation projection; ek sorgu yükü parent stack ile paylaşılır."
+ },
+ "testNotes": [
+  "Edition Surface'leri parent Accounting ArcheType'larıyla aynı veriyi gösterir; çift kayıt veya kopuk şema yok.",
+  "Muhasebeci salt-okur capability'si yazma denemesinde reddedilir (deny-by-default).",
+  "Komşu-tenant veri görünmez (RLS).",
+  "Edition'a fonksiyon eklenmediği kanıtı: parent stack ArcheType/module seti ile birebir aynı kontrat."
+ ]
+}

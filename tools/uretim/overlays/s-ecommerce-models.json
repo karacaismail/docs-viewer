@@ -1,0 +1,59 @@
+{
+ "featureDefs": [
+  {
+   "name": "Capability flag mimarisi (enum değil)",
+   "desc": "B2C/B2B/C2C/D2C... 14 model enum tek-seçim değil, eklemeli capability flag. Aynı tenant aynı anda hem B2C hem D2C hem marketplace olabilir. 'B2C'den B2B'ye geçiş' yanlış; doğrusu 'B2B yeteneğini açma' — yıkıcı migration yerine ek flag.",
+   "critical": true
+  },
+  {
+   "name": "tenant_capabilities tablosu",
+   "desc": "tenant_id, capability TEXT, enabled BOOL, enabled_at. Her endpoint öncesi capability check middleware. Müşteri model değiştirmiyor, yetenek ekliyor.",
+   "critical": true
+  },
+  {
+   "name": "Order ArcheType party-kind kolonları",
+   "desc": "sell_party_kind + buy_party_kind (ENUM business/consumer/manufacturer/government/employee/peer). Order.model derived field: kind1 + 2 + kind2. 2-eksen matris (sell × buy) modellerin kaynağı.",
+   "critical": true
+  },
+  {
+   "name": "3. eksen: transaction depth",
+   "desc": "lead_gen (sadece eşleştirme, ödeme/teslimat dışarıda — Sahibinden) | full (sepet+ödeme+kargo+iade içeride — Trendyol) | hybrid. Aynı satıcı tipi iki farklı dünyada yaşar; ArcheType seçiminden gelir modeline kadar etkiler."
+  },
+  {
+   "name": "Hibrit/dikey capability'ler",
+   "desc": "marketplace (multi-vendor, komisyon, ödeme split), dropship, subscription (recurring/MRR), social, headless (yalnız API+SDK), o2o (click & collect)."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — bu bir Domain (e-ticaret iş modeli) konfigürasyonu; Order/Party ArcheType'larını capability flag ile genişletir, kernel ve module koduna dokunmadan.",
+  "kernel": "Party kimliği ve tenancy (RLS) kernel'den; tenant_capabilities ve Order party-kind kolonları kernel ArcheType engine ile tanımlanır (config-as-data).",
+  "core": "Audit (capability enabled_at iz bırakır), Authz (capability deny-by-default) core kontratı; money/order bitemporal saklama.",
+  "modules": "Billing (subscription/MRR), Payment (split — marketplace), Shipping (full transaction), Classifieds (lead_gen) module'leri tenant capability'sine göre devreye girer.",
+  "apps": "Aynı tenant farklı app yüzeylerinde (storefront/marketplace/headless) farklı capability kombinasyonu sunar; tek Order modeli paylaşılır."
+ },
+ "moduleUsage": [
+  "Payment app: marketplace flag açıksa ödeme split + satıcı dashboard devreye girer.",
+  "Billing app: subscription capability ile recurring billing + MRR ölçer.",
+  "Shipping/Fulfillment app: transaction_depth=full ise kargo+iade akışını yönetir; lead_gen'de devre dışı.",
+  "Classifieds app: lead_gen modunda yalnız eşleştirme; ödeme platform dışında.",
+  "Public Surface app: D2C capability ile aracısız marka storefront'u açar."
+ ],
+ "ecaExample": "trigger:\n  event: tenant.capability_enable_requested\n  when: \"capability == 'b2b'\"\ncondition:\n  all:\n    - actor.capability >= \"tenant.admin\"\n    - not loop_detected\naction:\n  - upsert: tenant_capabilities { capability: 'b2b', enabled: true, enabled_at: now }\n  - emit: order.party_kind_options_extended\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:cap:b2b\"\n  external_effects: none",
+ "securityNotes": [
+  "Capability check middleware deny-by-default: flag açık değilse ilgili endpoint 403 — B2B fiyat/sözleşme yüzeyi B2C tenant'a kapalı.",
+  "tenant_capabilities RLS tenant-scoped; bir tenant başka tenant'ın yeteneğini okuyamaz/değiştiremez.",
+  "Marketplace ödeme split'inde satıcı bakiyesi para (money) bütünlüğü + audit ile; çapraz-satıcı sızıntı yok.",
+  "Lead_gen ↔ full geçişinde ödeme/PII yüzeyi capability ile koşullu açılır, yanlışlıkla aktive edilemez."
+ ],
+ "perfNotes": {
+  "code": "Model = derived field (kind1+kind2); yeni iş modeli yeni capability satırı, kod değişmez. Migration yerine eklemeli flag — 50 yıllık sürdürülebilirlik.",
+  "perf": "Capability lookup endpoint öncesi tek indeksli sorgu (tenant_id, capability); order listeleri keyset pagination."
+ },
+ "testNotes": [
+  "Aynı tenant aynı anda B2C + D2C + marketplace capability'lerini taşıyabilir (çoklu flag).",
+  "B2B flag kapalıyken B2B endpoint 403 döner (deny-by-default).",
+  "Order.model derived field sell/buy party-kind'dan doğru üretilir (ör. Manufacturer+Consumer → d2c).",
+  "transaction_depth=lead_gen tenant'ında dahili ödeme akışı devre dışı kalır.",
+  "Komşu-tenant tenant_capabilities sorgusu sıfır döner."
+ ]
+}

@@ -558,15 +558,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Increment yetkisi capability ile kapılı (deny-by-default); anonim/yetkisiz aktör sayaç şişiremez. Sayaç anahtarı tenant-scoped ('{tenant}:post:...'); bir tenant'ın sayacı diğerine sızmaz. Like/view spam'ine karşı idempotency_key + hız limiti; aynı aktör aynı olayı tekrar sayamaz. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -594,15 +586,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Sharded counter: increment'te rastgele shard'a INCR (SHARD_COUNT=16), read'de 16 GET'i tek Redis pipeline ile toplar — tek satırda lock contention yok."
        }
       ]
      },
@@ -620,15 +604,15 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
+        "text": "Klasik "
        },
        {
         "type": "code",
-        "text": "async def"
+        "text": "UPDATE post SET likes=likes+1"
        },
        {
         "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": " tek satırda hot-row contention yaratır, throughput çöker; Redis INCR + 10sn flush yazma yükünü DB'den alır; read approximate/eventual olduğundan okuma amplifikasyonu sınırlı."
        }
       ]
      },
@@ -924,7 +908,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Hot Counter",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Hot Counter\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: post.liked\ncondition:\n  all:\n    - actor.capability >= \"post.react\"\n    - tenant_scoped\n    - not loop_detected\naction:\n  - counter.increment: \"post:{post_id}:likes\"   # sharded, approximate\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{user}:post:{post_id}:like\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -1064,6 +1048,18 @@
     ]
    },
    {
+    "id": "block-scale-counter-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Concurrency: N paralel increment sonrası read = N (shard SUM doğruluğu, kayıp tıklama yok). Backend swap testi: aynı increment/read API SQL ve sharded backend'de aynı sözleşmeyle çalışır. Idempotency: aynı kullanıcı aynı post'u iki kez beğenemez (sayaç bir artar). Komşu-tenant sayaç anahtarı okunamaz/yazılamaz."
+     }
+    ]
+   },
+   {
     "id": "block-scale-counter-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1082,7 +1078,15 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — hot counter, milyonlarca eşzamanlı update'in (like/view/follower/stok-on-hand) klasik "
+       },
+       {
+        "type": "code",
+        "text": "UPDATE ... SET x=x+1"
+       },
+       {
+        "type": "text",
+        "text": " lock contention'ını ölçeklenebilir kılan bir scale primitive'idir; tek interface arkasında backend deployment'a göre swappable olmalı."
        }
       ]
      },
@@ -1091,16 +1095,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Counter abstraction core'da yaşar: module geliştirici increment/read/batch_read API'sini çağırır, altta hangi backend (SQL/Redis/sharded) olduğunu bilmez; ACID-gereken sayaç ile approximate sosyal sayaç aynı framework'te ayrı strateji."
        }
       ]
      },
@@ -1109,7 +1104,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Backend stratejisi deployment ile seçilir: shared hosting'te doğrudan SQL UPDATE, orta ölçekte Redis INCR + periyodik flush, büyük ölçekte sharded counter (shard_0..15, read'de SUM)."
        }
       ]
      },
@@ -1118,7 +1113,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Sosyal module like/view, e-ticaret module stok-on-hand sayacını aynı API ile tüketir; backend seçimi module dışında, capability/deployment profilinde tutulur."
        }
       ]
      },
@@ -1127,7 +1122,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Yüksek-okuma app'leri (feed, ürün listesi) batch_read ile çoklu sayacı tek turda okur; muhasebe app'i sayaç yerine ACID hareket-toplamı disiplinini kullanır (doğru pattern ayrımı)."
        }
       ]
      }
@@ -1140,13 +1135,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-scale-counter-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-scale-counter-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Sosyal app: post like/view/follower sayaçlarını sharded counter ile tutar; approximate + eventual tolere edilir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "E-ticaret app: stok-on-hand için Redis INCR + DB flush; kritik kesinlik gerekiyorsa ACID hareket toplamına düşer."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Feed/liste app: batch_read ile bir pipeline'da N sayacı okur (round-trip azaltma)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Analitik app: periyodik flush'la DB'ye inen sayaçtan rapor üretir."
+      }
+     ]
     ]
    },
    {

@@ -1,0 +1,50 @@
+{
+ "featureDefs": [
+  {
+   "name": "Multi-provider AI router",
+   "desc": "packages/ai/router.ts: capability'ye (reasoning/vision/long-context/cheap/tool-use) göre provider seçimi + fallback chain + maliyet tahmini; Anthropic/OpenAI/Google dispatch.",
+   "critical": true
+  },
+  {
+   "name": "3 kanallı realtime",
+   "desc": "SSE (notification/dashboard), native WebSocket (presence/live cursor), Yjs+Hocuspocus CRDT (collab editing) — tek abstraction zorlaması yok, socket.io YOK.",
+   "critical": true
+  },
+  {
+   "name": "Offline okuma+yazma",
+   "desc": "TanStack Query persist + idb-keyval (read cache), paused mutations (write queue, online'da auto-resume), Workbox background sync."
+  },
+  {
+   "name": "Güvenli artifact/markdown render",
+   "desc": "react-markdown + DOMPurify (XSS zorunlu), iframe sandboxed artifact, Shiki highlight, Zod schema tool calls (tek tanım server+client)."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "kısmi — bu frontend katmanı kernel'i tüketir, içine yerleşmez; AI provider routing ve realtime transport seçimi sunum tarafıdır.",
+  "kernel": "Event Bus (SSE/WS feed kaynağı), Authz (tool call yetki sınırı).",
+  "core": "Realtime core (presence/collab), Notification (SSE push).",
+  "modules": "AI özelliği olan tüm stack'ler useChat/useCompletion ile tüketir; tool call'lar capability-gated.",
+  "apps": "Tüm app UI'ları: streaming yanıt, generative UI dispatcher, voice STT/TTS."
+ },
+ "moduleUsage": [
+  "s-ai / k-agent-runtime: provider router üzerinden model seçimi + fallback; tool call'lar Zod schema ile",
+  "content-collaboration (PMS/Drive/Wiki): Yjs CRDT ile conflict-free eşzamanlı düzenleme + y-indexeddb offline persist",
+  "Tüm app'ler: SSE ile dashboard refresh + in-app notification"
+ ],
+ "securityNotes": [
+  "Markdown XSS zorunlu DOMPurify; rehype-raw çıktısı temizlenmeden render edilmez.",
+  "Artifact iframe sandboxed; LLM üretimi kod izole çalışır.",
+  "Tool calls Zod schema ile doğrulanır (server+client tek tanım); şema dışı argüman reddedilir.",
+  "Eşzamanlılık kapsam ayrımı: alan-değeri düzenleme last-write-wins/Yjs; ArcheType TANIMI düzenleme ChangeSet baseVersion optimistic lock + merge-uyarısı (k-sozlesme) — iki katman karıştırılmaz."
+ ],
+ "perfNotes": {
+  "code": "Provider router: capability → model dispatch + estimateCost; fallbackChain primary başarısızsa sıradaki sağlayıcıya geçer. SSE AI SDK varsayılan streaming transport.",
+  "perf": "Streaming parça parça render (2sn+ yanıtta beklemeyi maskeler); WS küçük payload presence; offline read cache ağ turunu atlar."
+ },
+ "testNotes": [
+  "Router: long-context capability istenince doğru model; primary down → fallback chain devreye girer.",
+  "Markdown render DOMPurify ile script enjeksiyonunu temizler.",
+  "Offline: paused mutation online olunca auto-resume + sıra korunur.",
+  "Collab: iki eşzamanlı düzenleme Yjs ile conflict-free birleşir."
+ ]
+}

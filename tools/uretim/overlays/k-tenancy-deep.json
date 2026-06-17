@@ -1,0 +1,50 @@
+{
+ "featureDefs": [
+  {
+   "name": "Tenancy model kararı (pool/bridge/silo)",
+   "desc": "Pool (tek shard, tenant_id kolonu, <10K tenant) → bridge (schema-per-tenant, 10K-100K) → silo (DB-per-tenant, enterprise). İzolasyon ve karmaşıklık modele göre artar.",
+   "critical": true
+  },
+  {
+   "name": "Shard key seçimi",
+   "desc": "tenant_id (doğal ama hot shard riski), user_id (eşit ama cross-shard), time-based (cold storage), hash(id) (eşit ama tahmin edilebilirlik kaybı). Yanlış seçim = hot shard.",
+   "critical": true
+  },
+  {
+   "name": "Cross-shard query (scatter-gather)",
+   "desc": "Tek shard 10ms; 10 shard'da paralel sorgu + merge ~50ms. ORDER BY + LIMIT tüm shard'lara yayılır, sonuç birleştirilir."
+  },
+  {
+   "name": "Shard tetik eşikleri",
+   "desc": "Tek tablo 100M+ satır VE p95 >500ms VE storage >1TB VE backup >4 saat — index optimize edildikten sonra. Erken shard = teknik borç."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — ama son çare olarak; k-tenancy pool model + cache + index + read replica 10K tenant'a yeter. Fizyolojik sınıra ulaşıldığında devreye girer, erken değil.",
+  "kernel": "k-tenancy'nin (RLS, tenant_id) derinleştirmesi; çekirdek tenant izolasyon sözleşmesi shard sınırında da korunur — komşu tenant verisi sızamaz.",
+  "core": "App core'u shard routing'i bilmez; tenant_id → shard map'i altyapıda çözülür, core ArcheType sorguları aynı kalır.",
+  "modules": "Her Layer-2 modülü tenant-scoped yazar; sharding sonrası dual-write geçişi backend tarafında saydam yürütülür.",
+  "apps": "Çok bölgeli (multiregion) yerleşimde eski/soğuk veri ayrı shard'a iner; uygulama yüzeyi değişmez."
+ },
+ "moduleUsage": [
+  "Yüksek hacimli stack'ler (commerce/order, audit log): tek tablo 100M satırı aşınca bridge/silo'ya taşınır.",
+  "Enterprise tenant: silo (DB-per-tenant) ile tam izolasyon + ayrı backup penceresi.",
+  "Analytics/raporlama: cross-shard scatter-gather yerine time-based shard'dan cold okuma."
+ ],
+ "ecaExample": "trigger:\n  event: tenant.growth_threshold_crossed\n  when: \"row_count > 100_000_000 AND p95_ms > 500\"\ncondition:\n  all:\n    - actor.capability >= \"infra.shard.plan\"\n    - index_optimized == true\n    - not migration_in_progress\naction:\n  - generate: shard_migration_plan   # pool -> bridge\n  - emit: shard.plan_proposed          # outbox, idempotent\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:shard-plan:{threshold_id}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Tenant izolasyon sözleşmesi shard sınırını aşar: shard key tenant_id olsa bile cross-shard query'de WHERE tenant_id RLS ile zorlanır.",
+  "Silo modeli en güçlü izolasyon (ayrı DB) — enterprise/regülasyon gereksinimi için; ama backup/secret yönetimi tenant başına çoğalır.",
+  "Hash(id) shard key kullanılırsa tenant tahmin edilebilirliği düşer; enumeration saldırısına karşı ek koruma."
+ ],
+ "perfNotes": {
+  "code": "Önce pool + index + cache + read replica; 100K satır/tenant aşılırsa bridge; enterprise'da silo. Shard key varsayılan tenant_id.",
+  "perf": "Tek shard sorgu 10ms; 10-shard scatter-gather ~50ms (paralel + merge). Erken sharding tüm query'leri 10x karmaşıklaştırır — pool+cache 10K tenant'a kadar p95 hedefini tutar."
+ },
+ "testNotes": [
+  "Hot shard tespiti: birkaç tenant tek shard'a düşerse yük dengesizliği alarmı (dağılım testi).",
+  "Cross-shard ORDER BY + LIMIT sonuçları tek-shard sonucuyla bit-bit eşleşmeli (merge doğruluğu).",
+  "Komşu tenant sorgusu farklı shard'da olsa bile sıfır satır döndürmeli (izolasyon).",
+  "Pool→bridge migration sırasında dual-write tutarlılığı (kayıp/çift kayıt yok)."
+ ]
+}

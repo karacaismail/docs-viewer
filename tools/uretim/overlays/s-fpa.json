@@ -1,0 +1,56 @@
+{
+ "featureDefs": [
+  {
+   "name": "Budget / Forecast / Plan ArcheType'ları",
+   "desc": "Dönem-bazlı bütçe ve tahmin satırları; hibrit şema + JSONB boyut (departman, hesap, senaryo); bitemporal — plan 'as-of' tarihiyle versiyonlanır.",
+   "critical": true
+  },
+  {
+   "name": "What-if senaryo modelleme",
+   "desc": "Aynı temel veride çoklu senaryo (baz/iyimser/kötümser); driver değişince türev satırlar yeniden hesaplanır; senaryolar izole, üretime kayıt değil öneri.",
+   "critical": true
+  },
+  {
+   "name": "Driver-based hesap motoru",
+   "desc": "Formül/driver ağı (ör. ciro × marj); döngü tespiti zorunlu, çıktı denetlenebilir."
+  },
+  {
+   "name": "Actuals vs Plan karşılaştırma",
+   "desc": "Muhasebe/GL fiili rakamları plan satırlarıyla varyans olarak eşleşir (TR muhasebe entegrasyonu)."
+  },
+  {
+   "name": "Rolling forecast + onay",
+   "desc": "Dönem kapanışında forecast ileri kaydırılır; revizyon onay zinciriyle kilitlenir."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — FP&A bağımsız bir SaaS (Anaplan/Planful muadili) ama fiili rakamları kendi içinde tutamaz; muhasebe/gelir module'lerinden Contract ile beslenmeli ki plan-fiili tek kaynakta buluşsun.",
+  "kernel": "Party/tenancy (RLS), audit ve event-bus kernel'den; FP&A kendi tablo şemasını ArcheType engine ile tanımlar.",
+  "core": "Money (çok-para birimi + kur), bitemporal (as-of plan sürümü), i18n/jurisdiction; core sözleşmelerine uyar.",
+  "modules": "Accounting/GL'den fiili rakam, Revenue Recognition'dan gelir, Subscription Analytics'ten MRR sinyalini tüketir — yalnız Contract.",
+  "apps": "Finans suite (NetSuite-clone bileşimi) içinde s-fpa diğer finans app'leriyle aynı Party + hesap planını paylaşır; çift veri yok."
+ },
+ "moduleUsage": [
+  "s-accounting: GL fiili tutarları varyans analizi için okunur (period-scoped).",
+  "s-revenue-recognition: tanınan gelir forecast doğrulamasına besler.",
+  "s-subscription-analytics: MRR/churn sinyali abonelik gelir tahminini sürükler."
+ ],
+ "ecaExample": "trigger:\n  event: forecast.scenario_recalc_requested\ncondition:\n  all:\n    - actor.capability >= \"fpa.model\"\n    - not loop_detected            # driver ağı döngüsüz\n    - scenario.locked == false\naction:\n  - recompute: derived_lines       # idempotent, senaryo-izole\n  - emit: fpa.scenario_ready\nguards:\n  max_depth: 6\n  idempotency_key: \"fpa:{tenant}:{scenario}:{as_of}\"\n  external_effects: none",
+ "securityNotes": [
+  "Bütçe/forecast finansal veridir: hesap-bazlı capability (fpa.read/model) deny-by-default; RLS tenant-scoped.",
+  "Money değerleri kuruş hassasiyetinde tamsayı + para birimi; float yok, kur dönüşümü as-of tarihiyle.",
+  "Senaryo izolasyonu: what-if hesabı üretim/fiili satırlarına yazamaz; audit her plan revizyonunu kaydeder.",
+  "Bitemporal: plan sürümü silinmez, yeni as-of eklenir — geçmiş forecast denetlenebilir."
+ ],
+ "perfNotes": {
+  "code": "Driver ağı topolojik sırada hesaplanır; senaryo recalc asenkron worker.",
+  "perf": "Plan satırı listeleri keyset pagination; boyut (departman/hesap) için JSONB GIN + sabit kolon index; büyük model recompute batch."
+ },
+ "testNotes": [
+  "Komşu-tenant bütçe satırı sorgusu sıfır döndürür (RLS).",
+  "What-if senaryo recalc'i fiili (actuals) satırlarını değiştirmez (izolasyon).",
+  "Driver ağında döngü tespit edilir ve hesap reddedilir.",
+  "Money: kur dönüşümü as-of tarihiyle deterministik, yuvarlama kuruş seviyesinde tutarlı.",
+  "Plan revizyonu yeni as-of sürümü yaratır, eskisi okunabilir kalır (bitemporal)."
+ ]
+}

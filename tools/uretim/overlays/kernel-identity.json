@@ -1,0 +1,62 @@
+{
+ "featureDefs": [
+  {
+   "name": "Polymorphic principal modeli (human/org/agent/system)",
+   "desc": "Tek identity şemasında principal_type ile ayrılan kimlikler; agent için agent_kind, model_provider, on_behalf_of_user_id, capability_set_id alanları zorunlu — agent ≠ human.",
+   "critical": true
+  },
+  {
+   "name": "Dört credential tipi + Agent Token",
+   "desc": "Password (Argon2id), Passkey/WebAuthn, API Key, Agent Token; agent token kısa-ömürlü (ttl_seconds), max_tool_calls limitli, capability_scope_ids kapsamlı, audited zorunlu.",
+   "critical": true
+  },
+  {
+   "name": "Session + step-up",
+   "desc": "Server-side Redis session (cookie ID), JWT stateless API için opsiyonel; failed-login backoff (1→2→4→8 sn) IP+account bazlı.",
+   "critical": true
+  },
+  {
+   "name": "SSO / OIDC / SAML 2.0",
+   "desc": "Tenant bazında zorunlu SSO (ör. acme.com → Google Workspace redirect); kernel'de var, module yazılmaz.",
+   "critical": true
+  },
+  {
+   "name": "Impersonation (denetimli)",
+   "desc": "Admin başka kullanıcı olarak oturum; 'X impersonated Y at HH:MM' audit kaydı zorunlu, started_at/ended_at/reason.",
+   "critical": true
+  },
+  {
+   "name": "Risk-based Auth (AI)",
+   "desc": "device fingerprint, geo_anomaly, velocity_anomaly → recommended_action (allow/step_up/block)."
+  },
+  {
+   "name": "KVKK anonimleştirme",
+   "desc": "Hesap silindi flag; email/name/phone null, ID korunur (referans bütünlüğü + audit izi bozulmaz)."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Identity kernel'in girişidir; her request'in başında 'kim bu' burada çözülür. Hiçbir module auth olmadan hook çağıramaz, event işleyemez.",
+  "kernel": "Identity kernel'in kendisi; tenancy (tenant_id context) ve authz (has_role/capability) doğrudan bu kimliğe pinlenir; audit her oturum/impersonation olayını yazar.",
+  "core": "current_user() ve system_context(service=...) sözleşmesi core'a açılır; locale/timezone core i18n'e besler.",
+  "modules": "Tüm module'ler require_auth ile korunur; cron/webhook gibi insansız akışlar system_context veya Agent Token ile çalışır — anonim erişim deny-by-default.",
+  "apps": "Tüm app'ler aynı principal'i paylaşır; e-Devlet/m-imza (TÜRKKEP) ileride adapter olarak Identity altına takılır, app değişmez."
+ },
+ "ecaExample": "trigger:\n  event: auth.login_attempt\ncondition:\n  all:\n    - credential.type in [\"password\",\"passkey\",\"api_key\",\"agent_token\"]\n    - risk.recommended_action != \"block\"\n    - not brute_force_detected\naction:\n  - emit: session.created   # audit'e yazılır, idempotent\n  - on agent_token: enforce(ttl_seconds, max_tool_calls, capability_scope_ids)\nguards:\n  backoff: \"1,2,4,8s per ip+account\"\n  idempotency_key: \"login:{principal_id}:{nonce}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Argon2id (RFC 9106, 19MiB/2 iter/1 lane); timing-safe karşılaştırma; password reset token tek-kullanımlık 30 dk TTL.",
+  "Agent token deny-by-default kapsamlı: capability_scope_ids dışına çıkamaz, max_tool_calls aşılınca reddedilir, on_behalf_of_user_id zorunlu, tüm çağrılar audited.",
+  "Impersonation audit zorunlu (admin_user, target_user, reason, started/ended); session fixation + CSRF + OAuth state doğrulaması kernel garantisi.",
+  "RLS: oturum ve credential kayıtları tenant-scoped; SSO Required tenant'ında şifre login yolu kapalı (deny path).",
+  "KVKK: silinen hesapta PII null'lanır, ID/audit korunur — silme geri-uyumlu, izi bozmaz."
+ ],
+ "perfNotes": {
+  "perf": "I02 kullanıcı arama p95 <300ms, principal type resolution %100; I03 login latency p95 <800ms, brute-force başarı 0, agent token TTL ihlali 0; session lookup Redis O(1)."
+ },
+ "testNotes": [
+  "Komşu-tenant kullanıcı/oturum sorgusu sıfır döndürür (RLS).",
+  "Agent token: max_tool_calls aşımı ve scope dışı capability deny edilir; TTL dolunca token geçersiz.",
+  "SSO Required tenant'ında şifre login reddedilir (Google'a redirect).",
+  "Brute-force: ardışık hatalı login backoff'u tetikler, account lockout devreye girer.",
+  "Impersonation oturumu audit kaydı olmadan başlatılamaz."
+ ]
+}

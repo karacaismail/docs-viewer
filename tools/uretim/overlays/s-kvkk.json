@@ -1,0 +1,48 @@
+{
+ "featureDefs": [
+  {
+   "name": "Otomatik VERBİS envanteri",
+   "desc": "Alan-seviyesi PII flag metadata'sından kişisel veri envanteri neredeyse otomatik çıkar — rakipler manuel anketle yapıyor; yapısal fark demo'da bir bakışta görünür.",
+   "critical": true
+  },
+  {
+   "name": "DSR talep portalı",
+   "desc": "Madde 11 erişim/silme/düzeltme talepleri; 30 gün SLA'lı iş akışı + HITL (insan onayı) kapısı.",
+   "critical": true
+  },
+  {
+   "name": "Aydınlatma yönetimi",
+   "desc": "Aydınlatma metni sürümleme + kanal bazlı onay kaydı (cc-notification-consent)."
+  },
+  { "name": "Delil zinciri", "desc": "Talepten kapanışa s-audit ile değiştirilemez denetim izi." }
+ ],
+ "integration": {
+  "shouldIntegrate": "evet — cc-privacy'nin ürünleşmesi; aday katalog kaydı ama PII-flag altyapısı sayesinde yapısal farkı taşıyan bağımsız satılabilir modül.",
+  "kernel": "Schema (alan-seviyesi PII flag metadata'sı — envanterin kaynağı), Authz (DSR onay yetkisi), Tenancy.",
+  "core": "Audit (s-audit delil zinciri), Workflow (30 gün SLA DSR akışı), Notification (aydınlatma/onay kaydı).",
+  "modules": "cc-privacy (PII flag tanımı), s-audit (denetim), stack-compliance (mevzuat paketi).",
+  "apps": "DSR self-servis portal + DPO/yönetici admin paneli."
+ },
+ "moduleUsage": [
+  "cc-privacy: alan PII flag metadata'sını okuyup VERBİS kayıt envanterini üretir",
+  "s-audit: DSR talebinin açılış→onay→export→kapanış adımlarını delil zincirine yazar",
+  "cc-notification-consent: aydınlatma metni onayını kanal bazlı kaydeder"
+ ],
+ "ecaExample": "trigger:\n  event: dsr.request_submitted  # Madde 11\ncondition:\n  all:\n    - request.type in [\"access\",\"erasure\",\"rectification\"]\n    - requester.identity_verified == true\naction:\n  - open: dsr_workflow  # 30 gün SLA\n  - require: human_approval  # HITL\nguards:\n  external_effects: human_approval_required\n  idempotency_key: \"dsr:{subject_id}:{request_id}\"\n  audit: \"chain_of_custody\"",
+ "securityNotes": [
+  "PII envanteri alan metadata'sından otomatik; manuel anket hatası/eksiği ortadan kalkar.",
+  "DSR HITL: silme/erişim talepleri insan onayı olmadan yürütülmez (yanlış silme/sızıntı koruması).",
+  "30 gün SLA: KVKK Madde 11 yasal süresi workflow'da takipli; aşım eskalasyonu.",
+  "Tüm talep yaşam döngüsü s-audit delil zincirinde — denetimde kanıt."
+ ],
+ "perfNotes": {
+  "code": "Envanter, PII-flag'li alanlar üzerinde metadata sorgusu (manuel veri girişi değil); DSR export DSAR pipeline'ı yeniden kullanır.",
+  "perf": "Envanter çıkarımı şema-metadata taraması olduğundan veri hacminden bağımsız hızlı."
+ },
+ "testNotes": [
+  "Yeni PII-flag'li alan eklenince VERBİS envanterine otomatik yansır.",
+  "DSR erişim talebi 30 gün içinde + HITL onayı ile kapanır.",
+  "Onaysız silme talebi yürütülMEZ (HITL kapısı).",
+  "Aydınlatma metni sürüm değişiminde önceki onay kaydı korunur."
+ ]
+}

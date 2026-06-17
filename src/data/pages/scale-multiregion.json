@@ -691,7 +691,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Multi-region + Disaster Recovery — çekirdek yetenek",
+      "term": "DR Tier 3 streaming replication",
       "definition": [
        {
         "type": "strong",
@@ -699,41 +699,47 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Postgres WAL master FSN1 → replica HEL1; RPO ~1 dk, RTO 15 dk (mevcut hedef). Tek datacenter = tek nokta arıza; istatistiksel olarak 10 yılda olur."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Tenant-bound region routing",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Kayıt anında ülkeye göre TR tenant TR DB'sine, AB tenant AB DB'sine yönlenir; KVKK Madde 9 / GDPR Madde 44+ veri-yerelleştirme zorunluluğu."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Read replica deseni",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "TR ana yazma, AB read-only replica; başlangıç için 1 (read replica) + 2 (tenant-bound) yeter."
+       }
+      ]
+     },
+     {
+      "term": "Geo-failover (DNS + healthcheck)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Ana bölge çökünce trafik DNS TTL + healthcheck ile 1-5 dk içinde yedek bölgeye yönlenir."
+       }
+      ]
+     },
+     {
+      "term": "Active-active CRDT (ileri seviye)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İki bölgede yazma + otomatik conflict resolution (RPO~0, RTO~0); klasik DB conflict çözemez, maliyetli — Tier 4."
        }
       ]
      }
@@ -921,15 +927,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "KVKK Madde 9: TR vatandaşı kişisel verisi yurt dışına aktarılamaz; Hetzner FSN1 (Almanya) = yurt dışı, TR tenant için ayrı bölge zorunlu. GDPR Madde 44+: AB vatandaşı verisi AB içinde işlenir; tenant-bound region pin'i bu invariantı taşır. Veri-yerelleştirme audit edilebilir: 'TR vatandaşı verisi TR'de mi?' sorusuna routing kaydı kanıt. Failover sırasında replica promote edilirken tenant izolasyonu (RLS) korunur; cross-region yazma yasak. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -957,15 +955,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "systemd timer ile her gün backup verify (point-in-time recovery testi); streaming replication WAL anlık."
        }
       ]
      },
@@ -983,15 +973,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "DR Tier hedefleri — Tier 3: RPO<1dk RTO<15dk (100-1000 müşteri); Tier 4 RPO~0 RTO<1dk (bankacılık). Uptime %99.9 = yılda 8.7 saat down; RTO bunu belirler."
        }
       ]
      },
@@ -1287,7 +1269,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Multi-region + Disaster Recovery",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Multi-region + Disaster Recovery\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: tenant.created\ncondition:\n  all:\n    - tenant.country resolved\n    - not loop_detected\naction:\n  - route_db: region = region_of(tenant.country)   # TR→tr-region, AB→eu-region\n  - pin: tenant.data_residency = region\n  - emit: replication.target_set\nguards:\n  max_depth: 6\n  idempotency_key: \"region:{tenant_id}\"\n  external_effects: cross_region_write_forbidden",
     "copyEnabled": true
    },
    {
@@ -1427,6 +1409,18 @@
     ]
    },
    {
+    "id": "block-scale-multiregion-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "TR kullanıcısı kayıt anında TR DB'sine routing edilir (KVKK uyumu). Master çökünce replica'ya failover RTO hedefi (<15dk) içinde gerçekleşir. Backup point-in-time recovery testi başarıyla restore eder (RPO doğrulama). Çapraz-bölge yazma denemesi reddedilir (data residency invariantı). Replica lag izlenir; eşik aşılınca alarm üretilir."
+     }
+    ]
+   },
+   {
     "id": "block-scale-multiregion-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1445,7 +1439,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — DR olmayan SaaS saatli bombadır; multi-region mimarisi sonradan değiştirmek aylar alır, baştan hazır olmalı. KVKK varsa tenant region routing hemen."
        }
       ]
      },
@@ -1454,16 +1448,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "k-tenancy ile birlikte tenant'a göre region routing; identity/audit kernel'den. Veri-yerelleştirme RLS + region pin'i birleşir."
        }
       ]
      },
@@ -1472,7 +1457,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "cc-obs (healthcheck/izleme), cc-privacy (KVKK/GDPR madde eşlemesi), cc-tr (yerel sağlayıcı: Türk Telekom/Vodafone) ile ortak."
        }
       ]
      },
@@ -1481,7 +1466,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Tüm Layer-2 stack'leri region-aware: yazma ana bölgeye, okuma replica'ya; tenant'ın bölgesi Contract'tan gelir."
        }
       ]
      },
@@ -1490,7 +1475,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Her app region selection UX'i sunar; veri kayıt anında doğru bölgeye routing edilir, çapraz-bölge yazma yok."
        }
       ]
      }
@@ -1503,13 +1488,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-scale-multiregion-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-scale-multiregion-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "k-tenancy: tenant.region alanı routing kararını verir (TR→FSN1-TR, AB→HEL1)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "cc-obs: healthcheck endpoint + replica lag izleme; failover tetikleyici sinyal."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "cc-privacy: KVKK Madde 9 / GDPR 44+ veri-yerelleştirme denetim kanıtı."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "cc-tr: TR vatandaşı verisi için yurt-içi sağlayıcı seçimi."
+      }
+     ]
     ]
    },
    {

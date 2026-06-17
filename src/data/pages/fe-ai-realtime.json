@@ -818,7 +818,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Frontend — AI + Realtime + Offline — birincil yetenek",
+      "term": "Multi-provider AI router",
       "definition": [
        {
         "type": "strong",
@@ -826,25 +826,38 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "packages/ai/router.ts: capability'ye (reasoning/vision/long-context/cheap/tool-use) göre provider seçimi + fallback chain + maliyet tahmini; Anthropic/OpenAI/Google dispatch."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "3 kanallı realtime",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "SSE (notification/dashboard), native WebSocket (presence/live cursor), Yjs+Hocuspocus CRDT (collab editing) — tek abstraction zorlaması yok, socket.io YOK."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "Offline okuma+yazma",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "TanStack Query persist + idb-keyval (read cache), paused mutations (write queue, online'da auto-resume), Workbox background sync."
+       }
+      ]
+     },
+     {
+      "term": "Güvenli artifact/markdown render",
+      "definition": [
+       {
+        "type": "text",
+        "text": "react-markdown + DOMPurify (XSS zorunlu), iframe sandboxed artifact, Shiki highlight, Zod schema tool calls (tek tanım server+client)."
        }
       ]
      }
@@ -1032,15 +1045,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Markdown XSS zorunlu DOMPurify; rehype-raw çıktısı temizlenmeden render edilmez. Artifact iframe sandboxed; LLM üretimi kod izole çalışır. Tool calls Zod schema ile doğrulanır (server+client tek tanım); şema dışı argüman reddedilir. Eşzamanlılık kapsam ayrımı: alan-değeri düzenleme last-write-wins/Yjs; ArcheType TANIMI düzenleme ChangeSet baseVersion optimistic lock + merge-uyarısı (k-sozlesme) — iki katman karıştırılmaz. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1068,15 +1073,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Provider router: capability → model dispatch + estimateCost; fallbackChain primary başarısızsa sıradaki sağlayıcıya geçer. SSE AI SDK varsayılan streaming transport."
        }
       ]
      },
@@ -1094,15 +1091,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Streaming parça parça render (2sn+ yanıtta beklemeyi maskeler); WS küçük payload presence; offline read cache ağ turunu atlar."
        }
       ]
      },
@@ -1538,6 +1527,18 @@
     ]
    },
    {
+    "id": "block-fe-ai-realtime-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Router: long-context capability istenince doğru model; primary down → fallback chain devreye girer. Markdown render DOMPurify ile script enjeksiyonunu temizler. Offline: paused mutation online olunca auto-resume + sıra korunur. Collab: iki eşzamanlı düzenleme Yjs ile conflict-free birleşir."
+     }
+    ]
+   },
+   {
     "id": "block-fe-ai-realtime-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1556,7 +1557,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "kısmi — bu frontend katmanı kernel'i tüketir, içine yerleşmez; AI provider routing ve realtime transport seçimi sunum tarafıdır."
        }
       ]
      },
@@ -1565,16 +1566,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Event Bus (SSE/WS feed kaynağı), Authz (tool call yetki sınırı)."
        }
       ]
      },
@@ -1583,7 +1575,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Realtime core (presence/collab), Notification (SSE push)."
        }
       ]
      },
@@ -1592,7 +1584,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "AI özelliği olan tüm stack'ler useChat/useCompletion ile tüketir; tool call'lar capability-gated."
        }
       ]
      },
@@ -1601,7 +1593,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Tüm app UI'ları: streaming yanıt, generative UI dispatcher, voice STT/TTS."
        }
       ]
      }
@@ -1614,13 +1606,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-fe-ai-realtime-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-fe-ai-realtime-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-ai / k-agent-runtime: provider router üzerinden model seçimi + fallback; tool call'lar Zod schema ile"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "content-collaboration (PMS/Drive/Wiki): Yjs CRDT ile conflict-free eşzamanlı düzenleme + y-indexeddb offline persist"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Tüm app'ler: SSE ile dashboard refresh + in-app notification"
+      }
+     ]
     ]
    },
    {

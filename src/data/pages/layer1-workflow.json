@@ -784,7 +784,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Workflow + ECA — birincil yetenek",
+      "term": "Deklaratif state machine + transition",
       "definition": [
        {
         "type": "strong",
@@ -792,25 +792,42 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "ArcheType yaşam döngüsü: states + transitions; her geçiş guard (önkoşul) + action (yan etki) + audit (kim/ne zaman). Serbest kod değil, beyan."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Approval chain (tutara/tipe göre)",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Çok katmanlı onay: <10K manager, >=10K CFO; timeout/escalation (3 gün onay yoksa CFO'ya eskale). 13 üründe ortak."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "ECA DSL (declarative JSON)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "event/condition/action; serbest JS/SQL/shell YOK, action allowlist'ten seçilir. AI kural önerir, motor doğrular ve uygular."
+       }
+      ]
+     },
+     {
+      "term": "Agent tetikleyici desteği",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "Agent transition'ı tetikleyebilir ancak scope izinliyse; audit metadata'sında triggered_by: agent; checkpoint/resume orkestrasyonla entegre."
        }
       ]
      }
@@ -998,15 +1015,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "ECA güvenlik kapısı: AI'ın ürettiği her kural sonsuz döngü (forward chaining), yan-tenant erişimi, geri-alınamaz yan etki, maks zincir derinliği 6 ve idempotency key için doğrulanır; geçmeyen kural canlıya çıkmaz. Transition permission: kim hangi geçişi yapabilir capability ile kapılı (deny-by-default); etkin yetki = kullanıcı ∩ capability ∩ tool_scope ∩ risk. Dış-etkili aksiyon (e-posta/webhook/ödeme) ECA içinde yürütülmez; allowlist'li akışa (HMAC/API-key + human-in-the-loop) delege; parasal/hukuki sonuçta step-up. Agent asla principal değil; transition'ı yalnız scope izinliyse tetikler, audit'te triggered_by: agent. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1034,15 +1043,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Workflow state ArcheType kolonunda; transition denetimi declarative tablodan okunur, if/else type-switch yok; ECA forward-chaining derinlik≤6 ile sınırlı."
        }
       ]
      },
@@ -1060,15 +1061,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Durum-değişim olayları outbox üzerinden asenkron; bildirim/dış aksiyon worker'a delege; timeout/escalation zamanlanmış job; çok sayıda run keyset pagination."
        }
       ]
      },
@@ -1364,7 +1357,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Workflow + ECA",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Workflow + ECA\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: archetype.PurchaseOrder.field.amount_changed\n  when: \"amount > 50000 AND status == 'draft'\"\ncondition:\n  all:\n    - actor.capability >= \"workflow.transition\"\n    - chain_depth <= 6\n    - not loop_detected\naction:\n  - assign_to_role: cfo                    # allowlist action\n  - emit: workflow.escalated               # outbox, idempotent\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{po}:escalate_cfo\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1504,6 +1497,18 @@
     ]
    },
    {
+    "id": "block-layer1-workflow-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "ECA döngü testi: kural kuralı tetiklerse derinlik 6'da durur; sonsuz döngü canlıya çıkmaz. Komşu-tenant transition reddedilir (RLS + permission); izinsiz rol geçiş yapamaz. Idempotency: aynı escalation/aksiyon ikinci kez tetiklenmez (idempotency key). Approval chain: eşik üstü tutar manager'la onaylanamaz, CFO zorunlu (condition doğrulaması bağımsız oracle ile)."
+     }
+    ]
+   },
+   {
     "id": "block-layer1-workflow-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1522,7 +1527,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Layer-1 in-tree ortak primitive; 13 ürün workflow + onay zincirini paylaşmalı. Çıkarılırsa her ürün kendi state machine'ini yeniden yazar, audit/onay disiplini dağılır. Core'da tutulur."
        }
       ]
      },
@@ -1531,16 +1536,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "State/transition tanımı ArcheType metadata'sı üstünde yaşar; tenancy (RLS) workflow run'ını tenant'a kapatır; her geçiş audit'e yazılır; Event Bus durum-değişim olaylarını yayar."
        }
       ]
      },
@@ -1549,7 +1545,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "App core'una bağlı in-tree primitive; transition permission engine üzerinden kontrol edilir (kim hangi geçişi yapabilir). Money eşik (onay tetiği) Decimal."
        }
       ]
      },
@@ -1558,7 +1554,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Her module kendi ArcheType'ı için workflow beyan eder; HR izin, e-fatura, PR review, refund akışları aynı state machine motorunu Contract üzerinden kullanır."
        }
       ]
      },
@@ -1567,7 +1563,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "App'ler workflow Surface'i (durum + uygun transition butonları) üzerinden ilerletir; capability deny-by-default izinli olmayan geçişi göstermez/yürütmez."
        }
       ]
      }
@@ -1580,13 +1576,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-layer1-workflow-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-layer1-workflow-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "HR module: izin talebi → manager → HR onay; 14 gün üstü genel müdür eklenir (branching)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Accounting/e-Belge module: fatura draft → finance review → manager approve → GİB'e gönder (dış-etkili → allowlist'li akış)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Dev/CI module: draft PR → CI green → 2 approval → merge (guard tabanlı transition)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Moderasyon module: submit → AI ön-tarama → flagged ise insan moderatör (agent tetikler, insan karar verir)."
+      }
+     ]
     ]
    },
    {

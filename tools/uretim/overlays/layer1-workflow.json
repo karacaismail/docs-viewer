@@ -1,0 +1,53 @@
+{
+ "featureDefs": [
+  {
+   "name": "Deklaratif state machine + transition",
+   "desc": "ArcheType yaşam döngüsü: states + transitions; her geçiş guard (önkoşul) + action (yan etki) + audit (kim/ne zaman). Serbest kod değil, beyan.",
+   "critical": true
+  },
+  {
+   "name": "Approval chain (tutara/tipe göre)",
+   "desc": "Çok katmanlı onay: <10K manager, >=10K CFO; timeout/escalation (3 gün onay yoksa CFO'ya eskale). 13 üründe ortak.",
+   "critical": true
+  },
+  {
+   "name": "ECA DSL (declarative JSON)",
+   "desc": "event/condition/action; serbest JS/SQL/shell YOK, action allowlist'ten seçilir. AI kural önerir, motor doğrular ve uygular.",
+   "critical": true
+  },
+  {
+   "name": "Agent tetikleyici desteği",
+   "desc": "Agent transition'ı tetikleyebilir ancak scope izinliyse; audit metadata'sında triggered_by: agent; checkpoint/resume orkestrasyonla entegre."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-1 in-tree ortak primitive; 13 ürün workflow + onay zincirini paylaşmalı. Çıkarılırsa her ürün kendi state machine'ini yeniden yazar, audit/onay disiplini dağılır. Core'da tutulur.",
+  "kernel": "State/transition tanımı ArcheType metadata'sı üstünde yaşar; tenancy (RLS) workflow run'ını tenant'a kapatır; her geçiş audit'e yazılır; Event Bus durum-değişim olaylarını yayar.",
+  "core": "App core'una bağlı in-tree primitive; transition permission engine üzerinden kontrol edilir (kim hangi geçişi yapabilir). Money eşik (onay tetiği) Decimal.",
+  "modules": "Her module kendi ArcheType'ı için workflow beyan eder; HR izin, e-fatura, PR review, refund akışları aynı state machine motorunu Contract üzerinden kullanır.",
+  "apps": "App'ler workflow Surface'i (durum + uygun transition butonları) üzerinden ilerletir; capability deny-by-default izinli olmayan geçişi göstermez/yürütmez."
+ },
+ "moduleUsage": [
+  "HR module: izin talebi → manager → HR onay; 14 gün üstü genel müdür eklenir (branching).",
+  "Accounting/e-Belge module: fatura draft → finance review → manager approve → GİB'e gönder (dış-etkili → allowlist'li akış).",
+  "Dev/CI module: draft PR → CI green → 2 approval → merge (guard tabanlı transition).",
+  "Moderasyon module: submit → AI ön-tarama → flagged ise insan moderatör (agent tetikler, insan karar verir)."
+ ],
+ "ecaExample": "trigger:\n  event: archetype.PurchaseOrder.field.amount_changed\n  when: \"amount > 50000 AND status == 'draft'\"\ncondition:\n  all:\n    - actor.capability >= \"workflow.transition\"\n    - chain_depth <= 6\n    - not loop_detected\naction:\n  - assign_to_role: cfo                    # allowlist action\n  - emit: workflow.escalated               # outbox, idempotent\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{po}:escalate_cfo\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "ECA güvenlik kapısı: AI'ın ürettiği her kural sonsuz döngü (forward chaining), yan-tenant erişimi, geri-alınamaz yan etki, maks zincir derinliği 6 ve idempotency key için doğrulanır; geçmeyen kural canlıya çıkmaz.",
+  "Transition permission: kim hangi geçişi yapabilir capability ile kapılı (deny-by-default); etkin yetki = kullanıcı ∩ capability ∩ tool_scope ∩ risk.",
+  "Dış-etkili aksiyon (e-posta/webhook/ödeme) ECA içinde yürütülmez; allowlist'li akışa (HMAC/API-key + human-in-the-loop) delege; parasal/hukuki sonuçta step-up.",
+  "Agent asla principal değil; transition'ı yalnız scope izinliyse tetikler, audit'te triggered_by: agent."
+ ],
+ "perfNotes": {
+  "code": "Workflow state ArcheType kolonunda; transition denetimi declarative tablodan okunur, if/else type-switch yok; ECA forward-chaining derinlik≤6 ile sınırlı.",
+  "perf": "Durum-değişim olayları outbox üzerinden asenkron; bildirim/dış aksiyon worker'a delege; timeout/escalation zamanlanmış job; çok sayıda run keyset pagination."
+ },
+ "testNotes": [
+  "ECA döngü testi: kural kuralı tetiklerse derinlik 6'da durur; sonsuz döngü canlıya çıkmaz.",
+  "Komşu-tenant transition reddedilir (RLS + permission); izinsiz rol geçiş yapamaz.",
+  "Idempotency: aynı escalation/aksiyon ikinci kez tetiklenmez (idempotency key).",
+  "Approval chain: eşik üstü tutar manager'la onaylanamaz, CFO zorunlu (condition doğrulaması bağımsız oracle ile)."
+ ]
+}

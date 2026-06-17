@@ -1,0 +1,57 @@
+{
+ "featureDefs": [
+  {
+   "name": "5-adımlı import workflow",
+   "desc": "Upload (S3 presigned) → Parse (csv-parse/sheetjs) → Validate (Zod, satır satır) → Dry-run preview → Commit (transaction bulk insert).",
+   "critical": true
+  },
+  {
+   "name": "Dry-run önizleme (zorunlu)",
+   "desc": "Commit öncesi UI'da {valid:N, invalid:M, suspect:Z}; yanlış kolon eşlemesi 10K satırı geri-alınamaz hale getirmeden yakalanır.",
+   "critical": true
+  },
+  {
+   "name": "Column mapping",
+   "desc": "Müşteri CSV'sindeki 'eposta' → sistem 'email'; eşleme olmadan import başlamaz.",
+   "critical": true
+  },
+  {
+   "name": "Partial commit stratejileri",
+   "desc": "All-or-nothing (1 hata → iptal), Best-effort (geçeni al + hata raporu), Threshold (>%5 hata → otomatik iptal)."
+  },
+  {
+   "name": "Ölçekli parse",
+   "desc": "<1K sync; 1K-100K async worker + batch insert (her 1000'de); 1M+ chunk + paralel worker (DBOS durable)."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — import onboarding'in en kritik adımı (legacy geçişin %80'i veri taşıma); ortak primitive olarak tek pipeline dry-run + hata raporu tutarlılığını sağlar, her module kendi parser'ını yazmaz.",
+  "kernel": "Identity (yükleyen kullanıcı + tenant context), Event Bus (import.completed event'i), audit (kim ne zaman ne yükledi).",
+  "core": "File/storage (S3 presigned), i18n (hata mesajı locale), Settings; bulk insert tenant-scoped transaction içinde.",
+  "modules": "Hedef module kendi Zod şemasını sağlar (ör. Contact, müşteri kartı); import sonucu ilgili ArcheType'a yazılır — Contract üzerinden.",
+  "apps": "Tüm app'ler ortak mapping UI + dry-run panelini kullanır; scale-workers-deep ile arka plan işlenir."
+ },
+ "moduleUsage": [
+  "s-crm: legacy müşteri/lead listesi → dry-run → Contact ArcheType bulk insert (dedup + consent kontrolü).",
+  "s-inventory / s-wms: ürün/stok CSV'si → validate → kalem kayıtları.",
+  "scale-workers-deep: 100K+ satır chunk + paralel worker ile durable işlenir, progress bar."
+ ],
+ "ecaExample": "trigger:\n  event: import.committed\n  when: \"mode == 'best_effort'\"\ncondition:\n  all:\n    - actor.capability >= \"import.write\"\n    - dry_run.approved == true\n    - error_ratio <= 0.05\naction:\n  - insert_bulk: rows.valid       # tek transaction, idempotent\n  - emit: import.report_ready      # hatalı satır CSV: row,column,error\nguards:\n  max_depth: 6\n  idempotency_key: \"import:{tenant}:{file_hash}\"\n  external_effects: none",
+ "securityNotes": [
+  "Upload doğrulaması: dosya tipi/boyut limiti, presigned URL kısa TTL; zip-bomb/oversize reddi.",
+  "Toplu PII sızıntısı riski: import edilen Contact/müşteri verisi pii=true + retention; RLS ile tenant'a kapalı.",
+  "Formula/CSV injection: hücre başındaki =,+,-,@ kaçırılır; değer Zod ile sınırlandırılır, DB constraint'i aşamadan reddedilir.",
+  "Best-effort modda hata raporu satır+kolon+sebep verir; başka tenant verisine yazılamaz (deny-by-default)."
+ ],
+ "perfNotes": {
+  "code": "Parse → validate → dry-run → (onay) → bulk insert sıralı pipeline; büyük dosya streaming + batch.",
+  "perf": "10K satır in-memory parse + bulk insert saniyeler; 100K streaming batch (1000'lik); 1M chunk paralel worker — tek tek INSERT yerine bulk (10K commit yerine 1)."
+ },
+ "testNotes": [
+  "Dry-run onaysız commit yapılamaz (zorunlu kapı).",
+  "Best-effort: hatalı satırlar reddedilir, geçenler yazılır, rapor row/column/error içerir.",
+  "Threshold: >%5 hata import'u otomatik iptal eder.",
+  "Aynı dosya (file_hash) ikinci kez commit edilince idempotency ile çift kayıt oluşmaz.",
+  "Tenant izolasyonu: A tenant import'u B tenant tablosuna yazamaz."
+ ]
+}

@@ -1,0 +1,33 @@
+{
+ "integration": {
+  "shouldIntegrate": "Evet — bayraklar (bitemporal/pii/retention/audit/translatable) bağımsız özellik değil, ArcheType tanımının davranış işaretleridir; eskiden 70 app'te 70 ekibin tek tek kod yazarak hatırladığı disiplin, kernel'de bir kez doğru yazılıp beyanla satın alınır.",
+  "kernel": "Bayrak ArcheType tanımındaki alan üstünde bir bit/değerdir; davranış (maskele, logla, sakla, iki tarih tut) kernel'de bir kez uygulanır. Disiplin ölçeklenmez, bayrak ölçeklenir — jr-öncesi geliştiricinin ve AI'ın hata alanını sıfıra indirir.",
+  "core": "pii tek bit değil bir sınıflandırma matrisidir (özel nitelikli/iletişim/finansal/davranışsal/kamuya açık); her sınıf liste/detay/public davranışı + silme rejimi taşır. retention yasal alt sınır (VUK) ile mahremiyet üst sınırını (KVKK) takvimle uzlaştırır.",
+  "modules": "Her module ArcheType alanına bayrağı beyan eder; kod yazmaz. bitemporal alan iki tarihi (valid/recorded) otomatik tutar, audit alan diff'i append-only kayda düşürür, pii alan loglarda maskelenir ve unutulma hakkına bağlanır.",
+  "apps": "Surface'ler bayrağı okur: pii alan listede gizli/maskeli, public'te yasak; 'göster' eylemi audit'e yazılır. Vibecoding'de AI 'logla/maskele/sakla' kodunu her seferinde yeniden (ve yanlış) üretmek yerine bayrağı koyar."
+ },
+ "moduleUsage": [
+  "İK module: maaş alanına bitemporal:true — geçmişe dönük zam iki tarih ayrı durarak girilir, muhasebe şaşmaz.",
+  "Kimlik/müşteri module: TCKN alanına pii:true + retention:10y — maskele + unutulma hakkı + VUK alt sınırı.",
+  "Tüm module'ler: audit:true ile her save'de alan diff'i append-only audit'e düşer ('kayıt oynandı' iddiası imkânsız).",
+  "Çok-dilli içerik module: translatable bayrağı çeviri altyapısını tanımdan kurar."
+ ],
+ "ecaExample": "trigger:\n  event: archetype.field.save\n  when: field.flags contains any [pii, bitemporal, audit]\ncondition:\n  all:\n    - actor.capability >= \"archetype.write\"\n    - tenant_scoped\n    - not loop_detected\naction:\n  - if pii: mask_in_logs + bind_to_erasure_right\n  - if bitemporal: stamp(valid_at, recorded_at)\n  - if audit: append_only_diff\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{archetype}:{record}:{version}\"\n  external_effects: none",
+ "securityNotes": [
+  "pii alan crypto-shredding ile silinir: 'beni unutun' deyince şifre-anahtarı imha edilir, veri matematiksel okunamaz olur, kayıt iskeleti denetim için kalır (be-kararlar E9).",
+  "PII matrisi: özel nitelikli (TC/sağlık/inanç) listede gizli, detayda maskeli+yetki+audit, public'te yasak; 'göster' eylemi audit'e yazılır.",
+  "Açık rıza/aydınlatma public form akışında zorunlu; retention yasal minimum silmeyi (VUK) ve mahremiyet maksimumu tutmayı (KVKK) birlikte zorlar.",
+  "audit:true append-only olduğundan sonradan değiştirme/silme teknik olarak engellenir (tamper-evidence)."
+ ],
+ "perfNotes": {
+  "code": "Davranış kernel'de bir kez yazıldığından her ArcheType save'inde aynı (test edilmiş) yol çalışır; bitemporal iki zaman kolonu + audit append-only tablo, pii maskeleme log katmanında tek noktadan uygulanır.",
+  "perf": "Bayrak başına davranış merkezi olduğundan 70 app'te kod tekrarı/kayması yok; audit append-only yazma sıcak yolu şişirmesin diye asenkron/batch yazılabilir, retention takvimi büyüyen tabloları partition+purge ile sınırlar."
+ },
+ "testNotes": [
+  "bitemporal: geçmişe dönük zam girildiğinde valid_at ≠ recorded_at ayrı durur, eski rapor değişmez.",
+  "pii: maskeleme listede/detayda/public'te matris kuralına uyar; 'göster' audit kaydı üretir.",
+  "retention: süre dolan kayıt silinir, yasal alt sınır içindeki kayıt silinemez (iki yönlü kontrol).",
+  "audit: kayıt değiştirme denemesinde önceki diff append-only olarak korunur, üzerine yazılamaz.",
+  "crypto-shredding: unutulma hakkı sonrası alan okunamaz, kayıt iskeleti denetim için durur."
+ ]
+}

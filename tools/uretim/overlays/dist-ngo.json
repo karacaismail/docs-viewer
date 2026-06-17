@@ -1,0 +1,50 @@
+{
+ "featureDefs": [
+  {
+   "name": "Dernek/Vakıf sektör paketi (distribution)",
+   "desc": "Üyelik + aidat + bağış kampanyası + makbuz e-belge — mevcut modüllerin niş paketlenmesi. Stack (alt-küme) Edition (alt-küme) Distribution: ham stack değil, edition-kalitesinde UI/UX ile teslim.",
+   "critical": true
+  },
+  {
+   "name": "Dernekler Kanunu defterleri (hazır config)",
+   "desc": "Dernekler Kanunu zorunlu defter formatları hazır konfigürasyon olarak gelir; mali müşavir kurmaz, açar.",
+   "critical": true
+  },
+  {
+   "name": "Bağış makbuzu e-belge akışı",
+   "desc": "Bağış -> makbuz; s-tax-compliance e-belge köprüsü. Tutarlar Money (Decimal); kurban/proje bazlı kampanya şablonları dahil."
+  },
+  {
+   "name": "Proje takibi (fon -> harcama -> rapor)",
+   "desc": "Bağış fonunun harcamaya ve şeffaflık raporuna izlenmesi; bitemporal + audit."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — distribution mevcut modüllerin niş paketi; kernel ile zorunlu (kimlik/tenancy/audit), paketlenen modüllerle yalnız Contract üzerinden.",
+  "kernel": "Kimlik, tenancy (RLS), audit kernel'den; üye/bağışçı Party'den türer. Para = Money (Decimal) + ISO 4217.",
+  "core": "Bağımsız core yazmaz; dist-membership + s-tax-compliance + s-comms modüllerini sektör config'iyle paketler.",
+  "modules": "dist-membership (üyelik/aidat/genel kurul), s-tax-compliance (makbuz e-belge), s-comms (üye duyuru) — yalnız Contract; distribution bunları config + içerik + theme ile sarar.",
+  "apps": "Paketlenen modüller aynı Party + bağış ArcheType'ını paylaşır; üye/bağışçı çift kaydı yok."
+ },
+ "moduleUsage": [
+  "dist-membership: üye kaydı, aidat tahsilatı, genel kurul listeleri.",
+  "s-tax-compliance: bağış makbuzu e-belge üretimi + GİB akışı.",
+  "s-comms: üye duyuru/iletişim köprüsü.",
+  "Reklamsız organik kanal: federasyon/konfederasyon ağıyla yayılır; bağış hacminden komisyon modeli."
+ ],
+ "ecaExample": "trigger:\n  event: donation.received\n  when: \"tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"donation.receipt.issue\"\n    - not loop_detected\n    - amount is Money    # Decimal, currency-tagged\naction:\n  - emit: ebelge.receipt_requested    # s-tax-compliance, outbox idempotent\n  - record: donation_ledger { bitemporal: true }\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{donation}:receipt\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Bağışçı/üye verisi pii=true (+retention); RLS tenant-scoped; bağışçı kimliği yalnız yetkiyle (capability deny-by-default).",
+  "Bağış defteri ve makbuz değişmez audit (A08): kesilmiş makbuz geriye değişmez; düzeltme yeni kayıt. Tutarlar Money/Decimal.",
+  "Dernekler Kanunu defter formatı sözleşme-kapısı: zorunlu alan eksikse kayıt reddedilir."
+ ],
+ "perfNotes": {
+  "perf": "Aidat/bağış tahsilat toplu işlemleri asenkron worker; üye/bağışçı listeleri keyset pagination; bağış defteri tarih+kampanya indeksli."
+ },
+ "testNotes": [
+  "Komşu-tenant üye/bağışçı sorgusu sıfır döndürür.",
+  "Aynı bağış ikinci kez makbuz üretmez (idempotency).",
+  "Bağış tutarı Money/Decimal; defter toplamı kuruşu kuruşuna.",
+  "Dernekler Kanunu zorunlu defter alanı eksik kayıt reddedilir."
+ ]
+}

@@ -1,0 +1,50 @@
+{
+ "featureDefs": [
+  {
+   "name": "PurchaseOrder ArcheType",
+   "desc": "Tedarikçi siparişi; satır kalemleri, onay zinciri, durum makinesi (taslak→onay→gönderildi→teslim alındı→faturalandı). money + bitemporal.",
+   "critical": true
+  },
+  {
+   "name": "Vendor / Supplier ArcheType",
+   "desc": "Tedarikçi Party'den türer; vergi no, ödeme koşulu, performans skoru. pii + audit."
+  },
+  {
+   "name": "RFQ → PO akışı",
+   "desc": "Teklif talebi (RFQ) karşılaştırma → seçilen tedarikçiye PO; üç-yönlü eşleme (PO/irsaliye/fatura) zemini."
+  },
+  {
+   "name": "Üç-yönlü eşleme (3-way match)",
+   "desc": "PO ↔ teslim (GRN) ↔ tedarikçi faturası tutar/miktar mutabakatı; sapma onaya düşer.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-2 SaaS ürünü; kendi PurchaseOrder/Vendor ArcheType'larını tanımlar ama yetki/audit/event-bus/tenancy framework'ten alır; satınalma↔envanter↔muhasebe app'leriyle yalnız Contract üzerinden.",
+  "kernel": "Party (tedarikçi) kimliği, tenancy (RLS), audit ve ArcheType engine kernel'den; Purchase kendi şemasını engine ile tanımlar.",
+  "core": "App core sözleşmelerine uyar; core module değişmez, Purchase bir Domain olarak otomatik REST/GraphQL + audit + tenancy alır.",
+  "modules": "Inventory module'üne 'stok girişi' (GRN onayı) olayı yayar; Accounting/Revenue module'üne tedarikçi faturası → borç (AP) olayı; yalnız Contract.",
+  "apps": "Inventory, Accounting ve Procurement app'leri aynı Vendor + PurchaseOrder'ı paylaşır; çift kayıt yok — tedarikçi tek Party."
+ },
+ "moduleUsage": [
+  "Inventory app: PurchaseOrder teslim alındığında stok seviyesini günceller (GRN olayı).",
+  "Accounting app: tedarikçi faturasından AP (borç) ve KDV indirim kaydı türetir (3-way match sonrası).",
+  "Sales app: stok yetersizliğinde reorder noktasından otomatik PO taslağı tetikleyebilir."
+ ],
+ "ecaExample": "trigger:\n  event: purchase_order.goods_received\n  when: \"three_way_match.variance <= tolerance AND tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"purchase.approve\"\n    - not loop_detected\naction:\n  - emit: accounting.payable_created   # outbox, idempotent\n  - emit: inventory.stock_incremented\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{po}:grn\"\n  external_effects: approval_required",
+ "securityNotes": [
+  "PO onay zinciri capability deny-by-default; tutar eşiğine göre kademeli onay (4-göz büyük tutarda).",
+  "Tedarikçi banka/IBAN değişikliği step-up + audit; tedarikçi-değiştirme dolandırıcılığına (BEC) karşı kritik.",
+  "Tedarikçi vergi no/iletişim pii + retention; RLS tenant-scoped; komşu tenant tedarikçisi görünmez.",
+  "3-way match sapması sessiz geçmez (deny-by-default) — onaya düşer; eşik gevşetme audit'li."
+ ],
+ "perfNotes": {
+  "perf": "PO liste ve tedarikçi liste uçları keyset (cursor) pagination; tedarikçi+durum+tarih indeksleri; 3-way match mutabakatı asenkron worker (büyük fatura partilerinde)."
+ },
+ "testNotes": [
+  "Komşu-tenant PurchaseOrder sorgusu sıfır döndürür.",
+  "3-way match sapması toleransı aşınca PO otomatik 'faturalandı' olamaz, onaya düşer.",
+  "Aynı GRN ikinci kez stok artıramaz / ikinci AP kaydı yaratamaz (idempotency).",
+  "Tedarikçi IBAN değişikliği MFA/step-up olmadan kaydedilmez."
+ ]
+}

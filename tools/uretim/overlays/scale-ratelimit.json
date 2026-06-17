@@ -1,0 +1,27 @@
+{
+ "integration": {
+  "shouldIntegrate": "Rate limit + quota bir scale primitive'i ve adalet aracı: tek istemcinin (IP/kullanıcı/tenant) kapasiteyi tüketmesini engeller, iyi müşteriye hız garantisi verir; her public endpoint için zorunlu.",
+  "kernel": "Tier bilgisi k-tenancy'den gelir; capability deny-by-default ile kota planı tenant'a bağlanır — bir tenant 10.000 ArcheType üretse bile noisy-neighbor izolasyonu plana göre tavanlanır.",
+  "core": "Sayaçlar Redis'te tutulur; token bucket (varsayılan) burst izinli, sliding window kritik endpoint için hassas; quota money/billing tier'larıyla tutarlı (free/pro/enterprise).",
+  "modules": "Üç katman: IP başına saniyelik tavan (Cloudflare/Nginx, DDoS), tenant başına saatlik kontingen (uygulama içi), endpoint başına özel limit (export 1/saat, login 5/dk).",
+  "apps": "Limit aşımında 429 + Retry-After + X-RateLimit-Limit/Remaining/Reset header'ları döner; client SDK'lar otomatik backoff yapar."
+ },
+ "ecaExample": "trigger:\n  event: api.request.received\ncondition:\n  all:\n    - tenant.tier_quota.remaining > 0\n    - ip_bucket.tokens >= 1\n    - not endpoint_limit_exceeded\naction:\n  - consume: token_bucket(1)\n  - allow: request\nguards:\n  max_depth: 6\n  idempotency_key: \"ratelimit:{tenant}:{window}\"\n  external_effects: on_reject_emit_429_retry_after",
+ "securityNotes": [
+  "Cloudflare/Nginx DDoS koruması tek başına yetmez — 'meşru' bir bot saatte 100K istek atabilir; uygulama içi rate limit + quota iki katmanlı koruma sağlar.",
+  "Login endpoint'i sıkı limitli (5/dk) — credential stuffing / brute-force yavaşlatılır.",
+  "Quota ve limitler tenant'lar arası izole (RLS + tenant-scope sayaç); bir tenant'ın aşımı diğerini etkilemez.",
+  "Tenant-başına metrik + trace ile meşru yüksek trafik, yanlış-yapılandırma ve gerçek kötüye kullanım ayrıştırılır; token-rate circuit breaker + günlük maliyet bütçesi devreye girer."
+ ],
+ "perfNotes": {
+  "code": "Token bucket varsayılan (O(1), burst için kovada birikmiş token); sliding window daha hassas ama her istekte hesap maliyetli — yalnız kritik endpoint'te. Redis atomik sayaç (INCR/EXPIRE) ile dağıtık-safe.",
+  "perf": "Sliding window pahalı; varsayılan token bucket sürekli yüksek yükte düşük overhead sağlar. Sayaç Redis'te tutulduğundan yatay ölçeklenen app instance'ları tutarlı limit görür."
+ },
+ "testNotes": [
+  "Tier × limit matrisi testi: anonim/free/pro/enterprise saatlik + saniyelik burst + endpoint exception değerlerinin doğru uygulandığı.",
+  "429 sözleşme testi: aşımda Retry-After + X-RateLimit-* header'larının döndüğü ve client backoff'unun tetiklendiği.",
+  "Tenant izolasyon testi: bir tenant kotayı doldurduğunda başka tenant'ın etkilenmediği.",
+  "Burst testi: token bucket'ın kısa süreli yüksek isteği (burst) kabul edip sürekli aşımı reddettiği.",
+  "Noisy-neighbor testi: 10.000 ArcheType üreten tenant'ın circuit breaker + kota ile sınırlandığı."
+ ]
+}

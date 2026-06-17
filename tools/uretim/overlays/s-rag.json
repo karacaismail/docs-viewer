@@ -1,0 +1,52 @@
+{
+ "featureDefs": [
+  {
+   "name": "Doküman ingest + chunking pipeline",
+   "desc": "Drive + CMS kaynaklarından belge alımı; parçalama (chunk) + pgvector embedding üretimi. ArcheType'ın 'searchable/embedding' bayrağı kolon + index türetir.",
+   "critical": true
+  },
+  {
+   "name": "Permission-aware retrieval",
+   "desc": "Sorgu sonuçları yalnız kullanıcının okuma yetkisi olduğu belgelerden gelir; capability/RLS retrieval'a WHERE olarak enjekte edilir — yetkisiz belge yanıta sızmaz.",
+   "critical": true
+  },
+  {
+   "name": "Cevap üretimi + kaynak atıf (provenance)",
+   "desc": "LLM yanıtı + alıntılanan belge referansları; halüsinasyon/atfsız iddia output guardrail'e takılır.",
+   "critical": true
+  },
+  {
+   "name": "Eval + feedback döngüsü",
+   "desc": "Kullanıcı feedback'i eval dataset'e döner; model + prompt template versiyon pinli, regression CI gating'e bağlı. Glean/Danswer muadili."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-2 SaaS ürünü; tek başına değil, Drive + CMS + Identity üstüne oturur. Kendi Domain'i (Kaya), kaynak modüllere yalnız Contract ile bağlı.",
+  "kernel": "Tenancy (RLS), capability scope, audit ve ArcheType engine kernel'den; ArcheType, agent'lara otomatik MCP tool olarak doğar — entegrasyon yazılmaz, beyandan türer.",
+  "core": "i18n, Notification, Settings core'dan; embedding araması ArcheType'taki tek bayrakla pgvector kolonu + index olarak üretilir.",
+  "modules": "Drive (dosya), CMS (içerik) modüllerinden belge olayını okur; yeni/değişen belge event'inde embedding projection güncellenir — yalnız Contract.",
+  "apps": "Knowledge/Search, Helpdesk ve Drive app'leri aynı belge + embedding kaydını paylaşır; tek kaynak, çift index yok."
+ },
+ "moduleUsage": [
+  "Drive app: dosya yüklendiğinde/değiştiğinde ingest event'i tetikler (re-embedding).",
+  "CMS app: yayınlanan içerik knowledge base'e girer; permission belgeyle taşınır.",
+  "Helpdesk app: ticket bağlamında 'benzer çözümleri bul' araması ile RAG retrieval'ı tüketir."
+ ],
+ "ecaExample": "trigger:\n  event: document.indexed\ncondition:\n  all:\n    - actor.capability >= \"rag.query\"\n    - requester.can_read(document)   # permission-aware\n    - not loop_detected\naction:\n  - retrieve: top_k_chunks           # RLS-filtered\n  - generate: grounded_answer        # with citations\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{query_hash}:{doc_version}\"\n  external_effects: cost_budget_check",
+ "securityNotes": [
+  "Permission-aware retrieval: yetkisiz belge embedding'i sorgu sonucuna ve LLM bağlamına asla girmez (deny-by-default + RLS).",
+  "Tenant verisi model eğitimine gitmez; PII prompt'a girmeden maskelenir (input guardrail), çıktı guardrail (PII/halüsinasyon/format).",
+  "Kaynak atıf zorunlu: atfsız/halüsinasyon iddia output guardrail'e takılır; agent eylemi audit'e (run_id, tool_name, capability_scope) yazılır.",
+  "Maliyet guardrail: günlük model bütçesi + tenant kotası + token-rate circuit breaker."
+ ],
+ "perfNotes": {
+  "code": "Ingest → chunk → embed → index asenkron worker; retrieval = pgvector ANN + permission filtresi, ardından LLM çağrısı (span-level tracing).",
+  "perf": "Embedding araması pgvector HNSW/IVF index; retrieve p95 düşük tutulur; sonuç listesi keyset; yeniden indexleme sadece değişen belgede (incremental)."
+ },
+ "testNotes": [
+  "Yetkisiz belge: kullanıcının erişimi olmayan içerik retrieval sonucunda ve yanıtta görünMEMEli (deny path).",
+  "Komşu tenant belgesi sorgu sonucuna sızmamalı (izolasyon).",
+  "Atıf doğruluğu: üretilen her iddia alıntılanan kaynakta bulunmalı (grounding testi).",
+  "Maliyet kotası aşılınca sorgu circuit breaker ile reddedilmeli."
+ ]
+}

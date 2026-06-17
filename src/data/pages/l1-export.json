@@ -809,15 +809,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Export capability (resource:export) deny-by-default; export sorgusu tenant-scope WHERE + RLS ile sınırlanır, kullanıcının göremediği alan export'a giremez. Presigned URL kısa ömürlü (1 saat) ve tek dosyaya kapsamlı; link sızsa bile süre dolunca erişim kapanır. pii içeren export'lar audit'lenir (kim, ne zaman, hangi alanları aldı); purpose-binding ve retention kaydıyla işlenir. Ağır export endpoint'i rate-limit'li (örn. 1/saat free tier) — kötüye kullanımla sistemin tüketilmesi engellenir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -845,15 +837,16 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
+        "text": "CSV streaming (queryStream → csvFormatter → write stream) ile veri RAM'e alınmadan akıtılır; Excel için ExcelJS stream-write; 100K+ S3 "
        },
        {
-        "type": "code",
-        "text": "if (type==...)"
+        "type": "term",
+        "text": "multipart upload",
+        "termId": "term-multipart-upload-l1-export"
        },
        {
         "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": " tek-istek timeout'unu aşmadan parça parça yükler."
        }
       ]
      },
@@ -871,15 +864,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Senkron 100K-satır export browser timeout'una yol açar; background job + worker + S3 + email link deseni zorunlu — kullanıcı isteği anında serbest bırakılır."
        }
       ]
      },
@@ -1175,7 +1160,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Veri Dışa Aktarma — CSV, Excel, PDF",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Veri Dışa Aktarma — CSV, Excel, PDF\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: export.requested\ncondition:\n  all:\n    - actor.capability >= \"resource:export\"\n    - row_estimate > 1000\n    - not tenant_quota_exceeded\naction:\n  - enqueue: export.worker.stream_csv\n  - emit: notification.export_ready\nguards:\n  max_depth: 6\n  idempotency_key: \"export:{tenant}:{query_hash}\"\n  external_effects: presigned_url_ttl=3600",
     "copyEnabled": true
    },
    {
@@ -1315,6 +1300,18 @@
     ]
    },
    {
+    "id": "block-l1-export-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Boyut-sınıfı testi: <1K sync, >1K background dallarının doğru seçildiği; 100K+ multipart'ın bütünlüğü. Tenant izolasyon testi: bir tenant'ın export'unda başka tenant satırının asla görünmediği (RLS). Para serileştirme testi: Currency/Decimal alanlarının kuruş kaybı olmadan CSV/XLSX'e yazıldığı. Memory testi: 1M satır CSV streaming'de RAM tavanının aşılmadığı (akıtarak yazma)."
+     }
+    ]
+   },
+   {
     "id": "block-l1-export-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1333,7 +1330,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Export, sistemin çıkış kapısı bir Layer-1 primitive'i: müşterinin kendi verisini CSV/Excel/PDF/UBL-TR olarak güvenle dışarı alabilmesi için kernel + scale workers + dosya servisi üstüne oturur."
        }
       ]
      },
@@ -1342,16 +1339,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Hangi ArcheType alanlarının export edilebileceği capability + permission engine'den türetilir; tenant-scope WHERE injeksiyonu export sorgusuna da uygulanır (başka tenant verisi sızmaz)."
        }
       ]
      },
@@ -1360,7 +1348,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Para alanları Decimal/Currency olarak (float değil) serialize edilir; bitemporal/audit alanları export'a dahil edildiğinde purpose-binding korunur."
        }
       ]
      },
@@ -1369,7 +1357,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Boyut sınıfına göre çalışır: <1K satır sync direct download, 1K–100K background job + S3, 100K+ chunk'lı S3 multipart; UBL-TR e-fatura ayrı GIB entegrasyonu."
        }
       ]
      },
@@ -1378,7 +1366,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "App 'rapor hazırlanıyor' bildirimi gösterir; worker bitince presigned URL (1 saat) email link olarak iletilir — backend statik dosya servis etmez."
        }
       ]
      }

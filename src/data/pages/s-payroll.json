@@ -324,7 +324,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Payroll — çekirdek yetenek",
+      "term": "Bordro hesap motoru",
       "definition": [
        {
         "type": "strong",
@@ -332,41 +332,42 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Brüt→net: SGK işçi/işveren primi, gelir vergisi dilimleri, damga vergisi, AGİ, kümülatif matrah; Money (Decimal) ile kuruş hassasiyeti. Etki tarihli ücret/parametre."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "SGK e-Bildirge entegrasyonu",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "APHB/MUHSGK aylık bildirge üretimi + işe giriş/çıkış (İAB); TR yerelleştirme zorunlu, yurt dışı muadillerin boşluk bıraktığı yer."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Bordro ArcheType + bitemporal",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Çalışan, sözleşme, ücret bileşeni ArcheType'ları; geriye dönük zam (etki 1 Mayıs, kayıt bugün) bitemporal ile doğru zamanlanır."
+       }
+      ]
+     },
+     {
+      "term": "Bordro onay Workflow'u",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Hesapla→incele→onayla→GL+ödeme; tenant'a pinli aşamalar, onay zinciri audit'lenir."
        }
       ]
      }
@@ -554,15 +555,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Ücret/TC kimlik/IBAN gibi alanlar pii=true (+retention); bordro KVKK'da en hassas veri sınıfı, field-level encryption. Tenant-scoped (RLS): bir müşterinin bordrosu başka tenant'a sızamaz; mali müşavir yalnız yetkili olduğu tenant'ı görür. Onaylanmış bordro immutable; düzeltme = ters kayıt + yeni dönem (mali integrity + SGK düzeltme bildirgesi). Bordro post + ücret görüntüleme yetkisi capability deny-by-default; ifowner/role ile dar kapsam. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -590,15 +583,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Dönem hesabı batch worker'da paralel (çalışan başına bağımsız); SGK bildirge üretimi finalize sonrası asenkron."
        }
       ]
      },
@@ -616,15 +601,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Çalışan + bordro geçmişi keyset (cursor) pagination; (tenant_id, employee_id, period) bileşik indeks; toplu dönem kapanışı kuyruk üstünden."
        }
       ]
      },
@@ -920,7 +897,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Payroll",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Payroll\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: payroll.period_finalized\n  when: \"period_end AND status == 'approved'\"\ncondition:\n  all:\n    - actor.capability >= \"payroll.post\"\n    - sgk_declaration.valid == true\n    - not loop_detected\naction:\n  - emit: gl.accrual_requested      # outbox, idempotent\n  - emit: sgk.declaration_ready      # APHB/MUHSGK\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{period}:payroll-post\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1060,6 +1037,18 @@
     ]
    },
    {
+    "id": "block-s-payroll-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Money kuruş doğruluğu: brüt - kesintiler = net, bit-bit; SGK tavanı uygulanınca doğru kesilir. Aynı dönem ikinci kez post edilemez (idempotency). Komşu tenant bordro/ücret sorgusu sıfır döndürür (izolasyon). Geriye dönük zam bitemporal: etki tarihinden itibaren fark doğru, kayıt tarihi bugün (time-travel doğruluğu)."
+     }
+    ]
+   },
+   {
     "id": "block-s-payroll-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1078,7 +1067,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Layer-2 SaaS ürünü; bordro tek başına çalışmaz, GL (muhasebe) + ödeme + SGK ile birlikte anlamlıdır. Kendi Domain'i (Kaya), dışarıya yalnız Contract ile konuşur."
        }
       ]
      },
@@ -1087,16 +1076,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Tenancy (RLS), capability/permission, audit ve ArcheType engine kernel'den; ürün kendi şemasını ArcheType ile tanımlar. KVKK kişisel veri kayıtları için bitemporal zorunlu."
        }
       ]
      },
@@ -1105,7 +1085,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Money/Tax (gelir vergisi/SGK oranları), i18n, Calendar (dönem/çalışma günü), Notification core'dan gelir; tutarlar Decimal."
        }
       ]
      },
@@ -1114,7 +1094,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "GL/Accounting'e bordro tahakkuk yevmiyesi yayar; cc-tr (Türkiye Uyum) paketinden SGK/GİB sürücülerini tüketir — yalnız Contract."
        }
       ]
      },
@@ -1123,7 +1103,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "HRMS, Accounting ve TR-uyum app'leri aynı çalışan + bordro kaydını paylaşır; mali müşavir 12 müşteriyi tek platformda yönetir."
        }
       ]
      }
@@ -1136,13 +1116,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-payroll-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-payroll-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "HRMS app: çalışan/sözleşme/izin verisini sağlar; bordro bu kaynaktan brüt ücret + kesinti okur."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Accounting/GL app: aylık bordro tahakkuk + ödeme yevmiyesini tüketir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "cc-tr (Türkiye Uyum): SGK e-Bildirge (APHB/MUHSGK) ve e-Devlet entegrasyonunu sağlar."
+      }
+     ]
     ]
    },
    {

@@ -1,0 +1,31 @@
+{
+ "integration": {
+  "shouldIntegrate": "Evet — hot counter, milyonlarca eşzamanlı update'in (like/view/follower/stok-on-hand) klasik `UPDATE ... SET x=x+1` lock contention'ını ölçeklenebilir kılan bir scale primitive'idir; tek interface arkasında backend deployment'a göre swappable olmalı.",
+  "kernel": "Counter abstraction core'da yaşar: module geliştirici increment/read/batch_read API'sini çağırır, altta hangi backend (SQL/Redis/sharded) olduğunu bilmez; ACID-gereken sayaç ile approximate sosyal sayaç aynı framework'te ayrı strateji.",
+  "core": "Backend stratejisi deployment ile seçilir: shared hosting'te doğrudan SQL UPDATE, orta ölçekte Redis INCR + periyodik flush, büyük ölçekte sharded counter (shard_0..15, read'de SUM).",
+  "modules": "Sosyal module like/view, e-ticaret module stok-on-hand sayacını aynı API ile tüketir; backend seçimi module dışında, capability/deployment profilinde tutulur.",
+  "apps": "Yüksek-okuma app'leri (feed, ürün listesi) batch_read ile çoklu sayacı tek turda okur; muhasebe app'i sayaç yerine ACID hareket-toplamı disiplinini kullanır (doğru pattern ayrımı)."
+ },
+ "moduleUsage": [
+  "Sosyal app: post like/view/follower sayaçlarını sharded counter ile tutar; approximate + eventual tolere edilir.",
+  "E-ticaret app: stok-on-hand için Redis INCR + DB flush; kritik kesinlik gerekiyorsa ACID hareket toplamına düşer.",
+  "Feed/liste app: batch_read ile bir pipeline'da N sayacı okur (round-trip azaltma).",
+  "Analitik app: periyodik flush'la DB'ye inen sayaçtan rapor üretir."
+ ],
+ "ecaExample": "trigger:\n  event: post.liked\ncondition:\n  all:\n    - actor.capability >= \"post.react\"\n    - tenant_scoped\n    - not loop_detected\naction:\n  - counter.increment: \"post:{post_id}:likes\"   # sharded, approximate\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{user}:post:{post_id}:like\"\n  external_effects: none",
+ "securityNotes": [
+  "Increment yetkisi capability ile kapılı (deny-by-default); anonim/yetkisiz aktör sayaç şişiremez.",
+  "Sayaç anahtarı tenant-scoped ('{tenant}:post:...'); bir tenant'ın sayacı diğerine sızmaz.",
+  "Like/view spam'ine karşı idempotency_key + hız limiti; aynı aktör aynı olayı tekrar sayamaz."
+ ],
+ "perfNotes": {
+  "code": "Sharded counter: increment'te rastgele shard'a INCR (SHARD_COUNT=16), read'de 16 GET'i tek Redis pipeline ile toplar — tek satırda lock contention yok.",
+  "perf": "Klasik `UPDATE post SET likes=likes+1` tek satırda hot-row contention yaratır, throughput çöker; Redis INCR + 10sn flush yazma yükünü DB'den alır; read approximate/eventual olduğundan okuma amplifikasyonu sınırlı."
+ },
+ "testNotes": [
+  "Concurrency: N paralel increment sonrası read = N (shard SUM doğruluğu, kayıp tıklama yok).",
+  "Backend swap testi: aynı increment/read API SQL ve sharded backend'de aynı sözleşmeyle çalışır.",
+  "Idempotency: aynı kullanıcı aynı post'u iki kez beğenemez (sayaç bir artar).",
+  "Komşu-tenant sayaç anahtarı okunamaz/yazılamaz."
+ ]
+}

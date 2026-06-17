@@ -1,0 +1,50 @@
+{
+ "featureDefs": [
+  {
+   "name": "8-boyut kanıt kapısı matrisi",
+   "desc": "Güvenlik/Kullanılabilirlik/Dayanıklılık/Performans/Veri yaşamı/Erişilebilirlik/Destek/Maliyet — her boyut P0 ölçüt + imzalı kanıt + kapı sahibi.",
+   "critical": true
+  },
+  {
+   "name": "Release durdurma kuralı",
+   "desc": "Tenant izolasyonu, veri kaybı, kritik güvenlik, doğrulanmamış restore veya mevzuat engeli açıkken release YAPILAMAZ; takvim/müşteri baskısı istisna üretemez.",
+   "critical": true
+  },
+  {
+   "name": "Bağımsız review zorunluluğu",
+   "desc": "İşi üretmeyen reviewer kanıtı yeniden çalıştırır/örnekler; release kararı AI tarafından tek başına verilemez."
+  },
+  {
+   "name": "İstisna defteri",
+   "desc": "Her istisnanın sahibi, bitiş tarihi ve telafi kontrolü olur; kanıtsız kapı kalıcı atlanamaz."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "kısmi — bu bir release governance kapısıdır, çalışma zamanı modülü değil; crosscut-security/observability ve cc-privacy kanıtlarını tüketip yayın kararını tek tabloda belirler.",
+  "kernel": "Tenancy (tenant kaçağı 0 kanıtı — RLS pentest).",
+  "core": "Audit (kanıt zinciri), gözlemlenebilirlik (SLI/SLO).",
+  "modules": "Tüm stack'ler bu kapıdan geçer; her release için boyut kanıtı bağlar.",
+  "apps": "Üretim yayını yapılabilir/durdurulmuş durumunu belirler; canary sonrası rollback."
+ },
+ "moduleUsage": [
+  "crosscut-security: threat model + SAST/DAST + RLS + bağımsız pentest raporunu güvenlik kapısına bağlar",
+  "crosscut-observability: kritik query p95/write p95/hata oranı SLI'larını performans+gözlem kapısına besler",
+  "cc-privacy: PII envanteri + retention + DSAR/silme senaryolarını veri-yaşamı kapısına bağlar"
+ ],
+ "securityNotes": [
+  "P0 güvenlik: kritik/yüksek ASVS bulgusu 0, tenant kaçağı 0, secret taraması temiz — kanıtsız geçilmez.",
+  "Beş durdurma kapısı (tenant izolasyonu/veri kaybı/kritik güvenlik/doğrulanmamış restore/mevzuat) istisnaya kapalı.",
+  "Veri yaşamı: PII envanteri tam + silme/anonimleştirme işleri testli (DSAR + legal hold).",
+  "Dış review zorunlu (externalReviewRequired): kanıt bağımsızca yeniden çalıştırılır."
+ ],
+ "perfNotes": {
+  "code": "Her boyut için otomatik çıktı (k6, sorgu planı, axe) veya imzalı tatbikat raporu bağlanır; istisnalar risk defterine tarihle yazılır.",
+  "perf": "P0 hedef: kritik query p95 <300ms, write p95 <500ms, hata <%0,1, kapasite payı ≥%30; RPO ≤5dk, RTO ≤60dk."
+ },
+ "testNotes": [
+  "Dayanıklılık: aylık restore + üç aylık failover tatbikatı imzalı raporla doğrulanır.",
+  "Performans: üretime benzer veriyle k6 + sorgu planı eşik altında.",
+  "Erişilebilirlik: WCAG 2.2 AA kritik/ciddi ihlal 0 + klavye ana akışları (axe + manuel ekran okuyucu).",
+  "Release sonrası: canary SLI'ları izlenir; eşik aşılırsa otomatik rollback."
+ ]
+}

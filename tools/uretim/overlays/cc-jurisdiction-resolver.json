@@ -1,0 +1,53 @@
+{
+ "featureDefs": [
+  {
+   "name": "6-eksen saf resolver fonksiyonları",
+   "desc": "Locale/Jurisdiction/Currency/Tax/Timezone/Data-residency her biri ayrı, test edilebilir saf fonksiyon; compose ile Policy Set üretir.",
+   "critical": true
+  },
+  {
+   "name": "jurisdiction_policy (config-as-data)",
+   "desc": "Versiyonlu, effective_from/to'lu politika tablosu; kural değişimi kod deploy'u değil config update. bitemporal + audit.",
+   "critical": true
+  },
+  {
+   "name": "decision_trace audit",
+   "desc": "Her request için çözülen 6 eksen + uygulanan policy versiyonu kaydı; 'neden bu kural?' yasal sorusunun cevabı (GDPR/KVKK). audit."
+  },
+  {
+   "name": "Çatışma precedence matrisi",
+   "desc": "KVKK-sil vs VUK-sakla → anonimleştir+kaydı tut; CCPA vs GDPR → en sıkı; sanctions → reddet; deny-by-default fallback.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — crosscut middleware; her request Layer-1 öncesi bu resolver'dan geçer; UI + iş mantığı + billing + bildirim hep çözülen Policy Set'ten beslenir.",
+  "kernel": "Tenancy/RLS ve audit kernel'den; resolver, kullanıcının kernel Party'sindeki ülke/tercih alanlarını okur; data-residency çözümü kernel'in storage-region eşlemesini sürer.",
+  "core": "Core sözleşmesi resolver'a bağımlı değil — core yalnız çözülmüş Policy Set'i tüketir; kural bilgisi koddan ayrı.",
+  "modules": "Billing module currency/tax eksenini, i18n module locale'i, l1-audit decision_trace'i tüketir; k-authz jurisdiction-relation ekleyerek jurisdiction-aware yetki verir.",
+  "apps": "E-ticaret, classifieds, billing app'leri aynı resolver çıktısını paylaşır; her app kendi locale/jurisdiction varsayımını uydurmaz — tek kaynak."
+ },
+ "moduleUsage": [
+  "Billing app: resolved currency = ledger, payment currency = işlem; dual ledger + FX lock kuralını Policy Set'ten okur.",
+  "Privacy/Consent module: resolved jurisdiction → consent default (GDPR opt-in / CCPA opt-out) + retention yılı.",
+  "Authorization (k-authz): user.jurisdiction='EU' AND action='export_personal_data' → GDPR md.20 portability formatı; jurisdiction-relation OpenFGA modeli."
+ ],
+ "ecaExample": "trigger:\n  event: order.checkout_requested\ncondition:\n  all:\n    - actor.capability >= \"order.create\"\n    - not loop_detected\n    - policy_set.sanctions_match == false\naction:\n  - apply: policy_set   # locale+jurisdiction+currency+tax+tz+residency\n  - emit: decision_trace.recorded   # async batch, audit\nguards:\n  max_depth: 6\n  idempotency_key: \"{request_id}:resolve\"\n  external_effects: deny_by_default_on_resolver_failure",
+ "securityNotes": [
+  "Resolver veya config eksikse deny-by-default — en sıkı kural seti (max consent, min veri toplama); sessiz kabul YASAK = yasal ihlal.",
+  "Sanctions list match → her şeyden önce REDDET (pre-check middleware); decision_trace'a OFAC_match yazılır.",
+  "Config-write OpenFGA ile 4-göz onayına bağlı; yanlış config = milyon dolar ceza; approved_by zorunlu.",
+  "KVKK-sil vs VUK-sakla: kişisel veri anonimleştirilir (TC hash, ad maskelenir), finansal kayıt 10 yıl tutulur — soft-delete + anonymize ayrı.",
+  "Data residency: TR vatandaşı verisi (KVKK md.9) izinli storage bölgesi dışına yazılamaz."
+ ],
+ "perfNotes": {
+  "perf": "Resolver hot path: per-user policy kısa TTL (5 dk), per-jurisdiction config uzun TTL (1 saat) + event-based invalidation (config değişti → cache flush). 6 eksen toplam < 6ms, policy lookup cache'ten < 5ms; decision_trace async batch insert (request'i bloklamaz)."
+ },
+ "testNotes": [
+  "Almanya'da yaşayan Türk: locale=tr, jurisdiction=DE, currency=EUR, tax=TR, tz=Berlin, residency=EU ayrı çözülür (tek-locale yaklaşımı bu kombinasyonu kuramaz).",
+  "Resolver çöküşünde deny-by-default fallback policy uygulanır, istek sessizce kabul edilmez.",
+  "Sanctions list eşleşmesinde sipariş diğer eksenlere bakılmadan reddedilir.",
+  "KVKK sil talebinde kişisel veri anonimleşir ama fatura kaydı korunur (idempotent, çift silme yok).",
+  "4-göz onayı olmadan jurisdiction_policy yeni versiyonu effective olamaz."
+ ]
+}

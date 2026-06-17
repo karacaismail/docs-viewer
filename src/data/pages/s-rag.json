@@ -352,7 +352,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Enterprise RAG Assistant — çekirdek yetenek",
+      "term": "Doküman ingest + chunking pipeline",
       "definition": [
        {
         "type": "strong",
@@ -360,41 +360,42 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Drive + CMS kaynaklarından belge alımı; parçalama (chunk) + pgvector embedding üretimi. ArcheType'ın 'searchable/embedding' bayrağı kolon + index türetir."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Permission-aware retrieval",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Sorgu sonuçları yalnız kullanıcının okuma yetkisi olduğu belgelerden gelir; capability/RLS retrieval'a WHERE olarak enjekte edilir — yetkisiz belge yanıta sızmaz."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Cevap üretimi + kaynak atıf (provenance)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "LLM yanıtı + alıntılanan belge referansları; halüsinasyon/atfsız iddia output guardrail'e takılır."
+       }
+      ]
+     },
+     {
+      "term": "Eval + feedback döngüsü",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Kullanıcı feedback'i eval dataset'e döner; model + prompt template versiyon pinli, regression CI gating'e bağlı. Glean/Danswer muadili."
        }
       ]
      }
@@ -582,15 +583,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Permission-aware retrieval: yetkisiz belge embedding'i sorgu sonucuna ve LLM bağlamına asla girmez (deny-by-default + RLS). Tenant verisi model eğitimine gitmez; PII prompt'a girmeden maskelenir (input guardrail), çıktı guardrail (PII/halüsinasyon/format). Kaynak atıf zorunlu: atfsız/halüsinasyon iddia output guardrail'e takılır; agent eylemi audit'e (run_id, tool_name, capability_scope) yazılır. Maliyet guardrail: günlük model bütçesi + tenant kotası + token-rate circuit breaker. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -618,15 +611,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Ingest → chunk → embed → index asenkron worker; retrieval = pgvector ANN + permission filtresi, ardından LLM çağrısı (span-level tracing)."
        }
       ]
      },
@@ -644,15 +629,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Embedding araması pgvector HNSW/IVF index; retrieve p95 düşük tutulur; sonuç listesi keyset; yeniden indexleme sadece değişen belgede (incremental)."
        }
       ]
      },
@@ -948,7 +925,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Enterprise RAG Assistant",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Enterprise RAG Assistant\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: document.indexed\ncondition:\n  all:\n    - actor.capability >= \"rag.query\"\n    - requester.can_read(document)   # permission-aware\n    - not loop_detected\naction:\n  - retrieve: top_k_chunks           # RLS-filtered\n  - generate: grounded_answer        # with citations\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{query_hash}:{doc_version}\"\n  external_effects: cost_budget_check",
     "copyEnabled": true
    },
    {
@@ -1088,6 +1065,18 @@
     ]
    },
    {
+    "id": "block-s-rag-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Yetkisiz belge: kullanıcının erişimi olmayan içerik retrieval sonucunda ve yanıtta görünMEMEli (deny path). Komşu tenant belgesi sorgu sonucuna sızmamalı (izolasyon). Atıf doğruluğu: üretilen her iddia alıntılanan kaynakta bulunmalı (grounding testi). Maliyet kotası aşılınca sorgu circuit breaker ile reddedilmeli."
+     }
+    ]
+   },
+   {
     "id": "block-s-rag-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1106,7 +1095,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Layer-2 SaaS ürünü; tek başına değil, Drive + CMS + Identity üstüne oturur. Kendi Domain'i (Kaya), kaynak modüllere yalnız Contract ile bağlı."
        }
       ]
      },
@@ -1115,16 +1104,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Tenancy (RLS), capability scope, audit ve ArcheType engine kernel'den; ArcheType, agent'lara otomatik MCP tool olarak doğar — entegrasyon yazılmaz, beyandan türer."
        }
       ]
      },
@@ -1133,7 +1113,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "i18n, Notification, Settings core'dan; embedding araması ArcheType'taki tek bayrakla pgvector kolonu + index olarak üretilir."
        }
       ]
      },
@@ -1142,7 +1122,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Drive (dosya), CMS (içerik) modüllerinden belge olayını okur; yeni/değişen belge event'inde embedding projection güncellenir — yalnız Contract."
        }
       ]
      },
@@ -1151,7 +1131,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Knowledge/Search, Helpdesk ve Drive app'leri aynı belge + embedding kaydını paylaşır; tek kaynak, çift index yok."
        }
       ]
      }
@@ -1164,13 +1144,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-rag-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-rag-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Drive app: dosya yüklendiğinde/değiştiğinde ingest event'i tetikler (re-embedding)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "CMS app: yayınlanan içerik knowledge base'e girer; permission belgeyle taşınır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Helpdesk app: ticket bağlamında 'benzer çözümleri bul' araması ile RAG retrieval'ı tüketir."
+      }
+     ]
     ]
    },
    {

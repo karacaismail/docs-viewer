@@ -1,0 +1,51 @@
+{
+ "featureDefs": [
+  {
+   "name": "Party (Person | Organization) jenerik çekirdek",
+   "desc": "Tek üst tip; aynı kişi birden çok rol taşır. Generic kısım core'da; Customer/Supplier 'rol' module'de — ölü kavram core'a girmez.",
+   "critical": true
+  },
+  {
+   "name": "Contact + Address ArcheType'ları",
+   "desc": "Party'ye bağlı iletişim ve adres; primary işaretleme; tek kaynak → değişince her modülde güncel.",
+   "critical": true
+  },
+  {
+   "name": "PartyRole (module katmanı)",
+   "desc": "role_type (customer/supplier/employee/lead) + role_data JSON; rol module'de tanımlı, çekirdek değişmeden eklenir/evrilir (lead → customer)."
+  },
+  {
+   "name": "Dedup / merge",
+   "desc": "Yeni taraf gelince 'sistemde var mı' kontrolü; varsa rol eklenir, yeni kayıt açılmaz; birleştirme audit'li."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — 13 üründe gerekli ortak primitive; her module kendi kişi tablosunu tutarsa aynı kişi N kez, telefon bir yerde güncel diğerinde eski. Party tek taraf otoritesidir.",
+  "kernel": "ArcheType engine ile Party/Contact/Address şeması; tenancy (RLS) tarafı tenant'a kapatır; audit kişi/adres değişimini izler; Event Bus party olaylarını yayar.",
+  "core": "Layer 1 in-tree; jenerik çekirdek core'da. 'Customer' rolü core'a KONMAZ (sosyal/CMS/LMS'te Customer yok). Kişisel veri pii=true (+retention).",
+  "modules": "commerce 'customer', hr 'employee', crm 'lead' rolünü PartyRole olarak ekler; çekirdek Party değişmez — yalnız Contract + role katmanı.",
+  "apps": "Tüm app'ler (satış/satınalma/İK/CRM) aynı Party'yi paylaşır; aynı kişi hem müşteri hem tedarikçi tek kayıt, çift veri yok."
+ },
+ "moduleUsage": [
+  "s-crm: lead → contact → customer rol evrimi; aynı Party, yeni tablo yok.",
+  "s-sales / s-purchase: aynı Organization hem alıcı hem satıcı (distributor) — dual role.",
+  "s-payroll / s-onboarding: çalışan 'employee' rolüyle aynı Party tabanından.",
+  "s-property: aynı kişi alıcı/satıcı/danışman rolünü tek Party üstünde taşır."
+ ],
+ "ecaExample": "trigger:\n  event: party.role_assigned\n  when: \"role_type == 'customer' AND tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"party.role.write\"\n    - not loop_detected\n    - not duplicate_party(email, phone)   # dedup kapısı\naction:\n  - emit: crm.lead_converted   # outbox, idempotent\n  - notify: [\"party-surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{party}:{role_type}:assign\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "pii=true: Contact/Address kişisel veri; retention politikası + KVKK silme/erişim hakkı; RLS ile tenant'a kapalı, komşu-tenant Party sıfır döner.",
+  "Capability deny-by-default: rol atama/birleştirme ayrı yetki; PII dışa-aktarımı yetki + audit gerektirir.",
+  "Dedup/merge audit'li ve geri-izlenebilir; yanlış birleştirme tek hareketten geri alınır."
+ ],
+ "perfNotes": {
+  "code": "Generic Party + role ayrımı: çekirdek tablo dar, rol-özel alanlar role_data JSON. Rol sorguları PartyRole üstünden, çekirdek şişmez.",
+  "perf": "Party/Contact listeleri keyset (cursor) pagination; (email), (phone) dedup indeksleri; rol filtreli sorgu PartyRole indeksinden."
+ },
+ "testNotes": [
+  "Dedup: aynı e-posta/telefon ikinci kez yeni Party açmaz, rol ekler.",
+  "Rol evrimi: lead → customer dönüşümü aynı Party id'sini korur.",
+  "Komşu-tenant Party sorgusu sıfır döndürür.",
+  "PII silme: KVKK silme talebinde Contact/Address retention'a uygun silinir/anonimleşir."
+ ]
+}

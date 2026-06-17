@@ -633,7 +633,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Sharding — büyük ölçek için yatay bölme — çekirdek yetenek",
+      "term": "Tenancy model kararı (pool/bridge/silo)",
       "definition": [
        {
         "type": "strong",
@@ -641,41 +641,47 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Pool (tek shard, tenant_id kolonu, <10K tenant) → bridge (schema-per-tenant, 10K-100K) → silo (DB-per-tenant, enterprise). İzolasyon ve karmaşıklık modele göre artar."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Shard key seçimi",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
+        "text": "tenant_id (doğal ama "
        },
        {
-        "type": "code",
-        "text": "bitemporal"
+        "type": "term",
+        "text": "hot shard",
+        "termId": "term-hot-shard-k-tenancy-deep"
        },
        {
         "type": "text",
-        "text": ", her şey audit'li."
+        "text": " riski), user_id (eşit ama cross-shard), time-based (cold storage), hash(id) (eşit ama tahmin edilebilirlik kaybı). Yanlış seçim = hot shard."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Cross-shard query (scatter-gather)",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Tek shard 10ms; 10 shard'da paralel sorgu + merge ~50ms. ORDER BY + LIMIT tüm shard'lara yayılır, sonuç birleştirilir."
+       }
+      ]
+     },
+     {
+      "term": "Shard tetik eşikleri",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tek tablo 100M+ satır VE p95 >500ms VE storage >1TB VE backup >4 saat — index optimize edildikten sonra. Erken shard = teknik borç."
        }
       ]
      }
@@ -863,15 +869,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Tenant izolasyon sözleşmesi shard sınırını aşar: shard key tenant_id olsa bile cross-shard query'de WHERE tenant_id RLS ile zorlanır. Silo modeli en güçlü izolasyon (ayrı DB) — enterprise/regülasyon gereksinimi için; ama backup/secret yönetimi tenant başına çoğalır. Hash(id) shard key kullanılırsa tenant tahmin edilebilirliği düşer; enumeration saldırısına karşı ek koruma. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -899,15 +897,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Önce pool + index + cache + read replica; 100K satır/tenant aşılırsa bridge; enterprise'da silo. Shard key varsayılan tenant_id."
        }
       ]
      },
@@ -925,15 +915,16 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
+        "text": "Tek shard sorgu 10ms; 10-shard "
        },
        {
-        "type": "code",
-        "text": "async def"
+        "type": "term",
+        "text": "scatter-gather",
+        "termId": "term-scatter-gather-k-tenancy-deep"
        },
        {
         "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": " ~50ms (paralel + merge). Erken sharding tüm query'leri 10x karmaşıklaştırır — pool+cache 10K tenant'a kadar p95 hedefini tutar."
        }
       ]
      },
@@ -1229,7 +1220,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Sharding — büyük ölçek için yatay bölme",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Sharding — büyük ölçek için yatay bölme\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: tenant.growth_threshold_crossed\n  when: \"row_count > 100_000_000 AND p95_ms > 500\"\ncondition:\n  all:\n    - actor.capability >= \"infra.shard.plan\"\n    - index_optimized == true\n    - not migration_in_progress\naction:\n  - generate: shard_migration_plan   # pool -> bridge\n  - emit: shard.plan_proposed          # outbox, idempotent\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:shard-plan:{threshold_id}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1369,6 +1360,18 @@
     ]
    },
    {
+    "id": "block-k-tenancy-deep-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Hot shard tespiti: birkaç tenant tek shard'a düşerse yük dengesizliği alarmı (dağılım testi). Cross-shard ORDER BY + LIMIT sonuçları tek-shard sonucuyla bit-bit eşleşmeli (merge doğruluğu). Komşu tenant sorgusu farklı shard'da olsa bile sıfır satır döndürmeli (izolasyon). Pool→bridge migration sırasında dual-write tutarlılığı (kayıp/çift kayıt yok)."
+     }
+    ]
+   },
+   {
     "id": "block-k-tenancy-deep-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1387,7 +1390,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — ama son çare olarak; k-tenancy pool model + cache + index + read replica 10K tenant'a yeter. Fizyolojik sınıra ulaşıldığında devreye girer, erken değil."
        }
       ]
      },
@@ -1396,16 +1399,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "k-tenancy'nin (RLS, tenant_id) derinleştirmesi; çekirdek tenant izolasyon sözleşmesi shard sınırında da korunur — komşu tenant verisi sızamaz."
        }
       ]
      },
@@ -1414,7 +1408,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "App core'u shard routing'i bilmez; tenant_id → shard map'i altyapıda çözülür, core ArcheType sorguları aynı kalır."
        }
       ]
      },
@@ -1423,7 +1417,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Her Layer-2 modülü tenant-scoped yazar; sharding sonrası dual-write geçişi backend tarafında saydam yürütülür."
        }
       ]
      },
@@ -1432,7 +1426,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Çok bölgeli (multiregion) yerleşimde eski/soğuk veri ayrı shard'a iner; uygulama yüzeyi değişmez."
        }
       ]
      }
@@ -1445,13 +1439,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-k-tenancy-deep-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-k-tenancy-deep-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Yüksek hacimli stack'ler (commerce/order, audit log): tek tablo 100M satırı aşınca bridge/silo'ya taşınır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Enterprise tenant: silo (DB-per-tenant) ile tam izolasyon + ayrı backup penceresi."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Analytics/raporlama: cross-shard scatter-gather yerine time-based shard'dan cold okuma."
+      }
+     ]
     ]
    },
    {

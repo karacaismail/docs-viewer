@@ -513,7 +513,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Party / Contact — birincil yetenek",
+      "term": "Party (Person | Organization) jenerik çekirdek",
       "definition": [
        {
         "type": "strong",
@@ -521,25 +521,38 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "Tek üst tip; aynı kişi birden çok rol taşır. Generic kısım core'da; Customer/Supplier 'rol' module'de — ölü kavram core'a girmez."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Contact + Address ArcheType'ları",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Party'ye bağlı iletişim ve adres; primary işaretleme; tek kaynak → değişince her modülde güncel."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "PartyRole (module katmanı)",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "role_type (customer/supplier/employee/lead) + role_data JSON; rol module'de tanımlı, çekirdek değişmeden eklenir/evrilir (lead → customer)."
+       }
+      ]
+     },
+     {
+      "term": "Dedup / merge",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yeni taraf gelince 'sistemde var mı' kontrolü; varsa rol eklenir, yeni kayıt açılmaz; birleştirme audit'li."
        }
       ]
      }
@@ -727,15 +740,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "pii=true: Contact/Address kişisel veri; retention politikası + KVKK silme/erişim hakkı; RLS ile tenant'a kapalı, komşu-tenant Party sıfır döner. Capability deny-by-default: rol atama/birleştirme ayrı yetki; PII dışa-aktarımı yetki + audit gerektirir. Dedup/merge audit'li ve geri-izlenebilir; yanlış birleştirme tek hareketten geri alınır. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -763,15 +768,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Generic Party + role ayrımı: çekirdek tablo dar, rol-özel alanlar role_data JSON. Rol sorguları PartyRole üstünden, çekirdek şişmez."
        }
       ]
      },
@@ -789,15 +786,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Party/Contact listeleri keyset (cursor) pagination; (email), (phone) dedup indeksleri; rol filtreli sorgu PartyRole indeksinden."
        }
       ]
      },
@@ -1093,7 +1082,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Party / Contact",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Party / Contact\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: party.role_assigned\n  when: \"role_type == 'customer' AND tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"party.role.write\"\n    - not loop_detected\n    - not duplicate_party(email, phone)   # dedup kapısı\naction:\n  - emit: crm.lead_converted   # outbox, idempotent\n  - notify: [\"party-surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{party}:{role_type}:assign\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1233,6 +1222,18 @@
     ]
    },
    {
+    "id": "block-layer1-party-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Dedup: aynı e-posta/telefon ikinci kez yeni Party açmaz, rol ekler. Rol evrimi: lead → customer dönüşümü aynı Party id'sini korur. Komşu-tenant Party sorgusu sıfır döndürür. PII silme: KVKK silme talebinde Contact/Address retention'a uygun silinir/anonimleşir."
+     }
+    ]
+   },
+   {
     "id": "block-layer1-party-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1251,7 +1252,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — 13 üründe gerekli ortak primitive; her module kendi kişi tablosunu tutarsa aynı kişi N kez, telefon bir yerde güncel diğerinde eski. Party tek taraf otoritesidir."
        }
       ]
      },
@@ -1260,16 +1261,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "ArcheType engine ile Party/Contact/Address şeması; tenancy (RLS) tarafı tenant'a kapatır; audit kişi/adres değişimini izler; Event Bus party olaylarını yayar."
        }
       ]
      },
@@ -1278,7 +1270,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Layer 1 in-tree; jenerik çekirdek core'da. 'Customer' rolü core'a KONMAZ (sosyal/CMS/LMS'te Customer yok). Kişisel veri pii=true (+retention)."
        }
       ]
      },
@@ -1287,7 +1279,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "commerce 'customer', hr 'employee', crm 'lead' rolünü PartyRole olarak ekler; çekirdek Party değişmez — yalnız Contract + role katmanı."
        }
       ]
      },
@@ -1296,7 +1288,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Tüm app'ler (satış/satınalma/İK/CRM) aynı Party'yi paylaşır; aynı kişi hem müşteri hem tedarikçi tek kayıt, çift veri yok."
        }
       ]
      }
@@ -1309,13 +1301,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-layer1-party-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-layer1-party-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-crm: lead → contact → customer rol evrimi; aynı Party, yeni tablo yok."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-sales / s-purchase: aynı Organization hem alıcı hem satıcı (distributor) — dual role."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-payroll / s-onboarding: çalışan 'employee' rolüyle aynı Party tabanından."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-property: aynı kişi alıcı/satıcı/danışman rolünü tek Party üstünde taşır."
+      }
+     ]
     ]
    },
    {

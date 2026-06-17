@@ -1,0 +1,25 @@
+{
+ "integration": {
+  "shouldIntegrate": "Anti-stack sayfası reddedilen frontend tercihlerini ve çelişki çözümlerini tek doğruluk kaynağı olarak sabitler; bu kararlar CLAUDE.md ve AI ajan prompt'larına buradan türetilir, böylece üretim sözleşmesi yasaklı kütüphaneleri reddeder.",
+  "kernel": "Auth tarafında Logto (Keycloak yerine) tercih edilir; OSS audit log yetersizliği kendi audit servisi (packages/audit) ile kapatılır — çekirdek audit beyanına bağlanır.",
+  "core": "Para/iş mantığı frontend'e taşınmaz; embedded WebView OAuth YASAK (store policy + token sızıntısı riski), ASWebAuthenticationSession / Custom Tabs zorunlu.",
+  "modules": "State karar matrisi bağlayıcı: server state TanStack Query, ephemeral UI Zustand, form RHF, URL nuqs; Refine headless (data+auth+access), UI'a karışmaz; üç realtime kanal (SSE/WS/Yjs) tek abstraction'a zorlanmaz.",
+  "apps": "App build/lint Biome tek araçta; OTA için kendi minimal FastAPI server (Capgo/Supabase bağımlılığı reddedilir); TC NFC kendi modül (Sumsub/Veriff yerine)."
+ },
+ "securityNotes": [
+  "Embedded WebView OAuth YASAK — token sızıntısı ve store policy ihlali; native ASWebAuthenticationSession/Custom Tabs zorunlu.",
+  "Logto OSS audit log yetersizliği compliance riski; kendi audit servisi veya Logto Cloud Pro ile kapatılır (kararname kaydı).",
+  "jmrtd LGPL + TC NFC modülü hukuki sınırda; dynamic link garantisiyle SaaS web tarafı kapalı kaynak tuzağına düşmez.",
+  "Multi-provider AI router'a budget limiter + daily cap — beklenmedik maliyet ve kötüye kullanım kontrolü."
+ ],
+ "perfNotes": {
+  "code": "Token tek doğruluk kaynağı SCSS (renk/tema/karmaşık animasyon); Tailwind yalnız component seviyesi. Biome ESLint+Prettier yerine tek geçişte lint+format. lefthook (husky yerine) daha hızlı git hook.",
+  "perf": "react-intl native (i18next + ayrı ICU modülü yerine) bağımlılık ve bundle yükünü azaltır; openapi-fetch + el-yazımı TanStack hook (Orval codegen yerine) daha ince çıktı; PostHog ayrı sunucu + S3 offload + 90 gün retention ile kaynak tüketimi sınırlanır."
+ },
+ "testNotes": [
+  "Karar regresyon testi: yasaklı kütüphane (Next.js, Supabase, socket.io, i18next, husky) bağımlılık ağacına sızarsa CI kırmızı.",
+  "OAuth testi: embedded WebView akışının engellendiği, native session akışının zorunlu olduğu.",
+  "Capacitor 7→8 breaking değişiminde Renovate + smoke test zinciri.",
+  "ADR kapsama: her reddedilen kararın docs/adr/ altında gerekçeli kaydı bulunduğu (ADR-001..008)."
+ ]
+}

@@ -1,0 +1,58 @@
+{
+ "featureDefs": [
+  {
+   "name": "3-currency ledger satırı",
+   "desc": "Her kayıt transaction + functional + reporting para birimi ve tutarı saklar; fx_lock_at, fx_rate_to_functional, fx_rate_to_reporting kolonları. Çok para birimi sonradan eklenemez.",
+   "critical": true
+  },
+  {
+   "name": "FX lock kuralı (3 an)",
+   "desc": "Kur sipariş / fatura / tahsilat anlarından birinde kilitlenir; iş modeline göre seçilir (B2C=sipariş, B2B abonelik=fatura, konsinye=tahsilat). 3 an = 3 farklı muhasebe sonucu.",
+   "critical": true
+  },
+  {
+   "name": "Refund'da orijinal tarih oranı",
+   "desc": "İade her zaman sipariş tarihindeki KDV oranı + fx_rate ile işlenir; ara dönemde oran değişse (%18→%20) eski oran kullanılır, yoksa vergi defteri uyumsuz.",
+   "critical": true
+  },
+  {
+   "name": "Revenue recognition (ASC 606 / IFRS 15)",
+   "desc": "Gelir tahsilatta değil ifa edildiğinde tanınır; 12 aylık abonelik aylık 1/12, setup fee ayrı, 3 yıllık lisans 36 aya yayılır."
+  },
+  {
+   "name": "FX gain/loss otomasyonu",
+   "desc": "Functional para açısından iki an (sipariş↔tahsilat) farkı her gece job ile hesaplanır; credit note ile önceki döneme dokunmadan iade kaydı."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — crosscut altyapısı: tek-currency varsayımıyla başlayan sistem ikinci ülkede yıkılır; FX lock ve functional currency ledger'ın temel kararıdır, ilk yabancı para işleminden ÖNCE modellenir.",
+  "kernel": "money tipi (NUMERIC, currency taşır), bitemporal/audit (fx_lock_at zaman boyutu), tenancy (RLS) kernel'den; ledger Money invariantlarına uyar.",
+  "core": "App core ledger sözleşmesine bağlanır; cc-jurisdiction-resolver ile vergi oranı/efektif tarih çözümü ortak.",
+  "modules": "s-accounting defter kaydını, s-billing fatura anını, s-revenue-recognition periyodik tanımayı bu primitive üzerinden tüketir.",
+  "apps": "Tüm finans app'leri aynı 3-currency ledger_entry'yi paylaşır; sipariş/fatura/tahsilat/iade tek tutarlı kaynaktan FX gain/loss üretir."
+ },
+ "moduleUsage": [
+  "s-accounting: ledger_entry'yi defter kaydı olarak tüketir; functional tutarla yevmiye.",
+  "s-billing: fatura anı FX lock seçiliyse fatura kurunu sabitler.",
+  "s-revenue-recognition: ASC 606 periyodik tanıma job'ını ledger üstünde çalıştırır.",
+  "cc-jurisdiction-resolver: refund'da sipariş tarihi vergi oranını çözer."
+ ],
+ "ecaExample": "trigger:\n  event: order.refund_requested\ncondition:\n  all:\n    - original_order.exists == true\n    - actor.capability >= \"ledger.refund\"\n    - not loop_detected\naction:\n  - resolve: tax_rate = original_order.tax_rate    # sipariş tarihi oranı, cari değil\n  - resolve: fx_rate  = original_order.fx_rate\n  - post: credit_note(functional, transaction, reporting)\n  - emit: fx_gain_loss.computed\nguards:\n  max_depth: 6\n  idempotency_key: \"refund:{tenant}:{order_id}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "money invariantı: tutarlar NUMERIC(18,2), kur NUMERIC(20,8); float yasak, yuvarlama tek noktada.",
+  "Refund yeni oranla yapılırsa vergi defteri uyumsuz → denetimde sorun; eski oran zorunlu (audit edilebilir).",
+  "Ledger satırı bitemporal: fx_lock_at + audit ile 'kur ne zaman alındı' geriye dönük açıklanabilir.",
+  "Tenant-scoped (RLS); önceki muhasebe dönemine credit note ile dokunulur, satır silinmez (immutable)."
+ ],
+ "perfNotes": {
+  "code": "FX gain/loss her gece batch job; refund handler orijinal order'ın fx_rate + tax_rate'ini okur (yeni hesap yapmaz).",
+  "perf": "transaction_currency / functional_currency CHAR(3) indeksli; dönem kapanış raporları materialized view ile hızlandırılır."
+ },
+ "testNotes": [
+  "EUR sipariş (kur 34) + TL fatura: fatura 3400 TL (sipariş anı), tahsilat 3600 TL → 200 TL FX gain üç kayıtla doğrulanır.",
+  "KDV %18 sipariş, %20 ortamda refund → eski %18 oran uygulanır.",
+  "12 aylık abonelik tek seferde değil aylık 1/12 tanınır.",
+  "Aynı order için ikinci refund idempotency ile reddedilir/tek kayıt olur.",
+  "Functional currency seçimi (TL) tüm yabancı işlemleri doğru çevirir."
+ ]
+}

@@ -1,0 +1,53 @@
+{
+ "featureDefs": [
+  {
+   "name": "HMAC imza doğrulama (her zaman)",
+   "desc": "X-Stripe-Signature header'ı secret ile karşılaştırılır; imzasız webhook = saldırı yüzeyi, deny-by-default. stripe.webhooks.constructEvent.",
+   "critical": true
+  },
+  {
+   "name": "Event ID idempotency",
+   "desc": "event.id webhook_events tablosuna INSERT ON CONFLICT DO NOTHING; conflict = duplicate, yine 200 dön. Stripe at-least-once teslim eder.",
+   "critical": true
+  },
+  {
+   "name": "Replay koruması (timestamp)",
+   "desc": "5 dk'dan eski istek reddedilir; saldırgan eski webhook'u kaydedip tekrar gönderemez.",
+   "critical": true
+  },
+  {
+   "name": "Hızlı 2xx + queue devri",
+   "desc": "Handler asıl işi yapmaz; event'i queue'ya (BullMQ/DBOS) atıp <100ms'de 200 döner. 5sn aşarsa sağlayıcı retry yapar — çift iş riski idempotency ile kapanır."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — her module kendi inbound endpoint'ini güvenliksiz açarsa imza/idempotency/replay tutarsız olur; tek doğrulama hattı saldırı yüzeyini kapatır.",
+  "kernel": "Event Bus (doğrulanmış event topic'e yayılır), Audit (gelen webhook + doğrulama sonucu izi), Identity (tenant bağlamı routing).",
+  "core": "Idempotency store (webhook_events tablosu), Settings (sağlayıcı secret'ları), queue altyapısı; outbox/worker deseni ile asenkron işlenir.",
+  "modules": "s-payment-methods, s-commerce vb. dış sağlayıcı event'lerini bu primitive üzerinden tüketir; kendi HMAC kodunu yazmaz.",
+  "apps": "Ödeme/izleme app'leri Stripe/Sentry/GitHub event'lerini tek /webhooks/<provider> kapısından alır; worker asıl iş akışını yürütür."
+ },
+ "moduleUsage": [
+  "s-payment-methods: payment.succeeded webhook'u → HMAC doğrula → idempotent kayıt → sipariş 'paid' event'i queue'ya.",
+  "scale-webhook / scale-workers-deep: queue + retry + async worker fan-out'u sağlar; bu primitive 200'ü hızlı döner.",
+  "cc-security: imza/replay invariantlarını ortak güvenlik kontrol listesine bağlar."
+ ],
+ "ecaExample": "trigger:\n  event: http.webhook_received\n  source: stripe\ncondition:\n  all:\n    - hmac_valid(payload, X-Stripe-Signature, secret) == true\n    - timestamp_age < 5m                 # replay reddi\n    - not exists(webhook_events, event.id) # INSERT ON CONFLICT DO NOTHING\naction:\n  - persist: webhook_events(event.id)\n  - enqueue: process_event              # asıl iş worker'da\n  - respond: 200                        # <100ms\nguards:\n  max_depth: 6\n  idempotency_key: \"webhook:{provider}:{event.id}\"\n  external_effects: none_in_handler",
+ "securityNotes": [
+  "İmza doğrulamadan kabul = vahim: sahte payment.succeeded enjekte edilebilir; HMAC zorunlu (deny-by-default).",
+  "Replay attack: timestamp >5dk eski istek reddedilir; dashboard'tan manuel 'tekrar gönder' ise idempotency ile tek kez işlenir.",
+  "Secret tenant/sağlayıcı bazlı saklanır; log'a payload imzası veya secret yazılmaz.",
+  "Idempotency kaydı tenant-scoped; cross-tenant event sızıntısı yok."
+ ],
+ "perfNotes": {
+  "code": "Sıralı pipeline: HMAC verify (<5ms) → timestamp (<1ms) → idempotency INSERT (<10ms) → queue push (<5ms) → respond 200; worker async (saniyeler).",
+  "perf": "Toplam handler bütçesi <100ms; aşılırsa Stripe retry → gereksiz yük. Asıl iş queue'ya devredilerek p95 düşük tutulur."
+ },
+ "testNotes": [
+  "Geçersiz imzalı webhook reddedilir (deny path).",
+  "5dk'dan eski timestamp reddedilir (replay testi).",
+  "Aynı event.id ikinci kez gelince tek kayıt + tek işlem (idempotency); yine 200.",
+  "Handler 100ms içinde 200 döner; asıl iş worker'da koşar.",
+  "Komşu-tenant event'i başka tenant akışını tetiklemez."
+ ]
+}

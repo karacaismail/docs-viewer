@@ -304,7 +304,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "i18n / Localization — çekirdek yetenek",
+      "term": "Locale / Translation / TranslationKey ArcheType'ları",
       "definition": [
        {
         "type": "strong",
@@ -312,41 +312,47 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "BCP-47 locale; anahtar-bazlı çeviri kayıtları; her çeviri bitemporal + audit (kim, ne zaman, hangi sürüm)."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Para birimi + FX bağı",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Çoklu para birimi sunumu; tutarlar Money (Decimal, float yasak); FX kuru ayrı module'den okunur — i18n yalnız SUNAR, kur otoritesi değildir."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Pluralizasyon + biçimleme (tarih/sayı/ad)",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "ICU MessageFormat çoğul kuralları; locale-aware tarih/sayı/ad biçimleme; metin uzaması (UI taşması) için kapasite."
+       }
+      ]
+     },
+     {
+      "term": "Çeviri iş akışı (taslak → onay → yayın)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Eksik/onaysız çeviri yayınlanamaz; fallback zinciri (locale → ana dil → anahtar); yayın geri-alınabilir sürüm."
+       }
+      ]
+     },
+     {
+      "term": "İçe/dışa aktarım (PO/XLIFF/CSV)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Dış çeviri ekipleriyle değişim; içe-aktarımda anahtar eşleme + kirli-veri doğrulaması."
        }
       ]
      }
@@ -534,15 +540,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Tenant-scoped (RLS): tenant'a özel sözlük/çeviri başka tenant'a sızmaz; komşu-tenant anahtar sorgusu sıfır döner. Capability deny-by-default: çeviri yayını ve anahtar silme ayrı yetki; onaysız çeviri yayınlanamaz. Çeviri içe-aktarımında enjeksiyon/HTML kaçışı (UI render'da XSS riskine karşı) + toplu kirli-veri taraması; para sunumu Money, float yasak. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -570,15 +568,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Yayınlanan çeviri seti locale başına materialize/cache edilir; her render'da anahtar sorgusu cehennemi yok. Fallback zinciri deterministik."
        }
       ]
      },
@@ -596,15 +586,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Çeviri anahtarı listeleri keyset (cursor) pagination; (locale, namespace) indeksleri; eksik-anahtar raporu projection'dan."
        }
       ]
      },
@@ -900,7 +882,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — i18n / Localization",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — i18n / Localization\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: translation.completeness_changed\n  when: \"locale_coverage >= threshold AND tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"i18n.publish\"\n    - not loop_detected\n    - not missing_required_keys(locale)\naction:\n  - emit: i18n.translation_published   # outbox, idempotent\n  - notify: [\"i18n-surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{locale}:{namespace}:publish\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1040,6 +1022,18 @@
     ]
    },
    {
+    "id": "block-s-i18n-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Fallback: hedef locale'de eksik anahtar ana dile düşer, anahtar adı sızmaz. Para sunumu: tutar Decimal; yuvarlama/locale ayracı doğru, float kullanılmaz. Komşu-tenant sözlük sorgusu sıfır döndürür. Yayın idempotency: aynı locale/namespace tekrar yayında çift i18n.translation_published üretmez."
+     }
+    ]
+   },
+   {
     "id": "block-s-i18n-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1058,7 +1052,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — tüm app'ler aynı çeviri kaynağı ve locale çözümünü paylaşmalı; her app kendi sözlüğünü tutarsa terim tutarsızlığı ve eksik dil kaçınılmaz. i18n çeviri otoritesidir, FX otoritesi değil."
        }
       ]
      },
@@ -1067,16 +1061,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "ArcheType engine ile çeviri şeması; tenancy (RLS) tenant'a özel sözlüğü kapatır; audit çeviri değişimini izler; Event Bus translation.published yayar."
        }
       ]
      },
@@ -1085,7 +1070,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "App core'una bağlı bir Domain (Büyük Taş); core sözleşmeleri değişmez. Para sunumu Money (Decimal); pii yok."
        }
       ]
      },
@@ -1094,7 +1079,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "FX & Ledger module kur sağlar (i18n tüketir); Search module çok-dilli indeks; her stack çeviri anahtarını Contract üzerinden çözer."
        }
       ]
      },
@@ -1103,7 +1088,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Storefront, admin, PIM, CMS aynı çeviri kaynağı + locale çözümünü tüketir; her uygulama kendi mini-sözlüğünü tutmaz."
        }
       ]
      }
@@ -1116,13 +1101,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-i18n-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-i18n-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-pim: ürün öznitelik değerlerinin çok-dilli çevirisini i18n anahtarlarıyla çözer."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "stack-cms: içerik sayfalarının locale varyantını i18n fallback zinciriyle render eder."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "cc-fx-ledger: para birimi kuru i18n'in sunum katmanına okunur (kur otoritesi FX'tedir)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "fe-core-ui: arayüz metinleri i18n anahtarlarından locale-aware render edilir."
+      }
+     ]
     ]
    },
    {

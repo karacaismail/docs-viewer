@@ -630,7 +630,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Veri İçe Aktarma — CSV upload + validate + dry-run — çekirdek yetenek",
+      "term": "5-adımlı import workflow",
       "definition": [
        {
         "type": "strong",
@@ -638,41 +638,51 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Upload (S3 presigned) → Parse (csv-parse/sheetjs) → Validate (Zod, satır satır) → Dry-run preview → Commit (transaction bulk insert)."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Dry-run önizleme (zorunlu)",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Commit öncesi UI'da {valid:N, invalid:M, suspect:Z}; yanlış kolon eşlemesi 10K satırı geri-alınamaz hale getirmeden yakalanır."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Column mapping",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Müşteri CSV'sindeki 'eposta' → sistem 'email'; eşleme olmadan import başlamaz."
+       }
+      ]
+     },
+     {
+      "term": "Partial commit stratejileri",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "All-or-nothing (1 hata → iptal), Best-effort (geçeni al + hata raporu), Threshold (>%5 hata → otomatik iptal)."
+       }
+      ]
+     },
+     {
+      "term": "Ölçekli parse",
+      "definition": [
+       {
+        "type": "text",
+        "text": "<1K sync; 1K-100K async worker + batch insert (her 1000'de); 1M+ chunk + paralel worker (DBOS durable)."
        }
       ]
      }
@@ -860,15 +870,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Upload doğrulaması: dosya tipi/boyut limiti, presigned URL kısa TTL; zip-bomb/oversize reddi. Toplu PII sızıntısı riski: import edilen Contact/müşteri verisi pii=true + retention; RLS ile tenant'a kapalı. Formula/CSV injection: hücre başındaki =,+,-,@ kaçırılır; değer Zod ile sınırlandırılır, DB constraint'i aşamadan reddedilir. Best-effort modda hata raporu satır+kolon+sebep verir; başka tenant verisine yazılamaz (deny-by-default). Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -896,15 +898,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Parse → validate → dry-run → (onay) → bulk insert sıralı pipeline; büyük dosya streaming + batch."
        }
       ]
      },
@@ -922,15 +916,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "10K satır in-memory parse + bulk insert saniyeler; 100K streaming batch (1000'lik); 1M chunk paralel worker — tek tek INSERT yerine bulk (10K commit yerine 1)."
        }
       ]
      },
@@ -1226,7 +1212,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Veri İçe Aktarma — CSV upload + validate + dry-run",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Veri İçe Aktarma — CSV upload + validate + dry-run\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: import.committed\n  when: \"mode == 'best_effort'\"\ncondition:\n  all:\n    - actor.capability >= \"import.write\"\n    - dry_run.approved == true\n    - error_ratio <= 0.05\naction:\n  - insert_bulk: rows.valid       # tek transaction, idempotent\n  - emit: import.report_ready      # hatalı satır CSV: row,column,error\nguards:\n  max_depth: 6\n  idempotency_key: \"import:{tenant}:{file_hash}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -1366,6 +1352,18 @@
     ]
    },
    {
+    "id": "block-l1-import-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Dry-run onaysız commit yapılamaz (zorunlu kapı). Best-effort: hatalı satırlar reddedilir, geçenler yazılır, rapor row/column/error içerir. Threshold: >%5 hata import'u otomatik iptal eder. Aynı dosya (file_hash) ikinci kez commit edilince idempotency ile çift kayıt oluşmaz. Tenant izolasyonu: A tenant import'u B tenant tablosuna yazamaz."
+     }
+    ]
+   },
+   {
     "id": "block-l1-import-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1384,7 +1382,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — import onboarding'in en kritik adımı (legacy geçişin %80'i veri taşıma); ortak primitive olarak tek pipeline dry-run + hata raporu tutarlılığını sağlar, her module kendi parser'ını yazmaz."
        }
       ]
      },
@@ -1393,16 +1391,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Identity (yükleyen kullanıcı + tenant context), Event Bus (import.completed event'i), audit (kim ne zaman ne yükledi)."
        }
       ]
      },
@@ -1411,7 +1400,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "File/storage (S3 presigned), i18n (hata mesajı locale), Settings; bulk insert tenant-scoped transaction içinde."
        }
       ]
      },
@@ -1420,7 +1409,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Hedef module kendi Zod şemasını sağlar (ör. Contact, müşteri kartı); import sonucu ilgili ArcheType'a yazılır — Contract üzerinden."
        }
       ]
      },
@@ -1429,7 +1418,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Tüm app'ler ortak mapping UI + dry-run panelini kullanır; scale-workers-deep ile arka plan işlenir."
        }
       ]
      }
@@ -1442,13 +1431,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-l1-import-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-l1-import-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-crm: legacy müşteri/lead listesi → dry-run → Contact ArcheType bulk insert (dedup + consent kontrolü)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-inventory / s-wms: ürün/stok CSV'si → validate → kalem kayıtları."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "scale-workers-deep: 100K+ satır chunk + paralel worker ile durable işlenir, progress bar."
+      }
+     ]
     ]
    },
    {

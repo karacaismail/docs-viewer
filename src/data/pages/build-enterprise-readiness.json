@@ -390,7 +390,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Enterprise Readiness Matrisi — Release Kanıt Kapıları — birincil yetenek",
+      "term": "8-boyut kanıt kapısı matrisi",
       "definition": [
        {
         "type": "strong",
@@ -398,25 +398,38 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "Güvenlik/Kullanılabilirlik/Dayanıklılık/Performans/Veri yaşamı/Erişilebilirlik/Destek/Maliyet — her boyut P0 ölçüt + imzalı kanıt + kapı sahibi."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Release durdurma kuralı",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Tenant izolasyonu, veri kaybı, kritik güvenlik, doğrulanmamış restore veya mevzuat engeli açıkken release YAPILAMAZ; takvim/müşteri baskısı istisna üretemez."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "Bağımsız review zorunluluğu",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "İşi üretmeyen reviewer kanıtı yeniden çalıştırır/örnekler; release kararı AI tarafından tek başına verilemez."
+       }
+      ]
+     },
+     {
+      "term": "İstisna defteri",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her istisnanın sahibi, bitiş tarihi ve telafi kontrolü olur; kanıtsız kapı kalıcı atlanamaz."
        }
       ]
      }
@@ -604,15 +617,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "P0 güvenlik: kritik/yüksek ASVS bulgusu 0, tenant kaçağı 0, secret taraması temiz — kanıtsız geçilmez. Beş durdurma kapısı (tenant izolasyonu/veri kaybı/kritik güvenlik/doğrulanmamış restore/mevzuat) istisnaya kapalı. Veri yaşamı: PII envanteri tam + silme/anonimleştirme işleri testli (DSAR + legal hold). Dış review zorunlu (externalReviewRequired): kanıt bağımsızca yeniden çalıştırılır. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -640,15 +645,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Her boyut için otomatik çıktı (k6, sorgu planı, axe) veya imzalı tatbikat raporu bağlanır; istisnalar risk defterine tarihle yazılır."
        }
       ]
      },
@@ -666,15 +663,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "P0 hedef: kritik query p95 <300ms, write p95 <500ms, hata <%0,1, kapasite payı ≥%30; RPO ≤5dk, RTO ≤60dk."
        }
       ]
      },
@@ -1110,6 +1099,18 @@
     ]
    },
    {
+    "id": "block-build-enterprise-readiness-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Dayanıklılık: aylık restore + üç aylık failover tatbikatı imzalı raporla doğrulanır. Performans: üretime benzer veriyle k6 + sorgu planı eşik altında. Erişilebilirlik: WCAG 2.2 AA kritik/ciddi ihlal 0 + klavye ana akışları (axe + manuel ekran okuyucu). Release sonrası: canary SLI'ları izlenir; eşik aşılırsa otomatik rollback."
+     }
+    ]
+   },
+   {
     "id": "block-build-enterprise-readiness-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1128,7 +1129,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "kısmi — bu bir release governance kapısıdır, çalışma zamanı modülü değil; crosscut-security/observability ve cc-privacy kanıtlarını tüketip yayın kararını tek tabloda belirler."
        }
       ]
      },
@@ -1137,16 +1138,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Tenancy (tenant kaçağı 0 kanıtı — RLS pentest)."
        }
       ]
      },
@@ -1155,7 +1147,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Audit (kanıt zinciri), gözlemlenebilirlik (SLI/SLO)."
        }
       ]
      },
@@ -1164,7 +1156,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Tüm stack'ler bu kapıdan geçer; her release için boyut kanıtı bağlar."
        }
       ]
      },
@@ -1173,7 +1165,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Üretim yayını yapılabilir/durdurulmuş durumunu belirler; canary sonrası rollback."
        }
       ]
      }
@@ -1186,13 +1178,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-build-enterprise-readiness-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-build-enterprise-readiness-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "crosscut-security: threat model + SAST/DAST + RLS + bağımsız pentest raporunu güvenlik kapısına bağlar"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "crosscut-observability: kritik query p95/write p95/hata oranı SLI'larını performans+gözlem kapısına besler"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "cc-privacy: PII envanteri + retention + DSAR/silme senaryolarını veri-yaşamı kapısına bağlar"
+      }
+     ]
     ]
    },
    {

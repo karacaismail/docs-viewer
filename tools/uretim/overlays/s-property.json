@@ -1,0 +1,52 @@
+{
+ "featureDefs": [
+  {
+   "name": "Listing ArcheType (parsel/ilan)",
+   "desc": "arsam.net çekirdeği: parsel ilanı; tapu/parsel bilgisi, EİDS entegrasyonu, fiyat/konum. classifieds + property hibrit, saf e-ticaret değil.",
+   "critical": true
+  },
+  {
+   "name": "Lead ArcheType",
+   "desc": "İlanla ilgilenen taraf; emlakçıya yönlendirme (lead-gen marketplace); iletişim consent + pii."
+  },
+  {
+   "name": "Membership + Promotion",
+   "desc": "Emlakçı üyelik paketi + ilan doping; gelir komisyondan değil ilan ücreti + doping + üyelik + EİDS data servisinden.",
+   "critical": true
+  },
+  {
+   "name": "TR mevzuat entegrasyonu",
+   "desc": "GİB e-Fatura, SGK, EİDS, KVKK baştan içeride; yurt dışı muadil (AppFolio) boşluğu — 1. sınıf yerelleştirme.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-2 vertical SaaS; kendi Listing/Lead ArcheType'larını tanımlar ama yetki/audit/event-bus/tenancy framework'ten alır; classifieds çekirdeğiyle (s-classifieds) ve TR uyum (cc-tr) ile zorunlu.",
+  "kernel": "Party (emlakçı/sakin), tenancy (RLS), audit ve ArcheType engine kernel'den; Property kendi şemasını engine ile tanımlar, otomatik REST/GraphQL alır.",
+  "core": "App core sözleşmelerine uyar; core module değişmez, Property bir vertical Domain olarak oturur.",
+  "modules": "Billing module ilan ücreti/üyelik faturasını üretir; classifieds (s-classifieds) Listing/Promotion/Lead deseni; EİDS data servisi dış sağlayıcı (services); yalnız Contract.",
+  "apps": "Classifieds, billing, audit app'leri aynı Party + Listing'i paylaşır; emlakçı tek Party — çift kayıt yok."
+ },
+ "moduleUsage": [
+  "Billing app: ilan ücreti + doping + üyelik için GİB e-Fatura kesimi (cc-tr); abonelik yenileme.",
+  "Audit app (s-audit): yönetici/işlem kayıtları delil; KVKK veri export endpoint.",
+  "Classifieds (s-classifieds): Listing yayın/yenileme + Lead yönlendirme + doping sıralaması bu vertical'a hizmet eder."
+ ],
+ "ecaExample": "trigger:\n  event: listing.published\n  when: \"membership.active AND tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"listing.publish\"\n    - not loop_detected\naction:\n  - emit: billing.charge_listing_fee   # outbox, idempotent\n  - emit: search.index_listing\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{listing}:publish\"\n  external_effects: payment_required",
+ "securityNotes": [
+  "Lead iletişim verisi (telefon/e-posta) pii + retention; KVKK consent kapısı pazarlama/yönlendirme kullanımına; RLS tenant-scoped.",
+  "İlan ücreti/üyelik money; ödeme/iade idempotent; çift tahsilat engellenir.",
+  "EİDS/tapu verisi hassas; erişim capability deny-by-default + audit.",
+  "İlan yayın yetkisi aktif üyelik + capability'ye bağlı; süresi dolmuş paketle yayın engellenir."
+ ],
+ "perfNotes": {
+  "perf": "İlan liste/arama uçları keyset (cursor) pagination; konum+kategori+fiyat indeksleri; doping sıralaması ve EİDS senkron asenkron worker; harita/konum sorgusu coğrafi indeks."
+ },
+ "testNotes": [
+  "Komşu-tenant Listing/Lead sorgusu sıfır döndürür.",
+  "Süresi dolmuş üyelikle ilan yayınlanamaz.",
+  "Aynı ilan yayını ikinci kez ücret tahakkuk ettiremez (idempotency).",
+  "Consent kapalı Lead emlakçıya pazarlama amaçlı yönlendirilmez.",
+  "GİB e-Fatura kesimi başarısızsa ödeme tamamlanmış sayılmaz (mutabakat)."
+ ]
+}

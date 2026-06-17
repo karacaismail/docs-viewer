@@ -698,7 +698,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Real-time Backend — WebSocket + SSE — çekirdek yetenek",
+      "term": "Doğru transport seçimi",
       "definition": [
        {
         "type": "strong",
@@ -706,41 +706,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Sunucu→istemci push için SSE (bildirim, feed — düşük kaynak, HTTP/2), iki yönlü için WebSocket (chat, oyun). Long polling yalnız eski uyumluluk fallback'i."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Yatay ölçek + state paylaşımı",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "1 Node.js pod max ~50K WebSocket; 1M concurrent = ~20 pod. Sticky session veya Redis pub/sub ile state paylaşımı kurulmadan ölçeklenmez."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Redis pub/sub fan-out",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Kanal user:${userId}:notifications; bir pod'a gelen olay tüm pod'lardaki ilgili bağlantılara dağıtılır."
+       }
+      ]
+     },
+     {
+      "term": "Reconnect + heartbeat",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Frontend reconnect logic, 30sn heartbeat; kopan bağlantı otomatik toparlanır, ölü bağlantı temizlenir."
        }
       ]
      }
@@ -928,15 +925,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "SSE/WS bağlantısı JWT auth zorunlu; kimliksiz kanal açılamaz (deny-by-default). Kanal isimlendirmesi tenant + user scope'lu; bir kullanıcı başkasının kanalına subscribe edemez (RLS eşdeğeri). WebSocket proxy/firewall'da bazen bloklanır; SSE/HTTP fallback ile erişim güvence altına alınır. Push edilen payload minimize edilir; PII yerine referans/id taşınır, hassas içerik ayrı yetkiyle çekilir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -964,15 +953,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Bağlantı yönetimi Redis pub/sub ile pod'lar arası paylaşılır; module kodu push transport'unu bilmez."
        }
       ]
      },
@@ -990,15 +971,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "SSE bildirim/feed'de WS'ten düşük kaynak; sticky session veya Redis state olmadan yatay ölçek mümkün değil. Heartbeat ölü bağlantıyı temizler."
        }
       ]
      },
@@ -1294,7 +1267,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Real-time Backend — WebSocket + SSE",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Real-time Backend — WebSocket + SSE\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: notification.created\ncondition:\n  all:\n    - subscriber.authenticated == true   # JWT\n    - channel == \"user:{userId}:notifications\"\n    - tenant_scoped\naction:\n  - push: { transport: sse }            # WS for chat\n  - fanout: redis_pubsub\nguards:\n  heartbeat: 30s\n  max_conn_per_pod: 50000\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -1434,6 +1407,18 @@
     ]
    },
    {
+    "id": "block-scale-realtime-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bildirim için SSE, chat için WS seçilir; long polling yalnız fallback'te devreye girer. İki pod'a dağılmış kullanıcılar Redis pub/sub ile aynı olayı alır. Komşu-tenant/başka kullanıcı kanalına subscribe sıfır mesaj döner. Bağlantı koparsa reconnect + heartbeat ile otomatik toparlanır. 50K bağlantı üstünde ikinci pod devreye girer, mesaj kaybı olmaz."
+     }
+    ]
+   },
+   {
     "id": "block-scale-realtime-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1452,7 +1437,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — scale katmanı olarak; gerçek-zamanlı taşıma kernel event bus ile entegre, ama bağlantı yönetimi ayrı bounded-context."
        }
       ]
      },
@@ -1461,16 +1446,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Event bus'tan (08-kernel-bus) gelen olayı dinler; Authz (JWT auth /events/sse) ve tenancy bağlantı bazında uygulanır."
        }
       ]
      },
@@ -1479,7 +1455,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Bağlantı kimliği + audit core kontratı; push edilen olay outbox/bus güvencesinden gelir, kaybolmaz."
        }
       ]
      },
@@ -1488,7 +1464,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Notification/chat module'leri olay yayar; realtime katmanı bunu SSE/WS üzerinden ilgili kullanıcıya iletir — module transport bilmez."
        }
       ]
      },
@@ -1497,7 +1473,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Public/authed app'ler aynı SSE/WS altyapısını paylaşır; kanal isimlendirmesi tenant + user scope'lu."
        }
       ]
      }
@@ -1510,13 +1486,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-scale-realtime-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-scale-realtime-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Notification module: SSE /events/sse üzerinden kullanıcıya bildirim push eder."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Chat/messaging module: çift yönlü WebSocket ile mesaj akışı kurar."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Live feed/dashboard: SSE ile canlı veri güncellemesi alır, yenilemeye gerek kalmaz."
+      }
+     ]
     ]
    },
    {

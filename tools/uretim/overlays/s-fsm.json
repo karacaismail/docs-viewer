@@ -1,0 +1,57 @@
+{
+ "featureDefs": [
+  {
+   "name": "İş Emri (Job) ArcheType'ı",
+   "desc": "Müşteri + adres + hizmet + atanan teknisyen + durum; FSM çekirdeği — ServiceTitan/Jobber muadili planlama varlığı.",
+   "critical": true
+  },
+  {
+   "name": "Planlama + Rota optimizasyonu",
+   "desc": "Teknisyen müsaitliği + coğrafi yakınlık → gün içi rota; randevu penceresi çakışması engellenir.",
+   "critical": true
+  },
+  {
+   "name": "Mobil teknisyen uygulaması",
+   "desc": "Saha cihazında iş emri, check-in/check-out, fotoğraf, müşteri imzası; offline-first senkron.",
+   "critical": true
+  },
+  {
+   "name": "İş emri durum makinesi",
+   "desc": "draft → scheduled → dispatched → in_progress → completed → invoiced; tenant'a pinli, ArcheType'tan bağımsız versiyonlanır.",
+   "critical": false
+  },
+  {
+   "name": "TR muhasebe entegrasyonu",
+   "desc": "Tamamlanan iş → fatura; Türk muhasebe ürünleriyle aynı platformda — ServiceTitan'ın TR boşluğu.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-2 SaaS ürünü; kendi ArcheType'larını ve UI'sını tanımlar ama yetki/audit/event-bus/tenancy framework'ten gelir, yeniden icat etmez.",
+  "kernel": "Tenancy (her iş emri tenant_id ile izole, RLS), Identity (teknisyen + müşteri kimliği), Audit (saha aksiyonu izi) kernel'den miras.",
+  "core": "App core'una bağlı; FSM bir Domain (Kaya) olarak core sözleşmelerine uyar, core module değişmez.",
+  "modules": "Scheduling/route module'lerini tüketir; tamamlanan iş olayını muhasebe (faturalama) ve CRM (müşteri geçmişi) modüllerine yalnız Contract ile yayar.",
+  "apps": "Helpdesk app'i saha hizmeti gerektiren ticket'ı FSM iş emrine dönüştürür; aynı müşteri kaydını paylaşır, çift kayıt yok."
+ },
+ "moduleUsage": [
+  "Helpdesk app: 'yerinde servis' gereken ticket → FSM job; SLA timer iş emri tamamlanınca durur.",
+  "Muhasebe app: completed job → fatura + tahsilat; döviz değil TL fiyatlandırma.",
+  "Notification: dispatched event → teknisyene push, müşteriye 'teknisyen yolda' SMS (İYS opt-in)."
+ ],
+ "ecaExample": "trigger:\n  event: job.status_changed\n  when: \"to == 'completed' AND tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"fsm.job.complete\"\n    - not loop_detected\naction:\n  - emit: accounting.invoice_requested   # outbox, idempotent\n  - notify: [\"customer\"]                  # ETK/İYS kapısı\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{job_id}:completed\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Müşteri adresi + telefon pii=true (+retention); RLS tenant-scoped — başka tenant'ın iş emri/müşterisi görülmez.",
+  "Mobil teknisyen yetkisi capability deny-by-default: teknisyen yalnız atandığı iş emrini görür/günceller, tüm tenant verisini değil.",
+  "Saha fotoğrafı/imza audit'lenir; offline senkronda idempotency key ile çift kayıt engellenir."
+ ],
+ "perfNotes": {
+  "code": "İş emri listesi keyset (cursor) pagination; (tenant_id, teknisyen, tarih) indeksi; rota optimizasyonu asenkron worker.",
+  "perf": "Mobil offline-first: yerel kuyruk + senkron; rota hesabı arka planda, UI bloklamaz."
+ },
+ "testNotes": [
+  "Komşu-tenant iş emri/müşteri sorgusu sıfır döndürür.",
+  "Teknisyen yalnız kendi atanmış iş emrini görebilir (capability testi).",
+  "Aynı job 'completed' ikinci kez tetiklenince tek fatura üretir (idempotency).",
+  "Offline check-in iki kez senkron olsa tek kayıt oluşur."
+ ]
+}

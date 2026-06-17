@@ -1,0 +1,52 @@
+{
+ "featureDefs": [
+  {
+   "name": "SGK Teşvik hesaplama motoru",
+   "desc": "Çalışan + sigorta kolu + teşvik kanunu → uygunluk + indirim tutarı; Segika muadili TR yerelleştirme çekirdeği.",
+   "critical": true
+  },
+  {
+   "name": "Teşvik kanun kataloğu",
+   "desc": "Yürürlükteki teşvik kodları (5510, 7103, 6111 vb.) + koşulları; mevzuat değişimi versiyonlanır.",
+   "critical": true
+  },
+  {
+   "name": "SGK e-bildirge entegrasyonu",
+   "desc": "Aylık prim ve hizmet belgesi ile teşvik beyanı; SGK kurumsal arayüzüyle senkron.",
+   "critical": true
+  },
+  {
+   "name": "Uygunluk denetim raporu",
+   "desc": "Hangi çalışan hangi teşvike uygun, kaçırılan teşvik tutarı; mali müşavir için icmal.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-2 SaaS ürünü; GİB/SGK/EİDS/KVKK mevzuatına baştan uyumlu, yetki/audit/event-bus framework'ten gelir.",
+  "kernel": "Tenancy iki seviyeli olabilir (mali müşavir bürosu + mükellef şirket); Identity, Audit (teşvik beyanı izi) kernel'den; bordro verisi Money + bitemporal.",
+  "core": "App core'una bağlı; SGK Teşvik bir Domain (Kaya) olarak core sözleşmelerine uyar, core module değişmez.",
+  "modules": "Bordro/HRMS module'ünden çalışan + prim verisini tüketir; teşvik sonucu muhasebe (gider/indirim) modülüne yalnız Contract ile yayar.",
+  "apps": "HRMS + Muhasebe app'leri aynı çalışan + bordro kaydını paylaşır; teşvik tek kaynaktan hesaplanır, çift kayıt yok."
+ },
+ "moduleUsage": [
+  "HRMS/Bordro app: çalışan SGK günü + prim → teşvik motoruna girdi; işe alım teşvik uygunluğunu tetikler.",
+  "Muhasebe app: hesaplanan teşvik indirimi → gider/mahsup kaydı.",
+  "Mali müşavir senaryosu: tek panelden 12 mükellefin teşvik icmali (iki seviyeli tenancy)."
+ ],
+ "ecaExample": "trigger:\n  event: payroll.period_closed\ncondition:\n  all:\n    - actor.capability >= \"incentive.calculate\"\n    - tenant_scoped AND company_scoped\n    - not loop_detected\naction:\n  - calculate: sgk_incentive   # kanun kataloğu\n  - emit: accounting.incentive_posted   # outbox, idempotent\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{company}:{period}:incentive\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Çalışan TC/SGK no/maaş pii=true + Money (+retention, KVKK); RLS tenant-scoped (gerekirse company_id ikinci eksen) — büro mükellefleri karıştıramaz.",
+  "Teşvik beyanı SGK'ya gönderim capability deny-by-default + audit; yetkisiz beyan engellenir.",
+  "Bordro tutarları bitemporal: geçmişe dönük mevzuat/düzeltme kayıt zamanı + geçerlilik zamanıyla izlenir, üzerine yazılmaz."
+ ],
+ "perfNotes": {
+  "code": "Teşvik hesabı çalışan başına deterministik kanun lookup; (tenant_id, company_id, period) indeksi; dönem kapanışı asenkron batch.",
+  "perf": "Aylık dönem kapanışında toplu hesap worker'da; mali müşavir icmali keyset pagination."
+ },
+ "testNotes": [
+  "Komşu-tenant/komşu-mükellef bordro+teşvik sorgusu sıfır döndürür.",
+  "Aynı dönem ikinci kez kapanınca teşvik tek kez hesaplanır (idempotency).",
+  "Mevzuat versiyonu: geçmiş dönem eski kanun katsayısıyla, yeni dönem yeni katsayıyla hesaplanmalı (bitemporal).",
+  "Yetkisiz kullanıcı SGK beyanı gönderemez (capability deny testi)."
+ ]
+}

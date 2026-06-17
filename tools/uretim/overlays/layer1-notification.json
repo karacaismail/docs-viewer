@@ -1,0 +1,51 @@
+{
+ "featureDefs": [
+  {
+   "name": "Kanal-bağımsız notify() yüzeyi",
+   "desc": "Modül yalnız notify(user, template, data) çağırır; email/SMS/push/in-app/webhook routing kullanıcı tercihine göre framework'te çözülür.",
+   "critical": true
+  },
+  {
+   "name": "İYS/ETK izin kapısı",
+   "desc": "Ticari SMS/Email gönderiminden önce İleti Yönetim Sistemi opt-in kaydı kontrol edilir; izinsiz gönderim engellenir.",
+   "critical": true
+  },
+  {
+   "name": "Throttle + batch pipeline",
+   "desc": "Aynı bildirimin saatte tekrarı engellenir; 12 kişi beğendi → tek digest bildirim."
+  },
+  {
+   "name": "Sürücü soyutlaması",
+   "desc": "Email (SES/SendGrid/Postmark), SMS (NetGSM/Turkcell/Twilio), push (APNs/FCM/VAPID) sürücü olarak takılır; yeni kanal kod değişikliği gerektirmez."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "evet — her modül kendi SMTP'sini kurarsa config dağınık, throttle/retry/unsubscribe tutarsız olur; tek pipeline compliance'ı kolaylaştırır.",
+  "kernel": "Identity (alıcı kimliği), Event Bus (topic_pattern abone deseni ile workflow event'lere bağlanır).",
+  "core": "i18n (Jinja template locale-aware render), Audit (gönderim/teslim izi), Settings (kanal tercihleri).",
+  "modules": "Tüm Layer-2 stack'leri tüketici: sipariş/ödeme/izin event'i → notify().",
+  "apps": "Public Surface + admin: in-app çan ikonu read/unread state; agent ping kanalı (agent'lar arası mesaj)."
+ },
+ "moduleUsage": [
+  "s-commerce: sipariş durumu değişimi → kullanıcının tercih ettiği kanaldan bildirim, ETK onayı varsa SMS",
+  "s-hrms: izin onayı/bordro event → in-app + email digest",
+  "k-agent-runtime: agent ping kanalı ile workflow event'lerini başka agent'a iletir"
+ ],
+ "ecaExample": "trigger:\n  event: order.status_changed\ncondition:\n  all:\n    - recipient.consent.commercial == true  # İYS opt-in\n    - not duplicate_within(\"1h\")\naction:\n  - notify:\n      template: order_shipped\n      channel: auto  # tercih: push>email\nguards:\n  throttle: \"1/hour/same_template\"\n  idempotency_key: \"notif:{order_id}:{template}:{recipient_id}\"\n  external_effects: iys_check_required",
+ "securityNotes": [
+  "İYS/ETK: ticari iletişimde opt-in kaydı gönderim öncesi zorunlu; izinsiz gönderim deny-by-default.",
+  "Tenant-scoped: bildirim ArcheType'ları ve teslim kayıtları RLS ile tenant'a kapalı; başka tenant'a sızıntı yok.",
+  "Template injection: data alanları Jinja render'da escape; kullanıcı girdisi template gövdesine geçmez.",
+  "Unsubscribe link her ticari gönderimde tutarlı; tek pipeline garanti eder."
+ ],
+ "perfNotes": {
+  "code": "Gönderim queue + retry üzerinden asenkron; render → preference → throttle → batch → route → queue sıralı pipeline.",
+  "perf": "LandX hedefi: email delivery rate >%98, in-app render p95 <500ms. Batch ile fan-out azaltılır."
+ },
+ "testNotes": [
+  "İYS opt-in yoksa ticari SMS/Email üretilMEMEli (deny path testi).",
+  "Aynı template + alıcı 1 saat içinde tekrar tetiklenince throttle ile tek gönderim.",
+  "Kanal fallback: push token yoksa email'e düşer.",
+  "Tenant izolasyonu: A tenant bildirimi B tenant kullanıcısına teslim edilmez."
+ ]
+}

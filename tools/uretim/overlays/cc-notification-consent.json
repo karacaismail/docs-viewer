@@ -1,0 +1,33 @@
+{
+ "integration": {
+  "shouldIntegrate": "Evet — bildirim tipi sınıflandırması + consent kuralı bağımsız bir özellik değil, her bildirim gönderen module'ün geçmek zorunda olduğu bir crosscut kapısıdır; yanlış sınıflandırma (marketing'i transactional gibi göstermek) doğrudan yasal ihlaldir.",
+  "kernel": "Bildirim dispatcher kernel olay akışının çıkış kenarındadır; her olay bir tip enum'u (transactional/system/marketing/behavioral) taşır, marketing/behavioral için user_consent kontrolü zorunlu — yoksa skip + audit log.",
+  "core": "consent core şemasında tutulur: user_consent (type başına granted + source + ToS version) ve tos_acceptance (version + ip + user_agent, GDPR/KVKK delili); jurisdiction resolver locale'e göre kural seçer.",
+  "modules": "l1-notification gönderimi, s-marketing kampanyası ve l1-quiet-hours bu kapıyı paylaşır; module bildirim tipini beyan eder, ülke/consent/quiet-hours mantığını tekrar yazmaz (Contract sınırı).",
+  "apps": "Her app transactional bildirimi (sipariş onayı, OTP) serbest gönderir; marketing/behavioral bildirimi consent + quiet-hours + ülke sender-ID kaydından (İYS/DLT/10DLC) geçirir."
+ },
+ "moduleUsage": [
+  "l1-notification: tip enum'a göre dispatch; marketing'de user_consent yoksa skip + audit.",
+  "s-marketing: kampanya gönderiminde opt-in consent + ToS version kontrolü + İYS kaydı.",
+  "cc-jurisdiction-resolver: kullanıcı locale/jurisdiction'ına göre SMS sender-ID kuralı (TR İYS, AB sender-ID, ABD 10DLC, Hindistan DLT, Brezilya Anatel) seçer.",
+  "l1-quiet-hours: marketing/behavioral'ı kullanıcının timezone'unda 22:00-08:00 arası bekletir, transactional/system bypass eder."
+ ],
+ "ecaExample": "trigger:\n  event: notification.dispatch\ncondition:\n  all:\n    - if type in [marketing, behavioral]: user_consent.granted == true\n    - if type in [marketing, behavioral]: not quiet_hours(user.timezone)\n    - sms_sender_id.registered_for(user.country)\n    - not loop_detected\naction:\n  - send: channel(email|sms|push)\n  - else: skip + audit.log(\"consent/quiet-hours blocked\")\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:notif:{event_id}:{user}\"\n  external_effects: provider_send_required",
+ "securityNotes": [
+  "Marketing'i transactional içine gömmek (sipariş onayında 'şuna da bak' linki) AB'de yasal ihlal; ayrı email + ayrı consent zorunlu.",
+  "consent + ToS versiyonlama delil zinciridir: tos_acceptance ip_address + user_agent + version saklar (GDPR/KVKK kanıtı); v4'e geçişte yeni-ToS modal + kayıt.",
+  "TR ticari ileti için İYS kaydı zorunlu — aksi ihlal başına ₺3000; SMS sender-ID ülke kaydı (DLT/10DLC) yoksa mesaj bloklanır + reputation kaybı.",
+  "Quiet hours kullanıcı timezone'unda hesaplanır (sunucununki değil); critical (security/payment-failed) sessiz saatte de bypass eder."
+ ],
+ "perfNotes": {
+  "code": "Dispatcher tip enum + consent lookup'ı tek sorguda (user_id, consent_type PK) yapar; SMS provider client ülke-aware sender-ID seçer; quiet-hours kontrolü kullanıcı timezone'unda O(1).",
+  "perf": "Marketing toplu gönderimi consent kapısından geçen alıcılara daraltılır (gereksiz provider çağrısı/maliyet yok); quiet-hours'ta bekleyen marketing kuyruğa alınır, transactional bypass'la anında gider."
+ },
+ "testNotes": [
+  "Sınıflandırma: marketing içeriği transactional kanaldan gönderilemez (ayrı consent kapısı).",
+  "Consent yoksa marketing/behavioral skip edilir + audit log üretilir; transactional consent'siz gider.",
+  "Quiet hours: kullanıcı timezone'unda 22:00-08:00 arası marketing bekletilir, critical bypass eder.",
+  "SMS ülke kuralı: sender-ID kayıtlı değilse (DLT/10DLC) gönderim reddedilir/bloklanır.",
+  "ToS versiyonlama: v3 kabul eden kullanıcıya v4 modal gösterilir, kabul ip+ua+version ile kaydedilir."
+ ]
+}

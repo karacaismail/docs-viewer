@@ -1,0 +1,58 @@
+{
+ "featureDefs": [
+  {
+   "name": "Çok-yargı resolver (en sıkı uygulanır)",
+   "desc": "Aynı kullanıcı KVKK + GDPR + PCI-DSS gibi birden çok kanuna tabi olabilir; resolver kuralları birleştirir ve en sıkısını uygular. Jurisdiction × kural seti config-as-data.",
+   "critical": true
+  },
+  {
+   "name": "Erasure çatışması: sil-vs-sakla",
+   "desc": "Kişisel veri anonimleştirilir (hash/mask), finansal kayıt (fatura/vergi/sözleşme) 10 yıl tutulur. KVKK silme hakkı + VUK saklama yükümlülüğü aynı anda karşılanır; tam silme yasal değil.",
+   "critical": true
+  },
+  {
+   "name": "Sanctions screening (pre-check)",
+   "desc": "OFAC/EU/UN/MASAK eşleşmesi = işlem otomatik blok + uyum sorumlusu bildirim, her şeyden önce. Refinitiv API veya OFAC direct download + nightly sync.",
+   "critical": true
+  },
+  {
+   "name": "DSAR pipeline",
+   "desc": "Trigger → user_id ile ~30 tablo SELECT → Stripe + SendGrid export → ZIP + presigned URL. n8n workflow ile otomatik veri sahibi erişim talebi karşılanır."
+  },
+  {
+   "name": "Anonymization fonksiyonu",
+   "desc": "Kişisel kolonları hash/mask eder, finansal tabloya dokunmaz; retention sonrası geri-döndürülemez."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — crosscut katmanı olarak tüm PII/finansal veri üreten module'leri keser; her erasure/işlem akışı bu resolver'dan geçmek zorunda.",
+  "kernel": "Tenancy (RLS), Authz (compliance capability) ve config ArcheType (jurisdiction × kural) kernel'den; veri residency region kuralı schema seviyesinde.",
+  "core": "Audit zorunlu (PII + sanctions + DSAR tüm kararlar iz bırakır); bitemporal saklama core kontratı — silme değil anonymize.",
+  "modules": "PII/finans üreten her module (CRM, Billing, Order, Identity) bu resolver'a tabidir; erasure isteği module'e değil resolver'a gider.",
+  "apps": "Tüm app'ler ortak compliance config'i paylaşır; tenant'ın bulunduğu yargı bölgesine göre kural seti aktive olur."
+ },
+ "moduleUsage": [
+  "Identity/CRM: erasure talebinde kişisel alanı anonymize, finansal bağı korur.",
+  "Billing/Order: fatura 10 yıl tutulur, ilişkili kullanıcı anonimleştirilir.",
+  "Payment: işlem öncesi sanctions pre-check; eşleşme blok + bildirim.",
+  "DSAR servisi: çok-tabloyu user_id ile toplar, dış sağlayıcı (Stripe/SendGrid) export'unu ekler."
+ ],
+ "ecaExample": "trigger:\n  event: data_subject.erasure_requested\ncondition:\n  all:\n    - actor.capability >= \"compliance.erase\"\n    - sanctions_precheck == clear\n    - not loop_detected\naction:\n  - anonymize: [pii_columns]            # hash/mask\n  - retain: [invoice, tax_doc, contract]  # 10y VUK\n  - emit: dsar.erasure_completed\nguards:\n  pii: true\n  retention: \"financial: 10y; personal: anonymized\"\n  external_effects: compliance_officer_review",
+ "securityNotes": [
+  "Sanctions eşleşmesi her şeyin önünde: işlem bloke + uyum sorumlusu bildirimi, otomatik geçiş yok.",
+  "Tam silme uygulanmaz — finansal kayıt korunur, yalnız kişisel veri anonimleştirilir (yasal çatışma çözümü).",
+  "DSAR export presigned URL süre-sınırlı; PII içeren ZIP yetkisiz erişime kapalı, audit'li.",
+  "Çok-yargı çakışmasında deny-by-default: belirsizse en sıkı kural, veri residency region dışına çıkmaz."
+ ],
+ "perfNotes": {
+  "code": "Resolver config-as-data; yeni yargı/kural kod değişmeden eklenir. Sanctions list nightly sync, işlem anında lokal lookup.",
+  "perf": "Sanctions pre-check işlem akışında senkron (blok kararı için); DSAR toplama asenkron worker'da, ana akışı bloklamaz."
+ },
+ "testNotes": [
+  "KVKK + GDPR + PCI-DSS birlikte tabi kullanıcıda en sıkı retention/consent uygulanır.",
+  "Erasure sonrası fatura tablosu durur, kişisel kolonlar hash'lenir (geri-okunamaz).",
+  "OFAC listesindeki taraf için işlem bloke + bildirim üretir.",
+  "DSAR export tüm ilgili tabloları + dış sağlayıcı verisini eksiksiz toplar.",
+  "Veri residency: AB kullanıcısı verisi bölge dışına yazılamaz."
+ ]
+}

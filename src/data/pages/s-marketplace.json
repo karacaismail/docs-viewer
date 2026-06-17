@@ -421,7 +421,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Marketplace Management — çekirdek yetenek",
+      "term": "Seller (vendor) ArcheType + onboarding",
       "definition": [
        {
         "type": "strong",
@@ -429,41 +429,47 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Mirakl/Webkul muadili transaction marketplace: satıcı kaydı, KYC/onay, mağaza profili. s-commerce üstüne multi-vendor capability — additif, mevcut B2C/B2B siparişleri etkilenmez."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Ödeme split + komisyon motoru",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Checkout içeride; ödeme satıcıya ve platforma bölünür (split). Komisyon kategoriye/satıcıya göre; tüm tutarlar Money (Decimal) — float YASAK."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Ürün kartında seller_id + çok-satıcı listing",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Marketplace bayrağı açıldığında ürün kartı seller_id alır; aynı ürünü birden çok satıcı listeleyebilir (offer/buy-box)."
+       }
+      ]
+     },
+     {
+      "term": "Satıcı hakediş (payout) & mutabakat",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sipariş tamamlanınca satıcı bakiyesi; periyodik payout, kesinti/iade düşümü; bitemporal hakediş defteri + audit."
+       }
+      ]
+     },
+     {
+      "term": "Satıcı performans & uyuşmazlık",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Teslim/iade/şikayet metrikleri; eşik altı satıcı askıya; uyuşmazlık iş akışı."
        }
       ]
      }
@@ -651,15 +657,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Satıcı yalnız kendi siparişini/hakedişini görür — RLS tenant-scoped + satıcı-scoped capability deny-by-default; alıcı PII satıcıya maskeli. Ödeme split tutarları Money/Decimal; komisyon+satıcı payı toplamı sipariş tutarına eşit olmalı (invariant kapı), aksi post reddedilir. Hakediş defteri değişmez audit (A08): tamamlanan payout geriye değişmez; iade düşümü yeni kayıt. Satıcı onboarding KYC step-up. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -687,15 +685,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Komisyon/split hesabı saf fonksiyon (Strategy: kategori | satıcı | kampanya kuralı); if (rule==...) yerine runtime dispatch."
        }
       ]
      },
@@ -713,15 +703,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Payout mutabakatı asenkron worker (batch); offer/buy-box seçimi indeksli; satıcı sipariş listesi keyset pagination; seller_id + durum bileşik indeks."
        }
       ]
      },
@@ -1017,7 +999,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Marketplace Management",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Marketplace Management\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: order.completed\n  when: \"tenant_scoped AND order.has_marketplace_items\"\ncondition:\n  all:\n    - actor.capability >= \"marketplace.payout.compute\"\n    - not loop_detected\n    - split.total == order.amount   # Money invariant, Decimal\naction:\n  - emit: payment.split_requested        # platform + satıcı payı, outbox idempotent\n  - record: seller_payable { bitemporal: true }\n  - emit: revenue.commission_earned\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{order}:payout\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1157,6 +1139,18 @@
     ]
    },
    {
+    "id": "block-s-marketplace-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Komşu-satıcı sipariş/hakediş sorgusu sıfır döndürür. Komisyon + satıcı payı == sipariş tutarı, kuruşu kuruşuna (Decimal). Aynı sipariş ikinci kez payout üretmez (idempotency). Marketplace bayrağı kapalı tenant'ta seller_id eklenmez; mevcut B2C sipariş akışı değişmez (additif)."
+     }
+    ]
+   },
+   {
     "id": "block-s-marketplace-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1175,7 +1169,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — bağımsız ürün değil, s-commerce üstüne multi-vendor capability; kernel ile zorunlu (kimlik/tenancy/audit), ödeme/komisyon modülleriyle yalnız Contract."
        }
       ]
      },
@@ -1184,16 +1178,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Kimlik, tenancy (RLS), audit ve ArcheType engine kernel'den; satıcı kimliği Party'den türer. Para = Money (Decimal) + ISO 4217."
        }
       ]
      },
@@ -1202,7 +1187,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Commerce app core'una bağlı; core module değişmez, marketplace capability core sözleşmelerine uyar (additif bayrak)."
        }
       ]
      },
@@ -1211,7 +1196,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "s-commerce / s-ecommerce-models ile ürün-sipariş tabanını paylaşır; ödeme sağlayıcı split için Contract; komisyon -> muhasebe/revenue olayı. Lead-gen marketplace (s-classifieds) AYRI mimari."
        }
       ]
      },
@@ -1220,7 +1205,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Storefront ve Commerce app'leri aynı ürün/sipariş ArcheType'ını paylaşır; marketplace bayrağı seller_id ekler, çift kayıt yok."
        }
       ]
      }
@@ -1233,13 +1218,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-marketplace-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-marketplace-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Storefront/Commerce app: ürün kartı seller_id + offer listesi; sepet çok-satıcılı bölünür."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Ödeme modülü: checkout tutarını platform komisyonu + satıcı payına split eder (escrow opsiyonu)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Revenue/Accounting app: komisyon geliri + satıcı hakediş borcu yevmiye olayı."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-classifieds: lead-gen (ilan ücreti+doping, ödeme dışarıda) — YANLIŞ ArcheType seçimi 6 ayı geri çevirir; ayrı modül."
+      }
+     ]
     ]
    },
    {

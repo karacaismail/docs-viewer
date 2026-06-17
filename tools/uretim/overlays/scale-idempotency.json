@@ -1,0 +1,52 @@
+{
+ "featureDefs": [
+  {
+   "name": "Idempotency-Key tablosu + middleware",
+   "desc": "key PRIMARY KEY + tenant_id + endpoint + response_status/body önbelleği; aynı key ile gelen ikinci istek yan etki üretmeden önbellekli yanıtı döner (Stripe deseni).",
+   "critical": true
+  },
+  {
+   "name": "Job idempotency",
+   "desc": "Worker job'ları da idempotency_key taşır; handler başında 'bu key işlendi mi' kontrolü — network retry, worker restart, queue replay senaryolarında çift işlemi keser.",
+   "critical": true
+  },
+  {
+   "name": "ChangeSet + ECA idempotency",
+   "desc": "Her ChangeSet ve her ECA tetiklenişi bir idempotency key taşır; aynı işlem tekrar uygulansa bile yan etki bir kez gerçekleşir.",
+   "critical": true
+  },
+  {
+   "name": "Döngü kesici ile birleşik koruma",
+   "desc": "ECA güvenlik kapısındaki maks zincir derinliği (6) ile idempotency birlikte forward-chaining'in çift-tetikleme riskini kapatır.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — idempotency scale primitive'i; her yan-etkili yazma (payment, webhook, sipariş) ve her ECA/ChangeSet bu anahtarı taşımazsa retry'da çift işlem kaçınılmaz.",
+  "kernel": "Tenancy ile birleşir: idempotency tablosu tenant_id taşır (RLS), key çakışması tenant-scoped; Audit her tekrar-yutma kararını izler.",
+  "core": "ChangeSet sözleşmesi (k-sozlesme) idempotency key'i zorunlu kılar; core yazma yolu key'siz yan etki üretmez.",
+  "modules": "Layer-1 workflow (ECA) her tetiklemede key üretir; ödeme/sipariş modülleri Idempotency-Key header'ını dışa açar.",
+  "apps": "Üçüncü-taraf entegrasyonlar (Stripe webhook, payment gateway) retry'da aynı key'i gönderir; App tek sonuç görür."
+ },
+ "moduleUsage": [
+  "Payment/sipariş: POST/PUT'ta client Idempotency-Key üretir; 'Gönder' iki kez basılsa da tek çekim.",
+  "Webhook delivery: gateway retry'da aynı event id → ikinci teslimat yutulur.",
+  "Layer-1 workflow: ECA forward-chaining'de aynı tetik ikinci kez emit etmez (key + max_depth 6)."
+ ],
+ "ecaExample": "trigger:\n  event: payment.charge_requested\ncondition:\n  all:\n    - actor.capability >= \"payment.charge\"\n    - not already_processed(idempotency_key)\n    - not loop_detected\naction:\n  - charge: external_gateway   # yan etki bir kez\n  - persist: idempotency_record\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{endpoint}:{client_key}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Idempotency tablosu tenant-scoped (RLS): A tenant'ın key'i B tenant'ın yanıtını döndüremez — key namespace tenant_id ile ayrılır.",
+  "response_body önbelleği PII/Money içerebilir → retention + maskeleme; key süresi dolunca temizlenir.",
+  "Key sadece başarılı (200/201/202) yanıtta yazılır; hata yanıtı önbelleğe alınmaz, aksi halde geçici hata kalıcılaşır."
+ ],
+ "perfNotes": {
+  "code": "key PRIMARY KEY → O(1) lookup; INSERT yarış durumu unique constraint ile çözülür (ikinci INSERT çakışır, önbellek okunur).",
+  "perf": "Idempotency kontrolü her yazma isteğine bir lookup ekler; sıcak key'ler için kısa TTL + index; eski kayıtlar periyodik temizlenir."
+ },
+ "testNotes": [
+  "Aynı Idempotency-Key ile iki POST → tek yan etki, ikinci istek önbellekli yanıtı döner.",
+  "Worker job retry'da aynı idempotency_key → handler ikinci kez iş yapmaz.",
+  "Tenant izolasyonu: A tenant key'i B tenant context'inde sıfır/yeni işlem olarak görülür (çakışmaz).",
+  "ECA çift-tetikleme: forward-chain aynı key'i ikinci kez emit etmemeli (max_depth 6 + idempotency)."
+ ]
+}

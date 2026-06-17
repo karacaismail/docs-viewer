@@ -1,0 +1,49 @@
+{
+ "featureDefs": [
+  {
+   "name": "Cultural theme variant",
+   "desc": "Jurisdiction'a göre tema değişkeni (CN primary=kırmızı/uğur); renk anlamı bağlanır, palet sabit değil. cc-jurisdiction-resolver çıktısını tüketir.",
+   "critical": true
+  },
+  {
+   "name": "Font fallback stack + unicode-range",
+   "desc": "Inter+Noto Arabic+Noto CJK+Noto Devanagari; @font-face unicode-range ile partial load; CJK (~5MB) mutlak lazy.",
+   "critical": true
+  },
+  {
+   "name": "RTL — CSS logical properties",
+   "desc": "margin-inline-start/padding-block-end; ikon flip, slider/breadcrumb/drawer aynalanır; margin-left hardcode YASAK."
+  },
+  {
+   "name": "Dinamik <html lang> + inline lang",
+   "desc": "Screen reader telaffuzu için sayfa gerçek dili; dil değişiminde JS update; karışık içerik için inline lang. WCAG 3.1.1."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — crosscut concern; frontend bileşen kütüphanesinde uygulanır ama jurisdiction/consent ekseninden beslenir; teknik i18n (cc-i18n-standards) + EAA a11y (cc-a11y-backend) ile birlikte.",
+  "kernel": "Doğrudan kernel bağı yok; jurisdiction/locale bilgisini resolver (kernel Party tercihinden) üzerinden alır.",
+  "core": "App core sözleşmesine değmez; saf sunum/a11y katmanı — core veri akışından bağımsız tema/font/lang kararı.",
+  "modules": "i18n module locale'i sağlar; cc-jurisdiction-resolver cultural variant tetikleyici jurisdiction'ı verir; asset seçimi jurisdiction-aware (Suudi'de kadın yüzü açık görsel kısıtı).",
+  "apps": "Storefront, portal, admin app'leri aynı font stack + tema variant + lang disiplinini paylaşır; her app kendi renk/font varsayımını tekrar etmez."
+ },
+ "moduleUsage": [
+  "Storefront app: CN pazar açılımında primary accent=kırmızı (uğur); mesaj icon+metin+renk üçü birlikte (a11y + kültürel).",
+  "Builder/Block editor: width:auto + max-width zorunlu; Almanca %135 genişlemede buton taşmasın (pseudo-localization testi).",
+  "Mobile app (fe-mobile): RTL drawer sağdan; logical properties ile tek kod hem LTR hem RTL."
+ ],
+ "securityNotes": [
+  "Doğrudan veri güvenliği yüzeyi düşük; a11y uyum (WCAG 1.4.1 renk-tek-araç-değil, 3.1.1/3.1.2 lang) yasal zorunluluk (EAA/EN 301 549).",
+  "Jurisdiction-aware görsel asset seçimi yanlışsa kültürel/yasal ihlal (Suudi kadın yüzü açık görsel) — asset seçimi deny-by-default güvenli varsayılana düşmeli.",
+  "Renk tek başına mesaj iletmez (renk körü + kültürel fark); icon+metin+renk birlikte zorunlu."
+ ],
+ "perfNotes": {
+  "perf": "Font lazy load: yalnız sayfada geçen yazı sistemi yüklenir (locale=hi → CJK indirme); unicode-range ile partial @font-face; CJK ~5MB asla eager. Tema variant CSS değişkeni (runtime repaint, yeniden bundle yok)."
+ },
+ "testNotes": [
+  "Devanagari/CJK içerik tofu (kutu) karakter göstermez — fallback stack doğru yüklenir.",
+  "locale=hi sayfasında CJK fontu indirilmez (lazy load doğrulaması).",
+  "RTL'de geri ok, breadcrumb, drawer aynalanır; margin-left hardcode bulunmaz.",
+  "Dinamik dil değişiminde document.documentElement.lang güncellenir; screen reader doğru telaffuz eder.",
+  "Almanca %135 metinle sabit-genişlik buton taşmaz (pseudo-localization)."
+ ]
+}

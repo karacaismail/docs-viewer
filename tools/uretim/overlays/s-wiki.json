@@ -1,0 +1,57 @@
+{
+ "featureDefs": [
+  {
+   "name": "Space / Page / Block ArcheType'ları",
+   "desc": "Hiyerarşik bilgi tabanı; sayfa ağacı + blok içerik; hibrit şema + JSONB (zengin içerik düğümleri) + FK ile space/parent bağı.",
+   "critical": true
+  },
+  {
+   "name": "Sürümleme + geçmiş",
+   "desc": "Her sayfa düzenlemesi sürüm; diff/restore; bitemporal — 'şu tarihte sayfa neydi' okunur.",
+   "critical": true
+  },
+  {
+   "name": "Tam-metin arama + izin-farkında",
+   "desc": "İçerik aranır ama sadece kullanıcının capability'sinin yettiği space/sayfa döner (deny-by-default).",
+   "critical": true
+  },
+  {
+   "name": "Yorum + birlikte düzenleme",
+   "desc": "Sayfa içi yorum, @bahsetme; eşzamanlı düzenleme çakışma çözümü."
+  },
+  {
+   "name": "İzin modeli (space/sayfa)",
+   "desc": "Space ve sayfa seviyesinde okuma/yazma capability; iç bilgi tabanı dışarı sızmaz."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Wiki bağımsız bir Layer-2 ürün (Confluence/Notion muadili) ama kimlik/yetki/arama altyapısını kendi yazmamalı; kernel ve core arama/bildirim ile Contract üzerinden entegre olmalı.",
+  "kernel": "Party/tenancy (RLS), authz (space/sayfa capability), audit, event-bus kernel'den; Wiki kendi ArcheType şemasını tanımlar.",
+  "core": "Search (tam-metin, izin-farkında), File/storage (ek/görsel), i18n (locale içerik), bitemporal (sürüm); core sözleşmelerine uyar.",
+  "modules": "Bildirim module'ünü etkinleştirir (sayfa değişimi/@bahsetme); başka module'lere içerik referansı yayar — yalnız Contract.",
+  "apps": "Content-collaboration suite içinde aynı Party + space kimliğini paylaşır; tek panelden erişilir."
+ },
+ "moduleUsage": [
+  "Bildirim module'ü: sayfa değişikliği / @bahsetme → ilgili kullanıcıya in-app + email digest.",
+  "Search core: izin-farkında tam-metin sorgusu yalnız yetkili space sonuçlarını döndürür.",
+  "File core: sayfa ekleri (görsel/dosya) tenant-scoped storage'da tutulur."
+ ],
+ "ecaExample": "trigger:\n  event: wiki.page_updated\ncondition:\n  all:\n    - actor.capability >= \"wiki.write\"\n    - actor in page.space.members\n    - not duplicate_within(\"5m\")\naction:\n  - emit: wiki.version_created      # idempotent, diff saklanır\n  - notify: page.watchers           # @mention + izleyenler\nguards:\n  max_depth: 6\n  idempotency_key: \"wiki:{tenant}:{page}:{revision}\"\n  external_effects: none",
+ "securityNotes": [
+  "İzin-farkında arama zorunlu: kullanıcının capability'si yetmediği space/sayfa arama sonucunda dönmez (sızıntı yok).",
+  "Space/sayfa capability deny-by-default; RLS ile içerik ve ekler tenant-scoped.",
+  "İçerik render'ında XSS/markup injection escape; kullanıcı girdisi güvenli düğümlere sınırlandırılır.",
+  "Sürüm geçmişi silinmez (bitemporal); audit kim neyi ne zaman düzenledi izini tutar."
+ ],
+ "perfNotes": {
+  "code": "Sayfa ağacı lazy yüklenir; arama indexlemesi asenkron worker.",
+  "perf": "Sayfa/sürüm listeleri keyset pagination; içerik JSONB GIN + tam-metin index; büyük space ağacı sayfalanır."
+ },
+ "testNotes": [
+  "Komşu-tenant sayfa/space sorgusu sıfır döndürür (RLS).",
+  "İzin-farkında arama: yetkisiz space içeriği sonuçlarda görünmez (deny path).",
+  "Sürüm: düzenleme yeni revision yaratır, eski sürüm diff/restore ile erişilir.",
+  "Eşzamanlı düzenleme çakışması veri kaybı olmadan çözülür.",
+  "@bahsetme yalnız space üyesine bildirim üretir."
+ ]
+}

@@ -1730,15 +1730,16 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
+      "text": "Türkçe i/ı locale tuzağı bir güvenlik riski olabilir: email/ID/token karşılaştırmasında toLowerCase() locale-bağımlı sonuç verir; her yerde toLocaleLowerCase('en-US') veya bilinçli locale='C' kullan. NFC normalization zorunlu — iki farklı encoding aynı karakteri farklı saklarsa eşitlik/karşılaştırma (ör. kullanıcı adı çakışması) kırılır. "
      },
      {
-      "type": "code",
-      "text": "pii"
+      "type": "term",
+      "text": "hreflang",
+      "termId": "term-hreflang-cc-i18n-standards"
      },
      {
       "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": " yanlış yapılandırması duplicate-content cezasına yol açar; locale URL stratejisi (subdirectory tercih) tutarlı tanımlanmalı. Çeviri içeriği runtime'da yüklendiğinden TMS kaynağı doğrulanmalı; çeviri stringlerine HTML/script enjeksiyonu sanitize edilmeli. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1766,15 +1767,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Intl.NumberFormat/DateTimeFormat/ListFormat ve ICU MessageFormat ile biçimleme; collation locale-aware (Türkçe 'İstanbul' aramada 'istanbul' bulmalı). CSS logical properties tek kaynaktan RTL/LTR çözer (ters çevirme kodu yok)."
        }
       ]
      },
@@ -1792,15 +1785,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Almanca metin İngilizce'den ~%35 uzun; pseudo-localization CI testi layout taşmalarını ve hardcoded string'i erkenden yakalar — runtime'da sürpriz reflow önlenir."
        }
       ]
      },
@@ -2236,6 +2221,18 @@
     ]
    },
    {
+    "id": "block-cc-i18n-standards-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Pseudo-localization CI testi: '[Šåvé éééé]' ile layout taşması + çevrilmemiş (hardcoded) string tespiti. Locale-case testi: Türkçe locale'de toLowerCase tuzağının email/ID karşılaştırmasını bozmadığı. Plural form testi: ICU plural kategorilerinin (tr=1, en=2, ru=4, ar=6) doğru cümle ürettiği. RTL testi: dir=rtl + logical properties ile layout ve ikon flip'inin (scaleX(-1)) doğru çalıştığı. Fallback zinciri testi: locale > base > kaynak sırasının ve 'eskimiş çeviri' tag'inin (last_synced_at < source_updated_at) doğru çözüldüğü."
+     }
+    ]
+   },
+   {
     "id": "block-cc-i18n-standards-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -2254,7 +2251,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "i18n teknik standartları çapraz-kesen bir crosscut katmanı: tek bir module değil, tüm Surface/Theme/içerik katmanlarının BCP 47 + CLDR + ICU + RTL kurallarına uyması için ortak sözleşme sağlar."
        }
       ]
      },
@@ -2263,16 +2260,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "ArcheType metin alanları ve etiketleri locale anahtarı taşır; collation ve normalization (NFC) DB sorgu/sıralama katmanında bilinçli locale ile uygulanır (Türkçe i/ı tuzağı çekirdek arama davranışını kırabilir)."
        }
       ]
      },
@@ -2281,7 +2269,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Tarih/sayı/para Intl API ile locale'e göre biçimlenir; para birimi ve format çekirdek Money/DateTime tipleriyle tutarlı (cümle birleştirme YASAK, anahtar-değer + ICU plural)."
        }
       ]
      },
@@ -2290,7 +2278,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Çeviriler koddan ayrı, runtime'da yüklenir; TMS olarak Tolgee (self-host) tercih edilir, deploy gerektirmeden çeviri güncellenir; fallback zinciri locale > base > kaynak."
        }
       ]
      },
@@ -2299,7 +2287,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "App'ler dir=rtl + CSS logical properties (margin-inline-start) kullanır; Theme RTL token varyantı sağlar (fe-theme Faz 3); eskimiş çeviri 'yenileniyor' badge'i ile işaretlenir."
        }
       ]
      }

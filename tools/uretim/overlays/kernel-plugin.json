@@ -1,0 +1,60 @@
+{
+ "featureDefs": [
+  {
+   "name": "Module Manifest (kanonik format)",
+   "desc": "name/version/api_version/publisher/license + depends/permissions/hooks/archetypes/fixtures/ui alanları; çekirdek manifest'i okuyup yükler. Permission satırı capability deny-by-default sözleşmesidir.",
+   "critical": true
+  },
+  {
+   "name": "Dependency resolution + cycle detection",
+   "desc": "depends listesi üzerinden topological sort; A→B ise B önce yüklenir, cycle boot'ta fail. Semver ile uyumluluk aralığı (^2.1.0 = 3.0.0 değil).",
+   "critical": true
+  },
+  {
+   "name": "Lifecycle hook'ları",
+   "desc": "before/after_install, before/after_uninstall, before/after_migrate, clear_cache — schema migration, fixtures, anonimleştirme bu kapılara bağlanır.",
+   "critical": true
+  },
+  {
+   "name": "Module Registry + Health Probe",
+   "desc": "Yüklü modüllerin merkezi sicili; trusted_publishers, verification_policy, liveness/readiness, error_rate_5m. Çakışma ve sürüm çözümü burada."
+  },
+  {
+   "name": "Marketplace + install workflow",
+   "desc": "Publisher kaydı + güvenlik taraması; idempotent install (install_id), strateji (atomic/staged/canary), dry_run plan, rollback_token, streaming install_log."
+  },
+  {
+   "name": "Service Container & Config Hierarchy",
+   "desc": "Dependency injection (singleton/transient/scoped/tenant_scoped) + global→tenant→user→agent→session config + feature flag + secret rotation."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — framework olmanın can damarı; bu yetenek olmadan platform değil tek uygulama olur. 70+ ürün tek çekirdeğin üstünde ancak böyle yaşar.",
+  "kernel": "Çekirdeğin temel mekanizması; ArcheType engine, capability/permission ve event-bus'ı kayıt altına alıp dış paketlere açar. Üçüncü taraf paketler gün-1 WASM sandbox içinde, permission scope sandbox'ın izin sözleşmesi olarak çalışır.",
+  "core": "App core'u bu registry'yi tüketir; lifecycle ve dependency çözümü core boot sırasına oturur, core sözleşmeleri değişmez.",
+  "modules": "Her Layer-2 modülü kendi manifest'ini bu sicile bildirir; declared_archetypes/hooks/tools/routes + required/optional_capabilities ile başka modüllerden ihtiyacını sözleşmeyle ister.",
+  "apps": "Tenant admin App Store'dan kurar; permission'lar onayına sunulur ('şu ArcheType'ları okuyacak'), entitlement ile hangi yüzeyin açık olduğu belirlenir."
+ },
+ "moduleUsage": [
+  "Tüm Layer-2 ürünleri: kendi manifest'ini sicile bildirir, hook'larını registry üzerinden bağlar (global mutable state'e dokunmadan).",
+  "Comms/Mail: declared_hooks ile doc_events'e abone olur; sürüm semver ile korunur.",
+  "Marketplace yayıncısı: imzalı paket (signed + signature_authority) yükler; compatibility_matrix kernel aralığını bildirir."
+ ],
+ "ecaExample": "trigger:\n  event: module.install_requested\ncondition:\n  all:\n    - actor.capability >= \"registry.install\"\n    - manifest.signature_valid == true\n    - not dependency_cycle_detected\naction:\n  - resolve: dependency_graph   # topological sort\n  - run: schema_migration       # after_install\n  - emit: module.installed       # outbox, idempotent\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{module_slug}:{version}:install\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Permission scope deny-by-default: manifest izinleri tenant admin onayından geçmeden hiçbir ArcheType okunmaz/yazılmaz.",
+  "Üçüncü taraf paket WASM sandbox içinde; izin sözleşmesi dışına çıkamaz (blast radius sınırlı).",
+  "İmza doğrulama: signed + signature_authority kontrolü; trusted_publishers dışı paket verification_policy'ye takılır.",
+  "Global mutable state yasak — yalnız hook registry; aksi halde modül update'i komşu paketleri kırar (Strapi tuzağı)."
+ ],
+ "perfNotes": {
+  "code": "Install pipeline sıralı: manifest indir → dependency resolve → migration → fixtures → hook register → after_install. Streaming log ile gözlem.",
+  "perf": "LandX hedefi: install p95 <30sn, dependency conflict otomatik tespiti %100, downtime-free upgrade >%95; config read p99 <5ms, flag toggle propagation <2sn, secret rotation downtime 0."
+ },
+ "testNotes": [
+  "Cycle içeren depends grafiği install'ı fail etmeli (boot reddi).",
+  "İzin onaylanmamış modül hedef ArcheType'ı okuyamamalı (deny path).",
+  "Atomic install yarıda kesilirse rollback_token ile tam geri alınmalı (kısmi şema kalmamalı).",
+  "Aynı install_id ikinci kez gönderilince tek kez uygulanmalı (idempotency)."
+ ]
+}

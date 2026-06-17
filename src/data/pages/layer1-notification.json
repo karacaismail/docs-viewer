@@ -526,7 +526,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Notification — birincil yetenek",
+      "term": "Kanal-bağımsız notify() yüzeyi",
       "definition": [
        {
         "type": "strong",
@@ -534,25 +534,38 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "Modül yalnız notify(user, template, data) çağırır; email/SMS/push/in-app/webhook routing kullanıcı tercihine göre framework'te çözülür."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "İYS/ETK izin kapısı",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Ticari SMS/Email gönderiminden önce İleti Yönetim Sistemi opt-in kaydı kontrol edilir; izinsiz gönderim engellenir."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "Throttle + batch pipeline",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "Aynı bildirimin saatte tekrarı engellenir; 12 kişi beğendi → tek digest bildirim."
+       }
+      ]
+     },
+     {
+      "term": "Sürücü soyutlaması",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Email (SES/SendGrid/Postmark), SMS (NetGSM/Turkcell/Twilio), push (APNs/FCM/VAPID) sürücü olarak takılır; yeni kanal kod değişikliği gerektirmez."
        }
       ]
      }
@@ -740,15 +753,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "İYS/ETK: ticari iletişimde opt-in kaydı gönderim öncesi zorunlu; izinsiz gönderim deny-by-default. Tenant-scoped: bildirim ArcheType'ları ve teslim kayıtları RLS ile tenant'a kapalı; başka tenant'a sızıntı yok. Template injection: data alanları Jinja render'da escape; kullanıcı girdisi template gövdesine geçmez. Unsubscribe link her ticari gönderimde tutarlı; tek pipeline garanti eder. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -776,15 +781,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Gönderim queue + retry üzerinden asenkron; render → preference → throttle → batch → route → queue sıralı pipeline."
        }
       ]
      },
@@ -802,15 +799,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "LandX hedefi: email delivery rate >%98, in-app render p95 <500ms. Batch ile fan-out azaltılır."
        }
       ]
      },
@@ -1106,7 +1095,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Notification",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Notification\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: order.status_changed\ncondition:\n  all:\n    - recipient.consent.commercial == true  # İYS opt-in\n    - not duplicate_within(\"1h\")\naction:\n  - notify:\n      template: order_shipped\n      channel: auto  # tercih: push>email\nguards:\n  throttle: \"1/hour/same_template\"\n  idempotency_key: \"notif:{order_id}:{template}:{recipient_id}\"\n  external_effects: iys_check_required",
     "copyEnabled": true
    },
    {
@@ -1246,6 +1235,18 @@
     ]
    },
    {
+    "id": "block-layer1-notification-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "İYS opt-in yoksa ticari SMS/Email üretilMEMEli (deny path testi). Aynı template + alıcı 1 saat içinde tekrar tetiklenince throttle ile tek gönderim. Kanal fallback: push token yoksa email'e düşer. Tenant izolasyonu: A tenant bildirimi B tenant kullanıcısına teslim edilmez."
+     }
+    ]
+   },
+   {
     "id": "block-layer1-notification-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1264,7 +1265,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "evet — her modül kendi SMTP'sini kurarsa config dağınık, throttle/retry/unsubscribe tutarsız olur; tek pipeline compliance'ı kolaylaştırır."
        }
       ]
      },
@@ -1273,16 +1274,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Identity (alıcı kimliği), Event Bus (topic_pattern abone deseni ile workflow event'lere bağlanır)."
        }
       ]
      },
@@ -1291,7 +1283,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "i18n (Jinja template locale-aware render), Audit (gönderim/teslim izi), Settings (kanal tercihleri)."
        }
       ]
      },
@@ -1300,7 +1292,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Tüm Layer-2 stack'leri tüketici: sipariş/ödeme/izin event'i → notify()."
        }
       ]
      },
@@ -1309,7 +1301,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Public Surface + admin: in-app çan ikonu read/unread state; agent ping kanalı (agent'lar arası mesaj)."
        }
       ]
      }
@@ -1322,13 +1314,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-layer1-notification-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-layer1-notification-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-commerce: sipariş durumu değişimi → kullanıcının tercih ettiği kanaldan bildirim, ETK onayı varsa SMS"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-hrms: izin onayı/bordro event → in-app + email digest"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "k-agent-runtime: agent ping kanalı ile workflow event'lerini başka agent'a iletir"
+      }
+     ]
     ]
    },
    {

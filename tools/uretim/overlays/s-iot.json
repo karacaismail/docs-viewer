@@ -1,0 +1,55 @@
+{
+ "featureDefs": [
+  {
+   "name": "Device / Sensor / Reading ArcheType'ları",
+   "desc": "Cihaz kimliği tenant-scoped; sensör tipi + birim; okuma noktası timeseries primitive'ine yazılır, ArcheType tablosu şişmez.",
+   "critical": true
+  },
+  {
+   "name": "MQTT/HTTP ingest kapısı",
+   "desc": "Cihaz kimliği doğrulanır (tenant'a bağlı kimlik); yetkisiz/sahte cihaz reddedilir; backpressure ve hız limiti zorunlu.",
+   "critical": true
+  },
+  {
+   "name": "Eşik + basit anomali alarmı",
+   "desc": "Sensör değeri eşik aşınca/anomali tespitinde alarm; bildirim Notification primitive'inden; alarm geçmişi audit'li."
+  },
+  {
+   "name": "Bakım köprüsü (CMMS)",
+   "desc": "Alarm → iş emri: s-cmms'e Contract üzerinden olay; köprü tek yönlü ve idempotent — IoT ölçer, CMMS iş emrini yönetir."
+  },
+  {
+   "name": "Enerji izleme nişi",
+   "desc": "Fabrika/AVM sayaç verisi; downsampling + retention timeseries'ten; ilk doğrulama nişi (organik kanal zayıf, CMMS müşterisine ek modül)."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — katalogda timeseries primitive'i vardı ama tüketen ürün yoktu; IoT onu tüketir. Bağımsız satış zayıf, bu yüzden CMMS/Fleet müşterisine ek modül olarak Contract'la bağlanır.",
+  "kernel": "ArcheType engine ile cihaz/sensör şeması; Identity cihaz kimliğini doğrular; tenancy (RLS) cihazı tenant'a kapatır; Event Bus alarm yayar; audit alarm/eşik değişimini izler.",
+  "core": "scale-timeseries primitive'ine yazar (okuma noktaları); kernel iç API'sine dokunmaz, primitive'i tüketir. pii yok (sensör verisi); cihaz-sahibi eşleşmesi gerekirse pii kapısı.",
+  "modules": "scale-timeseries saklama/downsampling/retention; Notification alarm kanalı; s-cmms iş emri köprüsü — yalnız Contract.",
+  "apps": "s-cmms (kestirimci bakım), s-fleet (araç sensörü) IoT okumalarını tüketir; alarm → iş emri tek köprüden geçer."
+ },
+ "moduleUsage": [
+  "scale-timeseries: sensör okumaları downsampling + retention politikasıyla burada saklanır.",
+  "s-cmms: eşik/anomali alarmı iş emrine dönüşür (kestirimci bakım özelliği olarak doğrulanır).",
+  "s-fleet: araç/ekipman sensör verisini okur (konum/yakıt/sıcaklık).",
+  "layer1-notification: alarm bildirimi kullanıcının tercih ettiği kanaldan gönderilir."
+ ],
+ "ecaExample": "trigger:\n  event: sensor.reading_received\n  when: \"value > threshold AND tenant_scoped\"\ncondition:\n  all:\n    - device.identity_verified\n    - actor.capability >= \"iot.alarm.raise\"\n    - not duplicate_within(\"5m\")   # alarm fırtınası bastırma\naction:\n  - emit: maintenance.workorder_requested   # outbox, idempotent → s-cmms\n  - notify: [\"iot-surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{device}:{threshold}:alarm\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Cihaz kimliği tenant-scoped: yetkisiz/sahte cihaz ingest reddedilir; komşu-tenant cihaz verisi sızmaz (RLS).",
+  "Capability deny-by-default: eşik/alarm tanımı ayrı yetki; ingest endpoint hız-limitli (DoS/flood koruması).",
+  "Alarm fırtınası bastırma: aynı cihaz/eşik kısa pencerede tek alarm; bildirim spam'i engellenir."
+ ],
+ "perfNotes": {
+  "code": "Okumalar timeseries primitive'ine yazılır (ArcheType tablosu değil); downsampling + retention timeseries'te. Alarm değerlendirmesi asenkron worker.",
+  "perf": "Yüksek-hacim ingest için batch yazma; alarm/cihaz listeleri keyset (cursor) pagination; backpressure ile ingest dayanıklı."
+ },
+ "testNotes": [
+  "Yetkisiz cihaz ingest reddedilir (kimlik doğrulanmamış).",
+  "Eşik aşımında alarm; aynı eşik 5 dk içinde tek iş emri (idempotency + bastırma).",
+  "Komşu-tenant cihaz okuması sıfır döndürür.",
+  "Köprü tek yönlü: alarm → iş emri; CMMS kapalıyken IoT okuma kaybetmez (outbox)."
+ ]
+}

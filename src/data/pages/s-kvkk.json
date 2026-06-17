@@ -200,7 +200,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "KVKK Uyum Paketi — çekirdek yetenek",
+      "term": "Otomatik VERBİS envanteri",
       "definition": [
        {
         "type": "strong",
@@ -208,41 +208,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Alan-seviyesi PII flag metadata'sından kişisel veri envanteri neredeyse otomatik çıkar — rakipler manuel anketle yapıyor; yapısal fark demo'da bir bakışta görünür."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "DSR talep portalı",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Madde 11 erişim/silme/düzeltme talepleri; 30 gün SLA'lı iş akışı + HITL (insan onayı) kapısı."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Aydınlatma yönetimi",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Aydınlatma metni sürümleme + kanal bazlı onay kaydı (cc-notification-consent)."
+       }
+      ]
+     },
+     {
+      "term": "Delil zinciri",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Talepten kapanışa s-audit ile değiştirilemez denetim izi."
        }
       ]
      }
@@ -430,15 +427,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "PII envanteri alan metadata'sından otomatik; manuel anket hatası/eksiği ortadan kalkar. DSR HITL: silme/erişim talepleri insan onayı olmadan yürütülmez (yanlış silme/sızıntı koruması). 30 gün SLA: KVKK Madde 11 yasal süresi workflow'da takipli; aşım eskalasyonu. Tüm talep yaşam döngüsü s-audit delil zincirinde — denetimde kanıt. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -466,15 +455,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Envanter, PII-flag'li alanlar üzerinde metadata sorgusu (manuel veri girişi değil); DSR export DSAR pipeline'ı yeniden kullanır."
        }
       ]
      },
@@ -492,15 +473,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Envanter çıkarımı şema-metadata taraması olduğundan veri hacminden bağımsız hızlı."
        }
       ]
      },
@@ -796,7 +769,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — KVKK Uyum Paketi",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — KVKK Uyum Paketi\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: dsr.request_submitted  # Madde 11\ncondition:\n  all:\n    - request.type in [\"access\",\"erasure\",\"rectification\"]\n    - requester.identity_verified == true\naction:\n  - open: dsr_workflow  # 30 gün SLA\n  - require: human_approval  # HITL\nguards:\n  external_effects: human_approval_required\n  idempotency_key: \"dsr:{subject_id}:{request_id}\"\n  audit: \"chain_of_custody\"",
     "copyEnabled": true
    },
    {
@@ -936,6 +909,18 @@
     ]
    },
    {
+    "id": "block-s-kvkk-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Yeni PII-flag'li alan eklenince VERBİS envanterine otomatik yansır. DSR erişim talebi 30 gün içinde + HITL onayı ile kapanır. Onaysız silme talebi yürütülMEZ (HITL kapısı). Aydınlatma metni sürüm değişiminde önceki onay kaydı korunur."
+     }
+    ]
+   },
+   {
     "id": "block-s-kvkk-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -954,7 +939,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "evet — cc-privacy'nin ürünleşmesi; aday katalog kaydı ama PII-flag altyapısı sayesinde yapısal farkı taşıyan bağımsız satılabilir modül."
        }
       ]
      },
@@ -963,16 +948,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Schema (alan-seviyesi PII flag metadata'sı — envanterin kaynağı), Authz (DSR onay yetkisi), Tenancy."
        }
       ]
      },
@@ -981,7 +957,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Audit (s-audit delil zinciri), Workflow (30 gün SLA DSR akışı), Notification (aydınlatma/onay kaydı)."
        }
       ]
      },
@@ -990,7 +966,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "cc-privacy (PII flag tanımı), s-audit (denetim), stack-compliance (mevzuat paketi)."
        }
       ]
      },
@@ -999,7 +975,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "DSR self-servis portal + DPO/yönetici admin paneli."
        }
       ]
      }
@@ -1012,13 +988,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-kvkk-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-kvkk-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "cc-privacy: alan PII flag metadata'sını okuyup VERBİS kayıt envanterini üretir"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-audit: DSR talebinin açılış→onay→export→kapanış adımlarını delil zincirine yazar"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "cc-notification-consent: aydınlatma metni onayını kanal bazlı kaydeder"
+      }
+     ]
     ]
    },
    {

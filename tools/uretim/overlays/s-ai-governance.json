@@ -1,0 +1,50 @@
+{
+ "featureDefs": [
+  {
+   "name": "ModelRegistry (model envanteri) ArcheType",
+   "desc": "NIST AI RMF deseni: kullanılan her AI/LLM modeli, sürümü, sahibi, amacı, veri kaynağı envanterde. Keşfedilemeyen model yönetilemez.",
+   "critical": true
+  },
+  {
+   "name": "RiskAssessment + policy bağlama",
+   "desc": "Model başına risk değerlendirme (etki/olasılık), uygulanan politika ve azaltım; risk eşiği üstü model dağıtım kapısına takılır.",
+   "critical": true
+  },
+  {
+   "name": "Denetim izi (audit trail)",
+   "desc": "Model kararı/çıktısı, prompt/yanıt referansı, kim onayladı — değişmez bitemporal kayıt; geriye dönük inceleme için."
+  },
+  {
+   "name": "Politika & onay iş akışı",
+   "desc": "Yeni model/kullanım dağıtımdan önce gözden geçirme; high-risk için step-up onay; reddedilen kullanım engellenir."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet (aday) — yatay (platform-horizontal) yönetişim katmanı; kernel ile zorunlu (kimlik/tenancy/audit), AI tüketen tüm modüllerle yalnız Contract üzerinden.",
+  "kernel": "Kimlik, tenancy (RLS) ve değişmez audit kernel'den; envanter/karar kaydı ArcheType engine ile. Agent runtime (k-agent-runtime) ile model çağrı sınırını paylaşır.",
+  "core": "Platform app core'una bağlı; core module değişmez, AI governance core sözleşmelerine uyar.",
+  "modules": "AI tüketen modüller (RAG, voice, copilot) model çağrısını governance kaydına bağlar — yalnız Contract; envanter dışı model çağrısı deny.",
+  "apps": "AI özellikli tüm app'ler aynı ModelRegistry'yi paylaşır; her çağrı correlation ile denetim izine düşer."
+ },
+ "moduleUsage": [
+  "AI Voice / RAG / Copilot app: kullandığı model envanterde kayıtlı olmalı; çağrı denetim izine bağlanır.",
+  "Agent Runtime (k-agent-runtime): MCP araç/model çağrısını allowlist + governance politikasıyla kapılar.",
+  "Cyber GRC / Audit app: model risk kaydını uyum çerçevesine (NIST AI RMF) raporlar.",
+  "Compliance matris: high-risk model dağıtımı için zorunlu onay kanıtı."
+ ],
+ "ecaExample": "trigger:\n  event: ai.model.deploy_requested\n  when: \"tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"ai.governance.approve\"\n    - model in model_registry           # envanter dışı model deny\n    - risk_assessment.level <= policy.max_allowed\naction:\n  - record: governance_decision { bitemporal: true }   # değişmez audit\n  - emit: ai.model.approved\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{model}:{version}:deploy\"\n  external_effects: step_up_required   # high-risk -> out-of-band onay",
+ "securityNotes": [
+  "Model envanteri ve risk kaydı RLS tenant-scoped; onay capability deny-by-default — yalnız yetkili dağıtım onaylar.",
+  "Governance kararı değişmez audit zinciri (A08/A09): onay/red, gerekçe, aktör, correlation; geriye değiştirilemez.",
+  "Envanter dışı veya risk eşiği üstü model çağrısı engellenir (A06 Insecure Design); high-risk dağıtım step-up onay gerektirir."
+ ],
+ "perfNotes": {
+  "perf": "Denetim izi yazımı asenkron (audit pipeline, l1-audit); envanter sorgusu indeksli; karar geçmişi keyset pagination — OFFSET yok."
+ },
+ "testNotes": [
+  "Envanterde olmayan model dağıtım isteği reddedilir.",
+  "Risk eşiği üstü model onaysız dağıtılamaz; high-risk step-up zorunlu.",
+  "Her model kararı değişmez denetim izine düşer; geriye yazılamaz.",
+  "Komşu-tenant model envanteri/karar kaydı sorgusu sıfır döndürür."
+ ]
+}

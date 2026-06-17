@@ -634,7 +634,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "CDN Strategy — sınırın uçtaki dağıtım — çekirdek yetenek",
+      "term": "Edge dağıtım + hash-based versioning",
       "definition": [
        {
         "type": "strong",
@@ -642,41 +642,34 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Vite build hash'li dosya adı üretir; max-age=31536000 immutable ile sürüm çakışması olmadan agresif cache. Manuel PURGE son çare."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "CDN seçim matrisi",
       "definition": [
        {
         "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
-       },
-       {
-        "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Cloudflare (free tier startup'a yeter, R2 var, image Polish paid), Bunny (ucuz + Optimizer), Fastly ($$$), CloudFront (Lambda@Edge). Sağlayıcı config-as-data ile seçilir."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Edge image transform",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Görsel S3'e yüklenir, CDN edge'de resize/format dönüşümü yapılır; origin yükü azalır."
+       }
+      ]
+     },
+     {
+      "term": "Cache invalidation stratejisi",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Hash-based versioning çoğu invalidation'ı çözer; PURGE yalnız acil düzeltmede."
        }
       ]
      }
@@ -864,15 +857,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "CDN credentials secret store'da; build/deploy dışında koda gömülmez. Immutable cache yalnız hash'li (sürümlü) asset'lere; sürümsüz/dinamik içerik cache'lenmez (stale veri riski). Edge'de PII/özel içerik cache'lenmez; yalnız public statik asset edge'e iner. Origin shield + signed URL ile yetkisiz origin erişimi ve hotlinking engellenir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -900,15 +885,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Asset URL'i build-time hash'le üretilir; runtime'da kernel API'sine dokunmaz."
        }
       ]
      },
@@ -926,15 +903,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Edge cache origin yükünü ve TTFB'yi düşürür; immutable header tekrar-indirmeyi sıfırlar. CDN olmadan modern frontend yavaştır."
        }
       ]
      },
@@ -1370,6 +1339,18 @@
     ]
    },
    {
+    "id": "block-fe-cdn-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Yeni build sonrası hash değişir, eski asset cache'ten düşmeden yeni sürüm servis edilir. PURGE sonrası edge taze içerik döner. Sağlayıcı config'i değişince (Cloudflare→Bunny) asset URL üretimi bozulmaz. Dinamik/PII içerik yanlışlıkla edge'e cache'lenmez."
+     }
+    ]
+   },
+   {
     "id": "block-fe-cdn-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1388,7 +1369,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — frontend dağıtım katmanı olarak; statik asset servisi kernel/backend'den bağımsız, ama deployment profile config'inden beslenir."
        }
       ]
      },
@@ -1397,16 +1378,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Kernel'e dokunmaz; CDN sağlayıcı seçimi ve cache politikası config ArcheType'ından (config-as-data) okunur."
        }
       ]
      },
@@ -1415,7 +1387,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Build pipeline (Vite hash) ve asset yükleme core deployment akışının parçası; secret/credentials core secret store'dan."
        }
       ]
      },
@@ -1424,7 +1396,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Module kodu CDN'i bilmez; yalnız asset URL'i alır. Sağlayıcı değişimi (Cloudflare↔Bunny) module'ü etkilemez."
        }
       ]
      },
@@ -1433,7 +1405,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "App frontend'leri aynı edge stratejisini paylaşır; tenant'a özel domain/cache kuralı config ile."
        }
       ]
      }
@@ -1446,13 +1418,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-fe-cdn-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-fe-cdn-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Public Surface app: statik asset + görsel edge'den servis edilir, ilk render hızlanır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Image-ağırlıklı app (e-ticaret/katalog): edge transform ile responsive görsel üretir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Build pipeline: hash-li filename üretir, immutable cache header'ı CDN'e verir."
+      }
+     ]
     ]
    },
    {

@@ -1,0 +1,26 @@
+{
+ "integration": {
+  "shouldIntegrate": "Export, sistemin çıkış kapısı bir Layer-1 primitive'i: müşterinin kendi verisini CSV/Excel/PDF/UBL-TR olarak güvenle dışarı alabilmesi için kernel + scale workers + dosya servisi üstüne oturur.",
+  "kernel": "Hangi ArcheType alanlarının export edilebileceği capability + permission engine'den türetilir; tenant-scope WHERE injeksiyonu export sorgusuna da uygulanır (başka tenant verisi sızmaz).",
+  "core": "Para alanları Decimal/Currency olarak (float değil) serialize edilir; bitemporal/audit alanları export'a dahil edildiğinde purpose-binding korunur.",
+  "modules": "Boyut sınıfına göre çalışır: <1K satır sync direct download, 1K–100K background job + S3, 100K+ chunk'lı S3 multipart; UBL-TR e-fatura ayrı GIB entegrasyonu.",
+  "apps": "App 'rapor hazırlanıyor' bildirimi gösterir; worker bitince presigned URL (1 saat) email link olarak iletilir — backend statik dosya servis etmez."
+ },
+ "ecaExample": "trigger:\n  event: export.requested\ncondition:\n  all:\n    - actor.capability >= \"resource:export\"\n    - row_estimate > 1000\n    - not tenant_quota_exceeded\naction:\n  - enqueue: export.worker.stream_csv\n  - emit: notification.export_ready\nguards:\n  max_depth: 6\n  idempotency_key: \"export:{tenant}:{query_hash}\"\n  external_effects: presigned_url_ttl=3600",
+ "securityNotes": [
+  "Export capability (resource:export) deny-by-default; export sorgusu tenant-scope WHERE + RLS ile sınırlanır, kullanıcının göremediği alan export'a giremez.",
+  "Presigned URL kısa ömürlü (1 saat) ve tek dosyaya kapsamlı; link sızsa bile süre dolunca erişim kapanır.",
+  "pii içeren export'lar audit'lenir (kim, ne zaman, hangi alanları aldı); purpose-binding ve retention kaydıyla işlenir.",
+  "Ağır export endpoint'i rate-limit'li (örn. 1/saat free tier) — kötüye kullanımla sistemin tüketilmesi engellenir."
+ ],
+ "perfNotes": {
+  "code": "CSV streaming (queryStream → csvFormatter → write stream) ile veri RAM'e alınmadan akıtılır; Excel için ExcelJS stream-write; 100K+ S3 multipart upload tek-istek timeout'unu aşmadan parça parça yükler.",
+  "perf": "Senkron 100K-satır export browser timeout'una yol açar; background job + worker + S3 + email link deseni zorunlu — kullanıcı isteği anında serbest bırakılır."
+ },
+ "testNotes": [
+  "Boyut-sınıfı testi: <1K sync, >1K background dallarının doğru seçildiği; 100K+ multipart'ın bütünlüğü.",
+  "Tenant izolasyon testi: bir tenant'ın export'unda başka tenant satırının asla görünmediği (RLS).",
+  "Para serileştirme testi: Currency/Decimal alanlarının kuruş kaybı olmadan CSV/XLSX'e yazıldığı.",
+  "Memory testi: 1M satır CSV streaming'de RAM tavanının aşılmadığı (akıtarak yazma)."
+ ]
+}

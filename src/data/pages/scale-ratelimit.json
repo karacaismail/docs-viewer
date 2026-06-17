@@ -926,15 +926,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Cloudflare/Nginx DDoS koruması tek başına yetmez — 'meşru' bir bot saatte 100K istek atabilir; uygulama içi rate limit + quota iki katmanlı koruma sağlar. Login endpoint'i sıkı limitli (5/dk) — credential stuffing / brute-force yavaşlatılır. Quota ve limitler tenant'lar arası izole (RLS + tenant-scope sayaç); bir tenant'ın aşımı diğerini etkilemez. Tenant-başına metrik + trace ile meşru yüksek trafik, yanlış-yapılandırma ve gerçek kötüye kullanım ayrıştırılır; token-rate circuit breaker + günlük maliyet bütçesi devreye girer. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -962,15 +954,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Token bucket varsayılan (O(1), burst için kovada birikmiş token); sliding window daha hassas ama her istekte hesap maliyetli — yalnız kritik endpoint'te. Redis atomik sayaç (INCR/EXPIRE) ile dağıtık-safe."
        }
       ]
      },
@@ -988,15 +972,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Sliding window pahalı; varsayılan token bucket sürekli yüksek yükte düşük overhead sağlar. Sayaç Redis'te tutulduğundan yatay ölçeklenen app instance'ları tutarlı limit görür."
        }
       ]
      },
@@ -1292,7 +1268,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Rate Limit + Quota",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Rate Limit + Quota\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: api.request.received\ncondition:\n  all:\n    - tenant.tier_quota.remaining > 0\n    - ip_bucket.tokens >= 1\n    - not endpoint_limit_exceeded\naction:\n  - consume: token_bucket(1)\n  - allow: request\nguards:\n  max_depth: 6\n  idempotency_key: \"ratelimit:{tenant}:{window}\"\n  external_effects: on_reject_emit_429_retry_after",
     "copyEnabled": true
    },
    {
@@ -1432,6 +1408,18 @@
     ]
    },
    {
+    "id": "block-scale-ratelimit-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Tier × limit matrisi testi: anonim/free/pro/enterprise saatlik + saniyelik burst + endpoint exception değerlerinin doğru uygulandığı. 429 sözleşme testi: aşımda Retry-After + X-RateLimit-* header'larının döndüğü ve client backoff'unun tetiklendiği. Tenant izolasyon testi: bir tenant kotayı doldurduğunda başka tenant'ın etkilenmediği. Burst testi: token bucket'ın kısa süreli yüksek isteği (burst) kabul edip sürekli aşımı reddettiği. Noisy-neighbor testi: 10.000 ArcheType üreten tenant'ın circuit breaker + kota ile sınırlandığı."
+     }
+    ]
+   },
+   {
     "id": "block-scale-ratelimit-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1450,7 +1438,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Rate limit + quota bir scale primitive'i ve adalet aracı: tek istemcinin (IP/kullanıcı/tenant) kapasiteyi tüketmesini engeller, iyi müşteriye hız garantisi verir; her public endpoint için zorunlu."
        }
       ]
      },
@@ -1459,16 +1447,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Tier bilgisi k-tenancy'den gelir; capability deny-by-default ile kota planı tenant'a bağlanır — bir tenant 10.000 ArcheType üretse bile noisy-neighbor izolasyonu plana göre tavanlanır."
        }
       ]
      },
@@ -1477,7 +1456,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Sayaçlar Redis'te tutulur; token bucket (varsayılan) burst izinli, sliding window kritik endpoint için hassas; quota money/billing tier'larıyla tutarlı (free/pro/enterprise)."
        }
       ]
      },
@@ -1486,7 +1465,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Üç katman: IP başına saniyelik tavan (Cloudflare/Nginx, DDoS), tenant başına saatlik kontingen (uygulama içi), endpoint başına özel limit (export 1/saat, login 5/dk)."
        }
       ]
      },
@@ -1495,7 +1474,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Limit aşımında 429 + Retry-After + X-RateLimit-Limit/Remaining/Reset header'ları döner; client SDK'lar otomatik backoff yapar."
        }
       ]
      }

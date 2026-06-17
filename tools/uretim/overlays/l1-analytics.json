@@ -1,0 +1,51 @@
+{
+ "featureDefs": [
+  {
+   "name": "Consent-gated iz toplama",
+   "desc": "Ziyaretçi rızası olmadan analytics/heatmap çalışmaz; tüm tracking KVKK consent kapısının arkasında.",
+   "critical": true
+  },
+  {
+   "name": "Network allowlist",
+   "desc": "Yalnız GA4/Plausible/Matomo gibi onaylı sağlayıcılara enjeksiyon; capability deny-by-default.",
+   "critical": true
+  },
+  {
+   "name": "UTM/Attribution yakalama",
+   "desc": "Kampanya parametresi yakalama + first/last/multi-touch modeli; lead s-crm'e beslenir."
+  },
+  {
+   "name": "Dönüşüm ölçümü",
+   "desc": "Dönüşüm olayı kaydı; paid media endpoint'lerine yalnız veri sağlar — reklam YÜRÜTMEZ."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "evet — ama dar bounded-context olarak: l1-seo render'dan ayrı, çünkü ziyaretçi pii sınırı + consent + network allowlist manifesti farklı.",
+  "kernel": "Schema (AnalyticsConfig ArcheType pii+consent bayraklı), Tenancy (RLS tenant-scoped), Authz (analytics capability).",
+  "core": "Audit (pii ürettiği için zorunlu izleme), i18n; rıza cc-privacy/cc-notification-consent crosscut'ta.",
+  "modules": "Etiket TAŞIMA l1-tagmanager'a, DENEY/A-B/MVT l1-experiment'e ayrıldı; bu çekirdek yalnız ölçüm/attribution sahibi.",
+  "apps": "Public Surface'li app'lerde aktif; lead → s-crm, konuşma → k-agent-runtime."
+ },
+ "moduleUsage": [
+  "s-crm: attribution modelinden gelen lead kaynağı ile fırsat zenginleştirme",
+  "s-product-feed: kampanya UTM ile ürün performans ölçümü",
+  "l1-aeo: AI referral attribution ölçümü için dönüşüm verisi sağlar"
+ ],
+ "ecaExample": "trigger:\n  event: page.viewed\ncondition:\n  all:\n    - visitor.consent.analytics == true\n    - provider in network_allowlist  # GA4|Plausible|Matomo\naction:\n  - capture: conversion_event\n  - attribute: { model: multi_touch }\nguards:\n  pii: true\n  retention: \"visitor_data: policy_bound\"\n  external_effects: consent_required",
+ "securityNotes": [
+  "Ziyaretçi verisi pii:true → retention politikası + audit zorunlu; bu modülde izole edilir.",
+  "Consent yoksa hiçbir iz toplanmaz (deny-by-default); rıza geri çekilince tracking durur.",
+  "Network allowlist: onaysız üçüncü-parti script enjeksiyonu engellenir (data exfiltration koruması).",
+  "Tenant-scoped RLS: analytics config ve event verisi tenant'a kapalı."
+ ],
+ "perfNotes": {
+  "code": "Script enjeksiyonu config ArcheType üzerinden; tracking client-side async, kernel iç API'sine dokunmaz.",
+  "perf": "Consent kapısı render'ı bloklamaz; iz toplama ana akış dışında."
+ },
+ "testNotes": [
+  "Rıza yokken analytics/heatmap script'i enjekte edilMEZ.",
+  "Allowlist dışı sağlayıcı reddedilir.",
+  "Rıza geri çekilince tracking durur + mevcut veri retention'a tabi.",
+  "Attribution: multi-touch modelde dönüşüm doğru kanala yazılır."
+ ]
+}

@@ -948,15 +948,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "İmzasız webhook = saldırı yüzeyi: HMAC-SHA256 (X-Webhook-Signature) zorunlu; customer signing secret ile gönderenin sen olduğunu doğrular. Replay koruması: X-Webhook-Timestamp 5 dk'dan eski istek reddedilir + X-Webhook-Id ile idempotency (aynı olay iki kez işlenmez). Payload pii içerebilir; yalnız abone olunan tenant'ın URL'ine gider, signing secret tenant-scoped ve rotate edilebilir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -984,15 +976,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Worker outbox'tan batch okur; 2xx alana kadar exponential backoff retry (1s→24saat), X-Webhook-Attempt header'ı debug için artar; 24 saat sonra DLQ + admin alert."
        }
       ]
      },
@@ -1010,15 +994,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Push polling'e göre 100x ucuz + 100x hızlı; yavaş/cevapsız abone tüm kuyruğu bloklamasın diye per-subscriber timeout + bağımsız retry; DLQ sonsuz retry'ı keser."
        }
       ]
      },
@@ -1314,7 +1290,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Outbound Webhook — dış sisteme olay yollama",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Outbound Webhook — dış sisteme olay yollama\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: order.created   # outbox'tan gelir\ncondition:\n  all:\n    - subscription.active\n    - timestamp_within: 5m   # replay penceresi\n    - not loop_detected\naction:\n  - webhook.post:\n      url: subscriber.url\n      headers: [X-Webhook-Id, X-Webhook-Timestamp, X-Webhook-Signature]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:webhook:{event_id}:{subscriber}\"\n  external_effects: hmac_signed_retry   # 1s,10s,1dk,10dk,1saat ... max 24s → DLQ",
     "copyEnabled": true
    },
    {
@@ -1454,6 +1430,18 @@
     ]
    },
    {
+    "id": "block-scale-webhook-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "HMAC: alıcı yanlış secret ile imzayı doğrulayamaz; doğru secret ile eşleşir. Replay: 5 dk eski timestamp veya tekrar gönderilen X-Webhook-Id reddedilir. Retry/DLQ: abone 5xx dönerken backoff uygulanır, 24 saat sonra DLQ'ya düşer + alert. Tenant izolasyonu: bir tenant'ın olayı başka tenant'ın webhook URL'ine gitmez."
+     }
+    ]
+   },
+   {
     "id": "block-scale-webhook-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1472,7 +1460,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — outbound webhook marketplace + entegrasyon ekosisteminin protokolüdür; scale-outbox'tan olay okuyup dış sisteme push eder, polling'in 100x maliyetini ve gecikmesini ortadan kaldırır. İlk public API ile birlikte sunulmazsa sonradan eklemek 5x iş."
        }
       ]
      },
@@ -1481,16 +1469,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Webhook worker bağımsız bir özellik değil, kernel olay akışının dış-dünya kenarıdır; 'order.created' gibi olaylar kernel event-bus → outbox üzerinden gelir, worker yalnız iletim + imza + retry'dan sorumludur."
        }
       ]
      },
@@ -1499,7 +1478,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Customer'ın webhook URL kaydı, abone olunan olay tipleri ve signing secret core ayar şemasında tutulur; gönderim geçmişi + status core audit/observability'ye bağlanır."
        }
       ]
      },
@@ -1508,7 +1487,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Her module olayını outbox'a yazar; webhook worker tüm module'lerin olaylarını tek noktadan dışa iletir, module'ler HTTP/HMAC ayrıntısını bilmez (Contract sınırı)."
        }
       ]
      },
@@ -1517,7 +1496,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Marketplace/entegrasyon app'leri (kargo, banka, ERP) webhook ile 'sipariş oluştu/ödendi/teslim' olaylarını proaktif alır; customer-facing UI'da URL formu, test-webhook butonu ve geçmiş gönderimler gösterilir."
        }
       ]
      }
@@ -1530,13 +1509,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-scale-webhook-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-scale-webhook-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "scale-outbox: webhook worker event'i buradan okur (dual-write tutarlılığı, kayıpsız)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "cc-obs: gönderim başarı/başarısızlık metriği ve DLQ doluluğu buraya akar."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "cc-security: signing secret rotasyonu ve HMAC doğrulama dokümanı buraya bağlı."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-marketing / marketplace app: customer kendi URL'ine sipariş/ödeme olaylarını abone eder."
+      }
+     ]
     ]
    },
    {

@@ -661,7 +661,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Inbound Webhook — dış sistemden gelen olay alma — çekirdek yetenek",
+      "term": "HMAC imza doğrulama (her zaman)",
       "definition": [
        {
         "type": "strong",
@@ -669,41 +669,42 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "X-Stripe-Signature header'ı secret ile karşılaştırılır; imzasız webhook = saldırı yüzeyi, deny-by-default. stripe.webhooks.constructEvent."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Event ID idempotency",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "event.id webhook_events tablosuna INSERT ON CONFLICT DO NOTHING; conflict = duplicate, yine 200 dön. Stripe at-least-once teslim eder."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Replay koruması (timestamp)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "5 dk'dan eski istek reddedilir; saldırgan eski webhook'u kaydedip tekrar gönderemez."
+       }
+      ]
+     },
+     {
+      "term": "Hızlı 2xx + queue devri",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Handler asıl işi yapmaz; event'i queue'ya (BullMQ/DBOS) atıp <100ms'de 200 döner. 5sn aşarsa sağlayıcı retry yapar — çift iş riski idempotency ile kapanır."
        }
       ]
      }
@@ -891,15 +892,16 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
+      "text": "İmza doğrulamadan kabul = vahim: sahte payment.succeeded enjekte edilebilir; HMAC zorunlu (deny-by-default). "
      },
      {
-      "type": "code",
-      "text": "pii"
+      "type": "term",
+      "text": "Replay attack",
+      "termId": "term-replay-attack-l1-webhook-in"
      },
      {
       "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": ": timestamp >5dk eski istek reddedilir; dashboard'tan manuel 'tekrar gönder' ise idempotency ile tek kez işlenir. Secret tenant/sağlayıcı bazlı saklanır; log'a payload imzası veya secret yazılmaz. Idempotency kaydı tenant-scoped; cross-tenant event sızıntısı yok. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -927,15 +929,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Sıralı pipeline: HMAC verify (<5ms) → timestamp (<1ms) → idempotency INSERT (<10ms) → queue push (<5ms) → respond 200; worker async (saniyeler)."
        }
       ]
      },
@@ -953,15 +947,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Toplam handler bütçesi <100ms; aşılırsa Stripe retry → gereksiz yük. Asıl iş queue'ya devredilerek p95 düşük tutulur."
        }
       ]
      },
@@ -1257,7 +1243,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Inbound Webhook — dış sistemden gelen olay alma",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Inbound Webhook — dış sistemden gelen olay alma\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: http.webhook_received\n  source: stripe\ncondition:\n  all:\n    - hmac_valid(payload, X-Stripe-Signature, secret) == true\n    - timestamp_age < 5m                 # replay reddi\n    - not exists(webhook_events, event.id) # INSERT ON CONFLICT DO NOTHING\naction:\n  - persist: webhook_events(event.id)\n  - enqueue: process_event              # asıl iş worker'da\n  - respond: 200                        # <100ms\nguards:\n  max_depth: 6\n  idempotency_key: \"webhook:{provider}:{event.id}\"\n  external_effects: none_in_handler",
     "copyEnabled": true
    },
    {
@@ -1397,6 +1383,18 @@
     ]
    },
    {
+    "id": "block-l1-webhook-in-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Geçersiz imzalı webhook reddedilir (deny path). 5dk'dan eski timestamp reddedilir (replay testi). Aynı event.id ikinci kez gelince tek kayıt + tek işlem (idempotency); yine 200. Handler 100ms içinde 200 döner; asıl iş worker'da koşar. Komşu-tenant event'i başka tenant akışını tetiklemez."
+     }
+    ]
+   },
+   {
     "id": "block-l1-webhook-in-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1415,7 +1413,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — her module kendi inbound endpoint'ini güvenliksiz açarsa imza/idempotency/replay tutarsız olur; tek doğrulama hattı saldırı yüzeyini kapatır."
        }
       ]
      },
@@ -1424,16 +1422,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Event Bus (doğrulanmış event topic'e yayılır), Audit (gelen webhook + doğrulama sonucu izi), Identity (tenant bağlamı routing)."
        }
       ]
      },
@@ -1442,7 +1431,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Idempotency store (webhook_events tablosu), Settings (sağlayıcı secret'ları), queue altyapısı; outbox/worker deseni ile asenkron işlenir."
        }
       ]
      },
@@ -1451,7 +1440,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "s-payment-methods, s-commerce vb. dış sağlayıcı event'lerini bu primitive üzerinden tüketir; kendi HMAC kodunu yazmaz."
        }
       ]
      },
@@ -1460,7 +1449,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Ödeme/izleme app'leri Stripe/Sentry/GitHub event'lerini tek /webhooks/<provider> kapısından alır; worker asıl iş akışını yürütür."
        }
       ]
      }
@@ -1473,13 +1462,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-l1-webhook-in-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-l1-webhook-in-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-payment-methods: payment.succeeded webhook'u → HMAC doğrula → idempotent kayıt → sipariş 'paid' event'i queue'ya."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "scale-webhook / scale-workers-deep: queue + retry + async worker fan-out'u sağlar; bu primitive 200'ü hızlı döner."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "cc-security: imza/replay invariantlarını ortak güvenlik kontrol listesine bağlar."
+      }
+     ]
     ]
    },
    {

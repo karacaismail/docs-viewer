@@ -1407,7 +1407,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Compliance Matrisi — KVKK, GDPR, CCPA, LGPD, PCI-DSS + Sanctions + DSAR — çekirdek yetenek",
+      "term": "Çok-yargı resolver (en sıkı uygulanır)",
       "definition": [
        {
         "type": "strong",
@@ -1415,41 +1415,51 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Aynı kullanıcı KVKK + GDPR + PCI-DSS gibi birden çok kanuna tabi olabilir; resolver kuralları birleştirir ve en sıkısını uygular. Jurisdiction × kural seti config-as-data."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Erasure çatışması: sil-vs-sakla",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Kişisel veri anonimleştirilir (hash/mask), finansal kayıt (fatura/vergi/sözleşme) 10 yıl tutulur. KVKK silme hakkı + VUK saklama yükümlülüğü aynı anda karşılanır; tam silme yasal değil."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Sanctions screening (pre-check)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "OFAC/EU/UN/MASAK eşleşmesi = işlem otomatik blok + uyum sorumlusu bildirim, her şeyden önce. Refinitiv API veya OFAC direct download + nightly sync."
+       }
+      ]
+     },
+     {
+      "term": "DSAR pipeline",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Trigger → user_id ile ~30 tablo SELECT → Stripe + SendGrid export → ZIP + presigned URL. n8n workflow ile otomatik veri sahibi erişim talebi karşılanır."
+       }
+      ]
+     },
+     {
+      "term": "Anonymization fonksiyonu",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kişisel kolonları hash/mask eder, finansal tabloya dokunmaz; retention sonrası geri-döndürülemez."
        }
       ]
      }
@@ -1637,15 +1647,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Sanctions eşleşmesi her şeyin önünde: işlem bloke + uyum sorumlusu bildirimi, otomatik geçiş yok. Tam silme uygulanmaz — finansal kayıt korunur, yalnız kişisel veri anonimleştirilir (yasal çatışma çözümü). DSAR export presigned URL süre-sınırlı; PII içeren ZIP yetkisiz erişime kapalı, audit'li. Çok-yargı çakışmasında deny-by-default: belirsizse en sıkı kural, veri residency region dışına çıkmaz. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1673,15 +1675,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Resolver config-as-data; yeni yargı/kural kod değişmeden eklenir. Sanctions list nightly sync, işlem anında lokal lookup."
        }
       ]
      },
@@ -1699,15 +1693,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Sanctions pre-check işlem akışında senkron (blok kararı için); DSAR toplama asenkron worker'da, ana akışı bloklamaz."
        }
       ]
      },
@@ -2003,7 +1989,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Compliance Matrisi — KVKK, GDPR, CCPA, LGPD, PCI-DSS + Sanctions + DSAR",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Compliance Matrisi — KVKK, GDPR, CCPA, LGPD, PCI-DSS + Sanctions + DSAR\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: data_subject.erasure_requested\ncondition:\n  all:\n    - actor.capability >= \"compliance.erase\"\n    - sanctions_precheck == clear\n    - not loop_detected\naction:\n  - anonymize: [pii_columns]            # hash/mask\n  - retain: [invoice, tax_doc, contract]  # 10y VUK\n  - emit: dsar.erasure_completed\nguards:\n  pii: true\n  retention: \"financial: 10y; personal: anonymized\"\n  external_effects: compliance_officer_review",
     "copyEnabled": true
    },
    {
@@ -2143,6 +2129,18 @@
     ]
    },
    {
+    "id": "block-cc-compliance-matrix-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "KVKK + GDPR + PCI-DSS birlikte tabi kullanıcıda en sıkı retention/consent uygulanır. Erasure sonrası fatura tablosu durur, kişisel kolonlar hash'lenir (geri-okunamaz). OFAC listesindeki taraf için işlem bloke + bildirim üretir. DSAR export tüm ilgili tabloları + dış sağlayıcı verisini eksiksiz toplar. Veri residency: AB kullanıcısı verisi bölge dışına yazılamaz."
+     }
+    ]
+   },
+   {
     "id": "block-cc-compliance-matrix-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -2161,7 +2159,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — crosscut katmanı olarak tüm PII/finansal veri üreten module'leri keser; her erasure/işlem akışı bu resolver'dan geçmek zorunda."
        }
       ]
      },
@@ -2170,16 +2168,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Tenancy (RLS), Authz (compliance capability) ve config ArcheType (jurisdiction × kural) kernel'den; veri residency region kuralı schema seviyesinde."
        }
       ]
      },
@@ -2188,7 +2177,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Audit zorunlu (PII + sanctions + DSAR tüm kararlar iz bırakır); bitemporal saklama core kontratı — silme değil anonymize."
        }
       ]
      },
@@ -2197,7 +2186,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "PII/finans üreten her module (CRM, Billing, Order, Identity) bu resolver'a tabidir; erasure isteği module'e değil resolver'a gider."
        }
       ]
      },
@@ -2206,7 +2195,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Tüm app'ler ortak compliance config'i paylaşır; tenant'ın bulunduğu yargı bölgesine göre kural seti aktive olur."
        }
       ]
      }
@@ -2219,13 +2208,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-cc-compliance-matrix-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-cc-compliance-matrix-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Identity/CRM: erasure talebinde kişisel alanı anonymize, finansal bağı korur."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Billing/Order: fatura 10 yıl tutulur, ilişkili kullanıcı anonimleştirilir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Payment: işlem öncesi sanctions pre-check; eşleşme blok + bildirim."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "DSAR servisi: çok-tabloyu user_id ile toplar, dış sağlayıcı (Stripe/SendGrid) export'unu ekler."
+      }
+     ]
     ]
    },
    {

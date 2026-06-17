@@ -1,0 +1,55 @@
+{
+ "featureDefs": [
+  {
+   "name": "Locale / Translation / TranslationKey ArcheType'ları",
+   "desc": "BCP-47 locale; anahtar-bazlı çeviri kayıtları; her çeviri bitemporal + audit (kim, ne zaman, hangi sürüm).",
+   "critical": true
+  },
+  {
+   "name": "Para birimi + FX bağı",
+   "desc": "Çoklu para birimi sunumu; tutarlar Money (Decimal, float yasak); FX kuru ayrı module'den okunur — i18n yalnız SUNAR, kur otoritesi değildir.",
+   "critical": true
+  },
+  {
+   "name": "Pluralizasyon + biçimleme (tarih/sayı/ad)",
+   "desc": "ICU MessageFormat çoğul kuralları; locale-aware tarih/sayı/ad biçimleme; metin uzaması (UI taşması) için kapasite."
+  },
+  {
+   "name": "Çeviri iş akışı (taslak → onay → yayın)",
+   "desc": "Eksik/onaysız çeviri yayınlanamaz; fallback zinciri (locale → ana dil → anahtar); yayın geri-alınabilir sürüm."
+  },
+  {
+   "name": "İçe/dışa aktarım (PO/XLIFF/CSV)",
+   "desc": "Dış çeviri ekipleriyle değişim; içe-aktarımda anahtar eşleme + kirli-veri doğrulaması."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — tüm app'ler aynı çeviri kaynağı ve locale çözümünü paylaşmalı; her app kendi sözlüğünü tutarsa terim tutarsızlığı ve eksik dil kaçınılmaz. i18n çeviri otoritesidir, FX otoritesi değil.",
+  "kernel": "ArcheType engine ile çeviri şeması; tenancy (RLS) tenant'a özel sözlüğü kapatır; audit çeviri değişimini izler; Event Bus translation.published yayar.",
+  "core": "App core'una bağlı bir Domain (Büyük Taş); core sözleşmeleri değişmez. Para sunumu Money (Decimal); pii yok.",
+  "modules": "FX & Ledger module kur sağlar (i18n tüketir); Search module çok-dilli indeks; her stack çeviri anahtarını Contract üzerinden çözer.",
+  "apps": "Storefront, admin, PIM, CMS aynı çeviri kaynağı + locale çözümünü tüketir; her uygulama kendi mini-sözlüğünü tutmaz."
+ },
+ "moduleUsage": [
+  "s-pim: ürün öznitelik değerlerinin çok-dilli çevirisini i18n anahtarlarıyla çözer.",
+  "stack-cms: içerik sayfalarının locale varyantını i18n fallback zinciriyle render eder.",
+  "cc-fx-ledger: para birimi kuru i18n'in sunum katmanına okunur (kur otoritesi FX'tedir).",
+  "fe-core-ui: arayüz metinleri i18n anahtarlarından locale-aware render edilir."
+ ],
+ "ecaExample": "trigger:\n  event: translation.completeness_changed\n  when: \"locale_coverage >= threshold AND tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"i18n.publish\"\n    - not loop_detected\n    - not missing_required_keys(locale)\naction:\n  - emit: i18n.translation_published   # outbox, idempotent\n  - notify: [\"i18n-surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{locale}:{namespace}:publish\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Tenant-scoped (RLS): tenant'a özel sözlük/çeviri başka tenant'a sızmaz; komşu-tenant anahtar sorgusu sıfır döner.",
+  "Capability deny-by-default: çeviri yayını ve anahtar silme ayrı yetki; onaysız çeviri yayınlanamaz.",
+  "Çeviri içe-aktarımında enjeksiyon/HTML kaçışı (UI render'da XSS riskine karşı) + toplu kirli-veri taraması; para sunumu Money, float yasak."
+ ],
+ "perfNotes": {
+  "code": "Yayınlanan çeviri seti locale başına materialize/cache edilir; her render'da anahtar sorgusu cehennemi yok. Fallback zinciri deterministik.",
+  "perf": "Çeviri anahtarı listeleri keyset (cursor) pagination; (locale, namespace) indeksleri; eksik-anahtar raporu projection'dan."
+ },
+ "testNotes": [
+  "Fallback: hedef locale'de eksik anahtar ana dile düşer, anahtar adı sızmaz.",
+  "Para sunumu: tutar Decimal; yuvarlama/locale ayracı doğru, float kullanılmaz.",
+  "Komşu-tenant sözlük sorgusu sıfır döndürür.",
+  "Yayın idempotency: aynı locale/namespace tekrar yayında çift i18n.translation_published üretmez."
+ ]
+}

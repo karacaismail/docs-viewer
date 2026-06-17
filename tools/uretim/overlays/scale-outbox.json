@@ -1,0 +1,31 @@
+{
+ "integration": {
+  "shouldIntegrate": "Evet — outbox bağımsız bir özellik değil, save pipeline'a örülü bir scale primitive'idir; çıkarılırsa her aggregate write'ta dual-write tutarsızlığı (DB yazıldı, olay kayboldu) geri döner.",
+  "kernel": "ArcheType save pipeline'ı aynı DB transaction'ında hem aggregate satırını hem outbox satırını yazar; module geliştirici outbox kodu yazmaz, her write otomatik outbox-aware olur.",
+  "core": "Outbox tablosu tenant_id + aggregate_type/aggregate_id + payload jsonb + status taşır; partitioning (monthly declarative partition) ve retention politikası core depolama disiplinine bağlıdır.",
+  "modules": "ChangeSet apply ve ECA'nın dış etkileri (bildirim kuyruğu, arama indeksi, public yayın) outbox üzerinden iletilir; module'ler olayı doğrudan publish etmez, outbox'a yazıp Contract sınırında kalır.",
+  "apps": "scale-webhook relay, search indexer ve l1-notification worker'ları aynı outbox'ı tüketir (FOR UPDATE SKIP LOCKED); olay kaybı veya çift yayın olmadan tüm app'lere yayılır."
+ },
+ "moduleUsage": [
+  "scale-webhook: outbox'tan event okuyup dış URL'e HMAC-imzalı POST eder (at-least-once + idempotency).",
+  "layer1-workflow: 'yeni kayıt → arama indeksine ekle / public ise yayın kuyruğu' ECA'sını outbox üstünden çalıştırır.",
+  "search indexer: published outbox satırlarından arama dokümanını asenkron günceller.",
+  "Tüm module'ler: aggregate write'ta save pipeline outbox satırını otomatik üretir; ek kod gerekmez."
+ ],
+ "ecaExample": "trigger:\n  event: order.created\ncondition:\n  all:\n    - actor.capability >= \"order.write\"\n    - tenant_scoped\n    - not loop_detected\naction:\n  - outbox.append: order.created   # aggregate write ile AYNI transaction\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:order:{order_id}:created\"\n  external_effects: relayed_async   # commit sonrası relay worker iletir",
+ "securityNotes": [
+  "Outbox payload'ı pii içerebilir; tenant_id zorunlu ve RLS ile filtrelenir, relay worker komşu-tenant satırını okuyamaz.",
+  "Relay'in dış publish'i en-az-bir-kez (at-least-once) olduğundan tüketici idempotency_key ile çift işlemeyi engellemeli.",
+  "Failed satırlar 30 gün sonra DLQ + alert; sonsuz retry yerine insan incelemesi (attack/poison-message koruması)."
+ ],
+ "perfNotes": {
+  "code": "Relay sorgusu `outbox_pending_idx (status, next_retry_at) WHERE status='pending'` kısmi indeksi + FOR UPDATE SKIP LOCKED ile contention'sız paralel worker; retry exponential backoff (min(60·2^attempts, 3600)).",
+  "perf": "Outbox tablosu hızla büyür (2B satıra ulaşan fintech örneği); published satırlar 7 gün sonra archive table'a, monthly partition + Debezium logical replication ile relay yükü DB'den ayrılır."
+ },
+ "testNotes": [
+  "Dual-write testi: relay/publish başarısızken aggregate write commit oldu mu — outbox satırı 'pending' kalmalı, olay kaybolmamalı.",
+  "Idempotency: aynı outbox satırı iki kez publish edilse tüketici tek kez işler (idempotency_key).",
+  "SKIP LOCKED: iki paralel relay aynı pending satırı çift almaz.",
+  "Komşu-tenant relay worker'ı başka tenant'ın outbox satırını okuyamaz (RLS)."
+ ]
+}

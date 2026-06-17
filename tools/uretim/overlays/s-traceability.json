@@ -1,0 +1,57 @@
+{
+ "featureDefs": [
+  {
+   "name": "Lot / Seri (Batch/Serial) ArcheType'ları",
+   "desc": "Ürün partisi ve tekil seri numarası izi; hibrit şema + JSONB (üretim/SKT alanları) + FK ile sevkiyat/stok hareketine bağlı.",
+   "critical": true
+  },
+  {
+   "name": "İleri/geri izleme (recall)",
+   "desc": "Bir lot'tan etkilenen tüm alt-sevkiyatlar ve müşteriler (forward), bir üründen kaynak lot'lar (backward); geri çağırma tek sorguda kapsam çıkarır.",
+   "critical": true
+  },
+  {
+   "name": "Soğuk zincir izleme",
+   "desc": "Sıcaklık/koşul telemetrisi lot'a iliştirilir; eşik ihlali olay olarak yayılır (timeseries).",
+   "critical": true
+  },
+  {
+   "name": "Chain-of-custody",
+   "desc": "Her el değiştirme (tedarikçi → depo → şube → müşteri) zaman damgalı, denetlenebilir kayıt."
+  },
+  {
+   "name": "Recall workflow",
+   "desc": "Geri çağırma kararı → etkilenen lot kapsamı → bildirim → iade/imha onay zinciri."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Traceability bağımsız satılabilir bir Layer-2 ürün ama lot izini stok/sevkiyat olaylarından türetir; tedarik ve envanter module'lerinden Contract ile beslenmeli, izolasyonda anlamı kalmaz.",
+  "kernel": "Party/tenancy (RLS), audit, event-bus kernel'den; Traceability kendi ArcheType şemasını tanımlar.",
+  "core": "Bitemporal (lot geçmişi as-of), timeseries (soğuk zincir telemetrisi), i18n; core sözleşmelerine uyar.",
+  "modules": "Inventory/WMS'ten stok hareketi, Procurement'tan giriş lot'u, sevkiyat module'ünden çıkış izini tüketir — yalnız Contract.",
+  "apps": "Supply-chain suite içinde aynı ürün/lot kimliğini paylaşır; recall app'i bildirim module'ünü etkinleştirir."
+ },
+ "moduleUsage": [
+  "s-inventory / s-wms: stok hareketi lot/seri kimliğiyle eşlenir, izleme zinciri buradan beslenir.",
+  "s-procurement: tedarikçi girişinde lot oluşur (kaynak izi).",
+  "Bildirim module'ü: recall kapsamındaki müşterilere izinli kanaldan uyarı (forward trace çıktısı)."
+ ],
+ "ecaExample": "trigger:\n  event: traceability.recall_initiated\ncondition:\n  all:\n    - actor.capability >= \"trace.recall\"\n    - lot.id is not null\n    - not loop_detected\naction:\n  - resolve: forward_scope(lot)     # etkilenen sevkiyat+müşteri\n  - emit: recall.scope_ready        # idempotent\n  - notify: affected_customers       # izinli kanal\nguards:\n  max_depth: 6\n  idempotency_key: \"recall:{tenant}:{lot}\"\n  external_effects: approval_required",
+ "securityNotes": [
+  "Lot/müşteri eşlemesi pii içerebilir (alıcı kimliği) → pii=true + retention; RLS tenant-scoped.",
+  "Recall kapsamı capability'li (trace.recall) deny-by-default; geri çağırma kararı audit'e yazılır.",
+  "Soğuk zincir eşik ihlali olayı değiştirilemez (immutable) kayıt; chain-of-custody silinmez.",
+  "Bitemporal: lot geçmişi as-of okunur, düzeltme yeni sürüm yaratır — denetim izi korunur."
+ ],
+ "perfNotes": {
+  "code": "Forward/backward trace graf gezinmesi; telemetri ingest asenkron worker.",
+  "perf": "Lot listeleri keyset pagination; izleme graf sorgusu FK index + JSONB GIN; soğuk zincir timeseries partition + downsample."
+ },
+ "testNotes": [
+  "Komşu-tenant lot/sevkiyat sorgusu sıfır döndürür (RLS).",
+  "Forward trace: bir lot'tan etkilenen tüm müşteriler eksiksiz çıkar (recall kapsamı).",
+  "Backward trace: bir üründen kaynak lot'lara ulaşılır.",
+  "Soğuk zincir eşik ihlali olay yayar ve değiştirilemez kaydedilir.",
+  "Recall onay zinciri tamamlanmadan iade/imha tetiklenmez (deny path)."
+ ]
+}

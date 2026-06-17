@@ -686,7 +686,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "SSO + Federation — kurumsal kimlik girişi — çekirdek yetenek",
+      "term": "OAuth 2.0 / OIDC akışı",
       "definition": [
        {
         "type": "strong",
@@ -694,41 +694,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Bireysel ve pre-revenue giriş; Google/Microsoft/Apple IdP'leri; JWT + refresh token rotation."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "SAML 2.0 federasyonu",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Enterprise satış kilidini açan XML tabanlı kurumsal SSO; Okta/Entra IdP'leri; e-posta domain'ine göre IdP yönlendirme."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "MFA katmanı",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "TOTP minimum; WebAuthn/passkey hedef; SMS yasak (SIM swap). İkinci faktör step-up olarak tetiklenir."
+       }
+      ]
+     },
+     {
+      "term": "Passkey / WebAuthn",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Parolasız, phishing'e bağışık kriptografik anahtar; modern hedef."
        }
       ]
      }
@@ -916,15 +913,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "SMS MFA YASAK (SIM swap); TOTP minimum, WebAuthn/passkey tercih — phishing'e bağışık. SAML assertion imza + audience + replay (NotOnOrAfter) doğrulaması zorunlu; imzasız assertion reddedilir (deny-by-default). JWT kısa ömürlü + refresh token rotation; çalınan refresh token tek kullanımda iptal (reuse detection). IdP federasyonunda just-in-time provisioning capability deny-by-default; rol token claim'inden otomatik yükseltilmez. OIDC state/nonce + PKCE zorunlu; authorization code interception'a karşı. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -978,15 +967,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "IdP metadata + JWKS public key cache (uzun TTL + rotation-aware invalidation); imza doğrulama hot path'te ağ çağrısı yapmaz. Session lookup keyset değil tek-anahtar (token jti) lookup; Redis session store."
        }
       ]
      },
@@ -1282,7 +1263,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — SSO + Federation — kurumsal kimlik girişi",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — SSO + Federation — kurumsal kimlik girişi\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: auth.high_risk_action_requested\n  when: \"action in ['export_data','change_payout'] AND tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"identity.authenticated\"\n    - not loop_detected\n    - session.mfa_level < required_level\naction:\n  - emit: auth.step_up_challenge   # WebAuthn/TOTP, outbox\n  - audit: [\"identity-trail\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{session}:stepup\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1422,6 +1403,18 @@
     ]
    },
    {
+    "id": "block-k-sso-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Imzasız/süresi geçmiş SAML assertion reddedilir. Yanlış audience'a kesilmiş assertion tüketilmez (cross-tenant assertion sızıntısı engellenir). Refresh token ikinci kez kullanılınca tüm oturum iptal edilir (reuse detection). Yüksek riskli aksiyon MFA seviyesi yetersizse step-up challenge tetikler, doğrudan geçmez. IdP-provisioned kullanıcı varsayılan minimum capability ile açılır, admin değil."
+     }
+    ]
+   },
+   {
     "id": "block-k-sso-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1440,7 +1433,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — kimlik kernel'in çekirdek sözleşmesi; SSO/federation k-identity ile zorunlu olarak iç içe; tüm app'ler oturumu Contract üzerinden tüketir."
        }
       ]
      },
@@ -1449,16 +1442,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Session/Token/Impersonation/2FA kernel'de; SSO IdP federasyonu kimliği kernel Party'sine eşler (just-in-time provisioning); RLS tenant-scope IdP eşlemesinden türer."
        }
       ]
      },
@@ -1467,7 +1451,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "App core'u oturumu yalnız doğrulanmış token üzerinden okur; IdP detayını bilmez — core sözleşmesi protokolden bağımsız."
        }
       ]
      },
@@ -1476,7 +1460,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Authorization module (k-authz) capability'leri token claim'lerinden değil kendi modelinden okur; SSO yalnız kimliği taşır, yetkiyi taşımaz."
        }
       ]
      },
@@ -1485,7 +1469,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Tek SSO oturumu tüm app'lere geçerli; işten çıkışta tek IdP iptali tüm app'lerden düşürür (build-enterprise tek-iptal vaadi)."
        }
       ]
      }
@@ -1498,13 +1482,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-k-sso-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-k-sso-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Enterprise app: SAML IdP zorunlu; tenant'a pinli IdP konfigürasyonu; SP-initiated + IdP-initiated akış."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Pre-revenue app: OIDC (Clerk/WorkOS) ile hızlı giriş; sonradan SAML'a yükseltme kontratı bozmadan."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Mobile app: WebAuthn passkey + secure storage'da refresh token; biyometrik step-up."
+      }
+     ]
     ]
    },
    {

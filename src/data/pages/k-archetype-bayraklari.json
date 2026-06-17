@@ -746,15 +746,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "pii alan crypto-shredding ile silinir: 'beni unutun' deyince şifre-anahtarı imha edilir, veri matematiksel okunamaz olur, kayıt iskeleti denetim için kalır (be-kararlar E9). PII matrisi: özel nitelikli (TC/sağlık/inanç) listede gizli, detayda maskeli+yetki+audit, public'te yasak; 'göster' eylemi audit'e yazılır. Açık rıza/aydınlatma public form akışında zorunlu; retention yasal minimum silmeyi (VUK) ve mahremiyet maksimumu tutmayı (KVKK) birlikte zorlar. audit:true append-only olduğundan sonradan değiştirme/silme teknik olarak engellenir (tamper-evidence). Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -782,15 +774,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Davranış kernel'de bir kez yazıldığından her ArcheType save'inde aynı (test edilmiş) yol çalışır; bitemporal iki zaman kolonu + audit append-only tablo, pii maskeleme log katmanında tek noktadan uygulanır."
        }
       ]
      },
@@ -808,15 +792,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Bayrak başına davranış merkezi olduğundan 70 app'te kod tekrarı/kayması yok; audit append-only yazma sıcak yolu şişirmesin diye asenkron/batch yazılabilir, retention takvimi büyüyen tabloları partition+purge ile sınırlar."
        }
       ]
      },
@@ -1112,7 +1088,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — ArcheType Bayrakları — Zaman ve Veri Yaşamı",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — ArcheType Bayrakları — Zaman ve Veri Yaşamı\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: archetype.field.save\n  when: field.flags contains any [pii, bitemporal, audit]\ncondition:\n  all:\n    - actor.capability >= \"archetype.write\"\n    - tenant_scoped\n    - not loop_detected\naction:\n  - if pii: mask_in_logs + bind_to_erasure_right\n  - if bitemporal: stamp(valid_at, recorded_at)\n  - if audit: append_only_diff\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{archetype}:{record}:{version}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -1252,6 +1228,18 @@
     ]
    },
    {
+    "id": "block-k-archetype-bayraklari-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "bitemporal: geçmişe dönük zam girildiğinde valid_at ≠ recorded_at ayrı durur, eski rapor değişmez. pii: maskeleme listede/detayda/public'te matris kuralına uyar; 'göster' audit kaydı üretir. retention: süre dolan kayıt silinir, yasal alt sınır içindeki kayıt silinemez (iki yönlü kontrol). audit: kayıt değiştirme denemesinde önceki diff append-only olarak korunur, üzerine yazılamaz. crypto-shredding: unutulma hakkı sonrası alan okunamaz, kayıt iskeleti denetim için durur."
+     }
+    ]
+   },
+   {
     "id": "block-k-archetype-bayraklari-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1270,7 +1258,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — bayraklar (bitemporal/pii/retention/audit/translatable) bağımsız özellik değil, ArcheType tanımının davranış işaretleridir; eskiden 70 app'te 70 ekibin tek tek kod yazarak hatırladığı disiplin, kernel'de bir kez doğru yazılıp beyanla satın alınır."
        }
       ]
      },
@@ -1279,16 +1267,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Bayrak ArcheType tanımındaki alan üstünde bir bit/değerdir; davranış (maskele, logla, sakla, iki tarih tut) kernel'de bir kez uygulanır. Disiplin ölçeklenmez, bayrak ölçeklenir — jr-öncesi geliştiricinin ve AI'ın hata alanını sıfıra indirir."
        }
       ]
      },
@@ -1297,7 +1276,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "pii tek bit değil bir sınıflandırma matrisidir (özel nitelikli/iletişim/finansal/davranışsal/kamuya açık); her sınıf liste/detay/public davranışı + silme rejimi taşır. retention yasal alt sınır (VUK) ile mahremiyet üst sınırını (KVKK) takvimle uzlaştırır."
        }
       ]
      },
@@ -1306,7 +1285,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Her module ArcheType alanına bayrağı beyan eder; kod yazmaz. bitemporal alan iki tarihi (valid/recorded) otomatik tutar, audit alan diff'i append-only kayda düşürür, pii alan loglarda maskelenir ve unutulma hakkına bağlanır."
        }
       ]
      },
@@ -1315,7 +1294,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Surface'ler bayrağı okur: pii alan listede gizli/maskeli, public'te yasak; 'göster' eylemi audit'e yazılır. Vibecoding'de AI 'logla/maskele/sakla' kodunu her seferinde yeniden (ve yanlış) üretmek yerine bayrağı koyar."
        }
       ]
      }
@@ -1328,13 +1307,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-k-archetype-bayraklari-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-k-archetype-bayraklari-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "İK module: maaş alanına bitemporal:true — geçmişe dönük zam iki tarih ayrı durarak girilir, muhasebe şaşmaz."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Kimlik/müşteri module: TCKN alanına pii:true + retention:10y — maskele + unutulma hakkı + VUK alt sınırı."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Tüm module'ler: audit:true ile her save'de alan diff'i append-only audit'e düşer ('kayıt oynandı' iddiası imkânsız)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Çok-dilli içerik module: translatable bayrağı çeviri altyapısını tanımdan kurar."
+      }
+     ]
     ]
    },
    {

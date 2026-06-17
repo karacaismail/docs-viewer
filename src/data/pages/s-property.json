@@ -431,7 +431,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Real Estate / Asset Mgmt — çekirdek yetenek",
+      "term": "Listing ArcheType (parsel/ilan)",
       "definition": [
        {
         "type": "strong",
@@ -439,41 +439,42 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "arsam.net çekirdeği: parsel ilanı; tapu/parsel bilgisi, EİDS entegrasyonu, fiyat/konum. classifieds + property hibrit, saf e-ticaret değil."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Lead ArcheType",
       "definition": [
        {
         "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
-       },
-       {
-        "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "İlanla ilgilenen taraf; emlakçıya yönlendirme (lead-gen marketplace); iletişim consent + pii."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Membership + Promotion",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Emlakçı üyelik paketi + ilan doping; gelir komisyondan değil ilan ücreti + doping + üyelik + EİDS data servisinden."
+       }
+      ]
+     },
+     {
+      "term": "TR mevzuat entegrasyonu",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "GİB e-Fatura, SGK, EİDS, KVKK baştan içeride; yurt dışı muadil (AppFolio) boşluğu — 1. sınıf yerelleştirme."
        }
       ]
      }
@@ -661,15 +662,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Lead iletişim verisi (telefon/e-posta) pii + retention; KVKK consent kapısı pazarlama/yönlendirme kullanımına; RLS tenant-scoped. İlan ücreti/üyelik money; ödeme/iade idempotent; çift tahsilat engellenir. EİDS/tapu verisi hassas; erişim capability deny-by-default + audit. İlan yayın yetkisi aktif üyelik + capability'ye bağlı; süresi dolmuş paketle yayın engellenir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -723,15 +716,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "İlan liste/arama uçları keyset (cursor) pagination; konum+kategori+fiyat indeksleri; doping sıralaması ve EİDS senkron asenkron worker; harita/konum sorgusu coğrafi indeks."
        }
       ]
      },
@@ -1027,7 +1012,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Real Estate / Asset Mgmt",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Real Estate / Asset Mgmt\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: listing.published\n  when: \"membership.active AND tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"listing.publish\"\n    - not loop_detected\naction:\n  - emit: billing.charge_listing_fee   # outbox, idempotent\n  - emit: search.index_listing\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{listing}:publish\"\n  external_effects: payment_required",
     "copyEnabled": true
    },
    {
@@ -1167,6 +1152,18 @@
     ]
    },
    {
+    "id": "block-s-property-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Komşu-tenant Listing/Lead sorgusu sıfır döndürür. Süresi dolmuş üyelikle ilan yayınlanamaz. Aynı ilan yayını ikinci kez ücret tahakkuk ettiremez (idempotency). Consent kapalı Lead emlakçıya pazarlama amaçlı yönlendirilmez. GİB e-Fatura kesimi başarısızsa ödeme tamamlanmış sayılmaz (mutabakat)."
+     }
+    ]
+   },
+   {
     "id": "block-s-property-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1185,7 +1182,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Layer-2 vertical SaaS; kendi Listing/Lead ArcheType'larını tanımlar ama yetki/audit/event-bus/tenancy framework'ten alır; classifieds çekirdeğiyle (s-classifieds) ve TR uyum (cc-tr) ile zorunlu."
        }
       ]
      },
@@ -1194,16 +1191,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Party (emlakçı/sakin), tenancy (RLS), audit ve ArcheType engine kernel'den; Property kendi şemasını engine ile tanımlar, otomatik REST/GraphQL alır."
        }
       ]
      },
@@ -1212,7 +1200,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "App core sözleşmelerine uyar; core module değişmez, Property bir vertical Domain olarak oturur."
        }
       ]
      },
@@ -1221,7 +1209,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Billing module ilan ücreti/üyelik faturasını üretir; classifieds (s-classifieds) Listing/Promotion/Lead deseni; EİDS data servisi dış sağlayıcı (services); yalnız Contract."
        }
       ]
      },
@@ -1230,7 +1218,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Classifieds, billing, audit app'leri aynı Party + Listing'i paylaşır; emlakçı tek Party — çift kayıt yok."
        }
       ]
      }
@@ -1243,13 +1231,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-property-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-property-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Billing app: ilan ücreti + doping + üyelik için GİB e-Fatura kesimi (cc-tr); abonelik yenileme."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Audit app (s-audit): yönetici/işlem kayıtları delil; KVKK veri export endpoint."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Classifieds (s-classifieds): Listing yayın/yenileme + Lead yönlendirme + doping sıralaması bu vertical'a hizmet eder."
+      }
+     ]
     ]
    },
    {

@@ -1,0 +1,52 @@
+{
+ "featureDefs": [
+  {
+   "name": "OAuth 2.0 / OIDC akışı",
+   "desc": "Bireysel ve pre-revenue giriş; Google/Microsoft/Apple IdP'leri; JWT + refresh token rotation.",
+   "critical": true
+  },
+  {
+   "name": "SAML 2.0 federasyonu",
+   "desc": "Enterprise satış kilidini açan XML tabanlı kurumsal SSO; Okta/Entra IdP'leri; e-posta domain'ine göre IdP yönlendirme.",
+   "critical": true
+  },
+  {
+   "name": "MFA katmanı",
+   "desc": "TOTP minimum; WebAuthn/passkey hedef; SMS yasak (SIM swap). İkinci faktör step-up olarak tetiklenir."
+  },
+  {
+   "name": "Passkey / WebAuthn",
+   "desc": "Parolasız, phishing'e bağışık kriptografik anahtar; modern hedef."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — kimlik kernel'in çekirdek sözleşmesi; SSO/federation k-identity ile zorunlu olarak iç içe; tüm app'ler oturumu Contract üzerinden tüketir.",
+  "kernel": "Session/Token/Impersonation/2FA kernel'de; SSO IdP federasyonu kimliği kernel Party'sine eşler (just-in-time provisioning); RLS tenant-scope IdP eşlemesinden türer.",
+  "core": "App core'u oturumu yalnız doğrulanmış token üzerinden okur; IdP detayını bilmez — core sözleşmesi protokolden bağımsız.",
+  "modules": "Authorization module (k-authz) capability'leri token claim'lerinden değil kendi modelinden okur; SSO yalnız kimliği taşır, yetkiyi taşımaz.",
+  "apps": "Tek SSO oturumu tüm app'lere geçerli; işten çıkışta tek IdP iptali tüm app'lerden düşürür (build-enterprise tek-iptal vaadi)."
+ },
+ "moduleUsage": [
+  "Enterprise app: SAML IdP zorunlu; tenant'a pinli IdP konfigürasyonu; SP-initiated + IdP-initiated akış.",
+  "Pre-revenue app: OIDC (Clerk/WorkOS) ile hızlı giriş; sonradan SAML'a yükseltme kontratı bozmadan.",
+  "Mobile app: WebAuthn passkey + secure storage'da refresh token; biyometrik step-up."
+ ],
+ "ecaExample": "trigger:\n  event: auth.high_risk_action_requested\n  when: \"action in ['export_data','change_payout'] AND tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"identity.authenticated\"\n    - not loop_detected\n    - session.mfa_level < required_level\naction:\n  - emit: auth.step_up_challenge   # WebAuthn/TOTP, outbox\n  - audit: [\"identity-trail\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{session}:stepup\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "SMS MFA YASAK (SIM swap); TOTP minimum, WebAuthn/passkey tercih — phishing'e bağışık.",
+  "SAML assertion imza + audience + replay (NotOnOrAfter) doğrulaması zorunlu; imzasız assertion reddedilir (deny-by-default).",
+  "JWT kısa ömürlü + refresh token rotation; çalınan refresh token tek kullanımda iptal (reuse detection).",
+  "IdP federasyonunda just-in-time provisioning capability deny-by-default; rol token claim'inden otomatik yükseltilmez.",
+  "OIDC state/nonce + PKCE zorunlu; authorization code interception'a karşı."
+ ],
+ "perfNotes": {
+  "perf": "IdP metadata + JWKS public key cache (uzun TTL + rotation-aware invalidation); imza doğrulama hot path'te ağ çağrısı yapmaz. Session lookup keyset değil tek-anahtar (token jti) lookup; Redis session store."
+ },
+ "testNotes": [
+  "Imzasız/süresi geçmiş SAML assertion reddedilir.",
+  "Yanlış audience'a kesilmiş assertion tüketilmez (cross-tenant assertion sızıntısı engellenir).",
+  "Refresh token ikinci kez kullanılınca tüm oturum iptal edilir (reuse detection).",
+  "Yüksek riskli aksiyon MFA seviyesi yetersizse step-up challenge tetikler, doğrudan geçmez.",
+  "IdP-provisioned kullanıcı varsayılan minimum capability ile açılır, admin değil."
+ ]
+}

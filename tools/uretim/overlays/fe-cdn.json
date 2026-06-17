@@ -1,0 +1,49 @@
+{
+ "featureDefs": [
+  {
+   "name": "Edge dağıtım + hash-based versioning",
+   "desc": "Vite build hash'li dosya adı üretir; max-age=31536000 immutable ile sürüm çakışması olmadan agresif cache. Manuel PURGE son çare.",
+   "critical": true
+  },
+  {
+   "name": "CDN seçim matrisi",
+   "desc": "Cloudflare (free tier startup'a yeter, R2 var, image Polish paid), Bunny (ucuz + Optimizer), Fastly ($$$), CloudFront (Lambda@Edge). Sağlayıcı config-as-data ile seçilir."
+  },
+  {
+   "name": "Edge image transform",
+   "desc": "Görsel S3'e yüklenir, CDN edge'de resize/format dönüşümü yapılır; origin yükü azalır."
+  },
+  {
+   "name": "Cache invalidation stratejisi",
+   "desc": "Hash-based versioning çoğu invalidation'ı çözer; PURGE yalnız acil düzeltmede."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — frontend dağıtım katmanı olarak; statik asset servisi kernel/backend'den bağımsız, ama deployment profile config'inden beslenir.",
+  "kernel": "Kernel'e dokunmaz; CDN sağlayıcı seçimi ve cache politikası config ArcheType'ından (config-as-data) okunur.",
+  "core": "Build pipeline (Vite hash) ve asset yükleme core deployment akışının parçası; secret/credentials core secret store'dan.",
+  "modules": "Module kodu CDN'i bilmez; yalnız asset URL'i alır. Sağlayıcı değişimi (Cloudflare↔Bunny) module'ü etkilemez.",
+  "apps": "App frontend'leri aynı edge stratejisini paylaşır; tenant'a özel domain/cache kuralı config ile."
+ },
+ "moduleUsage": [
+  "Public Surface app: statik asset + görsel edge'den servis edilir, ilk render hızlanır.",
+  "Image-ağırlıklı app (e-ticaret/katalog): edge transform ile responsive görsel üretir.",
+  "Build pipeline: hash-li filename üretir, immutable cache header'ı CDN'e verir."
+ ],
+ "securityNotes": [
+  "CDN credentials secret store'da; build/deploy dışında koda gömülmez.",
+  "Immutable cache yalnız hash'li (sürümlü) asset'lere; sürümsüz/dinamik içerik cache'lenmez (stale veri riski).",
+  "Edge'de PII/özel içerik cache'lenmez; yalnız public statik asset edge'e iner.",
+  "Origin shield + signed URL ile yetkisiz origin erişimi ve hotlinking engellenir."
+ ],
+ "perfNotes": {
+  "code": "Asset URL'i build-time hash'le üretilir; runtime'da kernel API'sine dokunmaz.",
+  "perf": "Edge cache origin yükünü ve TTFB'yi düşürür; immutable header tekrar-indirmeyi sıfırlar. CDN olmadan modern frontend yavaştır."
+ },
+ "testNotes": [
+  "Yeni build sonrası hash değişir, eski asset cache'ten düşmeden yeni sürüm servis edilir.",
+  "PURGE sonrası edge taze içerik döner.",
+  "Sağlayıcı config'i değişince (Cloudflare→Bunny) asset URL üretimi bozulmaz.",
+  "Dinamik/PII içerik yanlışlıkla edge'e cache'lenmez."
+ ]
+}

@@ -1,0 +1,65 @@
+{
+ "featureDefs": [
+  {
+   "name": "tenant_id day-1 zorunluluğu",
+   "desc": "Her finansal/iş satırında tenant_id NOT NULL; retrofit yasak — sonradan eklemek tüm tablo rebuild + cross-tenant sızıntı penceresi demektir.",
+   "critical": true
+  },
+  {
+   "name": "İki seviyeli tenancy (office + company)",
+   "desc": "Muhasebe deseni: tenant_id = mali müşavir bürosu (faturalama/login), company_id = mükellef (defter/beyanname); RLS her iki seviyeyi de kontrol eder.",
+   "critical": true
+  },
+  {
+   "name": "Tenant resolver middleware",
+   "desc": "Host header → custom domain / subdomain / path-based çözümleme; çözülen tenant transaction'da SET LOCAL app.tenant_id ile kurulur.",
+   "critical": true
+  },
+  {
+   "name": "Membership (User↔Tenant many-to-many)",
+   "desc": "Bir user birden çok tenant'a üye (workspace switcher); (user_id, tenant_id, role) ile modellenir — Tenant ≠ User.",
+   "critical": false
+  },
+  {
+   "name": "Tenant Lifecycle state machine",
+   "desc": "provisioning → active → suspended → archived → deleted; her provisioning adımı (reserve→create_schema→seed→finalize) rollback_token üretir.",
+   "critical": false
+  },
+  {
+   "name": "Quota + Configuration Profile",
+   "desc": "users/storage_gb/api_calls/llm_tokens/agents soft-warning + hard-limit; brand/logo/locale (tr-TR/en-US/de-DE)/timezone tenant'a pinli.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — tenancy kernel primitive'i; her Domain ve App bu yüzeyi MİRAS alır, kendi izolasyonunu yeniden icat edemez. tenant_id taşımayan tek bir tablo bile sistemik sızıntı kapısıdır.",
+  "kernel": "Identity (membership ile user↔tenant), Authz (tenant-scoped capability), Audit (admin/support tenant switch izi) ve Schema engine (tenant_id kolonu otomatik) ile zorunlu birleşir.",
+  "core": "App core'u tenant context'i Request Context içinde taşır; core module tenant_id'siz kayıt üretemez — sözleşme seviyesinde garanti.",
+  "modules": "Her Domain (Kaya) sorgularını tenant_id ile filtreler; iki seviyeli senaryoda company_id ikinci eksen olarak eklenir; modüller arası olay yalnız Contract + outbox.",
+  "apps": "Notion/Slack workspace, Shopify store, HRMS company, Muhasebe büro+mükellef — tüm App'ler aynı tenant primitive'ini farklı isimle (workspace/store/company) paketler; tek panel cross-tenant değil."
+ },
+ "moduleUsage": [
+  "Shopify (e-ticaret): tenant_id = store_id; her merchant kendi custom domain + tema + customer DB'sine sahip, host header → tenant lookup.",
+  "Muhasebe: iki seviyeli — tenant = büro, sub-tenant = mükellef; konsolide rapor için company_id eksende.",
+  "HRMS: tenant = company; Türk + Alman şirket aynı tabloda tenant_id ile izole.",
+  "LMS: tenant = okul; 500 okul tek kod tabanı, her okul kendi tenant kartında."
+ ],
+ "ecaExample": "trigger:\n  event: tenant.provisioning_requested\ncondition:\n  all:\n    - actor.capability >= \"platform.tenant.create\"\n    - not loop_detected\naction:\n  - step: reserve            # rollback_token üretir\n  - step: create_schema      # pg_schema veya shared+tenant_id\n  - step: seed\n  - step: finalize\n  - emit: tenant.activated   # outbox, idempotent\nguards:\n  max_depth: 6\n  idempotency_key: \"provision:{tenant_id}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Bağlam sızıntısı (en kritik): PgBouncer transaction mode'da bağlantı paylaşılır; SET (session) kullanırsan bir sonraki transaction senin tenant'ını miras alır → çapraz-tenant sızıntı. YALNIZ SET LOCAL (transaction bitince geri alınır).",
+  "Deny-by-default: bağlam hiç kurulmazsa sorgu sıfır satır döner — güvenli varsayılan; background job + MCP tool çağrısında RLS context açıkça enjekte edilir.",
+  "Migration yolu: app_migrator rolü BYPASSRLS yalnız migration sırasında, migration loglarıyla auditlenir; başka yerde BYPASSRLS yok.",
+  "Admin/support tenant switch ayrı capability + audit kaydı ister (legal_hold suspension reason dahil); KVKK Madde 7 tenant deletion legal_hold_check zorunlu.",
+  "İki seviyeli senaryoda RLS policy hem tenant_id hem company_id'yi kontrol etmezse büro tüm mükellefleri karıştırır."
+ ],
+ "perfNotes": {
+  "code": "Her finansal kayıtta (tenant_id, company_id) bileşik indeks; SET LOCAL transaction scope, session değil.",
+  "perf": "LandX hedefi: provisioning p95 <60sn, isolation breach 0, schema switch overhead p99 <2ms. Sharding hazırlığı: her query tenant_id ile filtreliyse pod routing future-day infra meselesi, kod değişikliği değil (Shopify Black Friday 80K req/s shop_id pod sharding)."
+ },
+ "testNotes": [
+  "Tenant A↔B sızıntısı her query pattern'inde negatif test: search / filter / sort / export / aggregate — istisnasız sıfır satır.",
+  "Bağlam kurulmadan çalışan sorgu sıfır satır döndürmeli (deny-by-default doğrulaması).",
+  "İki seviyeli: büro A'nın kullanıcısı büro B'nin mükellefini göremez; aynı büroda mükellef X mükellef Y defterini göremez.",
+  "PgBouncer transaction mode'da ardışık iki istek bağlamı miras almamalı (SET LOCAL regresyon testi)."
+ ]
+}

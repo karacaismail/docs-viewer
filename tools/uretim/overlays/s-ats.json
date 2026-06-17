@@ -1,0 +1,51 @@
+{
+ "featureDefs": [
+  {
+   "name": "Candidate / Job / Application / Stage ArcheType'ları",
+   "desc": "Party'den türeyen aday + ilan + başvuru varlıkları; hibrit şema + JSONB değişken alan; her başvuru audit'li, pii=true.",
+   "critical": true
+  },
+  {
+   "name": "Hiring Pipeline Workflow",
+   "desc": "Başvuru aşama durum makinesi (screen → interview → offer → hired/rejected); tenant'a pinli, ArcheType'tan bağımsız versiyonlanır; her geçiş onay+audit."
+  },
+  {
+   "name": "CV parsing (AI)",
+   "desc": "Özgeçmişten yapılandırılmış alan çıkarımı; karar değil ÖNERİ; çıkarılan veri pii + saklama politikası; güven kalibrasyonu zorunlu.",
+   "critical": true
+  },
+  {
+   "name": "Aday-ilan eşleştirme (AI)",
+   "desc": "İlan gereksinimi ile aday profili benzerlik skoru; ÖNERİ olarak gösterilir, eleme kararını insan verir; ayrımcılık/önyargı denetimi gerekli."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — HR/Payroll/Onboarding aynı Party + Candidate'i paylaşmalı; ATS kendi adayını tutarsa işe alımdan bordroya kopuk veri doğar. Layer-2 SaaS; kernel + scale + L1 üstüne oturur.",
+  "kernel": "Party kimliği, tenancy (RLS) ve audit kernel'den; ATS kendi tablo şemasını ArcheType engine ile tanımlar; Event Bus işe-alım olaylarını yayar.",
+  "core": "App core'una bağlı bir Domain (Büyük Taş); core sözleşmeleri değişmez. Aday verisi pii=true + retention + consent; Money (teklif ücreti) Decimal.",
+  "modules": "HR 'aday hired' olayını alır → çalışan kaydı açar; Comms/Mail module'ünü tüketir (aday iletişimi); Calendar module'ü ile mülakat planlar — yalnız Contract.",
+  "apps": "HR, Onboarding ve Payroll app'leri aynı Party + Candidate'i paylaşır; işe alınan aday çift kayıt olmadan çalışana dönüşür."
+ },
+ "moduleUsage": [
+  "HR app: 'hired' olayından çalışan kaydı türetir; aday geçmişini özgeçmiş arşivine bağlar.",
+  "Onboarding app: kabul edilen adayın oryantasyon akışını başlatır.",
+  "Payroll app: teklif ücretini (Money) işe alım sonrası bordro girişine taşır.",
+  "Comms module: aday bildirimlerini consent kapısıyla gönderir (dış-etkili → allowlist'li akış)."
+ ],
+ "ecaExample": "trigger:\n  event: application.stage_changed\n  when: \"to == 'hired' AND tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"ats.write\"\n    - not loop_detected\naction:\n  - emit: hr.employee_provision_requested  # outbox, idempotent\n  - notify: [\"hr-surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{application}:hired\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Aday/özgeçmiş verisi pii=true (+retention + consent); RLS tenant-scoped; komşu tenant aday havuzu görünmez.",
+  "CV upload'ta enjeksiyon, kötücül dosya ve toplu PII sızıntısına karşı doğrulama + hız limiti; çıkarılan alanlar maskelenebilir.",
+  "AI eşleştirme skoru karar değil öneri; ayrımcılık/önyargı denetimi + insan-onayı kapısı; eleme kararı audit'lenir."
+ ],
+ "perfNotes": {
+  "code": "Birincil alanlar fiziksel kolon (+index/FK); değişken aday alanları JSONB üstünde GIN index; arama tam-metin index'iyle sınırlı.",
+  "perf": "Aday/başvuru listeleri keyset (cursor) pagination; aşama + ilan + sahip index'leri; CV parsing ve eşleştirme asenkron worker."
+ },
+ "testNotes": [
+  "Komşu-tenant Candidate sorgusu sıfır döndürür (RLS + permission injection).",
+  "Aynı başvuru ikinci kez 'hired' yapamaz; HR provisioning idempotency key ile tek tetiklenir.",
+  "Consent kapalı aday iletişim akışına girmez.",
+  "CV parsing golden: aynı özgeçmiş deterministik aynı yapılandırılmış çıktıyı verir; pii alanları audit'lenir."
+ ]
+}

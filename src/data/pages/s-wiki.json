@@ -352,7 +352,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Wiki / Knowledge Base — çekirdek yetenek",
+      "term": "Space / Page / Block ArcheType'ları",
       "definition": [
        {
         "type": "strong",
@@ -360,41 +360,51 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Hiyerarşik bilgi tabanı; sayfa ağacı + blok içerik; hibrit şema + JSONB (zengin içerik düğümleri) + FK ile space/parent bağı."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Sürümleme + geçmiş",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Her sayfa düzenlemesi sürüm; diff/restore; bitemporal — 'şu tarihte sayfa neydi' okunur."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Tam-metin arama + izin-farkında",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "İçerik aranır ama sadece kullanıcının capability'sinin yettiği space/sayfa döner (deny-by-default)."
+       }
+      ]
+     },
+     {
+      "term": "Yorum + birlikte düzenleme",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Sayfa içi yorum, @bahsetme; eşzamanlı düzenleme çakışma çözümü."
+       }
+      ]
+     },
+     {
+      "term": "İzin modeli (space/sayfa)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Space ve sayfa seviyesinde okuma/yazma capability; iç bilgi tabanı dışarı sızmaz."
        }
       ]
      }
@@ -582,15 +592,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "İzin-farkında arama zorunlu: kullanıcının capability'si yetmediği space/sayfa arama sonucunda dönmez (sızıntı yok). Space/sayfa capability deny-by-default; RLS ile içerik ve ekler tenant-scoped. İçerik render'ında XSS/markup injection escape; kullanıcı girdisi güvenli düğümlere sınırlandırılır. Sürüm geçmişi silinmez (bitemporal); audit kim neyi ne zaman düzenledi izini tutar. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -618,15 +620,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Sayfa ağacı lazy yüklenir; arama indexlemesi asenkron worker."
        }
       ]
      },
@@ -644,15 +638,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Sayfa/sürüm listeleri keyset pagination; içerik JSONB GIN + tam-metin index; büyük space ağacı sayfalanır."
        }
       ]
      },
@@ -948,7 +934,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Wiki / Knowledge Base",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Wiki / Knowledge Base\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: wiki.page_updated\ncondition:\n  all:\n    - actor.capability >= \"wiki.write\"\n    - actor in page.space.members\n    - not duplicate_within(\"5m\")\naction:\n  - emit: wiki.version_created      # idempotent, diff saklanır\n  - notify: page.watchers           # @mention + izleyenler\nguards:\n  max_depth: 6\n  idempotency_key: \"wiki:{tenant}:{page}:{revision}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -1088,6 +1074,18 @@
     ]
    },
    {
+    "id": "block-s-wiki-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Komşu-tenant sayfa/space sorgusu sıfır döndürür (RLS). İzin-farkında arama: yetkisiz space içeriği sonuçlarda görünmez (deny path). Sürüm: düzenleme yeni revision yaratır, eski sürüm diff/restore ile erişilir. Eşzamanlı düzenleme çakışması veri kaybı olmadan çözülür. @bahsetme yalnız space üyesine bildirim üretir."
+     }
+    ]
+   },
+   {
     "id": "block-s-wiki-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1106,7 +1104,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Wiki bağımsız bir Layer-2 ürün (Confluence/Notion muadili) ama kimlik/yetki/arama altyapısını kendi yazmamalı; kernel ve core arama/bildirim ile Contract üzerinden entegre olmalı."
        }
       ]
      },
@@ -1115,16 +1113,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Party/tenancy (RLS), authz (space/sayfa capability), audit, event-bus kernel'den; Wiki kendi ArcheType şemasını tanımlar."
        }
       ]
      },
@@ -1133,7 +1122,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Search (tam-metin, izin-farkında), File/storage (ek/görsel), i18n (locale içerik), bitemporal (sürüm); core sözleşmelerine uyar."
        }
       ]
      },
@@ -1142,7 +1131,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Bildirim module'ünü etkinleştirir (sayfa değişimi/@bahsetme); başka module'lere içerik referansı yayar — yalnız Contract."
        }
       ]
      },
@@ -1151,7 +1140,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Content-collaboration suite içinde aynı Party + space kimliğini paylaşır; tek panelden erişilir."
        }
       ]
      }
@@ -1164,13 +1153,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-wiki-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-wiki-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Bildirim module'ü: sayfa değişikliği / @bahsetme → ilgili kullanıcıya in-app + email digest."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Search core: izin-farkında tam-metin sorgusu yalnız yetkili space sonuçlarını döndürür."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "File core: sayfa ekleri (görsel/dosya) tenant-scoped storage'da tutulur."
+      }
+     ]
     ]
    },
    {

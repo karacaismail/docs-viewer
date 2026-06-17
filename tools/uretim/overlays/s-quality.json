@@ -1,0 +1,51 @@
+{
+ "featureDefs": [
+  {
+   "name": "İnspeksiyon planı + örnekleme",
+   "desc": "Gelen mal/üretim/sevkiyat noktalarında inspection ArcheType'ı; AQL örnekleme planı, geç/kal/reddet kararı.",
+   "critical": true
+  },
+  {
+   "name": "Reddetme (NCR) akışı",
+   "desc": "Uygunsuzluk kaydı → karantina → karar (iade/rework/scrap); reddedilen lot stoktan izole edilir.",
+   "critical": true
+  },
+  {
+   "name": "Corrective action (CAPA)",
+   "desc": "Düzeltici/önleyici faaliyet workflow'u: kök neden → aksiyon → doğrulama → kapanış, son tarih takipli."
+  },
+  {
+   "name": "Traceability bağı",
+   "desc": "Lot/seri bazlı kalite geçmişi; bir lotun tüm inspection + NCR kayıtları izlenebilir."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "evet — Layer-2 SaaS ürünü; Kernel+Scale+Layer-1 üstüne oturur, kendi QC/QA ArcheType'larını tanımlar, yetki/audit/event-bus framework'ten gelir.",
+  "kernel": "Schema (Inspection/NonConformance/CorrectiveAction ArcheType'ları), Authz (denetçi/kalite müdürü capability), Event Bus.",
+  "core": "Workflow (CAPA süreç akışı), Audit (kalite delili — denetim zinciri), File (foto/rapor eki), Notification (SLA hatırlatma).",
+  "modules": "s-inventory (karantina/lot izolasyonu), s-mrp (üretim ara-kontrol), s-traceability (lot geçmişi), s-purchase (tedarikçi gelen-kalite).",
+  "apps": "Kalite app + tedarikçi/üretim arayüzü."
+ },
+ "moduleUsage": [
+  "s-purchase: gelen mal inspection geçmezse satınalma iade/red event'i tetiklenir",
+  "s-mrp: üretim sırası ara-kontrol başarısızsa iş emri durdurulur (hold)",
+  "s-traceability: NCR'lı lot tüm sevkiyat zincirinde geri izlenir"
+ ],
+ "ecaExample": "trigger:\n  event: inspection.recorded\ncondition:\n  all:\n    - inspector.capability >= \"quality.inspect\"\n    - result == \"reject\"\naction:\n  - emit: inventory.lot_quarantined\n  - open: corrective_action  # CAPA workflow\n  - notify: quality_manager\nguards:\n  idempotency_key: \"ncr:{lot_id}:{inspection_id}\"\n  external_effects: lot_hold\n  audit: true",
+ "securityNotes": [
+  "Audit zorunlu: inspection sonucu, NCR kararı, CAPA kapanışı değiştirilemez delil zinciri (denetim/sertifika için).",
+  "Capability: denetçi kayıt girer, ama lot serbest bırakma/CAPA kapatma kalite müdürü yetkisi (deny-by-default).",
+  "Tenant-scoped RLS: kalite kayıtları tenant'a kapalı; tedarikçi yalnız kendi gelen-kalitesini görür.",
+  "Reddedilen lot fiziksel/mantıksal karantinada; yetkisiz serbest bırakma engellenir."
+ ],
+ "perfNotes": {
+  "code": "Inspection event bus üzerinden stok karantina + CAPA açılışını asenkron tetikler; kalite geçmişi lot bazlı keyset pagination.",
+  "perf": "İnspeksiyon kaydı işlem akışını bloklamaz; CAPA SLA hatırlatmaları zamanlı worker ile."
+ },
+ "testNotes": [
+  "Reddedilen lot otomatik karantinaya alınır + serbest stoktan izole.",
+  "CAPA SLA aşımında eskalasyon bildirimi tetiklenir.",
+  "Yetkisiz denetçi lot serbest bırakamaz / CAPA kapatamaz (capability deny).",
+  "Lot traceability: bir NCR kaydı ilgili tüm sevkiyat/üretim kayıtlarına bağlanır."
+ ]
+}

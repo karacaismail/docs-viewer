@@ -1,0 +1,52 @@
+{
+ "featureDefs": [
+  {
+   "name": "Tenant başına app aktivasyonu",
+   "desc": "App aç/kapa entitlement düzleminden okunur (be-kararlar E1) — kod dağıtımı değil yetki kaydı.",
+   "critical": true
+  },
+  {
+   "name": "Edition-tabanlı entitlement",
+   "desc": "Hangi tenant hangi app'in hangi Edition'ında: yetki + kota + UI özellik bayrakları tek kaynaktan türer.",
+   "critical": true
+  },
+  {
+   "name": "Çok-ürün lisanslama",
+   "desc": "Suite paket fiyatlama, koltuk havuzu app'ler arası paylaşımlı; metering olayları (E8) faturaya akar."
+  },
+  {
+   "name": "Tek kimlik / tek iptal",
+   "desc": "k-sso federasyonu tüm app'lere tek oturum; işten çıkış tek iptalle tüm app'lerden düşürür.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Build Sırası'nın (5 stage) üstüne oturan 6. faz; 'tüm app'ler tek panelden, varsayılan entegre' kernel vaadini operasyon disiplinine çevirir. Aynı Party CRM'de müşteri, ERP'de cari, Comms'ta kişi — entegrasyon burada kanıtlanır.",
+  "kernel": "Paylaşımlı Party + tenancy (RLS) kernel'den; entitlement düzlemi aktivasyonu yetki kaydı olarak tutar — kod deploy'u değil; tek-iptal kernel kimlik iptalini tüm app'lere yayar.",
+  "core": "Core app sözleşmesi değişmez; entitlement core'a app-aktif mi sorusunu yetki kaydından cevaplatır.",
+  "modules": "k-sso (federasyon, tek oturum), s-billing (suite fatura, metering→fatura), entitlement (E1) module'leri birlikte; rejim matrisi (E9) uyum raporu; yalnız Contract.",
+  "apps": "Salesforce-clone + Workday-clone + DocuSign-clone tek sözleşme/kimlik/faturayla; iki app'in tek panelde paylaşımlı Party + tek faturayla gerçek müşteride çalışması = çıkış kriteri."
+ },
+ "moduleUsage": [
+  "k-sso: tek SSO oturumu tüm app'lere; tek iptal tüm app'lerden düşürür (deprovisioning).",
+  "s-billing: suite paket fiyat + koltuk havuzu + metering (E8) olayları faturaya; Edition gelir hattı (sus-lisans) burada ölçülür.",
+  "Entitlement (be-kararlar E1): app aktivasyonu + kota + UI özellik bayrağı tek kaynaktan; Edition'dan beslenir."
+ ],
+ "ecaExample": "trigger:\n  event: employee.offboarded\n  when: \"tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"tenant.admin\"\n    - not loop_detected\naction:\n  - emit: identity.revoke_all_apps   # tek iptal, tüm app, outbox\n  - emit: entitlement.seat_released   # koltuk havuzuna iade\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{employee}:offboard\"\n  external_effects: none",
+ "securityNotes": [
+  "App aktivasyonu entitlement düzleminden okunur; yetki kaydı yoksa app erişimi deny-by-default — kod dağıtımı yetki yerine geçmez.",
+  "Tek-iptal kritik: işten çıkış tek aksiyonla tüm app'lerden düşürmeli; bir app'te artık oturum kalması yetki sızıntısı.",
+  "Paylaşımlı Party tüm app'lerde aynı; tenant RLS sınırı korunur — bir app'in verisi diğer tenant'a sızmaz.",
+  "Metering olayları (E8) faturaya akarken idempotent; çift sayım = yanlış fatura.",
+  "Uyum raporları (E9 rejim matrisi) tenant-bazlı; çapraz-tenant rapor sızıntısı engellenir."
+ ],
+ "perfNotes": {
+  "perf": "Entitlement lookup hot path (her app girişinde) — tenant+app+edition cache (kısa TTL + aktivasyon değişiminde invalidation); kota panosu sorguları keyset; metering olayları batch agregasyon (gerçek-zaman fatura satırı değil)."
+ },
+ "testNotes": [
+  "Entitlement kaydı olmayan tenant app'i açamaz (aktivasyon = yetki, deploy değil).",
+  "Offboarding tek aksiyonla tüm app'lerden oturum düşürür; hiçbir app'te artık erişim kalmaz.",
+  "Aynı Party iki app'te tek kayıt; tenant RLS sınırında komşu tenant verisi görünmez.",
+  "Metering olayı çift işlenmez (idempotency) — fatura satırı bir kez."
+ ]
+}

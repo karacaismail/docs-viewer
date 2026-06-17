@@ -304,7 +304,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Traceability — çekirdek yetenek",
+      "term": "Lot / Seri (Batch/Serial) ArcheType'ları",
       "definition": [
        {
         "type": "strong",
@@ -312,41 +312,51 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Ürün partisi ve tekil seri numarası izi; hibrit şema + JSONB (üretim/SKT alanları) + FK ile sevkiyat/stok hareketine bağlı."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "İleri/geri izleme (recall)",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Bir lot'tan etkilenen tüm alt-sevkiyatlar ve müşteriler (forward), bir üründen kaynak lot'lar (backward); geri çağırma tek sorguda kapsam çıkarır."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Soğuk zincir izleme",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Sıcaklık/koşul telemetrisi lot'a iliştirilir; eşik ihlali olay olarak yayılır (timeseries)."
+       }
+      ]
+     },
+     {
+      "term": "Chain-of-custody",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Her el değiştirme (tedarikçi → depo → şube → müşteri) zaman damgalı, denetlenebilir kayıt."
+       }
+      ]
+     },
+     {
+      "term": "Recall workflow",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geri çağırma kararı → etkilenen lot kapsamı → bildirim → iade/imha onay zinciri."
        }
       ]
      }
@@ -534,15 +544,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Lot/müşteri eşlemesi pii içerebilir (alıcı kimliği) → pii=true + retention; RLS tenant-scoped. Recall kapsamı capability'li (trace.recall) deny-by-default; geri çağırma kararı audit'e yazılır. Soğuk zincir eşik ihlali olayı değiştirilemez (immutable) kayıt; chain-of-custody silinmez. Bitemporal: lot geçmişi as-of okunur, düzeltme yeni sürüm yaratır — denetim izi korunur. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -570,15 +572,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Forward/backward trace graf gezinmesi; telemetri ingest asenkron worker."
        }
       ]
      },
@@ -596,15 +590,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Lot listeleri keyset pagination; izleme graf sorgusu FK index + JSONB GIN; soğuk zincir timeseries partition + downsample."
        }
       ]
      },
@@ -900,7 +886,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Traceability",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Traceability\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: traceability.recall_initiated\ncondition:\n  all:\n    - actor.capability >= \"trace.recall\"\n    - lot.id is not null\n    - not loop_detected\naction:\n  - resolve: forward_scope(lot)     # etkilenen sevkiyat+müşteri\n  - emit: recall.scope_ready        # idempotent\n  - notify: affected_customers       # izinli kanal\nguards:\n  max_depth: 6\n  idempotency_key: \"recall:{tenant}:{lot}\"\n  external_effects: approval_required",
     "copyEnabled": true
    },
    {
@@ -1040,6 +1026,18 @@
     ]
    },
    {
+    "id": "block-s-traceability-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Komşu-tenant lot/sevkiyat sorgusu sıfır döndürür (RLS). Forward trace: bir lot'tan etkilenen tüm müşteriler eksiksiz çıkar (recall kapsamı). Backward trace: bir üründen kaynak lot'lara ulaşılır. Soğuk zincir eşik ihlali olay yayar ve değiştirilemez kaydedilir. Recall onay zinciri tamamlanmadan iade/imha tetiklenmez (deny path)."
+     }
+    ]
+   },
+   {
     "id": "block-s-traceability-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1058,7 +1056,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Traceability bağımsız satılabilir bir Layer-2 ürün ama lot izini stok/sevkiyat olaylarından türetir; tedarik ve envanter module'lerinden Contract ile beslenmeli, izolasyonda anlamı kalmaz."
        }
       ]
      },
@@ -1067,16 +1065,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Party/tenancy (RLS), audit, event-bus kernel'den; Traceability kendi ArcheType şemasını tanımlar."
        }
       ]
      },
@@ -1085,7 +1074,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Bitemporal (lot geçmişi as-of), timeseries (soğuk zincir telemetrisi), i18n; core sözleşmelerine uyar."
        }
       ]
      },
@@ -1094,7 +1083,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Inventory/WMS'ten stok hareketi, Procurement'tan giriş lot'u, sevkiyat module'ünden çıkış izini tüketir — yalnız Contract."
        }
       ]
      },
@@ -1103,7 +1092,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Supply-chain suite içinde aynı ürün/lot kimliğini paylaşır; recall app'i bildirim module'ünü etkinleştirir."
        }
       ]
      }
@@ -1116,13 +1105,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-traceability-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-traceability-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-inventory / s-wms: stok hareketi lot/seri kimliğiyle eşlenir, izleme zinciri buradan beslenir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-procurement: tedarikçi girişinde lot oluşur (kaynak izi)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Bildirim module'ü: recall kapsamındaki müşterilere izinli kanaldan uyarı (forward trace çıktısı)."
+      }
+     ]
     ]
    },
    {

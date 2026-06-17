@@ -1,0 +1,57 @@
+{
+ "featureDefs": [
+  {
+   "name": "DR Tier 3 streaming replication",
+   "desc": "Postgres WAL master FSN1 → replica HEL1; RPO ~1 dk, RTO 15 dk (mevcut hedef). Tek datacenter = tek nokta arıza; istatistiksel olarak 10 yılda olur.",
+   "critical": true
+  },
+  {
+   "name": "Tenant-bound region routing",
+   "desc": "Kayıt anında ülkeye göre TR tenant TR DB'sine, AB tenant AB DB'sine yönlenir; KVKK Madde 9 / GDPR Madde 44+ veri-yerelleştirme zorunluluğu.",
+   "critical": true
+  },
+  {
+   "name": "Read replica deseni",
+   "desc": "TR ana yazma, AB read-only replica; başlangıç için 1 (read replica) + 2 (tenant-bound) yeter."
+  },
+  {
+   "name": "Geo-failover (DNS + healthcheck)",
+   "desc": "Ana bölge çökünce trafik DNS TTL + healthcheck ile 1-5 dk içinde yedek bölgeye yönlenir."
+  },
+  {
+   "name": "Active-active CRDT (ileri seviye)",
+   "desc": "İki bölgede yazma + otomatik conflict resolution (RPO~0, RTO~0); klasik DB conflict çözemez, maliyetli — Tier 4."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — DR olmayan SaaS saatli bombadır; multi-region mimarisi sonradan değiştirmek aylar alır, baştan hazır olmalı. KVKK varsa tenant region routing hemen.",
+  "kernel": "k-tenancy ile birlikte tenant'a göre region routing; identity/audit kernel'den. Veri-yerelleştirme RLS + region pin'i birleşir.",
+  "core": "cc-obs (healthcheck/izleme), cc-privacy (KVKK/GDPR madde eşlemesi), cc-tr (yerel sağlayıcı: Türk Telekom/Vodafone) ile ortak.",
+  "modules": "Tüm Layer-2 stack'leri region-aware: yazma ana bölgeye, okuma replica'ya; tenant'ın bölgesi Contract'tan gelir.",
+  "apps": "Her app region selection UX'i sunar; veri kayıt anında doğru bölgeye routing edilir, çapraz-bölge yazma yok."
+ },
+ "moduleUsage": [
+  "k-tenancy: tenant.region alanı routing kararını verir (TR→FSN1-TR, AB→HEL1).",
+  "cc-obs: healthcheck endpoint + replica lag izleme; failover tetikleyici sinyal.",
+  "cc-privacy: KVKK Madde 9 / GDPR 44+ veri-yerelleştirme denetim kanıtı.",
+  "cc-tr: TR vatandaşı verisi için yurt-içi sağlayıcı seçimi."
+ ],
+ "ecaExample": "trigger:\n  event: tenant.created\ncondition:\n  all:\n    - tenant.country resolved\n    - not loop_detected\naction:\n  - route_db: region = region_of(tenant.country)   # TR→tr-region, AB→eu-region\n  - pin: tenant.data_residency = region\n  - emit: replication.target_set\nguards:\n  max_depth: 6\n  idempotency_key: \"region:{tenant_id}\"\n  external_effects: cross_region_write_forbidden",
+ "securityNotes": [
+  "KVKK Madde 9: TR vatandaşı kişisel verisi yurt dışına aktarılamaz; Hetzner FSN1 (Almanya) = yurt dışı, TR tenant için ayrı bölge zorunlu.",
+  "GDPR Madde 44+: AB vatandaşı verisi AB içinde işlenir; tenant-bound region pin'i bu invariantı taşır.",
+  "Veri-yerelleştirme audit edilebilir: 'TR vatandaşı verisi TR'de mi?' sorusuna routing kaydı kanıt.",
+  "Failover sırasında replica promote edilirken tenant izolasyonu (RLS) korunur; cross-region yazma yasak."
+ ],
+ "perfNotes": {
+  "code": "systemd timer ile her gün backup verify (point-in-time recovery testi); streaming replication WAL anlık.",
+  "perf": "DR Tier hedefleri — Tier 3: RPO<1dk RTO<15dk (100-1000 müşteri); Tier 4 RPO~0 RTO<1dk (bankacılık). Uptime %99.9 = yılda 8.7 saat down; RTO bunu belirler."
+ },
+ "testNotes": [
+  "TR kullanıcısı kayıt anında TR DB'sine routing edilir (KVKK uyumu).",
+  "Master çökünce replica'ya failover RTO hedefi (<15dk) içinde gerçekleşir.",
+  "Backup point-in-time recovery testi başarıyla restore eder (RPO doğrulama).",
+  "Çapraz-bölge yazma denemesi reddedilir (data residency invariantı).",
+  "Replica lag izlenir; eşik aşılınca alarm üretilir."
+ ]
+}

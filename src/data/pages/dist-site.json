@@ -200,7 +200,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Site/Apartman Yönetimi Distribution — çekirdek yetenek",
+      "term": "Aidat tahakkuk + gecikme faizi",
       "definition": [
        {
         "type": "strong",
@@ -208,41 +208,42 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "s-billing üstünde dönemsel aidat üretimi, gecikme faizi, toplu tahsilat. money + bitemporal."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Ortak gider dağıtım kuralları",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Arsa payı / eşit / kişi bazlı dağıtım; daire başına paylaştırma motoru."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Sakin portalı",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Borç görüntüleme, online ödeme, arıza/talep açma; düşük fiyat × yüksek adet self-service."
+       }
+      ]
+     },
+     {
+      "term": "634 defter şablonları",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Kat Mülkiyeti Kanunu karar defteri + işletme projesi şablonları hazır; s-audit delil zinciri."
        }
       ]
      }
@@ -430,15 +431,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Sakin borç/ödeme verisi money + pii; RLS site-scoped (sub-tenant blok/daire); komşu site verisi görünmez. Aidat tahsilatı/ödeme idempotent; aynı dönem ikinci kez tahakkuk etmez; çift komisyon engellenir. Yönetici defteri (634) audit-immutable; karar kaydı sonradan sessizce değiştirilemez — delil zinciri. Online ödeme PCI yüzeyi dış sağlayıcıda; kart verisi tenant DB'sine yazılmaz. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -492,15 +485,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Tahakkuk daire sayısı kadar satır → toplu üretim asenkron worker (büyük sitede binlerce daire); borç/ödeme liste uçları keyset pagination; sakin portalı borç sorgusu daire+dönem indeksli."
        }
       ]
      },
@@ -796,7 +781,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Site/Apartman Yönetimi Distribution",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Site/Apartman Yönetimi Distribution\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: dues.period_opened\n  when: \"tenant_scoped AND site.active\"\ncondition:\n  all:\n    - actor.capability >= \"site.manage\"\n    - not loop_detected\naction:\n  - emit: billing.dues_accrued   # daire başına, outbox idempotent\n  - notify: [\"resident-portal\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{period}:accrual\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -936,6 +921,18 @@
     ]
    },
    {
+    "id": "block-dist-site-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Komşu-site sakin/borç sorgusu sıfır döndürür (tenant izolasyonu). Aynı dönem aidatı ikinci kez tahakkuk ettirilemez (idempotency). Ortak gider dağıtımı arsa payı toplamı %100'e eşitlenir (yuvarlama dahil tutar tutar). 634 karar defteri kaydı oluşturulduktan sonra immutable; düzeltme yeni kayıtla yapılır."
+     }
+    ]
+   },
+   {
     "id": "block-dist-site-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -954,7 +951,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Distribution = stack + sektör konfigürasyonu + hazır içerik/workflow; YENİ KOD DEĞİL paketleme. Stack ⊂ Edition ⊂ Distribution; s-billing + dist-membership + s-property + s-audit'i sektör paketi olarak birleştirir, edition-kalitesinde UI/UX ile teslim."
        }
       ]
      },
@@ -963,16 +960,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Party (sakin/yönetici), tenancy (RLS — her site bir tenant; sub-tenant blok/daire), audit ve ArcheType engine kernel'den; distribution kendi ArcheType'ı eklemez, mevcut stack'leri konfigüre eder."
        }
       ]
      },
@@ -981,7 +969,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Core değişmez; distribution yalnız sektör konfigürasyonu + hazır workflow/şablon + UI katmanı ekler."
        }
       ]
      },
@@ -990,7 +978,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "s-billing (aidat/tahsilat), dist-membership (üyelik), s-audit (defter/delil) module'lerini konfigürasyonla tüketir; ödeme komisyonu billing event'inden gelir; yalnız Contract."
        }
       ]
      },
@@ -999,7 +987,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Billing, membership, property, audit yetenekleri tek site paketinde birleşir; aynı sakin Party'si borçlu, üye, portal kullanıcısı — çift kayıt yok."
        }
       ]
      }
@@ -1012,13 +1000,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-dist-site-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-dist-site-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-billing: aidat tahakkuku + gecikme faizi + toplu tahsilat; ödeme komisyonu reklamsız gelir hattı."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-audit: karar defteri + işletme projesi 634 delil; yönetici işlemleri audit'li."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-property: parsel/daire/blok yapısı ortak gider dağıtım tabanı."
+      }
+     ]
     ]
    },
    {

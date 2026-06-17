@@ -338,7 +338,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "PIM — çekirdek yetenek",
+      "term": "Product / Variant / Attribute / AttributeGroup ArcheType'ları",
       "definition": [
        {
         "type": "strong",
@@ -346,41 +346,47 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Esnek öznitelik sistemi (renk/beden/teknik); aile (family) bazlı zorunlu-alan kümesi; hibrit şema (sabit + JSONB) ile binlerce öznitelik."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Çok-kanallı / çok-locale değer projeksiyonu",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Aynı ürünün kanal (web/pazaryeri/B2B) ve dil bazında farklı değeri; tek kaynak, kanala göre izdüşüm — Surface başına projeksiyon."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Tamlık (completeness) kalite kapısı",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Kanal başına zorunlu-alan kuralı; eksik ürün yayınlanamaz; tamlık skoru kanal-yayın Contract'ının ön koşulu."
+       }
+      ]
+     },
+     {
+      "term": "Katalog yayını (publish) + sürüm",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Onaylı katalog kanala outbox ile gönderilir; ürün değişikliği bitemporal + audit; geri-alınabilir sürüm."
+       }
+      ]
+     },
+     {
+      "term": "Medya / dijital varlık (DAM) bağı",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Ürün görsel/doküman varlıklarını File & Storage primitive'inden bağlar; kanal başına renditions."
        }
       ]
      }
@@ -568,15 +574,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Tenant-scoped (RLS): katalog/öznitelik/medya başka tenant'a sızmaz; komşu-tenant ürün sorgusu sıfır döner. Capability deny-by-default: yayın (publish) ve fiyat değiştirme ayrı yetki; tamlık kapısından geçmeyen ürün kanala çıkamaz. Medya yükleme doğrulaması (tür/boyut) + enjeksiyon koruması; öznitelik içe-aktarımında toplu kirli-veri taraması. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -604,15 +602,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Kanal-locale değer izdüşümü materialize edilir (projection); her render'da öznitelik JOIN cehennemi yok. Yayın asenkron worker (outbox)."
        }
       ]
      },
@@ -630,15 +620,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Ürün/varyant listeleri keyset (cursor) pagination; öznitelik-değer indeksleri; binlerce öznitelik için JSONB GIN indeks."
        }
       ]
      },
@@ -934,7 +916,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — PIM",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — PIM\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: product.completeness_changed\n  when: \"channel_completeness >= 100 AND tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"pim.publish\"\n    - not loop_detected\n    - product.required_fields_complete(channel)\naction:\n  - emit: catalog.product_published   # outbox, idempotent; kanal başına\n  - notify: [\"pim-surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{product}:{channel}:publish\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1074,6 +1056,18 @@
     ]
    },
    {
+    "id": "block-s-pim-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Tamlık kapısı: zorunlu alanı eksik ürün ilgili kanala yayınlanamaz. Çok-locale: aynı ürün TR/EN değeri kanala göre doğru izdüşür. Komşu-tenant katalog sorgusu sıfır döndürür. Yayın idempotency: aynı ürün/kanal tekrar yayında çift catalog.product_published üretmez."
+     }
+    ]
+   },
+   {
     "id": "block-s-pim-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1092,7 +1086,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Commerce, Marketplace, Product Feed ve B2B kanalları tek ürün gerçeğini paylaşmalı; her kanal kendi ürün tablosunu tutarsa fiyat/öznitelik tutarsızlığı kaçınılmaz. PIM ürün otoritesidir."
        }
       ]
      },
@@ -1101,16 +1095,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "ArcheType engine ile esnek öznitelik şeması; tenancy (RLS) katalogu tenant'a kapatır; audit ürün değişimini izler; Event Bus product.published yayar."
        }
       ]
      },
@@ -1119,7 +1104,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "App core'una bağlı bir Domain (Büyük Taş); core sözleşmeleri değişmez. Fiyat alanları Money (Decimal); pii yok."
        }
       ]
      },
@@ -1128,7 +1113,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "i18n module locale-aware değer render'ı sağlar; File & Storage medya varlıklarını taşır; Search module ürün indeksini besler — yalnız Contract."
        }
       ]
      },
@@ -1137,7 +1122,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Commerce, Marketplace, Product Feed, B2B portal aynı Product + Variant'ı tüketir; kanala özel izdüşüm PIM'den gelir, çift ürün kaydı yok."
        }
       ]
      }
@@ -1150,13 +1135,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-pim-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-pim-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-marketplace: kanal başına ürün izdüşümü + tamlık kapısından geçen ürünleri pazaryerine listeler."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-product-feed: merchant feed üretimi için kanal-locale projeksiyonunu okur."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-i18n: ürün öznitelik değerlerinin çok-dilli çevirisini tutar/sunar."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "stack-commerce: storefront ürün detayını PIM projeksiyonundan render eder."
+      }
+     ]
     ]
    },
    {

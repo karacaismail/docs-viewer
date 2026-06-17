@@ -801,7 +801,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Health Check + Readiness/Liveness Probes — çekirdek yetenek",
+      "term": "Üç probe = üç farklı soru",
       "definition": [
        {
         "type": "strong",
@@ -809,41 +809,55 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "/live (Kubernetes, process alive, fail→pod restart), /ready (LB, bağımlılıklar OK, fail→trafik kesilir), /health (dashboard, detaylı JSON); /live ve /ready karıştırılırsa gereksiz restart."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Hafif probe sözleşmesi",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Probe içinde ağır iş yasak: /health'da SELECT * FROM order = DB yıkılır. SELECT 1 + Redis PING yeter; checks bloğu DB/Redis/dış servis latency_ms + version + uptime döner."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Üç kill switch + feature flag",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Tenant-level · AI-agent · MCP server disable; ek olarak feature flag, prompt rollback, traffic reroute — her biri tek tıkla erişilir ve auditlenir."
+       }
+      ]
+     },
+     {
+      "term": "AI-first incident runbook",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "detection → containment → root cause → remediation → post-incident review → guardrail update; sistem yalnız geliştirilmez, işletilir."
+       }
+      ]
+     },
+     {
+      "term": "Sessiz runtime hatası yakalama",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Exception fırlatmayan 'çalışıyor ama yanlış' hatalar; beklenen-çıktı invariant/SLO + iş-olayı doğrulaması + anomali tespiti ile yakalanır."
        }
       ]
      }
@@ -1031,15 +1045,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Probe endpoint'leri iç ağa/yetkili kaynağa kısıtlı olmalı; checks gövdesi (DB/Redis/Stripe durum) dış dünyaya sızdırılmaz — bilgi ifşası riski. Kill-switch ve feature flag değişiklikleri capability deny-by-default + audit; yetkisiz tetikleme engellenir. Migration prod→dev/beta kopyada PII anonimleştirme ZORUNLU; structured log'da PII maskeli. Sessiz hata en tehlikeli: exception fırlatan görünür, asıl risk 'çalışıyor ama yanlış'; iş-invariant ihlali metrikle yakalanmazsa sessiz veri bozulması sürer. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1067,15 +1073,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "/live 200 OK saf; /ready DB ping + Redis ping → 503 if fail; /health detaylı JSON; ağır sorgu probe'a girmez."
        }
       ]
      },
@@ -1093,15 +1091,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Probe'lar yüksek frekansla çağrılır — SELECT 1 + PING dışında iş yapmamalı, aksi halde sağlık kontrolü DB'yi yıkar (self-DoS)."
        }
       ]
      },
@@ -1397,7 +1387,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Health Check + Readiness/Liveness Probes",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Health Check + Readiness/Liveness Probes\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: tenant.leak_suspected\ncondition:\n  all:\n    - actor.capability >= \"platform.killswitch\"\n    - not loop_detected\naction:\n  - kill_switch: tenant_level   # tek tıkla, auditli\n  - audit: forensic_snapshot\n  - emit: incident.opened       # runbook tetikler\nguards:\n  max_depth: 6\n  idempotency_key: \"killswitch:{tenant_id}:{incident_id}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1537,6 +1527,18 @@
     ]
    },
    {
+    "id": "block-cc-obs-deep-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "/ready bağımlılık fail'inde 503 dönmeli, /live etkilenmemeli (gereksiz restart regresyonu). Probe içinde ağır sorgu olmadığı doğrulanmalı (SELECT 1 sözleşmesi). Tenant-level kill switch tetiklenince ilgili tenant trafiği durmalı, diğer tenant'lar etkilenmemeli. Sessiz hata: beklenen-çıktı invariant'ı ihlal edilince WARN/ERROR + iş-metriği anomalisi üretilmeli (oluşturma/dönüşüm sayısı)."
+     }
+    ]
+   },
+   {
     "id": "block-cc-obs-deep-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1555,7 +1557,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — health/probe ve kill-switch crosscut primitive'i; her stack ve agent runtime bu yüzeyi tüketir, kendi başına gözlemlenebilirlik/durdurma kuramaz."
        }
       ]
      },
@@ -1564,16 +1566,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Tenancy (tenant-level kill switch + RLS denetimi), Audit (her kill-switch ve runbook adımı forensic iz), Event Bus (iş-invariant ihlali WARN/ERROR yayını) ile birleşir."
        }
       ]
      },
@@ -1582,7 +1575,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Metadata dispatch sonucu runtime'da doğrulanır (k-archetype-storage); structured log + korelasyon ID + PII maskeleme core gözlemlenebilirlik sözleşmesi."
        }
       ]
      },
@@ -1591,7 +1584,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Layer-2 stack'leri /live /ready /health endpoint'lerini ArcheType action yüzeyiyle açar; kritik akışlar beklenen-çıktı invariant'larıyla izlenir."
        }
       ]
      },
@@ -1600,7 +1593,16 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "K8s/LB altyapısı probe'ları çağırır; /metrics Prometheus scrape → Grafana; "
+       },
+       {
+        "type": "term",
+        "text": "status page",
+        "termId": "term-status-page-cc-obs-deep"
+       },
+       {
+        "type": "text",
+        "text": " müşteriye uptime + incident sunar."
        }
       ]
      }
@@ -1613,13 +1615,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-cc-obs-deep-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-cc-obs-deep-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "k-agent-runtime: AI maliyeti patlarsa token-rate circuit breaker + günlük bütçe durdurma; MCP tool compromise'de MCP server disable + capability allowlist iptali."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "scale-multiregion: ChangeSet apply yarıda kalırsa idempotent yeniden uygula ya da rollback state machine; migration 2 saat sürerse pause/resume."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Her stack: RLS policy bug'ında global koruma — etkilenen tenant'lar için bağlam=sıfır-satır (deny-by-default)."
+      }
+     ]
     ]
    },
    {

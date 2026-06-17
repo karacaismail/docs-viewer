@@ -1,0 +1,52 @@
+{
+ "featureDefs": [
+  {
+   "name": "Offline-first satış terminali",
+   "desc": "Ağ kesilse de satış devam eder; işlemler yerelde kuyruğa alınıp bağlantı gelince senkronlanır (online/offline retail).",
+   "critical": true
+  },
+  {
+   "name": "Vardiya/kasa kapanış mutabakatı",
+   "desc": "Açılış-kapanış nakit sayımı, Z-raporu, kasa farkı denetimi; her vardiya audit'li kapanır.",
+   "critical": true
+  },
+  {
+   "name": "Ödeme + fiş entegrasyonu (TR)",
+   "desc": "GİB ÖKC/e-fiş uyumu, nakit/kart/karma ödeme; Türk muhasebe modülüne otomatik kayıt.",
+   "critical": true
+  },
+  {
+   "name": "Stok düşümü realtime",
+   "desc": "Satış anında s-inventory'de stok rezervasyonu/düşümü; iade satış event'i stoku geri yazar."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "evet — Layer-2 SaaS ürünü; Kernel+Scale+Layer-1 üstüne oturur, kendi POS ArcheType'larını tanımlar ama yetki/audit/event-bus framework'ten gelir.",
+  "kernel": "Schema (Order/Payment/ShiftSession ArcheType'ları), Tenancy (mağaza/tenant scope), Authz (kasiyer/müdür capability).",
+  "core": "Money (TRY, Decimal — para hesapları), Audit (kasa kapanış delili), Notification (vardiya bildirimi).",
+  "modules": "s-inventory (stok düşümü), s-accounting (satış→muhasebe kaydı), s-ecommerce (omnichannel ortak katalog).",
+  "apps": "POS terminal app (offline-capable) + admin dashboard."
+ },
+ "moduleUsage": [
+  "s-inventory: satış anında stok rezervasyonu/düşümü; offline satış sync olunca toplu düşüm",
+  "s-accounting: vardiya kapanışında Z-raporu → muhasebe fişi (TR)",
+  "s-loyalty: müşteri kartı ile puan kazanım/harcama satış anında"
+ ],
+ "ecaExample": "trigger:\n  event: pos.sale_completed\ncondition:\n  all:\n    - cashier.capability >= \"pos.sell\"\n    - shift_session.open == true\naction:\n  - emit: inventory.stock_decremented\n  - emit: accounting.sale_posted\n  - issue: e_receipt  # GİB ÖKC\nguards:\n  idempotency_key: \"sale:{terminal_id}:{local_seq}\"  # offline sync çift kayıt önler\n  external_effects: payment_capture\n  money: true",
+ "securityNotes": [
+  "Money bayrağı: tutar/iade/kasa farkı Decimal; ödeme yakalama external_effects, idempotent.",
+  "Offline sync idempotency: terminal yerel sıra no ile çift satış kaydı önlenir.",
+  "Kasiyer vs müdür capability: iade/iptal/indirim yetkisi deny-by-default + adımlı onay.",
+  "Tenant/mağaza-scoped RLS: bir mağaza satışı diğer tenant'a görünmez; kasa kapanışı audit'li."
+ ],
+ "perfNotes": {
+  "code": "Satış işlemi yerel-önce yazar (offline kuyruk), event bus üzerinden stok/muhasebe asenkron; ürün araması keyset pagination.",
+  "perf": "Terminal yanıtı ağ gecikmesinden bağımsız (offline-first); senkron arka planda outbox ile."
+ },
+ "testNotes": [
+  "Offline satış → bağlantı gelince tam senkron, çift kayıt yok (idempotency).",
+  "Vardiya kapanışı: nakit sayım ≠ beklenen → kasa farkı flag + audit.",
+  "İade: stok geri yazılır, muhasebe ters kayıt, yetki kontrolü.",
+  "Yetkisiz kasiyer iade/iptal yapamaz (capability deny)."
+ ]
+}

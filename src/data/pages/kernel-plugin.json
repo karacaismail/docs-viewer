@@ -1361,7 +1361,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Module Registry + Manifest — birincil yetenek",
+      "term": "Module Manifest (kanonik format)",
       "definition": [
        {
         "type": "strong",
@@ -1369,25 +1369,60 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "name/version/api_version/publisher/license + depends/permissions/hooks/archetypes/fixtures/ui alanları; çekirdek manifest'i okuyup yükler. Permission satırı capability deny-by-default sözleşmesidir."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Dependency resolution + cycle detection",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "depends listesi üzerinden topological sort; A→B ise B önce yüklenir, cycle boot'ta fail. Semver ile uyumluluk aralığı (^2.1.0 = 3.0.0 değil)."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "Lifecycle hook'ları",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "before/after_install, before/after_uninstall, before/after_migrate, clear_cache — schema migration, fixtures, anonimleştirme bu kapılara bağlanır."
+       }
+      ]
+     },
+     {
+      "term": "Module Registry + Health Probe",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "Yüklü modüllerin merkezi sicili; trusted_publishers, verification_policy, liveness/readiness, error_rate_5m. Çakışma ve sürüm çözümü burada."
+       }
+      ]
+     },
+     {
+      "term": "Marketplace + install workflow",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Publisher kaydı + güvenlik taraması; idempotent install (install_id), strateji (atomic/staged/canary), dry_run plan, rollback_token, streaming install_log."
+       }
+      ]
+     },
+     {
+      "term": "Service Container & Config Hierarchy",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Dependency injection (singleton/transient/scoped/tenant_scoped) + global→tenant→user→agent→session config + feature flag + secret rotation."
        }
       ]
      }
@@ -1575,15 +1610,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Permission scope deny-by-default: manifest izinleri tenant admin onayından geçmeden hiçbir ArcheType okunmaz/yazılmaz. Üçüncü taraf paket WASM sandbox içinde; izin sözleşmesi dışına çıkamaz (blast radius sınırlı). İmza doğrulama: signed + signature_authority kontrolü; trusted_publishers dışı paket verification_policy'ye takılır. Global mutable state yasak — yalnız hook registry; aksi halde modül update'i komşu paketleri kırar (Strapi tuzağı). Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1611,15 +1638,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Install pipeline sıralı: manifest indir → dependency resolve → migration → fixtures → hook register → after_install. Streaming log ile gözlem."
        }
       ]
      },
@@ -1637,15 +1656,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "LandX hedefi: install p95 <30sn, dependency conflict otomatik tespiti %100, downtime-free upgrade >%95; config read p99 <5ms, flag toggle propagation <2sn, secret rotation downtime 0."
        }
       ]
      },
@@ -1941,7 +1952,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Module Registry + Manifest",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Module Registry + Manifest\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: module.install_requested\ncondition:\n  all:\n    - actor.capability >= \"registry.install\"\n    - manifest.signature_valid == true\n    - not dependency_cycle_detected\naction:\n  - resolve: dependency_graph   # topological sort\n  - run: schema_migration       # after_install\n  - emit: module.installed       # outbox, idempotent\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{module_slug}:{version}:install\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -2081,6 +2092,18 @@
     ]
    },
    {
+    "id": "block-kernel-plugin-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Cycle içeren depends grafiği install'ı fail etmeli (boot reddi). İzin onaylanmamış modül hedef ArcheType'ı okuyamamalı (deny path). Atomic install yarıda kesilirse rollback_token ile tam geri alınmalı (kısmi şema kalmamalı). Aynı install_id ikinci kez gönderilince tek kez uygulanmalı (idempotency)."
+     }
+    ]
+   },
+   {
     "id": "block-kernel-plugin-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -2099,7 +2122,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — framework olmanın can damarı; bu yetenek olmadan platform değil tek uygulama olur. 70+ ürün tek çekirdeğin üstünde ancak böyle yaşar."
        }
       ]
      },
@@ -2108,16 +2131,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Çekirdeğin temel mekanizması; ArcheType engine, capability/permission ve event-bus'ı kayıt altına alıp dış paketlere açar. Üçüncü taraf paketler gün-1 WASM sandbox içinde, permission scope sandbox'ın izin sözleşmesi olarak çalışır."
        }
       ]
      },
@@ -2126,7 +2140,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "App core'u bu registry'yi tüketir; lifecycle ve dependency çözümü core boot sırasına oturur, core sözleşmeleri değişmez."
        }
       ]
      },
@@ -2135,7 +2149,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Her Layer-2 modülü kendi manifest'ini bu sicile bildirir; declared_archetypes/hooks/tools/routes + required/optional_capabilities ile başka modüllerden ihtiyacını sözleşmeyle ister."
        }
       ]
      },
@@ -2144,7 +2158,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Tenant admin App Store'dan kurar; permission'lar onayına sunulur ('şu ArcheType'ları okuyacak'), entitlement ile hangi yüzeyin açık olduğu belirlenir."
        }
       ]
      }
@@ -2157,13 +2171,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-kernel-plugin-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-kernel-plugin-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Tüm Layer-2 ürünleri: kendi manifest'ini sicile bildirir, hook'larını registry üzerinden bağlar (global mutable state'e dokunmadan)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Comms/Mail: declared_hooks ile doc_events'e abone olur; sürüm semver ile korunur."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Marketplace yayıncısı: imzalı paket (signed + signature_authority) yükler; compatibility_matrix kernel aralığını bildirir."
+      }
+     ]
     ]
    },
    {

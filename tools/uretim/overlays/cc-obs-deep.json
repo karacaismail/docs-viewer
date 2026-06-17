@@ -1,0 +1,58 @@
+{
+ "featureDefs": [
+  {
+   "name": "Üç probe = üç farklı soru",
+   "desc": "/live (Kubernetes, process alive, fail→pod restart), /ready (LB, bağımlılıklar OK, fail→trafik kesilir), /health (dashboard, detaylı JSON); /live ve /ready karıştırılırsa gereksiz restart.",
+   "critical": true
+  },
+  {
+   "name": "Hafif probe sözleşmesi",
+   "desc": "Probe içinde ağır iş yasak: /health'da SELECT * FROM order = DB yıkılır. SELECT 1 + Redis PING yeter; checks bloğu DB/Redis/dış servis latency_ms + version + uptime döner.",
+   "critical": true
+  },
+  {
+   "name": "Üç kill switch + feature flag",
+   "desc": "Tenant-level · AI-agent · MCP server disable; ek olarak feature flag, prompt rollback, traffic reroute — her biri tek tıkla erişilir ve auditlenir.",
+   "critical": true
+  },
+  {
+   "name": "AI-first incident runbook",
+   "desc": "detection → containment → root cause → remediation → post-incident review → guardrail update; sistem yalnız geliştirilmez, işletilir.",
+   "critical": false
+  },
+  {
+   "name": "Sessiz runtime hatası yakalama",
+   "desc": "Exception fırlatmayan 'çalışıyor ama yanlış' hatalar; beklenen-çıktı invariant/SLO + iş-olayı doğrulaması + anomali tespiti ile yakalanır.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — health/probe ve kill-switch crosscut primitive'i; her stack ve agent runtime bu yüzeyi tüketir, kendi başına gözlemlenebilirlik/durdurma kuramaz.",
+  "kernel": "Tenancy (tenant-level kill switch + RLS denetimi), Audit (her kill-switch ve runbook adımı forensic iz), Event Bus (iş-invariant ihlali WARN/ERROR yayını) ile birleşir.",
+  "core": "Metadata dispatch sonucu runtime'da doğrulanır (k-archetype-storage); structured log + korelasyon ID + PII maskeleme core gözlemlenebilirlik sözleşmesi.",
+  "modules": "Layer-2 stack'leri /live /ready /health endpoint'lerini ArcheType action yüzeyiyle açar; kritik akışlar beklenen-çıktı invariant'larıyla izlenir.",
+  "apps": "K8s/LB altyapısı probe'ları çağırır; /metrics Prometheus scrape → Grafana; status page müşteriye uptime + incident sunar."
+ },
+ "moduleUsage": [
+  "k-agent-runtime: AI maliyeti patlarsa token-rate circuit breaker + günlük bütçe durdurma; MCP tool compromise'de MCP server disable + capability allowlist iptali.",
+  "scale-multiregion: ChangeSet apply yarıda kalırsa idempotent yeniden uygula ya da rollback state machine; migration 2 saat sürerse pause/resume.",
+  "Her stack: RLS policy bug'ında global koruma — etkilenen tenant'lar için bağlam=sıfır-satır (deny-by-default)."
+ ],
+ "ecaExample": "trigger:\n  event: tenant.leak_suspected\ncondition:\n  all:\n    - actor.capability >= \"platform.killswitch\"\n    - not loop_detected\naction:\n  - kill_switch: tenant_level   # tek tıkla, auditli\n  - audit: forensic_snapshot\n  - emit: incident.opened       # runbook tetikler\nguards:\n  max_depth: 6\n  idempotency_key: \"killswitch:{tenant_id}:{incident_id}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Probe endpoint'leri iç ağa/yetkili kaynağa kısıtlı olmalı; checks gövdesi (DB/Redis/Stripe durum) dış dünyaya sızdırılmaz — bilgi ifşası riski.",
+  "Kill-switch ve feature flag değişiklikleri capability deny-by-default + audit; yetkisiz tetikleme engellenir.",
+  "Migration prod→dev/beta kopyada PII anonimleştirme ZORUNLU; structured log'da PII maskeli.",
+  "Sessiz hata en tehlikeli: exception fırlatan görünür, asıl risk 'çalışıyor ama yanlış'; iş-invariant ihlali metrikle yakalanmazsa sessiz veri bozulması sürer."
+ ],
+ "perfNotes": {
+  "code": "/live 200 OK saf; /ready DB ping + Redis ping → 503 if fail; /health detaylı JSON; ağır sorgu probe'a girmez.",
+  "perf": "Probe'lar yüksek frekansla çağrılır — SELECT 1 + PING dışında iş yapmamalı, aksi halde sağlık kontrolü DB'yi yıkar (self-DoS)."
+ },
+ "testNotes": [
+  "/ready bağımlılık fail'inde 503 dönmeli, /live etkilenmemeli (gereksiz restart regresyonu).",
+  "Probe içinde ağır sorgu olmadığı doğrulanmalı (SELECT 1 sözleşmesi).",
+  "Tenant-level kill switch tetiklenince ilgili tenant trafiği durmalı, diğer tenant'lar etkilenmemeli.",
+  "Sessiz hata: beklenen-çıktı invariant'ı ihlal edilince WARN/ERROR + iş-metriği anomalisi üretilmeli (oluşturma/dönüşüm sayısı)."
+ ]
+}

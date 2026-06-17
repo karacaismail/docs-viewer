@@ -131,7 +131,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "AI Governance / Model Risk — çekirdek yetenek",
+      "term": "ModelRegistry (model envanteri) ArcheType",
       "definition": [
        {
         "type": "strong",
@@ -139,41 +139,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "NIST AI RMF deseni: kullanılan her AI/LLM modeli, sürümü, sahibi, amacı, veri kaynağı envanterde. Keşfedilemeyen model yönetilemez."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "RiskAssessment + policy bağlama",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Model başına risk değerlendirme (etki/olasılık), uygulanan politika ve azaltım; risk eşiği üstü model dağıtım kapısına takılır."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Denetim izi (audit trail)",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Model kararı/çıktısı, prompt/yanıt referansı, kim onayladı — değişmez bitemporal kayıt; geriye dönük inceleme için."
+       }
+      ]
+     },
+     {
+      "term": "Politika & onay iş akışı",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yeni model/kullanım dağıtımdan önce gözden geçirme; high-risk için step-up onay; reddedilen kullanım engellenir."
        }
       ]
      }
@@ -361,15 +358,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Model envanteri ve risk kaydı RLS tenant-scoped; onay capability deny-by-default — yalnız yetkili dağıtım onaylar. Governance kararı değişmez audit zinciri (A08/A09): onay/red, gerekçe, aktör, correlation; geriye değiştirilemez. Envanter dışı veya risk eşiği üstü model çağrısı engellenir (A06 Insecure Design); high-risk dağıtım step-up onay gerektirir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -423,15 +412,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Denetim izi yazımı asenkron (audit pipeline, l1-audit); envanter sorgusu indeksli; karar geçmişi keyset pagination — OFFSET yok."
        }
       ]
      },
@@ -727,7 +708,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — AI Governance / Model Risk",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — AI Governance / Model Risk\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: ai.model.deploy_requested\n  when: \"tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"ai.governance.approve\"\n    - model in model_registry           # envanter dışı model deny\n    - risk_assessment.level <= policy.max_allowed\naction:\n  - record: governance_decision { bitemporal: true }   # değişmez audit\n  - emit: ai.model.approved\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{model}:{version}:deploy\"\n  external_effects: step_up_required   # high-risk -> out-of-band onay",
     "copyEnabled": true
    },
    {
@@ -867,6 +848,18 @@
     ]
    },
    {
+    "id": "block-s-ai-governance-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Envanterde olmayan model dağıtım isteği reddedilir. Risk eşiği üstü model onaysız dağıtılamaz; high-risk step-up zorunlu. Her model kararı değişmez denetim izine düşer; geriye yazılamaz. Komşu-tenant model envanteri/karar kaydı sorgusu sıfır döndürür."
+     }
+    ]
+   },
+   {
     "id": "block-s-ai-governance-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -885,7 +878,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet (aday) — yatay (platform-horizontal) yönetişim katmanı; kernel ile zorunlu (kimlik/tenancy/audit), AI tüketen tüm modüllerle yalnız Contract üzerinden."
        }
       ]
      },
@@ -894,16 +887,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Kimlik, tenancy (RLS) ve değişmez audit kernel'den; envanter/karar kaydı ArcheType engine ile. Agent runtime (k-agent-runtime) ile model çağrı sınırını paylaşır."
        }
       ]
      },
@@ -912,7 +896,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Platform app core'una bağlı; core module değişmez, AI governance core sözleşmelerine uyar."
        }
       ]
      },
@@ -921,7 +905,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "AI tüketen modüller (RAG, voice, copilot) model çağrısını governance kaydına bağlar — yalnız Contract; envanter dışı model çağrısı deny."
        }
       ]
      },
@@ -930,7 +914,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "AI özellikli tüm app'ler aynı ModelRegistry'yi paylaşır; her çağrı correlation ile denetim izine düşer."
        }
       ]
      }
@@ -943,13 +927,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-ai-governance-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-ai-governance-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "AI Voice / RAG / Copilot app: kullandığı model envanterde kayıtlı olmalı; çağrı denetim izine bağlanır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Agent Runtime (k-agent-runtime): MCP araç/model çağrısını allowlist + governance politikasıyla kapılar."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Cyber GRC / Audit app: model risk kaydını uyum çerçevesine (NIST AI RMF) raporlar."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Compliance matris: high-risk model dağıtımı için zorunlu onay kanıtı."
+      }
+     ]
     ]
    },
    {

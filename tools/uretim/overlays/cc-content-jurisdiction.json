@@ -1,0 +1,60 @@
+{
+ "featureDefs": [
+  {
+   "name": "content_filter_rules (config-as-data)",
+   "desc": "jurisdiction × category × action ('hide'/'restrict'/'flag') tablosu; resolver sonrası katalog/arama query'i bu tablo ile join+filter — kodda hard-code DEĞİL.",
+   "critical": true
+  },
+  {
+   "name": "e_invoice_adapter (per AB ülke)",
+   "desc": "İtalya SDI / Almanya XRechnung / Fransa Factur-X / İspanya Facturae / TR UBL-TR ayrı implementasyon, ortak interface. 'PDF fatura' yetmez.",
+   "critical": true
+  },
+  {
+   "name": "age_gate capability",
+   "desc": "Ürün/kategori başına min_age + jurisdiction'a göre devre; alkol/kumar/cinsel içerik için KVKK+COPPA+DSA uyumu."
+  },
+  {
+   "name": "Kanonik birim + display dönüştürücü",
+   "desc": "DB'de kanonik (SI/EU 42) sakla, display'de jurisdiction'a göre US 9/UK 8'e çevir (UCUM). Çift saklama YASAK."
+  },
+  {
+   "name": "business_calendar",
+   "desc": "jurisdiction × date × type (holiday/weekend) tablosu; '3 iş günü içinde teslimat' hesabı bu tablodan (Ramazan/Bayram Hicri'ye göre değişir)."
+  },
+  {
+   "name": "lawful_intercept_workflow",
+   "desc": "Tek giriş kapısı → doğrulama → scope check → 4-göz onay → DSAR pipeline export → 5 yıl audit log → izinliyse kullanıcı bildirimi.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "evet — Amazon/eBay'in 'görünmez' codebase ayrımının ürün/içerik tarafı; resolver locale+jurisdiction çözer ama 'ne gösterileceği' bu crosscut katmanıdır.",
+  "kernel": "Authz (4-göz approval, capability), Tenancy.",
+  "core": "Audit (lawful intercept 5 yıl saklama), i18n/Calendar (takvim+tatil), Money (e-fatura).",
+  "modules": "s-commerce (katalog/arama filtre), s-tax-compliance (e-fatura adapter), cc-jurisdiction-resolver (jurisdiction çözer), cc-compliance-matrix (sanctions/KVKK).",
+  "apps": "fe-cdn/edge worker geo-blocking; storefront katalog dinamik filtre."
+ },
+ "moduleUsage": [
+  "s-commerce: katalog query resolver sonrası content_filter_rules ile join+filter (DE Nazi içerik gizlenir)",
+  "s-tax-compliance: e_invoice_adapter ile ülkeye göre UBL/SDI/XRechnung üretimi",
+  "fe-cdn: edge worker'da jurisdiction kontrolü + geo-blocking (CN/RU/GDPR)"
+ ],
+ "ecaExample": "trigger:\n  event: catalog.query\ncondition:\n  all:\n    - resolved.jurisdiction != null\n    - product.category in content_filter_rules[jurisdiction]\naction:\n  - apply: filter_rule  # hide|restrict|flag\n  - convert: { unit: canonical_to_display }\nguards:\n  external_effects: legal_request_4eyes  # lawful intercept için\n  idempotency_key: \"filter:{jurisdiction}:{catalog_version}\"\n  audit: \"5y retention\"",
+ "securityNotes": [
+  "Lawful intercept: tek giriş kapısı + talep doğrulama (mahkeme damgası/IP whitelist) + legal counsel+CEO 4-göz; keyfi erişim yok.",
+  "Sanctions (OFAC/MASAK): IR vb. tam blok; hesap dondurma capability-gated.",
+  "Geo-blocking yasal sebeplerle edge'de; içerik bazı bölgelere servis edilmez.",
+  "Tüm yasal aktarım audit log'da 5 yıl saklanır (kim/ne zaman/ne aktardı)."
+ ],
+ "perfNotes": {
+  "code": "content_filter_rules / business_calendar config-as-data; resolver sonrası query join. Birim çevirisi runtime display'de (çift saklama yok).",
+  "perf": "Filtre kuralları cache'lenir; geo-rules CDN/edge'de değerlendirilir, origin'e yük binmez."
+ },
+ "testNotes": [
+  "DE jurisdiction'da yasak içerik (Nazi sembol) katalog+arama'dan filtrelenir.",
+  "AB ülkesine göre doğru e-fatura formatı üretilir (IT→SDI, FR→Factur-X); tek PDF reddedilir.",
+  "age_gate: min_age altı kullanıcı kısıtlı ürüne erişemez.",
+  "lawful intercept: 4-göz onayı olmadan export tetiklenmez; tüm akış audit'lenir."
+ ]
+}

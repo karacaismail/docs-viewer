@@ -1,0 +1,55 @@
+{
+ "featureDefs": [
+  {
+   "name": "Product / Variant / Attribute / AttributeGroup ArcheType'ları",
+   "desc": "Esnek öznitelik sistemi (renk/beden/teknik); aile (family) bazlı zorunlu-alan kümesi; hibrit şema (sabit + JSONB) ile binlerce öznitelik.",
+   "critical": true
+  },
+  {
+   "name": "Çok-kanallı / çok-locale değer projeksiyonu",
+   "desc": "Aynı ürünün kanal (web/pazaryeri/B2B) ve dil bazında farklı değeri; tek kaynak, kanala göre izdüşüm — Surface başına projeksiyon.",
+   "critical": true
+  },
+  {
+   "name": "Tamlık (completeness) kalite kapısı",
+   "desc": "Kanal başına zorunlu-alan kuralı; eksik ürün yayınlanamaz; tamlık skoru kanal-yayın Contract'ının ön koşulu."
+  },
+  {
+   "name": "Katalog yayını (publish) + sürüm",
+   "desc": "Onaylı katalog kanala outbox ile gönderilir; ürün değişikliği bitemporal + audit; geri-alınabilir sürüm."
+  },
+  {
+   "name": "Medya / dijital varlık (DAM) bağı",
+   "desc": "Ürün görsel/doküman varlıklarını File & Storage primitive'inden bağlar; kanal başına renditions."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Commerce, Marketplace, Product Feed ve B2B kanalları tek ürün gerçeğini paylaşmalı; her kanal kendi ürün tablosunu tutarsa fiyat/öznitelik tutarsızlığı kaçınılmaz. PIM ürün otoritesidir.",
+  "kernel": "ArcheType engine ile esnek öznitelik şeması; tenancy (RLS) katalogu tenant'a kapatır; audit ürün değişimini izler; Event Bus product.published yayar.",
+  "core": "App core'una bağlı bir Domain (Büyük Taş); core sözleşmeleri değişmez. Fiyat alanları Money (Decimal); pii yok.",
+  "modules": "i18n module locale-aware değer render'ı sağlar; File & Storage medya varlıklarını taşır; Search module ürün indeksini besler — yalnız Contract.",
+  "apps": "Commerce, Marketplace, Product Feed, B2B portal aynı Product + Variant'ı tüketir; kanala özel izdüşüm PIM'den gelir, çift ürün kaydı yok."
+ },
+ "moduleUsage": [
+  "s-marketplace: kanal başına ürün izdüşümü + tamlık kapısından geçen ürünleri pazaryerine listeler.",
+  "s-product-feed: merchant feed üretimi için kanal-locale projeksiyonunu okur.",
+  "s-i18n: ürün öznitelik değerlerinin çok-dilli çevirisini tutar/sunar.",
+  "stack-commerce: storefront ürün detayını PIM projeksiyonundan render eder."
+ ],
+ "ecaExample": "trigger:\n  event: product.completeness_changed\n  when: \"channel_completeness >= 100 AND tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"pim.publish\"\n    - not loop_detected\n    - product.required_fields_complete(channel)\naction:\n  - emit: catalog.product_published   # outbox, idempotent; kanal başına\n  - notify: [\"pim-surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{product}:{channel}:publish\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Tenant-scoped (RLS): katalog/öznitelik/medya başka tenant'a sızmaz; komşu-tenant ürün sorgusu sıfır döner.",
+  "Capability deny-by-default: yayın (publish) ve fiyat değiştirme ayrı yetki; tamlık kapısından geçmeyen ürün kanala çıkamaz.",
+  "Medya yükleme doğrulaması (tür/boyut) + enjeksiyon koruması; öznitelik içe-aktarımında toplu kirli-veri taraması."
+ ],
+ "perfNotes": {
+  "code": "Kanal-locale değer izdüşümü materialize edilir (projection); her render'da öznitelik JOIN cehennemi yok. Yayın asenkron worker (outbox).",
+  "perf": "Ürün/varyant listeleri keyset (cursor) pagination; öznitelik-değer indeksleri; binlerce öznitelik için JSONB GIN indeks."
+ },
+ "testNotes": [
+  "Tamlık kapısı: zorunlu alanı eksik ürün ilgili kanala yayınlanamaz.",
+  "Çok-locale: aynı ürün TR/EN değeri kanala göre doğru izdüşür.",
+  "Komşu-tenant katalog sorgusu sıfır döndürür.",
+  "Yayın idempotency: aynı ürün/kanal tekrar yayında çift catalog.product_published üretmez."
+ ]
+}

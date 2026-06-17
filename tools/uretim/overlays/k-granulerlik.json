@@ -1,0 +1,53 @@
+{
+ "featureDefs": [
+  {
+   "name": "Sekiz seviyeli zincir (App→Atom)",
+   "desc": "App(Dağ 34+) → Domain(Kaya 21) → Surface(Büyük Taş 13) → View(Orta Taş 8) → Fragment(Küçük Taş 5) → Component(Kum 3) → Property(Toz 2) → Atom/Rule(1); her seviye fibonacci SP katsayısı taşır.",
+   "critical": true
+  },
+  {
+   "name": "Komşuluk kuralı denetleyicisi",
+   "desc": "Bir seviye yalnız bir alt komşusuna bağlanır; Kaya doğrudan Kum'a bağlanamaz. AI-backlog üretiminde zincirde atlama = eksik analiz, plan reddedilir.",
+   "critical": true
+  },
+  {
+   "name": "Otomatik story point üreticisi",
+   "desc": "SP elle tahmin edilmez; yaprak Atom'lardan Dağ'a doğru toplanır — seviye = katsayı. WBS değil, granülerlik+tahmin makinesi.",
+   "critical": true
+  },
+  {
+   "name": "LLM iş tarifi dili",
+   "desc": "'crm dağ yap' = ürünü Dağ→Atom planla; 'listing orta taş yap' = bir Büyük Taş altında liste view'ı + endpoint grubu üret; çıktı tarif hangi seviyedeyse o seviyenin sözleşmesi.",
+   "critical": false
+  },
+  {
+   "name": "FE/BE tek metafor eşlemesi",
+   "desc": "Frontend (Page/Component/Property) ile Backend (Service Group/Endpoint/Policy) aynı taşa oturur; modül sınırı ile DDD bounded-context sınırı aynı seviyede (Kaya).",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — bu sayfa iş tarifi dilinin anayasası; her üretim akışı (SDK, AI-backlog, ArcheType seven-questions) bu taksonomiyi paylaşmazsa insan ve LLM aynı 'crm dağ yap' tarifinden farklı şey anlar.",
+  "kernel": "Atomic Types (Money/Phone) zemini ile kesişir ama eşanlamlı değil: granülerlik Atom'u kural/mantık, Faz 0 atomik tipi bölünemez tip; çoğu Atom kuralı bir atomik tipin validator'ına iner.",
+  "core": "Tanım katmanı adları (App/Domain/Surface/ArcheType/Fragment/Atom) öne çıkar; doğa metaforu SP/iletişim dili olarak tooltip'te yaşar — adlandırma core sözleşmesi (ADR-0010 Rev.1: 'alan' = Field/Attribute açık karar).",
+  "modules": "Her Domain (Kaya) bir bounded context; ArcheType (Büyük Taş) sdk archetype tek-komut + seven-questions ile üretilir; App ve Module geliştirici kompozisyonudur, tek-komut değil.",
+  "apps": "App (Dağ) kernel üstünde bir/çok stack'i paketler; bir stack tek başına da App olarak açılabilir — Dağ, App'in granülerlik karşılığı."
+ },
+ "moduleUsage": [
+  "be-sdk: granülerlik dilini manifest'e taşır; tek-komut yalnız ArcheType (Büyük Taş) + theme üretir.",
+  "HRMS örneği: Dağ(HRMS)→Kaya(Çalışanlar)→Büyük Taş(Profil)→Orta Taş(Düzenleme Formu)→Küçük Taş(Kişisel Bilgiler)→Kum(TC Input)→Toz(Required/MaxLength=11)→Atom(rakam-only, TC algoritması, yetki kuralı).",
+  "AI-backlog: 'iyzico entegrasyonu' ve 'SEO' module DEĞİL, ArcheType'tır — yanlış seviye ataması komşuluk kuralıyla yakalanır."
+ ],
+ "securityNotes": [
+  "Atom seviyesi 'yetkisi olmayan değiştiremez' gibi permission/business rule'ları barındırır — capability deny-by-default kuralları bu en alt seviyede beyan edilir.",
+  "Komşuluk kuralı denetleyicisi eksik analiz dedektörüdür: zincir atlaması olan plan reddedilince, güvenlik/validation katmanı (Toz/Atom) atlanmış üretim engellenir."
+ ],
+ "perfNotes": {
+  "perf": "Maliyet tahmini deterministik: SP yaprak→kök toplanır, elle kestirim yok; granülerlik denetleyicisi plan kabulünden önce çalışır, üretim sonrası değil."
+ },
+ "testNotes": [
+  "Komşuluk ihlali (Kaya→Kum doğrudan bağ) reddedilmeli — granülerlik denetleyici negatif testi.",
+  "Tek-komut yalnız Büyük Taş (ArcheType) + theme üretmeli; App/Module tek-komutla üretilememeli.",
+  "SP toplamı yapraktan köke deterministik hesaplanmalı; aynı zincir aynı SP'yi vermeli."
+ ]
+}

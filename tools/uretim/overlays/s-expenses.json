@@ -1,0 +1,53 @@
+{
+ "featureDefs": [
+  {
+   "name": "Expense ArcheType + OCR fiş çıkarımı",
+   "desc": "Fiş/fatura görselinden tutar, KDV, satıcı, tarih çıkarımı (AI öneri, insan onayı); harcama kalemi Party'ye ve maliyet merkezine bağlanır.",
+   "critical": true
+  },
+  {
+   "name": "Onay zinciri Workflow",
+   "desc": "Harcama → yönetici → finans onay durum makinesi; tutar/kategoriye göre eşik (ABAC); tenant'a pinli, ArcheType'tan bağımsız versiyonlanır.",
+   "critical": true
+  },
+  {
+   "name": "Travel & per-diem",
+   "desc": "Seyahat talebi, harcırah politikası, çoklu para birimi gider (cc-fx-ledger ile kur kilidi)."
+  },
+  {
+   "name": "TR muhasebe + KDV entegrasyonu",
+   "desc": "Türk muhasebe ile entegre, TR fiyatlandırma + Türkçe arayüz; e-fatura/e-arşiv eşlemesi muadillerden (Expensify/Concur) yapısal ayrışma."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-2 SaaS ürünü; kendi ArcheType'larını ve UI'sını sunar ama yetki/audit/event-bus framework'ten gelir. Müşteri ayrı bir gider SaaS'ı almak zorunda kalmaz.",
+  "kernel": "Party kimliği, tenancy (RLS), audit, ArcheType engine (otomatik REST/GraphQL) kernel'den; gider şemasını kernel ile tanımlar.",
+  "core": "App core'una bağlı; core module değişmez, Expenses bir Domain (Büyük Taş) olarak core sözleşmelerine uyar.",
+  "modules": "cc-fx-ledger (çok para birimli gider/kur kilidi), Notification (onay bekliyor bildirimi), Comms module'lerini tüketir.",
+  "apps": "Accounting/Billing app'leriyle aynı Party + maliyet merkezini paylaşır; onaylı gider muhasebeye Contract üzerinden yansır."
+ },
+ "moduleUsage": [
+  "s-accounting: onaylanan gider yevmiye kaydına Contract ile akar.",
+  "cc-fx-ledger: yabancı para gider için kur kilidi + functional currency çevirimi.",
+  "Notification: onay zincirinde sıradaki onaylayıcıya in-app/email bildirimi.",
+  "AI squad: OCR fiş çıkarımı + politika ihlali (limit aşımı) önerisi."
+ ],
+ "ecaExample": "trigger:\n  event: expense.submitted\ncondition:\n  all:\n    - actor.capability >= \"expense.create\"\n    - amount <= policy.limit_for(actor.role)   # eşik aşılırsa üst onaya\n    - not loop_detected\naction:\n  - route: approval_chain(manager -> finance)\n  - notify: next_approver\n  - on_approve emit: accounting.entry_requested   # outbox, idempotent\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{expense_id}:submit\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Fiş görseli ve tutar pii/finansal; RLS tenant-scoped, saklama politikası uygulanır.",
+  "OCR çıkarımı öneri olarak gelir; tutar/KDV onay öncesi insan doğrular (AI karar vermez).",
+  "Onay eşikleri ABAC: limit üstü harcama otomatik üst onaya, kendini onaylama engellenir.",
+  "OCR yüklemede dosya tipi/boyut doğrulama + zararlı içerik taraması."
+ ],
+ "perfNotes": {
+  "code": "OCR çıkarımı asenkron worker; onay zinciri event-driven, gider listesi keyset pagination.",
+  "perf": "Liste/rapor uçları keyset (cursor); maliyet merkezi + tarih indeksleri; OCR queue ile fan-out azaltılır."
+ },
+ "testNotes": [
+  "Komşu-tenant gideri sorguda sıfır döndürür (RLS).",
+  "Limit üstü harcama üst onaya yönlenir; alt onaylayıcı tek başına geçiremez.",
+  "Aynı gider iki kez submit edilince idempotency ile tek kayıt.",
+  "Onaylanan gider muhasebeye tek seferde yansır (idempotent entry).",
+  "Yabancı para gider doğru functional currency tutarına çevrilir."
+ ]
+}

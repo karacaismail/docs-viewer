@@ -540,7 +540,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "CQRS Projections (Materialized Read Models) — birincil yetenek",
+      "term": "is_projection ArcheType bayrağı + source_events",
       "definition": [
        {
         "type": "strong",
@@ -548,25 +548,38 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "Bir ArcheType projection olarak işaretlenir; kaynak event listesi + handler metadata'sı framework'e otomatik subscriber kurdurur."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Event-driven denormalize okuma modeli",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Yazma normalize/transaction-safe; okuma denormalize/hız için; ikisi event bus üzerinden senkron — JOIN cehennemi yok."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "Rebuild (replay) — durable",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "framework rebuild-projection: event store'dan baştan replay; durable workflow ile kesintide kaldığı yerden devam."
+       }
+      ]
+     },
+     {
+      "term": "Eventual consistency penceresi + fresh-read kaçışı",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1-5 sn gecikme tipik; finansal/ödeme sayfasında ?fresh=true write model'den okur (yavaş ama kesin)."
        }
       ]
      }
@@ -754,15 +767,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Tenant-scoped: projection satırı da RLS ile tenant'a kapalı; agregada komşu-tenant verisi karışmaz. Idempotent apply: outbox at-least-once teslim ettiğinden aynı event iki kez işlenince çift sayım olmaz (idempotency_key). Fresh-read kapısı: parasal/hukuki kesinlik gereken sayfa write model'den okur; stale projection finansal karar tabanı olmaz. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -790,15 +795,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Yazma normalize → event → handler → denormalize okuma tablosu. Rebuild durable workflow (kesintide devam). Handler saf + idempotent."
        }
       ]
      },
@@ -816,15 +813,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Dashboard tek SELECT (hazır agrege), JOIN yok; liste uçları keyset (cursor) pagination; eventual consistency 1-5 sn, finansalda fresh-read."
        }
       ]
      },
@@ -1120,7 +1109,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — CQRS Projections (Materialized Read Models)",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — CQRS Projections (Materialized Read Models)\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: order.placed\ncondition:\n  all:\n    - projection.is_subscribed(\"CustomerStats\")\n    - not loop_detected\naction:\n  - project:\n      target: CustomerStats\n      apply: |\n        stats[event.customer_id].total_spent += event.total   # Decimal\n        stats[event.customer_id].order_count += 1\nguards:\n  max_depth: 6\n  idempotency_key: \"proj:CustomerStats:{event.id}\"   # at-least-once → idempotent apply\n  external_effects: none   # projection saf okuma modeli; dış etki yok",
     "copyEnabled": true
    },
    {
@@ -1260,6 +1249,18 @@
     ]
    },
    {
+    "id": "block-scale-projections-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Idempotency: aynı event iki kez gelince projection değeri çift artmaz. Rebuild: event store'dan replay sonrası projection bakiyesi write model ile birebir. Tenant izolasyonu: agrega komşu-tenant order'ını saymaz. Fresh-read: ?fresh=true write model'den okur, stale değer dönmez."
+     }
+    ]
+   },
+   {
     "id": "block-scale-projections-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1278,7 +1279,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — bir kernel/scale primitive'idir, module değil. Her module kendi okuma tablosunu elle senkronlarsa stale/tutarsız olur; projection event bus üstünde tek desenle kurulur."
        }
       ]
      },
@@ -1287,16 +1288,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Event Bus (kaynak event aboneliği), Outbox (at-least-once teslim), ArcheType engine (is_projection bayrağı). Projection kernel primitive'i; iş kuralı değil."
        }
       ]
      },
@@ -1305,7 +1297,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Audit (projection güncelleme izi), tenancy (projection satırı da RLS ile tenant-scoped). Money alanları Decimal; finansal projeksiyonda yuvarlama tutarlı."
        }
       ]
      },
@@ -1314,7 +1306,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Module yalnız source_events tanımlar + handler yazar; framework subscriber'ı otomatik kurar — module senkron koduna karışmaz."
        }
       ]
      },
@@ -1323,7 +1315,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Dashboard/liste yüzeyleri projection'dan okur; yazma yolu write model'e gider. Aynı veri çift yazılmaz, türetilir."
        }
       ]
      }
@@ -1336,13 +1328,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-scale-projections-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-scale-projections-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-crm: pipeline/dashboard agregaları (won/lost, sahip bazında) projection'dan beslenir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "scale-counter: hot counter + projection birlikte yüksek-okuma sayaçlarını taşır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "stack-social: timeline fan-out işi projection (per-user materialize); celebrity politikası module'de."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-bi: rapor/dashboard sorguları write model yerine projection tablolarından okur."
+      }
+     ]
     ]
    },
    {

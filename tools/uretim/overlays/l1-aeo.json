@@ -1,0 +1,51 @@
+{
+ "featureDefs": [
+  {
+   "name": "Yapılandırılmış cevap blokları",
+   "desc": "AnswerBlock (soru/öz-cevap/detay) → geçerli FAQPage/HowTo/QAPage JSON-LD; AI Overviews ve featured snippet uyumlu.",
+   "critical": true
+  },
+  {
+   "name": "llms.txt politikası",
+   "desc": "Erişim + öne çıkan içerik manifesti; yalnız public içerik listelenir, tarama-dostu temiz markup.",
+   "critical": true
+  },
+  {
+   "name": "Entity / E-E-A-T sinyali",
+   "desc": "Organization/Person/about/sameAs schema + güncellik tarihi; kaynaksız iddia üretilmez."
+  },
+  {
+   "name": "Semantik HTML render",
+   "desc": "Cevap blokları heading/dl ile; HTML string render YASAK (XSS + semantik kaybı)."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "evet — ama l1-seo'dan ayrı modül: klasik meta/schema l1-seo'da, bu modül cevap-yapısı + AI-atıf sinyalini sahiplenir (farklı editöryel+teknik sorumluluk).",
+  "kernel": "Schema (AnswerBlock/FaqSchema/LlmsTxtPolicy/EntityProfile ArcheType'ları), Authz (render-only capability).",
+  "core": "Audit (cevaplar kaynak+tarih ile audit'li), bitemporal güncellik tarihi.",
+  "modules": "l1-pseo sayfaları bu modülün cevap bloklarıyla zenginleşir; ölçüm (AI referral) l1-analytics'te; içerik üretimi k-agent-runtime opsiyonel (capability-gated).",
+  "apps": "Public Surface'i olan app'lerde aktif: cevap bloğu + JSON-LD enjeksiyonu, GET /llms.txt; admin Surface'te cevap editörü + Rich Results önizleme."
+ },
+ "moduleUsage": [
+  "l1-pseo: programatik sayfalar AnswerBlock cevap bloklarıyla zenginleşir",
+  "l1-analytics: AI yüzeylerinden gelen referral attribution ölçümü",
+  "k-agent-runtime: cevap taslağı üretimi (Faz 3, insan onaylı)"
+ ],
+ "ecaExample": "trigger:\n  event: answer_block.publish_requested\ncondition:\n  all:\n    - draft.source != null  # E-E-A-T kapısı: kaynaksız yayınlanmaz\n    - draft.updated_at != null\n    - human_reviewer.approved == true  # AI-üretimi denetimsiz çıkmaz\naction:\n  - render: faq_jsonld\n  - update: llms_txt\nguards:\n  external_effects: human_approval_required\n  idempotency_key: \"answer:{page_id}:{block_id}\"\n  audit: true",
+ "securityNotes": [
+  "HTML string render YASAK → cevap blokları semantik HTML (heading/dl); XSS yüzeyi kapatılır.",
+  "Render-only capability: schema + cevap bloğu + llms.txt yazmadan ibaret; pii üretmez, kernel iç API'sine dokunmaz.",
+  "llms.txt yalnız public içerik listeler; özel/tenant içeriği sızdırmaz.",
+  "AI-üretimi taslak insan onayı olmadan yayınlanmaz (E-E-A-T + güven koruması)."
+ ],
+ "perfNotes": {
+  "code": "Saf hook gövdeleri: AnswerBlock → JSON-LD serileştirici, llms.txt üreteci, entity çözücü — saf fonksiyonlar (Shiki/HTML-string yok).",
+  "perf": "JSON-LD ve llms.txt build/render zamanı üretilir; çıkarım katmanı için statik servis."
+ },
+ "testNotes": [
+  "AnswerBlock → geçerli FAQPage/HowTo JSON-LD (Rich Results doğrulaması).",
+  "llms.txt geçerli formatta + yalnız public içerik listeler.",
+  "Entity schema sameAs/about çözülür; her cevapta güncellik tarihi mevcut.",
+  "Kaynaksız iddia üretilmez (E-E-A-T kapısı); HTML string render reddedilir."
+ ]
+}

@@ -1481,7 +1481,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Jurisdiction / Policy Resolver — 6-Eksen Orthogonal Model — çekirdek yetenek",
+      "term": "6-eksen saf resolver fonksiyonları",
       "definition": [
        {
         "type": "strong",
@@ -1489,41 +1489,42 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Locale/Jurisdiction/Currency/Tax/Timezone/Data-residency her biri ayrı, test edilebilir saf fonksiyon; compose ile Policy Set üretir."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "jurisdiction_policy (config-as-data)",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Versiyonlu, effective_from/to'lu politika tablosu; kural değişimi kod deploy'u değil config update. bitemporal + audit."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "decision_trace audit",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Her request için çözülen 6 eksen + uygulanan policy versiyonu kaydı; 'neden bu kural?' yasal sorusunun cevabı (GDPR/KVKK). audit."
+       }
+      ]
+     },
+     {
+      "term": "Çatışma precedence matrisi",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "KVKK-sil vs VUK-sakla → anonimleştir+kaydı tut; CCPA vs GDPR → en sıkı; sanctions → reddet; deny-by-default fallback."
        }
       ]
      }
@@ -1711,15 +1712,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Resolver veya config eksikse deny-by-default — en sıkı kural seti (max consent, min veri toplama); sessiz kabul YASAK = yasal ihlal. Sanctions list match → her şeyden önce REDDET (pre-check middleware); decision_trace'a OFAC_match yazılır. Config-write OpenFGA ile 4-göz onayına bağlı; yanlış config = milyon dolar ceza; approved_by zorunlu. KVKK-sil vs VUK-sakla: kişisel veri anonimleştirilir (TC hash, ad maskelenir), finansal kayıt 10 yıl tutulur — soft-delete + anonymize ayrı. Data residency: TR vatandaşı verisi (KVKK md.9) izinli storage bölgesi dışına yazılamaz. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1773,15 +1766,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Resolver hot path: per-user policy kısa TTL (5 dk), per-jurisdiction config uzun TTL (1 saat) + event-based invalidation (config değişti → cache flush). 6 eksen toplam < 6ms, policy lookup cache'ten < 5ms; decision_trace async batch insert (request'i bloklamaz)."
        }
       ]
      },
@@ -2077,7 +2062,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Jurisdiction / Policy Resolver — 6-Eksen Orthogonal Model",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Jurisdiction / Policy Resolver — 6-Eksen Orthogonal Model\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: order.checkout_requested\ncondition:\n  all:\n    - actor.capability >= \"order.create\"\n    - not loop_detected\n    - policy_set.sanctions_match == false\naction:\n  - apply: policy_set   # locale+jurisdiction+currency+tax+tz+residency\n  - emit: decision_trace.recorded   # async batch, audit\nguards:\n  max_depth: 6\n  idempotency_key: \"{request_id}:resolve\"\n  external_effects: deny_by_default_on_resolver_failure",
     "copyEnabled": true
    },
    {
@@ -2217,6 +2202,18 @@
     ]
    },
    {
+    "id": "block-cc-jurisdiction-resolver-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Almanya'da yaşayan Türk: locale=tr, jurisdiction=DE, currency=EUR, tax=TR, tz=Berlin, residency=EU ayrı çözülür (tek-locale yaklaşımı bu kombinasyonu kuramaz). Resolver çöküşünde deny-by-default fallback policy uygulanır, istek sessizce kabul edilmez. Sanctions list eşleşmesinde sipariş diğer eksenlere bakılmadan reddedilir. KVKK sil talebinde kişisel veri anonimleşir ama fatura kaydı korunur (idempotent, çift silme yok). 4-göz onayı olmadan jurisdiction_policy yeni versiyonu effective olamaz."
+     }
+    ]
+   },
+   {
     "id": "block-cc-jurisdiction-resolver-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -2235,7 +2232,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — crosscut middleware; her request Layer-1 öncesi bu resolver'dan geçer; UI + iş mantığı + billing + bildirim hep çözülen Policy Set'ten beslenir."
        }
       ]
      },
@@ -2244,16 +2241,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Tenancy/RLS ve audit kernel'den; resolver, kullanıcının kernel Party'sindeki ülke/tercih alanlarını okur; data-residency çözümü kernel'in storage-region eşlemesini sürer."
        }
       ]
      },
@@ -2262,7 +2250,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Core sözleşmesi resolver'a bağımlı değil — core yalnız çözülmüş Policy Set'i tüketir; kural bilgisi koddan ayrı."
        }
       ]
      },
@@ -2271,7 +2259,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Billing module currency/tax eksenini, i18n module locale'i, l1-audit decision_trace'i tüketir; k-authz jurisdiction-relation ekleyerek jurisdiction-aware yetki verir."
        }
       ]
      },
@@ -2280,7 +2268,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "E-ticaret, classifieds, billing app'leri aynı resolver çıktısını paylaşır; her app kendi locale/jurisdiction varsayımını uydurmaz — tek kaynak."
        }
       ]
      }
@@ -2293,13 +2281,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-cc-jurisdiction-resolver-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-cc-jurisdiction-resolver-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Billing app: resolved currency = ledger, payment currency = işlem; dual ledger + FX lock kuralını Policy Set'ten okur."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Privacy/Consent module: resolved jurisdiction → consent default (GDPR opt-in / CCPA opt-out) + retention yılı."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Authorization (k-authz): user.jurisdiction='EU' AND action='export_personal_data' → GDPR md.20 portability formatı; jurisdiction-relation OpenFGA modeli."
+      }
+     ]
     ]
    },
    {

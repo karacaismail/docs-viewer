@@ -1,0 +1,51 @@
+{
+ "featureDefs": [
+  {
+   "name": "CashAccount / BankConnection / CashFlowForecast ArcheType'ları",
+   "desc": "Banka hesabı, açılış/kapanış bakiyesi ve nakit pozisyonu; her tutar Money (Decimal + ISO para birimi), her hareket bitemporal + audit'li.",
+   "critical": true
+  },
+  {
+   "name": "Nakit akış projeksiyonu (Projection-ArcheType)",
+   "desc": "Alacak/borç/gerçekleşen hareketlerden türetilen salt-okur 13-haftalık nakit görünümü; bozulursa kaynaktan yeniden dökülür, elle yazılmaz."
+  },
+  {
+   "name": "Çok-para / döviz pozisyonu",
+   "desc": "Para birimi başına bakiye; kur kaynağı dış servis; tutarlar asla float değil Decimal — yuvarlama ve para-birimi uyuşmazlığı reddedilir.",
+   "critical": true
+  },
+  {
+   "name": "Nakit tahmini (AI)",
+   "desc": "Geçmiş tahsilat/ödeme deseninden likidite tahmini; karar değil ÖNERİ — finans onayına düşer, güven kalibrasyonu zorunlu."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Accounting/AR/AP aynı nakit hareketini paylaşmalı; treasury kendi defterini tutarsa banka mutabakatı ve nakit pozisyonu çelişir. Layer-2 SaaS; kernel + scale + L1 üstüne oturur.",
+  "kernel": "ArcheType engine ile şema; tenancy (RLS) hesabı/banka bağlantısını tenant'a kapatır; audit her nakit hareketini izler; Event Bus likidite olaylarını yayar.",
+  "core": "App core'una bağlı bir Domain (Büyük Taş); core sözleşmeleri değişmez. Money zorunlu Decimal; banka kimlik bilgileri encrypted-at-rest + pii/sır kapsamında.",
+  "modules": "Accounting 'fatura kaydedildi/tahsil edildi' → nakit projeksiyonu günceller; AR/AP vade hareketlerini Contract üzerinden besler — yalnız Contract.",
+  "apps": "Accounting, AR/AP ve raporlama app'leri aynı CashAccount + bakiyeyi paylaşır; çift kayıt ve tutarsız nakit pozisyonu yok."
+ },
+ "moduleUsage": [
+  "Accounting app: tahsilat/ödeme hareketlerini nakit projeksiyonuna besler; banka mutabakatını tek hareket modelinden okur.",
+  "AR app: alacak vadelerini 13-haftalık nakit görünümüne aktarır.",
+  "AP app: borç/ödeme planını çıkış tahminine bağlar.",
+  "Reporting app: salt-okur nakit projeksiyonunu gösterir; kaynağı her zaman yeniden kurulabilir."
+ ],
+ "ecaExample": "trigger:\n  event: cash.balance_changed\n  when: \"abs(delta.amount) >= threshold AND tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"treasury.write\"\n    - not loop_detected\naction:\n  - emit: treasury.liquidity_alert        # outbox, idempotent\n  - notify: [\"finance-surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{account}:{txn}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Banka bağlantı sırları (token/anahtar) encrypted-at-rest; düz gösterilmez; RLS tenant-scoped — komşu tenant nakit pozisyonu görünmez.",
+  "Ödeme/transfer dış-etkili aksiyon: ECA doğrudan yürütmez, allowlist'li akışa delege + parasal sonuçta step-up onayı.",
+  "Money alanları purpose-binding + audit; kur dönüşümü ve yuvarlama kuralları deterministik, float yasak."
+ ],
+ "perfNotes": {
+  "code": "Bakiye türetilir (hareket defterinden projection); tutar Decimal kolon + para birimi; tarih bazlı hareket sorguları index'li.",
+  "perf": "Nakit hareketi listeleri keyset (cursor) pagination; 13-haftalık projeksiyon continuous-aggregation/materialized; AI tahmini asenkron worker."
+ },
+ "testNotes": [
+  "Komşu-tenant CashAccount sorgusu sıfır döndürür (RLS + permission injection).",
+  "Money invariantı: para-birimi uyuşmazlığı ve float girdisi reddedilir; 0.1+0.2 Decimal doğruluğu.",
+  "Aynı banka mutabakat satırı idempotency key ile iki kez işlenmez.",
+  "Nakit projeksiyonu silinip kaynaktan yeniden dökülünce aynı sonucu üretir (deterministik)."
+ ]
+}

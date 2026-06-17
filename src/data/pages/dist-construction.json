@@ -215,7 +215,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Şantiye/İnşaat Distribution — çekirdek yetenek",
+      "term": "Hakediş hesap motoru",
       "definition": [
        {
         "type": "strong",
@@ -223,41 +223,51 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Metraj × birim fiyat − kesintiler (avans/teminat/stopaj); onay zinciri; TR inşaatının en kronik Excel acısı tek akışa bağlanır."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Puantaj (şantiye bazlı, mobil)",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "İşçi/taşeron günlük giriş, şantiye bazlı; Workforce module köprüsü."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Taşeron sözleşme ↔ hakediş bağı",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "CLM sözleşmesi hakediş satırlarına bağlı; sözleşme-hakediş-ödeme zinciri kesintisiz."
+       }
+      ]
+     },
+     {
+      "term": "Metraj + birim fiyat yönetimi",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "İmalat kalemleri, poz/birim fiyat, ilerleme yüzdesi."
+       }
+      ]
+     },
+     {
+      "term": "Şantiye malzeme + depo transferi",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Procurement + şantiyeler arası stok transferi; İSG denetim listeleri köprüsü."
        }
       ]
      }
@@ -445,15 +455,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Taşeron/işçi verisi pii=true + retention; RLS tenant-scoped — bir müteahhit başka şantiyenin hakedişini göremez. Hakediş/kesinti/stopaj Money kuruş hassasiyetinde tamsayı + para birimi; float yok, yuvarlama denetlenebilir. Hakediş onayı capability'li (hakedis.approve) deny-by-default; her revizyon audit'e yazılır (kesinti gerekçesiyle). Bitemporal: onaylanan hakediş dönem sürümü silinmez; düzeltme yeni sürüm — ödeme izi korunur. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -481,15 +483,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Hakediş hesabı dönem kapanışında batch; puantaj mobil giriş asenkron senkronize."
        }
       ]
      },
@@ -507,15 +501,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Hakediş/puantaj listeleri keyset pagination; metraj kalemleri için FK index + JSONB GIN; çok-şantiye sorgusu sayfalanır."
        }
       ]
      },
@@ -811,7 +797,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Şantiye/İnşaat Distribution",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Şantiye/İnşaat Distribution\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: progress_payment.submitted\ncondition:\n  all:\n    - actor.capability >= \"hakedis.approve\"\n    - contract.linked == true\n    - not loop_detected\naction:\n  - compute: metraj * unit_price - deductions   # idempotent\n  - emit: hakedis.approved_for_payment\nguards:\n  max_depth: 6\n  idempotency_key: \"hakedis:{tenant}:{contract}:{period}\"\n  external_effects: approval_required",
     "copyEnabled": true
    },
    {
@@ -951,6 +937,18 @@
     ]
    },
    {
+    "id": "block-dist-construction-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Komşu-tenant hakediş/puantaj sorgusu sıfır döndürür (RLS). Hakediş = metraj × birim fiyat − kesinti formülü kuruş seviyesinde doğru. Sözleşmesiz hakediş onaya gidemez (contract.linked kapısı). Aynı dönem hakedişi ikinci kez onaylanınca çift ödeme oluşmaz (idempotency). İSG ihlali olan şantiyede hakediş onayı kural gereği bloke olur (deny path)."
+     }
+    ]
+   },
+   {
     "id": "block-dist-construction-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -969,7 +967,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — bu bir Distribution (sektör paketi): Workforce + CLM + MRP kesişimi; Stack ⊂ Edition ⊂ Distribution taksonomisinde gelişmiş UI/UX ile teslim edilir. Hakediş tek başına demo kapatıcı ama puantaj/sözleşme/malzeme module'leriyle Contract üzerinden bağlanır."
        }
       ]
      },
@@ -978,16 +976,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Party (taşeron/işçi), tenancy (RLS), audit, event-bus kernel'den; distribution kendi hakediş ArcheType'larını kompoze eder."
        }
       ]
      },
@@ -996,7 +985,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Money (hakediş/kesinti, kuruş + para birimi, stopaj), bitemporal (hakediş dönem sürümü), i18n; core sözleşmelerine uyar."
        }
       ]
      },
@@ -1005,7 +994,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "s-workforce (puantaj), s-clm (taşeron sözleşmesi), s-procurement (malzeme), s-isg (denetim) module'lerini tüketir — yalnız Contract."
        }
       ]
      },
@@ -1014,7 +1003,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Şantiye distribution'ı tek panelde; aynı taşeron Party'sini sözleşme/ödeme/puantaj app'leriyle paylaşır — çift kayıt yok."
        }
       ]
      }
@@ -1027,13 +1016,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-dist-construction-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-dist-construction-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-workforce: şantiye puantajı hakediş işçilik kalemine besler (mobil giriş)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-clm: taşeron sözleşme şartları hakediş kesinti/teminat kurallarını sürükler."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-procurement: şantiye malzeme girişi + depolar arası transfer maliyete yansır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-isg: şantiye denetim listesi ihlali hakediş onayını engelleyebilir."
+      }
+     ]
     ]
    },
    {

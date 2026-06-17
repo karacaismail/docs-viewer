@@ -1,0 +1,55 @@
+{
+ "featureDefs": [
+  {
+   "name": "Seller (vendor) ArcheType + onboarding",
+   "desc": "Mirakl/Webkul muadili transaction marketplace: satıcı kaydı, KYC/onay, mağaza profili. s-commerce üstüne multi-vendor capability — additif, mevcut B2C/B2B siparişleri etkilenmez.",
+   "critical": true
+  },
+  {
+   "name": "Ödeme split + komisyon motoru",
+   "desc": "Checkout içeride; ödeme satıcıya ve platforma bölünür (split). Komisyon kategoriye/satıcıya göre; tüm tutarlar Money (Decimal) — float YASAK.",
+   "critical": true
+  },
+  {
+   "name": "Ürün kartında seller_id + çok-satıcı listing",
+   "desc": "Marketplace bayrağı açıldığında ürün kartı seller_id alır; aynı ürünü birden çok satıcı listeleyebilir (offer/buy-box)."
+  },
+  {
+   "name": "Satıcı hakediş (payout) & mutabakat",
+   "desc": "Sipariş tamamlanınca satıcı bakiyesi; periyodik payout, kesinti/iade düşümü; bitemporal hakediş defteri + audit."
+  },
+  {
+   "name": "Satıcı performans & uyuşmazlık",
+   "desc": "Teslim/iade/şikayet metrikleri; eşik altı satıcı askıya; uyuşmazlık iş akışı."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — bağımsız ürün değil, s-commerce üstüne multi-vendor capability; kernel ile zorunlu (kimlik/tenancy/audit), ödeme/komisyon modülleriyle yalnız Contract.",
+  "kernel": "Kimlik, tenancy (RLS), audit ve ArcheType engine kernel'den; satıcı kimliği Party'den türer. Para = Money (Decimal) + ISO 4217.",
+  "core": "Commerce app core'una bağlı; core module değişmez, marketplace capability core sözleşmelerine uyar (additif bayrak).",
+  "modules": "s-commerce / s-ecommerce-models ile ürün-sipariş tabanını paylaşır; ödeme sağlayıcı split için Contract; komisyon -> muhasebe/revenue olayı. Lead-gen marketplace (s-classifieds) AYRI mimari.",
+  "apps": "Storefront ve Commerce app'leri aynı ürün/sipariş ArcheType'ını paylaşır; marketplace bayrağı seller_id ekler, çift kayıt yok."
+ },
+ "moduleUsage": [
+  "Storefront/Commerce app: ürün kartı seller_id + offer listesi; sepet çok-satıcılı bölünür.",
+  "Ödeme modülü: checkout tutarını platform komisyonu + satıcı payına split eder (escrow opsiyonu).",
+  "Revenue/Accounting app: komisyon geliri + satıcı hakediş borcu yevmiye olayı.",
+  "s-classifieds: lead-gen (ilan ücreti+doping, ödeme dışarıda) — YANLIŞ ArcheType seçimi 6 ayı geri çevirir; ayrı modül."
+ ],
+ "ecaExample": "trigger:\n  event: order.completed\n  when: \"tenant_scoped AND order.has_marketplace_items\"\ncondition:\n  all:\n    - actor.capability >= \"marketplace.payout.compute\"\n    - not loop_detected\n    - split.total == order.amount   # Money invariant, Decimal\naction:\n  - emit: payment.split_requested        # platform + satıcı payı, outbox idempotent\n  - record: seller_payable { bitemporal: true }\n  - emit: revenue.commission_earned\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{order}:payout\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Satıcı yalnız kendi siparişini/hakedişini görür — RLS tenant-scoped + satıcı-scoped capability deny-by-default; alıcı PII satıcıya maskeli.",
+  "Ödeme split tutarları Money/Decimal; komisyon+satıcı payı toplamı sipariş tutarına eşit olmalı (invariant kapı), aksi post reddedilir.",
+  "Hakediş defteri değişmez audit (A08): tamamlanan payout geriye değişmez; iade düşümü yeni kayıt. Satıcı onboarding KYC step-up."
+ ],
+ "perfNotes": {
+  "code": "Komisyon/split hesabı saf fonksiyon (Strategy: kategori | satıcı | kampanya kuralı); if (rule==...) yerine runtime dispatch.",
+  "perf": "Payout mutabakatı asenkron worker (batch); offer/buy-box seçimi indeksli; satıcı sipariş listesi keyset pagination; seller_id + durum bileşik indeks."
+ },
+ "testNotes": [
+  "Komşu-satıcı sipariş/hakediş sorgusu sıfır döndürür.",
+  "Komisyon + satıcı payı == sipariş tutarı, kuruşu kuruşuna (Decimal).",
+  "Aynı sipariş ikinci kez payout üretmez (idempotency).",
+  "Marketplace bayrağı kapalı tenant'ta seller_id eklenmez; mevcut B2C sipariş akışı değişmez (additif)."
+ ]
+}

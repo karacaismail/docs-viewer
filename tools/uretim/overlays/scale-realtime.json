@@ -1,0 +1,52 @@
+{
+ "featureDefs": [
+  {
+   "name": "Doğru transport seçimi",
+   "desc": "Sunucu→istemci push için SSE (bildirim, feed — düşük kaynak, HTTP/2), iki yönlü için WebSocket (chat, oyun). Long polling yalnız eski uyumluluk fallback'i.",
+   "critical": true
+  },
+  {
+   "name": "Yatay ölçek + state paylaşımı",
+   "desc": "1 Node.js pod max ~50K WebSocket; 1M concurrent = ~20 pod. Sticky session veya Redis pub/sub ile state paylaşımı kurulmadan ölçeklenmez.",
+   "critical": true
+  },
+  {
+   "name": "Redis pub/sub fan-out",
+   "desc": "Kanal user:${userId}:notifications; bir pod'a gelen olay tüm pod'lardaki ilgili bağlantılara dağıtılır."
+  },
+  {
+   "name": "Reconnect + heartbeat",
+   "desc": "Frontend reconnect logic, 30sn heartbeat; kopan bağlantı otomatik toparlanır, ölü bağlantı temizlenir."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — scale katmanı olarak; gerçek-zamanlı taşıma kernel event bus ile entegre, ama bağlantı yönetimi ayrı bounded-context.",
+  "kernel": "Event bus'tan (08-kernel-bus) gelen olayı dinler; Authz (JWT auth /events/sse) ve tenancy bağlantı bazında uygulanır.",
+  "core": "Bağlantı kimliği + audit core kontratı; push edilen olay outbox/bus güvencesinden gelir, kaybolmaz.",
+  "modules": "Notification/chat module'leri olay yayar; realtime katmanı bunu SSE/WS üzerinden ilgili kullanıcıya iletir — module transport bilmez.",
+  "apps": "Public/authed app'ler aynı SSE/WS altyapısını paylaşır; kanal isimlendirmesi tenant + user scope'lu."
+ },
+ "moduleUsage": [
+  "Notification module: SSE /events/sse üzerinden kullanıcıya bildirim push eder.",
+  "Chat/messaging module: çift yönlü WebSocket ile mesaj akışı kurar.",
+  "Live feed/dashboard: SSE ile canlı veri güncellemesi alır, yenilemeye gerek kalmaz."
+ ],
+ "ecaExample": "trigger:\n  event: notification.created\ncondition:\n  all:\n    - subscriber.authenticated == true   # JWT\n    - channel == \"user:{userId}:notifications\"\n    - tenant_scoped\naction:\n  - push: { transport: sse }            # WS for chat\n  - fanout: redis_pubsub\nguards:\n  heartbeat: 30s\n  max_conn_per_pod: 50000\n  external_effects: none",
+ "securityNotes": [
+  "SSE/WS bağlantısı JWT auth zorunlu; kimliksiz kanal açılamaz (deny-by-default).",
+  "Kanal isimlendirmesi tenant + user scope'lu; bir kullanıcı başkasının kanalına subscribe edemez (RLS eşdeğeri).",
+  "WebSocket proxy/firewall'da bazen bloklanır; SSE/HTTP fallback ile erişim güvence altına alınır.",
+  "Push edilen payload minimize edilir; PII yerine referans/id taşınır, hassas içerik ayrı yetkiyle çekilir."
+ ],
+ "perfNotes": {
+  "code": "Bağlantı yönetimi Redis pub/sub ile pod'lar arası paylaşılır; module kodu push transport'unu bilmez.",
+  "perf": "SSE bildirim/feed'de WS'ten düşük kaynak; sticky session veya Redis state olmadan yatay ölçek mümkün değil. Heartbeat ölü bağlantıyı temizler."
+ },
+ "testNotes": [
+  "Bildirim için SSE, chat için WS seçilir; long polling yalnız fallback'te devreye girer.",
+  "İki pod'a dağılmış kullanıcılar Redis pub/sub ile aynı olayı alır.",
+  "Komşu-tenant/başka kullanıcı kanalına subscribe sıfır mesaj döner.",
+  "Bağlantı koparsa reconnect + heartbeat ile otomatik toparlanır.",
+  "50K bağlantı üstünde ikinci pod devreye girer, mesaj kaybı olmaz."
+ ]
+}

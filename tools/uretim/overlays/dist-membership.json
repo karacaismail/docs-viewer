@@ -1,0 +1,56 @@
+{
+ "featureDefs": [
+  {
+   "name": "Üye / Üyelik / Aidat ArcheType'ları",
+   "desc": "Dernek/oda üyesi (Party'den türer), üyelik tipi/dönemi, aidat tahakkuk-tahsilat; hibrit şema + JSONB (üye özel alanları) + FK.",
+   "critical": true
+  },
+  {
+   "name": "Aidat tahakkuk + tahsilat takibi",
+   "desc": "Dönemsel aidat borç oluşturma, ödeme eşleştirme, gecikme/borçlu raporu; Money kuruş hassasiyeti.",
+   "critical": true
+  },
+  {
+   "name": "Üyelik yaşam döngüsü",
+   "desc": "Başvuru → onay → aktif → askı/istifa → çıkış; durum makinesi onay zinciriyle."
+  },
+  {
+   "name": "Bağış / kampanya yönetimi",
+   "desc": "Bağış kaydı, kampanya hedefi, bağışçı geçmişi (CiviCRM çekirdek işlevi)."
+  },
+  {
+   "name": "Genel kurul / etkinlik katılım",
+   "desc": "Üye etkinliğe kayıt, yoklama, oy hakkı (aidat durumu kapısıyla)."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — bu bir Distribution (sektör paketi, CiviCRM muadili) ve Stack ⊂ Edition ⊂ Distribution taksonomisinde gelişmiş UI/UX ile teslim edilir; finans/bildirim module'leriyle Contract üzerinden entegre olur, ham stack olarak değil.",
+  "kernel": "Party (üye kimliği), tenancy (RLS), audit, event-bus kernel'den; üyelik kendi ArcheType şemasını tanımlar.",
+  "core": "Money (aidat/bağış, kuruş + para birimi), bitemporal (üyelik geçmişi), i18n; core sözleşmelerine uyar.",
+  "modules": "Muhasebe module'üne aidat/bağış gelir kaydı, bildirim module'üne aidat hatırlatma yayar; ödeme module'ünden tahsilat tüketir — yalnız Contract.",
+  "apps": "Üyelik distribution'ı tek panelde sunulur; aynı Party'yi muhasebe ve iletişim app'leriyle paylaşır."
+ },
+ "moduleUsage": [
+  "Muhasebe module'ü: aidat tahakkuku ve bağış geliri GL'ye yansır.",
+  "Bildirim module'ü: aidat son ödeme / genel kurul daveti izinli kanaldan üyeye gönderilir.",
+  "Ödeme module'ü: gelen tahsilat aidat borcuyla eşleştirilir (idempotent)."
+ ],
+ "ecaExample": "trigger:\n  event: membership.dues_due\ncondition:\n  all:\n    - actor.capability >= \"membership.manage\"\n    - member.status == \"active\"\n    - recipient.consent.commercial == true\naction:\n  - emit: dues.accrued              # Money satırı, idempotent\n  - notify: member                  # izinli kanal\nguards:\n  max_depth: 6\n  idempotency_key: \"dues:{tenant}:{member}:{period}\"\n  external_effects: none",
+ "securityNotes": [
+  "Üye verisi pii=true (kimlik/iletişim) + retention; RLS tenant-scoped — bir dernek başka derneğin üyesini göremez.",
+  "Aidat/bağış Money kuruş hassasiyetinde tamsayı + para birimi; float yok.",
+  "Üyelik yönetimi capability'li (membership.manage) deny-by-default; durum değişimi (askı/çıkış) audit'e yazılır.",
+  "Aidat hatırlatma ticari iletişim ise izin (consent) kapısı zorunlu; oy hakkı aidat durumu kontrolüyle verilir."
+ ],
+ "perfNotes": {
+  "code": "Aidat tahakkuk batch (dönem başında); tahsilat eşleştirme asenkron.",
+  "perf": "Üye/aidat listeleri keyset pagination; borçlu sorgusu sabit kolon index + JSONB GIN; büyük üye tabanı sayfalanır."
+ },
+ "testNotes": [
+  "Komşu-tenant üye/aidat sorgusu sıfır döndürür (RLS).",
+  "Aynı dönem aidatı ikinci kez tahakkuk etmez (idempotency).",
+  "Tahsilat doğru aidat borcuyla eşleşir, çift düşmez.",
+  "Aidat borçlu üye oy/etkinlik hakkını kural gereği kullanamaz (deny path).",
+  "Money: aidat/bağış toplamı kuruş seviyesinde tutarlı."
+ ]
+}

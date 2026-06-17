@@ -301,7 +301,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Idempotency Keys — birincil yetenek",
+      "term": "Idempotency-Key tablosu + middleware",
       "definition": [
        {
         "type": "strong",
@@ -309,25 +309,51 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "key PRIMARY KEY + tenant_id + endpoint + response_status/body önbelleği; aynı key ile gelen ikinci istek yan etki üretmeden önbellekli yanıtı döner (Stripe deseni)."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Job idempotency",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Worker job'ları da idempotency_key taşır; handler başında 'bu key işlendi mi' kontrolü — network retry, worker restart, queue replay senaryolarında çift işlemi keser."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "ChangeSet + ECA idempotency",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Her ChangeSet ve her ECA tetiklenişi bir "
+       },
+       {
+        "type": "term",
+        "text": "idempotency key",
+        "termId": "term-idempotency-key-scale-idempotency"
+       },
+       {
+        "type": "text",
+        "text": " taşır; aynı işlem tekrar uygulansa bile yan etki bir kez gerçekleşir."
+       }
+      ]
+     },
+     {
+      "term": "Döngü kesici ile birleşik koruma",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "ECA güvenlik kapısındaki maks zincir derinliği (6) ile idempotency birlikte forward-chaining'in çift-tetikleme riskini kapatır."
        }
       ]
      }
@@ -515,15 +541,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Idempotency tablosu tenant-scoped (RLS): A tenant'ın key'i B tenant'ın yanıtını döndüremez — key namespace tenant_id ile ayrılır. response_body önbelleği PII/Money içerebilir → retention + maskeleme; key süresi dolunca temizlenir. Key sadece başarılı (200/201/202) yanıtta yazılır; hata yanıtı önbelleğe alınmaz, aksi halde geçici hata kalıcılaşır. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -551,15 +569,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "key PRIMARY KEY → O(1) lookup; INSERT yarış durumu unique constraint ile çözülür (ikinci INSERT çakışır, önbellek okunur)."
        }
       ]
      },
@@ -577,15 +587,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Idempotency kontrolü her yazma isteğine bir lookup ekler; sıcak key'ler için kısa TTL + index; eski kayıtlar periyodik temizlenir."
        }
       ]
      },
@@ -881,7 +883,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Idempotency Keys",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Idempotency Keys\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: payment.charge_requested\ncondition:\n  all:\n    - actor.capability >= \"payment.charge\"\n    - not already_processed(idempotency_key)\n    - not loop_detected\naction:\n  - charge: external_gateway   # yan etki bir kez\n  - persist: idempotency_record\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{endpoint}:{client_key}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1021,6 +1023,18 @@
     ]
    },
    {
+    "id": "block-scale-idempotency-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Aynı Idempotency-Key ile iki POST → tek yan etki, ikinci istek önbellekli yanıtı döner. Worker job retry'da aynı idempotency_key → handler ikinci kez iş yapmaz. Tenant izolasyonu: A tenant key'i B tenant context'inde sıfır/yeni işlem olarak görülür (çakışmaz). ECA çift-tetikleme: forward-chain aynı key'i ikinci kez emit etmemeli (max_depth 6 + idempotency)."
+     }
+    ]
+   },
+   {
     "id": "block-scale-idempotency-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1039,7 +1053,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — idempotency scale primitive'i; her yan-etkili yazma (payment, webhook, sipariş) ve her ECA/ChangeSet bu anahtarı taşımazsa retry'da çift işlem kaçınılmaz."
        }
       ]
      },
@@ -1048,16 +1062,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Tenancy ile birleşir: idempotency tablosu tenant_id taşır (RLS), key çakışması tenant-scoped; Audit her tekrar-yutma kararını izler."
        }
       ]
      },
@@ -1066,7 +1071,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "ChangeSet sözleşmesi (k-sozlesme) idempotency key'i zorunlu kılar; core yazma yolu key'siz yan etki üretmez."
        }
       ]
      },
@@ -1075,7 +1080,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Layer-1 workflow (ECA) her tetiklemede key üretir; ödeme/sipariş modülleri Idempotency-Key header'ını dışa açar."
        }
       ]
      },
@@ -1084,7 +1089,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Üçüncü-taraf entegrasyonlar (Stripe webhook, payment gateway) retry'da aynı key'i gönderir; App tek sonuç görür."
        }
       ]
      }
@@ -1097,13 +1102,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-scale-idempotency-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-scale-idempotency-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Payment/sipariş: POST/PUT'ta client Idempotency-Key üretir; 'Gönder' iki kez basılsa da tek çekim."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Webhook delivery: gateway retry'da aynı event id → ikinci teslimat yutulur."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Layer-1 workflow: ECA forward-chaining'de aynı tetik ikinci kez emit etmez (key + max_depth 6)."
+      }
+     ]
     ]
    },
    {

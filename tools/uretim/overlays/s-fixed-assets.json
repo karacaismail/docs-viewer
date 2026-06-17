@@ -1,0 +1,52 @@
+{
+ "featureDefs": [
+  {
+   "name": "Sabit Kıymet ArcheType'ı",
+   "desc": "Edinim maliyeti, faydalı ömür, kalıntı değer, kategori, dayanak belge — Money tipiyle (kuruş hassasiyeti) tanımlı varlık kartı; Odoo Assets muadili.",
+   "critical": true
+  },
+  {
+   "name": "Amortisman programı (depreciation schedule)",
+   "desc": "Doğrusal/azalan bakiyeler yöntemiyle dönemsel amortisman satırları; etki tarihli (effective dating), her dönem GL'ye yevmiye kaydı.",
+   "critical": true
+  },
+  {
+   "name": "Elden çıkarma / değer düşüklüğü",
+   "desc": "Satış, hurda, devir senaryoları + kıst amortisman; kâr/zarar hesabı GL'ye yansır.",
+   "critical": true
+  },
+  {
+   "name": "Yeniden değerleme & TR uyum",
+   "desc": "Enflasyon/yeniden değerleme ayarı; VUK amortisman oran tabloları ile uyumlu kayıt."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-2 SaaS ürünü; tek başına ada değil. Amortisman ancak GL (genel muhasebe) ile birlikte anlam taşır; kendi başına bir Domain (Kaya), GL'ye Contract ile bağlı.",
+  "kernel": "Tenancy (RLS), capability/permission, audit ve ArcheType engine kernel'den gelir; ürün kendi şemasını ArcheType ile tanımlar, REST/GraphQL otomatik üretilir.",
+  "core": "Money/Tax/FX ve i18n Layer-1 primitive'lerini tüketir; tutarlar Decimal, dönem kapanışı core takvimine uyar. Bu ArcheType'lar için bitemporal zorunlu (bedava audit + time-travel + 'o tarihte ne biliyorduk').",
+  "modules": "GL/Accounting modülüne yevmiye olayı yayar (amortisman gideri, birikmiş amortisman); Procurement/Inventory'den aktifleştirme (capitalization) olayını okur — yalnız Contract.",
+  "apps": "Accounting, Reporting ve TR-uyum app'leri aynı varlık + amortisman kaydını paylaşır; çift kayıt yok."
+ },
+ "moduleUsage": [
+  "Accounting/GL app: her amortisman döneminde yevmiye girişini doğrudan tüketir (gider + birikmiş amortisman).",
+  "Procurement app: sabit kıymet satın alımı 'capitalize' edildiğinde varlık kartını oluşturur.",
+  "Reporting app: amortisman tablosu + net defter değeri raporlarını okur (keyset)."
+ ],
+ "ecaExample": "trigger:\n  event: depreciation.period_due\n  when: \"period_end AND asset.status == 'active'\"\ncondition:\n  all:\n    - actor.capability >= \"fixed_assets.post\"\n    - asset.book_value > asset.residual_value\n    - not loop_detected\naction:\n  - compute: depreciation_amount   # Decimal, kuruş\n  - emit: gl.journal_requested      # outbox, idempotent\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{asset_id}:{period}:depr\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Varlık tutarları ve dayanak belgeler tenant-scoped (RLS); komşu tenant sabit kıymetini göremez.",
+  "Submit edilmiş amortisman kaydı immutable; düzeltme = ters kayıt + yeni dönem (mali integrity, VUK).",
+  "Aktif/edinim değeri değişiklikleri audit'e alan-bazlı diff ile yazılır (bitemporal); denetçi geçmiş değeri görebilir.",
+  "Amortisman post yetkisi capability deny-by-default; yalnız muhasebe rolü."
+ ],
+ "perfNotes": {
+  "code": "Dönemsel amortisman batch worker'da; her varlık için schedule önceden hesaplanır, period_due'da yalnız post tetiklenir.",
+  "perf": "Varlık listesi ve amortisman geçmişi keyset (cursor) pagination; (tenant_id, asset_id, period) bileşik indeks; toplu dönem kapanışı asenkron."
+ },
+ "testNotes": [
+  "Money kuruş doğruluğu: doğrusal amortisman toplamı edinim - kalıntı değere bit-bit eşit (yuvarlama kaybı yok).",
+  "Aynı varlık + dönem ikinci kez post edilemez (idempotency).",
+  "Komşu tenant sabit kıymet sorgusu sıfır döndürür.",
+  "Submit sonrası edinim tutarı değiştirilemez; düzeltme ancak ters kayıtla."
+ ]
+}

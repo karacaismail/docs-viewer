@@ -1,0 +1,51 @@
+{
+ "featureDefs": [
+  {
+   "name": "is_projection ArcheType bayrağı + source_events",
+   "desc": "Bir ArcheType projection olarak işaretlenir; kaynak event listesi + handler metadata'sı framework'e otomatik subscriber kurdurur.",
+   "critical": true
+  },
+  {
+   "name": "Event-driven denormalize okuma modeli",
+   "desc": "Yazma normalize/transaction-safe; okuma denormalize/hız için; ikisi event bus üzerinden senkron — JOIN cehennemi yok.",
+   "critical": true
+  },
+  {
+   "name": "Rebuild (replay) — durable",
+   "desc": "framework rebuild-projection: event store'dan baştan replay; durable workflow ile kesintide kaldığı yerden devam."
+  },
+  {
+   "name": "Eventual consistency penceresi + fresh-read kaçışı",
+   "desc": "1-5 sn gecikme tipik; finansal/ödeme sayfasında ?fresh=true write model'den okur (yavaş ama kesin)."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — bir kernel/scale primitive'idir, module değil. Her module kendi okuma tablosunu elle senkronlarsa stale/tutarsız olur; projection event bus üstünde tek desenle kurulur.",
+  "kernel": "Event Bus (kaynak event aboneliği), Outbox (at-least-once teslim), ArcheType engine (is_projection bayrağı). Projection kernel primitive'i; iş kuralı değil.",
+  "core": "Audit (projection güncelleme izi), tenancy (projection satırı da RLS ile tenant-scoped). Money alanları Decimal; finansal projeksiyonda yuvarlama tutarlı.",
+  "modules": "Module yalnız source_events tanımlar + handler yazar; framework subscriber'ı otomatik kurar — module senkron koduna karışmaz.",
+  "apps": "Dashboard/liste yüzeyleri projection'dan okur; yazma yolu write model'e gider. Aynı veri çift yazılmaz, türetilir."
+ },
+ "moduleUsage": [
+  "s-crm: pipeline/dashboard agregaları (won/lost, sahip bazında) projection'dan beslenir.",
+  "scale-counter: hot counter + projection birlikte yüksek-okuma sayaçlarını taşır.",
+  "stack-social: timeline fan-out işi projection (per-user materialize); celebrity politikası module'de.",
+  "s-bi: rapor/dashboard sorguları write model yerine projection tablolarından okur."
+ ],
+ "ecaExample": "trigger:\n  event: order.placed\ncondition:\n  all:\n    - projection.is_subscribed(\"CustomerStats\")\n    - not loop_detected\naction:\n  - project:\n      target: CustomerStats\n      apply: |\n        stats[event.customer_id].total_spent += event.total   # Decimal\n        stats[event.customer_id].order_count += 1\nguards:\n  max_depth: 6\n  idempotency_key: \"proj:CustomerStats:{event.id}\"   # at-least-once → idempotent apply\n  external_effects: none   # projection saf okuma modeli; dış etki yok",
+ "securityNotes": [
+  "Tenant-scoped: projection satırı da RLS ile tenant'a kapalı; agregada komşu-tenant verisi karışmaz.",
+  "Idempotent apply: outbox at-least-once teslim ettiğinden aynı event iki kez işlenince çift sayım olmaz (idempotency_key).",
+  "Fresh-read kapısı: parasal/hukuki kesinlik gereken sayfa write model'den okur; stale projection finansal karar tabanı olmaz."
+ ],
+ "perfNotes": {
+  "code": "Yazma normalize → event → handler → denormalize okuma tablosu. Rebuild durable workflow (kesintide devam). Handler saf + idempotent.",
+  "perf": "Dashboard tek SELECT (hazır agrege), JOIN yok; liste uçları keyset (cursor) pagination; eventual consistency 1-5 sn, finansalda fresh-read."
+ },
+ "testNotes": [
+  "Idempotency: aynı event iki kez gelince projection değeri çift artmaz.",
+  "Rebuild: event store'dan replay sonrası projection bakiyesi write model ile birebir.",
+  "Tenant izolasyonu: agrega komşu-tenant order'ını saymaz.",
+  "Fresh-read: ?fresh=true write model'den okur, stale değer dönmez."
+ ]
+}

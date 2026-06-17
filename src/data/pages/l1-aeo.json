@@ -425,7 +425,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "AEO / GEO / LLMO — AI Motorlarına Görünürlük — çekirdek yetenek",
+      "term": "Yapılandırılmış cevap blokları",
       "definition": [
        {
         "type": "strong",
@@ -433,41 +433,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "AnswerBlock (soru/öz-cevap/detay) → geçerli FAQPage/HowTo/QAPage JSON-LD; AI Overviews ve featured snippet uyumlu."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "llms.txt politikası",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Erişim + öne çıkan içerik manifesti; yalnız public içerik listelenir, tarama-dostu temiz markup."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Entity / E-E-A-T sinyali",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Organization/Person/about/sameAs schema + güncellik tarihi; kaynaksız iddia üretilmez."
+       }
+      ]
+     },
+     {
+      "term": "Semantik HTML render",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Cevap blokları heading/dl ile; HTML string render YASAK (XSS + semantik kaybı)."
        }
       ]
      }
@@ -655,15 +652,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "HTML string render YASAK → cevap blokları semantik HTML (heading/dl); XSS yüzeyi kapatılır. Render-only capability: schema + cevap bloğu + llms.txt yazmadan ibaret; pii üretmez, kernel iç API'sine dokunmaz. llms.txt yalnız public içerik listeler; özel/tenant içeriği sızdırmaz. AI-üretimi taslak insan onayı olmadan yayınlanmaz (E-E-A-T + güven koruması). Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -691,15 +680,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Saf hook gövdeleri: AnswerBlock → JSON-LD serileştirici, llms.txt üreteci, entity çözücü — saf fonksiyonlar (Shiki/HTML-string yok)."
        }
       ]
      },
@@ -717,15 +698,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "JSON-LD ve llms.txt build/render zamanı üretilir; çıkarım katmanı için statik servis."
        }
       ]
      },
@@ -1021,7 +994,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — AEO / GEO / LLMO — AI Motorlarına Görünürlük",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — AEO / GEO / LLMO — AI Motorlarına Görünürlük\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: answer_block.publish_requested\ncondition:\n  all:\n    - draft.source != null  # E-E-A-T kapısı: kaynaksız yayınlanmaz\n    - draft.updated_at != null\n    - human_reviewer.approved == true  # AI-üretimi denetimsiz çıkmaz\naction:\n  - render: faq_jsonld\n  - update: llms_txt\nguards:\n  external_effects: human_approval_required\n  idempotency_key: \"answer:{page_id}:{block_id}\"\n  audit: true",
     "copyEnabled": true
    },
    {
@@ -1161,6 +1134,18 @@
     ]
    },
    {
+    "id": "block-l1-aeo-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AnswerBlock → geçerli FAQPage/HowTo JSON-LD (Rich Results doğrulaması). llms.txt geçerli formatta + yalnız public içerik listeler. Entity schema sameAs/about çözülür; her cevapta güncellik tarihi mevcut. Kaynaksız iddia üretilmez (E-E-A-T kapısı); HTML string render reddedilir."
+     }
+    ]
+   },
+   {
     "id": "block-l1-aeo-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1179,7 +1164,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "evet — ama l1-seo'dan ayrı modül: klasik meta/schema l1-seo'da, bu modül cevap-yapısı + AI-atıf sinyalini sahiplenir (farklı editöryel+teknik sorumluluk)."
        }
       ]
      },
@@ -1188,16 +1173,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Schema (AnswerBlock/FaqSchema/LlmsTxtPolicy/EntityProfile ArcheType'ları), Authz (render-only capability)."
        }
       ]
      },
@@ -1206,7 +1182,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Audit (cevaplar kaynak+tarih ile audit'li), bitemporal güncellik tarihi."
        }
       ]
      },
@@ -1215,7 +1191,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "l1-pseo sayfaları bu modülün cevap bloklarıyla zenginleşir; ölçüm (AI referral) l1-analytics'te; içerik üretimi k-agent-runtime opsiyonel (capability-gated)."
        }
       ]
      },
@@ -1224,7 +1200,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Public Surface'i olan app'lerde aktif: cevap bloğu + JSON-LD enjeksiyonu, GET /llms.txt; admin Surface'te cevap editörü + Rich Results önizleme."
        }
       ]
      }
@@ -1237,13 +1213,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-l1-aeo-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-l1-aeo-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "l1-pseo: programatik sayfalar AnswerBlock cevap bloklarıyla zenginleşir"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "l1-analytics: AI yüzeylerinden gelen referral attribution ölçümü"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "k-agent-runtime: cevap taslağı üretimi (Faz 3, insan onaylı)"
+      }
+     ]
     ]
    },
    {

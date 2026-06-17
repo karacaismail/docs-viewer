@@ -339,7 +339,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Inventory / Stock — çekirdek yetenek",
+      "term": "StockItem / Warehouse / Location / Lot ArcheType'ları",
       "definition": [
        {
         "type": "strong",
@@ -347,41 +347,47 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Çok depo + çok lokasyon (raf/bölge) hiyerarşisi; lot/seri takibi; her hareket bitemporal + audit'li."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "StockMove + ledger (çift-girişli stok defteri)",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Giriş/çıkış/transfer/sayım tek hareket modeline indirgenir; bakiye türetilir, elle yazılmaz — quant = move ledger'ın projection'ı."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Reservation + available-to-promise",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Sipariş stok rezerve eder; on-hand − reserved = ATP; rezervasyon süresi dolunca otomatik serbest (scale primitive: reservation expiration policy)."
+       }
+      ]
+     },
+     {
+      "term": "Auto reorder (AI)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Talep tahmini + lead-time + emniyet stoğundan yeniden-sipariş noktası; karar değil ÖNERİ — satınalma onayına düşer, güven kalibrasyonu zorunlu."
+       }
+      ]
+     },
+     {
+      "term": "Sayım / envanter düzeltme",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Cycle count + fiziksel sayım; fark düzeltmesi audit gerekçeli StockMove olarak yazılır, bakiye doğrudan ezilmez."
        }
       ]
      }
@@ -569,15 +575,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Tenant-scoped (RLS): depo/lokasyon/bakiye başka tenant'a sızmaz; komşu-tenant SKU sorgusu sıfır döner. Capability deny-by-default: stok düzeltme/maliyet değiştirme ayrı yetki; reorder yalnız ÖNERİR, otomatik satınalma yapmaz (PII/parasal benzeri sürtünme: onay zorunlu). Negatif stok ve elle bakiye ezme deny-by-default; düzeltme yalnız gerekçeli StockMove ile (audit). Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -605,15 +603,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Bakiye = StockMove ledger'ının projection'ı (CQRS); on-hand/ATP materialize edilir, her okumada SUM(moves) yapılmaz. Auto-reorder asenkron worker."
        }
       ]
      },
@@ -631,15 +621,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Stok hareketi listeleri keyset (cursor) pagination; (sku, location) indeksleri; rebuild komutu ledger'dan projection'ı yeniden kurar."
        }
       ]
      },
@@ -935,7 +917,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Inventory / Stock",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Inventory / Stock\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: stock.level_changed\n  when: \"on_hand <= reorder_point AND tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"inventory.reorder.suggest\"\n    - not loop_detected\n    - confidence >= 0.80   # AI öneri eşiği; altıysa elle seçim\naction:\n  - emit: purchase.reorder_suggested   # outbox, idempotent — KARAR değil öneri\n  - notify: [\"inventory-surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{sku}:{location}:reorder\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1075,6 +1057,18 @@
     ]
    },
    {
+    "id": "block-s-inventory-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Over-sell testi: ATP=0 iken ikinci rezervasyon reddedilir. Ledger tutarlılığı: projection bakiyesi = move ledger toplamı (rebuild sonrası birebir). Komşu-tenant depo sorgusu sıfır döndürür. Reorder idempotency: aynı SKU/lokasyon eşik altı tekrar tetiklenince tek öneri üretilir."
+     }
+    ]
+   },
+   {
     "id": "block-s-inventory-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1093,7 +1087,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Sales/Purchase/WMS aynı stok bakiyesini paylaşmalı; her app kendi stoğunu tutarsa over-sell ve hayalet stok kaçınılmaz. Tek StockMove ledger'ı kernel üstünde otorite."
        }
       ]
      },
@@ -1102,16 +1096,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "ArcheType engine ile şema; tenancy (RLS) depo/lokasyonu tenant'a kapatır; audit her hareketi izler; Event Bus stok olaylarını yayar."
        }
       ]
      },
@@ -1120,7 +1105,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "App core'una bağlı bir Domain (Büyük Taş); core sözleşmeleri değişmez. Money (değerleme/maliyet) Decimal; pii yok (stok verisi kişisel değil)."
        }
       ]
      },
@@ -1129,7 +1114,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Sales 'sipariş onaylandı' → rezervasyon; Purchase 'mal kabul' → giriş; WMS toplama/yerleştirme hareketlerini StockMove olarak besler — yalnız Contract."
        }
       ]
      },
@@ -1138,7 +1123,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Commerce, POS, Purchase, WMS aynı StockItem + bakiyeyi paylaşır; satış kanalları arasında çift kayıt ve over-sell yok."
        }
       ]
      }
@@ -1151,13 +1136,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-inventory-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-inventory-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-sales: sipariş onayında ATP kontrolü + rezervasyon; sevkiyatta stok çıkış hareketi."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-purchase: mal kabulde lot/seri ile giriş hareketi; reorder önerisi satınalma talebine dönüşür."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-wms: toplama/yerleştirme/transfer fiziksel hareketleri StockMove ledger'ına yazar."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-traceability: lot/seri zinciri için StockMove geçmişini okur (geri çağırma/izlenebilirlik)."
+      }
+     ]
     ]
    },
    {

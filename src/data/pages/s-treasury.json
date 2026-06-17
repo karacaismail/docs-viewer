@@ -338,7 +338,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Cash Flow & Treasury — çekirdek yetenek",
+      "term": "CashAccount / BankConnection / CashFlowForecast ArcheType'ları",
       "definition": [
        {
         "type": "strong",
@@ -346,41 +346,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Banka hesabı, açılış/kapanış bakiyesi ve nakit pozisyonu; her tutar Money (Decimal + ISO para birimi), her hareket bitemporal + audit'li."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Nakit akış projeksiyonu (Projection-ArcheType)",
       "definition": [
        {
         "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
-       },
-       {
-        "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Alacak/borç/gerçekleşen hareketlerden türetilen salt-okur 13-haftalık nakit görünümü; bozulursa kaynaktan yeniden dökülür, elle yazılmaz."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Çok-para / döviz pozisyonu",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Para birimi başına bakiye; kur kaynağı dış servis; tutarlar asla float değil Decimal — yuvarlama ve para-birimi uyuşmazlığı reddedilir."
+       }
+      ]
+     },
+     {
+      "term": "Nakit tahmini (AI)",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Geçmiş tahsilat/ödeme deseninden likidite tahmini; karar değil ÖNERİ — finans onayına düşer, güven kalibrasyonu zorunlu."
        }
       ]
      }
@@ -568,15 +565,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Banka bağlantı sırları (token/anahtar) encrypted-at-rest; düz gösterilmez; RLS tenant-scoped — komşu tenant nakit pozisyonu görünmez. Ödeme/transfer dış-etkili aksiyon: ECA doğrudan yürütmez, allowlist'li akışa delege + parasal sonuçta step-up onayı. Money alanları purpose-binding + audit; kur dönüşümü ve yuvarlama kuralları deterministik, float yasak. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -604,15 +593,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Bakiye türetilir (hareket defterinden projection); tutar Decimal kolon + para birimi; tarih bazlı hareket sorguları index'li."
        }
       ]
      },
@@ -630,15 +611,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Nakit hareketi listeleri keyset (cursor) pagination; 13-haftalık projeksiyon continuous-aggregation/materialized; AI tahmini asenkron worker."
        }
       ]
      },
@@ -934,7 +907,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Cash Flow & Treasury",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Cash Flow & Treasury\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: cash.balance_changed\n  when: \"abs(delta.amount) >= threshold AND tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"treasury.write\"\n    - not loop_detected\naction:\n  - emit: treasury.liquidity_alert        # outbox, idempotent\n  - notify: [\"finance-surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{account}:{txn}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1074,6 +1047,18 @@
     ]
    },
    {
+    "id": "block-s-treasury-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Komşu-tenant CashAccount sorgusu sıfır döndürür (RLS + permission injection). Money invariantı: para-birimi uyuşmazlığı ve float girdisi reddedilir; 0.1+0.2 Decimal doğruluğu. Aynı banka mutabakat satırı idempotency key ile iki kez işlenmez. Nakit projeksiyonu silinip kaynaktan yeniden dökülünce aynı sonucu üretir (deterministik)."
+     }
+    ]
+   },
+   {
     "id": "block-s-treasury-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1092,7 +1077,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Accounting/AR/AP aynı nakit hareketini paylaşmalı; treasury kendi defterini tutarsa banka mutabakatı ve nakit pozisyonu çelişir. Layer-2 SaaS; kernel + scale + L1 üstüne oturur."
        }
       ]
      },
@@ -1101,16 +1086,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "ArcheType engine ile şema; tenancy (RLS) hesabı/banka bağlantısını tenant'a kapatır; audit her nakit hareketini izler; Event Bus likidite olaylarını yayar."
        }
       ]
      },
@@ -1119,7 +1095,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "App core'una bağlı bir Domain (Büyük Taş); core sözleşmeleri değişmez. Money zorunlu Decimal; banka kimlik bilgileri encrypted-at-rest + pii/sır kapsamında."
        }
       ]
      },
@@ -1128,7 +1104,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Accounting 'fatura kaydedildi/tahsil edildi' → nakit projeksiyonu günceller; AR/AP vade hareketlerini Contract üzerinden besler — yalnız Contract."
        }
       ]
      },
@@ -1137,7 +1113,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Accounting, AR/AP ve raporlama app'leri aynı CashAccount + bakiyeyi paylaşır; çift kayıt ve tutarsız nakit pozisyonu yok."
        }
       ]
      }
@@ -1150,13 +1126,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-treasury-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-treasury-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Accounting app: tahsilat/ödeme hareketlerini nakit projeksiyonuna besler; banka mutabakatını tek hareket modelinden okur."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "AR app: alacak vadelerini 13-haftalık nakit görünümüne aktarır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "AP app: borç/ödeme planını çıkış tahminine bağlar."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Reporting app: salt-okur nakit projeksiyonunu gösterir; kaynağı her zaman yeniden kurulabilir."
+      }
+     ]
     ]
    },
    {

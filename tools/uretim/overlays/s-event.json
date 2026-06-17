@@ -1,0 +1,52 @@
+{
+ "featureDefs": [
+  {
+   "name": "Etkinlik (Event) ArcheType'ı",
+   "desc": "Tarih + mekan + kapasite + bilet tipleri; Layer-2 SaaS etkinlik yönetimi çekirdeği.",
+   "critical": true
+  },
+  {
+   "name": "Kayıt + Bilet (Ticket)",
+   "desc": "Katılımcı kaydı → bilet üretimi (QR/barkod); bilet tipi bazlı kontenjan ve fiyat.",
+   "critical": true
+  },
+  {
+   "name": "Check-in",
+   "desc": "Kapıda QR okutma → katılım kaydı; çift giriş engellenir, gerçek-zamanlı kapasite sayacı.",
+   "critical": true
+  },
+  {
+   "name": "Kapasite/kontenjan kontrolü",
+   "desc": "Bilet tipi başına stok; eşzamanlı satışta over-booking engellenir.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-2 SaaS ürünü; kendi ArcheType'larını/UI'sını tanımlar, yetki/audit/event-bus framework'ten gelir.",
+  "kernel": "Tenancy (her etkinlik + katılımcı tenant_id ile izole, RLS), Identity (organizatör + katılımcı), Audit (check-in izi) kernel'den.",
+  "core": "App core'una bağlı; Event bir Domain (Kaya) olarak core sözleşmelerine uyar, core module değişmez.",
+  "modules": "Payment module'ünü tüketir (bilet ödemesi); kayıt/check-in olayını CRM (katılımcı geçmişi) ve notification modüllerine yalnız Contract ile yayar.",
+  "apps": "CRM app'i katılımcıyı Contact olarak paylaşır; aynı kişi etkinlikler arası tekilleştirilir, çift kayıt yok."
+ },
+ "moduleUsage": [
+  "Payment: bilet satışı → ödeme; iade/iptal akışı bilet durumunu günceller.",
+  "Notification: kayıt onayı → bilet email/SMS; etkinlik öncesi hatırlatma (İYS opt-in).",
+  "CRM app: katılımcı → Contact; segment ve gelecek etkinlik daveti (consent kapısıyla)."
+ ],
+ "ecaExample": "trigger:\n  event: registration.completed\ncondition:\n  all:\n    - actor.capability >= \"event.register\"\n    - ticket_stock_available\n    - not loop_detected\naction:\n  - issue: ticket          # QR üret\n  - notify: [\"attendee\"]   # ETK/İYS kapısı\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{event_id}:{attendee_id}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Katılımcı adı/email/telefon pii=true (+retention); RLS tenant-scoped — başka organizatörün katılımcı listesi görülmez.",
+  "Bilet QR'ı tahmin edilemez (imzalı/rastgele); check-in capability deny-by-default — yalnız yetkili kapı görevlisi okutur.",
+  "Eşzamanlı satışta kontenjan tükenmesi atomik kontrol; over-sell engellenir, ödeme alınıp bilet verilememe durumu önlenir."
+ ],
+ "perfNotes": {
+  "code": "Katılımcı/bilet listesi keyset (cursor) pagination; (tenant_id, event_id) indeksi; check-in idempotent (aynı QR ikinci kez = zaten girdi).",
+  "perf": "Check-in kapıda düşük gecikme okuma; kapasite sayacı atomik artış, kilit darboğazı yok."
+ },
+ "testNotes": [
+  "Komşu-tenant etkinlik/katılımcı sorgusu sıfır döndürür.",
+  "Aynı bilet QR'ı ikinci kez okutulunca 'zaten check-in' döner (çift giriş yok).",
+  "Kontenjan dolu etkinlikte eşzamanlı iki kayıt biri reddedilir (over-booking yok).",
+  "Consent kapalı katılımcı gelecek etkinlik segmentine girmez."
+ ]
+}

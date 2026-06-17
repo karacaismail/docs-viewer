@@ -1,0 +1,55 @@
+{
+ "featureDefs": [
+  {
+   "name": "StockItem / Warehouse / Location / Lot ArcheType'ları",
+   "desc": "Çok depo + çok lokasyon (raf/bölge) hiyerarşisi; lot/seri takibi; her hareket bitemporal + audit'li.",
+   "critical": true
+  },
+  {
+   "name": "StockMove + ledger (çift-girişli stok defteri)",
+   "desc": "Giriş/çıkış/transfer/sayım tek hareket modeline indirgenir; bakiye türetilir, elle yazılmaz — quant = move ledger'ın projection'ı.",
+   "critical": true
+  },
+  {
+   "name": "Reservation + available-to-promise",
+   "desc": "Sipariş stok rezerve eder; on-hand − reserved = ATP; rezervasyon süresi dolunca otomatik serbest (scale primitive: reservation expiration policy)."
+  },
+  {
+   "name": "Auto reorder (AI)",
+   "desc": "Talep tahmini + lead-time + emniyet stoğundan yeniden-sipariş noktası; karar değil ÖNERİ — satınalma onayına düşer, güven kalibrasyonu zorunlu."
+  },
+  {
+   "name": "Sayım / envanter düzeltme",
+   "desc": "Cycle count + fiziksel sayım; fark düzeltmesi audit gerekçeli StockMove olarak yazılır, bakiye doğrudan ezilmez."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Sales/Purchase/WMS aynı stok bakiyesini paylaşmalı; her app kendi stoğunu tutarsa over-sell ve hayalet stok kaçınılmaz. Tek StockMove ledger'ı kernel üstünde otorite.",
+  "kernel": "ArcheType engine ile şema; tenancy (RLS) depo/lokasyonu tenant'a kapatır; audit her hareketi izler; Event Bus stok olaylarını yayar.",
+  "core": "App core'una bağlı bir Domain (Büyük Taş); core sözleşmeleri değişmez. Money (değerleme/maliyet) Decimal; pii yok (stok verisi kişisel değil).",
+  "modules": "Sales 'sipariş onaylandı' → rezervasyon; Purchase 'mal kabul' → giriş; WMS toplama/yerleştirme hareketlerini StockMove olarak besler — yalnız Contract.",
+  "apps": "Commerce, POS, Purchase, WMS aynı StockItem + bakiyeyi paylaşır; satış kanalları arasında çift kayıt ve over-sell yok."
+ },
+ "moduleUsage": [
+  "s-sales: sipariş onayında ATP kontrolü + rezervasyon; sevkiyatta stok çıkış hareketi.",
+  "s-purchase: mal kabulde lot/seri ile giriş hareketi; reorder önerisi satınalma talebine dönüşür.",
+  "s-wms: toplama/yerleştirme/transfer fiziksel hareketleri StockMove ledger'ına yazar.",
+  "s-traceability: lot/seri zinciri için StockMove geçmişini okur (geri çağırma/izlenebilirlik)."
+ ],
+ "ecaExample": "trigger:\n  event: stock.level_changed\n  when: \"on_hand <= reorder_point AND tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"inventory.reorder.suggest\"\n    - not loop_detected\n    - confidence >= 0.80   # AI öneri eşiği; altıysa elle seçim\naction:\n  - emit: purchase.reorder_suggested   # outbox, idempotent — KARAR değil öneri\n  - notify: [\"inventory-surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{sku}:{location}:reorder\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Tenant-scoped (RLS): depo/lokasyon/bakiye başka tenant'a sızmaz; komşu-tenant SKU sorgusu sıfır döner.",
+  "Capability deny-by-default: stok düzeltme/maliyet değiştirme ayrı yetki; reorder yalnız ÖNERİR, otomatik satınalma yapmaz (PII/parasal benzeri sürtünme: onay zorunlu).",
+  "Negatif stok ve elle bakiye ezme deny-by-default; düzeltme yalnız gerekçeli StockMove ile (audit)."
+ ],
+ "perfNotes": {
+  "code": "Bakiye = StockMove ledger'ının projection'ı (CQRS); on-hand/ATP materialize edilir, her okumada SUM(moves) yapılmaz. Auto-reorder asenkron worker.",
+  "perf": "Stok hareketi listeleri keyset (cursor) pagination; (sku, location) indeksleri; rebuild komutu ledger'dan projection'ı yeniden kurar."
+ },
+ "testNotes": [
+  "Over-sell testi: ATP=0 iken ikinci rezervasyon reddedilir.",
+  "Ledger tutarlılığı: projection bakiyesi = move ledger toplamı (rebuild sonrası birebir).",
+  "Komşu-tenant depo sorgusu sıfır döndürür.",
+  "Reorder idempotency: aynı SKU/lokasyon eşik altı tekrar tetiklenince tek öneri üretilir."
+ ]
+}

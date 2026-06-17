@@ -986,7 +986,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "FX & Ledger — Çok Para Birimli Muhasebe — çekirdek yetenek",
+      "term": "3-currency ledger satırı",
       "definition": [
        {
         "type": "strong",
@@ -994,41 +994,60 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Her kayıt transaction + functional + reporting para birimi ve tutarı saklar; fx_lock_at, fx_rate_to_functional, fx_rate_to_reporting kolonları. Çok para birimi sonradan eklenemez."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "FX lock kuralı (3 an)",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Kur sipariş / fatura / tahsilat anlarından birinde kilitlenir; iş modeline göre seçilir (B2C=sipariş, B2B abonelik=fatura, konsinye=tahsilat). 3 an = 3 farklı muhasebe sonucu."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Refund'da orijinal tarih oranı",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "İade her zaman sipariş tarihindeki KDV oranı + fx_rate ile işlenir; ara dönemde oran değişse (%18→%20) eski oran kullanılır, yoksa vergi defteri uyumsuz."
+       }
+      ]
+     },
+     {
+      "term": "Revenue recognition (ASC 606 / IFRS 15)",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Gelir tahsilatta değil ifa edildiğinde tanınır; 12 aylık abonelik aylık 1/12, setup fee ayrı, 3 yıllık lisans 36 aya yayılır."
+       }
+      ]
+     },
+     {
+      "term": "FX gain/loss otomasyonu",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Functional para açısından iki an (sipariş↔tahsilat) farkı her gece job ile hesaplanır; "
+       },
+       {
+        "type": "term",
+        "text": "credit note",
+        "termId": "term-credit-note-cc-fx-ledger"
+       },
+       {
+        "type": "text",
+        "text": " ile önceki döneme dokunmadan iade kaydı."
        }
       ]
      }
@@ -1216,15 +1235,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "money invariantı: tutarlar NUMERIC(18,2), kur NUMERIC(20,8); float yasak, yuvarlama tek noktada. Refund yeni oranla yapılırsa vergi defteri uyumsuz → denetimde sorun; eski oran zorunlu (audit edilebilir). Ledger satırı bitemporal: fx_lock_at + audit ile 'kur ne zaman alındı' geriye dönük açıklanabilir. Tenant-scoped (RLS); önceki muhasebe dönemine credit note ile dokunulur, satır silinmez (immutable). Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1252,15 +1263,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "FX gain/loss her gece batch job; refund handler orijinal order'ın fx_rate + tax_rate'ini okur (yeni hesap yapmaz)."
        }
       ]
      },
@@ -1278,15 +1281,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "transaction_currency / functional_currency CHAR(3) indeksli; dönem kapanış raporları materialized view ile hızlandırılır."
        }
       ]
      },
@@ -1582,7 +1577,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — FX & Ledger — Çok Para Birimli Muhasebe",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — FX & Ledger — Çok Para Birimli Muhasebe\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: order.refund_requested\ncondition:\n  all:\n    - original_order.exists == true\n    - actor.capability >= \"ledger.refund\"\n    - not loop_detected\naction:\n  - resolve: tax_rate = original_order.tax_rate    # sipariş tarihi oranı, cari değil\n  - resolve: fx_rate  = original_order.fx_rate\n  - post: credit_note(functional, transaction, reporting)\n  - emit: fx_gain_loss.computed\nguards:\n  max_depth: 6\n  idempotency_key: \"refund:{tenant}:{order_id}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1722,6 +1717,18 @@
     ]
    },
    {
+    "id": "block-cc-fx-ledger-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "EUR sipariş (kur 34) + TL fatura: fatura 3400 TL (sipariş anı), tahsilat 3600 TL → 200 TL FX gain üç kayıtla doğrulanır. KDV %18 sipariş, %20 ortamda refund → eski %18 oran uygulanır. 12 aylık abonelik tek seferde değil aylık 1/12 tanınır. Aynı order için ikinci refund idempotency ile reddedilir/tek kayıt olur. Functional currency seçimi (TL) tüm yabancı işlemleri doğru çevirir."
+     }
+    ]
+   },
+   {
     "id": "block-cc-fx-ledger-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1740,7 +1747,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — crosscut altyapısı: tek-currency varsayımıyla başlayan sistem ikinci ülkede yıkılır; FX lock ve functional currency ledger'ın temel kararıdır, ilk yabancı para işleminden ÖNCE modellenir."
        }
       ]
      },
@@ -1749,16 +1756,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "money tipi (NUMERIC, currency taşır), bitemporal/audit (fx_lock_at zaman boyutu), tenancy (RLS) kernel'den; ledger Money invariantlarına uyar."
        }
       ]
      },
@@ -1767,7 +1765,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "App core ledger sözleşmesine bağlanır; cc-jurisdiction-resolver ile vergi oranı/efektif tarih çözümü ortak."
        }
       ]
      },
@@ -1776,7 +1774,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "s-accounting defter kaydını, s-billing fatura anını, s-revenue-recognition periyodik tanımayı bu primitive üzerinden tüketir."
        }
       ]
      },
@@ -1785,7 +1783,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Tüm finans app'leri aynı 3-currency ledger_entry'yi paylaşır; sipariş/fatura/tahsilat/iade tek tutarlı kaynaktan FX gain/loss üretir."
        }
       ]
      }
@@ -1798,13 +1796,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-cc-fx-ledger-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-cc-fx-ledger-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-accounting: ledger_entry'yi defter kaydı olarak tüketir; functional tutarla yevmiye."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-billing: fatura anı FX lock seçiliyse fatura kurunu sabitler."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-revenue-recognition: ASC 606 periyodik tanıma job'ını ledger üstünde çalıştırır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "cc-jurisdiction-resolver: refund'da sipariş tarihi vergi oranını çözer."
+      }
+     ]
     ]
    },
    {

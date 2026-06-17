@@ -1,0 +1,47 @@
+{
+ "featureDefs": [
+  {
+   "name": "Lead / Account / Contact / Opportunity ArcheType'ları",
+   "desc": "Party'den türeyen çekirdek satış varlıkları; hibrit şema + JSONB değişken alan.",
+   "critical": true
+  },
+  {
+   "name": "Pipeline Workflow",
+   "desc": "Aşama durum makinesi (tenant'a pinli, ArcheType'tan bağımsız versiyonlanır)."
+  },
+  {
+   "name": "Lead scoring (AI)",
+   "desc": "Dış sinyal + sentetik önizleme; karar değil öneri; güven kalibrasyonu zorunlu."
+  },
+  {
+   "name": "Conversation intelligence",
+   "desc": "Görüşme özeti/aksiyon çıkarımı; PII maskeleme + saklama politikası."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — paylaşılan Party ArcheType'ı üzerinden kernel ile zorunlu; satış/pazarlama/destek app'leriyle Contract üzerinden.",
+  "kernel": "Party kimliği, tenancy (RLS) ve audit kernel'den; CRM kendi tablo şemasını kernel ArcheType engine ile tanımlar.",
+  "core": "App core'una bağlı; core module değişmez, CRM bir Domain (Kaya) olarak core sözleşmelerine uyar.",
+  "modules": "Comms/Mail module'lerini tüketir (etkinleşme); Sales ve Revenue module'lerine fırsat/anlaşma olayı yayar — yalnız Contract.",
+  "apps": "Sales, Marketing, Helpdesk ve Revenue app'leri aynı Party + Opportunity'yi paylaşır; çift kayıt yok."
+ },
+ "moduleUsage": [
+  "Sales app: Opportunity + Pipeline'ı doğrudan tüketir; quote/CPQ'ya bağlar.",
+  "Marketing app: Lead kaynağı ve segment için Contact ArcheType'ını okur (consent kapısıyla).",
+  "Helpdesk app: Account/Contact bağlamını ticket'a iliştirir.",
+  "Revenue app: Opportunity 'won' olayından recognition tetikler."
+ ],
+ "ecaExample": "trigger:\n  event: opportunity.stage_changed\n  when: \"to == 'won' AND tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"crm.write\"\n    - not loop_detected\naction:\n  - emit: revenue.recognition_requested   # outbox, idempotent\n  - notify: [\"sales-surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{opportunity}:won\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Contact/Account verisi pii=true (+retention); RLS tenant-scoped; consent durumu pazarlama kullanımına kapı.",
+  "Lead import'ta enjeksiyon ve toplu PII sızıntısına karşı doğrulama + hız limiti."
+ ],
+ "perfNotes": {
+  "perf": "Pipeline ve liste uçları keyset (cursor) pagination; sahip+aşama indeksleri; conversation intelligence asenkron worker."
+ },
+ "testNotes": [
+  "Komşu-tenant Account sorgusu sıfır döndürür.",
+  "Lead dedup: aynı e-posta/telefon ikinci kez 'won' yapamaz (idempotency).",
+  "Consent kapalı Contact pazarlama segmentine girmez."
+ ]
+}

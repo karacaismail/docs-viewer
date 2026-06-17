@@ -1,0 +1,55 @@
+{
+ "featureDefs": [
+  {
+   "name": "Asset + WorkOrder ArcheType'ları",
+   "desc": "Varlık (ekipman/tesis) hiyerarşisi + iş emri yaşam döngüsü. UpKeep/Fiix muadili: preventive (planlı) ve corrective (arıza) bakım tek modelde.",
+   "critical": true
+  },
+  {
+   "name": "PM (preventive maintenance) zamanlayıcı",
+   "desc": "Takvim-bazlı (her 3 ay) veya sayaç-bazlı (her 500 saat / 10.000 km) tetik; vade gelince iş emri otomatik açılır.",
+   "critical": true
+  },
+  {
+   "name": "MeterReading + eşik tetik",
+   "desc": "Sayaç/sensör okuması -> condition-based bakım; okuma bitemporal kayıt, geçmiş trend audit'li."
+  },
+  {
+   "name": "Yedek parça & stok düşümü",
+   "desc": "İş emri parça tüketir; envanter modülüyle Contract üzerinden rezervasyon/düşüm; maliyet Money (Decimal)."
+  },
+  {
+   "name": "Downtime & maliyet izleme",
+   "desc": "Arıza süresi (MTBF/MTTR) ve iş emri maliyeti; varlık başına toplam sahip olma maliyeti raporu."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-2 tedarik/bakım ürünü olarak kernel ile zorunlu (kimlik/tenancy/audit); envanter/saha-servis/satınalma modülleriyle yalnız Contract üzerinden.",
+  "kernel": "Kimlik, tenancy (RLS), audit ve ArcheType engine kernel'den; CMMS kendi Asset/WorkOrder şemasını tanımlar. Maliyet = Money (Decimal) + ISO 4217.",
+  "core": "Operasyon app core'una bağlı; core module değişmez, CMMS bir Domain (Büyük Taş) olarak core sözleşmelerine uyar.",
+  "modules": "Inventory'den yedek parça stok düşümü; Field Service (s-fsm) ile teknisyen/saha randevu köprüsü; Procurement'a parça talebi yayar — yalnız Contract.",
+  "apps": "Field Service, Inventory ve Fixed Assets app'leri aynı Asset ArcheType'ını paylaşır; varlık çift kaydı yok."
+ },
+ "moduleUsage": [
+  "Field Service app: iş emrini teknisyene atar, saha randevusuyla eşler (asset konumu + parça).",
+  "Inventory app: WorkOrder parça tükettiğinde stok rezerve/düşer; kritik parça eşiği uyarır.",
+  "Procurement app: yedek parça stok-altı -> reorder; iş emri beklemeye alınır.",
+  "Fixed Assets app: Asset amortisman + bakım maliyetini toplam sahip olma maliyetine bağlar."
+ ],
+ "ecaExample": "trigger:\n  event: asset.meter_reading_recorded\n  when: \"tenant_scoped AND reading.value >= pm_rule.threshold\"\ncondition:\n  all:\n    - actor.capability >= \"cmms.workorder.create\"\n    - not loop_detected\n    - not open_workorder_exists(asset, pm_rule)   # çift PM açma yok\naction:\n  - emit: workorder.created { type: preventive, asset_id }   # outbox idempotent\n  - notify: [\"maintenance-surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{asset}:{pm_rule}:{cycle}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Asset/iş emri verisi RLS tenant-scoped; saha teknisyeni yalnız atandığı iş emrini görür (capability deny-by-default).",
+  "Sayaç okuması ve bakım geçmişi değişmez audit (A08): tamamlanan iş emri geriye değiştirilemez, düzeltme yeni kayıt.",
+  "Parça maliyeti Money/Decimal; iş emri maliyet toplamı float ile tutulamaz (muhasebe köprüsü bozulur)."
+ ],
+ "perfNotes": {
+  "code": "PM tetik kuralı saf fonksiyon (Strategy: time-based | meter-based | condition-based); if (type==...) yerine runtime dispatch.",
+  "perf": "Vade taraması (due PM) asenkron worker — toplu; iş emri listeleri keyset pagination; asset+durum, vade-tarihi indeksleri; sensör okuması time-series tablosu."
+ },
+ "testNotes": [
+  "Komşu-tenant Asset/WorkOrder sorgusu sıfır döndürür.",
+  "Aynı PM döngüsü için ikinci iş emri açılmaz (idempotency).",
+  "Sayaç eşiği aşılınca tam bir condition-based iş emri açılır; eşik altında açılmaz.",
+  "İş emri parça tükettiğinde envanter düşümü atomik; kısmi yazma yok."
+ ]
+}

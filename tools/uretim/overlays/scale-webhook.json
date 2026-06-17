@@ -1,0 +1,31 @@
+{
+ "integration": {
+  "shouldIntegrate": "Evet — outbound webhook marketplace + entegrasyon ekosisteminin protokolüdür; scale-outbox'tan olay okuyup dış sisteme push eder, polling'in 100x maliyetini ve gecikmesini ortadan kaldırır. İlk public API ile birlikte sunulmazsa sonradan eklemek 5x iş.",
+  "kernel": "Webhook worker bağımsız bir özellik değil, kernel olay akışının dış-dünya kenarıdır; 'order.created' gibi olaylar kernel event-bus → outbox üzerinden gelir, worker yalnız iletim + imza + retry'dan sorumludur.",
+  "core": "Customer'ın webhook URL kaydı, abone olunan olay tipleri ve signing secret core ayar şemasında tutulur; gönderim geçmişi + status core audit/observability'ye bağlanır.",
+  "modules": "Her module olayını outbox'a yazar; webhook worker tüm module'lerin olaylarını tek noktadan dışa iletir, module'ler HTTP/HMAC ayrıntısını bilmez (Contract sınırı).",
+  "apps": "Marketplace/entegrasyon app'leri (kargo, banka, ERP) webhook ile 'sipariş oluştu/ödendi/teslim' olaylarını proaktif alır; customer-facing UI'da URL formu, test-webhook butonu ve geçmiş gönderimler gösterilir."
+ },
+ "moduleUsage": [
+  "scale-outbox: webhook worker event'i buradan okur (dual-write tutarlılığı, kayıpsız).",
+  "cc-obs: gönderim başarı/başarısızlık metriği ve DLQ doluluğu buraya akar.",
+  "cc-security: signing secret rotasyonu ve HMAC doğrulama dokümanı buraya bağlı.",
+  "s-marketing / marketplace app: customer kendi URL'ine sipariş/ödeme olaylarını abone eder."
+ ],
+ "ecaExample": "trigger:\n  event: order.created   # outbox'tan gelir\ncondition:\n  all:\n    - subscription.active\n    - timestamp_within: 5m   # replay penceresi\n    - not loop_detected\naction:\n  - webhook.post:\n      url: subscriber.url\n      headers: [X-Webhook-Id, X-Webhook-Timestamp, X-Webhook-Signature]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:webhook:{event_id}:{subscriber}\"\n  external_effects: hmac_signed_retry   # 1s,10s,1dk,10dk,1saat ... max 24s → DLQ",
+ "securityNotes": [
+  "İmzasız webhook = saldırı yüzeyi: HMAC-SHA256 (X-Webhook-Signature) zorunlu; customer signing secret ile gönderenin sen olduğunu doğrular.",
+  "Replay koruması: X-Webhook-Timestamp 5 dk'dan eski istek reddedilir + X-Webhook-Id ile idempotency (aynı olay iki kez işlenmez).",
+  "Payload pii içerebilir; yalnız abone olunan tenant'ın URL'ine gider, signing secret tenant-scoped ve rotate edilebilir."
+ ],
+ "perfNotes": {
+  "code": "Worker outbox'tan batch okur; 2xx alana kadar exponential backoff retry (1s→24saat), X-Webhook-Attempt header'ı debug için artar; 24 saat sonra DLQ + admin alert.",
+  "perf": "Push polling'e göre 100x ucuz + 100x hızlı; yavaş/cevapsız abone tüm kuyruğu bloklamasın diye per-subscriber timeout + bağımsız retry; DLQ sonsuz retry'ı keser."
+ },
+ "testNotes": [
+  "HMAC: alıcı yanlış secret ile imzayı doğrulayamaz; doğru secret ile eşleşir.",
+  "Replay: 5 dk eski timestamp veya tekrar gönderilen X-Webhook-Id reddedilir.",
+  "Retry/DLQ: abone 5xx dönerken backoff uygulanır, 24 saat sonra DLQ'ya düşer + alert.",
+  "Tenant izolasyonu: bir tenant'ın olayı başka tenant'ın webhook URL'ine gitmez."
+ ]
+}

@@ -315,7 +315,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Pazarlama Ölçümü / Analytics + Deney — çekirdek yetenek",
+      "term": "Consent-gated iz toplama",
       "definition": [
        {
         "type": "strong",
@@ -323,41 +323,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Ziyaretçi rızası olmadan analytics/heatmap çalışmaz; tüm tracking KVKK consent kapısının arkasında."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Network allowlist",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Yalnız GA4/Plausible/Matomo gibi onaylı sağlayıcılara enjeksiyon; capability deny-by-default."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "UTM/Attribution yakalama",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Kampanya parametresi yakalama + first/last/multi-touch modeli; lead s-crm'e beslenir."
+       }
+      ]
+     },
+     {
+      "term": "Dönüşüm ölçümü",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Dönüşüm olayı kaydı; paid media endpoint'lerine yalnız veri sağlar — reklam YÜRÜTMEZ."
        }
       ]
      }
@@ -545,15 +542,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Ziyaretçi verisi pii:true → retention politikası + audit zorunlu; bu modülde izole edilir. Consent yoksa hiçbir iz toplanmaz (deny-by-default); rıza geri çekilince tracking durur. Network allowlist: onaysız üçüncü-parti script enjeksiyonu engellenir (data exfiltration koruması). Tenant-scoped RLS: analytics config ve event verisi tenant'a kapalı. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -581,15 +570,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Script enjeksiyonu config ArcheType üzerinden; tracking client-side async, kernel iç API'sine dokunmaz."
        }
       ]
      },
@@ -607,15 +588,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Consent kapısı render'ı bloklamaz; iz toplama ana akış dışında."
        }
       ]
      },
@@ -911,7 +884,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Pazarlama Ölçümü / Analytics + Deney",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Pazarlama Ölçümü / Analytics + Deney\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: page.viewed\ncondition:\n  all:\n    - visitor.consent.analytics == true\n    - provider in network_allowlist  # GA4|Plausible|Matomo\naction:\n  - capture: conversion_event\n  - attribute: { model: multi_touch }\nguards:\n  pii: true\n  retention: \"visitor_data: policy_bound\"\n  external_effects: consent_required",
     "copyEnabled": true
    },
    {
@@ -1051,6 +1024,18 @@
     ]
    },
    {
+    "id": "block-l1-analytics-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Rıza yokken analytics/heatmap script'i enjekte edilMEZ. Allowlist dışı sağlayıcı reddedilir. Rıza geri çekilince tracking durur + mevcut veri retention'a tabi. Attribution: multi-touch modelde dönüşüm doğru kanala yazılır."
+     }
+    ]
+   },
+   {
     "id": "block-l1-analytics-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1069,7 +1054,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "evet — ama dar bounded-context olarak: l1-seo render'dan ayrı, çünkü ziyaretçi pii sınırı + consent + network allowlist manifesti farklı."
        }
       ]
      },
@@ -1078,16 +1063,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Schema (AnalyticsConfig ArcheType pii+consent bayraklı), Tenancy (RLS tenant-scoped), Authz (analytics capability)."
        }
       ]
      },
@@ -1096,7 +1072,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Audit (pii ürettiği için zorunlu izleme), i18n; rıza cc-privacy/cc-notification-consent crosscut'ta."
        }
       ]
      },
@@ -1105,7 +1081,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Etiket TAŞIMA l1-tagmanager'a, DENEY/A-B/MVT l1-experiment'e ayrıldı; bu çekirdek yalnız ölçüm/attribution sahibi."
        }
       ]
      },
@@ -1114,7 +1090,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Public Surface'li app'lerde aktif; lead → s-crm, konuşma → k-agent-runtime."
        }
       ]
      }
@@ -1127,13 +1103,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-l1-analytics-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-l1-analytics-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-crm: attribution modelinden gelen lead kaynağı ile fırsat zenginleştirme"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-product-feed: kampanya UTM ile ürün performans ölçümü"
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "l1-aeo: AI referral attribution ölçümü için dönüşüm verisi sağlar"
+      }
+     ]
     ]
    },
    {

@@ -1,0 +1,57 @@
+{
+ "featureDefs": [
+  {
+   "name": "Tek interface, üç transport",
+   "desc": "Module kodu yalnız publish/subscribe görür; backend deployment profile'a göre in-process → Redis Streams → Kafka seçilir, module değişmez. Config flag: EVENT_BUS=redis.",
+   "critical": true
+  },
+  {
+   "name": "Event ≠ Command ayrımı",
+   "desc": "Bus'ta sadece event akar (olmuş-bitmiş gerçek); command'ı doğrudan Aggregate.do_something() çağırır. Event Sourcing'e gitmeden bu sınır net tutulur.",
+   "critical": true
+  },
+  {
+   "name": "Polyglot runtime köprüsü",
+   "desc": "Geliştirici hook'u Python veya TypeScript yazabilir; hook contract aynı. K04 Hook & Event Bus eşdeğeri: sync hook + async event ayrımı net.",
+   "critical": true
+  },
+  {
+   "name": "Event versioning (kontrat)",
+   "desc": "Event'ler kontrattır; versiyon değişimi backward-compat zorunlu, eski tüketici kırılmaz."
+  },
+  {
+   "name": "Aggregate boundary kuralı (DDD)",
+   "desc": "TS hook Python aggregate üzerinde açık transaction tutamaz; 2PC yok. Saga/outbox + eventual consistency ile sınır korunur."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — bu kernel omurgasının ta kendisi; tüm module'ler loose-coupled iletişimi yalnız bu bus üzerinden kurar, doğrudan import yasak.",
+  "kernel": "Bus kernel'in çekirdek bileşeni; transport soyutlaması (in-process/Redis/Kafka) ve hook runtime köprüsü burada yaşar.",
+  "core": "Audit, idempotency ve dead-letter recovery core sözleşmeleri bus'a iliştirilir; delivery garanti seviyesi core kontratı.",
+  "modules": "Module'ler birbirini tanımaz; yalnız event publish/subscribe ile konuşur — Order'a 5. module satırı eklenen tight-coupling anti-pattern'i bu sayede ortadan kalkar.",
+  "apps": "App'ler hook (Python/TS) ile event'lere bağlanır; cross-app etkileşim event sözleşmesiyle, çift bağımlılık olmadan."
+ },
+ "moduleUsage": [
+  "Tüm Module'ler: domain olayını publish eder, ilgilendiği olaya subscribe olur — transport bilmeden.",
+  "Hook geliştirici (Python/TS): sync hook ile akışa müdahale, async event ile yan etki tetikler.",
+  "Saga koordinatörü: çok-aggregate iş akışını outbox + telafi adımlarıyla yürütür, dağıtık transaction kullanmadan."
+ ],
+ "ecaExample": "trigger:\n  event: order.placed\ncondition:\n  all:\n    - actor.capability >= \"bus.publish\"\n    - not loop_detected\n    - event.schema_version compatible\naction:\n  - emit: inventory.reserve_requested   # outbox, transport-agnostic\n  - notify: [\"fulfillment-module\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{order}:placed:v1\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Publish/subscribe capability deny-by-default; bir module yetkisi olmadan başka bağlamın olayına abone olamaz.",
+  "Event payload'ı tenant-scoped; cross-tenant olay sızıntısı RLS + envelope tenant_id ile engellenir.",
+  "PII taşıyan event minimize edilir (referans/id taşı, ham PII değil); audit ve retention politikası olaya tabi.",
+  "Hook runtime sandbox: TS/Python hook kernel iç API'sine doğrudan erişemez, yalnız kontrat yüzeyini görür."
+ ],
+ "perfNotes": {
+  "code": "Module kodu transport'tan bağımsız; ölçek değişimi (in-process→Redis→Kafka) yalnız config, kod değişmez.",
+  "perf": "Event delivery hedefi p95 <50ms; hook timeout <%0.1; dead-letter recovery >%95. Async teslimat ana akışı bloklamaz."
+ },
+ "testNotes": [
+  "Aynı event iki kez teslim edilince tüketici idempotency_key ile tek kez işler.",
+  "Transport değiştirildiğinde (redis→kafka) module davranışı bayt-bayt aynı kalır.",
+  "Backward-incompatible event versiyonu eski tüketiciyi kırmaz (kontrat testi).",
+  "Komşu-tenant olayına subscribe sıfır mesaj alır.",
+  "TS hook Python aggregate'te açık transaction açamaz (boundary testi)."
+ ]
+}

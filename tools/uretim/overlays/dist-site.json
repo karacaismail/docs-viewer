@@ -1,0 +1,51 @@
+{
+ "featureDefs": [
+  {
+   "name": "Aidat tahakkuk + gecikme faizi",
+   "desc": "s-billing üstünde dönemsel aidat üretimi, gecikme faizi, toplu tahsilat. money + bitemporal.",
+   "critical": true
+  },
+  {
+   "name": "Ortak gider dağıtım kuralları",
+   "desc": "Arsa payı / eşit / kişi bazlı dağıtım; daire başına paylaştırma motoru.",
+   "critical": true
+  },
+  {
+   "name": "Sakin portalı",
+   "desc": "Borç görüntüleme, online ödeme, arıza/talep açma; düşük fiyat × yüksek adet self-service."
+  },
+  {
+   "name": "634 defter şablonları",
+   "desc": "Kat Mülkiyeti Kanunu karar defteri + işletme projesi şablonları hazır; s-audit delil zinciri.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Distribution = stack + sektör konfigürasyonu + hazır içerik/workflow; YENİ KOD DEĞİL paketleme. Stack ⊂ Edition ⊂ Distribution; s-billing + dist-membership + s-property + s-audit'i sektör paketi olarak birleştirir, edition-kalitesinde UI/UX ile teslim.",
+  "kernel": "Party (sakin/yönetici), tenancy (RLS — her site bir tenant; sub-tenant blok/daire), audit ve ArcheType engine kernel'den; distribution kendi ArcheType'ı eklemez, mevcut stack'leri konfigüre eder.",
+  "core": "Core değişmez; distribution yalnız sektör konfigürasyonu + hazır workflow/şablon + UI katmanı ekler.",
+  "modules": "s-billing (aidat/tahsilat), dist-membership (üyelik), s-audit (defter/delil) module'lerini konfigürasyonla tüketir; ödeme komisyonu billing event'inden gelir; yalnız Contract.",
+  "apps": "Billing, membership, property, audit yetenekleri tek site paketinde birleşir; aynı sakin Party'si borçlu, üye, portal kullanıcısı — çift kayıt yok."
+ },
+ "moduleUsage": [
+  "s-billing: aidat tahakkuku + gecikme faizi + toplu tahsilat; ödeme komisyonu reklamsız gelir hattı.",
+  "s-audit: karar defteri + işletme projesi 634 delil; yönetici işlemleri audit'li.",
+  "s-property: parsel/daire/blok yapısı ortak gider dağıtım tabanı."
+ ],
+ "ecaExample": "trigger:\n  event: dues.period_opened\n  when: \"tenant_scoped AND site.active\"\ncondition:\n  all:\n    - actor.capability >= \"site.manage\"\n    - not loop_detected\naction:\n  - emit: billing.dues_accrued   # daire başına, outbox idempotent\n  - notify: [\"resident-portal\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{period}:accrual\"\n  external_effects: none",
+ "securityNotes": [
+  "Sakin borç/ödeme verisi money + pii; RLS site-scoped (sub-tenant blok/daire); komşu site verisi görünmez.",
+  "Aidat tahsilatı/ödeme idempotent; aynı dönem ikinci kez tahakkuk etmez; çift komisyon engellenir.",
+  "Yönetici defteri (634) audit-immutable; karar kaydı sonradan sessizce değiştirilemez — delil zinciri.",
+  "Online ödeme PCI yüzeyi dış sağlayıcıda; kart verisi tenant DB'sine yazılmaz."
+ ],
+ "perfNotes": {
+  "perf": "Tahakkuk daire sayısı kadar satır → toplu üretim asenkron worker (büyük sitede binlerce daire); borç/ödeme liste uçları keyset pagination; sakin portalı borç sorgusu daire+dönem indeksli."
+ },
+ "testNotes": [
+  "Komşu-site sakin/borç sorgusu sıfır döndürür (tenant izolasyonu).",
+  "Aynı dönem aidatı ikinci kez tahakkuk ettirilemez (idempotency).",
+  "Ortak gider dağıtımı arsa payı toplamı %100'e eşitlenir (yuvarlama dahil tutar tutar).",
+  "634 karar defteri kaydı oluşturulduktan sonra immutable; düzeltme yeni kayıtla yapılır."
+ ]
+}

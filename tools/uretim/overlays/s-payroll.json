@@ -1,0 +1,52 @@
+{
+ "featureDefs": [
+  {
+   "name": "Bordro hesap motoru",
+   "desc": "Brüt→net: SGK işçi/işveren primi, gelir vergisi dilimleri, damga vergisi, AGİ, kümülatif matrah; Money (Decimal) ile kuruş hassasiyeti. Etki tarihli ücret/parametre.",
+   "critical": true
+  },
+  {
+   "name": "SGK e-Bildirge entegrasyonu",
+   "desc": "APHB/MUHSGK aylık bildirge üretimi + işe giriş/çıkış (İAB); TR yerelleştirme zorunlu, yurt dışı muadillerin boşluk bıraktığı yer.",
+   "critical": true
+  },
+  {
+   "name": "Bordro ArcheType + bitemporal",
+   "desc": "Çalışan, sözleşme, ücret bileşeni ArcheType'ları; geriye dönük zam (etki 1 Mayıs, kayıt bugün) bitemporal ile doğru zamanlanır.",
+   "critical": true
+  },
+  {
+   "name": "Bordro onay Workflow'u",
+   "desc": "Hesapla→incele→onayla→GL+ödeme; tenant'a pinli aşamalar, onay zinciri audit'lenir."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-2 SaaS ürünü; bordro tek başına çalışmaz, GL (muhasebe) + ödeme + SGK ile birlikte anlamlıdır. Kendi Domain'i (Kaya), dışarıya yalnız Contract ile konuşur.",
+  "kernel": "Tenancy (RLS), capability/permission, audit ve ArcheType engine kernel'den; ürün kendi şemasını ArcheType ile tanımlar. KVKK kişisel veri kayıtları için bitemporal zorunlu.",
+  "core": "Money/Tax (gelir vergisi/SGK oranları), i18n, Calendar (dönem/çalışma günü), Notification core'dan gelir; tutarlar Decimal.",
+  "modules": "GL/Accounting'e bordro tahakkuk yevmiyesi yayar; cc-tr (Türkiye Uyum) paketinden SGK/GİB sürücülerini tüketir — yalnız Contract.",
+  "apps": "HRMS, Accounting ve TR-uyum app'leri aynı çalışan + bordro kaydını paylaşır; mali müşavir 12 müşteriyi tek platformda yönetir."
+ },
+ "moduleUsage": [
+  "HRMS app: çalışan/sözleşme/izin verisini sağlar; bordro bu kaynaktan brüt ücret + kesinti okur.",
+  "Accounting/GL app: aylık bordro tahakkuk + ödeme yevmiyesini tüketir.",
+  "cc-tr (Türkiye Uyum): SGK e-Bildirge (APHB/MUHSGK) ve e-Devlet entegrasyonunu sağlar."
+ ],
+ "ecaExample": "trigger:\n  event: payroll.period_finalized\n  when: \"period_end AND status == 'approved'\"\ncondition:\n  all:\n    - actor.capability >= \"payroll.post\"\n    - sgk_declaration.valid == true\n    - not loop_detected\naction:\n  - emit: gl.accrual_requested      # outbox, idempotent\n  - emit: sgk.declaration_ready      # APHB/MUHSGK\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{period}:payroll-post\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Ücret/TC kimlik/IBAN gibi alanlar pii=true (+retention); bordro KVKK'da en hassas veri sınıfı, field-level encryption.",
+  "Tenant-scoped (RLS): bir müşterinin bordrosu başka tenant'a sızamaz; mali müşavir yalnız yetkili olduğu tenant'ı görür.",
+  "Onaylanmış bordro immutable; düzeltme = ters kayıt + yeni dönem (mali integrity + SGK düzeltme bildirgesi).",
+  "Bordro post + ücret görüntüleme yetkisi capability deny-by-default; ifowner/role ile dar kapsam."
+ ],
+ "perfNotes": {
+  "code": "Dönem hesabı batch worker'da paralel (çalışan başına bağımsız); SGK bildirge üretimi finalize sonrası asenkron.",
+  "perf": "Çalışan + bordro geçmişi keyset (cursor) pagination; (tenant_id, employee_id, period) bileşik indeks; toplu dönem kapanışı kuyruk üstünden."
+ },
+ "testNotes": [
+  "Money kuruş doğruluğu: brüt - kesintiler = net, bit-bit; SGK tavanı uygulanınca doğru kesilir.",
+  "Aynı dönem ikinci kez post edilemez (idempotency).",
+  "Komşu tenant bordro/ücret sorgusu sıfır döndürür (izolasyon).",
+  "Geriye dönük zam bitemporal: etki tarihinden itibaren fark doğru, kayıt tarihi bugün (time-travel doğruluğu)."
+ ]
+}

@@ -1,0 +1,55 @@
+{
+ "featureDefs": [
+  {
+   "name": "ProductFeed + FeedChannel ArcheType'ları",
+   "desc": "Ürün/varyant kayıtlarından Google Merchant XML + Meta Catalog feed üretir. FeedChannel = Merchant/Meta/pazaryeri kanal tanımı (format/kapsam). Commerce ArcheType'larına bağlı — Layer 1 değil, Stack ürün modülü.",
+   "critical": true
+  },
+  {
+   "name": "AttributeMap (yerel -> kanal taksonomisi)",
+   "desc": "Yerel alan -> kanal zorunlu özniteliği (GTIN/brand/condition/availability/price) eşleme. Fiyat alanı Money/Decimal — float YASAK.",
+   "critical": true
+  },
+  {
+   "name": "FeedValidationRule (geçerlilik ön-denetimi)",
+   "desc": "Kanal politikası ön-doğrulama: eksik/yanlış öznitelik kanal reddinden (Merchant disapproval) ÖNCE yakalanır."
+  },
+  {
+   "name": "Delta güncelleme + scheduled tam yeniden üretim",
+   "desc": "Fiyat/stok değişiminde yalnız değişen ürün artımlı feed'e; periyodik tam yeniden üretim. Yayından kalkan ürün feed'den düşer."
+  },
+  {
+   "name": "Çok-kanal / çok-ülke feed varyantı",
+   "desc": "Kanal/ülke/dil başına ayrı feed (para birimi, dil, fiyat). Tenant-scoped."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — App değil module; yalnız commerce/storefront/marketplace app'lerinde (ürün ArcheType'ı varsa) aktif. Kernel ile zorunlu, kanal API'sine yalnız allowlist üzerinden.",
+  "kernel": "Kimlik, tenancy (RLS), audit ve ArcheType engine kernel'den; feed üretimi pii üretmez. Fiyat = Money (Decimal) + ISO 4217.",
+  "core": "Commerce app core'una bağlı module; core module değişmez, product-feed core sözleşmelerine uyar. Ürün ArcheType'ı yoksa pasif.",
+  "modules": "Ürün verisi s-commerce'ten; kanal yayını stack-channel üzerinden; dönüşüm/UTM geri-besleme l1-analytics; organik schema l1-seo. Tümü Contract.",
+  "apps": "Storefront/Commerce/Marketplace app'leri aynı ürün/varyant ArcheType'ını paylaşır; feed onlardan türetilir, çift ürün kaydı yok."
+ },
+ "moduleUsage": [
+  "Commerce/Storefront app: ürün+varyant ArcheType'ından Merchant XML + Meta Catalog feed üretir.",
+  "stack-channel: üretilen feed'i pazaryeri/kanal API'sine (allowlist) yayınlar veya kanal GET ile çeker.",
+  "l1-analytics: feed dönüşümü + UTM geri-beslemesi; hangi feed kalemi sattı.",
+  "l1-seo / l1-pseo: organik keşif schema'sı orada; bu module ücretli/sosyal kanalın ürün-veri köprüsü (kampanya yürütme DEĞİL)."
+ ],
+ "ecaExample": "trigger:\n  event: product.updated\n  when: \"tenant_scoped AND (price_changed OR stock_changed OR unpublished)\"\ncondition:\n  all:\n    - actor.capability >= \"feed.publish\"   # dar yol; kanal API allowlist\n    - not loop_detected\n    - validation.passed                     # GTIN/price dolu, Money/Decimal\naction:\n  - emit: feed.delta_built { channel, country }   # outbox idempotent\n  - publish_or_warn: merchant_channel             # ret riski -> uyarı\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{channel}:{product}:{version}\"\n  external_effects: allowlist_only",
+ "securityNotes": [
+  "Feed üretimi pii üretmez; çıktı yalnız ürün/fiyat/stok. Kanal API'sine yalnız allowlist (A03/manifest) — keyfi dış çağrı yok.",
+  "Fiyat float = para hatası; tüm fiyat alanları Money/Decimal, currency-tagged. Çok-ülke feed'de yanlış para birimi testten geçemez.",
+  "Feed üretim/yayın capability deny-by-default (dar yol); tenant izolasyonu — bir tenant'ın ürünü başka tenant feed'ine sızamaz."
+ ],
+ "perfNotes": {
+  "code": "Öznitelik eşleyici + feed serileştirici + geçerlilik denetleyici SAF fonksiyon; if (channel==...) yerine runtime dispatch (FeedChannel Strategy).",
+  "perf": "Delta artımlı feed (yalnız değişen ürün) — tam yeniden üretim scheduled batch worker; ürün+kanal indeksleri; büyük katalog streaming serileştirme, OFFSET yok."
+ },
+ "testNotes": [
+  "Ürün -> geçerli Merchant XML (zorunlu öznitelikler dolu); eksik GTIN/price -> validation yakalar (kanal reddinden önce).",
+  "Fiyat Money/Decimal — float yok; çok-ülke feed doğru para birimi/dil.",
+  "Delta: yalnız değişen ürün artımlı feed'de; yayından kalkan ürün feed'den düşer.",
+  "Tenant izolasyonu: komşu-tenant ürünü feed'e girmez."
+ ]
+}

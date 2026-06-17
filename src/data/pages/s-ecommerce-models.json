@@ -2060,7 +2060,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "E-Ticaret İş Modelleri — Capability Flag Mimarisi — çekirdek yetenek",
+      "term": "Capability flag mimarisi (enum değil)",
       "definition": [
        {
         "type": "strong",
@@ -2068,41 +2068,51 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "B2C/B2B/C2C/D2C... 14 model enum tek-seçim değil, eklemeli capability flag. Aynı tenant aynı anda hem B2C hem D2C hem marketplace olabilir. 'B2C'den B2B'ye geçiş' yanlış; doğrusu 'B2B yeteneğini açma' — yıkıcı migration yerine ek flag."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "tenant_capabilities tablosu",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "tenant_id, capability TEXT, enabled BOOL, enabled_at. Her endpoint öncesi capability check middleware. Müşteri model değiştirmiyor, yetenek ekliyor."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Order ArcheType party-kind kolonları",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "sell_party_kind + buy_party_kind (ENUM business/consumer/manufacturer/government/employee/peer). Order.model derived field: kind1 + 2 + kind2. 2-eksen matris (sell × buy) modellerin kaynağı."
+       }
+      ]
+     },
+     {
+      "term": "3. eksen: transaction depth",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "lead_gen (sadece eşleştirme, ödeme/teslimat dışarıda — Sahibinden) | full (sepet+ödeme+kargo+iade içeride — Trendyol) | hybrid. Aynı satıcı tipi iki farklı dünyada yaşar; ArcheType seçiminden gelir modeline kadar etkiler."
+       }
+      ]
+     },
+     {
+      "term": "Hibrit/dikey capability'ler",
+      "definition": [
+       {
+        "type": "text",
+        "text": "marketplace (multi-vendor, komisyon, ödeme split), dropship, subscription (recurring/MRR), social, headless (yalnız API+SDK), o2o (click & collect)."
        }
       ]
      }
@@ -2290,15 +2300,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Capability check middleware deny-by-default: flag açık değilse ilgili endpoint 403 — B2B fiyat/sözleşme yüzeyi B2C tenant'a kapalı. tenant_capabilities RLS tenant-scoped; bir tenant başka tenant'ın yeteneğini okuyamaz/değiştiremez. Marketplace ödeme split'inde satıcı bakiyesi para (money) bütünlüğü + audit ile; çapraz-satıcı sızıntı yok. Lead_gen ↔ full geçişinde ödeme/PII yüzeyi capability ile koşullu açılır, yanlışlıkla aktive edilemez. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -2326,15 +2328,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Model = derived field (kind1+kind2); yeni iş modeli yeni capability satırı, kod değişmez. Migration yerine eklemeli flag — 50 yıllık sürdürülebilirlik."
        }
       ]
      },
@@ -2352,15 +2346,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Capability lookup endpoint öncesi tek indeksli sorgu (tenant_id, capability); order listeleri keyset pagination."
        }
       ]
      },
@@ -2656,7 +2642,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — E-Ticaret İş Modelleri — Capability Flag Mimarisi",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — E-Ticaret İş Modelleri — Capability Flag Mimarisi\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: tenant.capability_enable_requested\n  when: \"capability == 'b2b'\"\ncondition:\n  all:\n    - actor.capability >= \"tenant.admin\"\n    - not loop_detected\naction:\n  - upsert: tenant_capabilities { capability: 'b2b', enabled: true, enabled_at: now }\n  - emit: order.party_kind_options_extended\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:cap:b2b\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -2796,6 +2782,18 @@
     ]
    },
    {
+    "id": "block-s-ecommerce-models-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Aynı tenant aynı anda B2C + D2C + marketplace capability'lerini taşıyabilir (çoklu flag). B2B flag kapalıyken B2B endpoint 403 döner (deny-by-default). Order.model derived field sell/buy party-kind'dan doğru üretilir (ör. Manufacturer+Consumer → d2c). transaction_depth=lead_gen tenant'ında dahili ödeme akışı devre dışı kalır. Komşu-tenant tenant_capabilities sorgusu sıfır döner."
+     }
+    ]
+   },
+   {
     "id": "block-s-ecommerce-models-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -2814,7 +2812,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — bu bir Domain (e-ticaret iş modeli) konfigürasyonu; Order/Party ArcheType'larını capability flag ile genişletir, kernel ve module koduna dokunmadan."
        }
       ]
      },
@@ -2823,16 +2821,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Party kimliği ve tenancy (RLS) kernel'den; tenant_capabilities ve Order party-kind kolonları kernel ArcheType engine ile tanımlanır (config-as-data)."
        }
       ]
      },
@@ -2841,7 +2830,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Audit (capability enabled_at iz bırakır), Authz (capability deny-by-default) core kontratı; money/order bitemporal saklama."
        }
       ]
      },
@@ -2850,7 +2839,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Billing (subscription/MRR), Payment (split — marketplace), Shipping (full transaction), Classifieds (lead_gen) module'leri tenant capability'sine göre devreye girer."
        }
       ]
      },
@@ -2859,7 +2848,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Aynı tenant farklı app yüzeylerinde (storefront/marketplace/headless) farklı capability kombinasyonu sunar; tek Order modeli paylaşılır."
        }
       ]
      }
@@ -2872,13 +2861,39 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-ecommerce-models-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-ecommerce-models-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Payment app: marketplace flag açıksa ödeme split + satıcı dashboard devreye girer."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Billing app: subscription capability ile recurring billing + MRR ölçer."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Shipping/Fulfillment app: transaction_depth=full ise kargo+iade akışını yönetir; lead_gen'de devre dışı."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Classifieds app: lead_gen modunda yalnız eşleştirme; ödeme platform dışında."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Public Surface app: D2C capability ile aracısız marka storefront'u açar."
+      }
+     ]
     ]
    },
    {

@@ -1281,15 +1281,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Marketing'i transactional içine gömmek (sipariş onayında 'şuna da bak' linki) AB'de yasal ihlal; ayrı email + ayrı consent zorunlu. consent + ToS versiyonlama delil zinciridir: tos_acceptance ip_address + user_agent + version saklar (GDPR/KVKK kanıtı); v4'e geçişte yeni-ToS modal + kayıt. TR ticari ileti için İYS kaydı zorunlu — aksi ihlal başına ₺3000; SMS sender-ID ülke kaydı (DLT/10DLC) yoksa mesaj bloklanır + reputation kaybı. Quiet hours kullanıcı timezone'unda hesaplanır (sunucununki değil); critical (security/payment-failed) sessiz saatte de bypass eder. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1317,15 +1309,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Dispatcher tip enum + consent lookup'ı tek sorguda (user_id, consent_type PK) yapar; SMS provider client ülke-aware sender-ID seçer; quiet-hours kontrolü kullanıcı timezone'unda O(1)."
        }
       ]
      },
@@ -1343,15 +1327,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Marketing toplu gönderimi consent kapısından geçen alıcılara daraltılır (gereksiz provider çağrısı/maliyet yok); quiet-hours'ta bekleyen marketing kuyruğa alınır, transactional bypass'la anında gider."
        }
       ]
      },
@@ -1647,7 +1623,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Bildirim & Consent — Transactional vs Marketing, SMS Regülasyon",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Bildirim & Consent — Transactional vs Marketing, SMS Regülasyon\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: notification.dispatch\ncondition:\n  all:\n    - if type in [marketing, behavioral]: user_consent.granted == true\n    - if type in [marketing, behavioral]: not quiet_hours(user.timezone)\n    - sms_sender_id.registered_for(user.country)\n    - not loop_detected\naction:\n  - send: channel(email|sms|push)\n  - else: skip + audit.log(\"consent/quiet-hours blocked\")\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:notif:{event_id}:{user}\"\n  external_effects: provider_send_required",
     "copyEnabled": true
    },
    {
@@ -1787,6 +1763,18 @@
     ]
    },
    {
+    "id": "block-cc-notification-consent-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Sınıflandırma: marketing içeriği transactional kanaldan gönderilemez (ayrı consent kapısı). Consent yoksa marketing/behavioral skip edilir + audit log üretilir; transactional consent'siz gider. Quiet hours: kullanıcı timezone'unda 22:00-08:00 arası marketing bekletilir, critical bypass eder. SMS ülke kuralı: sender-ID kayıtlı değilse (DLT/10DLC) gönderim reddedilir/bloklanır. ToS versiyonlama: v3 kabul eden kullanıcıya v4 modal gösterilir, kabul ip+ua+version ile kaydedilir."
+     }
+    ]
+   },
+   {
     "id": "block-cc-notification-consent-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1805,7 +1793,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — bildirim tipi sınıflandırması + consent kuralı bağımsız bir özellik değil, her bildirim gönderen module'ün geçmek zorunda olduğu bir crosscut kapısıdır; yanlış sınıflandırma (marketing'i transactional gibi göstermek) doğrudan yasal ihlaldir."
        }
       ]
      },
@@ -1814,16 +1802,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Bildirim dispatcher kernel olay akışının çıkış kenarındadır; her olay bir tip enum'u (transactional/system/marketing/behavioral) taşır, marketing/behavioral için user_consent kontrolü zorunlu — yoksa skip + audit log."
        }
       ]
      },
@@ -1832,7 +1811,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "consent core şemasında tutulur: user_consent (type başına granted + source + ToS version) ve tos_acceptance (version + ip + user_agent, GDPR/KVKK delili); jurisdiction resolver locale'e göre kural seçer."
        }
       ]
      },
@@ -1841,7 +1820,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "l1-notification gönderimi, s-marketing kampanyası ve l1-quiet-hours bu kapıyı paylaşır; module bildirim tipini beyan eder, ülke/consent/quiet-hours mantığını tekrar yazmaz (Contract sınırı)."
        }
       ]
      },
@@ -1850,7 +1829,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Her app transactional bildirimi (sipariş onayı, OTP) serbest gönderir; marketing/behavioral bildirimi consent + quiet-hours + ülke sender-ID kaydından (İYS/DLT/10DLC) geçirir."
        }
       ]
      }
@@ -1863,13 +1842,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-cc-notification-consent-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-cc-notification-consent-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "l1-notification: tip enum'a göre dispatch; marketing'de user_consent yoksa skip + audit."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-marketing: kampanya gönderiminde opt-in consent + ToS version kontrolü + İYS kaydı."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "cc-jurisdiction-resolver: kullanıcı locale/jurisdiction'ına göre SMS sender-ID kuralı (TR İYS, AB sender-ID, ABD 10DLC, Hindistan DLT, Brezilya Anatel) seçer."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "l1-quiet-hours: marketing/behavioral'ı kullanıcının timezone'unda 22:00-08:00 arası bekletir, transactional/system bypass eder."
+      }
+     ]
     ]
    },
    {

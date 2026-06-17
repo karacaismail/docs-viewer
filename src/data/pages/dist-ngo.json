@@ -208,7 +208,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Dernek/Vakıf (NGO) Distribution — çekirdek yetenek",
+      "term": "Dernek/Vakıf sektör paketi (distribution)",
       "definition": [
        {
         "type": "strong",
@@ -216,41 +216,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Üyelik + aidat + bağış kampanyası + makbuz e-belge — mevcut modüllerin niş paketlenmesi. Stack (alt-küme) Edition (alt-küme) Distribution: ham stack değil, edition-kalitesinde UI/UX ile teslim."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Dernekler Kanunu defterleri (hazır config)",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Dernekler Kanunu zorunlu defter formatları hazır konfigürasyon olarak gelir; mali müşavir kurmaz, açar."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Bağış makbuzu e-belge akışı",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Bağış -> makbuz; s-tax-compliance e-belge köprüsü. Tutarlar Money (Decimal); kurban/proje bazlı kampanya şablonları dahil."
+       }
+      ]
+     },
+     {
+      "term": "Proje takibi (fon -> harcama -> rapor)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bağış fonunun harcamaya ve şeffaflık raporuna izlenmesi; bitemporal + audit."
        }
       ]
      }
@@ -438,15 +435,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Bağışçı/üye verisi pii=true (+retention); RLS tenant-scoped; bağışçı kimliği yalnız yetkiyle (capability deny-by-default). Bağış defteri ve makbuz değişmez audit (A08): kesilmiş makbuz geriye değişmez; düzeltme yeni kayıt. Tutarlar Money/Decimal. Dernekler Kanunu defter formatı sözleşme-kapısı: zorunlu alan eksikse kayıt reddedilir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -500,15 +489,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Aidat/bağış tahsilat toplu işlemleri asenkron worker; üye/bağışçı listeleri keyset pagination; bağış defteri tarih+kampanya indeksli."
        }
       ]
      },
@@ -804,7 +785,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Dernek/Vakıf (NGO) Distribution",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Dernek/Vakıf (NGO) Distribution\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: donation.received\n  when: \"tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"donation.receipt.issue\"\n    - not loop_detected\n    - amount is Money    # Decimal, currency-tagged\naction:\n  - emit: ebelge.receipt_requested    # s-tax-compliance, outbox idempotent\n  - record: donation_ledger { bitemporal: true }\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{donation}:receipt\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -944,6 +925,18 @@
     ]
    },
    {
+    "id": "block-dist-ngo-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Komşu-tenant üye/bağışçı sorgusu sıfır döndürür. Aynı bağış ikinci kez makbuz üretmez (idempotency). Bağış tutarı Money/Decimal; defter toplamı kuruşu kuruşuna. Dernekler Kanunu zorunlu defter alanı eksik kayıt reddedilir."
+     }
+    ]
+   },
+   {
     "id": "block-dist-ngo-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -962,7 +955,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — distribution mevcut modüllerin niş paketi; kernel ile zorunlu (kimlik/tenancy/audit), paketlenen modüllerle yalnız Contract üzerinden."
        }
       ]
      },
@@ -971,16 +964,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Kimlik, tenancy (RLS), audit kernel'den; üye/bağışçı Party'den türer. Para = Money (Decimal) + ISO 4217."
        }
       ]
      },
@@ -989,7 +973,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Bağımsız core yazmaz; dist-membership + s-tax-compliance + s-comms modüllerini sektör config'iyle paketler."
        }
       ]
      },
@@ -998,7 +982,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "dist-membership (üyelik/aidat/genel kurul), s-tax-compliance (makbuz e-belge), s-comms (üye duyuru) — yalnız Contract; distribution bunları config + içerik + theme ile sarar."
        }
       ]
      },
@@ -1007,7 +991,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Paketlenen modüller aynı Party + bağış ArcheType'ını paylaşır; üye/bağışçı çift kaydı yok."
        }
       ]
      }
@@ -1020,13 +1004,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-dist-ngo-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-dist-ngo-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "dist-membership: üye kaydı, aidat tahsilatı, genel kurul listeleri."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-tax-compliance: bağış makbuzu e-belge üretimi + GİB akışı."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-comms: üye duyuru/iletişim köprüsü."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Reklamsız organik kanal: federasyon/konfederasyon ağıyla yayılır; bağış hacminden komisyon modeli."
+      }
+     ]
     ]
    },
    {
