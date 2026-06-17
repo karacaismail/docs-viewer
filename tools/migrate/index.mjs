@@ -215,6 +215,9 @@ function transformCluster({ file, stem, data }) {
     },
     ...governanceOf(data, stem, categoryId),
     related: data.related ?? [],
+    // ADR-0023 Faz 2 — ham parent/relations (çözüm ve breadcrumb resolution pass'inde).
+    ...(data.parent ? { parent: data.parent } : {}),
+    ...(Array.isArray(data.relations) ? { relations: data.relations } : {}),
     blocks,
   };
 
@@ -504,6 +507,50 @@ for (const r of results) {
     if (target && !target.page.related.includes(r.page.id)) target.page.related.push(r.page.id);
   }
 }
+// ADR-0023 Faz 2 — parent + tipli relations çözümü (stem/eski-id → pageId) + breadcrumb.
+for (const r of results) {
+  if (r.page.parent) {
+    const pid = byKey.get(r.page.parent);
+    if (!pid) {
+      warnings.push(`${r.page.id}: çözülemeyen parent '${r.page.parent}'`);
+      r.page.parent = undefined;
+    } else r.page.parent = pid;
+  }
+  if (Array.isArray(r.page.relations)) {
+    r.page.relations = r.page.relations
+      .map((rel) => {
+        const pid = byKey.get(rel.target);
+        if (!pid) {
+          warnings.push(`${r.page.id}: çözülemeyen relation target '${rel.target}'`);
+          return null;
+        }
+        return { type: rel.type, target: pid };
+      })
+      .filter(Boolean);
+  }
+}
+for (const r of results) {
+  if (!r.page.parent) continue;
+  const chain = [];
+  const seen = new Set();
+  let cur = r.page.id;
+  while (cur) {
+    if (seen.has(cur)) {
+      warnings.push(`${r.page.id}: parent döngüsü ('${cur}')`);
+      break;
+    }
+    seen.add(cur);
+    const node = byId.get(cur);
+    if (!node) break;
+    chain.unshift({
+      id: cur,
+      title: node.page.title,
+      ...(node.page.meta?.granularity ? { granularity: node.page.meta.granularity } : {}),
+    });
+    cur = node.page.parent;
+  }
+  if (chain.length > 1) r.page.meta = { ...r.page.meta, breadcrumb: chain };
+}
 const glossary = results.flatMap((r) => r.glossary);
 const navigation = buildNavigation(results);
 const searchIndex = buildSearchIndex(results, glossary);
@@ -533,6 +580,8 @@ write("pages-index.json", {
     categoryId: r.page.categoryId,
     meta: r.page.meta,
     related: r.page.related,
+    ...(r.page.parent ? { parent: r.page.parent } : {}),
+    ...(r.page.relations?.length ? { relations: r.page.relations } : {}),
   })),
 });
 for (const r of results) {
