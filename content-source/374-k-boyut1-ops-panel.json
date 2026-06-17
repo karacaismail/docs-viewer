@@ -1,0 +1,130 @@
+{
+  "id": "k-boyut1-ops-panel",
+  "title": "Boyut 1 — Ops/DevOps Operatör Konsolu",
+  "subtitle": "Dört kontrol düzleminden birincisi: Operatör/SRE'nin hosting, dağıtım ve gözlemlenebilirlik yüzeyi. Karakteri read-mostly (çoğunlukla izlenir), tehlikeli aksiyonlar kilitli ve onay penceresine bağlıdır. Muadil: Frappe Press / cPanel / Vercel dashboard.",
+  "cluster": "kernel",
+  "categoryId": "kernel",
+  "order": 18,
+  "icon": "ph-gauge",
+  "granularity": "kaya",
+  "state": "wip",
+  "badge": "Kontrol Düzlemi",
+  "tags": ["boyut1", "ops", "devops", "panel"],
+  "parent": "k-control-planes",
+  "relations": [
+    {"type": "belongs-to", "target": "k-control-planes"},
+    {"type": "uses", "target": "be-deploy-profilleri"},
+    {"type": "uses", "target": "k-tenancy"},
+    {"type": "depends-on", "target": "adr-0015"}
+  ],
+  "related": ["cc-obs-deep", "deploy-yap", "k-surface"],
+  "enrich": {
+    "info": "Boyut 1, dört kontrol düzleminden birincisidir ({{ref:k-control-planes}}): Operatör/SRE'ye ait hosting, dağıtım ve gözlemlenebilirlik konsolu. Diğer üç düzlemden (Boyut 2 developer-admin, Boyut 3 tenant/müşteri-admin, Boyut 4 public/frontpages) ayrı bir yetki tavanına tabidir ({{ref:adr-0015}}). Bu panel bir **Surface**'tir ({{ref:k-surface}}): kendi motorlarına sahip değildir, kernel motorlarını (kimlik, tenancy, audit, deploy) operatör yüzeyine projekte eder. Karakteri read-mostly'dir — varsayılan davranış izlemektir, durum değiştiren her düğme önce onay ister.",
+    "detail": "Panelin **read-mostly** olması bir tasarım kararıdır, eksiklik değil. Operatörün günlük işinin çoğu gözlemdir: sağlık görmek, log okumak, hata sayacına bakmak. Bu görünümler salt-okurdur ve serbestçe açılır. Durumu değiştiren — dağıtan, geri alan, geri yükleyen, ölçek bayrağı çeviren — işlemler ise ayrı bir sınıftır: her biri tehlikeli aksiyon olarak işaretlenir, onay penceresinden geçer ve append-only audit'e yazılır. Böylece kaza ile yıkıcı bir işlem tetiklemek, normal gezinmeyle aynı kolaylıkta olmaz; tehlike bilinçli bir adım gerektirir. En uçta restore durur: bir tenant'ı eski yedeğe döndürmek aradaki tüm veriyi siler, bu yüzden ad-doğrulamalı güçlü onay ister.\n\nGözlemlenebilirlik tarafı bilinçli olarak adaptör-opsiyoneldir. Panel canlı log akışını ve son 1 saatlik hata sayacını her kurulumda gösterir; ancak derin sağlayıcılar (Sentry, Grafana, OpenSearch) zorunlu bağımlılık değil, takılabilir adaptörlerdir ({{ref:cc-obs-deep}}). Bir tenant bu sağlayıcıları kullanmıyorsa panel yine çalışır — yalnızca o opsiyonel paneller boş kalır. Bu opsiyonellik, ops yüzeyini belirli bir SaaS yığınına kilitlemeden taşınabilir tutar; sağlayıcı seçimi dağıtım profiline bırakılır ({{ref:be-deploy-profilleri}})."
+  },
+  "blocks": [
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Kapsam ve kitle"
+    },
+    {
+      "type": "paragraph",
+      "text": "Boyut 1, **Operatör/SRE** kitlesine hizmet eder. Soru basittir: site ayakta mı, dağıtım geçti mi, hata var mı, gerekirse nasıl geri alınır? Panel bu soruları yanıtlar ama yıkıcı gücü kilit altında tutar — varsayılan davranış izlemektir, müdahale değil."
+    },
+    {
+      "type": "table",
+      "caption": "Boyut 1 yetenekleri: kitle ve sınır",
+      "headers": ["Yetenek", "Kitle", "Sınır"],
+      "rows": [
+        ["Kiracı/site sağlığı", "Operatör/SRE", "Salt-okur — durum, sürüm, kaynak görüntülenir; değiştirilemez"],
+        ["Deploy / rollback", "Operatör/SRE", "Tehlikeli — onay penceresi + audit zorunlu ({{ref:deploy-yap}})"],
+        ["Log / observability", "Operatör/SRE", "Salt-okur akış; sağlayıcı adaptörleri opsiyonel ({{ref:cc-obs-deep}})"],
+        ["Yedek/restore + ölçek bayrakları", "Operatör/SRE", "Restore en tehlikeli — ad-doğrulamalı güçlü onay ({{ref:k-tenancy}})"]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Dört yetenek"
+    },
+    {
+      "type": "feature-list",
+      "items": [
+        {
+          "name": "Kiracı/site sağlığı",
+          "desc": "Her tenant için tek bakışta sağlık: durum (**ayakta** / **bakımda** / **arızalı**), çalışan sürüm ve kaynak kullanımı (CPU / bellek). Tamamen salt-okurdur — operatör görür ama bu yüzeyden tenant'ın halini değiştiremez."
+        },
+        {
+          "name": "Deploy / rollback",
+          "desc": "GitHub Actions aşamaları canlı izlenir: **sıraya girdi → test → kuruyor → başarılı / hata**; her aşamada `Logu gör`. Rollback tenant'ı önceki sürüme döndürür. Tehlikeli aksiyondur → onay penceresi açılır ve işlem audit'e yazılır. ({{ref:deploy-yap}}, {{ref:be-deploy-profilleri}})"
+        },
+        {
+          "name": "Log / observability",
+          "desc": "Canlı log akışı ve son 1 saatin hata sayacı her kurulumda vardır. Sentry, Grafana ve OpenSearch derin sağlayıcı adaptörleri **opsiyoneldir** — takılırsa zenginleşir, takılmazsa panel yine çalışır. ({{ref:cc-obs-deep}})"
+        },
+        {
+          "name": "Yedek/restore + ölçek bayrakları",
+          "desc": "Restore bu panelin **en tehlikeli** işlemidir: aradaki tüm veriyi sileceği için ad-doğrulamalı güçlü onay ister (tenant adını elle yaz). Yanında Redis ve S3 gibi servisler için aç-kapa ölçek bayrakları durur. ({{ref:k-tenancy}})",
+          "critical": true
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Üç altın kural"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        "**Yalnız ops rolü.** Bu yüzeye yalnız ops/SRE rolü erişir; başka her rol `403` alır — developer-admin de, tenant-admin de buraya giremez.",
+        "**Tehlikeli düğme = önce onay.** Durum değiştiren her işlem step-up doğrulamadan geçer; gerektiğinde out-of-band onay aranır ({{ref:sus-actions}}). Kaza ile yıkım, normal gezinmeyle aynı kolaylıkta olamaz.",
+        "**Her tehlikeli iş append-only audit.** Deploy, rollback, restore ve bayrak değişimi — kim, ne zaman, hangi tenant'a, sonuç ne; hepsi değiştirilemez audit'e yazılır. DisableProtection sınıfı bir kaçış **asla** sunulmaz."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Tehlikeli aksiyon sözleşmesi"
+    },
+    {
+      "type": "callout",
+      "variant": "warning",
+      "label": "Onay + audit zorunlu",
+      "body": "Boyut 1'de durum değiştiren her işlem aynı sözleşmeye tabidir: **önce onay, sonra audit.** Onayın gücü işlemin yıkıcılığıyla orantılıdır — sıradan dağıtım tek onayla geçerken restore ad-doğrulamalı güçlü onay ister. Hiçbir tehlikeli işlem audit'e yazılmadan tamamlanmaz; koruma katmanı devre dışı bırakılamaz."
+    },
+    {
+      "type": "table",
+      "caption": "Tehlikeli aksiyon → onay tipi → audit",
+      "headers": ["Aksiyon", "Onay tipi", "Audit"],
+      "rows": [
+        ["Deploy", "Tek onay (step-up)", "Append-only: aktör, tenant, sürüm, sonuç"],
+        ["Rollback", "Onay penceresi (step-up)", "Append-only: hedef sürüm, gerekçe, sonuç"],
+        ["Restore", "Ad-doğrulamalı güçlü onay (out-of-band)", "Append-only: yedek noktası, silinecek aralık, aktör"],
+        ["Ölçek bayrağı", "Tek onay (step-up)", "Append-only: servis, eski/yeni durum, aktör"]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Kernel sağlar, panel projekte eder"
+    },
+    {
+      "type": "kv-row",
+      "pairs": [
+        {"key": "Kernel sağlar", "value": "Kimlik (rol/oturum), tenancy (izolasyon, {{ref:k-tenancy}}) ve append-only audit — panelin güvendiği motorlar burada yaşar, panelde değil"},
+        {"key": "Panel rolü", "value": "Bir **Surface** olarak bu motorları operatör yüzeyine projekte eder ({{ref:k-surface}}); kendi veri sahipliği yoktur"},
+        {"key": "Dış erişim", "value": "Yalnız Contract üzerinden — panel motorlara doğrudan değil, sözleşmeli API ile bağlanır"},
+        {"key": "Gözlemlenebilirlik", "value": "Sentry/Grafana/OpenSearch adaptörleri opsiyonel ({{ref:cc-obs-deep}}); yoklukları paneli kırmaz"}
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "danger",
+      "label": "Sınır",
+      "body": "Ops-dışı her rol bu yüzeyde `403` alır — yetki tavanı ADR-0015 ile zorlanır ({{ref:adr-0015}}). Koruma katmanını kapatan bir DisableProtection işlemi tanımlı değildir, önerilemez ve uygulanamaz: tehlikeli aksiyonun onay + audit sözleşmesi atlanamaz. Etkin yetki her zaman rolün, capability'nin ve risk seviyesinin kesişimidir ({{ref:sus-actions}})."
+    }
+  ]
+}

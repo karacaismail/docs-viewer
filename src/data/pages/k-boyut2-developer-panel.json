@@ -1,0 +1,1727 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-k-boyut2-developer-panel",
+  "sourceId": "k-boyut2-developer-panel",
+  "slug": "kernel/k-boyut2-developer-panel",
+  "title": "Boyut 2 — Developer-admin Paneli",
+  "summary": "İkinci kontrol düzlemi. Kitle: veri/model geliştiricisi. Muadil: Django / Drupal / Directus admin. Karakter: kuvvetli ama frenli — geliştirici YAPIYI (ArcheType şablonu) değiştirir, tenant VERİSİNİ değiştirmez. Panel, Surface'in bir projeksiyonudur.",
+  "categoryId": "kernel",
+  "tags": [
+   "boyut2",
+   "developer",
+   "admin",
+   "archetype",
+   "panel"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "wip",
+   "badge": "Kontrol Düzlemi",
+   "breadcrumb": [
+    {
+     "id": "page-k-control-planes",
+     "title": "Dört Boyut — Kontrol Düzlemleri (Control Planes)",
+     "granularity": "kaya"
+    },
+    {
+     "id": "page-k-boyut2-developer-panel",
+     "title": "Boyut 2 — Developer-admin Paneli",
+     "granularity": "kaya"
+    }
+   ]
+  },
+  "owner": "Kernel mimarisi sahibi",
+  "reviewer": "Senior platform ve güvenlik reviewer",
+  "maturity": "taslak",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": [],
+  "nonGoals": [
+   "Bu sayfa tek başına üretim onayı veya uzman incelemesi yerine geçmez."
+  ],
+  "failureModes": [
+   "Tanım, ölçülebilir kabul testi ve sorumlu reviewer olmadan doğrudan üretime uygulanır."
+  ],
+  "acceptanceCriteria": [
+   "Sahip ve reviewer atanmıştır; ilgili otomatik kapılar yeşildir; açık varsayımlar kayıtlıdır."
+  ],
+  "operationalImpact": "Tüm app'lerin güvenlik, izolasyon ve geriye uyumluluk temelini etkiler.",
+  "externalReviewRequired": true,
+  "related": [
+   "page-k-archetype-storage",
+   "page-k-archetype-bayraklari",
+   "page-be-sdk"
+  ],
+  "parent": "page-k-control-planes",
+  "relations": [
+   {
+    "type": "belongs-to",
+    "target": "page-k-control-planes"
+   },
+   {
+    "type": "uses",
+    "target": "page-kernel-schema"
+   },
+   {
+    "type": "uses",
+    "target": "page-k-surface"
+   },
+   {
+    "type": "uses",
+    "target": "page-adr-0022-archetype-storage"
+   },
+   {
+    "type": "depends-on",
+    "target": "page-adr-0016-changeset-migration"
+   }
+  ],
+  "blocks": [
+   {
+    "id": "block-k-boyut2-developer-panel-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Boyut 2, platformun dört kontrol düzleminin ikincisidir: veri ve modeli şekillendiren geliştiricinin paneli. Django admin, Drupal (Views), Directus muadilidir; farkı, panelin Surface'in bir projeksiyonu olması ve yetkisinin yapı ile sınırlanmasıdır. Geliştirici ArcheType şablonunu (alan, tip, pii, retention, ilişki, migration) düzenler; ama hiçbir tenant'ın iş verisine bu panelden dokunamaz. Karakteri kuvvetli ama frenli: dört yeteneği (şema editörü, auto-render CRUD, ilişki/görünüm gezgini, additif migration) güçlüdür, fakat tablo-per-tip üretimi, dinamik DDL, ham SQL birleştirme ve onaysız yıkıcı migration düzlemde yasaktır."
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-co",
+    "type": "callout",
+    "variant": "info",
+    "title": "İkinci kontrol düzlemi",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Boyut 2, veri ve modeli şekillendiren geliştiricinin panelidir. Muadili Django admin, Drupal (Views) ve Directus'tur. Bu panel ayrı bir uygulama değil, Surface'in geliştiriciye özel bir projeksiyonudur ("
+     },
+     {
+      "type": "ref",
+      "text": "k-surface",
+      "refId": "k-surface"
+     },
+     {
+      "type": "text",
+      "text": "): aynı motor, aynı şema, farklı kitle ve farklı yetki tavanı. Karakteri "
+     },
+     {
+      "type": "strong",
+      "text": "kuvvetli ama frenli"
+     },
+     {
+      "type": "text",
+      "text": " — geliştirici "
+     },
+     {
+      "type": "strong",
+      "text": "yapıyı (ArcheType şablonu) değiştirir, tenant verisini değiştirmez"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-h-kapsam-ve-kitle",
+    "type": "heading",
+    "level": 2,
+    "text": "Kapsam ve kitle"
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-table",
+    "type": "table",
+    "caption": "Boyut 2 — kim, ne yapar, nereye dokunmaz",
+    "columns": [
+     "Boyut",
+     "Değer"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kitle"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Veri/model geliştiricisi (SaaS geliştirici)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Muadil"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Django admin · Drupal (Views) · Directus admin"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Yapı (dokunur)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "ArcheType şablonu: alan, tip, zorunlu, pii, retention, ilişki, migration"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Veri (DOKUNMAZ)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tenant iş kayıtları (fatura/müşteri/sipariş) bu panelden değişmez"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Yüzey"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Surface'in projeksiyonu ("
+       },
+       {
+        "type": "ref",
+        "text": "k-surface",
+        "refId": "k-surface"
+       },
+       {
+        "type": "text",
+        "text": "); ayrı uygulama değil"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Yetki tavanı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Developer rolü; yapı-yazma izinli, veri-yazma izinsiz; developer-dışı "
+       },
+       {
+        "type": "code",
+        "text": "403"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-h-dort-yetenek",
+    "type": "heading",
+    "level": 2,
+    "text": "Dört yetenek"
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-feat",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "1. ArcheType şema editörü",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Alan ekle/çıkar; her alan için tip, zorunlu, "
+       },
+       {
+        "type": "strong",
+        "text": "pii"
+       },
+       {
+        "type": "text",
+        "text": " ve "
+       },
+       {
+        "type": "strong",
+        "text": "retention"
+       },
+       {
+        "type": "text",
+        "text": " işaretlenir ("
+       },
+       {
+        "type": "ref",
+        "text": "k-archetype-bayraklari",
+        "refId": "k-archetype-bayraklari"
+       },
+       {
+        "type": "text",
+        "text": "). Depolama "
+       },
+       {
+        "type": "strong",
+        "text": "hibrit"
+       },
+       {
+        "type": "text",
+        "text": "tir ("
+       },
+       {
+        "type": "ref",
+        "text": "k-archetype-storage",
+        "refId": "k-archetype-storage"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "ref",
+        "text": "adr-0022",
+        "refId": "adr-0022"
+       },
+       {
+        "type": "text",
+        "text": "): paylaşılan/sabit çekirdek şema + değişken alanlar için JSONB; "
+       },
+       {
+        "type": "strong",
+        "text": "tablo-per-tip üretimi YOK, dinamik DDL YOK"
+       },
+       {
+        "type": "text",
+        "text": ". Tip ayrımı metadata güdümlü "
+       },
+       {
+        "type": "strong",
+        "text": "Strategy/Policy"
+       },
+       {
+        "type": "text",
+        "text": " ile yapılır — "
+       },
+       {
+        "type": "code",
+        "text": "if (type==...)"
+       },
+       {
+        "type": "text",
+        "text": " switch YASAK."
+       }
+      ]
+     },
+     {
+      "term": "2. Şemadan auto-render CRUD",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Liste, form ve detay ekranları el yazımı değil; ArcheType tanımından üretilir ("
+       },
+       {
+        "type": "ref",
+        "text": "k-schema",
+        "refId": "k-schema"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "ref",
+        "text": "k-surface",
+        "refId": "k-surface"
+       },
+       {
+        "type": "text",
+        "text": "). pii işaretli alanlar listede gizlenir, detayda maskelenir; geliştirici alanı işaretler, davranışı motor uygular."
+       }
+      ]
+     },
+     {
+      "term": "3. İlişki/görünüm gezgini",
+      "definition": [
+       {
+        "type": "text",
+        "text": "belongs-to / uses / depends-on / extends ilişkileri görselleştirilir; üstüne tıklayarak "
+       },
+       {
+        "type": "strong",
+        "text": "join/filtre sorgu kurucu"
+       },
+       {
+        "type": "text",
+        "text": " açılır (Drupal Views muadili). Çıktı "
+       },
+       {
+        "type": "strong",
+        "text": "bildirimsel sorgu nesnesidir"
+       },
+       {
+        "type": "text",
+        "text": " — ham SQL birleştirme yoktur; join yalnız ArcheType'ta "
+       },
+       {
+        "type": "strong",
+        "text": "tanımlı ilişkiler"
+       },
+       {
+        "type": "text",
+        "text": " üzerinden kurulur."
+       }
+      ]
+     },
+     {
+      "term": "4. Additif migration",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Şema değişikliği "
+       },
+       {
+        "type": "strong",
+        "text": "ChangeSet"
+       },
+       {
+        "type": "text",
+        "text": " olarak yaşar ("
+       },
+       {
+        "type": "ref",
+        "text": "adr-0016",
+        "refId": "adr-0016"
+       },
+       {
+        "type": "text",
+        "text": "): "
+       },
+       {
+        "type": "strong",
+        "text": "additif değişiklik onaysız"
+       },
+       {
+        "type": "text",
+        "text": " uygulanır; "
+       },
+       {
+        "type": "strong",
+        "text": "yıkıcı değişiklik uyarı + açık onay + append-only audit"
+       },
+       {
+        "type": "text",
+        "text": " gerektirir. Desen expand-contract'tır; developer-dışı denemeler "
+       },
+       {
+        "type": "code",
+        "text": "403"
+       },
+       {
+        "type": "text",
+        "text": "."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-co-2",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Hibrit depolama kuralı",
+    "segments": [
+     {
+      "type": "text",
+      "text": "ArcheType verisi VARSAYILAN olarak paylaşılan/sabit çekirdek şemaya + değişken alanlar için JSONB kolonuna yazılır; ilişkiler FK ile kurulur. Şema editörü "
+     },
+     {
+      "type": "strong",
+      "text": "tablo-per-tip üretMEZ"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "strong",
+      "text": "dinamik DDL çalıştırMAZ"
+     },
+     {
+      "type": "text",
+      "text": ", son müşteri tablo yaratamaz. Tipe bağlı davranış koda gömülmez: "
+     },
+     {
+      "type": "code",
+      "text": "if (type==Invoice) ... else if (type==Contract) ..."
+     },
+     {
+      "type": "text",
+      "text": " zinciri YASAK; tip dispatch metadata'dan "
+     },
+     {
+      "type": "strong",
+      "text": "Strategy/Policy"
+     },
+     {
+      "type": "text",
+      "text": " modülüyle çözülür ("
+     },
+     {
+      "type": "code",
+      "text": "InvoicePolicy"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "code",
+      "text": "ContractPolicy"
+     },
+     {
+      "type": "text",
+      "text": "). Detay "
+     },
+     {
+      "type": "ref",
+      "text": "k-archetype-storage",
+      "refId": "k-archetype-storage"
+     },
+     {
+      "type": "text",
+      "text": "; karar "
+     },
+     {
+      "type": "ref",
+      "text": "adr-0022",
+      "refId": "adr-0022"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-h-iliski-turleri",
+    "type": "heading",
+    "level": 2,
+    "text": "İlişki türleri"
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-table-2",
+    "type": "table",
+    "caption": "Gezginde görselleştirilen ve sorgu kurucuda join'lenebilen ilişkiler",
+    "columns": [
+     "İlişki",
+     "Anlam",
+     "Örnek"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "belongs-to"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kayıt başka bir kayda aittir (FK sahipliği)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Fatura → Müşteri'ye ait"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "uses"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Bir tip başka tipi kullanır/referans verir"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sipariş → ÜrünKalemi kullanır"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "depends-on"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tanım/yaşam döngüsü başka tanıma bağımlı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Migration → ChangeSet'e bağımlı"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "extends"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Bir tip başka tipin alanlarını genişletir"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "PremiumMüşteri → Müşteri'yi genişletir"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-h-migration-siniflari",
+    "type": "heading",
+    "level": 2,
+    "text": "Migration sınıfları"
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-table-3",
+    "type": "table",
+    "caption": "ChangeSet sınıfı → gereken onay ({{ref:adr-0016}})",
+    "columns": [
+     "Sınıf",
+     "Örnek",
+     "Gereken"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Additif"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Alan ekle, opsiyonel kolon, yeni ilişki"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Onaysız uygulanır (geri-uyumlu)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Yıkıcı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Alan sil, tip daralt, zorunlu yap"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Uyarı + açık onay + append-only audit"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-h-motor-baglari",
+    "type": "heading",
+    "level": 2,
+    "text": "Motor bağları"
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Şema kaynağı",
+      "definition": [
+       {
+        "type": "text",
+        "text": "ArcheType tanımı tek kaynaktır; editör ve CRUD bunu okur ("
+       },
+       {
+        "type": "ref",
+        "text": "k-schema",
+        "refId": "k-schema"
+       },
+       {
+        "type": "text",
+        "text": ")"
+       }
+      ]
+     },
+     {
+      "term": "Yüzey projeksiyonu",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Liste/form/detay ve gezgin Surface'ten türer ("
+       },
+       {
+        "type": "ref",
+        "text": "k-surface",
+        "refId": "k-surface"
+       },
+       {
+        "type": "text",
+        "text": ")"
+       }
+      ]
+     },
+     {
+      "term": "Değişiklik yolu",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tüm şema değişiklikleri ChangeSet ile, additif/yıkıcı sınıfında ("
+       },
+       {
+        "type": "ref",
+        "text": "adr-0016",
+        "refId": "adr-0016"
+       },
+       {
+        "type": "text",
+        "text": ")"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-co-3",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Sınır: yapı ≠ veri",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Boyut 2'nin tek ve sert sınırı budur: geliştirici "
+     },
+     {
+      "type": "strong",
+      "text": "yapıyı"
+     },
+     {
+      "type": "text",
+      "text": " (ArcheType şablonu: alan/tip/pii/retention/ilişki/migration) değiştirir; "
+     },
+     {
+      "type": "strong",
+      "text": "tenant'ın iş verisini DEĞİŞTİRMEZ"
+     },
+     {
+      "type": "text",
+      "text": ". Üretim kayıtlarına (fatura tutarı, müşteri adresi, sipariş satırı) bu panelden yazma yolu yoktur — o yüzey Boyut 3'e (müşteri-admin) ve audit'li aksiyon yüzeyine aittir. Developer-dışı her deneme "
+     },
+     {
+      "type": "code",
+      "text": "403"
+     },
+     {
+      "type": "text",
+      "text": "; yapı-yazma izni veri-yazma iznine genişletilemez. Frenin gerekçesi: yapı ile veri ayrı güven sınırlarıdır ve bir bakım penceresinde üretim verisinin bozulması en pahalı hatadır."
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Neden frenli? Çünkü yapı ile veri ayrı güven sınırlarıdır. Geliştirici şablonu (ArcheType tanımı) değiştirebilmeli — alan ekleyip çıkarmak, pii/retention işaretlemek, ilişki kurmak işinin tanımıdır. Ama tenant'ın iş kayıtlarına (fatura satırı, müşteri adresi, sipariş tutarı) bu panelden erişim, bir bakım penceresinde yanlışlıkla ya da kasıtla üretim verisini bozma riskidir; bu yüzden veri yüzeyi Boyut 3'e (müşteri-admin) ve audit'li aksiyon yüzeyine bırakılır. Hibrit depolama (paylaşılan şema + JSONB değişken alanlar) sayesinde şema değişikliği dinamik DDL gerektirmez; tip ayrımı "
+     },
+     {
+      "type": "code",
+      "text": "if (type==...)"
+     },
+     {
+      "type": "text",
+      "text": " ile değil, metadata güdümlü Strategy/Policy ile yapılır — böylece şablon değişikliği koda dokunmadan yaşar ve geri alınabilir kalır."
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Görsel sorgu kurucu neden ham SQL üretmez? İlişki/görünüm gezgini, Drupal Views muadilidir: geliştirici belongs-to / uses / depends-on / extends ilişkileri üstünde tıklayarak join ve filtre kurar. Ama çıktı serbest SQL metni DEĞİL, bildirimsel bir sorgu nesnesidir (alanlar, filtreler, sıralama, sayfalama). Bu nesne yalnızca ArcheType tanımında tanımlı ilişkiler üzerinden join yapabilir; rastgele tablo birleştirme, alt sorgu enjeksiyonu ya da şema-dışı erişim üretemez. Böylece güçlü bir keşif aracı, motorun yetki ve tenant izolasyon katmanını (RLS) atlamadan çalışır; üretilen sorgu yine permission ∩ tenant ∩ object-ownership kesişiminden geçer."
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-div",
+    "type": "divider"
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-h",
+    "type": "heading",
+    "level": 2,
+    "text": "Üretim Sözleşmesi"
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu bölüm \"Boyut 2 — Developer-admin Paneli\" birimini üretirken AI ajanın ve geliştiricinin uyması gereken 16 boyutu bağlar. Kanonik sözleşme "
+     },
+     {
+      "type": "ref",
+      "text": "k-surface",
+      "refId": "k-surface"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "ref",
+      "text": "be-sdk",
+      "refId": "be-sdk"
+     },
+     {
+      "type": "text",
+      "text": " ve "
+     },
+     {
+      "type": "ref",
+      "text": "k-terminoloji",
+      "refId": "k-terminoloji"
+     },
+     {
+      "type": "text",
+      "text": "; sıralama testler ÖNCE, küçük PR + kanıt."
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-h-2",
+    "type": "heading",
+    "level": 3,
+    "text": "1. Özellik tanımları"
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-dl",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Boyut 2 — Developer-admin Paneli — çekirdek yetenek",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+       }
+      ]
+     },
+     {
+      "term": "Alan bayrakları",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Para=Money (Decimal), kişisel veri="
+       },
+       {
+        "type": "code",
+        "text": "pii"
+       },
+       {
+        "type": "text",
+        "text": "(+retention), tarihçeli="
+       },
+       {
+        "type": "code",
+        "text": "bitemporal"
+       },
+       {
+        "type": "text",
+        "text": ", her şey audit'li."
+       }
+      ]
+     },
+     {
+      "term": "Sözleşmeli sınır",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-h-3",
+    "type": "heading",
+    "level": 3,
+    "text": "2. Güvenlik önlemleri — OWASP Top 10:2025"
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-table",
+    "type": "table",
+    "caption": "OWASP Top 10:2025 → bu birimde karşılığı",
+    "columns": [
+     "Risk (2025)",
+     "Bu birimde önlem"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "A01 Broken Access Control"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tenant-scoped RLS + capability deny-by-default; negatif/komşu-tenant testi zorunlu."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A02 Security Misconfiguration"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Güvenli varsayılan; sır yönetimi; gereksiz yüzey kapalı."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A03 Software Supply Chain Failures"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Bağımlılık pinleme, SBOM, imzalı yapıt, manifest izin beyanı (WASM sandbox)."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A04 Cryptographic Failures"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Aktarımda/duruşta şifreleme; "
+       },
+       {
+        "type": "code",
+        "text": "pii"
+       },
+       {
+        "type": "text",
+        "text": " alanları maskeli; anahtar rotasyonu."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A05 Injection"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Parametreli sorgu; girdi doğrulama (zod/pydantic); çıktı kodlama."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A06 Insecure Design"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tehdit modeli; Rule of Two; en az yetki; kötüye-kullanım hikâyesi."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A07 Authentication Failures"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kernel kimliği + OIDC federation; oturum/step-up; kaba-kuvvet limiti."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A08 Software or Data Integrity Failures"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "İmzalı migration; outbox idempotency; değişmez audit zinciri."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A09 Security Logging and Alerting Failures"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yapılandırılmış audit (aktör/tenant/correlation); alarm eşiği; "
+       },
+       {
+        "type": "ref",
+        "text": "l1-audit",
+        "refId": "l1-audit"
+       },
+       {
+        "type": "text",
+        "text": "."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A10 Mishandling of Exceptional Conditions"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Güvenli hata; kısmi yazma yok; telafi/saga; sızıntısız mesaj."
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Güvenlik optimizasyonu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
+     },
+     {
+      "type": "code",
+      "text": "pii"
+     },
+     {
+      "type": "text",
+      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+     },
+     {
+      "type": "ref",
+      "text": "adr-0017",
+      "refId": "adr-0017"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-h-4",
+    "type": "heading",
+    "level": 3,
+    "text": "3. Optimizasyon — kod, güvenlik, performans"
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-dl-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Kod optimizasyonu",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
+       },
+       {
+        "type": "code",
+        "text": "if (type==...)"
+       },
+       {
+        "type": "text",
+        "text": " yasak — runtime dispatch."
+       }
+      ]
+     },
+     {
+      "term": "Güvenlik optimizasyonu",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Deny-by-default, sır sızıntısı taraması, bağımlılık denetimi CI kapısı."
+       }
+      ]
+     },
+     {
+      "term": "Performans optimizasyonu",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
+       },
+       {
+        "type": "code",
+        "text": "async def"
+       },
+       {
+        "type": "text",
+        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+       }
+      ]
+     },
+     {
+      "term": "Yük profili",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yüksek-hacimli ArcheType opt-in fiziksel tabloya terfi; aksi halde hibrit şema."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-h-5",
+    "type": "heading",
+    "level": 3,
+    "text": "4. Çok-platform: iOS / Android / Chrome extension"
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-table-2",
+    "type": "table",
+    "columns": [
+     "Hedef",
+     "Uyum kuralı"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "iOS / Android (native)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Contract/GraphQL üzerinden tüketim; offline-first kuyruk; token güvenli saklama; dokunma hedefi ≥44px ("
+       },
+       {
+        "type": "ref",
+        "text": "fe-mobile",
+        "refId": "fe-mobile"
+       },
+       {
+        "type": "text",
+        "text": ")."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Chrome extension"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yalnız Contract'a; içerik betiği en az yetki; CSP sıkı; arka plan mesajlaşma doğrulanır."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "PWA / responsive web"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tek kod tabanı; 320px'e kadar akışkan; klavye + ekran okuyucu pariteli."
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-h-6",
+    "type": "heading",
+    "level": 3,
+    "text": "5. Erişilebilirlik — WCAG 2.2 AAA"
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-chk",
+    "type": "checklist",
+    "title": "WCAG 2.2 AAA kontrol listesi (Surface taşıyan birimler)",
+    "items": [
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "1.4.6 Kontrast (Gelişmiş) — metinde 7:1 (büyük metin 4.5:1)."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "2.1.3 Klavye (İstisnasız) — tüm işlevler klavyeyle, tuzak yok."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "2.2.6 Zaman aşımı — veri kaybı riski önceden uyarılır."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "2.3.3 Etkileşimden doğan animasyon — kapatılabilir (prefers-reduced-motion)."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "2.4.9 Bağlantı amacı (yalnız bağlantı) — metinden anlaşılır."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "2.4.12/2.4.13 Odak gizlenmez + görünür odak göstergesi."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "2.5.5 Hedef boyutu (Gelişmiş) — 44×44 CSS px."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "3.1.5 Okuma düzeyi — sade dil veya alternatif."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "3.3.9 Erişilebilir kimlik doğrulama (Gelişmiş) — bilişsel test yok."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Otomasyon: axe-core (Playwright) + manuel ekran okuyucu; "
+       },
+       {
+        "type": "ref",
+        "text": "cc-a11y-backend",
+        "refId": "cc-a11y-backend"
+       },
+       {
+        "type": "text",
+        "text": "."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-h-7",
+    "type": "heading",
+    "level": 3,
+    "text": "6. Dağıtım uyumluluğu — Swarm / Kubernetes / shared hosting"
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-table-3",
+    "type": "table",
+    "caption": "Taşıyıcı destek matrisi (v1 profili: Debian + Docker Compose)",
+    "columns": [
+     "Taşıyıcı",
+     "Uyum / koşul"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Docker Compose (v1)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Birincil teslim profili; tek Postgres (kuyruk/outbox dahil)."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Docker Swarm"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yatay ölçek opsiyonu; stateless servis + paylaşılan Postgres/obje deposu; secret/config Swarm yönetiminde."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kubernetes"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Opsiyon; 12-faktör, sağlık probu, HPA, NetworkPolicy, dış sır yöneticisi; durum dışarıda."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Shared hosting (WordPress benzeri)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yalnız statik/headless dağıtım (bu site gibi) ya da yönetilen Postgres; uzun-süren worker/queue gerektiren özellik desteklenmez — açıkça beyan et."
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-h-8",
+    "type": "heading",
+    "level": 3,
+    "text": "7. Otomatik ECA kuralları"
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Deklaratif Olay-Koşul-Eylem (no-code) — güvenlik kapısı: döngü/yan-tenant/derinlik>6/idempotency; dış etki n8n allowlist + step-up ("
+     },
+     {
+      "type": "ref",
+      "text": "adr-0019",
+      "refId": "adr-0019"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "ref",
+      "text": "l1-workflow",
+      "refId": "l1-workflow"
+     },
+     {
+      "type": "text",
+      "text": ")."
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-code",
+    "type": "codeBlock",
+    "title": "ECA kuralı — Boyut 2 — Developer-admin Paneli",
+    "language": "yaml",
+    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Boyut 2 — Developer-admin Paneli\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "copyEnabled": true
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-h-9",
+    "type": "heading",
+    "level": 3,
+    "text": "8. Default AI ajan davranışı"
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-co-2",
+    "type": "callout",
+    "variant": "info",
+    "title": "Yetki tavanı (ADR-0015)",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan asla principal değildir; bir aktör adına çalışır. Etkin yetki = kullanıcı ∩ agent_capability ∩ tool_scope ∩ aksiyon_riski. Planlama serbest, uygulama capability-gated; DisableProtection (RLS/PII/audit kapatma) hiçbir koşulda önerilemez; yüksek-riskli aksiyon out-of-band step-up ister ("
+     },
+     {
+      "type": "ref",
+      "text": "sus-actions",
+      "refId": "sus-actions"
+     },
+     {
+      "type": "text",
+      "text": "). AI kendi çıktısını son onay sayamaz: bağımsız review + deterministik kapı + insan reviewer."
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-h-10",
+    "type": "heading",
+    "level": 3,
+    "text": "9. Test stratejisi ve döngüleri"
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-table-4",
+    "type": "table",
+    "caption": "Test katmanları ({{ref:edu-u16}})",
+    "columns": [
+     "Katman",
+     "Kapsam / kapı"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Unit"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Saf mantık, Atom kuralları, şema doğrulama; kırmızı-önce."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Contract / entegrasyon"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Module sınırı, RLS, negatif + komşu-tenant yetki testi."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "E2E (Playwright)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Ana akış + alternatif + hata akışı; AI-ajan destekli senaryo üretimi."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "User journey"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Önkoşul→yetki→ana/alternatif/hata→invariant→audit→SLO→kabul testi."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A11y"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "axe-core WCAG taraması (Playwright); klavye + ekran okuyucu."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Autonomous QA"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Ajan testi yazar/çalıştırır; testing loop: düzelene kadar "
+       },
+       {
+        "type": "strong",
+        "text": "en fazla 6 kez"
+       },
+       {
+        "type": "text",
+        "text": ", 6'da düzelmezse otomatik durur ve raporlar."
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-h-11",
+    "type": "heading",
+    "level": 3,
+    "text": "10. Kernel / Core / Module entegrasyonu"
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-dl-3",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Entegre olmalı mı?",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+       }
+      ]
+     },
+     {
+      "term": "Kernel",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
+       },
+       {
+        "type": "ref",
+        "text": "k-tenancy",
+        "refId": "k-tenancy"
+       },
+       {
+        "type": "text",
+        "text": ")."
+       }
+      ]
+     },
+     {
+      "term": "Core",
+      "definition": [
+       {
+        "type": "text",
+        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+       }
+      ]
+     },
+     {
+      "term": "Modüller",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+       }
+      ]
+     },
+     {
+      "term": "Diğer app'ler",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-h-12",
+    "type": "heading",
+    "level": 3,
+    "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-h-13",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu birimi üret — kopyalanabilir prompt"
+   },
+   {
+    "id": "block-k-boyut2-developer-panel-urs-code-2",
+    "type": "codeBlock",
+    "title": "Module (Kaya) üretim prompt'u",
+    "language": "text",
+    "code": "SEVİYE: Module / Domain (Kaya) · birim: Boyut 2 — Developer-admin Paneli\nROL: Domain mimarı. OKU: bu sayfa (k-boyut2-developer-panel), ilgili app plan ağacı, core sözleşmeleri.\nGÖREV: \"Boyut 2 — Developer-admin Paneli\" module sınırını, ArcheType'larını ve Contract (API kapısı) tanımını çıkar.\nKISIT: Başka module tablosuna dokunma; Contract üzerinden konuş. Capability deny-by-default.\n\nGÖREV SÖZLEŞMESİ — 16 boyutu ÇIKTIDA kanıtla (eksikse dur):\n1) Özellik tanımları + non-goal.  2) Güvenlik önlemleri (OWASP Top 10:2025 her madde için karşılık).  3) Kod optimizasyonu.  4) Güvenlik optimizasyonu (en az yetki, sır yönetimi).  5) Performans optimizasyonu (keyset pagination, p95 SLO).  6) Mobil + Chrome extension uyumu (Contract, offline, ≥44px).  7) WCAG 2.2 AAA (axe-core kanıtı).  8) Dağıtım: Docker Compose + Swarm + Kubernetes + shared-hosting beyanı.  9) Otomatik ECA kuralları (döngü/derinlik-6/idempotency kapısı).  10) Default AI ajan davranışı (capability-gated, principal değil, step-up).  11) Testler: unit + entegrasyon + e2e + user journey + a11y; AI-destekli Playwright; testing loop en fazla 6 kez, düzelmezse raporla; autonomous QA.  12) OWASP + ASVS + NIST SSDF.  13) Kernel/Core/Module entegrasyonu (entegre olmalı mı, nasıl).  14) Module ise diğer app'ler nasıl tüketir.\nÇIKTI: testler önce (kırmızı→yeşil kanıt) → tanımlar/yaml → uygulama → değişen dosyalar + komut çıktısı + açık riskler. Testi/eşiği geçmek için gevşetme yapma.\nÖNCE faz prompt'larını uygula (Gereksinim, Tasarım), sonra İnşa/Doğrulama. be-sdk sırası: testler ÖNCE (kırmızı) → yaml taslaklar → uygulama. Küçük PR + kanıt. Komşuluk kuralını ihlal etme.",
+    "copyEnabled": true
+   }
+  ]
+ }
+}

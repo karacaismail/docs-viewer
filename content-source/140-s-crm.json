@@ -17,6 +17,14 @@
     {
       "type": "sibling",
       "target": "s-sales"
+    },
+    {
+      "type": "uses",
+      "target": "l1-party"
+    },
+    {
+      "type": "uses",
+      "target": "k-surface"
     }
   ],
   "enrich": {
@@ -94,6 +102,90 @@
       "variant": "tip",
       "label": "AI-first özellikler",
       "body": "lead scoring, conversation intelligence"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "CRM Çekirdek ArcheType'ları"
+    },
+    {
+      "type": "paragraph",
+      "text": "CRM modülünün **Contact** ve **Account** ArcheType'ları yeni bir kişi tablosu açmaz; platformun ortak **Party** ArcheType'ını projekte eder ({{ref:l1-party}}). Aynı kişi/firma kaydı muhasebede cari, sözleşmede taraf, destek modülünde talep sahibi olarak görünür — ama tek kaynak Party'dir. İlke: \"projekte edilir, kopyalanmaz\" ({{ref:app-modul-matrisi}}); CRM yalnızca kendi ek alanlarını (lead source, deal stage, score) ve ilişkilerini ekler, kimlik verisini sahiplenmez."
+    },
+    {
+      "type": "table",
+      "headers": [
+        "ArcheType",
+        "Rol",
+        "Anahtar alanlar",
+        "Bayraklar"
+      ],
+      "rows": [
+        [
+          "**Lead**",
+          "aday / ilgilenme aşaması",
+          "source, status, owner, score",
+          "pii:true (email/telefon)"
+        ],
+        [
+          "**Contact**",
+          "kişi (Party projeksiyonu)",
+          "name, email, phone, account_id",
+          "pii:true + retention"
+        ],
+        [
+          "**Account**",
+          "firma (B2B)",
+          "legal_name, tax_no, segment",
+          "pii (tax_no)"
+        ],
+        [
+          "**Deal/Opportunity**",
+          "satış fırsatı",
+          "amount (**Money/Decimal**), stage, close_prob, expected_close",
+          "audit"
+        ],
+        [
+          "**Pipeline/Stage**",
+          "satış hattı tanımı",
+          "name, order, win_prob",
+          "—"
+        ],
+        [
+          "**Activity**",
+          "arama / e-posta / görev / not",
+          "type, due_at, related_to",
+          "audit"
+        ]
+      ]
+    },
+    {
+      "type": "feature-list",
+      "title": "Davranış kuralları",
+      "items": [
+        {
+          "title": "Stage geçişi Workflow ile",
+          "body": "Deal'in stage geçişi (örn. Qualified → Proposal → Won) ArcheType şemasına gömülmez; **Workflow** olarak ArcheType'tan bağımsız ve versiyonlu tanımlanır. Satış süreci değişince şema migrasyonu değil, yeni Workflow sürümü yayınlanır."
+        },
+        {
+          "title": "if-else tip dispatch YOK",
+          "body": "Lead/Contact/Account/Deal türüne göre `if type == ...` dallanması yazılmaz; davranış **Strategy/Policy** ile ArcheType'a bağlanır. Yeni bir alt-tür eklemek mevcut kodu açmaz, yeni bir Policy kaydı ekler."
+        },
+        {
+          "title": "Tenant izolasyon + audit",
+          "body": "Tüm CRM ArcheType'ları tenant-scoped; çapraz kiracı erişimi framework düzeyinde engellenir. audit bayraklı kayıtlarda (Deal, Activity) her değişiklik kim/ne zaman/önce-sonra olarak iz bırakır."
+        },
+        {
+          "title": "AI: lead scoring",
+          "body": "Lead.score alanı AI squad'ın lead scoring modeliyle beslenir; skor bir ArcheType alanı olarak okunur/filtrelenir, model çıktısı ayrı bir kod yolu değil, Party+Activity geçmişi üzerinden hesaplanan bir projeksiyondur."
+        }
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "info",
+      "label": "Surface projeksiyonları",
+      "body": "CRM ArcheType'ları doğrudan ekran değildir; her görünüm bir **Surface** projeksiyonudur ({{ref:k-surface}}): **Lead listesi** (Lead, kolon+filtre), **Deal kanban** (Deal, stage sütunlu pano), **360° Contact** (Party + Activity + Deal tek ekranda birleştirilir). Bayrak disiplini ({{ref:k-archetype-bayraklari}}): para alanları **Money=Decimal** (float değil), kişi verisi **pii + retention**, fırsat/etkinlik kayıtları **audit**."
     }
   ]
 }

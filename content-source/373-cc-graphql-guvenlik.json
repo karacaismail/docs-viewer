@@ -1,0 +1,730 @@
+{
+  "id": "cc-graphql-guvenlik",
+  "title": "GraphQL Güvenlik Sözleşmesi — 12 Zorunlu Önlem",
+  "subtitle": "Tek /graphql endpoint güvenli değildir; risk schema + resolver + field + object + tenant + query-cost düzeyindedir. OWASP GraphQL Cheat Sheet + graphql.org + PortSwigger + Apollo temelli 12 önlem.",
+  "cluster": "crosscut",
+  "categoryId": "crosscut",
+  "order": 40,
+  "icon": "ph-shield-check",
+  "granularity": "kaya",
+  "state": "wip",
+  "badge": "Güvenlik Sözleşmesi",
+  "tags": [
+    "graphql",
+    "güvenlik",
+    "owasp",
+    "api"
+  ],
+  "relations": [
+    {
+      "type": "belongs-to",
+      "target": "be-kararlar"
+    },
+    {
+      "type": "uses",
+      "target": "adr-0015"
+    },
+    {
+      "type": "uses",
+      "target": "k-tenancy"
+    },
+    {
+      "type": "uses",
+      "target": "k-authz"
+    },
+    {
+      "type": "depends-on",
+      "target": "adr-0025-frontend-stack-uzlastirma"
+    }
+  ],
+  "related": [
+    "sus-actions",
+    "be-sdk",
+    "k-agent-runtime"
+  ],
+  "enrich": {
+    "info": "GraphQL güvensiz değildir; ama 'endpoint açtım, resolver yazdım, yetkiyi sonra düşünürüz' yaklaşımı hızla güvenlik faciasına döner. Risk endpoint değil; schema + resolver + field + object + tenant + query-cost düzeyindedir. Bu sayfa 12 zorunlu önlemi her biri için kötü/doğru örnekle verir.",
+    "detail": "**Tek endpoint, çok yüzey.** REST'te her kaynak ayrı bir URL'dir; GraphQL'de tek `/graphql` vardır ama saldırı yüzeyi tek değildir. Tehdit yüzeyi altı katmandadır:\n\n1. **Schema** — admin alanları public graph'a sızarsa keşif (introspection/öneri) ile görünür.\n2. **Resolver** — `order(id)` çağrısı sahibini kontrol etmezse IDOR/BOLA.\n3. **Field** — `salary`, `nationalId` gibi alanlar field-level yetki olmadan herkese açık olur.\n4. **Object** — bir nesneyi okuma yetkisi onun tüm alanlarını okuma yetkisi DEĞİLDİR.\n5. **Tenant** — `tenantId` client'tan gelirse cross-tenant veri sızıntısı.\n6. **Query-cost** — derin/iç içe/alias'lı sorgu maliyet limiti yoksa DoS.\n\n**12 önlem (özet):**\n\n1. Public/App/Admin şema ayrımı\n2. Resolver-level authorization (zorunlu)\n3. Field-level authorization\n4. Tenant isolation (server-side)\n5. Introspection + GraphiQL prod'da kapalı\n6. Error suggestion sızıntısını kapat\n7. Persisted Query / Operation Allowlist\n8. Depth / complexity / alias / batch limit\n9. Pagination zorunlu\n10. Mutation koruması + batching brute-force engeli\n11. Input validation + injection savunması\n12. Audit + cost log + alarm + CI güvenlik testleri\n\nFelsefe: **deny-by-default**. Bir resolver yetkiyi açıkça kontrol etmiyorsa varsayılan REDDET'tir. Her para alanı Decimal, her PII alanı `pii:true` + retention, her erişim audit — bunlar AGENTS sözleşmesinde zaten zorunludur; bu sayfa onları GraphQL yüzeyine bağlar."
+  },
+  "blocks": [
+    {
+      "type": "callout",
+      "variant": "info",
+      "label": "Neden GraphQL + neden bilinçli güvenlik",
+      "body": "GraphQL tek esnek sözleşmedir: frontend tam ihtiyacı kadar veriyi tek istekte alır, over/under-fetch biter, tipli şema kontrat görevi görür. Ama bu esneklik bedava değildir — client'a 'ne istersen sor' demek, güvenlik düşünülmezse 'ne istersen sız' demektir. [graphql.org/learn/security](https://graphql.org/learn/security/) bunu net söyler: GraphQL güvenli ya da güvensiz bir teknoloji değildir; güvenlik **uygulama düzeyinde** kurulur. Karşılaştırma için OWASP'ın [GraphQL Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/GraphQL_Cheat_Sheet.html)'i ve saldırı tarafı için [PortSwigger GraphQL API vulnerabilities](https://portswigger.net/web-security/graphql) referans alınır. Bu sayfa o üç kaynağı + Apollo işletim notlarını 12 somut önleme indirger."
+    },
+    {
+      "type": "paragraph",
+      "text": "**API kararı ve GraphQL varsayılanı.** Bu platformda dış API yüzeyi olarak GraphQL seçildi ({{ref:adr-0025-frontend-stack-uzlastirma}}); backend tarafında GraphQL FastAPI içinde varsayılan kapıdır ({{ref:be-kararlar}}). Dolayısıyla bu 12 önlem 'opsiyonel sertleştirme' değil, **API sözleşmesinin parçasıdır**: yetki kesişimi {{ref:adr-0015}}, tenant izolasyonu (RLS) {{ref:k-tenancy}}, RBAC/ABAC {{ref:k-authz}} ile birlikte okunur."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "1. Public / App / Admin şema ayrımı"
+    },
+    {
+      "type": "paragraph",
+      "text": "**Tek 'dev şeması' yoktur.** Bir şemada hem `products` hem `deleteCompany` bulunamaz. Üç yüzey ayrılır: `/graphql/public` (anonim/oturumsuz okuma), `/graphql/app` (oturumlu tenant kullanıcısı), `/graphql/admin` (platform/sistem yöneticisi). Admin alanları — `adminUsers`, `allTenants`, `changeUserRole`, `deleteCompany`, `systemLogs` — public ya da app graph'ına **derlenmez**; introspection açık olsa bile orada görünmez."
+    },
+    {
+      "type": "code",
+      "lang": "graphql",
+      "title": "KÖTÜ — tek şema, admin field'ları herkesin graph'ında",
+      "content": "type Query {\n  products: [Product!]!\n  # Aşağıdakiler aynı şemada — public introspection ile görünür!\n  adminUsers: [User!]!\n  allTenants: [Tenant!]!\n  systemLogs(limit: Int): [LogEntry!]!\n}\n\ntype Mutation {\n  addToCart(productId: ID!): Cart!\n  changeUserRole(userId: ID!, role: Role!): User!   # public graph'ta!\n  deleteCompany(companyId: ID!): Boolean!           # felaket\n}"
+    },
+    {
+      "type": "code",
+      "lang": "graphql",
+      "title": "DOĞRU — yüzeye göre ayrı şema (admin field'ı public'e sızmaz)",
+      "content": "# /graphql/public — anonim okuma\ntype Query {\n  products(first: Int!, after: String): ProductConnection!\n  product(slug: String!): Product\n}\n\n# /graphql/app — oturumlu tenant kullanıcısı\ntype Query {\n  me: User!\n  orders(first: Int!, after: String): OrderConnection!\n}\n\n# /graphql/admin — ayrı binary/route, ayrı authn, ağ seviyesinde kısıtlı\ntype Query {\n  adminUsers(first: Int!, after: String): UserConnection!\n  allTenants(first: Int!, after: String): TenantConnection!\n  systemLogs(first: Int!, after: String): LogEntryConnection!\n}\ntype Mutation {\n  changeUserRole(userId: ID!, role: Role!): User!\n  deleteCompany(companyId: ID!): Boolean!\n}"
+    },
+    {
+      "type": "list",
+      "items": [
+        "**Kural:** Üç ayrı şema/route — public, app, admin. Aynı binary olsa bile schema-stitching ile yüzeyler birbirine sızmaz.",
+        "**Kural:** Admin field'ları (adminUsers, allTenants, changeUserRole, deleteCompany, systemLogs) public/app graph'a derlenmez; CI'da 'admin tipi public şemada' testi kırmızı verir.",
+        "**Kural:** Admin endpoint ağ seviyesinde de kısıtlı (VPN/allowlist IP); yetki katmanı tek savunma olmasın.",
+        "**Kural:** 'Bir field nereye ait?' kararı şema sahibinindir, resolver'ın değil — yanlış yüzeye konan field sonradan yetkiyle kapatılamaz, görünür kalır."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "2. Resolver-level authorization (zorunlu)"
+    },
+    {
+      "type": "paragraph",
+      "text": "**Login yetmez.** Kullanıcının kimliğini doğrulamak (authentication) ile o işlemi yapmaya yetkili olduğunu doğrulamak (authorization) farklı şeylerdir. GraphQL'in en yaygın açığı budur: OWASP'ın **BOLA** (Broken Object Level Authorization), klasik adıyla **IDOR** (Insecure Direct Object Reference). `order(id: \"123\")` çağrısı oturum açmış olmayı kontrol ediyor ama o siparişin çağıran kullanıcıya/tenant'a ait olup olmadığını kontrol etmiyorsa, herkes ID'yi değiştirerek başkasının siparişini okur."
+    },
+    {
+      "type": "code",
+      "lang": "typescript",
+      "title": "KÖTÜ — sadece login kontrolü, sahiplik yok (IDOR/BOLA)",
+      "content": "const resolvers = {\n  Query: {\n    order: async (_parent, { id }, ctx) => {\n      if (!ctx.user) throw new Error('Unauthorized'); // sadece login!\n      // id=124 dersem komşunun siparişini okurum\n      return db.order.findById(id);\n    },\n  },\n};"
+    },
+    {
+      "type": "code",
+      "lang": "typescript",
+      "title": "DOĞRU — permission + tenant + object-ownership kesişimi",
+      "content": "const resolvers = {\n  Query: {\n    order: async (_parent, { id }, ctx) => {\n      // 1) Kimlik\n      requireAuth(ctx);\n      // 2) İzin (RBAC/ABAC) — {{ref:k-authz}}\n      requirePermission(ctx, 'order:read');\n      // 3) Tenant scope — {{ref:k-tenancy}} (RLS de aynı şeyi DB'de zorlar)\n      const order = await db.order.findOne({\n        id,\n        tenantId: ctx.tenantId, // client'tan DEĞİL, ctx'ten\n      });\n      if (!order) throw new NotFoundError('order'); // 404, 403 değil (varlık sızdırma)\n      // 4) Object ownership — kayıt bu kullanıcıya mı bağlı?\n      assertOwnership(ctx, order); // ör. order.customerId === ctx.user.id\n      return order;\n    },\n  },\n};"
+    },
+    {
+      "type": "callout",
+      "variant": "warning",
+      "label": "Yetki = kesişim, tek kontrol değil",
+      "body": "{{ref:adr-0015}} der ki: erişim **permission ∩ tenant ∩ object-ownership** kesişimidir. Üçünden biri eksikse yetki yoktur. 'Login var' tek başına yetki sayılmaz; 'permission var' tenant'ı atlamaz; 'tenant doğru' nesne sahipliğini atlamaz. Kayıt bulunamadığında 403 yerine 404 dön — aksi halde 'bu ID var ama erişemiyorsun' bilgisi varlık sızdırır."
+    },
+    {
+      "type": "list",
+      "items": [
+        "**Kural:** Her resolver authn + authz + tenant-scope + object-ownership dört kontrolünü yapar; yapmıyorsa varsayılan REDDET (deny-by-default).",
+        "**Kural:** Yetki resolver içinde değil, ortak bir yetki katmanında (directive / middleware / policy) toplanır; her resolver'a elle yazmak kaçırılan kontrol üretir.",
+        "**Kural:** `findById(id)` doğrudan yasak; her sorgu `WHERE tenant_id = ctx.tenantId` ile gelir (DB tarafında RLS ile de zorlanır → {{ref:k-tenancy}}).",
+        "**Kural:** Bulunamayan/yetkisiz kayıt için 404 (NotFound) dön; 403 varlık sızdırır."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "3. Field-level authorization"
+    },
+    {
+      "type": "paragraph",
+      "text": "**Bir nesneyi okuma yetkisi, tüm alanlarını okuma yetkisi değildir.** `User` nesnesine erişebilen herkes `name` görebilir; ama `salary`, `nationalId`, `internalNotes` yalnız yetkili rollere açılır. Bu kontrol resolver girişinde değil, **alan düzeyinde** yapılır — çünkü saldırgan sadece o alanı sorgular. Çözüm: alanlara `@can(permission: ...)` / `@permission` directive'i ya da field-resolver içinde yetki kontrolü."
+    },
+    {
+      "type": "code",
+      "lang": "graphql",
+      "title": "DOĞRU — hassas alanlara field-level yetki directive'i",
+      "content": "type User {\n  id: ID!\n  name: String!                                   # herkese (nesneye erişen)\n  email: String! @permission(require: \"pii:read\")\n  phone: String @permission(require: \"pii:read\")\n  address: String @permission(require: \"pii:read\")\n  salary: Money @permission(require: \"hr:salary:read\")\n  identityNumber: String @permission(require: \"pii:identity:read\")\n  taxNumber: String @permission(require: \"pii:tax:read\")\n  internalNotes: String @permission(require: \"admin:notes:read\")\n}\n\n# Money özel scalar — para asla Float değil, Decimal serialize edilir."
+    },
+    {
+      "type": "code",
+      "lang": "typescript",
+      "title": "DOĞRU — field-resolver tarafında yetki + maskeleme",
+      "content": "const User = {\n  // name: parent.name  -> serbest\n  salary: (parent, _args, ctx) => {\n    if (!hasPermission(ctx, 'hr:salary:read')) return null; // sızdırma yok\n    return parent.salary; // Decimal\n  },\n  identityNumber: (parent, _args, ctx) => {\n    if (!hasPermission(ctx, 'pii:identity:read')) return null;\n    auditPiiAccess(ctx, parent.id, 'identityNumber'); // PII erişimi loglanır\n    return parent.identityNumber;\n  },\n};"
+    },
+    {
+      "type": "table",
+      "caption": "PII / hassas alanlar — varsayılan yetki sınıfı (liste/detay/public davranışı k-archetype bayraklarıyla aynı mantıkta)",
+      "headers": [
+        "Alan",
+        "Sınıf",
+        "Liste",
+        "Detay",
+        "Gerekli izin"
+      ],
+      "rows": [
+        [
+          "email / phone / address",
+          "PII",
+          "Maskeli",
+          "Yetkiyle",
+          "pii:read"
+        ],
+        [
+          "salary / profitMargin / costPrice",
+          "Finansal-hassas",
+          "Gizli",
+          "Yetkiyle (Decimal)",
+          "finance:read"
+        ],
+        [
+          "identityNumber / taxNumber",
+          "PII-kimlik",
+          "Gizli",
+          "Yetkiyle + audit",
+          "pii:identity:read"
+        ],
+        [
+          "paymentInfo",
+          "PII-ödeme",
+          "Gizli",
+          "Tokenize/son 4 hane",
+          "payment:read"
+        ],
+        [
+          "apiKeys / tokens",
+          "Sır",
+          "Asla",
+          "Asla (yalnız create yanıtı)",
+          "—"
+        ],
+        [
+          "auditLogs",
+          "İz",
+          "Gizli",
+          "Yetkiyle",
+          "audit:read"
+        ],
+        [
+          "internalNotes",
+          "Dahili",
+          "Gizli",
+          "Admin",
+          "admin:notes:read"
+        ]
+      ]
+    },
+    {
+      "type": "list",
+      "items": [
+        "**Kural:** Hassas alanlar (email/phone/address/salary/identityNumber/taxNumber/paymentInfo/costPrice/profitMargin/apiKeys/tokens/auditLogs) ya `@permission` directive'i ya field-resolver yetkisi taşır; düz `parent.field` yasak.",
+        "**Kural:** Yetkisiz alan `null` döner — hata mesajı ya da 'forbidden' yerine sessiz null; aksi halde alanın varlığı sızar.",
+        "**Kural:** `apiKeys`/`tokens` sadece oluşturma mutation'ının yanıtında bir kez döner; sorgu ile asla okunmaz.",
+        "**Kural:** PII alanı okunduğunda audit'e yazılır ({{ref:sus-actions}}); 'kim hangi kimlik numarasını gördü' sonradan sorulabilmeli."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "4. Tenant isolation (server-side)"
+    },
+    {
+      "type": "paragraph",
+      "text": "**`tenantId` / `orgId` client'tan ASLA gelmez.** Tenant kimliği oturumun (JWT claim / session) içinden okunur ve resolver bağlamına (ctx) konur. Bir argüman olarak `orders(tenantId: \"abc\")` kabul etmek, saldırgana 'başka tenant'ın verisini iste' demektir. Her sorgu `WHERE tenant_id = ctx.tenantId` ile çalışır; DB tarafında bu Row-Level Security ile de zorlanır ({{ref:k-tenancy}})."
+    },
+    {
+      "type": "code",
+      "lang": "graphql",
+      "title": "KÖTÜ — tenant argümanı şemada (cross-tenant kapısı)",
+      "content": "type Query {\n  # Saldırgan tenantId'yi değiştirerek başka şirketin siparişlerini çeker\n  orders(tenantId: ID!, first: Int!): [Order!]!\n}"
+    },
+    {
+      "type": "code",
+      "lang": "typescript",
+      "title": "DOĞRU — tenant ctx'ten gelir, şemada argüman yok",
+      "content": "// Şema: orders(first: Int!, after: String): OrderConnection!  (tenantId argümanı YOK)\n\nconst resolvers = {\n  Query: {\n    orders: async (_p, { first, after }, ctx) => {\n      requireAuth(ctx);\n      requirePermission(ctx, 'order:list');\n      return db.order.paginate({\n        where: { tenantId: ctx.tenantId }, // JWT/session'dan, client'tan DEĞİL\n        first, after,\n      });\n    },\n  },\n};\n\n// ctx kurulumu (her istek): tenantId yalnız doğrulanmış token'dan\nfunction buildContext(req) {\n  const claims = verifyJwt(req.headers.authorization);\n  return { user: claims.sub, tenantId: claims.tenant_id, roles: claims.roles };\n}"
+    },
+    {
+      "type": "callout",
+      "variant": "danger",
+      "label": "Cross-tenant = en pahalı sızıntı",
+      "body": "Multi-tenant SaaS'ta bir tenant'ın diğerinin verisini görmesi tek tıkla sözleşme + itibar kaybıdır. İki kat savunma zorunlu: (1) uygulama her sorguya `ctx.tenantId` ekler, (2) Postgres RLS politikası DB seviyesinde aynı filtreyi zorlar ({{ref:k-tenancy}}). Uygulama bir yerde filtreyi unutursa RLS yakalar; tek katmana güvenme."
+    },
+    {
+      "type": "list",
+      "items": [
+        "**Kural:** `tenantId`/`orgId` hiçbir query/mutation argümanında bulunmaz; CI'da 'şemada tenantId argümanı' testi kırmızı verir.",
+        "**Kural:** ctx.tenantId yalnız doğrulanmış JWT/session claim'inden gelir; header/body/query string'ten asla.",
+        "**Kural:** Her DB sorgusu tenant filtresi taşır + DB'de RLS açık ({{ref:k-tenancy}}); çift katman.",
+        "**Kural:** Admin 'tüm tenant' sorguları yalnız admin graph'ında ve açık `cross-tenant:read` izniyle; her çağrı audit."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "5. Introspection + GraphiQL prod'da kapalı"
+    },
+    {
+      "type": "paragraph",
+      "text": "**Şemanı saldırgana hediye etme.** Introspection, GraphQL'in 'şemanı bana anlat' özelliğidir; geliştirme için harika, prod'da haritayı saldırgana verir. Aynı şekilde interaktif IDE'ler (GraphiQL / Apollo Sandbox / Playground / Voyager) ve detaylı hata/stack-trace çıktıları üretimde kapatılır. [Apollo](https://www.apollographql.com/docs/apollo-server/security/), introspection'ı prod'da kapamayı açıkça önerir. Ortama göre: **local açık, staging VPN arkasında, prod kapalı.**"
+    },
+    {
+      "type": "table",
+      "caption": "Ortam matrisi — introspection ve tooling",
+      "headers": [
+        "Özellik",
+        "Local",
+        "Staging",
+        "Production"
+      ],
+      "rows": [
+        [
+          "Introspection",
+          "Açık",
+          "VPN arkasında açık",
+          "Kapalı"
+        ],
+        [
+          "GraphiQL / Sandbox / Playground",
+          "Açık",
+          "VPN arkasında",
+          "Kapalı"
+        ],
+        [
+          "Voyager (şema görselleştirme)",
+          "Açık",
+          "VPN arkasında",
+          "Kapalı"
+        ],
+        [
+          "Detaylı hata + stack trace",
+          "Açık",
+          "Kapalı",
+          "Kapalı (generic)"
+        ],
+        [
+          "Field suggestion ('Did you mean')",
+          "Açık",
+          "Kapalı",
+          "Kapalı"
+        ]
+      ]
+    },
+    {
+      "type": "code",
+      "lang": "typescript",
+      "title": "DOĞRU — prod'da introspection + IDE kapalı, hata generic",
+      "content": "const server = new ApolloServer({\n  schema,\n  introspection: process.env.NODE_ENV !== 'production', // prod'da kapalı\n  extensions: [\n    process.env.NODE_ENV === 'production'\n      ? ApolloServerExtensionLandingPageDisabled()        // Sandbox kapalı\n      : ApolloServerExtensionLandingPageLocalDefault(),\n  ],\n  formatError: (formatted) => {\n    if (process.env.NODE_ENV === 'production') {\n      // stack/iç detay sızdırma; generic mesaj + korelasyon id\n      return { message: 'Internal error', extensions: { code: formatted.extensions?.code, traceId: currentTraceId() } };\n    }\n    return formatted;\n  },\n});"
+    },
+    {
+      "type": "list",
+      "items": [
+        "**Kural:** Prod'da introspection kapalı; staging yalnız VPN/IP-allowlist arkasında açık; local serbest.",
+        "**Kural:** GraphiQL / Apollo Sandbox / Playground / Voyager prod'da devre dışı.",
+        "**Kural:** Prod hata yanıtı generic (mesaj + traceId); stack trace / SQL / iç tip adı sızmaz.",
+        "**Kural:** Field suggestion prod'da kapalı (bkz. madde 6)."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "6. Error suggestion sızıntısını kapat"
+    },
+    {
+      "type": "paragraph",
+      "text": "**Introspection kapalı olsa bile şema sızabilir.** Birçok GraphQL motoru, yanlış alan adı yazıldığında 'Did you mean `user`?' gibi öneriler döner. [PortSwigger](https://portswigger.net/web-security/graphql/what-is-graphql), bunu introspection kapalıyken bile şema çıkarmanın (field stuffing / suggestion harvesting) bilinen yolu olarak gösterir: saldırgan harf harf deneyip motorun önerilerinden alan adlarını toplar. Çözüm: önerileri kapat ve hata mesajlarını generic tut."
+    },
+    {
+      "type": "code",
+      "lang": "text",
+      "title": "KÖTÜ — motor şemayı öneriyle sızdırıyor",
+      "content": "POST /graphql   { query: \"{ usr { id } }\" }\n\nResponse:\n{\n  \"errors\": [{\n    \"message\": \"Cannot query field 'usr' on type 'Query'. Did you mean 'user'?\"\n  }]\n}\n// Saldırgan: 'use', 'us', 'adm'... deneyerek tüm field adlarını toplar."
+    },
+    {
+      "type": "code",
+      "lang": "typescript",
+      "title": "DOĞRU — öneri kapalı + generic validation hatası",
+      "content": "// 'Did you mean' önerilerini üreten validation rule'unu devre dışı bırak\nimport { NoSuggestionsValidationRule } from './rules/noSuggestions';\n\nconst server = new ApolloServer({\n  schema,\n  validationRules: [NoSuggestionsValidationRule, depthLimit(8), costLimit(...)],\n  formatError: (err) => {\n    if (process.env.NODE_ENV === 'production' && err.extensions?.code === 'GRAPHQL_VALIDATION_FAILED') {\n      return { message: 'Invalid query', extensions: { code: 'BAD_REQUEST' } }; // alan adı yok\n    }\n    return err;\n  },\n});"
+    },
+    {
+      "type": "list",
+      "items": [
+        "**Kural:** Prod'da field-suggestion ('Did you mean ...') kapalı; validation hatası alan adı içermez.",
+        "**Kural:** Geçersiz alan denemeleri (invalid-field) audit + alarm'a düşer (madde 12) — suggestion harvesting tespiti.",
+        "**Kural:** Hata kodları sabit enum'dan gelir (BAD_REQUEST, FORBIDDEN, NOT_FOUND); serbest metin sızdırmaz."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "7. Persisted Query / Operation Allowlist"
+    },
+    {
+      "type": "paragraph",
+      "text": "**Keyfi sorguyu en baştan reddet.** En güçlü GraphQL savunması, client'ın 'ne isterse' göndermesine değil, yalnız **önceden bilinen sorguların** çalışmasına izin vermektir. Build sırasında frontend'in tüm operation'ları çıkarılır, hash'lenir ve allowlist'e konur; sunucu yalnız bu hash'lere izin verir. [graphql.org](https://graphql.org/learn/security/) bunu 'trusted documents' olarak adlandırır ve introspection kapatmaktan **daha güçlü** sayar — çünkü saldırgan keyfi derin/pahalı sorgu yazamaz, var olmayan operation çalıştıramaz."
+    },
+    {
+      "type": "code",
+      "lang": "typescript",
+      "title": "DOĞRU — trusted documents / persisted operation allowlist",
+      "content": "// Build çıktısı: { \"a1b2c3...\": \"query Orders($f:Int!){ orders(first:$f){...} }\", ... }\nimport allowlist from './persisted-operations.json';\n\nconst server = new ApolloServer({\n  schema,\n  persistedQueries: { cache: redisCache },\n  extensions: [{\n    async requestDidStart() {\n      return {\n        async didResolveOperation(rc) {\n          const hash = rc.request.extensions?.persistedQuery?.sha256Hash;\n          if (!hash || !allowlist[hash]) {\n            throw new ForbiddenError('Operation not allowed'); // keyfi sorgu RED\n          }\n        },\n      };\n    },\n  }],\n});"
+    },
+    {
+      "type": "callout",
+      "variant": "tip",
+      "label": "Allowlist > introspection kapatma",
+      "body": "Introspection'ı kapatmak şemayı gizler ama keyfi sorguyu hâlâ çalıştırır. Operation allowlist (trusted documents) ise **yalnız uygulamanın kendi sorgularını** çalıştırır: depth/complexity/alias saldırıları, var olmayan operation denemeleri ve çoğu otomatik tarama daha kapıda durur. Public graph'ta da uygulanabilir; tek istisna, dışa açık genel API sunuyorsan (o zaman 8-9-10 daha kritik)."
+    },
+    {
+      "type": "list",
+      "items": [
+        "**Kural:** App/internal client'lar yalnız build'de çıkarılmış persisted operation (hash) gönderir; keyfi sorgu reddedilir.",
+        "**Kural:** Allowlist CI'da üretilir ve deploy artefaktıdır; elle düzenlenmez.",
+        "**Kural:** Allowlist dışı operation denemesi audit + alarm (madde 12).",
+        "**Kural:** Dışa açık genel API gerekiyorsa allowlist yerine 8/9/10 maddelerindeki limitler zorunlu hale gelir."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "8. Depth / complexity / alias / batch limit"
+    },
+    {
+      "type": "paragraph",
+      "text": "**Tek istekle veritabanını dize getirme.** GraphQL'in iç içe yapısı, kötü niyetli bir sorgunun katlanarak büyümesine izin verir: derin iç içe ilişkiler, yüzlerce alias, tek istekte onlarca operation, batch ile çoğaltma. Limit yoksa tek HTTP isteği sunucuyu DoS'lar. [graphql.org/learn/security](https://graphql.org/learn/security/) ve OWASP, **maliyet/derinlik analizini** zorunlu sayar. Değerler senaryoya göre ayarlanır; aşağıdakiler makul varsayılanlardır."
+    },
+    {
+      "type": "code",
+      "lang": "graphql",
+      "title": "KÖTÜ — derinlik/maliyet limiti yok (DoS)",
+      "content": "query Bomba {\n  users {                 # binlerce\n    orders {              # her birine\n      items {             # her birine\n        product {\n          reviews {       # her birine\n            author { orders { items { product { reviews { id }}}}} # ...\n          }\n        }\n      }\n    }\n  }\n}"
+    },
+    {
+      "type": "kv-row",
+      "pairs": [
+        {
+          "key": "maxDepth",
+          "value": "6-8 (iç içe seviye)"
+        },
+        {
+          "key": "maxListDepth",
+          "value": "2-3 (iç içe liste alanı)"
+        },
+        {
+          "key": "maxAliases",
+          "value": "10 (aynı alanın tekrarı)"
+        },
+        {
+          "key": "maxRootFields",
+          "value": "5 (tek istekte kök alan)"
+        },
+        {
+          "key": "maxOperationsPerRequest",
+          "value": "1-3 (batch operation)"
+        },
+        {
+          "key": "maxQueryCost",
+          "value": "role/tenant'a göre (ör. anonim 1000, app 5000, admin 20000)"
+        },
+        {
+          "key": "timeout",
+          "value": "3-5 sn (sorgu yürütme)"
+        },
+        {
+          "key": "maxResponseSize",
+          "value": "1-5 MB"
+        }
+      ]
+    },
+    {
+      "type": "code",
+      "lang": "typescript",
+      "title": "DOĞRU — depth + cost + alias + operation limitleri",
+      "content": "const server = new ApolloServer({\n  schema,\n  validationRules: [\n    depthLimit(8),                         // maxDepth\n    createComplexityRule({                 // query cost\n      maximumComplexity: ctxCost(ctx => ctx.roles), // role/tenant'a göre\n      onComplete: (cost) => recordCost(cost),       // audit (madde 12)\n    }),\n    aliasLimit(10),                        // maxAliases\n    rootFieldLimit(5),                     // maxRootFields\n  ],\n  extensions: [\n    operationLimitExtension({ maxOperationsPerRequest: 3 }),\n    requestTimeoutExtension({ ms: 4000 }),    // timeout\n    responseSizeLimitExtension({ maxBytes: 2 * 1024 * 1024 }),\n  ],\n});"
+    },
+    {
+      "type": "list",
+      "items": [
+        "**Kural:** maxDepth (6-8), maxListDepth (2-3), maxAliases (~10), maxRootFields (~5), maxOperationsPerRequest (1-3) limitleri açık ve role/tenant'a göre ölçeklidir.",
+        "**Kural:** maxQueryCost rol/tenant bazlı; her sorgunun hesaplanan maliyeti audit'e yazılır (madde 12).",
+        "**Kural:** Sorgu timeout (3-5 sn) ve maxResponseSize (1-5 MB) zorunlu; limit aşımı reddedilir, çökmez.",
+        "**Kural:** Limit değerleri senaryoya göre ayarlanır ama hiç limitsiz alan olamaz; 'sınırsız' yasak."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "9. Pagination zorunlu"
+    },
+    {
+      "type": "paragraph",
+      "text": "**Sınırsız liste yoktur.** `users`, `orders`, `products`, `logs`, `messages` gibi her liste alanı cursor tabanlı sayfalama (`first` / `after`) ile gelir; varsayılan limit + maksimum limit tanımlıdır. `first` verilmezse makul varsayılan uygulanır, çok büyük `first` reddedilir. Sınırsız liste hem performans hem güvenlik (veri kazıma + DoS) açığıdır."
+    },
+    {
+      "type": "code",
+      "lang": "graphql",
+      "title": "KÖTÜ → DOĞRU — unbounded liste yerine Connection",
+      "content": "# KÖTÜ — sınırsız, tek istekte tüm tablo\ntype Query { users: [User!]! }\n\n# DOĞRU — Relay-style cursor pagination, default + max limit\ntype Query {\n  users(first: Int = 20, after: String): UserConnection!\n}\ntype UserConnection {\n  edges: [UserEdge!]!\n  pageInfo: PageInfo!\n  totalCount: Int\n}\ntype UserEdge { node: User!  cursor: String! }\ntype PageInfo { hasNextPage: Boolean!  endCursor: String }"
+    },
+    {
+      "type": "code",
+      "lang": "typescript",
+      "title": "DOĞRU — default + max clamp",
+      "content": "function clampFirst(first?: number): number {\n  const DEFAULT = 20, MAX = 100;\n  if (first == null) return DEFAULT;\n  if (first < 1) throw new UserInputError('first must be >= 1');\n  return Math.min(first, MAX); // 10_000 istense bile 100\n}"
+    },
+    {
+      "type": "list",
+      "items": [
+        "**Kural:** Her liste alanı (products/users/orders/logs/messages ...) cursor pagination (first/after) taşır; düz `[T!]!` liste dönüşü yasak.",
+        "**Kural:** Her liste alanının default (ör. 20) ve max (ör. 100) limiti vardır; max aşan istek clamp'lenir veya reddedilir.",
+        "**Kural:** Sayfalama sıralaması deterministiktir (stable cursor); offset yerine cursor tercih edilir.",
+        "**Kural:** totalCount pahalıysa opsiyonel/yaklaşık döner; her sayfa için tam sayım zorunlu değildir."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "10. Mutation koruması + batching brute-force engeli"
+    },
+    {
+      "type": "paragraph",
+      "text": "**Mutation'lar en hassas yüzeydir.** Her mutation yedi kontrolü taşır: permission, object-ownership, business-rule, audit, rate-limit, idempotency, CSRF koruması. Ayrı bir GraphQL'e özgü tehdit **alias/operation batching ile brute-force**'tur: tek HTTP isteğinde aynı mutation onlarca alias ile çağrılarak rate-limit atlatılmaya çalışılır. Bu yüzden `login`, `otp`, `passwordReset`, `invite` gibi mutation'larda batching kapatılır ve alias/operation sayısı sınırlanır."
+    },
+    {
+      "type": "code",
+      "lang": "graphql",
+      "title": "KÖTÜ — alias batching ile login brute-force",
+      "content": "mutation Brute {\n  a: login(email:\"v@x.com\", password:\"1234\")\n  b: login(email:\"v@x.com\", password:\"1235\")\n  c: login(email:\"v@x.com\", password:\"1236\")\n  # ... tek istekte 500 deneme — naif rate-limit 'tek istek' sayar\n}"
+    },
+    {
+      "type": "code",
+      "lang": "typescript",
+      "title": "DOĞRU — hassas mutation'larda batching kapalı + çok katmanlı rate-limit",
+      "content": "const SENSITIVE = new Set(['login', 'requestOtp', 'passwordReset', 'invite']);\n\nconst guardExtension = {\n  async requestDidStart() {\n    return {\n      async didResolveOperation(rc) {\n        const ops = collectRootFields(rc.document); // alias'lar dahil\n        const sensitive = ops.filter(o => SENSITIVE.has(o.fieldName));\n        // hassas mutation tek istekte 1'den fazla / alias'lı ise RED\n        if (sensitive.length > 1) throw new ForbiddenError('Batching not allowed for sensitive ops');\n        for (const op of sensitive) {\n          await rateLimit({ key: rc.context.ip, op: op.fieldName, max: 5, windowSec: 60 });\n          await rateLimit({ key: rc.context.user ?? rc.context.email, op: op.fieldName, max: 5, windowSec: 300 });\n          await rateLimit({ key: rc.context.tenantId, op: op.fieldName, max: 50, windowSec: 60 });\n        }\n      },\n    };\n  },\n};"
+    },
+    {
+      "type": "feature-list",
+      "items": [
+        {
+          "name": "permission",
+          "desc": "Mutation'a karşılık gelen izin (RBAC/ABAC) zorunlu — {{ref:k-authz}}.",
+          "critical": true
+        },
+        {
+          "name": "object-ownership",
+          "desc": "Etkilenen kayıt çağıranın/tenant'ın mı? deleteCompany kendi tenant'ında bile yetkiye bağlı.",
+          "critical": true
+        },
+        {
+          "name": "business-rule",
+          "desc": "Kapalı sipariş tekrar kapatılamaz; negatif tutar reddedilir; durum makinesi zorlanır."
+        },
+        {
+          "name": "audit",
+          "desc": "Her mutation kim/ne zaman/hangi kayıt/eski-yeni değer ile audit'e yazılır ({{ref:sus-actions}}).",
+          "critical": true
+        },
+        {
+          "name": "rate-limit",
+          "desc": "Per-user + per-IP + per-tenant; hassas mutation'larda sıkı eşik.",
+          "critical": true
+        },
+        {
+          "name": "idempotency",
+          "desc": "Idempotency-Key ile tekrar gönderim aynı sonucu üretir; çift kayıt/çift tahsilat olmaz."
+        },
+        {
+          "name": "CSRF",
+          "desc": "GET ile mutation yasak; state-changing istekte CSRF token / SameSite + Origin kontrolü."
+        },
+        {
+          "name": "batching-guard",
+          "desc": "login/otp/passwordReset/invite tek istekte 1'den fazla / alias'lı çağrılamaz.",
+          "critical": true
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "items": [
+        "**Kural:** Her mutation permission + object-ownership + business-rule + audit + rate-limit + idempotency + CSRF taşır; biri eksikse mutation yayına alınmaz.",
+        "**Kural:** login/requestOtp/passwordReset/invite mutation'larında batching kapalı; alias/operation count limiti sıkı.",
+        "**Kural:** Rate-limit en az üç boyutta: per-user, per-IP, per-tenant.",
+        "**Kural:** Para etkileyen mutation Idempotency-Key zorunlu; tutarlar Decimal (Float yasak)."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "11. Input validation + injection savunması"
+    },
+    {
+      "type": "paragraph",
+      "text": "**Resolver, input'u DB ve HTTP'ye taşır.** OWASP'ın [GraphQL Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/GraphQL_Cheat_Sheet.html)'i şunu vurgular: GraphQL tipi tek başına güvenlik değildir — bir alan `String` olabilir ama içeriği SQL, komut ya da bir URL olabilir. Savunma: custom scalar + enum + allowlist ile değer kümesini daralt, max-length uygula, DB erişimini parametreli yap (raw SQL yasak), resolver'dan dış URL çağrısında SSRF kısıtı koy."
+    },
+    {
+      "type": "code",
+      "lang": "graphql",
+      "title": "DOĞRU — tip değil, anlam kısıtı: scalar + enum + length",
+      "content": "scalar EmailAddress      # regex doğrulamalı custom scalar\nscalar URL               # şema/host allowlist'li custom scalar\n\nenum SortDir { ASC DESC }\n\ninput CreateUserInput {\n  email: EmailAddress!\n  displayName: String!    @constraint(maxLength: 80)   # max-length\n  role: Role!             # serbest string değil, enum\n  website: URL\n}"
+    },
+    {
+      "type": "code",
+      "lang": "typescript",
+      "title": "DOĞRU — parametreli DB + SSRF allowlist",
+      "content": "// DB: ASLA string concat — her zaman parametreli\nawait db.query(\n  'SELECT id, name FROM users WHERE tenant_id = $1 AND email = $2',\n  [ctx.tenantId, input.email],\n);\n// raw SQL / template literal ile sorgu YASAK\n\n// Resolver dış URL çağrısı (ör. webhook test, avatar fetch): SSRF kısıtı\nfunction assertSafeUrl(u: URL) {\n  if (!['https:'].includes(u.protocol)) throw new UserInputError('only https');\n  if (isPrivateIp(u.hostname) || u.hostname === 'localhost') throw new ForbiddenError('SSRF blocked');\n  if (!HOST_ALLOWLIST.has(u.hostname)) throw new ForbiddenError('host not allowed');\n}"
+    },
+    {
+      "type": "list",
+      "items": [
+        "**Kural:** Serbest string yerine custom scalar (EmailAddress/URL...) + enum + allowlist; her metin alanına max-length.",
+        "**Kural:** DB erişimi yalnız parametreli sorgu/ORM ile; raw SQL ve string concat yasak.",
+        "**Kural:** Resolver'dan dış HTTP çağrısında SSRF kısıtı: https-only + private-IP/localhost engeli + host allowlist.",
+        "**Kural:** Dosya/ID/path türevi input'lar normalize + doğrulanır; path traversal ve injection için allowlist temellidir."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "12. Audit + cost log + alarm + CI güvenlik testleri"
+    },
+    {
+      "type": "paragraph",
+      "text": "**Görünmeyen sistem savunulamaz.** Her GraphQL isteği yapısal olarak loglanır; anormallikler alarm üretir; güvenlik testleri CI/CD'de her PR'da koşar. Audit zaten platform sözleşmesinde zorunludur ({{ref:sus-actions}}); burada GraphQL yüzeyine özgü alanlar eklenir. Bu sayede 'kim, hangi operation'ı, ne maliyetle, hangi sonuçla çalıştırdı' sorusu sonradan cevaplanabilir."
+    },
+    {
+      "type": "code",
+      "lang": "typescript",
+      "title": "Her istekte yazılan GraphQL audit/cost kaydı",
+      "content": "logGraphQL({\n  userId:        ctx.user ?? null,\n  tenantId:      ctx.tenantId ?? null,\n  operationName: rc.operationName,\n  operationHash: rc.queryHash,          // persisted op hash\n  queryDepth:    metrics.depth,\n  queryCost:     metrics.cost,          // madde 8\n  durationMs:    metrics.duration,\n  dbQueryCount:  metrics.dbQueries,     // N+1 / kazıma sinyali\n  responseBytes: metrics.responseSize,\n  errorCode:     result.errorCode ?? null,\n  ip:            ctx.ip,\n});"
+    },
+    {
+      "type": "table",
+      "caption": "Alarm eşikleri — anormallik tespiti",
+      "headers": [
+        "Sinyal",
+        "Anlamı",
+        "Aksiyon"
+      ],
+      "rows": [
+        [
+          "Yüksek queryCost / dbQueryCount ani artış",
+          "DoS ya da veri kazıma",
+          "Throttle + on-call alarm"
+        ],
+        [
+          "Tekrarlı failed-auth (login/otp)",
+          "Brute-force",
+          "IP/user lock + alarm"
+        ],
+        [
+          "invalid-field denemesi serisi",
+          "Suggestion harvesting (madde 6)",
+          "Alarm + IP işaretle"
+        ],
+        [
+          "Introspection denemesi (prod)",
+          "Şema keşfi",
+          "Reddet + alarm"
+        ],
+        [
+          "Cross-tenant erişim sinyali",
+          "Tenant izolasyon ihlali",
+          "İsteği kes + acil alarm + inceleme"
+        ],
+        [
+          "Allowlist-dışı operation (madde 7)",
+          "Keyfi/otomatik tarama",
+          "Reddet + alarm"
+        ]
+      ]
+    },
+    {
+      "type": "code",
+      "lang": "text",
+      "title": "CI/CD GraphQL güvenlik testleri (her PR)",
+      "content": "graphql-security-ci:\n  - schema-diff: public/app şemada admin tipi (adminUsers/allTenants/...) var mı? -> FAIL\n  - schema-lint:  herhangi bir query/mutation argümanında tenantId/orgId? -> FAIL\n  - authz-test:   her resolver authn+authz+tenant+ownership kontrolü kapsanıyor mu?\n  - idor-test:    başka tenant ID ile order(id) -> 404 beklenir (sızıntı yok)\n  - depth-test:   maxDepth+1 derinlik sorgusu -> reddedilir\n  - alias-test:   hassas mutation alias batching -> reddedilir\n  - introspection-test: prod profili ile introspection -> kapalı\n  - suggestion-test: yanlış field -> 'Did you mean' içermez"
+    },
+    {
+      "type": "list",
+      "items": [
+        "**Kural:** Her istek için userId/tenantId/operationName/operationHash/queryDepth/queryCost/durationMs/dbQueryCount/responseBytes/errorCode/IP loglanır ({{ref:sus-actions}}).",
+        "**Kural:** Alarm sinyalleri: yüksek cost, failed-auth serisi, invalid-field denemesi, introspection denemesi, cross-tenant erişim, allowlist-dışı operation.",
+        "**Kural:** GraphQL güvenlik testleri CI/CD'de her PR'da koşar (schema-diff, IDOR, depth, alias-batching, introspection, suggestion).",
+        "**Kural:** PII erişim logu ve para alanları audit'e bağlıdır; audit append-only ve değiştirilemezdir."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Minimum zorunlu standart"
+    },
+    {
+      "type": "paragraph",
+      "text": "Bu 12 maddeyi geçmeyen bir GraphQL yüzeyi **yayına alınmaz**. Bir API kararı olarak ({{ref:adr-0025-frontend-stack-uzlastirma}}) ve GraphQL varsayılanı olarak ({{ref:be-kararlar}}), aşağıdaki checklist sürüm kapısının (gate) parçasıdır."
+    },
+    {
+      "type": "feature-list",
+      "items": [
+        {
+          "name": "1. Şema ayrımı",
+          "desc": "Public/App/Admin ayrı; admin field'ı public graph'a sızmıyor.",
+          "critical": true
+        },
+        {
+          "name": "2. Resolver authz",
+          "desc": "Her resolver authn+permission+tenant+ownership (deny-by-default).",
+          "critical": true
+        },
+        {
+          "name": "3. Field authz",
+          "desc": "Hassas/PII alanları directive ya da field-resolver ile korunuyor.",
+          "critical": true
+        },
+        {
+          "name": "4. Tenant isolation",
+          "desc": "tenantId ctx'ten; şemada argüman yok; DB'de RLS açık.",
+          "critical": true
+        },
+        {
+          "name": "5. Introspection kapalı",
+          "desc": "Prod'da introspection + IDE kapalı; staging VPN arkasında.",
+          "critical": true
+        },
+        {
+          "name": "6. Suggestion kapalı",
+          "desc": "'Did you mean' yok; hata generic.",
+          "critical": true
+        },
+        {
+          "name": "7. Operation allowlist",
+          "desc": "Trusted documents — keyfi sorgu reddediliyor.",
+          "critical": false
+        },
+        {
+          "name": "8. Cost/depth limit",
+          "desc": "maxDepth/complexity/alias/batch + timeout + responseSize.",
+          "critical": true
+        },
+        {
+          "name": "9. Pagination zorunlu",
+          "desc": "Her liste cursor + default/max limit; unbounded yok.",
+          "critical": true
+        },
+        {
+          "name": "10. Mutation koruması",
+          "desc": "permission+ownership+rule+audit+rate-limit+idempotency+CSRF + batching-guard.",
+          "critical": true
+        },
+        {
+          "name": "11. Input validation",
+          "desc": "scalar/enum/allowlist/max-length + parametreli DB + SSRF kısıtı.",
+          "critical": true
+        },
+        {
+          "name": "12. Audit + alarm + CI",
+          "desc": "İstek audit/cost log + anomali alarmı + CI güvenlik testleri.",
+          "critical": true
+        }
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "warning",
+      "label": "Kısa karar",
+      "body": "GraphQL'i 'endpoint açıp resolver yazmak' olarak kurarsan güvenlik faciası kapıdadır. Doğru çerçeve: **schema + resolver + field + object + tenant + query-cost** altı katmanını ayrı ayrı savun, deny-by-default uygula, keyfi sorguyu (allowlist) ve sınırsız sorguyu (cost/pagination) en baştan kes, her isteği audit'le. Money = Decimal, PII = pii:true + retention + maskeleme, audit = zorunlu — bunlar AGENTS sözleşmesinde zaten var; bu 12 madde onları GraphQL yüzeyine bağlar. Bu 12 madde geçilmeden yayın yoktur."
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 {
   "id": "fe-monorepo",
   "title": "Frontend — Monorepo İskeleti",
-  "subtitle": "pnpm workspaces, apps/ + packages/ + tools/, sıkı paket sınırı.",
+  "subtitle": "pnpm workspaces; kök üçlü apps/ + packages/ + infra/ (tools/ + docs/ yardımcı), sıkı paket sınırı.",
   "cluster": "frontend",
   "order": 2,
   "icon": "ph-folder-open",
@@ -12,7 +12,9 @@
     "packages"
   ],
   "relations": [
-    { "type": "sibling", "target": "fe-locked" }
+    { "type": "sibling", "target": "fe-locked" },
+    { "type": "depends-on", "target": "adr-0025-frontend-stack-uzlastirma" },
+    { "type": "depends-on", "target": "fe-core-ui" }
   ],
   "parent": "fe-locked",
   "granularity": "orta-tas",
@@ -20,6 +22,10 @@
     {
       "type": "paragraph",
       "text": "**pnpm workspaces** — strict node_modules, workspace native, hızlı. Tek codebase'de web + mobile + OTA server + 11 paylaşılan paket."
+    },
+    {
+      "type": "paragraph",
+      "text": "**Kök üçlü: apps/ + packages/ + infra/.** apps/ çalıştırılabilir uygulamalar (web, mobile, ota-server), packages/ paylaşılan kütüphaneler, infra/ ise Docker/compose + CI + deploy artefaktları. tools/ (lint/tsconfig) ve docs/ yardımcı dizinlerdir. UI çekirdeği (packages/ui) **Radix + Phosphor + SCSS token** üzerine kuruludur; routing **TanStack Router** ile yapılır; Flowbite yalnız karşılaştırma-tablosu sunumunda sınırlı kalır. Bu seçimler {{ref:adr-0025-frontend-stack-uzlastirma}} ile bağlayıcıdır ve {{ref:fe-core-ui}} ile uyumludur."
     },
     {
       "type": "tree",
@@ -49,7 +55,7 @@
             "children": [
               {
                 "name": "ui/",
-                "comment": "Flowbite + Radix + Phosphor wrapper'ları"
+                "comment": "Radix + Phosphor (çekirdek) wrapper'ları; SCSS token. Flowbite yalnız karşılaştırma-tablosu sunumunda sınırlı."
               },
               {
                 "name": "api/",
@@ -112,6 +118,24 @@
               {
                 "name": "tsconfig/",
                 "comment": "Paylaşılan tsconfig.base.json"
+              }
+            ]
+          },
+          {
+            "name": "infra/",
+            "comment": "Kök üçlünün 3. ayağı (apps/ + packages/ + infra/): Docker/compose, CI ve deploy artefaktları",
+            "children": [
+              {
+                "name": "docker/",
+                "comment": "Dockerfile'lar + docker-compose (Logto, OTA server, yerel ortam)"
+              },
+              {
+                "name": "deploy/",
+                "comment": "Hetzner provizyon + rollout/release artefaktları"
+              },
+              {
+                "name": "ci/",
+                "comment": "Paylaşılan CI yardımcıları; .github/workflows bunları çağırır"
               }
             ]
           },

@@ -44,7 +44,8 @@
    "page-s-channel-hub",
    "page-stack-messaging",
    "page-stack-editions",
-   "page-edition-storefront"
+   "page-edition-storefront",
+   "page-app-modul-matrisi"
   ],
   "relations": [
    {
@@ -491,13 +492,414 @@
     ]
    },
    {
+    "id": "block-stack-commerce-h-e-ticaret-archetype-semasi-ve-capability-bagi",
+    "type": "heading",
+    "level": 2,
+    "text": "E-ticaret ArcheType Şeması ve Capability Bağı"
+   },
+   {
+    "id": "block-stack-commerce-table",
+    "type": "table",
+    "columns": [
+     "ArcheType",
+     "Anahtar alanlar",
+     "Bayraklar"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Product"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "sku, name, category_id"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "audit"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Variant"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "attributes, price ("
+       },
+       {
+        "type": "strong",
+        "text": "Money/Decimal"
+       },
+       {
+        "type": "text",
+        "text": ")"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "audit"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Category"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "name, parent_id, path"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "—"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "PriceList"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "tier, min_qty, price (B2B kademeli)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "audit"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "StockItem + StockMovement"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "on_hand, reserved + movement ledger (delta, reason)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "audit"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Cart"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "lines[], seller split, expires_at"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "pii (müşteri)"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "SalesOrder + OrderLine"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "total="
+       },
+       {
+        "type": "strong",
+        "text": "Money/Decimal"
+       },
+       {
+        "type": "text",
+        "text": "; OrderLine Fragment; submittable: draft → submit → cancel"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "pii + retention, audit"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Payment"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "method, transaction, refund, capture"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "pii, audit"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Shipping"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "method, zone, rate, label, tracking"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "audit"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-stack-commerce-co-2",
+    "type": "callout",
+    "variant": "info",
+    "title": "İş modeli capability flag ile (ENUM DEĞİL)",
+    "segments": [
+     {
+      "type": "text",
+      "text": "İş modeli farkı ArcheType'a "
+     },
+     {
+      "type": "code",
+      "text": "enum"
+     },
+     {
+      "type": "text",
+      "text": " alanı olarak gömülmez; "
+     },
+     {
+      "type": "code",
+      "text": "tenant_capabilities(tenant_id, capability, enabled)"
+     },
+     {
+      "type": "text",
+      "text": " flag tablosuyla modellenir. B2C/B2B/marketplace yetenekleri tek tek açılır, mevcut veri bozulmadan genişler ("
+     },
+     {
+      "type": "ref",
+      "text": "s-ecommerce-models",
+      "refId": "s-ecommerce-models"
+     },
+     {
+      "type": "text",
+      "text": ")."
+     }
+    ]
+   },
+   {
+    "id": "block-stack-commerce-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Buna dik bir eksen "
+     },
+     {
+      "type": "strong",
+      "text": "transaction_depth"
+     },
+     {
+      "type": "text",
+      "text": "'tir: "
+     },
+     {
+      "type": "code",
+      "text": "full"
+     },
+     {
+      "type": "text",
+      "text": " (varsayılan, uçtan uca sipariş+ödeme), "
+     },
+     {
+      "type": "code",
+      "text": "lead_gen"
+     },
+     {
+      "type": "text",
+      "text": " (yalnızca talep/iletişim, ödeme dışarıda) ve "
+     },
+     {
+      "type": "code",
+      "text": "hybrid"
+     },
+     {
+      "type": "text",
+      "text": " (ikisi bir arada) değerleriyle ürünün ne kadarının platform içinde tamamlandığını belirler. Bu eksen ilan/pazaryeri tarafıyla ortaktır ("
+     },
+     {
+      "type": "ref",
+      "text": "s-classifieds",
+      "refId": "s-classifieds"
+     },
+     {
+      "type": "text",
+      "text": ") — aynı capability omurgası hem e-ticaret hem ilan ürününü besler."
+     }
+    ]
+   },
+   {
+    "id": "block-stack-commerce-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "if-else YOK",
+      "definition": [
+       {
+        "type": "text",
+        "text": "İş modeli farkı "
+       },
+       {
+        "type": "code",
+        "text": "if model == ..."
+       },
+       {
+        "type": "text",
+        "text": " ile değil capability flag + "
+       },
+       {
+        "type": "strong",
+        "text": "Policy"
+       },
+       {
+        "type": "text",
+        "text": " ile; durum farkı (draft/submit/cancel) "
+       },
+       {
+        "type": "strong",
+        "text": "Workflow"
+       },
+       {
+        "type": "text",
+        "text": " ile yönetilir. Yeni model/durum eklemek mevcut kodu açmaz."
+       }
+      ]
+     },
+     {
+      "term": "OrderLine Fragment",
+      "definition": [
+       {
+        "type": "text",
+        "text": "OrderLine bağımsız bir ArcheType değil, SalesOrder parent'ına bağlı bir "
+       },
+       {
+        "type": "strong",
+        "text": "Fragment"
+       },
+       {
+        "type": "text",
+        "text": "'tır; parent'ın yaşam döngüsüne ve yetkisine tabidir, tek başına yaşamaz."
+       }
+      ]
+     },
+     {
+      "term": "Money = Decimal",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tüm para alanları (Variant.price, OrderLine, SalesOrder.total) "
+       },
+       {
+        "type": "strong",
+        "text": "Money/Decimal"
+       },
+       {
+        "type": "text",
+        "text": "'dır, asla float değil — yuvarlama hatası finansal kayıt bütünlüğünü bozar ("
+       },
+       {
+        "type": "ref",
+        "text": "k-archetype-bayraklari",
+        "refId": "k-archetype-bayraklari"
+       },
+       {
+        "type": "text",
+        "text": ")."
+       }
+      ]
+     },
+     {
+      "term": "Uygulama → modül bağı",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bu ArcheType'lar tek tek uygulamalara değil, modül matrisindeki Commerce modülüne aittir; bir ürün hangi modülleri install ettiğine göre bu şemayı kullanır ("
+       },
+       {
+        "type": "ref",
+        "text": "app-modul-matrisi",
+        "refId": "app-modul-matrisi"
+       },
+       {
+        "type": "text",
+        "text": ")."
+       }
+      ]
+     }
+    ]
+   },
+   {
     "id": "block-stack-commerce-h-derinlemesine",
     "type": "heading",
     "level": 2,
     "text": "Derinlemesine"
    },
    {
-    "id": "block-stack-commerce-p-3",
+    "id": "block-stack-commerce-p-4",
     "type": "paragraph",
     "segments": [
      {

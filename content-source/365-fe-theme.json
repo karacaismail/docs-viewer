@@ -10,7 +10,7 @@
  "state": "wip",
  "badge": "Frontend",
  "tags": ["theme","tema","sdk","token","sunum","edition"],
- "related": ["be-sdk","dx-cli","dx-marketplace","stack-editions","cc-cultural-ux","fe-cdn","k-terminoloji"],
+ "related": ["be-sdk","dx-cli","dx-marketplace","stack-editions","cc-cultural-ux","fe-cdn","k-terminoloji","adr-0025-frontend-stack-uzlastirma","k-surface"],
  "relations": [
   { "type": "uses", "target": "be-sdk" },
   { "type": "uses", "target": "dx-cli" },
@@ -19,8 +19,10 @@
   { "type": "uses", "target": "cc-cultural-ux" },
   { "type": "sibling", "target": "fe-cdn" },
   { "type": "depends-on", "target": "k-terminoloji" },
+  { "type": "depends-on", "target": "adr-0025-frontend-stack-uzlastirma" },
   { "type": "uses", "target": "cc-i18n-deep" },
-  { "type": "uses", "target": "l1-experiment" }
+  { "type": "uses", "target": "l1-experiment" },
+  { "type": "uses", "target": "k-surface" }
  ],
  "parent": "be-sdk",
  "enrich": {
@@ -32,11 +34,24 @@
   {"type":"table","caption":"Yetenek → nasıl","headers":["Yetenek","Nasıl"],
    "rows":[
     ["Token seti","Renk/spacing/tipografi token'ları (tokens.css deseni); tek kaynaktan tema değişkenleri"],
+    ["Tipografi token'ı","Aile: Roboto (tek arayüz ailesi); kalınlık ölçeği 300/400/500/700 (en hafif 300 — daha ince yok); boyut ölçeği 1rem tabanlı (1rem altı YOK). ADR-0025 bağlayıcı."],
+    ["İkon token'ı","Phosphor ikon seti, CDN dağıtımı (npm bundle değil); FontAwesome opsiyonel alternatif. Emoji ikon olarak kullanılmaz."],
     ["Surface şablonları","Surface layout/bileşen sunum override'ları; iş mantığı değil yalnız görünüm"],
     ["a11y bütçesi","Kontrast + dokunma hedefi + odak; axe kapısından geçer"],
     ["perf bütçesi","Eager CSS/JS bütçesi; size-limit kapısı"],
     ["Edition bağı","Bir Edition bir theme'i pinler; Distribution theme'i içerir"]
    ]},
+  {"type":"heading","level":2,"text":"Tipografi + ikon + emoji — ADR-0025 bağlayıcı"},
+  {"type":"kv-row","pairs":[
+    {"key":"Tipografi ailesi","value":"Roboto — arayüz ve içerik için tek aile. Inter veya başka aile kullanılmaz."},
+    {"key":"Kalınlık ölçeği","value":"300 / 400 / 500 / 700. En hafif kalınlık 300 (Light); 300 altı (Thin/100) token'da YOK."},
+    {"key":"Boyut ölçeği","value":"1rem tabanlı; en küçük adım 1rem. 1rem altı boyut token'ı tanımlanmaz (okunabilirlik tabanı)."},
+    {"key":"İkon","value":"Phosphor, CDN dağıtımı (npm paketi değil). FontAwesome yalnız opsiyonel alternatif."},
+    {"key":"Emoji yasağı","value":"Arayüz ve içerik emoji İÇERMEZ — anlam taşıyan her görsel işaret Phosphor ikonu ile verilir."}
+   ]},
+  {"type":"callout","variant":"warning","label":"Emoji yasağı","body":"Token katmanı ve onu tüketen Surface şablonları emoji kullanmaz. Durum/aksiyon/uyarı işaretleri Phosphor ikon token'ları üzerinden ifade edilir; metne emoji gömülmez. Bu kural ADR-0025'ten bağlayıcıdır ve a11y/tutarlılık gerekçesi taşır."},
+  {"type":"heading","level":2,"text":"Prerender / SSG sahibi — Vite build-time (SSR yok)"},
+  {"type":"callout","variant":"info","label":"Prerender sahibi (ADR-0025 Ç8)","body":"Token katmanı çıktısı (tokens.css + Surface sunum şablonları) build-time prerender ile statik üretilebilir: Vite build aşamasında token'lar derlenir ve statik CSS/HTML olarak çıkar. Çalışma-zamanı SSR YOKTUR — sunum statiktir, hidrasyon sonrası React 19 devralır. Prerender sahibi rolü bu sayfadadır; {{ref:k-surface}} Surface katmanıyla uyumludur (Surface şablonları aynı build-time akışında prerender edilir)."},
   {"type":"heading","level":2,"text":"ArcheType'lar + capability manifesti"},
   {"type":"kv-row","pairs":[
     {"key":"ArcheType'lar","value":"ThemeTokens (renk/spacing/tipografi), SurfaceTemplate (sunum override), ThemeManifest (uyum + izin)"},
@@ -58,6 +73,6 @@
     {"title":"Faz 3","body":"Çoklu dil/RTL token varyantı (cc-i18n) + theme A/B (l1-experiment ile)."}
    ]},
   {"type":"callout","variant":"warning","label":"Riskler / sınır","body":"Theme iş mantığı değiştirmez — aksi core module değişmezliğini bozar. Token dışı 'kod' temaya sızarsa Edition sınırı bozulur. Anti-stack: yasak kütüphaneler kullanılmaz; token-tabanlı, React 19 + Radix uyumlu. a11y/perf bütçesi atlanamaz."},
-  {"type":"paragraph","text":"Theme, SDK üçlüsünün (app/module/theme) sunum ayağıdır; Edition'ı (stack-editions) gerçekleştirir, marketplace'te (dx-marketplace) dağıtılır, sdk theme create (be-sdk/dx-cli) ile üretilir."}
+  {"type":"paragraph","text":"Theme, SDK üçlüsünün (app/module/theme) sunum ayağıdır; Edition'ı (stack-editions) gerçekleştirir, marketplace'te (dx-marketplace) dağıtılır, sdk theme create (be-sdk/dx-cli) ile üretilir. Tipografi (Roboto), ikon (Phosphor CDN), emoji yasağı ve build-time prerender (Vite, SSR yok) kararları {{ref:adr-0025-frontend-stack-uzlastirma}} ile bağlayıcıdır."}
  ]
 }

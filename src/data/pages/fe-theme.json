@@ -62,7 +62,9 @@
    "page-stack-editions",
    "page-cc-cultural-ux",
    "page-fe-cdn",
-   "page-k-terminoloji"
+   "page-k-terminoloji",
+   "page-adr-0025-frontend-stack-uzlastirma",
+   "page-k-surface"
   ],
   "parent": "page-be-sdk",
   "relations": [
@@ -95,12 +97,20 @@
     "target": "page-k-terminoloji"
    },
    {
+    "type": "depends-on",
+    "target": "page-adr-0025-frontend-stack-uzlastirma"
+   },
+   {
     "type": "uses",
     "target": "page-cc-i18n-deep"
    },
    {
     "type": "uses",
     "target": "page-l1-experiment"
+   },
+   {
+    "type": "uses",
+    "target": "page-k-surface"
    }
   ],
   "blocks": [
@@ -154,6 +164,34 @@
        {
         "type": "text",
         "text": "Renk/spacing/tipografi token'ları (tokens.css deseni); tek kaynaktan tema değişkenleri"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Tipografi token'ı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Aile: Roboto (tek arayüz ailesi); kalınlık ölçeği 300/400/500/700 (en hafif 300 — daha ince yok); boyut ölçeği 1rem tabanlı (1rem altı YOK). ADR-0025 bağlayıcı."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "İkon token'ı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Phosphor ikon seti, CDN dağıtımı (npm bundle değil); FontAwesome opsiyonel alternatif. Emoji ikon olarak kullanılmaz."
        }
       ]
      ],
@@ -216,13 +254,109 @@
     ]
    },
    {
+    "id": "block-fe-theme-h-tipografi-ikon-emoji-adr-0025-baglayici",
+    "type": "heading",
+    "level": 2,
+    "text": "Tipografi + ikon + emoji — ADR-0025 bağlayıcı"
+   },
+   {
+    "id": "block-fe-theme-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Tipografi ailesi",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Roboto — arayüz ve içerik için tek aile. Inter veya başka aile kullanılmaz."
+       }
+      ]
+     },
+     {
+      "term": "Kalınlık ölçeği",
+      "definition": [
+       {
+        "type": "text",
+        "text": "300 / 400 / 500 / 700. En hafif kalınlık 300 (Light); 300 altı (Thin/100) token'da YOK."
+       }
+      ]
+     },
+     {
+      "term": "Boyut ölçeği",
+      "definition": [
+       {
+        "type": "text",
+        "text": "1rem tabanlı; en küçük adım 1rem. 1rem altı boyut token'ı tanımlanmaz (okunabilirlik tabanı)."
+       }
+      ]
+     },
+     {
+      "term": "İkon",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Phosphor, CDN dağıtımı (npm paketi değil). FontAwesome yalnız opsiyonel alternatif."
+       }
+      ]
+     },
+     {
+      "term": "Emoji yasağı",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Arayüz ve içerik emoji İÇERMEZ — anlam taşıyan her görsel işaret Phosphor ikonu ile verilir."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-fe-theme-co-2",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Emoji yasağı",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Token katmanı ve onu tüketen Surface şablonları emoji kullanmaz. Durum/aksiyon/uyarı işaretleri Phosphor ikon token'ları üzerinden ifade edilir; metne emoji gömülmez. Bu kural ADR-0025'ten bağlayıcıdır ve a11y/tutarlılık gerekçesi taşır."
+     }
+    ]
+   },
+   {
+    "id": "block-fe-theme-h-prerender-ssg-sahibi-vite-build-time-ssr-yok",
+    "type": "heading",
+    "level": 2,
+    "text": "Prerender / SSG sahibi — Vite build-time (SSR yok)"
+   },
+   {
+    "id": "block-fe-theme-co-3",
+    "type": "callout",
+    "variant": "info",
+    "title": "Prerender sahibi (ADR-0025 Ç8)",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Token katmanı çıktısı (tokens.css + Surface sunum şablonları) build-time prerender ile statik üretilebilir: Vite build aşamasında token'lar derlenir ve statik CSS/HTML olarak çıkar. Çalışma-zamanı SSR YOKTUR — sunum statiktir, hidrasyon sonrası React 19 devralır. Prerender sahibi rolü bu sayfadadır; "
+     },
+     {
+      "type": "ref",
+      "text": "k-surface",
+      "refId": "k-surface"
+     },
+     {
+      "type": "text",
+      "text": " Surface katmanıyla uyumludur (Surface şablonları aynı build-time akışında prerender edilir)."
+     }
+    ]
+   },
+   {
     "id": "block-fe-theme-h-archetype-lar-capability-manifesti",
     "type": "heading",
     "level": 2,
     "text": "ArcheType'lar + capability manifesti"
    },
    {
-    "id": "block-fe-theme-kv",
+    "id": "block-fe-theme-kv-2",
     "type": "definitionList",
     "items": [
      {
@@ -363,7 +497,7 @@
     ]
    },
    {
-    "id": "block-fe-theme-co-2",
+    "id": "block-fe-theme-co-4",
     "type": "callout",
     "variant": "warning",
     "title": "Riskler / sınır",
@@ -380,7 +514,16 @@
     "segments": [
      {
       "type": "text",
-      "text": "Theme, SDK üçlüsünün (app/module/theme) sunum ayağıdır; Edition'ı (stack-editions) gerçekleştirir, marketplace'te (dx-marketplace) dağıtılır, sdk theme create (be-sdk/dx-cli) ile üretilir."
+      "text": "Theme, SDK üçlüsünün (app/module/theme) sunum ayağıdır; Edition'ı (stack-editions) gerçekleştirir, marketplace'te (dx-marketplace) dağıtılır, sdk theme create (be-sdk/dx-cli) ile üretilir. Tipografi (Roboto), ikon (Phosphor CDN), emoji yasağı ve build-time prerender (Vite, SSR yok) kararları "
+     },
+     {
+      "type": "ref",
+      "text": "adr-0025-frontend-stack-uzlastirma",
+      "refId": "adr-0025-frontend-stack-uzlastirma"
+     },
+     {
+      "type": "text",
+      "text": " ile bağlayıcıdır."
      }
     ]
    },

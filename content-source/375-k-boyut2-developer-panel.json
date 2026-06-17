@@ -1,0 +1,158 @@
+{
+  "id": "k-boyut2-developer-panel",
+  "title": "Boyut 2 — Developer-admin Paneli",
+  "subtitle": "İkinci kontrol düzlemi. Kitle: veri/model geliştiricisi. Muadil: Django / Drupal / Directus admin. Karakter: kuvvetli ama frenli — geliştirici YAPIYI (ArcheType şablonu) değiştirir, tenant VERİSİNİ değiştirmez. Panel, Surface'in bir projeksiyonudur.",
+  "cluster": "kernel",
+  "categoryId": "kernel",
+  "order": 19,
+  "icon": "ph-tree-structure",
+  "granularity": "kaya",
+  "state": "wip",
+  "badge": "Kontrol Düzlemi",
+  "tags": [
+    "boyut2",
+    "developer",
+    "admin",
+    "archetype",
+    "panel"
+  ],
+  "parent": "k-control-planes",
+  "relations": [
+    {"type": "belongs-to", "target": "k-control-planes"},
+    {"type": "uses", "target": "k-schema"},
+    {"type": "uses", "target": "k-surface"},
+    {"type": "uses", "target": "adr-0022"},
+    {"type": "depends-on", "target": "adr-0016"}
+  ],
+  "related": [
+    "k-archetype-storage",
+    "k-archetype-bayraklari",
+    "be-sdk"
+  ],
+  "enrich": {
+    "info": "Boyut 2, platformun dört kontrol düzleminin ikincisidir: veri ve modeli şekillendiren geliştiricinin paneli. Django admin, Drupal (Views), Directus muadilidir; farkı, panelin Surface'in bir projeksiyonu olması ve yetkisinin yapı ile sınırlanmasıdır. Geliştirici ArcheType şablonunu (alan, tip, pii, retention, ilişki, migration) düzenler; ama hiçbir tenant'ın iş verisine bu panelden dokunamaz. Karakteri kuvvetli ama frenli: dört yeteneği (şema editörü, auto-render CRUD, ilişki/görünüm gezgini, additif migration) güçlüdür, fakat tablo-per-tip üretimi, dinamik DDL, ham SQL birleştirme ve onaysız yıkıcı migration düzlemde yasaktır.",
+    "detail": "Neden frenli? Çünkü yapı ile veri ayrı güven sınırlarıdır. Geliştirici şablonu (ArcheType tanımı) değiştirebilmeli — alan ekleyip çıkarmak, pii/retention işaretlemek, ilişki kurmak işinin tanımıdır. Ama tenant'ın iş kayıtlarına (fatura satırı, müşteri adresi, sipariş tutarı) bu panelden erişim, bir bakım penceresinde yanlışlıkla ya da kasıtla üretim verisini bozma riskidir; bu yüzden veri yüzeyi Boyut 3'e (müşteri-admin) ve audit'li aksiyon yüzeyine bırakılır. Hibrit depolama (paylaşılan şema + JSONB değişken alanlar) sayesinde şema değişikliği dinamik DDL gerektirmez; tip ayrımı `if (type==...)` ile değil, metadata güdümlü Strategy/Policy ile yapılır — böylece şablon değişikliği koda dokunmadan yaşar ve geri alınabilir kalır.\n\nGörsel sorgu kurucu neden ham SQL üretmez? İlişki/görünüm gezgini, Drupal Views muadilidir: geliştirici belongs-to / uses / depends-on / extends ilişkileri üstünde tıklayarak join ve filtre kurar. Ama çıktı serbest SQL metni DEĞİL, bildirimsel bir sorgu nesnesidir (alanlar, filtreler, sıralama, sayfalama). Bu nesne yalnızca ArcheType tanımında tanımlı ilişkiler üzerinden join yapabilir; rastgele tablo birleştirme, alt sorgu enjeksiyonu ya da şema-dışı erişim üretemez. Böylece güçlü bir keşif aracı, motorun yetki ve tenant izolasyon katmanını (RLS) atlamadan çalışır; üretilen sorgu yine permission ∩ tenant ∩ object-ownership kesişiminden geçer."
+  },
+  "blocks": [
+    {
+      "type": "callout",
+      "variant": "info",
+      "label": "İkinci kontrol düzlemi",
+      "body": "Boyut 2, veri ve modeli şekillendiren geliştiricinin panelidir. Muadili Django admin, Drupal (Views) ve Directus'tur. Bu panel ayrı bir uygulama değil, Surface'in geliştiriciye özel bir projeksiyonudur ({{ref:k-surface}}): aynı motor, aynı şema, farklı kitle ve farklı yetki tavanı. Karakteri **kuvvetli ama frenli** — geliştirici **yapıyı (ArcheType şablonu) değiştirir, tenant verisini değiştirmez**."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Kapsam ve kitle"
+    },
+    {
+      "type": "table",
+      "caption": "Boyut 2 — kim, ne yapar, nereye dokunmaz",
+      "headers": [
+        "Boyut",
+        "Değer"
+      ],
+      "rows": [
+        ["Kitle", "Veri/model geliştiricisi (SaaS geliştirici)"],
+        ["Muadil", "Django admin · Drupal (Views) · Directus admin"],
+        ["Yapı (dokunur)", "ArcheType şablonu: alan, tip, zorunlu, pii, retention, ilişki, migration"],
+        ["Veri (DOKUNMAZ)", "Tenant iş kayıtları (fatura/müşteri/sipariş) bu panelden değişmez"],
+        ["Yüzey", "Surface'in projeksiyonu ({{ref:k-surface}}); ayrı uygulama değil"],
+        ["Yetki tavanı", "Developer rolü; yapı-yazma izinli, veri-yazma izinsiz; developer-dışı `403`"]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Dört yetenek"
+    },
+    {
+      "type": "feature-list",
+      "items": [
+        {
+          "name": "1. ArcheType şema editörü",
+          "desc": "Alan ekle/çıkar; her alan için tip, zorunlu, **pii** ve **retention** işaretlenir ({{ref:k-archetype-bayraklari}}). Depolama **hibrit**tir ({{ref:k-archetype-storage}}, {{ref:adr-0022}}): paylaşılan/sabit çekirdek şema + değişken alanlar için JSONB; **tablo-per-tip üretimi YOK, dinamik DDL YOK**. Tip ayrımı metadata güdümlü **Strategy/Policy** ile yapılır — `if (type==...)` switch YASAK.",
+          "critical": true
+        },
+        {
+          "name": "2. Şemadan auto-render CRUD",
+          "desc": "Liste, form ve detay ekranları el yazımı değil; ArcheType tanımından üretilir ({{ref:k-schema}}, {{ref:k-surface}}). pii işaretli alanlar listede gizlenir, detayda maskelenir; geliştirici alanı işaretler, davranışı motor uygular.",
+          "critical": true
+        },
+        {
+          "name": "3. İlişki/görünüm gezgini",
+          "desc": "belongs-to / uses / depends-on / extends ilişkileri görselleştirilir; üstüne tıklayarak **join/filtre sorgu kurucu** açılır (Drupal Views muadili). Çıktı **bildirimsel sorgu nesnesidir** — ham SQL birleştirme yoktur; join yalnız ArcheType'ta **tanımlı ilişkiler** üzerinden kurulur.",
+          "critical": false
+        },
+        {
+          "name": "4. Additif migration",
+          "desc": "Şema değişikliği **ChangeSet** olarak yaşar ({{ref:adr-0016}}): **additif değişiklik onaysız** uygulanır; **yıkıcı değişiklik uyarı + açık onay + append-only audit** gerektirir. Desen expand-contract'tır; developer-dışı denemeler `403`.",
+          "critical": true
+        }
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "warning",
+      "label": "Hibrit depolama kuralı",
+      "body": "ArcheType verisi VARSAYILAN olarak paylaşılan/sabit çekirdek şemaya + değişken alanlar için JSONB kolonuna yazılır; ilişkiler FK ile kurulur. Şema editörü **tablo-per-tip üretMEZ**, **dinamik DDL çalıştırMAZ**, son müşteri tablo yaratamaz. Tipe bağlı davranış koda gömülmez: `if (type==Invoice) ... else if (type==Contract) ...` zinciri YASAK; tip dispatch metadata'dan **Strategy/Policy** modülüyle çözülür (`InvoicePolicy`, `ContractPolicy`). Detay {{ref:k-archetype-storage}}; karar {{ref:adr-0022}}."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "İlişki türleri"
+    },
+    {
+      "type": "table",
+      "caption": "Gezginde görselleştirilen ve sorgu kurucuda join'lenebilen ilişkiler",
+      "headers": [
+        "İlişki",
+        "Anlam",
+        "Örnek"
+      ],
+      "rows": [
+        ["belongs-to", "Kayıt başka bir kayda aittir (FK sahipliği)", "Fatura → Müşteri'ye ait"],
+        ["uses", "Bir tip başka tipi kullanır/referans verir", "Sipariş → ÜrünKalemi kullanır"],
+        ["depends-on", "Tanım/yaşam döngüsü başka tanıma bağımlı", "Migration → ChangeSet'e bağımlı"],
+        ["extends", "Bir tip başka tipin alanlarını genişletir", "PremiumMüşteri → Müşteri'yi genişletir"]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Migration sınıfları"
+    },
+    {
+      "type": "table",
+      "caption": "ChangeSet sınıfı → gereken onay ({{ref:adr-0016}})",
+      "headers": [
+        "Sınıf",
+        "Örnek",
+        "Gereken"
+      ],
+      "rows": [
+        ["Additif", "Alan ekle, opsiyonel kolon, yeni ilişki", "Onaysız uygulanır (geri-uyumlu)"],
+        ["Yıkıcı", "Alan sil, tip daralt, zorunlu yap", "Uyarı + açık onay + append-only audit"]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Motor bağları"
+    },
+    {
+      "type": "kv-row",
+      "pairs": [
+        {"key": "Şema kaynağı", "value": "ArcheType tanımı tek kaynaktır; editör ve CRUD bunu okur ({{ref:k-schema}})"},
+        {"key": "Yüzey projeksiyonu", "value": "Liste/form/detay ve gezgin Surface'ten türer ({{ref:k-surface}})"},
+        {"key": "Değişiklik yolu", "value": "Tüm şema değişiklikleri ChangeSet ile, additif/yıkıcı sınıfında ({{ref:adr-0016}})"}
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "danger",
+      "label": "Sınır: yapı ≠ veri",
+      "body": "Boyut 2'nin tek ve sert sınırı budur: geliştirici **yapıyı** (ArcheType şablonu: alan/tip/pii/retention/ilişki/migration) değiştirir; **tenant'ın iş verisini DEĞİŞTİRMEZ**. Üretim kayıtlarına (fatura tutarı, müşteri adresi, sipariş satırı) bu panelden yazma yolu yoktur — o yüzey Boyut 3'e (müşteri-admin) ve audit'li aksiyon yüzeyine aittir. Developer-dışı her deneme `403`; yapı-yazma izni veri-yazma iznine genişletilemez. Frenin gerekçesi: yapı ile veri ayrı güven sınırlarıdır ve bir bakım penceresinde üretim verisinin bozulması en pahalı hatadır."
+    }
+  ]
+}

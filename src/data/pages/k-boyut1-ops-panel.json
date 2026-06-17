@@ -1,0 +1,1664 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-k-boyut1-ops-panel",
+  "sourceId": "k-boyut1-ops-panel",
+  "slug": "kernel/k-boyut1-ops-panel",
+  "title": "Boyut 1 — Ops/DevOps Operatör Konsolu",
+  "summary": "Dört kontrol düzleminden birincisi: Operatör/SRE'nin hosting, dağıtım ve gözlemlenebilirlik yüzeyi. Karakteri read-mostly (çoğunlukla izlenir), tehlikeli aksiyonlar kilitli ve onay penceresine bağlıdır. Muadil: Frappe Press / cPanel / Vercel dashboard.",
+  "categoryId": "kernel",
+  "tags": [
+   "boyut1",
+   "ops",
+   "devops",
+   "panel"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "wip",
+   "badge": "Kontrol Düzlemi",
+   "breadcrumb": [
+    {
+     "id": "page-k-control-planes",
+     "title": "Dört Boyut — Kontrol Düzlemleri (Control Planes)",
+     "granularity": "kaya"
+    },
+    {
+     "id": "page-k-boyut1-ops-panel",
+     "title": "Boyut 1 — Ops/DevOps Operatör Konsolu",
+     "granularity": "kaya"
+    }
+   ]
+  },
+  "owner": "Kernel mimarisi sahibi",
+  "reviewer": "Senior platform ve güvenlik reviewer",
+  "maturity": "taslak",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": [],
+  "nonGoals": [
+   "Bu sayfa tek başına üretim onayı veya uzman incelemesi yerine geçmez."
+  ],
+  "failureModes": [
+   "Tanım, ölçülebilir kabul testi ve sorumlu reviewer olmadan doğrudan üretime uygulanır."
+  ],
+  "acceptanceCriteria": [
+   "Sahip ve reviewer atanmıştır; ilgili otomatik kapılar yeşildir; açık varsayımlar kayıtlıdır."
+  ],
+  "operationalImpact": "Tüm app'lerin güvenlik, izolasyon ve geriye uyumluluk temelini etkiler.",
+  "externalReviewRequired": true,
+  "related": [
+   "page-cc-obs-deep",
+   "page-deploy-yap",
+   "page-k-surface"
+  ],
+  "parent": "page-k-control-planes",
+  "relations": [
+   {
+    "type": "belongs-to",
+    "target": "page-k-control-planes"
+   },
+   {
+    "type": "uses",
+    "target": "page-be-deploy-profilleri"
+   },
+   {
+    "type": "uses",
+    "target": "page-kernel-tenancy"
+   },
+   {
+    "type": "depends-on",
+    "target": "page-adr-0015-aksiyon-taksonomisi-yetki"
+   }
+  ],
+  "blocks": [
+   {
+    "id": "block-k-boyut1-ops-panel-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Boyut 1, dört kontrol düzleminden birincisidir ("
+     },
+     {
+      "type": "ref",
+      "text": "k-control-planes",
+      "refId": "k-control-planes"
+     },
+     {
+      "type": "text",
+      "text": "): Operatör/SRE'ye ait hosting, dağıtım ve gözlemlenebilirlik konsolu. Diğer üç düzlemden (Boyut 2 developer-admin, Boyut 3 tenant/müşteri-admin, Boyut 4 public/frontpages) ayrı bir yetki tavanına tabidir ("
+     },
+     {
+      "type": "ref",
+      "text": "adr-0015",
+      "refId": "adr-0015"
+     },
+     {
+      "type": "text",
+      "text": "). Bu panel bir "
+     },
+     {
+      "type": "strong",
+      "text": "Surface"
+     },
+     {
+      "type": "text",
+      "text": "'tir ("
+     },
+     {
+      "type": "ref",
+      "text": "k-surface",
+      "refId": "k-surface"
+     },
+     {
+      "type": "text",
+      "text": "): kendi motorlarına sahip değildir, kernel motorlarını (kimlik, tenancy, audit, deploy) operatör yüzeyine projekte eder. Karakteri read-mostly'dir — varsayılan davranış izlemektir, durum değiştiren her düğme önce onay ister."
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-h-kapsam-ve-kitle",
+    "type": "heading",
+    "level": 2,
+    "text": "Kapsam ve kitle"
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Boyut 1, "
+     },
+     {
+      "type": "strong",
+      "text": "Operatör/SRE"
+     },
+     {
+      "type": "text",
+      "text": " kitlesine hizmet eder. Soru basittir: site ayakta mı, dağıtım geçti mi, hata var mı, gerekirse nasıl geri alınır? Panel bu soruları yanıtlar ama yıkıcı gücü kilit altında tutar — varsayılan davranış izlemektir, müdahale değil."
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-table",
+    "type": "table",
+    "caption": "Boyut 1 yetenekleri: kitle ve sınır",
+    "columns": [
+     "Yetenek",
+     "Kitle",
+     "Sınır"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kiracı/site sağlığı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Operatör/SRE"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Salt-okur — durum, sürüm, kaynak görüntülenir; değiştirilemez"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Deploy / rollback"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Operatör/SRE"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tehlikeli — onay penceresi + audit zorunlu ("
+       },
+       {
+        "type": "ref",
+        "text": "deploy-yap",
+        "refId": "deploy-yap"
+       },
+       {
+        "type": "text",
+        "text": ")"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Log / observability"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Operatör/SRE"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Salt-okur akış; sağlayıcı adaptörleri opsiyonel ("
+       },
+       {
+        "type": "ref",
+        "text": "cc-obs-deep",
+        "refId": "cc-obs-deep"
+       },
+       {
+        "type": "text",
+        "text": ")"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Yedek/restore + ölçek bayrakları"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Operatör/SRE"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Restore en tehlikeli — ad-doğrulamalı güçlü onay ("
+       },
+       {
+        "type": "ref",
+        "text": "k-tenancy",
+        "refId": "k-tenancy"
+       },
+       {
+        "type": "text",
+        "text": ")"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-h-dort-yetenek",
+    "type": "heading",
+    "level": 2,
+    "text": "Dört yetenek"
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-feat",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Kiracı/site sağlığı",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her tenant için tek bakışta sağlık: durum ("
+       },
+       {
+        "type": "strong",
+        "text": "ayakta"
+       },
+       {
+        "type": "text",
+        "text": " / "
+       },
+       {
+        "type": "strong",
+        "text": "bakımda"
+       },
+       {
+        "type": "text",
+        "text": " / "
+       },
+       {
+        "type": "strong",
+        "text": "arızalı"
+       },
+       {
+        "type": "text",
+        "text": "), çalışan sürüm ve kaynak kullanımı (CPU / bellek). Tamamen salt-okurdur — operatör görür ama bu yüzeyden tenant'ın halini değiştiremez."
+       }
+      ]
+     },
+     {
+      "term": "Deploy / rollback",
+      "definition": [
+       {
+        "type": "text",
+        "text": "GitHub Actions aşamaları canlı izlenir: "
+       },
+       {
+        "type": "strong",
+        "text": "sıraya girdi → test → kuruyor → başarılı / hata"
+       },
+       {
+        "type": "text",
+        "text": "; her aşamada "
+       },
+       {
+        "type": "code",
+        "text": "Logu gör"
+       },
+       {
+        "type": "text",
+        "text": ". Rollback tenant'ı önceki sürüme döndürür. Tehlikeli aksiyondur → onay penceresi açılır ve işlem audit'e yazılır. ("
+       },
+       {
+        "type": "ref",
+        "text": "deploy-yap",
+        "refId": "deploy-yap"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "ref",
+        "text": "be-deploy-profilleri",
+        "refId": "be-deploy-profilleri"
+       },
+       {
+        "type": "text",
+        "text": ")"
+       }
+      ]
+     },
+     {
+      "term": "Log / observability",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Canlı log akışı ve son 1 saatin hata sayacı her kurulumda vardır. Sentry, Grafana ve OpenSearch derin sağlayıcı adaptörleri "
+       },
+       {
+        "type": "strong",
+        "text": "opsiyoneldir"
+       },
+       {
+        "type": "text",
+        "text": " — takılırsa zenginleşir, takılmazsa panel yine çalışır. ("
+       },
+       {
+        "type": "ref",
+        "text": "cc-obs-deep",
+        "refId": "cc-obs-deep"
+       },
+       {
+        "type": "text",
+        "text": ")"
+       }
+      ]
+     },
+     {
+      "term": "Yedek/restore + ölçek bayrakları",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Restore bu panelin "
+       },
+       {
+        "type": "strong",
+        "text": "en tehlikeli"
+       },
+       {
+        "type": "text",
+        "text": " işlemidir: aradaki tüm veriyi sileceği için ad-doğrulamalı güçlü onay ister (tenant adını elle yaz). Yanında Redis ve S3 gibi servisler için aç-kapa ölçek bayrakları durur. ("
+       },
+       {
+        "type": "ref",
+        "text": "k-tenancy",
+        "refId": "k-tenancy"
+       },
+       {
+        "type": "text",
+        "text": ")"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-h-uc-altin-kural",
+    "type": "heading",
+    "level": 2,
+    "text": "Üç altın kural"
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-list",
+    "type": "list",
+    "ordered": true,
+    "items": [
+     [
+      {
+       "type": "strong",
+       "text": "Yalnız ops rolü."
+      },
+      {
+       "type": "text",
+       "text": " Bu yüzeye yalnız ops/SRE rolü erişir; başka her rol "
+      },
+      {
+       "type": "code",
+       "text": "403"
+      },
+      {
+       "type": "text",
+       "text": " alır — developer-admin de, tenant-admin de buraya giremez."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Tehlikeli düğme = önce onay."
+      },
+      {
+       "type": "text",
+       "text": " Durum değiştiren her işlem step-up doğrulamadan geçer; gerektiğinde out-of-band onay aranır ("
+      },
+      {
+       "type": "ref",
+       "text": "sus-actions",
+       "refId": "sus-actions"
+      },
+      {
+       "type": "text",
+       "text": "). Kaza ile yıkım, normal gezinmeyle aynı kolaylıkta olamaz."
+      }
+     ],
+     [
+      {
+       "type": "strong",
+       "text": "Her tehlikeli iş append-only audit."
+      },
+      {
+       "type": "text",
+       "text": " Deploy, rollback, restore ve bayrak değişimi — kim, ne zaman, hangi tenant'a, sonuç ne; hepsi değiştirilemez audit'e yazılır. DisableProtection sınıfı bir kaçış "
+      },
+      {
+       "type": "strong",
+       "text": "asla"
+      },
+      {
+       "type": "text",
+       "text": " sunulmaz."
+      }
+     ]
+    ]
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-h-tehlikeli-aksiyon-sozlesmesi",
+    "type": "heading",
+    "level": 2,
+    "text": "Tehlikeli aksiyon sözleşmesi"
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Onay + audit zorunlu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Boyut 1'de durum değiştiren her işlem aynı sözleşmeye tabidir: "
+     },
+     {
+      "type": "strong",
+      "text": "önce onay, sonra audit."
+     },
+     {
+      "type": "text",
+      "text": " Onayın gücü işlemin yıkıcılığıyla orantılıdır — sıradan dağıtım tek onayla geçerken restore ad-doğrulamalı güçlü onay ister. Hiçbir tehlikeli işlem audit'e yazılmadan tamamlanmaz; koruma katmanı devre dışı bırakılamaz."
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-table-2",
+    "type": "table",
+    "caption": "Tehlikeli aksiyon → onay tipi → audit",
+    "columns": [
+     "Aksiyon",
+     "Onay tipi",
+     "Audit"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Deploy"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tek onay (step-up)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Append-only: aktör, tenant, sürüm, sonuç"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Rollback"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Onay penceresi (step-up)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Append-only: hedef sürüm, gerekçe, sonuç"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Restore"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Ad-doğrulamalı güçlü onay (out-of-band)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Append-only: yedek noktası, silinecek aralık, aktör"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Ölçek bayrağı"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tek onay (step-up)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Append-only: servis, eski/yeni durum, aktör"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-h-kernel-saglar-panel-projekte-eder",
+    "type": "heading",
+    "level": 2,
+    "text": "Kernel sağlar, panel projekte eder"
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Kernel sağlar",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kimlik (rol/oturum), tenancy (izolasyon, "
+       },
+       {
+        "type": "ref",
+        "text": "k-tenancy",
+        "refId": "k-tenancy"
+       },
+       {
+        "type": "text",
+        "text": ") ve append-only audit — panelin güvendiği motorlar burada yaşar, panelde değil"
+       }
+      ]
+     },
+     {
+      "term": "Panel rolü",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bir "
+       },
+       {
+        "type": "strong",
+        "text": "Surface"
+       },
+       {
+        "type": "text",
+        "text": " olarak bu motorları operatör yüzeyine projekte eder ("
+       },
+       {
+        "type": "ref",
+        "text": "k-surface",
+        "refId": "k-surface"
+       },
+       {
+        "type": "text",
+        "text": "); kendi veri sahipliği yoktur"
+       }
+      ]
+     },
+     {
+      "term": "Dış erişim",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yalnız Contract üzerinden — panel motorlara doğrudan değil, sözleşmeli API ile bağlanır"
+       }
+      ]
+     },
+     {
+      "term": "Gözlemlenebilirlik",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sentry/Grafana/OpenSearch adaptörleri opsiyonel ("
+       },
+       {
+        "type": "ref",
+        "text": "cc-obs-deep",
+        "refId": "cc-obs-deep"
+       },
+       {
+        "type": "text",
+        "text": "); yoklukları paneli kırmaz"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-co-2",
+    "type": "callout",
+    "variant": "danger",
+    "title": "Sınır",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Ops-dışı her rol bu yüzeyde "
+     },
+     {
+      "type": "code",
+      "text": "403"
+     },
+     {
+      "type": "text",
+      "text": " alır — yetki tavanı ADR-0015 ile zorlanır ("
+     },
+     {
+      "type": "ref",
+      "text": "adr-0015",
+      "refId": "adr-0015"
+     },
+     {
+      "type": "text",
+      "text": "). Koruma katmanını kapatan bir DisableProtection işlemi tanımlı değildir, önerilemez ve uygulanamaz: tehlikeli aksiyonun onay + audit sözleşmesi atlanamaz. Etkin yetki her zaman rolün, capability'nin ve risk seviyesinin kesişimidir ("
+     },
+     {
+      "type": "ref",
+      "text": "sus-actions",
+      "refId": "sus-actions"
+     },
+     {
+      "type": "text",
+      "text": ")."
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Panelin "
+     },
+     {
+      "type": "strong",
+      "text": "read-mostly"
+     },
+     {
+      "type": "text",
+      "text": " olması bir tasarım kararıdır, eksiklik değil. Operatörün günlük işinin çoğu gözlemdir: sağlık görmek, log okumak, hata sayacına bakmak. Bu görünümler salt-okurdur ve serbestçe açılır. Durumu değiştiren — dağıtan, geri alan, geri yükleyen, ölçek bayrağı çeviren — işlemler ise ayrı bir sınıftır: her biri tehlikeli aksiyon olarak işaretlenir, onay penceresinden geçer ve append-only audit'e yazılır. Böylece kaza ile yıkıcı bir işlem tetiklemek, normal gezinmeyle aynı kolaylıkta olmaz; tehlike bilinçli bir adım gerektirir. En uçta restore durur: bir tenant'ı eski yedeğe döndürmek aradaki tüm veriyi siler, bu yüzden ad-doğrulamalı güçlü onay ister."
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Gözlemlenebilirlik tarafı bilinçli olarak adaptör-opsiyoneldir. Panel canlı log akışını ve son 1 saatlik hata sayacını her kurulumda gösterir; ancak derin sağlayıcılar (Sentry, Grafana, OpenSearch) zorunlu bağımlılık değil, takılabilir adaptörlerdir ("
+     },
+     {
+      "type": "ref",
+      "text": "cc-obs-deep",
+      "refId": "cc-obs-deep"
+     },
+     {
+      "type": "text",
+      "text": "). Bir tenant bu sağlayıcıları kullanmıyorsa panel yine çalışır — yalnızca o opsiyonel paneller boş kalır. Bu opsiyonellik, ops yüzeyini belirli bir SaaS yığınına kilitlemeden taşınabilir tutar; sağlayıcı seçimi dağıtım profiline bırakılır ("
+     },
+     {
+      "type": "ref",
+      "text": "be-deploy-profilleri",
+      "refId": "be-deploy-profilleri"
+     },
+     {
+      "type": "text",
+      "text": ")."
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-div",
+    "type": "divider"
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-h",
+    "type": "heading",
+    "level": 2,
+    "text": "Üretim Sözleşmesi"
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu bölüm \"Boyut 1 — Ops/DevOps Operatör Konsolu\" birimini üretirken AI ajanın ve geliştiricinin uyması gereken 16 boyutu bağlar. Kanonik sözleşme "
+     },
+     {
+      "type": "ref",
+      "text": "k-surface",
+      "refId": "k-surface"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "ref",
+      "text": "be-sdk",
+      "refId": "be-sdk"
+     },
+     {
+      "type": "text",
+      "text": " ve "
+     },
+     {
+      "type": "ref",
+      "text": "k-terminoloji",
+      "refId": "k-terminoloji"
+     },
+     {
+      "type": "text",
+      "text": "; sıralama testler ÖNCE, küçük PR + kanıt."
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-h-2",
+    "type": "heading",
+    "level": 3,
+    "text": "1. Özellik tanımları"
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-dl",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Boyut 1 — Ops/DevOps Operatör Konsolu — çekirdek yetenek",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+       }
+      ]
+     },
+     {
+      "term": "Alan bayrakları",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Para=Money (Decimal), kişisel veri="
+       },
+       {
+        "type": "code",
+        "text": "pii"
+       },
+       {
+        "type": "text",
+        "text": "(+retention), tarihçeli="
+       },
+       {
+        "type": "code",
+        "text": "bitemporal"
+       },
+       {
+        "type": "text",
+        "text": ", her şey audit'li."
+       }
+      ]
+     },
+     {
+      "term": "Sözleşmeli sınır",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-h-3",
+    "type": "heading",
+    "level": 3,
+    "text": "2. Güvenlik önlemleri — OWASP Top 10:2025"
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-table",
+    "type": "table",
+    "caption": "OWASP Top 10:2025 → bu birimde karşılığı",
+    "columns": [
+     "Risk (2025)",
+     "Bu birimde önlem"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "A01 Broken Access Control"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tenant-scoped RLS + capability deny-by-default; negatif/komşu-tenant testi zorunlu."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A02 Security Misconfiguration"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Güvenli varsayılan; sır yönetimi; gereksiz yüzey kapalı."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A03 Software Supply Chain Failures"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Bağımlılık pinleme, SBOM, imzalı yapıt, manifest izin beyanı (WASM sandbox)."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A04 Cryptographic Failures"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Aktarımda/duruşta şifreleme; "
+       },
+       {
+        "type": "code",
+        "text": "pii"
+       },
+       {
+        "type": "text",
+        "text": " alanları maskeli; anahtar rotasyonu."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A05 Injection"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Parametreli sorgu; girdi doğrulama (zod/pydantic); çıktı kodlama."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A06 Insecure Design"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tehdit modeli; Rule of Two; en az yetki; kötüye-kullanım hikâyesi."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A07 Authentication Failures"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kernel kimliği + OIDC federation; oturum/step-up; kaba-kuvvet limiti."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A08 Software or Data Integrity Failures"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "İmzalı migration; outbox idempotency; değişmez audit zinciri."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A09 Security Logging and Alerting Failures"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yapılandırılmış audit (aktör/tenant/correlation); alarm eşiği; "
+       },
+       {
+        "type": "ref",
+        "text": "l1-audit",
+        "refId": "l1-audit"
+       },
+       {
+        "type": "text",
+        "text": "."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A10 Mishandling of Exceptional Conditions"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Güvenli hata; kısmi yazma yok; telafi/saga; sızıntısız mesaj."
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Güvenlik optimizasyonu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
+     },
+     {
+      "type": "code",
+      "text": "pii"
+     },
+     {
+      "type": "text",
+      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+     },
+     {
+      "type": "ref",
+      "text": "adr-0017",
+      "refId": "adr-0017"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-h-4",
+    "type": "heading",
+    "level": 3,
+    "text": "3. Optimizasyon — kod, güvenlik, performans"
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-dl-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Kod optimizasyonu",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
+       },
+       {
+        "type": "code",
+        "text": "if (type==...)"
+       },
+       {
+        "type": "text",
+        "text": " yasak — runtime dispatch."
+       }
+      ]
+     },
+     {
+      "term": "Güvenlik optimizasyonu",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Deny-by-default, sır sızıntısı taraması, bağımlılık denetimi CI kapısı."
+       }
+      ]
+     },
+     {
+      "term": "Performans optimizasyonu",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
+       },
+       {
+        "type": "code",
+        "text": "async def"
+       },
+       {
+        "type": "text",
+        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+       }
+      ]
+     },
+     {
+      "term": "Yük profili",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yüksek-hacimli ArcheType opt-in fiziksel tabloya terfi; aksi halde hibrit şema."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-h-5",
+    "type": "heading",
+    "level": 3,
+    "text": "4. Çok-platform: iOS / Android / Chrome extension"
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-table-2",
+    "type": "table",
+    "columns": [
+     "Hedef",
+     "Uyum kuralı"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "iOS / Android (native)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Contract/GraphQL üzerinden tüketim; offline-first kuyruk; token güvenli saklama; dokunma hedefi ≥44px ("
+       },
+       {
+        "type": "ref",
+        "text": "fe-mobile",
+        "refId": "fe-mobile"
+       },
+       {
+        "type": "text",
+        "text": ")."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Chrome extension"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yalnız Contract'a; içerik betiği en az yetki; CSP sıkı; arka plan mesajlaşma doğrulanır."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "PWA / responsive web"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tek kod tabanı; 320px'e kadar akışkan; klavye + ekran okuyucu pariteli."
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-h-6",
+    "type": "heading",
+    "level": 3,
+    "text": "5. Erişilebilirlik — WCAG 2.2 AAA"
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-chk",
+    "type": "checklist",
+    "title": "WCAG 2.2 AAA kontrol listesi (Surface taşıyan birimler)",
+    "items": [
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "1.4.6 Kontrast (Gelişmiş) — metinde 7:1 (büyük metin 4.5:1)."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "2.1.3 Klavye (İstisnasız) — tüm işlevler klavyeyle, tuzak yok."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "2.2.6 Zaman aşımı — veri kaybı riski önceden uyarılır."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "2.3.3 Etkileşimden doğan animasyon — kapatılabilir (prefers-reduced-motion)."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "2.4.9 Bağlantı amacı (yalnız bağlantı) — metinden anlaşılır."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "2.4.12/2.4.13 Odak gizlenmez + görünür odak göstergesi."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "2.5.5 Hedef boyutu (Gelişmiş) — 44×44 CSS px."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "3.1.5 Okuma düzeyi — sade dil veya alternatif."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "3.3.9 Erişilebilir kimlik doğrulama (Gelişmiş) — bilişsel test yok."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Otomasyon: axe-core (Playwright) + manuel ekran okuyucu; "
+       },
+       {
+        "type": "ref",
+        "text": "cc-a11y-backend",
+        "refId": "cc-a11y-backend"
+       },
+       {
+        "type": "text",
+        "text": "."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-h-7",
+    "type": "heading",
+    "level": 3,
+    "text": "6. Dağıtım uyumluluğu — Swarm / Kubernetes / shared hosting"
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-table-3",
+    "type": "table",
+    "caption": "Taşıyıcı destek matrisi (v1 profili: Debian + Docker Compose)",
+    "columns": [
+     "Taşıyıcı",
+     "Uyum / koşul"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Docker Compose (v1)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Birincil teslim profili; tek Postgres (kuyruk/outbox dahil)."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Docker Swarm"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yatay ölçek opsiyonu; stateless servis + paylaşılan Postgres/obje deposu; secret/config Swarm yönetiminde."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kubernetes"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Opsiyon; 12-faktör, sağlık probu, HPA, NetworkPolicy, dış sır yöneticisi; durum dışarıda."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Shared hosting (WordPress benzeri)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yalnız statik/headless dağıtım (bu site gibi) ya da yönetilen Postgres; uzun-süren worker/queue gerektiren özellik desteklenmez — açıkça beyan et."
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-h-8",
+    "type": "heading",
+    "level": 3,
+    "text": "7. Otomatik ECA kuralları"
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Deklaratif Olay-Koşul-Eylem (no-code) — güvenlik kapısı: döngü/yan-tenant/derinlik>6/idempotency; dış etki n8n allowlist + step-up ("
+     },
+     {
+      "type": "ref",
+      "text": "adr-0019",
+      "refId": "adr-0019"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "ref",
+      "text": "l1-workflow",
+      "refId": "l1-workflow"
+     },
+     {
+      "type": "text",
+      "text": ")."
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-code",
+    "type": "codeBlock",
+    "title": "ECA kuralı — Boyut 1 — Ops/DevOps Operatör Konsolu",
+    "language": "yaml",
+    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Boyut 1 — Ops/DevOps Operatör Konsolu\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "copyEnabled": true
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-h-9",
+    "type": "heading",
+    "level": 3,
+    "text": "8. Default AI ajan davranışı"
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-co-2",
+    "type": "callout",
+    "variant": "info",
+    "title": "Yetki tavanı (ADR-0015)",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan asla principal değildir; bir aktör adına çalışır. Etkin yetki = kullanıcı ∩ agent_capability ∩ tool_scope ∩ aksiyon_riski. Planlama serbest, uygulama capability-gated; DisableProtection (RLS/PII/audit kapatma) hiçbir koşulda önerilemez; yüksek-riskli aksiyon out-of-band step-up ister ("
+     },
+     {
+      "type": "ref",
+      "text": "sus-actions",
+      "refId": "sus-actions"
+     },
+     {
+      "type": "text",
+      "text": "). AI kendi çıktısını son onay sayamaz: bağımsız review + deterministik kapı + insan reviewer."
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-h-10",
+    "type": "heading",
+    "level": 3,
+    "text": "9. Test stratejisi ve döngüleri"
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-table-4",
+    "type": "table",
+    "caption": "Test katmanları ({{ref:edu-u16}})",
+    "columns": [
+     "Katman",
+     "Kapsam / kapı"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Unit"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Saf mantık, Atom kuralları, şema doğrulama; kırmızı-önce."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Contract / entegrasyon"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Module sınırı, RLS, negatif + komşu-tenant yetki testi."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "E2E (Playwright)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Ana akış + alternatif + hata akışı; AI-ajan destekli senaryo üretimi."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "User journey"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Önkoşul→yetki→ana/alternatif/hata→invariant→audit→SLO→kabul testi."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A11y"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "axe-core WCAG taraması (Playwright); klavye + ekran okuyucu."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Autonomous QA"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Ajan testi yazar/çalıştırır; testing loop: düzelene kadar "
+       },
+       {
+        "type": "strong",
+        "text": "en fazla 6 kez"
+       },
+       {
+        "type": "text",
+        "text": ", 6'da düzelmezse otomatik durur ve raporlar."
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-h-11",
+    "type": "heading",
+    "level": 3,
+    "text": "10. Kernel / Core / Module entegrasyonu"
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-dl-3",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Entegre olmalı mı?",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+       }
+      ]
+     },
+     {
+      "term": "Kernel",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
+       },
+       {
+        "type": "ref",
+        "text": "k-tenancy",
+        "refId": "k-tenancy"
+       },
+       {
+        "type": "text",
+        "text": ")."
+       }
+      ]
+     },
+     {
+      "term": "Core",
+      "definition": [
+       {
+        "type": "text",
+        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+       }
+      ]
+     },
+     {
+      "term": "Modüller",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+       }
+      ]
+     },
+     {
+      "term": "Diğer app'ler",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-h-12",
+    "type": "heading",
+    "level": 3,
+    "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
+     }
+    ]
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-h-13",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu birimi üret — kopyalanabilir prompt"
+   },
+   {
+    "id": "block-k-boyut1-ops-panel-urs-code-2",
+    "type": "codeBlock",
+    "title": "Module (Kaya) üretim prompt'u",
+    "language": "text",
+    "code": "SEVİYE: Module / Domain (Kaya) · birim: Boyut 1 — Ops/DevOps Operatör Konsolu\nROL: Domain mimarı. OKU: bu sayfa (k-boyut1-ops-panel), ilgili app plan ağacı, core sözleşmeleri.\nGÖREV: \"Boyut 1 — Ops/DevOps Operatör Konsolu\" module sınırını, ArcheType'larını ve Contract (API kapısı) tanımını çıkar.\nKISIT: Başka module tablosuna dokunma; Contract üzerinden konuş. Capability deny-by-default.\n\nGÖREV SÖZLEŞMESİ — 16 boyutu ÇIKTIDA kanıtla (eksikse dur):\n1) Özellik tanımları + non-goal.  2) Güvenlik önlemleri (OWASP Top 10:2025 her madde için karşılık).  3) Kod optimizasyonu.  4) Güvenlik optimizasyonu (en az yetki, sır yönetimi).  5) Performans optimizasyonu (keyset pagination, p95 SLO).  6) Mobil + Chrome extension uyumu (Contract, offline, ≥44px).  7) WCAG 2.2 AAA (axe-core kanıtı).  8) Dağıtım: Docker Compose + Swarm + Kubernetes + shared-hosting beyanı.  9) Otomatik ECA kuralları (döngü/derinlik-6/idempotency kapısı).  10) Default AI ajan davranışı (capability-gated, principal değil, step-up).  11) Testler: unit + entegrasyon + e2e + user journey + a11y; AI-destekli Playwright; testing loop en fazla 6 kez, düzelmezse raporla; autonomous QA.  12) OWASP + ASVS + NIST SSDF.  13) Kernel/Core/Module entegrasyonu (entegre olmalı mı, nasıl).  14) Module ise diğer app'ler nasıl tüketir.\nÇIKTI: testler önce (kırmızı→yeşil kanıt) → tanımlar/yaml → uygulama → değişen dosyalar + komut çıktısı + açık riskler. Testi/eşiği geçmek için gevşetme yapma.\nÖNCE faz prompt'larını uygula (Gereksinim, Tasarım), sonra İnşa/Doğrulama. be-sdk sırası: testler ÖNCE (kırmızı) → yaml taslaklar → uygulama. Küçük PR + kanıt. Komşuluk kuralını ihlal etme.",
+    "copyEnabled": true
+   }
+  ]
+ }
+}

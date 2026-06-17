@@ -62,7 +62,157 @@
     "type": "codeBlock",
     "title": "ddd_moduler_monolith/",
     "language": "text",
-    "code": "ddd_moduler_monolith/\n├─ framework/   # Layer 0 + Scale + Layer 1\n│  ├─ kernel/\n│  │  ├─ schema/   # ArcheType engine\n│  │  ├─ identity/\n│  │  ├─ authz/   # RBAC + ABAC + ReBAC + RLS\n│  │  ├─ tenancy/\n│  │  ├─ events/   # bus + outbox\n│  │  ├─ polyglot/   # embedded JS / sidecar / WASM\n│  │  └─ modül/   # registry + manifest\n│  ├─ scale/\n│  │  ├─ projection.py\n│  │  ├─ counter.py\n│  │  ├─ workers.py\n│  │  ├─ scheduler.py\n│  │  ├─ saga.py\n│  │  └─ idempotency.py\n│  ├─ layer1/\n│  │  ├─ party/\n│  │  ├─ file/\n│  │  ├─ workflow/\n│  │  ├─ notification/\n│  │  ├─ audit/\n│  │  ├─ search/   # FTS + pgvector + reranker\n│  │  ├─ calendar/\n│  │  ├─ i18n/\n│  │  ├─ money/\n│  │  ├─ realtime/\n│  │  ├─ webhook/\n│  │  ├─ api/   # REST + GraphQL autogen\n│  │  └─ reporting/\n│  └─ sdk/\n│     ├─ python/\n│     └─ typescript/\n├─ modules/   # Layer 2 — first-party\n│  ├─ commerce/\n│  ├─ accounting/\n│  │  ├─ ebelge/   # TR e-Fatura/e-Arşiv/e-İrsaliye\n│  │  ├─ edefter/\n│  │  └─ beyanname/\n│  ├─ hrms/\n│  ├─ pms/\n│  ├─ lms/\n│  ├─ cms/\n│  ├─ social/\n│  ├─ mrp/\n│  ├─ ai/\n│  ├─ marketing/\n│  ├─ helpdesk/\n│  ├─ drive/\n│  └─ tr_compliance/   # KVKK, SGK, MERSİS\n├─ ui/   # Flowbite React (Next.js yasak)\n├─ docs/\n├─ tests/\n└─ pyproject.toml"
+    "code": "ddd_moduler_monolith/\n├─ framework/   # Layer 0 + Scale + Layer 1\n│  ├─ kernel/\n│  │  ├─ schema/   # ArcheType engine\n│  │  ├─ identity/\n│  │  ├─ authz/   # RBAC + ABAC + ReBAC + RLS\n│  │  ├─ tenancy/\n│  │  ├─ events/   # bus + outbox\n│  │  ├─ polyglot/   # embedded JS / sidecar / WASM\n│  │  └─ modül/   # registry + manifest\n│  ├─ scale/\n│  │  ├─ projection.py\n│  │  ├─ counter.py\n│  │  ├─ workers.py\n│  │  ├─ scheduler.py\n│  │  ├─ saga.py\n│  │  └─ idempotency.py\n│  ├─ layer1/\n│  │  ├─ party/\n│  │  ├─ file/\n│  │  ├─ workflow/\n│  │  ├─ notification/\n│  │  ├─ audit/\n│  │  ├─ search/   # FTS + pgvector + reranker\n│  │  ├─ calendar/\n│  │  ├─ i18n/\n│  │  ├─ money/\n│  │  ├─ realtime/\n│  │  ├─ webhook/\n│  │  ├─ api/   # REST + GraphQL autogen\n│  │  └─ reporting/\n│  └─ sdk/\n│     ├─ python/\n│     └─ typescript/\n├─ modules/   # Layer 2 — first-party\n│  ├─ commerce/\n│  ├─ accounting/\n│  │  ├─ ebelge/   # TR e-Fatura/e-Arşiv/e-İrsaliye\n│  │  ├─ edefter/\n│  │  └─ beyanname/\n│  ├─ hrms/\n│  ├─ pms/\n│  ├─ lms/\n│  ├─ cms/\n│  ├─ social/\n│  ├─ mrp/\n│  ├─ ai/\n│  ├─ marketing/\n│  ├─ helpdesk/\n│  ├─ drive/\n│  └─ tr_compliance/   # KVKK, SGK, MERSİS\n├─ ui/   # Radix primitives + token seti (Next.js/Redux/Flowbite-çekirdek yasak — ADR-0025)\n├─ infra/   # Docker/compose, CI workflow'ları (.github/workflows), sunucu + deploy artefaktları\n│  ├─ docker/   # Dockerfile + compose dosyaları\n│  ├─ workflows/   # ci.yml, deploy-pages.yml, deploy-backend.yml (henüz iskelet)\n│  └─ deploy/   # self-host compose + sunucu artefaktları\n├─ docs/\n├─ tests/\n└─ pyproject.toml"
+   },
+   {
+    "id": "block-file-layout-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Birleşik kök = `apps/ + packages/ + infra/`."
+     },
+     {
+      "type": "text",
+      "text": " Tek monorepo üç üst dizinde toplanır: "
+     },
+     {
+      "type": "strong",
+      "text": "`apps/`"
+     },
+     {
+      "type": "text",
+      "text": " çalıştırılabilir uygulamalar (backend "
+     },
+     {
+      "type": "code",
+      "text": "api"
+     },
+     {
+      "type": "text",
+      "text": ", frontend "
+     },
+     {
+      "type": "code",
+      "text": "web"
+     },
+     {
+      "type": "text",
+      "text": "); "
+     },
+     {
+      "type": "strong",
+      "text": "`packages/`"
+     },
+     {
+      "type": "text",
+      "text": " paylaşılan kütüphaneler (token seti, "
+     },
+     {
+      "type": "code",
+      "text": "ui"
+     },
+     {
+      "type": "text",
+      "text": " çekirdeği, SDK'lar); "
+     },
+     {
+      "type": "strong",
+      "text": "`infra/`"
+     },
+     {
+      "type": "text",
+      "text": " dağıtım katmanı = Docker/compose, CI workflow'ları ("
+     },
+     {
+      "type": "code",
+      "text": ".github/workflows"
+     },
+     {
+      "type": "text",
+      "text": ") ve sunucu/deploy artefaktları. Backend ağacı ("
+     },
+     {
+      "type": "code",
+      "text": "framework/"
+     },
+     {
+      "type": "text",
+      "text": " + "
+     },
+     {
+      "type": "code",
+      "text": "modules/"
+     },
+     {
+      "type": "text",
+      "text": " + "
+     },
+     {
+      "type": "code",
+      "text": "ui/"
+     },
+     {
+      "type": "text",
+      "text": ") bu kökün "
+     },
+     {
+      "type": "code",
+      "text": "apps/api"
+     },
+     {
+      "type": "text",
+      "text": " + "
+     },
+     {
+      "type": "code",
+      "text": "packages/*"
+     },
+     {
+      "type": "text",
+      "text": " tarafına; frontend ("
+     },
+     {
+      "type": "code",
+      "text": "apps/web"
+     },
+     {
+      "type": "text",
+      "text": ") "
+     },
+     {
+      "type": "code",
+      "text": "apps/"
+     },
+     {
+      "type": "text",
+      "text": " tarafına oturur. Üç üst dizin adlandırması ("
+     },
+     {
+      "type": "code",
+      "text": "apps"
+     },
+     {
+      "type": "text",
+      "text": "/"
+     },
+     {
+      "type": "code",
+      "text": "packages"
+     },
+     {
+      "type": "text",
+      "text": "/"
+     },
+     {
+      "type": "code",
+      "text": "infra"
+     },
+     {
+      "type": "text",
+      "text": ") hem backend hem frontend ağacında tutarlıdır."
+     }
+    ]
    },
    {
     "id": "block-file-layout-h-derinlemesine",
@@ -71,7 +221,7 @@
     "text": "Derinlemesine"
    },
    {
-    "id": "block-file-layout-p",
+    "id": "block-file-layout-p-2",
     "type": "paragraph",
     "segments": [
      {

@@ -85,6 +85,80 @@
   {
    "type": "paragraph",
    "text": "Bağlar: müşteri iletişimi ve segmentasyon tarafıyla {{ref:s-marketing}} ile birlikte çalışır (destek→pazarlama döngüsü); sipariş/ürün bağlamı destek biletinde {{ref:s-commerce}} verisinden gelir."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Helpdesk Çekirdek ArcheType'ları"
+  },
+  {
+   "type": "table",
+   "headers": [
+    "ArcheType",
+    "Rol",
+    "Anahtar alanlar",
+    "Bayraklar"
+   ],
+   "rows": [
+    [
+     "**Ticket**",
+     "destek bileti",
+     "subject, status, priority, party_id, queue_id",
+     "pii (müşteri), audit"
+    ],
+    [
+     "**SLA**",
+     "süre taahhüdü (plan-bazlı sayaç)",
+     "plan, first_response_min, resolve_min, breached",
+     "audit"
+    ],
+    [
+     "**Queue**",
+     "bilet kuyruğu",
+     "name, routing_rule",
+     "—"
+    ],
+    [
+     "**Agent**",
+     "temsilci",
+     "user_id, skills, capacity",
+     "—"
+    ],
+    [
+     "**KnowledgeArticle**",
+     "bilgi bankası",
+     "title, body, searchable(embedding)",
+     "—"
+    ]
+   ]
+  },
+  {
+   "type": "feature-list",
+   "title": "Davranış ve bağlantı kuralları",
+   "items": [
+    {
+     "name": "Ticket → Party Link",
+     "desc": "Bilet talep sahibini yeni bir kişi tablosuyla değil, platformun ortak Party ArcheType'ına Link ile bağlar ({{ref:l1-party}}); aynı müşteri muhasebede cari, sözleşmede taraf, destekte talep sahibi olarak tek kaynaktan görünür."
+    },
+    {
+     "name": "Durum + eskalasyon Workflow ile (if-else YOK)",
+     "desc": "Bilet durumu (open → pending → resolved → closed) ve eskalasyon ArcheType şemasına gömülmez; if-else tip dallanması yazılmaz, davranış ArcheType'tan bağımsız ve versiyonlu Workflow olarak tanımlanır. Süreç değişince şema migrasyonu değil, yeni Workflow sürümü yayınlanır."
+    },
+    {
+     "name": "SLA aşımı eskalasyonu tetikler",
+     "desc": "SLA süresi (first_response_min / resolve_min) aşıldığında breached işaretlenir ve eskalasyon Workflow'u tetiklenir — sayaç ArcheType alanı olarak okunur/filtrelenir, eskalasyon ayrı bir kod yolu değil bir Workflow geçişidir."
+    },
+    {
+     "name": "Sipariş bağlamı Commerce'ten Contract ile",
+     "desc": "Destek bileti sipariş/ürün bağlamını Commerce tablolarını doğrudan okuyarak değil, Contract arayüzü üzerinden alır (doğrudan tablo okuma YOK); modüller arası bağ sözleşmeyle kurulur, veri sahipliği bozulmaz."
+    }
+   ]
+  },
+  {
+   "type": "callout",
+   "variant": "info",
+   "label": "Surface projeksiyonları",
+   "body": "Helpdesk ArcheType'ları doğrudan ekran değildir; her görünüm bir **Surface** projeksiyonudur ({{ref:k-surface}}): **bilet kuyruğu** (Queue + Ticket, routing'e göre sütunlu liste), **bilet detay** (Ticket + Party + SLA sayacı tek ekranda), **KB arama** (KnowledgeArticle, embedding ile semantik arama), **360° müşteri** (Party + geçmiş Ticket + Activity birleştirilir)."
   }
  ],
  "enrich": {

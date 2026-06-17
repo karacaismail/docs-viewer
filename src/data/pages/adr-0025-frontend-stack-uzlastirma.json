@@ -1,0 +1,2070 @@
+{
+ "__generated": "tools/migrate — elle düzenleme yasak (04 §1)",
+ "schemaVersion": "1.0",
+ "page": {
+  "id": "page-adr-0025-frontend-stack-uzlastirma",
+  "sourceId": "adr-0025-frontend-stack-uzlastirma",
+  "slug": "kararlar/adr-0025-frontend-stack-uzlastirma",
+  "title": "ADR-0025: Frontend Stack Uzlaştırma — Roadmap ↔ Katalog Çelişkilerini Kapat",
+  "summary": "Roadmap ile katalog arasındaki 8 çelişkiyi tek bağlayıcı kararla kilitler: Roboto/300/1rem, Phosphor-CDN, emoji yasak, GraphQL+codegen, TanStack Router, Radix+SCSS çekirdek (Flowbite yalnız karşılaştırma-tablosu sunumu), genişletilmiş anti-stack, Vite build-time prerender.",
+  "categoryId": "kararlar",
+  "tags": [
+   "adr",
+   "frontend",
+   "stack",
+   "tipografi",
+   "graphql",
+   "router",
+   "anti-stack",
+   "uzlaştırma"
+  ],
+  "meta": {
+   "granularity": "kaya",
+   "state": "wip",
+   "badge": "KARAR"
+  },
+  "owner": "Mimari karar sahibi",
+  "reviewer": "Mimari karar kurulu",
+  "maturity": "taslak",
+  "lastVerified": null,
+  "evidence": [],
+  "prerequisites": [],
+  "nonGoals": [
+   "Bu sayfa tek başına üretim onayı veya uzman incelemesi yerine geçmez."
+  ],
+  "failureModes": [
+   "Tanım, ölçülebilir kabul testi ve sorumlu reviewer olmadan doğrudan üretime uygulanır."
+  ],
+  "acceptanceCriteria": [
+   "Sahip ve reviewer atanmıştır; ilgili otomatik kapılar yeşildir; açık varsayımlar kayıtlıdır."
+  ],
+  "operationalImpact": "Bağlayıcı mimari kararları ve sonraki uygulama adımlarını etkiler.",
+  "externalReviewRequired": false,
+  "related": [
+   "page-fe-anti-stack",
+   "page-fe-monorepo",
+   "page-be-kararlar"
+  ],
+  "relations": [
+   {
+    "type": "supersedes",
+    "target": "page-fe-core-ui"
+   },
+   {
+    "type": "uses",
+    "target": "page-cc-graphql-guvenlik"
+   },
+   {
+    "type": "uses",
+    "target": "page-fe-theme"
+   },
+   {
+    "type": "sibling",
+    "target": "page-adr-0023-ia-navigasyon"
+   }
+  ],
+  "blocks": [
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-ozet",
+    "type": "callout",
+    "variant": "info",
+    "title": "Özet",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Frontend stack'inde roadmap ile katalog arasındaki 8 çelişkiyi tek bağlayıcı kararla kapatan uzlaştırma; tipografi, ikon, emoji, teslim API'si, router, çekirdek UI, anti-stack ve prerender sahipliğini kilitler."
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-kv",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Durum",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kabul (wip) — bağlayıcı; çelişen kayıtları ezer"
+       }
+      ]
+     },
+     {
+      "term": "Bağlam",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Frontend tanımının iki kaynağı (yol haritası ↔ katalog) arasında 8 çelişki birikti: tipografi, ikon, emoji, teslim API'si, router, çekirdek UI, anti-stack kapsamı ve prerender sahipliği farklı yerlerde farklı kayıtlı"
+       }
+      ]
+     },
+     {
+      "term": "Karar",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tek bağlayıcı uzlaştırma: "
+       },
+       {
+        "type": "strong",
+        "text": "Roboto/300/1rem"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "strong",
+        "text": "Phosphor CDN"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "strong",
+        "text": "emoji YASAK"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "strong",
+        "text": "GraphQL + codegen"
+       },
+       {
+        "type": "text",
+        "text": " (tip şemadan üretilir), "
+       },
+       {
+        "type": "strong",
+        "text": "TanStack Router"
+       },
+       {
+        "type": "text",
+        "text": ", "
+       },
+       {
+        "type": "strong",
+        "text": "Radix çekirdek + SCSS token"
+       },
+       {
+        "type": "text",
+        "text": " (Flowbite yalnız karşılaştırma-tablosu sunumu), genişletilmiş "
+       },
+       {
+        "type": "strong",
+        "text": "anti-stack"
+       },
+       {
+        "type": "text",
+        "text": " (Next.js + Redux + çekirdek Flowbite), "
+       },
+       {
+        "type": "strong",
+        "text": "Vite build-time prerender"
+       },
+       {
+        "type": "text",
+        "text": " sahibi"
+       }
+      ]
+     },
+     {
+      "term": "Sonuç",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Çelişen eski kayıtlar supersede edilir ("
+       },
+       {
+        "type": "ref",
+        "text": "fe-core-ui",
+        "refId": "fe-core-ui"
+       },
+       {
+        "type": "text",
+        "text": ": OpenAPI/router/çekirdek-Flowbite güncellenir); tipler "
+       },
+       {
+        "type": "code",
+        "text": "codegen"
+       },
+       {
+        "type": "text",
+        "text": " ile şemadan üretilir; güvenlik "
+       },
+       {
+        "type": "ref",
+        "text": "cc-graphql-guvenlik",
+        "refId": "cc-graphql-guvenlik"
+       },
+       {
+        "type": "text",
+        "text": "'e bağlanır; her sayfa bu ADR'yi tek doğruluk kaynağı alır"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-h-8-celiski-onceki-karar-gerekce",
+    "type": "heading",
+    "level": 2,
+    "text": "8 çelişki — önceki ↔ karar ↔ gerekçe"
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-table",
+    "type": "table",
+    "caption": "Roadmap ile katalog arasındaki sekiz çelişki ve bağlayıcı çözüm",
+    "columns": [
+     "Konu",
+     "Önceki / Çelişki",
+     "Karar",
+     "Gerekçe"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Ç1 · Tipografi"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Inter (roadmap) ↔ farklı kayıtlar; kalınlık/min boy belirsiz"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "Roboto"
+       },
+       {
+        "type": "text",
+        "text": ", en hafif kalınlık "
+       },
+       {
+        "type": "strong",
+        "text": "300"
+       },
+       {
+        "type": "text",
+        "text": ", en küçük metin "
+       },
+       {
+        "type": "strong",
+        "text": "1rem"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tek tipografi ailesi + okunabilir taban; Inter supersede edilir, sub-1rem metin yok"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Ç2 · İkon"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Phosphor npm paketi ↔ CDN belirsiz"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "Phosphor"
+       },
+       {
+        "type": "text",
+        "text": ", dağıtım "
+       },
+       {
+        "type": "strong",
+        "text": "CDN"
+       },
+       {
+        "type": "text",
+        "text": " (npm değil)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Sürüm pinli CDN ile bundle şişmez; ikon dağıtımı tek hatta sabitlenir"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Ç3 · Emoji"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Arayüz/içerikte emoji kullanımı serbest sanılıyor"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Emoji "
+       },
+       {
+        "type": "strong",
+        "text": "YASAK"
+       },
+       {
+        "type": "text",
+        "text": " (arayüz ve içerik)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tutarlı kurumsal sunum + a11y/okuma netliği; ikon yerine Phosphor"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Ç4 · Teslim API'si"
+       }
+      ],
+      [
+       {
+        "type": "code",
+        "text": "fe-core-ui"
+       },
+       {
+        "type": "text",
+        "text": " OpenAPI + openapi-typescript ↔ AGENTS.md 'varsayılan GraphQL'"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "GraphQL + codegen"
+       },
+       {
+        "type": "text",
+        "text": " (tipler şemadan üretilir, elle yazılmaz)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "AGENTS.md ile hizalı; tek şema → tip; güvenlik "
+       },
+       {
+        "type": "ref",
+        "text": "cc-graphql-guvenlik",
+        "refId": "cc-graphql-guvenlik"
+       },
+       {
+        "type": "text",
+        "text": "'e bağlı; "
+       },
+       {
+        "type": "code",
+        "text": "fe-core-ui"
+       },
+       {
+        "type": "text",
+        "text": " OpenAPI kararı güncellenir"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Ç5 · Router"
+       }
+      ],
+      [
+       {
+        "type": "code",
+        "text": "fe-core-ui"
+       },
+       {
+        "type": "text",
+        "text": " React Router v7 ↔ "
+       },
+       {
+        "type": "ref",
+        "text": "fe-theme",
+        "refId": "fe-theme"
+       },
+       {
+        "type": "text",
+        "text": "/be-sdk TanStack hizası"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "TanStack Router"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tip-güvenli rota + TanStack ekosistemiyle hizalı; React Router v7 supersede edilir"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Ç6 · Temel UI"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Çekirdek = Flowbite Pro ↔ SCSS token çekirdek"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "Radix çekirdek + SCSS token"
+       },
+       {
+        "type": "text",
+        "text": "; Flowbite YALNIZ karşılaştırma-tablosu sunumunda"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Çekirdek bileşen ve kernel bağımlılığı Flowbite değil; Flowbite kapsamı yalnız karşılaştırma tabloları"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Ç7 · Anti-stack"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Next.js yasak kayıtlı; Redux + çekirdek Flowbite eksik"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "Next.js + Redux + Flowbite(çekirdek)"
+       },
+       {
+        "type": "text",
+        "text": " yasak"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Redux açıkça eklenir; Flowbite kapsamı yalnız karşılaştırma tablosu; "
+       },
+       {
+        "type": "ref",
+        "text": "fe-anti-stack",
+        "refId": "fe-anti-stack"
+       },
+       {
+        "type": "text",
+        "text": " genişletilir"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Ç8 · Prerender/SSG"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Prerender/SSG sahibi belirsiz; SSR riski"
+       }
+      ],
+      [
+       {
+        "type": "strong",
+        "text": "Vite build-time prerender"
+       },
+       {
+        "type": "text",
+        "text": " hattı sahibi (SSR yok)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tek sahip-karar; build-time statik üretim, sunucu render'ı yok"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-h-kilitli-kararlar-boyut-bazinda",
+    "type": "heading",
+    "level": 2,
+    "text": "Kilitli kararlar — boyut bazında"
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-feat",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Tipografi",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Aile "
+       },
+       {
+        "type": "strong",
+        "text": "Roboto"
+       },
+       {
+        "type": "text",
+        "text": "; en hafif kalınlık "
+       },
+       {
+        "type": "strong",
+        "text": "300"
+       },
+       {
+        "type": "text",
+        "text": "; en küçük metin "
+       },
+       {
+        "type": "strong",
+        "text": "1rem"
+       },
+       {
+        "type": "text",
+        "text": " (sub-1rem yok). Inter supersede."
+       }
+      ]
+     },
+     {
+      "term": "İkon",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "strong",
+        "text": "Phosphor"
+       },
+       {
+        "type": "text",
+        "text": ", dağıtım "
+       },
+       {
+        "type": "strong",
+        "text": "CDN"
+       },
+       {
+        "type": "text",
+        "text": " (sürüm pinli), npm paketi değil."
+       }
+      ]
+     },
+     {
+      "term": "Emoji",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Arayüz ve içerikte "
+       },
+       {
+        "type": "strong",
+        "text": "YASAK"
+       },
+       {
+        "type": "text",
+        "text": "; semantik ihtiyaçta Phosphor ikonu kullanılır."
+       }
+      ]
+     },
+     {
+      "term": "Teslim API'si",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "strong",
+        "text": "GraphQL + codegen"
+       },
+       {
+        "type": "text",
+        "text": ": tipler şemadan üretilir, elle yazılmaz. Güvenlik sözleşmesi "
+       },
+       {
+        "type": "ref",
+        "text": "cc-graphql-guvenlik",
+        "refId": "cc-graphql-guvenlik"
+       },
+       {
+        "type": "text",
+        "text": "."
+       }
+      ]
+     },
+     {
+      "term": "Router",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "strong",
+        "text": "TanStack Router"
+       },
+       {
+        "type": "text",
+        "text": " (tip-güvenli). React Router v7 supersede."
+       }
+      ]
+     },
+     {
+      "term": "Çekirdek UI",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "strong",
+        "text": "Radix çekirdek + SCSS token"
+       },
+       {
+        "type": "text",
+        "text": ". Flowbite YALNIZ karşılaştırma-tablosu sunumunda; çekirdek bileşen/kernel bağımlılığı değil."
+       }
+      ]
+     },
+     {
+      "term": "Anti-stack",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "strong",
+        "text": "Next.js + Redux + Flowbite(çekirdek)"
+       },
+       {
+        "type": "text",
+        "text": " yasak. Redux açıkça eklenir; Flowbite kapsamı yalnız karşılaştırma tabloları."
+       }
+      ]
+     },
+     {
+      "term": "Prerender/SSG",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Sahip "
+       },
+       {
+        "type": "strong",
+        "text": "Vite build-time prerender"
+       },
+       {
+        "type": "text",
+        "text": " hattı (SSR yok). Bir sahip-karar olarak işaretli."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-h-teslim-api-si-graphql-codegen-sozlesmesi",
+    "type": "heading",
+    "level": 2,
+    "text": "Teslim API'si — GraphQL + codegen sözleşmesi"
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-co",
+    "type": "callout",
+    "variant": "info",
+    "title": "Tip şemadan üretilir",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Teslim API'si "
+     },
+     {
+      "type": "strong",
+      "text": "GraphQL"
+     },
+     {
+      "type": "text",
+      "text": "; istemci tipleri "
+     },
+     {
+      "type": "strong",
+      "text": "codegen"
+     },
+     {
+      "type": "text",
+      "text": " ile şemadan üretilir, "
+     },
+     {
+      "type": "strong",
+      "text": "elle yazılmaz"
+     },
+     {
+      "type": "text",
+      "text": ". AGENTS.md zaten 'API varsayılanı GraphQL' der; çelişen tek kayıt olan "
+     },
+     {
+      "type": "ref",
+      "text": "fe-core-ui",
+      "refId": "fe-core-ui"
+     },
+     {
+      "type": "text",
+      "text": "'deki OpenAPI/"
+     },
+     {
+      "type": "code",
+      "text": "openapi-typescript"
+     },
+     {
+      "type": "text",
+      "text": " kararı güncellenir. Güvenlik (depth/complexity/persisted query) sözleşmesi "
+     },
+     {
+      "type": "ref",
+      "text": "cc-graphql-guvenlik",
+      "refId": "cc-graphql-guvenlik"
+     },
+     {
+      "type": "text",
+      "text": "'e bağlıdır."
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-h-flowbite-in-daraltilmis-kapsami",
+    "type": "heading",
+    "level": 2,
+    "text": "Flowbite'ın daraltılmış kapsamı"
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-co-2",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Yalnız karşılaştırma-tablosu sunumu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Flowbite "
+     },
+     {
+      "type": "strong",
+      "text": "çekirdek bileşen değildir"
+     },
+     {
+      "type": "text",
+      "text": " ve "
+     },
+     {
+      "type": "strong",
+      "text": "kernel bağımlılığı değildir"
+     },
+     {
+      "type": "text",
+      "text": ". Tek izinli kullanımı "
+     },
+     {
+      "type": "strong",
+      "text": "karşılaştırma-tablosu sunumudur"
+     },
+     {
+      "type": "text",
+      "text": ". Çekirdek bileşenler "
+     },
+     {
+      "type": "strong",
+      "text": "Radix + SCSS token"
+     },
+     {
+      "type": "text",
+      "text": " ile kurulur; uygulama gövdesi Flowbite'a bağlanamaz. Anti-stack çekirdek Flowbite'ı yasaklar; bu kapsam istisnası yalnızca tablo sunumu içindir."
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-h-uygulama-asamalari",
+    "type": "heading",
+    "level": 2,
+    "text": "Uygulama aşamaları"
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-h-once-karar-guvenlik-sonra-katalog-sonra-paneller",
+    "type": "heading",
+    "level": 3,
+    "text": "Önce karar + güvenlik, sonra katalog, sonra paneller"
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-steps",
+    "type": "stepList",
+    "steps": [
+     {
+      "title": "Faz 1 · ADR + güvenlik sayfası",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Bu ADR (tek doğruluk kaynağı) yazılır ve GraphQL güvenlik sözleşmesi "
+       },
+       {
+        "type": "ref",
+        "text": "cc-graphql-guvenlik",
+        "refId": "cc-graphql-guvenlik"
+       },
+       {
+        "type": "text",
+        "text": " bağlanır. Sekiz çelişki burada kilitlenir; sonraki tüm güncellemeler buraya referans verir."
+       }
+      ]
+     },
+     {
+      "title": "Faz 2 · Katalog hizalama",
+      "segments": [
+       {
+        "type": "ref",
+        "text": "fe-core-ui",
+        "refId": "fe-core-ui"
+       },
+       {
+        "type": "text",
+        "text": " güncellenir (OpenAPI→GraphQL+codegen, React Router v7→TanStack Router, çekirdek Flowbite→Radix+SCSS, Flowbite yalnız tablo); "
+       },
+       {
+        "type": "ref",
+        "text": "fe-theme",
+        "refId": "fe-theme"
+       },
+       {
+        "type": "text",
+        "text": " tipografi/ikon token'ları Roboto/300/1rem + Phosphor-CDN'e hizalanır; "
+       },
+       {
+        "type": "ref",
+        "text": "fe-anti-stack",
+        "refId": "fe-anti-stack"
+       },
+       {
+        "type": "text",
+        "text": " Redux + çekirdek Flowbite ile genişletilir; emoji yasağı işlenir."
+       }
+      ]
+     },
+     {
+      "title": "Faz 3 · Panel sayfaları",
+      "segments": [
+       {
+        "type": "text",
+        "text": "Surface/panel sayfaları yeni çekirdeğe (Radix + SCSS token, TanStack Router, GraphQL codegen istemcisi) ve Vite build-time prerender hattına göre güncellenir. Flowbite yalnız karşılaştırma-tablosu sunumunda kalır."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-h-bagli-kararlar",
+    "type": "heading",
+    "level": 2,
+    "text": "Bağlı kararlar"
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-kv-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Supersede",
+      "definition": [
+       {
+        "type": "ref",
+        "text": "fe-core-ui",
+        "refId": "fe-core-ui"
+       },
+       {
+        "type": "text",
+        "text": " — OpenAPI teslim, React Router v7 ve çekirdek Flowbite kararlarını ezer"
+       }
+      ]
+     },
+     {
+      "term": "Kullanır (güvenlik)",
+      "definition": [
+       {
+        "type": "ref",
+        "text": "cc-graphql-guvenlik",
+        "refId": "cc-graphql-guvenlik"
+       },
+       {
+        "type": "text",
+        "text": " — GraphQL teslim API'sinin güvenlik sözleşmesi"
+       }
+      ]
+     },
+     {
+      "term": "Kullanır (tema)",
+      "definition": [
+       {
+        "type": "ref",
+        "text": "fe-theme",
+        "refId": "fe-theme"
+       },
+       {
+        "type": "text",
+        "text": " — Roboto/300/1rem tipografi ve Phosphor-CDN ikon token'larının sunum sahibi"
+       }
+      ]
+     },
+     {
+      "term": "Kardeş",
+      "definition": [
+       {
+        "type": "ref",
+        "text": "adr-0023",
+        "refId": "adr-0023"
+       },
+       {
+        "type": "text",
+        "text": " — IA/navigasyon kararıyla hizalı (tech-stack simetrisi, tipli ilişki)"
+       }
+      ]
+     },
+     {
+      "term": "İlgili",
+      "definition": [
+       {
+        "type": "ref",
+        "text": "fe-anti-stack",
+        "refId": "fe-anti-stack"
+       },
+       {
+        "type": "text",
+        "text": " (Redux + çekirdek Flowbite yasağı), "
+       },
+       {
+        "type": "ref",
+        "text": "fe-monorepo",
+        "refId": "fe-monorepo"
+       },
+       {
+        "type": "text",
+        "text": " (paket yerleşimi), "
+       },
+       {
+        "type": "ref",
+        "text": "be-kararlar",
+        "refId": "be-kararlar"
+       },
+       {
+        "type": "text",
+        "text": " (backend karar hizası)"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-co-3",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Geri-dönüş & risk",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Risk: çelişkiler kilitlenmeden kod yazılırsa her sayfa kendi stack'ini varsayar, tip/tema tutarsızlığı üretim hattını kırar. Geri-dönüş: bu ADR tek doğruluk kaynağıdır; bir karar değişirse yeni ADR + bu sayfanın güncellenmesi gerekir, sayfalar tek tek düzeltilmez. GraphQL teslimine geçiş codegen kapısına ("
+     },
+     {
+      "type": "ref",
+      "text": "cc-graphql-guvenlik",
+      "refId": "cc-graphql-guvenlik"
+     },
+     {
+      "type": "text",
+      "text": ") bağlıdır; şema kırılırsa tipler üretilmez ve build kapıda durur. Flowbite kapsam istisnası yalnız karşılaştırma-tablosu sunumudur; çekirdeğe sızarsa anti-stack ihlali sayılır."
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu karar bağlayıcıdır: "
+     },
+     {
+      "type": "ref",
+      "text": "fe-core-ui",
+      "refId": "fe-core-ui"
+     },
+     {
+      "type": "text",
+      "text": " içindeki çelişen kayıtları (teslim API'si, router, çekirdek UI) supersede eder; "
+     },
+     {
+      "type": "ref",
+      "text": "fe-theme",
+      "refId": "fe-theme"
+     },
+     {
+      "type": "text",
+      "text": " tipografi/ikon sunumunu, "
+     },
+     {
+      "type": "ref",
+      "text": "cc-graphql-guvenlik",
+      "refId": "cc-graphql-guvenlik"
+     },
+     {
+      "type": "text",
+      "text": " teslim güvenliğini, "
+     },
+     {
+      "type": "ref",
+      "text": "adr-0023",
+      "refId": "adr-0023"
+     },
+     {
+      "type": "text",
+      "text": " navigasyon hizasını destekler. Sekiz çelişki tek uzlaştırmada kilitlenmiştir."
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-h-derinlemesine",
+    "type": "heading",
+    "level": 2,
+    "text": "Derinlemesine"
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu ADR, frontend tanımının iki kaynağı (yol haritası ve katalog sayfaları) arasında biriken sekiz çelişkiyi tek bir bağlayıcı kararla uzlaştırır. Amaç yeni bir tercih icat etmek değil; çatışan kayıtları kullanıcının kesinleşmiş kararına göre tek doğruluk kaynağına indirmektir. Karar, ilgili sayfalarda dağınık duran eski seçimleri (Inter tipografisi, npm ikon dağıtımı, OpenAPI teslim, React Router v7, çekirdek Flowbite bağımlılığı) açıkça ezer ve yerlerine kilitli kararları koyar."
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Supersede edilen kararlar: (1) "
+     },
+     {
+      "type": "ref",
+      "text": "fe-core-ui",
+      "refId": "fe-core-ui"
+     },
+     {
+      "type": "text",
+      "text": " içindeki "
+     },
+     {
+      "type": "strong",
+      "text": "OpenAPI/openapi-typescript teslim API'si"
+     },
+     {
+      "type": "text",
+      "text": " → GraphQL + codegen ile değişir; (2) "
+     },
+     {
+      "type": "ref",
+      "text": "fe-core-ui",
+      "refId": "fe-core-ui"
+     },
+     {
+      "type": "text",
+      "text": " içindeki "
+     },
+     {
+      "type": "strong",
+      "text": "React Router v7 (framework mode)"
+     },
+     {
+      "type": "text",
+      "text": " → TanStack Router ile değişir; (3) "
+     },
+     {
+      "type": "ref",
+      "text": "fe-core-ui",
+      "refId": "fe-core-ui"
+     },
+     {
+      "type": "text",
+      "text": " içindeki "
+     },
+     {
+      "type": "strong",
+      "text": "çekirdek bileşen = Flowbite Pro"
+     },
+     {
+      "type": "text",
+      "text": " kararı → çekirdek Radix + SCSS token olur, Flowbite kapsamı yalnız karşılaştırma-tablosu sunumuna daraltılır. Tipografi tarafında roadmap'in Inter kaydı Roboto ile, ikon tarafında npm dağıtımı CDN ile ezilir. Bu üç supersede maddesi "
+     },
+     {
+      "type": "code",
+      "text": "fe-core-ui"
+     },
+     {
+      "type": "text",
+      "text": " sayfasında not edilir; ADR bağlayıcı kalır."
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-p-4",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Neden bu uzlaştırma şimdi: çelişkiler kod yazımından önce kilitlenmezse, eksen kayması (her sayfanın kendi stack'ini varsayması) büyür ve üretim hattı tutarsız tip/temadan kırılır. Teslim API'si GraphQL + codegen olduğundan tipler şemadan üretilir, elle yazılmaz; güvenlik sözleşmesi "
+     },
+     {
+      "type": "ref",
+      "text": "cc-graphql-guvenlik",
+      "refId": "cc-graphql-guvenlik"
+     },
+     {
+      "type": "text",
+      "text": "'e bağlanır. AGENTS.md zaten 'API varsayılanı GraphQL' dediği için bu karar mevcut yönergeyle hizalıdır; çelişen tek kayıt olan "
+     },
+     {
+      "type": "code",
+      "text": "fe-core-ui"
+     },
+     {
+      "type": "text",
+      "text": "'deki OpenAPI kararı güncellenir."
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-div",
+    "type": "divider"
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-h",
+    "type": "heading",
+    "level": 2,
+    "text": "Üretim Sözleşmesi"
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-p",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu bölüm \"ADR-0025: Frontend Stack Uzlaştırma — Roadmap ↔ Katalog Çelişkilerini Kapat\" birimini üretirken AI ajanın ve geliştiricinin uyması gereken 16 boyutu bağlar. Kanonik sözleşme "
+     },
+     {
+      "type": "ref",
+      "text": "k-surface",
+      "refId": "k-surface"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "ref",
+      "text": "be-sdk",
+      "refId": "be-sdk"
+     },
+     {
+      "type": "text",
+      "text": " ve "
+     },
+     {
+      "type": "ref",
+      "text": "k-terminoloji",
+      "refId": "k-terminoloji"
+     },
+     {
+      "type": "text",
+      "text": "; sıralama testler ÖNCE, küçük PR + kanıt."
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-h-2",
+    "type": "heading",
+    "level": 3,
+    "text": "1. Özellik tanımları"
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-dl",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Karar kapsamı",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "ADR'nin bağladığı invariant; alternatifler ve seçilen yön."
+       }
+      ]
+     },
+     {
+      "term": "Uygulama etkisi",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bu kararın kod/şema/test üzerindeki bağlayıcı sonucu."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-h-3",
+    "type": "heading",
+    "level": 3,
+    "text": "2. Güvenlik önlemleri — OWASP Top 10:2025"
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-table",
+    "type": "table",
+    "caption": "OWASP Top 10:2025 → bu birimde karşılığı",
+    "columns": [
+     "Risk (2025)",
+     "Bu birimde önlem"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "A01 Broken Access Control"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tenant-scoped RLS + capability deny-by-default; negatif/komşu-tenant testi zorunlu."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A02 Security Misconfiguration"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Güvenli varsayılan; sır yönetimi; gereksiz yüzey kapalı."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A03 Software Supply Chain Failures"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Bağımlılık pinleme, SBOM, imzalı yapıt, manifest izin beyanı (WASM sandbox)."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A04 Cryptographic Failures"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Aktarımda/duruşta şifreleme; "
+       },
+       {
+        "type": "code",
+        "text": "pii"
+       },
+       {
+        "type": "text",
+        "text": " alanları maskeli; anahtar rotasyonu."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A05 Injection"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Parametreli sorgu; girdi doğrulama (zod/pydantic); çıktı kodlama."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A06 Insecure Design"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tehdit modeli; Rule of Two; en az yetki; kötüye-kullanım hikâyesi."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A07 Authentication Failures"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Kernel kimliği + OIDC federation; oturum/step-up; kaba-kuvvet limiti."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A08 Software or Data Integrity Failures"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "İmzalı migration; outbox idempotency; değişmez audit zinciri."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A09 Security Logging and Alerting Failures"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yapılandırılmış audit (aktör/tenant/correlation); alarm eşiği; "
+       },
+       {
+        "type": "ref",
+        "text": "l1-audit",
+        "refId": "l1-audit"
+       },
+       {
+        "type": "text",
+        "text": "."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A10 Mishandling of Exceptional Conditions"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Güvenli hata; kısmi yazma yok; telafi/saga; sızıntısız mesaj."
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-co",
+    "type": "callout",
+    "variant": "warning",
+    "title": "Güvenlik optimizasyonu",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
+     },
+     {
+      "type": "code",
+      "text": "pii"
+     },
+     {
+      "type": "text",
+      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+     },
+     {
+      "type": "ref",
+      "text": "adr-0017",
+      "refId": "adr-0017"
+     },
+     {
+      "type": "text",
+      "text": "."
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-h-4",
+    "type": "heading",
+    "level": 3,
+    "text": "3. Optimizasyon — kod, güvenlik, performans"
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-dl-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Kod optimizasyonu",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
+       },
+       {
+        "type": "code",
+        "text": "if (type==...)"
+       },
+       {
+        "type": "text",
+        "text": " yasak — runtime dispatch."
+       }
+      ]
+     },
+     {
+      "term": "Güvenlik optimizasyonu",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Deny-by-default, sır sızıntısı taraması, bağımlılık denetimi CI kapısı."
+       }
+      ]
+     },
+     {
+      "term": "Performans optimizasyonu",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
+       },
+       {
+        "type": "code",
+        "text": "async def"
+       },
+       {
+        "type": "text",
+        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+       }
+      ]
+     },
+     {
+      "term": "Yük profili",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Yüksek-hacimli ArcheType opt-in fiziksel tabloya terfi; aksi halde hibrit şema."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-h-5",
+    "type": "heading",
+    "level": 3,
+    "text": "4. Çok-platform: iOS / Android / Chrome extension"
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-table-2",
+    "type": "table",
+    "columns": [
+     "Hedef",
+     "Uyum kuralı"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "iOS / Android (native)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Contract/GraphQL üzerinden tüketim; offline-first kuyruk; token güvenli saklama; dokunma hedefi ≥44px ("
+       },
+       {
+        "type": "ref",
+        "text": "fe-mobile",
+        "refId": "fe-mobile"
+       },
+       {
+        "type": "text",
+        "text": ")."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Chrome extension"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yalnız Contract'a; içerik betiği en az yetki; CSP sıkı; arka plan mesajlaşma doğrulanır."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "PWA / responsive web"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Tek kod tabanı; 320px'e kadar akışkan; klavye + ekran okuyucu pariteli."
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-h-6",
+    "type": "heading",
+    "level": 3,
+    "text": "5. Erişilebilirlik — WCAG 2.2 AAA"
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-chk",
+    "type": "checklist",
+    "title": "WCAG 2.2 AAA kontrol listesi (Surface taşıyan birimler)",
+    "items": [
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "1.4.6 Kontrast (Gelişmiş) — metinde 7:1 (büyük metin 4.5:1)."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "2.1.3 Klavye (İstisnasız) — tüm işlevler klavyeyle, tuzak yok."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "2.2.6 Zaman aşımı — veri kaybı riski önceden uyarılır."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "2.3.3 Etkileşimden doğan animasyon — kapatılabilir (prefers-reduced-motion)."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "2.4.9 Bağlantı amacı (yalnız bağlantı) — metinden anlaşılır."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "2.4.12/2.4.13 Odak gizlenmez + görünür odak göstergesi."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "2.5.5 Hedef boyutu (Gelişmiş) — 44×44 CSS px."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "3.1.5 Okuma düzeyi — sade dil veya alternatif."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "3.3.9 Erişilebilir kimlik doğrulama (Gelişmiş) — bilişsel test yok."
+       }
+      ]
+     },
+     {
+      "segments": [
+       {
+        "type": "text",
+        "text": "Otomasyon: axe-core (Playwright) + manuel ekran okuyucu; "
+       },
+       {
+        "type": "ref",
+        "text": "cc-a11y-backend",
+        "refId": "cc-a11y-backend"
+       },
+       {
+        "type": "text",
+        "text": "."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-h-7",
+    "type": "heading",
+    "level": 3,
+    "text": "6. Dağıtım uyumluluğu — Swarm / Kubernetes / shared hosting"
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-table-3",
+    "type": "table",
+    "caption": "Taşıyıcı destek matrisi (v1 profili: Debian + Docker Compose)",
+    "columns": [
+     "Taşıyıcı",
+     "Uyum / koşul"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Docker Compose (v1)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Birincil teslim profili; tek Postgres (kuyruk/outbox dahil)."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Docker Swarm"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yatay ölçek opsiyonu; stateless servis + paylaşılan Postgres/obje deposu; secret/config Swarm yönetiminde."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Kubernetes"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Opsiyon; 12-faktör, sağlık probu, HPA, NetworkPolicy, dış sır yöneticisi; durum dışarıda."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Shared hosting (WordPress benzeri)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Yalnız statik/headless dağıtım (bu site gibi) ya da yönetilen Postgres; uzun-süren worker/queue gerektiren özellik desteklenmez — açıkça beyan et."
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-h-8",
+    "type": "heading",
+    "level": 3,
+    "text": "7. Otomatik ECA kuralları"
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Deklaratif Olay-Koşul-Eylem (no-code) — güvenlik kapısı: döngü/yan-tenant/derinlik>6/idempotency; dış etki n8n allowlist + step-up ("
+     },
+     {
+      "type": "ref",
+      "text": "adr-0019",
+      "refId": "adr-0019"
+     },
+     {
+      "type": "text",
+      "text": ", "
+     },
+     {
+      "type": "ref",
+      "text": "l1-workflow",
+      "refId": "l1-workflow"
+     },
+     {
+      "type": "text",
+      "text": ")."
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-code",
+    "type": "codeBlock",
+    "title": "ECA kuralı — ADR-0025: Frontend Stack Uzlaştırma — Roadmap ↔ Katalog Çelişkilerini Kapat",
+    "language": "yaml",
+    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — ADR-0025: Frontend Stack Uzlaştırma — Roadmap ↔ Katalog Çelişkilerini Kapat\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "copyEnabled": true
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-h-9",
+    "type": "heading",
+    "level": 3,
+    "text": "8. Default AI ajan davranışı"
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-co-2",
+    "type": "callout",
+    "variant": "info",
+    "title": "Yetki tavanı (ADR-0015)",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AI ajan asla principal değildir; bir aktör adına çalışır. Etkin yetki = kullanıcı ∩ agent_capability ∩ tool_scope ∩ aksiyon_riski. Planlama serbest, uygulama capability-gated; DisableProtection (RLS/PII/audit kapatma) hiçbir koşulda önerilemez; yüksek-riskli aksiyon out-of-band step-up ister ("
+     },
+     {
+      "type": "ref",
+      "text": "sus-actions",
+      "refId": "sus-actions"
+     },
+     {
+      "type": "text",
+      "text": "). AI kendi çıktısını son onay sayamaz: bağımsız review + deterministik kapı + insan reviewer."
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-h-10",
+    "type": "heading",
+    "level": 3,
+    "text": "9. Test stratejisi ve döngüleri"
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-table-4",
+    "type": "table",
+    "caption": "Test katmanları ({{ref:edu-u16}})",
+    "columns": [
+     "Katman",
+     "Kapsam / kapı"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "text",
+        "text": "Unit"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Saf mantık, Atom kuralları, şema doğrulama; kırmızı-önce."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Contract / entegrasyon"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Module sınırı, RLS, negatif + komşu-tenant yetki testi."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "E2E (Playwright)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Ana akış + alternatif + hata akışı; AI-ajan destekli senaryo üretimi."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "User journey"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Önkoşul→yetki→ana/alternatif/hata→invariant→audit→SLO→kabul testi."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "A11y"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "axe-core WCAG taraması (Playwright); klavye + ekran okuyucu."
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "text",
+        "text": "Autonomous QA"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "Ajan testi yazar/çalıştırır; testing loop: düzelene kadar "
+       },
+       {
+        "type": "strong",
+        "text": "en fazla 6 kez"
+       },
+       {
+        "type": "text",
+        "text": ", 6'da düzelmezse otomatik durur ve raporlar."
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-h-11",
+    "type": "heading",
+    "level": 3,
+    "text": "10. Kernel / Core / Module entegrasyonu"
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-dl-3",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Entegre olmalı mı?",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Dolaylı — bu sayfa kararı/bilgiyi tanımlar; entegrasyon onu uygulayan birimlerde gerçekleşir."
+       }
+      ]
+     },
+     {
+      "term": "Kernel",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
+       },
+       {
+        "type": "ref",
+        "text": "k-tenancy",
+        "refId": "k-tenancy"
+       },
+       {
+        "type": "text",
+        "text": ")."
+       }
+      ]
+     },
+     {
+      "term": "Core",
+      "definition": [
+       {
+        "type": "text",
+        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+       }
+      ]
+     },
+     {
+      "term": "Modüller",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+       }
+      ]
+     },
+     {
+      "term": "Diğer app'ler",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-h-12",
+    "type": "heading",
+    "level": 3,
+    "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-p-3",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
+     }
+    ]
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-h-13",
+    "type": "heading",
+    "level": 2,
+    "text": "Bu birimi üret — kopyalanabilir prompt"
+   },
+   {
+    "id": "block-adr-0025-frontend-stack-uzlastirma-urs-code-2",
+    "type": "codeBlock",
+    "title": "Module (Kaya) üretim prompt'u",
+    "language": "text",
+    "code": "BAĞLAM: Yönetişim/karar · birim: ADR-0025: Frontend Stack Uzlaştırma — Roadmap ↔ Katalog Çelişkilerini Kapat\nROL: Güvenlik/mimari gözden geçiren. OKU: bu sayfa (adr-0025-frontend-stack-uzlastirma) + ilgili ADR/sus sayfaları.\nGÖREV: Bu kuralı/kararı uygulayan birimlerde 16 boyutun nasıl zorlanacağını (kapı + test) tanımla.\nKISIT: Deny-by-default; DisableProtection önerme.\n\nGÖREV SÖZLEŞMESİ — 16 boyutu ÇIKTIDA kanıtla (eksikse dur):\n1) Özellik tanımları + non-goal.  2) Güvenlik önlemleri (OWASP Top 10:2025 her madde için karşılık).  3) Kod optimizasyonu.  4) Güvenlik optimizasyonu (en az yetki, sır yönetimi).  5) Performans optimizasyonu (keyset pagination, p95 SLO).  6) Mobil + Chrome extension uyumu (Contract, offline, ≥44px).  7) WCAG 2.2 AAA (axe-core kanıtı).  8) Dağıtım: Docker Compose + Swarm + Kubernetes + shared-hosting beyanı.  9) Otomatik ECA kuralları (döngü/derinlik-6/idempotency kapısı).  10) Default AI ajan davranışı (capability-gated, principal değil, step-up).  11) Testler: unit + entegrasyon + e2e + user journey + a11y; AI-destekli Playwright; testing loop en fazla 6 kez, düzelmezse raporla; autonomous QA.  12) OWASP + ASVS + NIST SSDF.  13) Kernel/Core/Module entegrasyonu (entegre olmalı mı, nasıl).  14) Module ise diğer app'ler nasıl tüketir.\nÇIKTI: testler önce (kırmızı→yeşil kanıt) → tanımlar/yaml → uygulama → değişen dosyalar + komut çıktısı + açık riskler. Testi/eşiği geçmek için gevşetme yapma.\nÖNCE faz prompt'larını uygula (Gereksinim, Tasarım), sonra İnşa/Doğrulama. be-sdk sırası: testler ÖNCE (kırmızı) → yaml taslaklar → uygulama. Küçük PR + kanıt. Komşuluk kuralını ihlal etme.",
+    "copyEnabled": true
+   }
+  ]
+ }
+}

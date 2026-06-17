@@ -1,0 +1,170 @@
+{
+  "id": "k-boyut3-tenant-panel",
+  "title": "Boyut 3 — Tenant/Müşteri-admin Paneli",
+  "subtitle": "Üçüncü ve en kritik kontrol düzlemi: SaaS müşterisinin kendi işini yönettiği yüzey. Muadil: Shopify admin / Frappe Desk / WordPress wp-admin. Karakteri sıkı izole — müşteri SADECE kendi verisini görür; bağlam yoksa 0 satır, komşu tenant 403. Etkin yetki kesişimdir: kullanıcı ∩ capability ∩ plan.",
+  "cluster": "kernel",
+  "categoryId": "kernel",
+  "order": 20,
+  "icon": "ph-storefront",
+  "granularity": "kaya",
+  "state": "wip",
+  "badge": "Kontrol Düzlemi",
+  "tags": [
+    "boyut3",
+    "tenant",
+    "müşteri",
+    "admin",
+    "panel"
+  ],
+  "parent": "k-control-planes",
+  "relations": [
+    {"type": "belongs-to", "target": "k-control-planes"},
+    {"type": "uses", "target": "k-agent-runtime"},
+    {"type": "uses", "target": "k-tenancy"},
+    {"type": "depends-on", "target": "adr-0015"}
+  ],
+  "related": [
+    "k-authz",
+    "be-sdk",
+    "k-surface"
+  ],
+  "enrich": {
+    "info": "Boyut 3, dört kontrol düzleminin üçüncüsü ve müşteri cephesinin merkezidir ({{ref:k-control-planes}}): SaaS müşterisinin kendi siparişini, biletini, ilanını ve kayıtlarını yönettiği yüzey. Muadili Shopify admin, Frappe Desk ve WordPress wp-admin'dir; farkı, sıkı tenant izolasyonu ({{ref:k-tenancy}}) ve kesişim-yetkisidir ({{ref:adr-0015}}). Müşteri SADECE kendi verisini görür: bağlam yoksa panel 0 satır döner (güvenli varsayılan), komşu tenant'a erişim 403'tür. Dört yeteneği vardır — müşteri dashboard, capability aç-kapa, prompt→ArcheType sihirbazı ve kayıt + kullanıcı/rol yönetimi. En kritik düzlem olmasının nedeni, müşterinin burada hem veri hem yapı üretebilmesidir; bu güç tipli, capability-gated ve plan-limitli bir dar kapıdan geçirilir. Etkin yetki her zaman kullanıcı ∩ capability ∩ plan kesişimidir; menü plana göre çizilir, kapalı modül hiç görünmez.",
+    "detail": "Boyut 3 neden en kritik paneldir? Çünkü diğer üç düzlemden farklı olarak burada son müşteri hem kendi iş verisini (sipariş, bilet, ilan) hem de — prompt sihirbazı yoluyla — kendi yapısını (ArcheType + Surface) üretir. Ops (Boyut 1) yalnız izler ve onayla müdahale eder; developer (Boyut 2) yapıyı düzenler ama tenant verisine dokunmaz; müşteri ise kendi tenant'ı içinde hem veri hem tanım yaratabilir. Bu güç, izolasyon ihlali ya da yetki sızıntısının en pahalı olduğu yerdir: bir müşterinin komşusunun verisini görmesi ürünü bitiren bir olaydır. Bu yüzden iki sözleşme serttir — tenant izolasyonu (bağlam yoksa 0 satır, komşu tenant 403, kimlik asla client'tan değil ctx'ten) ve kesişim-yetkisi (kullanıcı ∩ capability ∩ plan). Capability aç-kapa additiftir: müşteri modül açtığında veri bozulmaz veya silinmez, plan limiti dolunca işlem kibar bir blokla durdurulur ({{ref:k-tenancy}} kota).\n\nPrompt→ArcheType sihirbazının developer-SDK'dan farkı nedir? SDK ({{ref:be-sdk}}) bir geliştirici aracıdır: terminal, YAML, test-first iskelet, geniş yetki. Sihirbaz ise bir müşteri yüzeyidir ve kasıtla dar bir kapıdır. Müşteri düz Türkçe anlatır → sistem ArcheType + Surface önerir → seven-questions ile netleştirir → müşteri onaylar → oluşturulur ({{ref:k-agent-runtime}}). Bu serbest DDL DEĞİLDİR: çıktı tipli, capability-gated ve plan-limitlidir; tehlikeli ya da sistem-açıcı bir istek asla tipli bir yapıya dönüşmez. Kayıtlar Surface tarafından auto-render edilir ({{ref:k-surface}}) ve her aksiyon çift kapıdan geçer: yetki yoksa düğme gizlenir VE sunucu çağrısı reddedilir ({{ref:k-authz}}). Böylece müşteriye verilen üretkenlik, motorun izolasyon ve yetki katmanını atlamadan, müşteri yüzeyine uygun bir frenle çalışır."
+  },
+  "blocks": [
+    {
+      "type": "callout",
+      "variant": "info",
+      "label": "Üçüncü kontrol düzlemi",
+      "body": "Boyut 3, SaaS müşterisinin kendi işini yönettiği müşteri-cephesi paneldir. Muadili Shopify admin, Frappe Desk ve WordPress wp-admin'dir. Bu panel ayrı bir uygulama değil, Surface'in müşteriye özel projeksiyonudur ({{ref:k-surface}}): aynı motor, aynı şema, müşteri kitlesi ve müşteri yetki tavanı. Karakteri **sıkı izole**dir — müşteri **SADECE kendi verisini görür** ({{ref:k-tenancy}}); etkin yetki **kesişimdir**: kullanıcı ∩ capability ∩ plan ({{ref:adr-0015}})."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Kapsam ve kitle"
+    },
+    {
+      "type": "table",
+      "caption": "Boyut 3 — kim, ne yapar, sınır nedir",
+      "headers": [
+        "Boyut",
+        "Değer"
+      ],
+      "rows": [
+        ["Kitle", "SaaS müşterisi (tenant-admin ve davet ettiği kullanıcılar)"],
+        ["Muadil", "Shopify admin · Frappe Desk · WordPress wp-admin"],
+        ["Görünür veri", "**Yalnız kendi tenant'ı**: kendi sipariş/bilet/ilan/kayıtları"],
+        ["İzolasyon", "Bağlam yoksa **0 satır**; komşu tenant **403** ({{ref:k-tenancy}})"],
+        ["Yapı üretimi", "Prompt→ArcheType sihirbazı: tipli, capability-gated, plan-limitli ({{ref:k-agent-runtime}})"],
+        ["Etkin yetki", "Kesişim: **kullanıcı ∩ capability ∩ plan** ({{ref:adr-0015}}); menü plana göre çizilir"]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Dört yetenek"
+    },
+    {
+      "type": "feature-list",
+      "items": [
+        {
+          "name": "1. Müşteri dashboard",
+          "desc": "Müşterinin kendi **sipariş / bilet / ilan** özeti tek bakışta. Menü **plana göre** çizilir: kapalı modül hiç görünmez — görünürlük **izin ∩ plan** kesişimidir ({{ref:adr-0015}}). Tüm sayılar yalnız kendi tenant'ından gelir; başka tenant'ın özeti bu panelde asla belirmez ({{ref:k-tenancy}}).",
+          "critical": false
+        },
+        {
+          "name": "2. Capability aç-kapa",
+          "desc": "Müşteri kendi **planına göre** modül açar/kapatır. Açma **additif**tir: mevcut veri bozulmaz, silinmez, yalnız yeni yetenek eklenir. Plan limiti dolunca işlem **kibar bir blokla** durdurulur — sert hata değil, plana yönlendiren net mesaj ({{ref:k-tenancy}} kota). Plan dışı modül menüde hiç çıkmaz.",
+          "critical": false
+        },
+        {
+          "name": "3. Prompt→ArcheType sihirbazı",
+          "desc": "Müşteri **düz Türkçe** anlatır → sistem **ArcheType + Surface** önerir → **seven-questions** ile netleştirir → müşteri **onaylar** → oluşturulur ({{ref:k-agent-runtime}}, {{ref:be-sdk}}). **Serbest DDL DEĞİL**: çıktı **tipli, capability-gated, plan-limitli**dir. Tehlikeli ya da sistem-açıcı bir istek **tipli yapıya dönüşmez** — dar kapı, müşteri yüzeyine uygun fren.",
+          "critical": true
+        },
+        {
+          "name": "4. Kayıt + kullanıcı/rol yönetimi",
+          "desc": "Müşterinin kendi kayıtları Surface tarafından **auto-render** edilir ({{ref:k-surface}}); listeyi/formu/detayı müşteri elle yazmaz. Aksiyonlar **çift kapı**dan geçer: yetki yoksa düğme **gizli** VE sunucu çağrısı **reddedilir** ({{ref:k-authz}}). Kullanıcı/rol davetinde **kullanıcı kotası** uygulanır.",
+          "critical": false
+        }
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "danger",
+      "label": "Tenant izolasyon sözleşmesi",
+      "body": "Boyut 3'ün en sert kuralı budur: **müşteri yalnız kendi verisini görür.** Tenant **bağlamı yoksa** sorgu **0 satır** döner — güvenli varsayılan, asla \"hepsini göster\" değil. **Komşu tenant'a** erişim denemesi **403**'tür; başka bir tenant'ın kaydına ne liste, ne detay, ne API yolu vardır. Tenant kimliği **ASLA client'tan** alınmaz; her zaman sunucu **bağlamından (ctx)** çözülür ({{ref:k-tenancy}}). Bu sözleşme atlanamaz: izolasyon ihlali, bu üründe en pahalı hatadır."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Sihirbaz akışı"
+    },
+    {
+      "type": "steps",
+      "title": "Prompt→ArcheType: düz Türkçeden tipli yapıya, dar kapıdan",
+      "items": [
+        {
+          "title": "Anlat",
+          "body": "Müşteri ne istediğini **düz Türkçe** yazar (ör. \"emlak ilanlarımı ve görüntüleme randevularımı yönetmek istiyorum\"); kod ya da şema değil, doğal dil."
+        },
+        {
+          "title": "Sorular (seven-questions)",
+          "body": "Sistem **seven-questions** ile netleştirir: alanlar, zorunluluklar, ilişkiler, kim erişsin, listede ne görünsün — eksik kalan her boyut açık soruyla kapatılır ({{ref:k-agent-runtime}})."
+        },
+        {
+          "title": "Özet",
+          "body": "Sistem önerdiği **ArcheType + Surface**'i özetler: hangi tip, hangi alanlar, hangi ekranlar; müşteri ne oluşacağını **onaylamadan önce** görür."
+        },
+        {
+          "title": "Onay",
+          "body": "Müşteri özeti **açıkça onaylar**. Onaysız hiçbir tip/Surface yaratılmaz; sihirbaz sessizce uygulama yapmaz."
+        },
+        {
+          "title": "Oluştur",
+          "body": "Onaylı tanım **tipli, capability-gated, plan-limitli** olarak oluşturulur ({{ref:be-sdk}}); Surface auto-render eder ({{ref:k-surface}}). **Serbest DDL yok** — yalnız motorun izin verdiği tipli yapı."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "canCreate koşulu"
+    },
+    {
+      "type": "kv-row",
+      "pairs": [
+        {"key": "canCreate", "value": "= **tüm seven-questions cevaplı** ∧ **kullanıcı izni var** ∧ **plan bu tipi kapsıyor** ∧ **kota limiti altında** ∧ **müşteri onayladı**. Beş koşulun **hepsi** sağlanmadan oluşturma tetiklenmez."},
+        {"key": "Eksik soru", "value": "Bir seven-questions boş kaldıysa sihirbaz oluşturmaya geçmez; önce soruyu kapatır ({{ref:k-agent-runtime}})"},
+        {"key": "İzin/plan", "value": "Kullanıcı izni ya da plan kapsamı yoksa düğme gizli VE çağrı reddedilir ({{ref:k-authz}}, {{ref:adr-0015}})"},
+        {"key": "Kota", "value": "Limit aşımında oluşturma **kibar blok**la durur; veri bozulmaz ({{ref:k-tenancy}})"}
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Yetki = kesişim"
+    },
+    {
+      "type": "table",
+      "caption": "Etkin yetki üç kümenin kesişimidir ({{ref:adr-0015}})",
+      "headers": [
+        "Küme",
+        "Anlam",
+        "Eksikse"
+      ],
+      "rows": [
+        ["Kullanıcı", "Kullanıcının rol/izin seti (tenant-admin mi, davetli kullanıcı mı)", "Düğme gizli VE çağrı reddedilir ({{ref:k-authz}})"],
+        ["Capability", "Modülün/yeteneğin açık olması (additif olarak açılmış)", "Modül menüde görünmez; aksiyon yok"],
+        ["Plan", "Müşterinin planının bu tipi/limiti kapsaması", "Kibar blok + plana yönlendirme ({{ref:k-tenancy}} kota)"]
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "warning",
+      "label": "Güvenli öneri",
+      "body": "Sihirbaz güçlü ama **dar bir kapıdır**: müşteri ne yazarsa yazsın, **tehlikeli ya da sistem-açıcı bir istek tipli bir yapıya dönüşmez.** Çıktı her zaman **tipli, capability-gated, plan-limitli**dir; serbest DDL, ham SQL, kernel'e dokunan tanım ya da izolasyonu delen ilişki üretilemez. Sistem öneriyi güvenli kümeye kısar; sınır dışı bir istek tipli forma çevrilmek yerine kibarca reddedilir ({{ref:k-agent-runtime}}, {{ref:adr-0015}}). Müşteriye verilen üretkenlik, motorun fren katmanını **atlamadan** çalışır."
+    }
+  ]
+}

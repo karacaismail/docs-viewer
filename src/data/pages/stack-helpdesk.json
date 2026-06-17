@@ -35,7 +35,9 @@
   ],
   "operationalImpact": "Paketleme, entegrasyon ve ürün deneyimini etkiler.",
   "externalReviewRequired": false,
-  "related": [],
+  "related": [
+   "page-app-modul-matrisi"
+  ],
   "relations": [
    {
     "type": "sibling",
@@ -160,6 +162,266 @@
      {
       "type": "text",
       "text": " verisinden gelir."
+     }
+    ]
+   },
+   {
+    "id": "block-stack-helpdesk-h-helpdesk-cekirdek-archetype-lari",
+    "type": "heading",
+    "level": 2,
+    "text": "Helpdesk Çekirdek ArcheType'ları"
+   },
+   {
+    "id": "block-stack-helpdesk-table",
+    "type": "table",
+    "columns": [
+     "ArcheType",
+     "Rol",
+     "Anahtar alanlar",
+     "Bayraklar"
+    ],
+    "rows": [
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Ticket"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "destek bileti"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "subject, status, priority, party_id, queue_id"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "pii (müşteri), audit"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "SLA"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "süre taahhüdü (plan-bazlı sayaç)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "plan, first_response_min, resolve_min, breached"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "audit"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Queue"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "bilet kuyruğu"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "name, routing_rule"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "—"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "Agent"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "temsilci"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "user_id, skills, capacity"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "—"
+       }
+      ]
+     ],
+     [
+      [
+       {
+        "type": "strong",
+        "text": "KnowledgeArticle"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "bilgi bankası"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "title, body, searchable(embedding)"
+       }
+      ],
+      [
+       {
+        "type": "text",
+        "text": "—"
+       }
+      ]
+     ]
+    ]
+   },
+   {
+    "id": "block-stack-helpdesk-feat-2",
+    "type": "definitionList",
+    "items": [
+     {
+      "term": "Ticket → Party Link",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bilet talep sahibini yeni bir kişi tablosuyla değil, platformun ortak Party ArcheType'ına Link ile bağlar ("
+       },
+       {
+        "type": "ref",
+        "text": "l1-party",
+        "refId": "l1-party"
+       },
+       {
+        "type": "text",
+        "text": "); aynı müşteri muhasebede cari, sözleşmede taraf, destekte talep sahibi olarak tek kaynaktan görünür."
+       }
+      ]
+     },
+     {
+      "term": "Durum + eskalasyon Workflow ile (if-else YOK)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bilet durumu (open → pending → resolved → closed) ve eskalasyon ArcheType şemasına gömülmez; if-else tip dallanması yazılmaz, davranış ArcheType'tan bağımsız ve versiyonlu Workflow olarak tanımlanır. Süreç değişince şema migrasyonu değil, yeni Workflow sürümü yayınlanır."
+       }
+      ]
+     },
+     {
+      "term": "SLA aşımı eskalasyonu tetikler",
+      "definition": [
+       {
+        "type": "text",
+        "text": "SLA süresi (first_response_min / resolve_min) aşıldığında breached işaretlenir ve eskalasyon Workflow'u tetiklenir — sayaç ArcheType alanı olarak okunur/filtrelenir, eskalasyon ayrı bir kod yolu değil bir Workflow geçişidir."
+       }
+      ]
+     },
+     {
+      "term": "Sipariş bağlamı Commerce'ten Contract ile",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Destek bileti sipariş/ürün bağlamını Commerce tablolarını doğrudan okuyarak değil, Contract arayüzü üzerinden alır (doğrudan tablo okuma YOK); modüller arası bağ sözleşmeyle kurulur, veri sahipliği bozulmaz."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "block-stack-helpdesk-co",
+    "type": "callout",
+    "variant": "info",
+    "title": "Surface projeksiyonları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Helpdesk ArcheType'ları doğrudan ekran değildir; her görünüm bir "
+     },
+     {
+      "type": "strong",
+      "text": "Surface"
+     },
+     {
+      "type": "text",
+      "text": " projeksiyonudur ("
+     },
+     {
+      "type": "ref",
+      "text": "k-surface",
+      "refId": "k-surface"
+     },
+     {
+      "type": "text",
+      "text": "): "
+     },
+     {
+      "type": "strong",
+      "text": "bilet kuyruğu"
+     },
+     {
+      "type": "text",
+      "text": " (Queue + Ticket, routing'e göre sütunlu liste), "
+     },
+     {
+      "type": "strong",
+      "text": "bilet detay"
+     },
+     {
+      "type": "text",
+      "text": " (Ticket + Party + SLA sayacı tek ekranda), "
+     },
+     {
+      "type": "strong",
+      "text": "KB arama"
+     },
+     {
+      "type": "text",
+      "text": " (KnowledgeArticle, embedding ile semantik arama), "
+     },
+     {
+      "type": "strong",
+      "text": "360° müşteri"
+     },
+     {
+      "type": "text",
+      "text": " (Party + geçmiş Ticket + Activity birleştirilir)."
      }
     ]
    },

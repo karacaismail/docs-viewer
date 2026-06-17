@@ -1,0 +1,107 @@
+{
+ "id": "app-modul-matrisi",
+ "title": "App → Modül Matrisi",
+ "subtitle": "Tek denetlenebilir yüzeyde: hangi app hangi modülü/ArcheType'ı Core veya Opsiyonel olarak içerir. Dört app — CRM, E-ticaret, Helpdesk, İlan — ortak modülleri kopyalamaz, projekte eder; ortak yeteneği yalnız Contract üzerinden tüketir.",
+ "cluster": "genel",
+ "categoryId": "genel",
+ "order": 30,
+ "icon": "ph-table",
+ "granularity": "kaya",
+ "state": "wip",
+ "badge": "KAVRAM",
+ "tags": ["matris", "app", "modul", "archetype", "harita"],
+ "related": ["s-crm", "s-commerce", "s-classifieds", "s-helpdesk", "k-control-planes"],
+ "relations": [
+  {"type": "uses", "target": "l1-party"},
+  {"type": "uses", "target": "k-surface"},
+  {"type": "belongs-to", "target": "k-granulerlik"}
+ ],
+ "enrich": {
+  "info": "Bu matris, dört app'in (CRM, E-ticaret, Helpdesk, İlan) modül/ArcheType içeriğini TEK denetlenebilir yüzeyde toplar: her hücre Core (C), Opsiyonel (O) veya yok (—) der. Ortak modüller kopyalanmaz, projekte edilir — Party tek tanımdır; app'ler birbirinin tablosuna dokunmaz, ortak yeteneği yalnız Contract üzerinden tüketir.",
+  "detail": "Matrisin amacı denetlenebilirliktir: 'hangi app neyi içerir' sorusu dört ayrı stack dokümanına dağılmak yerine tek tabloda yanıtlanır, böylece komşuluk ve sözleşme sınırı bir bakışta okunur. Satır = modül/ArcheType, sütun = app; hücre o app'in o yeteneğe bağımlılığını söyler. Aynı modül birden çok app'te göründüğünde bu paylaşım değil projeksiyon demektir: Party tek kayıttır ({{ref:l1-party}}), CRM müşterisi ile ERP carisi aynı Party'dir, app yalnız kendi Surface'ini projekte eder.\n\nCore/Opsiyonel ayrımı statik değildir: Core, app'in o modül olmadan anlamını yitirdiği çekirdek bağımlılıktır (İlan'da Listing, E-ticaret'te Cart); Opsiyonel ise capability flag ile sonradan açılan yetenektir ({{ref:k-control-planes}}). Bir app yeni bir Opsiyonel modülü etkinleştirdiğinde tabloya tablo eklemez — paylaşılan modülü projekte eder ve Contract bağını kurar. Genişleme bu yüzden kopyalama değil, matrise satır + Contract + projeksiyon kalıbıdır."
+ },
+ "blocks": [
+  {
+   "type": "paragraph",
+   "text": "Bu sayfa, dört app'in modül haritasını **tek denetlenebilir yüzeyde** verir. Soru basittir: *hangi app hangi modülü/ArcheType'ı içerir, ne kadar zorunlu?* Yanıt dört ayrı stack dokümanına dağılmaz; satır modül/ArcheType, sütun app olan tek tabloda okunur. Dört app: **CRM · E-ticaret · Helpdesk · İlan**. Ortak modüller **projekte edilir, kopyalanmaz** — {{ref:l1-party}} Party tek tanımdır, {{ref:k-terminoloji}} terimleri tektir, {{ref:k-granulerlik}} aynı taş büyüklüğünü herkese verir."
+  },
+  {
+   "type": "callout",
+   "variant": "info",
+   "label": "Ortak modül projeksiyonu",
+   "body": "Aynı modül birden çok app'te göründüğünde bu **paylaşım değil projeksiyondur**: Party tek kayıttır — CRM müşterisi = ERP carisi = aynı Party ({{ref:l1-party}}). App, ortak modülün kendi Surface'ine düşen projeksiyonunu tüketir; ortak tabloyu kopyalamaz, sahiplenmez."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Ana Matris — Modül/ArcheType × App"
+  },
+  {
+   "type": "table",
+   "caption": "C = Core (çekirdek bağımlılık) · O = Opsiyonel (capability flag ile açılır) · — = yok",
+   "headers": ["Modül/ArcheType", "CRM", "E-ticaret", "Helpdesk", "İlan", "Ne işe yarar"],
+   "rows": [
+    ["Party/Contact", "C", "C", "C", "C", "Tek kişi/kurum kaydı — tüm app'lerin ortak kimlik tabanı"],
+    ["Lead", "C", "O", "O", "C", "Nitelenmemiş ilgi/talep; satış ve ilan girişinin başlangıcı"],
+    ["Account", "C", "O", "O", "—", "Kurumsal müşteri/hesap çatısı; Party'lerin toplandığı tüzel birim"],
+    ["Deal", "C", "—", "—", "—", "Satış fırsatı; tutar, olasılık ve kapanış izlenir"],
+    ["Pipeline/Stage", "C", "—", "—", "—", "Fırsatların aşama hattı; dönüşüm ve tahmin yönetimi"],
+    ["Activity", "C", "O", "C", "O", "Görüşme/görev/etkileşim kaydı; zaman çizelgesi"],
+    ["Product", "—", "C", "—", "—", "Satılan ürün tanımı; katalog çekirdeği"],
+    ["Variant", "—", "C", "—", "—", "Ürün varyasyonu (beden/renk); SKU düzeyi"],
+    ["Category", "—", "C", "—", "C", "Sınıflandırma ağacı; katalog ve ilan taksonomisi"],
+    ["Pricing", "—", "C", "—", "—", "Fiyat/indirim kuralları; fiyat listeleri"],
+    ["Inventory", "—", "C", "—", "—", "Stok adedi ve rezervasyon; mevcudiyet"],
+    ["Cart", "—", "C", "—", "—", "Sepet; satın alma öncesi seçim toplama"],
+    ["Order", "O", "C", "—", "—", "Sipariş; sepetin onaylanmış hali, ödeme/sevkiyat tetiği"],
+    ["Payment", "—", "C", "—", "O", "Tahsilat; ödeme yöntemi ve mutabakat"],
+    ["Shipping", "—", "C", "—", "—", "Sevkiyat/kargo; teslim takibi"],
+    ["Promotion/Doping", "—", "C", "—", "C", "Kampanya/öne çıkarma; e-ticarette indirim, ilanda doping"],
+    ["Returns", "—", "C", "—", "—", "İade/değişim; ters lojistik ve geri ödeme"],
+    ["Tax", "—", "C", "—", "—", "Vergi hesabı; KDV/oran matrisi"],
+    ["Ticket", "O", "O", "C", "—", "Destek kaydı; sorun/talep yaşam döngüsü"],
+    ["SLA", "—", "—", "C", "—", "Hizmet seviyesi taahhüdü; süre/öncelik kuralları"],
+    ["Queue/Agent", "—", "—", "C", "—", "Kuyruk ve temsilci atama; yük dağıtımı"],
+    ["KnowledgeBase", "—", "O", "C", "O", "Bilgi tabanı/SSS; self-servis çözüm"],
+    ["Listing", "—", "—", "—", "C", "İlan kaydı; ilan app'inin çekirdeği"],
+    ["Membership", "—", "O", "—", "C", "Üyelik/paket; erişim ve gelir katmanı"],
+    ["Moderation", "—", "O", "O", "C", "İçerik denetimi; onay/red ve şikayet işleme"],
+    ["Message", "O", "O", "C", "C", "Mesajlaşma; taraflar arası yazışma"],
+    ["Search (faceted)", "O", "C", "C", "C", "Faset/filtreli arama; katalog ve ilan keşfi"],
+    ["Workflow", "C", "C", "C", "C", "Süreç motoru; durum geçişleri tüm app'lerde ortak"],
+    ["Surface", "C", "C", "C", "C", "Ekran/projeksiyon katmanı; her app'in yüzü"]
+   ]
+  },
+  {
+   "type": "paragraph",
+   "text": "Kural: bir app, başka app'in tablosuna **doğrudan dokunmaz**. Matriste bir modül birden çok app'te Core/Opsiyonel görünse de erişim ortak tabloya değil, **Contract üzerinden** kurulur. Ortak yetenek (ör. Party, Search, Workflow) yalnız sözleşmeli arayüzle tüketilir — doğrudan tablo erişimi yoktur. Komşuluk sınırı budur: paylaşılan modül vardır, paylaşılan tablo yoktur."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "transaction_depth Ekseni"
+  },
+  {
+   "type": "table",
+   "caption": "App'in işlem derinliği — ne kadar 'satış sonuna kadar' gittiği",
+   "headers": ["transaction_depth", "Anlamı", "Default app", "Çekirdek akış"],
+   "rows": [
+    ["full", "Sepet→Sipariş→Ödeme→Sevkiyat tam zinciri", "E-ticaret", "Cart · Order · Payment · Shipping"],
+    ["lead_gen", "Talep/eşleşme üretir, işlemi dışarıda kapatır", "İlan ({{ref:s-classifieds}})", "Listing · Lead · Message"],
+    ["hybrid", "Lead toplar + seçili işlemleri içeride kapatır", "Karma (ör. Payment opsiyonel)", "Lead + opsiyonel Order/Payment"]
+   ]
+  },
+  {
+   "type": "callout",
+   "variant": "warning",
+   "label": "İlan = Listing-first",
+   "body": "İlan app'inin çekirdeği **Listing**'tir; **Cart/Order YOKTUR**. Gelir modeli işlem komisyonu değil: **listing-fee + doping + üyelik**. transaction_depth burada **lead_gen**'dir — app talebi ve eşleşmeyi üretir, alışveriş işlemini taraflar dışarıda kapatır ({{ref:s-classifieds}})."
+  },
+  {
+   "type": "callout",
+   "variant": "tip",
+   "label": "Genişleme kalıbı",
+   "body": "Yeni bir app eklemek **kopyalama değildir**: (1) matrise yeni bir **satır/sütun**, (2) ortak yeteneğe **Contract bağı**, (3) paylaşılan modülün **projeksiyonu** — bu kadar. Tablo çoğaltılmaz, modül sahiplenilmez. Beşinci app de aynı yüzeye oturur: satır ekle, sözleşmeyi bağla, Party'yi ({{ref:l1-party}}) projekte et."
+  }
+ ]
+}

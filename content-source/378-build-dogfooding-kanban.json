@@ -1,0 +1,140 @@
+{
+ "id": "build-dogfooding-kanban",
+ "title": "Dogfooding — Platform Kendini Kanban/Waterfall Aracıyla Yönetir",
+ "subtitle": "Platform, kendi inşa yol haritasını kendi Project (PMS) app'iyle yönetir; aynı veri kanban panosu ↔ waterfall/Gantt olarak iki projeksiyonda görünür.",
+ "cluster": "build",
+ "categoryId": "build",
+ "order": 35,
+ "icon": "ph-kanban",
+ "granularity": "kaya",
+ "state": "wip",
+ "badge": "TASARIM",
+ "tags": [
+  "dogfooding",
+  "kanban",
+  "waterfall",
+  "proje-yönetim",
+  "project"
+ ],
+ "relations": [
+  {"type": "uses", "target": "build-sequence"},
+  {"type": "sibling", "target": "stack-pms"},
+  {"type": "uses", "target": "k-surface"}
+ ],
+ "related": [
+  "k-wbs",
+  "k-granulerlik",
+  "k-control-planes"
+ ],
+ "enrich": {
+  "info": "Platform, inşa yol haritasını ({{ref:build-sequence}}) **kendi Project (PMS) app'iyle** yönetir — yani aracını kendi üstünde kullanır (dogfooding). {{ref:stack-pms}} bir pazar-muadili kataloğuyken bu sayfa onun **kendini-yönetme açısını** ve **kanban ↔ waterfall ikili görünümünü** ekler; Workspace ve Status'u first-class yapar.",
+  "detail": "Dogfooding neden: Platform kendi yol haritasını başka bir araçta (harici tablo, üçüncü-parti pano) değil, **ürettiği Project app'inde** yönetirse App-Core kalıbı gerçek kullanımda sınanır. Eksik bir Status geçişi, kapalı kalan bir bağımlılık oku, yanlış kurgulanmış bir Milestone otomasyonu önce platformu inşa eden ekibi yaralar — bu da geri besleme döngüsünü en kısa yapar. \"Kendi şarabını iç\" ilkesi: aracın muadil kataloğdaki ({{ref:stack-pms}}) iddialarını söz değil kanıt seviyesine taşır.\n\nKanban-waterfall ikiliği aynı ArcheType'tan projeksiyon: Task, Status, Dependency ve Milestone tek veri modelinde (ArcheType) tutulur; Kanban ile Waterfall/Gantt iki ayrı **Surface** ({{ref:k-surface}}) projeksiyonudur, iki ayrı veri tabanı değil. Kolon sürükle-bırak ile bir Task'ın Status'unu değiştirmek, Gantt'ta o Task'ın bloğunu ve ona bağlı Dependency oklarını anında günceller; çünkü ikisi de aynı kayıttan okur. Bu, {{ref:k-wbs}} kırılımının ve {{ref:k-control-planes}} düzlem ayrımının somut bir doğrulamasıdır: tek kayıt, çok yüzey."
+ },
+ "blocks": [
+  {
+   "type": "callout",
+   "variant": "info",
+   "label": "Dogfooding — aracı kendi üstünde kullan",
+   "body": "Platform inşa yol haritasını ({{ref:build-sequence}}) **kendi Project (PMS) app'iyle** yönetir. {{ref:stack-pms}} pazar-muadili kataloğu sunar; bu sayfa onun **kendini-yönetme açısını** ekler ve **Workspace ile Status'u first-class** yapar. Aynı veri **kanban panosu ↔ waterfall/Gantt** olarak iki projeksiyonda görünür."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Project app çekirdeği"
+  },
+  {
+   "type": "paragraph",
+   "text": "Çekirdek ArcheType'lar (C = core) ve görünümler. Görünümler birer **Surface** projeksiyonudur ({{ref:k-surface}}): Kanban panosu, Gantt/Timeline, Liste, Takvim — hepsi aynı veriden okur."
+  },
+  {
+   "type": "feature-list",
+   "items": [
+    {"name": "Workspace (C)", "desc": "Üst kapsam: ekip/ürün/inşa programı; tüm Board ve kayıtların tenant-izole sahibi. First-class."},
+    {"name": "Board (C)", "desc": "Bir Workspace içindeki çalışma yüzeyi; Status kolonlarını ve görünüm tercihlerini taşır."},
+    {"name": "Task / Card (C)", "desc": "Tek iş kalemi; atanan, Status, bağımlılıkları ve DoD kontrol listesi taşır."},
+    {"name": "Status / Column (C)", "desc": "Kanban kolonu; Task'ın yaşam döngüsü durumu. First-class — geçişleri Workflow yönetir."},
+    {"name": "Dependency (C — waterfall)", "desc": "Task → Task önkoşul kenarı; Gantt'ta bağımlılık oku, kritik yol hesabının girdisi.", "critical": true},
+    {"name": "Milestone (C)", "desc": "Dönüm noktası / kapı; bağlı tüm Task bitince otomatik tamamlanır.", "critical": true},
+    {"name": "Sprint (ops)", "desc": "Opsiyon: zaman kutusu; backlog'tan çekilen Task kümesi."},
+    {"name": "TimeEntry (ops)", "desc": "Opsiyon: Task üstünde harcanan efor kaydı."},
+    {"name": "Comment (ops)", "desc": "Opsiyon: Task üstünde tartışma / karar izi."},
+    {"name": "Attachment (ops)", "desc": "Opsiyon: Task'a iliştirilen dosya / belge."}
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "İki görünüm — aynı veri, iki projeksiyon"
+  },
+  {
+   "type": "table",
+   "caption": "Kanban ve Waterfall/Gantt: tek veri modelinin iki Surface projeksiyonu",
+   "headers": [
+    "Boyut",
+    "Kanban",
+    "Waterfall / Gantt"
+   ],
+   "rows": [
+    ["Birincil eksen", "Status kolonları (akış)", "Zaman ekseni (başlangıç–bitiş)"],
+    ["Etkileşim", "Sürükle-bırak ile Status değiştir, WIP limiti", "Dependency oklarını çiz, tarihleri kaydır"],
+    ["Bağımlılık", "Görece örtük (blocker rozeti)", "Açık Dependency okları + kritik yol ({{ref:k-wbs}})"],
+    ["Dönüm noktası", "Kolon sonu / etiket", "Milestone işareti zaman ekseninde"],
+    ["Ne için iyi", "Günlük akış, darboğaz görünürlüğü", "Plan, sıralama, kritik yol, sapma"],
+    ["Veri kaynağı", "Aynı Task/Status/Dependency/Milestone", "Aynı Task/Status/Dependency/Milestone"]
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Yol haritasını araca dökme"
+  },
+  {
+   "type": "paragraph",
+   "text": "İnşa yol haritası ({{ref:build-sequence}}) kavramları, Project app'in çekirdek ArcheType'larına birebir eşlenir; böylece yol haritası ayrı bir belge değil, **aracın içinde canlı veri** olur."
+  },
+  {
+   "type": "table",
+   "caption": "Yol haritası kavramı → araçtaki karşılığı ({{ref:build-sequence}} sırasıyla)",
+   "headers": [
+    "Kavram",
+    "Araçtaki karşılığı"
+   ],
+   "rows": [
+    ["Faz / Boyut / Aşama", "Milestone"],
+    ["Adım", "Task"],
+    ["Önkoşul", "Dependency (waterfall oku)"],
+    ["Test-first komutu", "Alt-görev (Task'ın altında)"],
+    ["Kabul kapısı (DoD)", "Task DoD kontrol listesi"],
+    ["Geliştirici", "Atanan (assignee)"]
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Davranış kuralları"
+  },
+  {
+   "type": "list",
+   "items": [
+    "Task durum geçişi **Workflow**'a tabidir; tanımlı olmayan (izinsiz) geçiş reddedilir.",
+    "Dependency grafında **döngü reddedilir** — bir Task dolaylı olarak kendine önkoşul olamaz.",
+    "Bir Milestone'a bağlı **tüm Task** bitince Milestone otomatik **\"tamam\"** olur.",
+    "Tüm kayıtlar **tenant-izole**dir; her durum geçişi ve atama **audit** kaydına yazılır."
+   ]
+  },
+  {
+   "type": "callout",
+   "variant": "tip",
+   "label": "Dogfooding değeri",
+   "body": "Platform kendini bu araçla yöneterek **kendi App-Core kalıbını kanıtlar**: Workspace/Board/Task/Status/Dependency/Milestone çekirdeği gerçek inşa programında sınanır, kanban ↔ waterfall ikiliği tek ArcheType'tan iki Surface projeksiyonu olarak doğrulanır ({{ref:k-surface}}, {{ref:k-control-planes}})."
+  },
+  {
+   "type": "kv-row",
+   "pairs": [
+    {"key": "Muadil katalog", "value": "{{ref:stack-pms}} — pazar muadilleri (Linear, Jira, Asana, Monday, ClickUp, MS Project) ve modül listesi; bu sayfa onun kendini-yönetme açısı."},
+    {"key": "Yönetilen yol haritası", "value": "{{ref:build-sequence}} — Faz 0–7 inşa sırası; Milestone/Task/Dependency olarak araca dökülür."},
+    {"key": "Kırılım & projeksiyon", "value": "Kritik yol ve WBS {{ref:k-wbs}}; tek veri çok yüzey {{ref:k-surface}}; düzlem ayrımı {{ref:k-control-planes}}."}
+   ]
+  }
+ ]
+}

@@ -1,0 +1,82 @@
+{
+ "id": "adr-0025-frontend-stack-uzlastirma",
+ "title": "ADR-0025: Frontend Stack Uzlaştırma — Roadmap ↔ Katalog Çelişkilerini Kapat",
+ "subtitle": "Roadmap ile katalog arasındaki 8 çelişkiyi tek bağlayıcı kararla kilitler: Roboto/300/1rem, Phosphor-CDN, emoji yasak, GraphQL+codegen, TanStack Router, Radix+SCSS çekirdek (Flowbite yalnız karşılaştırma-tablosu sunumu), genişletilmiş anti-stack, Vite build-time prerender.",
+ "cluster": "kararlar",
+ "order": 25,
+ "icon": "ph-gavel",
+ "granularity": "kaya",
+ "state": "wip",
+ "badge": "KARAR",
+ "tags": ["adr","frontend","stack","tipografi","graphql","router","anti-stack","uzlaştırma"],
+ "related": ["fe-anti-stack","fe-monorepo","be-kararlar"],
+ "relations": [
+  { "type": "supersedes", "target": "fe-core-ui" },
+  { "type": "uses", "target": "cc-graphql-guvenlik" },
+  { "type": "uses", "target": "fe-theme" },
+  { "type": "sibling", "target": "adr-0023" }
+ ],
+ "enrich": {
+  "info": "Frontend stack'inde roadmap ile katalog arasındaki 8 çelişkiyi tek bağlayıcı kararla kapatan uzlaştırma; tipografi, ikon, emoji, teslim API'si, router, çekirdek UI, anti-stack ve prerender sahipliğini kilitler.",
+  "detail": "Bu ADR, frontend tanımının iki kaynağı (yol haritası ve katalog sayfaları) arasında biriken sekiz çelişkiyi tek bir bağlayıcı kararla uzlaştırır. Amaç yeni bir tercih icat etmek değil; çatışan kayıtları kullanıcının kesinleşmiş kararına göre tek doğruluk kaynağına indirmektir. Karar, ilgili sayfalarda dağınık duran eski seçimleri (Inter tipografisi, npm ikon dağıtımı, OpenAPI teslim, React Router v7, çekirdek Flowbite bağımlılığı) açıkça ezer ve yerlerine kilitli kararları koyar.\n\nSupersede edilen kararlar: (1) {{ref:fe-core-ui}} içindeki **OpenAPI/openapi-typescript teslim API'si** → GraphQL + codegen ile değişir; (2) {{ref:fe-core-ui}} içindeki **React Router v7 (framework mode)** → TanStack Router ile değişir; (3) {{ref:fe-core-ui}} içindeki **çekirdek bileşen = Flowbite Pro** kararı → çekirdek Radix + SCSS token olur, Flowbite kapsamı yalnız karşılaştırma-tablosu sunumuna daraltılır. Tipografi tarafında roadmap'in Inter kaydı Roboto ile, ikon tarafında npm dağıtımı CDN ile ezilir. Bu üç supersede maddesi `fe-core-ui` sayfasında not edilir; ADR bağlayıcı kalır.\n\nNeden bu uzlaştırma şimdi: çelişkiler kod yazımından önce kilitlenmezse, eksen kayması (her sayfanın kendi stack'ini varsayması) büyür ve üretim hattı tutarsız tip/temadan kırılır. Teslim API'si GraphQL + codegen olduğundan tipler şemadan üretilir, elle yazılmaz; güvenlik sözleşmesi {{ref:cc-graphql-guvenlik}}'e bağlanır. AGENTS.md zaten 'API varsayılanı GraphQL' dediği için bu karar mevcut yönergeyle hizalıdır; çelişen tek kayıt olan `fe-core-ui`'deki OpenAPI kararı güncellenir."
+ },
+ "blocks": [
+  {"type":"kv-row","pairs":[
+    {"key":"Durum","value":"Kabul (wip) — bağlayıcı; çelişen kayıtları ezer"},
+    {"key":"Bağlam","value":"Frontend tanımının iki kaynağı (yol haritası ↔ katalog) arasında 8 çelişki birikti: tipografi, ikon, emoji, teslim API'si, router, çekirdek UI, anti-stack kapsamı ve prerender sahipliği farklı yerlerde farklı kayıtlı"},
+    {"key":"Karar","value":"Tek bağlayıcı uzlaştırma: **Roboto/300/1rem**, **Phosphor CDN**, **emoji YASAK**, **GraphQL + codegen** (tip şemadan üretilir), **TanStack Router**, **Radix çekirdek + SCSS token** (Flowbite yalnız karşılaştırma-tablosu sunumu), genişletilmiş **anti-stack** (Next.js + Redux + çekirdek Flowbite), **Vite build-time prerender** sahibi"},
+    {"key":"Sonuç","value":"Çelişen eski kayıtlar supersede edilir ({{ref:fe-core-ui}}: OpenAPI/router/çekirdek-Flowbite güncellenir); tipler `codegen` ile şemadan üretilir; güvenlik {{ref:cc-graphql-guvenlik}}'e bağlanır; her sayfa bu ADR'yi tek doğruluk kaynağı alır"}
+   ]},
+
+  {"type":"heading","level":2,"text":"8 çelişki — önceki ↔ karar ↔ gerekçe"},
+  {"type":"table","caption":"Roadmap ile katalog arasındaki sekiz çelişki ve bağlayıcı çözüm",
+   "headers":["Konu","Önceki / Çelişki","Karar","Gerekçe"],
+   "rows":[
+    ["Ç1 · Tipografi","Inter (roadmap) ↔ farklı kayıtlar; kalınlık/min boy belirsiz","**Roboto**, en hafif kalınlık **300**, en küçük metin **1rem**","Tek tipografi ailesi + okunabilir taban; Inter supersede edilir, sub-1rem metin yok"],
+    ["Ç2 · İkon","Phosphor npm paketi ↔ CDN belirsiz","**Phosphor**, dağıtım **CDN** (npm değil)","Sürüm pinli CDN ile bundle şişmez; ikon dağıtımı tek hatta sabitlenir"],
+    ["Ç3 · Emoji","Arayüz/içerikte emoji kullanımı serbest sanılıyor","Emoji **YASAK** (arayüz ve içerik)","Tutarlı kurumsal sunum + a11y/okuma netliği; ikon yerine Phosphor"],
+    ["Ç4 · Teslim API'si","`fe-core-ui` OpenAPI + openapi-typescript ↔ AGENTS.md 'varsayılan GraphQL'","**GraphQL + codegen** (tipler şemadan üretilir, elle yazılmaz)","AGENTS.md ile hizalı; tek şema → tip; güvenlik {{ref:cc-graphql-guvenlik}}'e bağlı; `fe-core-ui` OpenAPI kararı güncellenir"],
+    ["Ç5 · Router","`fe-core-ui` React Router v7 ↔ {{ref:fe-theme}}/be-sdk TanStack hizası","**TanStack Router**","Tip-güvenli rota + TanStack ekosistemiyle hizalı; React Router v7 supersede edilir"],
+    ["Ç6 · Temel UI","Çekirdek = Flowbite Pro ↔ SCSS token çekirdek","**Radix çekirdek + SCSS token**; Flowbite YALNIZ karşılaştırma-tablosu sunumunda","Çekirdek bileşen ve kernel bağımlılığı Flowbite değil; Flowbite kapsamı yalnız karşılaştırma tabloları"],
+    ["Ç7 · Anti-stack","Next.js yasak kayıtlı; Redux + çekirdek Flowbite eksik","**Next.js + Redux + Flowbite(çekirdek)** yasak","Redux açıkça eklenir; Flowbite kapsamı yalnız karşılaştırma tablosu; {{ref:fe-anti-stack}} genişletilir"],
+    ["Ç8 · Prerender/SSG","Prerender/SSG sahibi belirsiz; SSR riski","**Vite build-time prerender** hattı sahibi (SSR yok)","Tek sahip-karar; build-time statik üretim, sunucu render'ı yok"]
+   ]},
+
+  {"type":"heading","level":2,"text":"Kilitli kararlar — boyut bazında"},
+  {"type":"feature-list","items":[
+    {"name":"Tipografi","desc":"Aile **Roboto**; en hafif kalınlık **300**; en küçük metin **1rem** (sub-1rem yok). Inter supersede.","critical":true},
+    {"name":"İkon","desc":"**Phosphor**, dağıtım **CDN** (sürüm pinli), npm paketi değil.","critical":true},
+    {"name":"Emoji","desc":"Arayüz ve içerikte **YASAK**; semantik ihtiyaçta Phosphor ikonu kullanılır.","critical":true},
+    {"name":"Teslim API'si","desc":"**GraphQL + codegen**: tipler şemadan üretilir, elle yazılmaz. Güvenlik sözleşmesi {{ref:cc-graphql-guvenlik}}.","critical":true},
+    {"name":"Router","desc":"**TanStack Router** (tip-güvenli). React Router v7 supersede.","critical":true},
+    {"name":"Çekirdek UI","desc":"**Radix çekirdek + SCSS token**. Flowbite YALNIZ karşılaştırma-tablosu sunumunda; çekirdek bileşen/kernel bağımlılığı değil.","critical":true},
+    {"name":"Anti-stack","desc":"**Next.js + Redux + Flowbite(çekirdek)** yasak. Redux açıkça eklenir; Flowbite kapsamı yalnız karşılaştırma tabloları.","critical":true},
+    {"name":"Prerender/SSG","desc":"Sahip **Vite build-time prerender** hattı (SSR yok). Bir sahip-karar olarak işaretli.","critical":true}
+   ]},
+
+  {"type":"heading","level":2,"text":"Teslim API'si — GraphQL + codegen sözleşmesi"},
+  {"type":"callout","variant":"info","label":"Tip şemadan üretilir","body":"Teslim API'si **GraphQL**; istemci tipleri **codegen** ile şemadan üretilir, **elle yazılmaz**. AGENTS.md zaten 'API varsayılanı GraphQL' der; çelişen tek kayıt olan {{ref:fe-core-ui}}'deki OpenAPI/`openapi-typescript` kararı güncellenir. Güvenlik (depth/complexity/persisted query) sözleşmesi {{ref:cc-graphql-guvenlik}}'e bağlıdır."},
+
+  {"type":"heading","level":2,"text":"Flowbite'ın daraltılmış kapsamı"},
+  {"type":"callout","variant":"warning","label":"Yalnız karşılaştırma-tablosu sunumu","body":"Flowbite **çekirdek bileşen değildir** ve **kernel bağımlılığı değildir**. Tek izinli kullanımı **karşılaştırma-tablosu sunumudur**. Çekirdek bileşenler **Radix + SCSS token** ile kurulur; uygulama gövdesi Flowbite'a bağlanamaz. Anti-stack çekirdek Flowbite'ı yasaklar; bu kapsam istisnası yalnızca tablo sunumu içindir."},
+
+  {"type":"heading","level":2,"text":"Uygulama aşamaları"},
+  {"type":"steps","title":"Önce karar + güvenlik, sonra katalog, sonra paneller","items":[
+    {"title":"Faz 1 · ADR + güvenlik sayfası","body":"Bu ADR (tek doğruluk kaynağı) yazılır ve GraphQL güvenlik sözleşmesi {{ref:cc-graphql-guvenlik}} bağlanır. Sekiz çelişki burada kilitlenir; sonraki tüm güncellemeler buraya referans verir."},
+    {"title":"Faz 2 · Katalog hizalama","body":"{{ref:fe-core-ui}} güncellenir (OpenAPI→GraphQL+codegen, React Router v7→TanStack Router, çekirdek Flowbite→Radix+SCSS, Flowbite yalnız tablo); {{ref:fe-theme}} tipografi/ikon token'ları Roboto/300/1rem + Phosphor-CDN'e hizalanır; {{ref:fe-anti-stack}} Redux + çekirdek Flowbite ile genişletilir; emoji yasağı işlenir."},
+    {"title":"Faz 3 · Panel sayfaları","body":"Surface/panel sayfaları yeni çekirdeğe (Radix + SCSS token, TanStack Router, GraphQL codegen istemcisi) ve Vite build-time prerender hattına göre güncellenir. Flowbite yalnız karşılaştırma-tablosu sunumunda kalır."}
+   ]},
+
+  {"type":"heading","level":2,"text":"Bağlı kararlar"},
+  {"type":"kv-row","pairs":[
+    {"key":"Supersede","value":"{{ref:fe-core-ui}} — OpenAPI teslim, React Router v7 ve çekirdek Flowbite kararlarını ezer"},
+    {"key":"Kullanır (güvenlik)","value":"{{ref:cc-graphql-guvenlik}} — GraphQL teslim API'sinin güvenlik sözleşmesi"},
+    {"key":"Kullanır (tema)","value":"{{ref:fe-theme}} — Roboto/300/1rem tipografi ve Phosphor-CDN ikon token'larının sunum sahibi"},
+    {"key":"Kardeş","value":"{{ref:adr-0023}} — IA/navigasyon kararıyla hizalı (tech-stack simetrisi, tipli ilişki)"},
+    {"key":"İlgili","value":"{{ref:fe-anti-stack}} (Redux + çekirdek Flowbite yasağı), {{ref:fe-monorepo}} (paket yerleşimi), {{ref:be-kararlar}} (backend karar hizası)"}
+   ]},
+
+  {"type":"callout","variant":"warning","label":"Geri-dönüş & risk","body":"Risk: çelişkiler kilitlenmeden kod yazılırsa her sayfa kendi stack'ini varsayar, tip/tema tutarsızlığı üretim hattını kırar. Geri-dönüş: bu ADR tek doğruluk kaynağıdır; bir karar değişirse yeni ADR + bu sayfanın güncellenmesi gerekir, sayfalar tek tek düzeltilmez. GraphQL teslimine geçiş codegen kapısına ({{ref:cc-graphql-guvenlik}}) bağlıdır; şema kırılırsa tipler üretilmez ve build kapıda durur. Flowbite kapsam istisnası yalnız karşılaştırma-tablosu sunumudur; çekirdeğe sızarsa anti-stack ihlali sayılır."},
+  {"type":"paragraph","text":"Bu karar bağlayıcıdır: {{ref:fe-core-ui}} içindeki çelişen kayıtları (teslim API'si, router, çekirdek UI) supersede eder; {{ref:fe-theme}} tipografi/ikon sunumunu, {{ref:cc-graphql-guvenlik}} teslim güvenliğini, {{ref:adr-0023}} navigasyon hizasını destekler. Sekiz çelişki tek uzlaştırmada kilitlenmiştir."}
+ ]
+}

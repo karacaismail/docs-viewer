@@ -217,6 +217,97 @@
       "variant": "critical",
       "label": "Çoklu iş modeli — capability flag pattern",
       "body": "**Müşteri B2C'den B2B'ye 'geçmez' — B2B yeteneğini 'açar'.** s-ecommerce-models cluster'ında 14 model (B2C, B2B, C2C, B2B2B, B2B2C, C2B, D2C, B2G, C2G, G2C, B2E, P2P, M2C, O2O) + hibrit yetenekler (marketplace, dropshipping, subscription, social) capability flag olarak modellenir. Enum YASAK; flag tablosu zorunlu. Sürdürülebilirlik felsefesinin somut tezahürü."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "E-ticaret ArcheType Şeması ve Capability Bağı"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "ArcheType",
+        "Anahtar alanlar",
+        "Bayraklar"
+      ],
+      "rows": [
+        [
+          "**Product**",
+          "sku, name, category_id",
+          "audit"
+        ],
+        [
+          "**Variant**",
+          "attributes, price (**Money/Decimal**)",
+          "audit"
+        ],
+        [
+          "**Category**",
+          "name, parent_id, path",
+          "—"
+        ],
+        [
+          "**PriceList**",
+          "tier, min_qty, price (B2B kademeli)",
+          "audit"
+        ],
+        [
+          "**StockItem + StockMovement**",
+          "on_hand, reserved + movement ledger (delta, reason)",
+          "audit"
+        ],
+        [
+          "**Cart**",
+          "lines[], seller split, expires_at",
+          "pii (müşteri)"
+        ],
+        [
+          "**SalesOrder + OrderLine**",
+          "total=**Money/Decimal**; OrderLine Fragment; submittable: draft → submit → cancel",
+          "pii + retention, audit"
+        ],
+        [
+          "**Payment**",
+          "method, transaction, refund, capture",
+          "pii, audit"
+        ],
+        [
+          "**Shipping**",
+          "method, zone, rate, label, tracking",
+          "audit"
+        ]
+      ]
+    },
+    {
+      "type": "callout",
+      "variant": "info",
+      "label": "İş modeli capability flag ile (ENUM DEĞİL)",
+      "body": "İş modeli farkı ArcheType'a `enum` alanı olarak gömülmez; `tenant_capabilities(tenant_id, capability, enabled)` flag tablosuyla modellenir. B2C/B2B/marketplace yetenekleri tek tek açılır, mevcut veri bozulmadan genişler ({{ref:s-ecommerce-models}})."
+    },
+    {
+      "type": "paragraph",
+      "text": "Buna dik bir eksen **transaction_depth**'tir: `full` (varsayılan, uçtan uca sipariş+ödeme), `lead_gen` (yalnızca talep/iletişim, ödeme dışarıda) ve `hybrid` (ikisi bir arada) değerleriyle ürünün ne kadarının platform içinde tamamlandığını belirler. Bu eksen ilan/pazaryeri tarafıyla ortaktır ({{ref:s-classifieds}}) — aynı capability omurgası hem e-ticaret hem ilan ürününü besler."
+    },
+    {
+      "type": "kv-row",
+      "pairs": [
+        {
+          "key": "if-else YOK",
+          "value": "İş modeli farkı `if model == ...` ile değil capability flag + **Policy** ile; durum farkı (draft/submit/cancel) **Workflow** ile yönetilir. Yeni model/durum eklemek mevcut kodu açmaz."
+        },
+        {
+          "key": "OrderLine Fragment",
+          "value": "OrderLine bağımsız bir ArcheType değil, SalesOrder parent'ına bağlı bir **Fragment**'tır; parent'ın yaşam döngüsüne ve yetkisine tabidir, tek başına yaşamaz."
+        },
+        {
+          "key": "Money = Decimal",
+          "value": "Tüm para alanları (Variant.price, OrderLine, SalesOrder.total) **Money/Decimal**'dır, asla float değil — yuvarlama hatası finansal kayıt bütünlüğünü bozar ({{ref:k-archetype-bayraklari}})."
+        },
+        {
+          "key": "Uygulama → modül bağı",
+          "value": "Bu ArcheType'lar tek tek uygulamalara değil, modül matrisindeki Commerce modülüne aittir; bir ürün hangi modülleri install ettiğine göre bu şemayı kullanır ({{ref:app-modul-matrisi}})."
+        }
+      ]
     }
   ],
   "enrich": {

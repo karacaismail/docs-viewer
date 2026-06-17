@@ -6,7 +6,7 @@
   "sourceId": "fe-monorepo",
   "slug": "frontend/fe-monorepo",
   "title": "Frontend — Monorepo İskeleti",
-  "summary": "pnpm workspaces, apps/ + packages/ + tools/, sıkı paket sınırı.",
+  "summary": "pnpm workspaces; kök üçlü apps/ + packages/ + infra/ (tools/ + docs/ yardımcı), sıkı paket sınırı.",
   "categoryId": "frontend",
   "tags": [
    "frontend",
@@ -46,12 +46,22 @@
   ],
   "operationalImpact": "Kullanılabilirlik, erişilebilirlik ve istemci güvenliğini etkiler.",
   "externalReviewRequired": false,
-  "related": [],
+  "related": [
+   "page-adr-0025-frontend-stack-uzlastirma"
+  ],
   "parent": "page-fe-locked-decisions",
   "relations": [
    {
     "type": "sibling",
     "target": "page-fe-locked-decisions"
+   },
+   {
+    "type": "depends-on",
+    "target": "page-adr-0025-frontend-stack-uzlastirma"
+   },
+   {
+    "type": "depends-on",
+    "target": "page-fe-core-ui"
    }
   ],
   "blocks": [
@@ -82,11 +92,59 @@
     ]
    },
    {
+    "id": "block-fe-monorepo-p-2",
+    "type": "paragraph",
+    "segments": [
+     {
+      "type": "strong",
+      "text": "Kök üçlü: apps/ + packages/ + infra/."
+     },
+     {
+      "type": "text",
+      "text": " apps/ çalıştırılabilir uygulamalar (web, mobile, ota-server), packages/ paylaşılan kütüphaneler, infra/ ise Docker/compose + CI + deploy artefaktları. tools/ (lint/tsconfig) ve docs/ yardımcı dizinlerdir. UI çekirdeği (packages/ui) "
+     },
+     {
+      "type": "strong",
+      "text": "Radix + Phosphor + SCSS token"
+     },
+     {
+      "type": "text",
+      "text": " üzerine kuruludur; routing "
+     },
+     {
+      "type": "strong",
+      "text": "TanStack Router"
+     },
+     {
+      "type": "text",
+      "text": " ile yapılır; Flowbite yalnız karşılaştırma-tablosu sunumunda sınırlı kalır. Bu seçimler "
+     },
+     {
+      "type": "ref",
+      "text": "adr-0025-frontend-stack-uzlastirma",
+      "refId": "adr-0025-frontend-stack-uzlastirma"
+     },
+     {
+      "type": "text",
+      "text": " ile bağlayıcıdır ve "
+     },
+     {
+      "type": "ref",
+      "text": "fe-core-ui",
+      "refId": "fe-core-ui"
+     },
+     {
+      "type": "text",
+      "text": " ile uyumludur."
+     }
+    ]
+   },
+   {
     "id": "block-fe-monorepo-tree",
     "type": "codeBlock",
     "title": "saas-panel/",
     "language": "text",
-    "code": "saas-panel/\n├─ apps/\n│  ├─ web/   # PWA Vite build, ana giriş noktası\n│  ├─ mobile/   # Capacitor wrapper (ios/, android/)\n│  └─ ota-server/   # FastAPI, OTA manifest + S3 yönlendirme\n├─ packages/\n│  ├─ ui/   # Flowbite + Radix + Phosphor wrapper'ları\n│  ├─ api/   # openapi-typescript types + openapi-fetch client\n│  ├─ domain/   # Zod schemas, business logic, CASL abilities\n│  ├─ i18n/   # ICU mesajlar (tr, en, ar), date/number formatters\n│  ├─ ai/   # AI SDK provider router, prompt registry, schema-driven UI dispatcher\n│  ├─ auth/   # Logto adapter, Capacitor in-app browser flow\n│  ├─ kyc/   # TC NFC Capacitor modül + KYB Veriff adapter\n│  ├─ realtime/   # SSE client, WS client, Yjs/Hocuspocus setup\n│  ├─ offline/   # TanStack Query persist + IDB write queue\n│  ├─ native/   # Capacitor modüllerin tek noktadan dispatch'i\n│  └─ test-utils/   # MSW handlers, fixture factory'leri\n├─ tools/\n│  ├─ eslint-config/   # Biome config + custom rules\n│  └─ tsconfig/   # Paylaşılan tsconfig.base.json\n├─ docs/\n│  ├─ TECH_STACK.md   # Bu doküman\n│  ├─ ENGINEERING_MANIFESTO.md\n│  ├─ CLAUDE.md   # AI agent context\n│  └─ adr/   # Architecture Decision Records\n├─ .github/workflows/\n│  ├─ web-deploy.yml   # Ubuntu runner → Hetzner\n│  ├─ ios-build.yml   # macOS runner → TestFlight\n│  ├─ android-build.yml   # Ubuntu runner → Play Console\n│  └─ ota-publish.yml   # JS bundle → kendi OTA server\n├─ pnpm-workspace.yaml\n├─ lefthook.yml\n└─ biome.json"
+    "code": "saas-panel/\n├─ apps/\n│  ├─ web/   # PWA Vite build, ana giriş noktası\n│  ├─ mobile/   # Capacitor wrapper (ios/, android/)\n│  └─ ota-server/   # FastAPI, OTA manifest + S3 yönlendirme\n├─ packages/\n│  ├─ ui/   # Radix + Phosphor (çekirdek) wrapper'ları; SCSS token. Flowbite yalnız karşılaştırma-tablosu sunumunda sınırlı.\n│  ├─ api/   # openapi-typescript types + openapi-fetch client\n│  ├─ domain/   # Zod schemas, business logic, CASL abilities\n│  ├─ i18n/   # ICU mesajlar (tr, en, ar), date/number formatters\n│  ├─ ai/   # AI SDK provider router, prompt registry, schema-driven UI dispatcher\n│  ├─ auth/   # Logto adapter, Capacitor in-app browser flow\n│  ├─ kyc/   # TC NFC Capacitor modül + KYB Veriff adapter\n│  ├─ realtime/   # SSE client, WS client, Yjs/Hocuspocus setup\n│  ├─ offline/   # TanStack Query persist + IDB write queue\n│  ├─ native/   # Capacitor modüllerin tek noktadan dispatch'i\n│  └─ test-utils/   # MSW handlers, fixture factory'leri\n├─ tools/\n│  ├─ eslint-config/   # Biome config + custom rules\n│  └─ tsconfig/   # Paylaşılan tsconfig.base.json\n├─ infra/   # Kök üçlünün 3. ayağı (apps/ + packages/ + infra/): Docker/compose, CI ve deploy artefaktları\n│  ├─ docker/   # Dockerfile'lar + docker-compose (Logto, OTA server, yerel ortam)\n│  ├─ deploy/   # Hetzner provizyon + rollout/release artefaktları\n│  └─ ci/   # Paylaşılan CI yardımcıları; .github/workflows bunları çağırır\n├─ docs/\n│  ├─ TECH_STACK.md   # Bu doküman\n│  ├─ ENGINEERING_MANIFESTO.md\n│  ├─ CLAUDE.md   # AI agent context\n│  └─ adr/   # Architecture Decision Records\n├─ .github/workflows/\n│  ├─ web-deploy.yml   # Ubuntu runner → Hetzner\n│  ├─ ios-build.yml   # macOS runner → TestFlight\n│  ├─ android-build.yml   # Ubuntu runner → Play Console\n│  └─ ota-publish.yml   # JS bundle → kendi OTA server\n├─ pnpm-workspace.yaml\n├─ lefthook.yml\n└─ biome.json"
    },
    {
     "id": "block-fe-monorepo-co",
@@ -147,7 +205,7 @@
     "text": "Derinlemesine"
    },
    {
-    "id": "block-fe-monorepo-p-2",
+    "id": "block-fe-monorepo-p-3",
     "type": "paragraph",
     "segments": [
      {

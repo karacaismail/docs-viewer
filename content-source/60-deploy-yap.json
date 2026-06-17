@@ -305,10 +305,10 @@
       "type": "callout",
       "variant": "warning",
       "label": "Sınırlar",
-      "body": "**Free plan**: yayında olan repo public olmalı. Geliştirmede public, sonra Pro + private. **Cowork sandbox** `git push` yapamaz; push her zaman Mac'teki `yap` ile. **Backend** (Hetzner/Debian) için `ci.yml` testleri yeterli; deploy ayrı bir workflow (SSH/rsync veya Docker) gerektirir — ihtiyaç olunca kurulur.",
+      "body": "**Free plan**: yayında olan repo public olmalı. Geliştirmede public, sonra Pro + private. **Cowork sandbox** `git push` yapamaz; push her zaman Mac'teki `yap` ile. **Backend** (Hetzner/Debian) için `ci.yml` testleri yeterli; canlı çıkış ayrı bir workflow gerektirir. Desen: GitHub Actions imajı derler → **GHCR (`ghcr.io`)** registry'sine push → sunucuda `docker compose pull api && docker compose up -d api`. Bu `deploy-backend.yml` **henüz kurulu değil** — {{ref:be-deploy-profilleri}} P2 (self-host compose) profilinin kurulması gereken iskelet adımıdır.",
       "enrich": {
         "info": "3 bilinçli sınır: Pages free=public, push sadece Mac'ten, backend deploy ayrı.",
-        "detail": "**Hetzner backend deploy** için önerilen pattern: `.github/workflows/deploy-backend.yml` → docker build + docker push (registry'ye) + SSH'tan `docker compose pull && up`.",
+        "detail": "**Hetzner backend deploy** için önerilen pattern: `.github/workflows/deploy-backend.yml` → GitHub Actions imajı derler → **GHCR (ghcr.io)** registry'sine push eder → sunucuda `docker compose pull api && docker compose up -d api`. Bu workflow henüz kurulu değil; {{ref:be-deploy-profilleri}} P2 (self-host compose) profilinin kurulması gereken iskelet adımıdır.",
         "lesson": {
           "ne": "Almanya merkezli ucuz sunucu kiralama firması.",
           "nicin": "AWS pahalı; Hetzner uygun.",
