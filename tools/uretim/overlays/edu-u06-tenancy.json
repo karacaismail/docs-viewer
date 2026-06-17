@@ -1,0 +1,29 @@
+{
+ "featureDefs": [
+  {
+   "name": "Otomatik tenant scope",
+   "desc": "Query katmanının her SELECT/UPDATE/DELETE'e otomatik WHERE tenant_id = :current eklemesi; cross-tenant sızıntının teknik garantisi, insan müdahalesinden bağımsız.",
+   "critical": true
+  },
+  {
+   "name": "Üç izolasyon seviyesi",
+   "desc": "Row-level (aynı tablo + tenant_id kolonu, bu projenin seçimi), schema-level (tenant başına PostgreSQL schema) ve cluster-level (tenant başına DB instance) arasında maliyet/izolasyon dengesi.",
+   "critical": true
+  },
+  {
+   "name": "Sub-tenant hiyerarşisi",
+   "desc": "Bir tenant altındaki iş birimleri (holding altı şirketler); konsolide rapor + ayrı operasyon ihtiyacını karşılar.",
+   "critical": false
+  }
+ ],
+ "moduleUsage": [],
+ "testNotes": [
+  "Tenant scope'un asıl testi negatif testtir: A tenant'ının oturumuyla B tenant'ının kaydına erişim denemesi boş sonuç dönmeli — scope eklenmemiş bir sorgu yolunu bulan test, bu üniteyi gerçekten anladığının kanıtıdır.",
+  "Scope query katmanında zorlandığı için her yeni repository/sorgu yolu otomatik kapsanmalı; geliştiricinin elle WHERE yazmayı unuttuğu durum testle yakalanmalı, kod incelemesine bırakılmamalı.",
+  "Sub-tenant senaryosunda konsolide rapor, üst tenant kapsamında alt birimleri toplarken yine izolasyonu korumalı: bir holding bir başkasının alt-şirketini görememeli."
+ ],
+ "securityNotes": [
+  "Cross-tenant veri sızıntısı bu ünitenin merkezi tehdididir: izolasyonu kod incelemesiyle (bir gün unutulur) değil, query katmanında zorunlu scope ile garanti etmek tek güvenli desendir — callout 'critical' olarak işaretli.",
+  "İzolasyon seviyesi seçimi bir güvenlik/regülasyon kararıdır: regülasyon fiziksel ayrım istediğinde row-level yetmez, cluster-level (ayrı DB instance) gerekir; seçim tehdit modeline göre yapılır."
+ ]
+}

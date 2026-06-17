@@ -1,0 +1,44 @@
+{
+ "featureDefs": [
+  {
+   "name": "Namespace: tenant-scoped ad + rezerve defteri",
+   "desc": "Karar kapsamı: ArcheType adları tenant-scoped; rezerve-kelime kayıt defteri; çakışmada AI son-ek önerir. Çapraz-tenant ad çakışmasını baştan önler.",
+   "critical": true
+  },
+  {
+   "name": "Eşzamanlılık: optimistic lock (son-yazan-kazanır değil)",
+   "desc": "ChangeSet baseVersion ile optimistic lock; çakışmada merge-uyarısı. Kayıp güncellemeyi engeller.",
+   "critical": true
+  },
+  {
+   "name": "Kota/abuse: per-tenant sınır + circuit breaker",
+   "desc": "Tenant başına ArcheType/kayıt üst sınırı + token-rate circuit breaker; noisy-neighbor izolasyonu; plana göre değişir.",
+   "critical": true
+  },
+  {
+   "name": "Public KVKK: zorunlu rıza + audit",
+   "desc": "Public form veri topluyorsa aydınlatma + açık rıza bu sürümde zorunlu; yayın sihirbazına gömülü; rıza audit'e yazılır.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Beş açık karar merge-first kapatıldı: her biri sahip sayfaya da entegre edildi, dolayısıyla namespace/eşzamanlılık motoru, i18n yapısı, rate-limit ve gizlilik akışını birlikte bağlar.",
+  "kernel": "Namespace ve eşzamanlılık (ChangeSet baseVersion optimistic lock) k-sozlesme'de; rezerve-kelime defteri kernel seviyesinde.",
+  "core": "i18n gün-1 locale-anahtarlı etiket (varsayılan TR) in-tree i18n çekirdeğine; public rıza akışı gizlilik çekirdeğine oturur.",
+  "modules": "Kota/abuse scale-ratelimit ile her modülün ArcheType/kayıt üretimini sınırlar; noisy-neighbor izolasyonu modüller arası.",
+  "apps": "Public yayın sihirbazı (app yüzeyi) rıza metnini zorunlu kılar; plan bazlı kota app paketine bağlı."
+ },
+ "securityNotes": [
+  "Public KVKK: veri toplayan public form aydınlatma + açık rıza olmadan yayınlanamaz; rıza kaydı audit'e yazılır — ihlal baştan önlenir.",
+  "Noisy-neighbor izolasyonu: token-rate circuit breaker bir tenant'ın diğerlerini tüketmesini engeller (kaynak tüketimi güvenliği).",
+  "Namespace rezerve-kelime defteri: çapraz-tenant ad çakışması ve rezerve ad ele geçirme engellenir.",
+  "Optimistic lock kayıp güncellemeyi (lost update) önler; son-yazan-kazanır kabul edilmez."
+ ],
+ "testNotes": [
+  "Namespace çakışma testi: aynı ad iki tenant'ta izole; rezerve kelime reddi; AI son-ek önerisi.",
+  "Eşzamanlılık testi: eş-zamanlı iki ChangeSet baseVersion uyuşmazlığında merge-uyarısı üretir, sessiz üzerine yazma yok.",
+  "i18n testi: tek locale (TR) ile başlayan etiket yapısına ikinci dil eklenince migration gerekmez.",
+  "Kota testi: tenant ArcheType/kayıt üst sınırı ve token-rate breaker plan değerine göre tetiklenir.",
+  "Public KVKK testi: rızasız public form yayını reddedilir; rıza audit kaydı doğrulanır."
+ ]
+}

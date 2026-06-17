@@ -478,7 +478,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Politika yüzeyi",
+      "term": "Sözleşme yüzeyi + revert kapısı",
       "definition": [
        {
         "type": "strong",
@@ -486,16 +486,38 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı kural/kapı; deny-by-default ve kanıtlanabilir uygulama."
+        "text": "'Don't break userspace' (Linux) karşılığı: sistemin dışarıya verdiği değişmez söz (API/format/davranış) korunur; ihlal eden değişiklik CI'da geri alınır. Dış entegratör 5 yıl sonra kırılmamış sistem bulur."
        }
       ]
      },
      {
-      "term": "Kapı koşulu",
+      "term": "CI sınır denetçisi (mekanizma > niyet)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Shopify Packwerk karşılığı: import-linter (Python) + TS sınır denetçisi her PR'da modül komşuluk ihlalini reddeder. Uzun-ömür iyi tasarımdan değil, kişiye bağlı olmayan otomatik denetimden gelir — insan unutur, mekanizma unutmaz."
+       }
+      ]
+     },
+     {
+      "term": "Tarih-versiyon + dönüşüm katmanı",
       "definition": [
        {
         "type": "text",
-        "text": "İhlalde işi reddeden deterministik kontrol (CI veya runtime)."
+        "text": "Stripe (14 yıl API) karşılığı: çekirdek tek-versiyon kalır, eski sürümleri bir dönüşüm katmanı yaşatır; içerik evrilirken sözleşme sabit durur."
+       }
+      ]
+     },
+     {
+      "term": "Deprecation + codemod döngüsü",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Drupal Rector karşılığı: kullanımdan kaldırma bildirimi + AI-yürütücülü LibCST codemod, yükseltmeyi otomatik kod dönüşümüyle taşır; breaking-change maliyetini düşürür."
        }
       ]
      }
@@ -683,15 +705,25 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
+      "text": "ASIL MESAJ — uzun-ömür (30-50 yıl) 'güzel mimari'den değil mekanizmadan gelir; her mekanizmanın yanında onu zorlayan bir makine ("
      },
      {
-      "type": "code",
-      "text": "pii"
+      "type": "term",
+      "text": "CI kapısı",
+      "termId": "term-ci-kapisi-sus-overview"
      },
      {
       "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": ") olmalıdır, yazılı politika tek başına yetmez. "
+     },
+     {
+      "type": "term",
+      "text": "Sözleşme yüzeyi",
+      "termId": "term-sozlesme-yuzeyi-sus-overview"
+     },
+     {
+      "type": "text",
+      "text": " bir güvenlik/uyumluluk sınırıdır: yeni geliştirici eski kuralı bilmeden baskı altında kısayol bulur; tek koruma sınırı her PR'da kontrol eden denetçidir (Linux/Shopify modeli). TIMI soyutlama (IBM i, 35 yıl) karşılığı stabil substrat-bağımsız arayüz: ArcheType alt katman değişse de üst sözleşmeyi korur, böylece altyapı göçü ekosistemi kırmaz. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -736,16 +768,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Deny-by-default, sır sızıntısı taraması, bağımlılık denetimi "
-       },
-       {
-        "type": "term",
-        "text": "CI kapısı",
-        "termId": "term-ci-kapisi-sus-overview"
-       },
-       {
-        "type": "text",
-        "text": "."
+        "text": "Deny-by-default, sır sızıntısı taraması, bağımlılık denetimi CI kapısı."
        }
       ]
      },
@@ -1195,6 +1218,18 @@
        }
       ]
      ]
+    ]
+   },
+   {
+    "id": "block-sus-overview-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bitemporal kayıt (XTDB karşılığı: Postgres'te valid_time + system_time) geçmişe-bakış garantisini test eder: eski bir tarihteki durum sorgusu, sonradan gelen düzeltmelerden etkilenmeden o günün gerçeğini döndürmeli. Sözleşme yüzeyi regresyon testi: yayımlanmış API/format için golden snapshot tutulur; bir değişiklik sözleşmeyi bozarsa CI kırmızı olur (revert kapısının test tarafı). Codemod döngüsü test edilir: deprecation kuralı bir örnek repoda otomatik dönüşümle uygulanıp sonucun derlenip testleri geçtiği doğrulanır — yükseltme yolu kanıtlanmadan duyurulmaz."
+     }
     ]
    },
    {

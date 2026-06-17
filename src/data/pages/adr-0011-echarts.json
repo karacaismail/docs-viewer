@@ -245,7 +245,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Karar kapsamı",
+      "term": "Yalnız dinamik import (lazy chunk)",
       "definition": [
        {
         "type": "strong",
@@ -253,16 +253,29 @@
        },
        {
         "type": "text",
-        "text": "ADR'nin bağladığı invariant; alternatifler ve seçilen yön."
+        "text": "ECharts WBS görselleştirmesi sadece gerektiğinde yüklenen ayrı bir chunk'tır; eager bundle bütçesi korunur. Kararın doğrudan implikasyonu: ağır araç dolapta durur, ana yükü şişirmez."
        }
       ]
      },
      {
-      "term": "Uygulama etkisi",
+      "term": "Erişilebilir liste fallback'i (zorunlu)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Canvas yoksa WBS ağacı erişilebilir bir liste olarak sunulur; görsel bağımlılık erişilebilirliği düşürmez. Karar implikasyonu: yeni runtime bağımlılığı eklemek a11y sözünü bozamaz."
+       }
+      ]
+     },
+     {
+      "term": "size-limit CI kapısı denetimi",
       "definition": [
        {
         "type": "text",
-        "text": "Bu kararın kod/şema/test üzerindeki bağlayıcı sonucu."
+        "text": "Anti-stack defteri yeni runtime bağımlılığının kaydını ister; size-limit kapısı lazy-chunk sınırının korunduğunu her PR'da doğrular. Mimar kararının makine-zorlamalı tarafı."
        }
       ]
      }
@@ -450,15 +463,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "GELİŞTİRME ADIMI — bu ADR bir karar + gerekçe + 5N1K eğitim setidir; kanonik kayıt docs/ ADR serisidir, overlay onu çoğaltmaz, implikasyon boyutlarını ekler. Yeni runtime bağımlılığı supply-chain yüzeyini genişletir: ECharts sürümü sabitlenmeli ve bağımlılık tarama kapsamına alınmalı; anti-stack defteri kaydı bu denetimin izini tutar. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -486,15 +491,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "WBS blok bileşeninde dynamic import('echarts'); canvas yoksa erişilebilir <ul/ol> ağaç render"
        }
       ]
      },
@@ -512,15 +509,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Olumlu sonuç: etkileşimli ağaç sunumu sağlanır, eager bundle bütçesi lazy-chunk ile korunur. Kabul edilen maliyet: kayıtlı ve kapsamı sınırlı yeni runtime bağımlılığı (yalnız WBS yüzeyinde)."
        }
       ]
      },
@@ -953,6 +942,18 @@
        }
       ]
      ]
+    ]
+   },
+   {
+    "id": "block-adr-0011-echarts-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Fallback davranışı test edilmeli: canvas/WebGL devre dışıyken WBS'nin erişilebilir liste olarak render olduğu ve klavye + ekran okuyucuyla gezilebildiği e2e/a11y testiyle doğrulanır (axe ihlali = fail). Lazy chunk testi: ECharts'ın yalnız WBS yüzeyi açıldığında yüklendiği, ana giriş bundle'ında yer almadığı bundle analizi/size-limit ile kanıtlanır."
+     }
     ]
    },
    {

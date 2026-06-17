@@ -1,0 +1,46 @@
+{
+ "featureDefs": [
+  {
+   "name": "İki mod / tek motor",
+   "desc": "Otopilot (AI sürer, sonuç-önce, tek tık) ve Atölye (insan sürer, [a,b,c,d] DecisionCard + sub_prompt) aynı karar ağacının iki görünümü; insan-kararı kilidi korunur.",
+   "critical": true
+  },
+  {
+   "name": "Deterministic faker önizleme",
+   "desc": "6 satır sentetik veri LLM'den değil deterministic faker'dan üretilir; 'örnek veri' etiketli ve export'tan korumalı.",
+   "critical": true
+  },
+  {
+   "name": "Dış-sinyalli güven skoru",
+   "desc": "Güven validation/self-consistency/token olasılığı/risk/geçmişten gelir; model self-report'u tek başına kullanılmaz; eşik 0.80/0.60-0.80/0.60.",
+   "critical": true
+  },
+  {
+   "name": "Riskli kararda ön-seçimsizlik",
+   "desc": "PII/parasal/hukuki/yıkıcı kararlarda AI önerisi ön-seçili gelmez; otomasyon yanlılığı bilinçli olarak kırılır.",
+   "critical": true
+  },
+  {
+   "name": "Journey state machine",
+   "desc": "idle->completed akışı + hata durumları; her hata öğretici mesaj ve geri dönüş yolu taşır.",
+   "critical": false
+  }
+ ],
+ "ecaExample": "trigger:\n  event: decision_card.confirmed\ncondition:\n  all:\n    - card.risk_class in [\"pii\", \"monetary\", \"legal\", \"destructive\"]\n    - actor.capability >= \"suggest\"\n    - not preselect_applied\naction:\n  - emit: preview.synthetic_render\n  - require: explicit_user_choice\nguards:\n  max_depth: 3\n  idempotency_key: \"journey:{journey_id}:{card_id}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Sentetik önizleme LLM ile üretilirse 'örnek veri' kanıtlanamaz ve gerçek-görünümlü veri export'a sızabilir; deterministic faker + export koruması bunu engeller.",
+  "Güven yalnız model self-report'undan okunursa güven yanılsaması doğar; dış sinyaller (validation/risk/geçmiş) olmadan eşik kararı güvenilmez.",
+  "Riskli kararda AI önerisi ön-seçili gelirse otomasyon yanlılığı kullanıcıyı düşünmeden onaya iter; ön-seçimsizlik bu kavşakta zorunludur."
+ ],
+ "perfNotes": {
+  "code": "Önizleme deterministic faker'dan tek geçişte üretilir; güven sinyalleri (self-consistency/risk) karar başına toplanıp eşikle karşılaştırılır.",
+  "perf": "LLM çağrısı önizleme için kullanılmadığından sonuç-önce render düşük gecikmeli; faker çıktısı seed'e göre tekrarlanabilir/cache'lenebilir."
+ },
+ "testNotes": [
+  "Aynı seed ile sentetik önizleme her çağrıda aynı 6 satırı vermeli (deterministik) ve export akışında bloklanmalı.",
+  "Güven 0.60 altındaysa düşük-güven görünümü, 0.80 üstündeyse tek-tık Otopilot yolu seçildiği doğrulanmalı.",
+  "PII/parasal/hukuki/yıkıcı kararda hiçbir seçeneğin ön-seçili gelmediği test edilmeli.",
+  "Otopilot ve Atölye modlarının aynı karar ağacından geçtiği ve insan-kararı kilidinin her iki modda korunduğu kontrol edilmeli.",
+  "Journey state machine her hata durumunda öğretici mesaj + geri dönüş yolu üretmeli."
+ ]
+}

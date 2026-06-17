@@ -252,7 +252,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Karar kapsamı",
+      "term": "Model + prompt versiyon pinleme",
       "definition": [
        {
         "type": "strong",
@@ -260,16 +260,59 @@
        },
        {
         "type": "text",
-        "text": "ADR'nin bağladığı invariant; alternatifler ve seçilen yön."
+        "text": "Her AI çağrısı pinlenmiş model sürümü + prompt sürümü ile koşar; test edilmiş rollback hedefi tutulur. Yeni sürüm eval geçmeden trafiğe alınmaz."
        }
       ]
      },
      {
-      "term": "Uygulama etkisi",
+      "term": "Eval dataset + CI gating",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Bu kararın kod/şema/test üzerindeki bağlayıcı sonucu."
+        "text": "Eval dataset sistemin kalbi; model/prompt değişimi drift ölçümü ve eval skoru CI kapısından geçmeden merge edilemez. Skor düşüşü build'i kırar."
+       }
+      ]
+     },
+     {
+      "term": "Maliyet circuit breaker",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Günlük bütçe + tenant kotası + token-rate eşiği; eşik aşılınca AI çağrıları kesilir. Maliyet patlaması sessizce gerçekleşemez."
+       }
+      ]
+     },
+     {
+      "term": "Üç kill-switch (tenant/agent/MCP)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Tenant, agent ve MCP düzeyinde bağımsız acil kapatma. İncident anında ilgili katman izole edilir; tüm sistem durdurulmadan sorunlu yüzey susturulur."
+       }
+      ]
+     },
+     {
+      "term": "Input/output guardrail",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "PII/injection/halüsinasyon filtresi giriş ve çıkışta; tenant verisi eğitime gitmez. Guardrail Contract düzeyinde tanımlı, tüm AI endpoint'lerine otomatik dahil."
        }
       ]
      }
@@ -457,15 +500,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Kill-switch tetikleme yıkıcı bir eylemdir: yüksek-yetki capability + step-up doğrulama ister, her tetikleme audit log'a yazılır; tenant/agent/MCP düzeyinde izolasyon sağlar. Guardrail çift yönlüdür: girişte prompt-injection ve PII, çıkışta halüsinasyon/veri-sızıntısı filtrelenir; tenant verisi model eğitimine asla gönderilmez (deny-by-default). Versiyon pinleme tedarik-zinciri güvenliğidir: model/prompt sürümü sabitlenmeden trafiğe alınamaz, sessiz model değişimi (drift) CI gating ile yakalanır. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -493,15 +528,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Maliyet sayacı ve guardrail her çağrıda çalışır ama hafif tutulur: token-rate sayımı in-memory + kısa TTL, ağır eval yalnız CI'da koşar, istek yolunda değil."
        }
       ]
      },
@@ -519,15 +546,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Circuit breaker açıkken AI çağrıları erken reddedilir (fail-fast); böylece bütçe aşımı hem maliyeti hem de upstream sağlayıcıya gereksiz yükü durdurur."
        }
       ]
      },
@@ -823,7 +842,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — ADR-0020: AI Governance & Model Ops + Operations/Runbook",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — ADR-0020: AI Governance & Model Ops + Operations/Runbook\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: ai.cost_threshold_exceeded\ncondition:\n  all:\n    - tenant.daily_spend >= tenant.budget\n    - not killswitch.active(tenant)\naction:\n  - activate: killswitch.tenant\n  - emit: incident.cost_breaker_tripped\n  - notify: oncall_sre\nguards:\n  idempotency_key: \"breaker:{tenant}:{date}\"\n  external_effects: step_up_required\n  rollback: prompt_and_model_pin",
     "copyEnabled": true
    },
    {
@@ -963,6 +982,18 @@
     ]
    },
    {
+    "id": "block-adr-0020-governance-runbook-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Eval skoru eşik altına düşen prompt/model değişimi CI'da merge'i bloke etmeli (gating). Tenant günlük bütçe aşımı -> tenant kill-switch otomatik aktif + incident olayı üretilmeli; idempotent olmalı (gün içinde bir kez). Pinlenmemiş model sürümüyle AI çağrısı reddedilmeli; rollback hedefi her zaman test edilmiş olmalı. Output guardrail: PII içeren yanıt maskelenmeli/reddedilmeli; tenant verisinin eğitim akışına gitmediği doğrulanmalı."
+     }
+    ]
+   },
+   {
     "id": "block-adr-0020-governance-runbook-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -981,7 +1012,7 @@
        },
        {
         "type": "text",
-        "text": "Dolaylı — bu sayfa kararı/bilgiyi tanımlar; entegrasyon onu uygulayan birimlerde gerçekleşir."
+        "text": "Evet — governance ve operasyon tek bir modül değil, AI çağrısı yapan her yüzeyin çapraz-kesen kuralıdır; cc-obs ve cc-obs-deep sayfalarına entegre edilir."
        }
       ]
      },
@@ -990,16 +1021,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Authz (kill-switch tetikleme yüksek-yetki capability'si ister), tenancy (maliyet kotası + kill-switch tenant-scoped), bus (drift/bütçe-aşımı olayları runbook/alarm tetikler)."
        }
       ]
      },
@@ -1008,7 +1030,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "AI çağrı kontratına model_version + prompt_version + guardrail alanları; eval skoru ve maliyet sayacı zorunlu metadata."
        }
       ]
      },
@@ -1017,7 +1039,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "cc-obs (governance göstergeleri), cc-obs-deep (runbook + kill-switch), edu-u20 (yedek/restore tatbikatı)."
        }
       ]
      },
@@ -1026,7 +1048,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "AI özelliği barındıran her App pinlenmiş sürümle çağrı yapar; feature flag ve prompt rollback kontrolünü tüketir."
        }
       ]
      }

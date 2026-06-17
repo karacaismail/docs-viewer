@@ -1,0 +1,37 @@
+{
+ "featureDefs": [
+  {
+   "name": "ArcheType → tablo eşlemesi",
+   "desc": "Bir ArcheType bir PostgreSQL tablosuna karşılık gelir: field = kolon, belge = satır, UUID v7 birincil anahtar. Ders, soyut ArcheType kavramını somut CREATE TABLE + indeks + FK çıktısına bağlar.",
+   "critical": true
+  },
+  {
+   "name": "Tenant-scope FK kapısı (otomatik)",
+   "desc": "Framework her foreign key üstüne otomatik tenant kontrolü ekler: bir link tenant-A'dan tenant-B'ye gidemez. Çok-kiracılı izolasyonun veritabanı katmanındaki güvenlik garantisidir.",
+   "critical": true
+  },
+  {
+   "name": "İndeks seçimi (yaz/oku dengesi)",
+   "desc": "İndeks okuma O(N)→O(log N) hızlandırır ama her INSERT/UPDATE indeksi de günceller; bu yüzden yalnız sık WHERE/ORDER/JOIN edilen kolonlara indeks konur, yazma-ağır tablolarda az tutulur."
+  },
+  {
+   "name": "Transaction + ACID atomikliği",
+   "desc": "Para transferi gibi çok adımlı işlem 'ya hepsi ya hiçbiri' (BEGIN/COMMIT/ROLLBACK) garantisiyle çalışır; Atomicity/Consistency/Isolation/Durability mali sistemlerde varsayılan."
+  }
+ ],
+ "moduleUsage": [],
+ "perfNotes": {
+  "code": "CREATE INDEX ... (tenant_id, created_at DESC); EXPLAIN ANALYZE ile 'Seq Scan' tespit edilip doğru kolona indeks eklenir",
+  "perf": "100k satırda WHERE musteri_id='X': indekssiz ~100k satır taranır, B-tree ile ~17 okuma (log₂ 100000) — yaklaşık 1000× fark. Yanlış endpoint yavaşlığının ilk şüphelisi eksik indekstir."
+ },
+ "securityNotes": [
+  "DERS HEDEFİ — bu ders ArcheType'tan önceki veritabanı temelidir; tenant_id kolonu ve tenant-scope FK kontrolü her örnek tabloda gösterilir, kaçak senaryosu (tenant-A linkinin tenant-B'ye gitmesi) engellenir.",
+  "Foreign key yetim kaydı engeller (var olmayan id'ye INSERT → hata); silme davranışı bilinçle seçilir: ON DELETE CASCADE / SET NULL / RESTRICT — yanlış seçim veri kaybı veya yetim bırakır.",
+  "Dual write tuzağı: 'DB'ye yaz, sonra Kafka'ya yaz' ikinci yazma başarısız olursa tutarsızlık doğurur; çözüm Transactional Outbox (DB içi kuyruk satırı + ayrı worker) — iki sistem atomik tutulamaz."
+ ],
+ "testNotes": [
+  "Transaction davranışı integration testte gerçek test DB ile doğrulanır: ikinci UPDATE'te hata enjekte edilip ROLLBACK sonrası birinci UPDATE'in de geri alındığı (atomiklik) kanıtlanır.",
+  "Migration testi şema değişikliğinin (yeni kolon/indeks) ileri ve geri (up/down) çalıştığını ve mevcut veriyi bozmadığını doğrular; production'a güvenli geçişin kapısıdır.",
+  "Tenant-scope FK kontrolü için negatif test: başka tenant'ın id'siyle link kurma denemesi reddedilmeli — happy path bunu görmez."
+ ]
+}

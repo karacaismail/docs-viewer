@@ -1,0 +1,41 @@
+{
+ "featureDefs": [
+  {
+   "name": "Ölçmeden optimize etme: percentile bütçesi",
+   "desc": "Performans ortalama ile değil p50/p95/p99 percentile ile değerlendirilir; hedef p50<100ms, p95<500ms, p99<2s. Müşteri en yavaş %1'de (p99) şikâyet eder, ortalama bunu gizler. Optimizasyon kararı daima ölçüme dayanır, sezgiye değil.",
+   "critical": true
+  },
+  {
+   "name": "N+1 sorgu avı: eager-load / JOIN",
+   "desc": "ORM ilişki erişimi (customer.orders) arka planda her satır için ayrı SELECT üretir: 100 satır = 101 sorgu. EXPLAIN'de değil yalnız slow query log'da görünür; çözüm include/eager-load veya tek JOIN. En gizli ve en yaygın performans katili.",
+   "critical": true
+  },
+  {
+   "name": "EXPLAIN ANALYZE + slow query log",
+   "desc": "Sorgunun gerçek planı EXPLAIN ANALYZE ile okunur: Seq Scan (full table) yavaş, Index Scan hızlı. log_min_duration_statement (ör. 500ms) ile yavaş sorgular otomatik log'a düşer; haftalık en yavaş 10 sorgu çözülür."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Bu sayfa ürün modülü değil; sistemin hızını ölçüp yavaşı kanıta dayalı bulup düzeltmeyi öğreten eğitim ünitesidir. Pratiğe cc-obs gözlemlenebilirlik altyapısı ve save pipeline'ın sorgu disiplini olarak bağlanır.",
+  "kernel": "Çekirdek tüm istekleri otomatik latency histogram'ına (p50/p95/p99) ve trace'e bağlar; modül geliştirici ölçüm kodu yazmaz. Tenant-kapsamlı sorgu çekirdek tarafından zorlanır, bu da plan/index stratejisini belirler.",
+  "core": "Slow query log eşiği, index stratejisi ve N+1 önleyici eager-load core depolama disiplinine aittir; ArcheType JSONB alanları için GIN index, sık filtrelenen alanlar için b-tree index core tarafından planlanır.",
+  "modules": "Modüller ilişki erişimini eager-load/include ile yazar, döngü içinde sorgu yapmaz; ağır rapor sorguları senkron endpoint yerine iş kuyruğuna/projeksiyona kaydırılır.",
+  "apps": "Frontend FCP/LCP bütçesi (FCP<1.5s, LCP<2.5s) bundle size ve CDN ile; her dağıtım p95>500ms alarmını proaktif (müşteri şikâyetinden önce) Grafana üzerinden izler."
+ },
+ "moduleUsage": [],
+ "securityNotes": [
+  "Yavaş/pahalı sorgu yüzeyi aynı zamanda bir DoS yüzeyidir; sayfalama/limit zorunlu, sınırsız list endpoint'i (LIMIT'siz) bir saldırganın DB'yi kilitlemesine izin verir.",
+  "EXPLAIN ANALYZE çıktısı, slow query log ve trace satırları PII/sorgu parametresi içerebilir; bu kayıtlar maskelenmeli ve erişimi kısıtlanmalı.",
+  "Load test (k6/Artillery) yalnız izole ortamda; üretime karşı yetkisiz yük testi kasıtlı DoS sayılır."
+ ],
+ "perfNotes": {
+  "code": "EXPLAIN ANALYZE'da Seq Scan görülürse filtre/join alanına index eklenir; N+1 tespit edilirse include/eager-load veya tek JOIN'e dönülür. Ağır endpoint k6 ile 100 RPS load test'ten geçirilir, hedef p95<300ms.",
+  "perf": "Performans bütçesi: API p95<300ms (sarı 300-500ms, kırmızı >500ms), API p99<1s, DB query p95<50ms, FCP<1.5s, LCP<2.5s. p99 = sistemin tansiyonu; eşik aşılınca alarm, optimizasyon ölçüm-driven yapılır (profiling, flame graph: py-spy/node --prof)."
+ },
+ "testNotes": [
+  "N+1 regresyon testi: kritik endpoint'in ürettiği sorgu sayısı sabitlenir (ör. <=2); ilişki büyüdükçe sorgu sayısı artarsa test kırılır.",
+  "Performans bütçe testi: load test çıktısında p95 eşiği (ör. <300ms) geçilince CI kırmızı.",
+  "Index varlığı testi: sık filtrelenen alanda Seq Scan yerine Index Scan kullanıldığı EXPLAIN ile doğrulanır.",
+  "Sayfalama testi: list endpoint'i LIMIT'siz tüm satırı döndürmez (DoS/perf koruması)."
+ ]
+}

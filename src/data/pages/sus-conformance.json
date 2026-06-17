@@ -375,7 +375,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Politika yüzeyi",
+      "term": "Conformance suite koşum motoru",
       "definition": [
        {
         "type": "strong",
@@ -383,16 +383,29 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı kural/kapı; deny-by-default ve kanıtlanabilir uygulama."
+        "text": "Her ArcheType manifest'iyle birlikte gelen uyum test kümesini izole PostgreSQL şemasında koşar; standart API yüzeyinin (CRUD, list, filter, permission-check) beklenen davranışı sergilediğini kanıtlar. Geçemeyen ArcheType merge edilemez."
        }
       ]
      },
      {
-      "term": "Kapı koşulu",
+      "term": "Property-based invariant denetimi",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Hypothesis ile rastgele üretilen girdi kombinasyonlarında değişmezlerin (örn. toplam_borç >= 0, idempotency_key tek üretim) korunduğunu sürekli denetler; elle yazılan örnek-tabanlı testlerin atladığı edge case'leri otomatik bulur ve minimal karşı-örnek üretir."
+       }
+      ]
+     },
+     {
+      "term": "Golden-response diff kapısı",
       "definition": [
        {
         "type": "text",
-        "text": "İhlalde işi reddeden deterministik kontrol (CI veya runtime)."
+        "text": "Kanonik yanıtların saklı kopyası gerçek yanıtla diff'lenir; yanıt şeması, alan sırası veya serileştirme formatı değişirse PR insan onayına düşer. Stripe-mock üzerinden ödeme yanıtları deterministik tutulur."
        }
       ]
      }
@@ -580,15 +593,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Conformance suite permission-check davranışını da kapsar: bir ArcheType'ın tenant izolasyonunu veya yetki kapısını sessizce gevşetip gevşetmediği property testleriyle yakalanır — güvenlik gerilemesi merge öncesi durur. Stripe-mock gerçek ödeme sağlayıcısına ağ çağrısı yapmaz; test sırasında PII/kart verisi dış sisteme sızmaz, golden yanıtlar maskelenmiş alanlarla saklanır. Property test üreteçleri kötücül girdi (negatif tutar, taşma, unicode enjeksiyonu, aşırı derinlik) örnekler; invariant ihlali bir DoS/bütünlük açığının erken sinyalidir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -616,15 +621,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Conformance + property suite izole şema (template DB clone) üzerinde paralel koşar; her ArcheType kendi transaction'ında, sonunda rollback. Golden diff yalnız değişen dosyalarda tetiklenir."
        }
       ]
      },
@@ -642,15 +639,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Template DB clone yaklaşımı migration'i her testte tekrar koşmaktan ~10x hizlidir; property test bütçesi (örnek sayısı) CI'da düşük, nightly'de yüksek tutularak PR geri-bildirimi dakika altı seviyede kalir."
        }
       ]
      },
@@ -1083,6 +1072,18 @@
        }
       ]
      ]
+    ]
+   },
+   {
+    "id": "block-sus-conformance-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Conformance suite = ArcheType'in 'public' yüzeyiyle eşzamanli yazilir: sözleşme tanimlandiği an testi de var; testsiz yüzey 'public' sayilmaz. Property invariant'larini ArcheType yazari değil mimar tanimlar — sözleşmenin matematiksel hali merkezi kalir, modül başina yorumlanmaz. Golden file güncellemesi ayri, gözle görülür bir commit'tir; sessiz overwrite yasak, diff kapisi bilinçli kabul gerektirir. Karşi-örnek bulunduğunda Hypothesis onu kalici regresyon fixture'ina yazar; ayni bozulma bir daha sessizce geçemez."
+     }
     ]
    },
    {

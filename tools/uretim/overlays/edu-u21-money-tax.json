@@ -1,0 +1,44 @@
+{
+ "featureDefs": [
+  {
+   "name": "Tarih-bağlı kur defteri",
+   "desc": "fx_rate(from, to, rate, valid_at); geçmiş işlem her zaman işlem tarihindeki kurla okunur, anlık kurla yeniden hesaplanmaz.",
+   "critical": true
+  },
+  {
+   "name": "ArcheType-bazlı vergi oranı tablosu",
+   "desc": "tax_rate(category, country, rate, valid_from, valid_to); oran sabit kodlanmaz, tarihe ve yetki alanına göre sorgulanır.",
+   "critical": true
+  },
+  {
+   "name": "Reverse charge / OSS kararı",
+   "desc": "AB B2B'de alıcı VAT no'lu ise sıfır oran + ters yükleme; B2C'de OSS ile satıcı ülkesi basitleştirmesi.",
+   "critical": false
+  },
+  {
+   "name": "Ödeme sağlayıcı seçim matrisi",
+   "desc": "TR için Iyzico/PayTR, uluslararası abonelik için Stripe, vergi yükü devri için Paddle (Merchant of Record).",
+   "critical": false
+  }
+ ],
+ "moduleUsage": [
+  "s-billing fatura kalemine amount/currency/fx_rate/fx_date/tax_rate kolonlarını uygular.",
+  "s-accounting kur farkını ve stopajı muhasebe defterine yansıtır.",
+  "cc-tr KDV %1/%10/%20 ve stopaj oranlarını yetki alanına bağlar."
+ ],
+ "securityNotes": [
+  "Vergi oranı sabit kodlanırsa (const KDV = 0.20) oran değişiminde tüm fatura sessizce yanlışlanır; oran tablodan tarihe göre çözülmeli.",
+  "Anlık kurla geçmiş işlem yeniden hesaplanırsa muhasebe açığı doğar ve denetimde hesap verilemez; fx_date değişmez kayıt olmalı.",
+  "Reverse charge yanlış uygulanırsa (B2B'ye KDV eklemek veya B2C'ye eklememek) denetim cezası riski oluşur."
+ ],
+ "perfNotes": {
+  "code": "tax_rate ve fx_rate sorguları (category, country, valid_from) ve (from, to, valid_at) bileşik indeksiyle nokta-tarih çözümler.",
+  "perf": "Fatura kesiminde tek tarih-aralığı sorgusu; geçmiş kur için tablo immutable olduğundan sonuç cache'lenebilir."
+ },
+ "testNotes": [
+  "Geçmiş tarihli fatura yeniden açıldığında orijinal fx_rate ile aynı toplamı vermeli (anlık kurla değil).",
+  "Oran tablosunda valid_to dolu eski kayıt ile yeni kayıt arası geçişte doğru oranın seçildiği doğrulanmalı.",
+  "AB B2B (VAT no var) faturasında oran sıfır + reverse charge etiketi; B2C faturasında tam oran üretildiği test edilmeli.",
+  "Decimal(18,2) toplam = amount * (1 + tax_rate) ve dönüştürülmüş tutar = amount * fx_rate kuruş sapmasız hesaplanmalı."
+ ]
+}

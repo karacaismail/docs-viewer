@@ -924,7 +924,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Öğrenme hedefi",
+      "term": "Görünürlük + dokunma + kontrast eşikleri",
       "definition": [
        {
         "type": "strong",
@@ -932,16 +932,46 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin okuyucuya kazandırdığı bağlayıcı yetkinlik."
+        "text": "Yazı >=16px (1rem), dokunma alanı >=44x44px, kontrast >=4.5:1 (büyük yazı 3:1). 60+ için tasarlanan iyi UX gence de daha iyi UX'tir."
        }
       ]
      },
      {
-      "term": "Uygulanabilir çıktı",
+      "term": "Progressive form + affedicilik",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Dersin sonunda üretilen çalıştırılabilir/denetlenebilir eser."
+        "text": "Tek kolon, label inputun üstünde, adım göstergesi (1/3), otomatik kaydet (localStorage), her yıkıcı aksiyona onay + geri al."
+       }
+      ]
+     },
+     {
+      "term": "İnsan-dilinde hata mesajı",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "'INVALID_INPUT' değil 'E-posta @ içermeli (örn: ad@gmail.com)'; backend kullanıcı-dostu + i18n'den geçen hata döndürür."
+       }
+      ]
+     },
+     {
+      "term": "Sentetik önizleme (deterministic faker, LLM değil)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Önizleme verisi faker katmanından; 6 örnek satır, locale-farkında, 'örnek veri' etiketli, export'a kapalı. LLM yalnız domain/alan tespiti yapar."
        }
       ]
      }
@@ -1128,16 +1158,13 @@
     "title": "Güvenlik optimizasyonu",
     "segments": [
      {
-      "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
+      "type": "term",
+      "text": "Sentetik önizleme",
+      "termId": "term-sentetik-onizleme-edu-u15-ux-60-plus"
      },
      {
       "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": " PII-güvenli: faker regex/domain kurallarıyla üretir, gerçek veri sızdırmaz; 'örnek veri' etiketi gerçek sanılıp export edilmesini önler. Otomasyon yanlılığı kapısı: PII/parasal/hukuki/yıkıcı kararlarda AI-önerisi ön-seçili gelmez, aktif seçim zorunludur; 60+ kullanıcının düşünmeden onaylaması engellenir. Güven dış sinyalden hesaplanır (validation geçişi, self-consistency, token olasılığı, risk cezası, geçmiş override oranı) — modelin 'eminim' self-report'u güven sayılmaz (RLHF emin-sesi ödüllendirir). Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1165,15 +1192,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "<button class=\"min-h-[44px] px-4 text-base font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50\">"
        }
       ]
      },
@@ -1191,15 +1210,16 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
+        "text": "Önizleme için deterministic faker LLM çağrısından çok daha hızlı ve tutarlı: tek-alan/önizlemede ağ gecikmesi yok, öngörülebilir çıktı. Mobile-first 360px'e çizilir; font-size >=1rem ve min-h-[44px] "
        },
        {
-        "type": "code",
-        "text": "async def"
+        "type": "term",
+        "text": "tap target",
+        "termId": "term-tap-target-edu-u15-ux-60-plus"
        },
        {
         "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": " SCSS/Tailwind tokenleriyle sabitlenir."
        }
       ]
      },
@@ -1495,7 +1515,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — UX Prensipleri — 60+ kullanıcı için tasarım",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — UX Prensipleri — 60+ kullanıcı için tasarım\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: ai.suggestion_ready\ncondition:\n  all:\n    - confidence >= 0.80\n    - decision.class not in [\"pii\",\"financial\",\"legal\",\"destructive\"]\naction:\n  - emit: ui.one_tap_accept\nelse:\n  - emit: ui.active_selection_required\nguards:\n  confidence_source: external_signal\n  preselect_high_risk: false\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1632,6 +1652,27 @@
        }
       ]
      ]
+    ]
+   },
+   {
+    "id": "block-edu-u15-ux-60-plus-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Erişilebilirlik gate'i ("
+     },
+     {
+      "type": "term",
+      "text": "WCAG",
+      "termId": "term-wcag-edu-u15-ux-60-plus"
+     },
+     {
+      "type": "text",
+      "text": " 2.2 AA): kontrast >=4.5:1, tap target >=44x44px, tüm işlev klavyeyle erişilebilir, semantic HTML + ARIA doğrulanır. Güven eşiği testi: >=0.80 otopilot kapalı; 0.60-0.80 atölye kartı açık; <0.60 aktif seçim zorunlu — eşik sınırları davranışı belirler. Ön-seçim politikası: yüksek-riskli karar kartında AI-önerisi ön-seçili GELMEMELİ (negatif test). Hata mesajı oracle'ı: kullanıcıya dönen mesaj jargon kodu (INVALID_INPUT vb.) içermemeli, düzeltme yönergesi taşımalı."
+     }
     ]
    },
    {

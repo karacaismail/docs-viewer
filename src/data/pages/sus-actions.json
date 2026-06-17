@@ -1012,7 +1012,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Politika yüzeyi",
+      "term": "Tipli kinetik aksiyon yüzeyi",
       "definition": [
        {
         "type": "strong",
@@ -1020,16 +1020,59 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı kural/kapı; deny-by-default ve kanıtlanabilir uygulama."
+        "text": "AI ham SQL yazmaz; JSON-Schema imzalı, amaç-odaklı action'lar (publish_order, approve_invoice, cancel_subscription) çağırır. Her çağrı validation + authz + audit'ten geçer."
        }
       ]
      },
      {
-      "term": "Kapı koşulu",
+      "term": "Yetki tavanı kesişim kuralı",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "İhlalde işi reddeden deterministik kontrol (CI veya runtime)."
+        "text": "Etkin yetki = kullanıcı_rolü ∩ agent_capability ∩ tool_scope ∩ aksiyon_riski ∩ ortam. Ajan asla principal değil; temsil ettiği aktörün yetkisini aşamaz (delegasyon, kimliğe bürünme değil)."
+       }
+      ]
+     },
+     {
+      "term": "Kapatılamaz korumalar (hard invariant)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Tenant izolasyonu (RLS), PII/KVKK maskeleme, audit ve şema-değişim güvenliğini kapatan aksiyon yüzeyde tanımlanamaz ve capability allowlist'ine asla giremez."
+       }
+      ]
+     },
+     {
+      "term": "Aksiyon taksonomisi (risk/onay/geri-alma)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Her aksiyon risk sınıfı taşır: Read/Suggest/Draft AI'a doğrudan; ApplySchema/Migration/DeleteField/PermissionChange/PublishPublic motorla + insan onayıyla; DisableProtection yasak."
+       }
+      ]
+     },
+     {
+      "term": "Out-of-band step-up onay",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Dış-etkili, parasal, hukuki veya yıkıcı aksiyonlar (e-posta/webhook, ödeme, silme, public yayın) ayrı güvenli kanaldan onay ister; Otopilot'ta bile akış bu kavşakta durur."
        }
       ]
      }
@@ -1217,15 +1260,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "AI ham SQL (INSERT INTO ...) atabilirse governance açığı ve injection-benzeri risk doğar; tipli action yüzeyi tek geçiş noktası olmalı. Etkin yetki birleşim olarak hesaplanırsa ajan aktörün üstünde yetki kazanır; kural kesişim olmalı ve capability allowlist'iyle daha da daraltılmalı. RLS/PII/audit/şema-güvenliğini kapatan bir aksiyon yüzeye sızarsa hard invariant çöker; bu dört koruma beyandan gelir ve aksiyonla devre dışı bırakılamaz. Yüksek-riskli aksiyon step-up olmadan uygulanırsa geri-alınamaz/parasal işlem korumasız kalır; out-of-band onay zorunludur. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1253,15 +1288,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Her action ayrı dosya (framework/kernel/actions/), manifest'te listeli; çağrı imza doğrulama -> authz kesişim -> audit append sırasıyla işlenir."
        }
       ]
      },
@@ -1279,15 +1306,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Düşük-riskli Read/Suggest/Draft doğrudan akar; yalnız orta/yüksek-risk aksiyonlar insan-onayı/step-up kavşağında bloklanır, sıcak yol hızlı kalır."
        }
       ]
      },
@@ -1583,7 +1602,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Tipli kinetik aksiyon yüzeyi (AI için)",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Tipli kinetik aksiyon yüzeyi (AI için)\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: action.invoked\ncondition:\n  all:\n    - actor.capability >= action.required_capability\n    - action.capability subset_of (user.role ∩ tool.scope)\n    - action.name not in [\"DisableProtection\"]\n    - not loop_detected\naction:\n  - emit: authz.evaluate\n  - emit: audit.append\nguards:\n  max_depth: 6\n  idempotency_key: \"action:{action_id}:{actor_id}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1723,6 +1742,18 @@
     ]
    },
    {
+    "id": "block-sus-actions-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "DisableProtection aksiyonunun yüzeyde tanımlanamadığı ve capability allowlist'ine eklenemediği doğrulanmalı. Ajan capability'si kullanıcı rolünü aşan bir aksiyon istediğinde kesişim kuralının çağrıyı reddettiği test edilmeli. Parasal/yıkıcı/public aksiyonların step-up onayı olmadan uygulanmadığı, Otopilot modunda bile durduğu kontrol edilmeli. Taksonomideki her aksiyonun beyan edilen risk/onay/geri-alma sınıfıyla (ör. DeleteField -> çift onay + soft-delete 30g) uygulandığı doğrulanmalı. Her başarılı ve reddedilen aksiyon çağrısının audit'e değişmez kayıt olarak gittiği test edilmeli."
+     }
+    ]
+   },
+   {
     "id": "block-sus-actions-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1799,13 +1830,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-sus-actions-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-sus-actions-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "k-authz her aksiyon çağrısını merkezî politika kapısından geçirir (kesişim kuralı burada zorlanır)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-ai ajanı MCP üzerinden yalnız ilan edilmiş action'lara erişir; ham veri katmanına dokunamaz."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "layer1-workflow ECA sözleşmesini aksiyon side-effect'lerine bağlar; sus-conformance üretilmiş uyumluluk testlerini doğrular."
+      }
+     ]
     ]
    },
    {

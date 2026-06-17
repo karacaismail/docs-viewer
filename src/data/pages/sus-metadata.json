@@ -561,15 +561,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Introspect yüzeyi sistemin tüm yapısını ifşa eder; okuma kendisi yetkilendirilmeli — denetçi rolü tüm meta-kayıtları görür, kiracı kullanıcısı yalnız kendi tenant'ının kayıtlarını. Meta-kayıt 'kim ne zaman değiştirdi' alanı silinemez/üzeri yazılamaz olmalı; aksi halde audit zinciri sahteleştirilebilir ve 'her şey kayıt' garantisi çöker. Feature flag ve policy gibi kayıtların değer alanı hassas olabilir (örn. eşik değerleri saldırgana ipucu verir); introspect cevabı alan-bazlı maskelemeyi desteklemeli. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -927,7 +919,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Her-şey-metadata (introspectable kayıt)",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Her-şey-metadata (introspectable kayıt)\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: component.registered\ncondition:\n  all:\n    - component.kind in [\"role\",\"workflow\",\"policy\",\"feature_flag\",\"scheduled_job\"]\n    - component.metadata_record == present\n    - not component.has_embedded_governance\naction:\n  - emit: introspection.index_updated\n  - emit: audit.metadata_snapshot\nguards:\n  max_depth: 6\n  idempotency_key: \"introspect:{component.id}:{component.version}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -1067,6 +1059,18 @@
     ]
    },
    {
+    "id": "block-sus-metadata-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Her bileşen tipi için 'meta-ArcheType kaydı var mı' invariant testi: kayıt-dışı bir rol/policy eklemeye çalışan PR doğrulamada reddedilmeli. Introspect(component) cevabının audit log'daki son değişiklik sürümüyle tutarlı olduğunu doğrulayan golden test — kayıt ile gerçek davranışın sapmaması. Geçmiş sorgu testi: '5 yıl önce hangi rol neydi' senaryosu için sürümlü kaydın eski hâlinin okunabildiğini doğrula (saklama + sürüm alanı)."
+     }
+    ]
+   },
+   {
     "id": "block-sus-metadata-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1085,7 +1089,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Kısmen — bu bir kernel disiplini, ürün modülü değil. Her bileşen tipini (rol, workflow, policy, feature flag, scheduled job) introspectable ArcheType kaydına çeviren meta-katman kernel'de yaşar; modüller ve uygulamalar bu kayıtları sadece tüketir."
        }
       ]
      },
@@ -1094,16 +1098,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Meta-ArcheType kayıt deposu: bir bileşeni tarif eden ArcheType (alanları, sahipliği, sürümü) burada tutulur. introspect(component_id) API'si kernel yüzeyindedir; audit zinciri ve okuma izleri bu katmandan akar."
        }
       ]
      },
@@ -1112,7 +1107,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Identity rolü, Authz politikası, Workflow tanımı — hepsi ortak meta-şemaya uyar. Core, kayıt-değil bir bileşen tipinin sızmasını (örn. koda gömülü yetki kuralı) reddeden doğrulamayı çalıştırır."
        }
       ]
      },
@@ -1121,7 +1116,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Modül yeni bir bileşen tipi getirdiğinde onu meta-ArcheType olarak kaydeder; aksi halde introspect ve audit görünmez kalır. Modül kendi koduna governance kuralı gömemez."
        }
       ]
      },
@@ -1130,7 +1125,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Uygulama (Distribution/Edition) introspect kayıtlarını okuyup 'bu kiracıda hangi rol hangi tabloya erişir' sorusunu çözer; kendisi meta-şema tanımlamaz, sadece sorgular."
        }
       ]
      }

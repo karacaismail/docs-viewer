@@ -586,7 +586,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Services — Dış Sağlayıcılar — birincil yetenek",
+      "term": "Tek kategori-arayüzü, çok sağlayıcı (driver pattern)",
       "definition": [
        {
         "type": "strong",
@@ -594,25 +594,29 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "Her dış servis kategorisi (ödeme, e-belge, SMS, depolama, LLM, kargo...) tek bir Port arayüzü tanımlar; iyzico/Stripe ya da NetGSM/Twilio gibi sağlayıcılar bu arayüzü uygulayan değiştirilebilir driver'lardır. Çağıran kod somut sağlayıcıyı bilmez, yalnız kategoriyi çağırır."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Tenant başına sağlayıcı seçimi ve credential izolasyonu",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Hangi tenant'ın hangi SMS/ödeme/e-belge sağlayıcısını kullandığı ve API anahtarları runtime konfigürasyonudur; bir tenant iyzico, diğeri PayTR kullanabilir. Anahtarlar tenant-kapsamlı saklanır ve asla koda gömülmez."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "TR-yerel sağlayıcı kapsaması",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "Kategori arayüzleri Türkiye'ye özgü zorunlu entegratörleri (GİB e-belge, NetGSM, Yurtiçi/Aras kargo, BKM, SGK, MERSİS, TC Kimlik) global sağlayıcılarla aynı Port arkasında birleştirir; yerel mevzuat sağlayıcısı eklemek yeni kategori değil yeni driver'dır."
        }
       ]
      }
@@ -800,15 +804,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Sağlayıcı API anahtarları tenant-kapsamlı secret store'da; koda/repo'ya gömülmez, log'a yazılmaz, audit'te maskelenir. Dış sağlayıcıya giden PII minimize edilir; e-belge/KYC gibi zorunlu alanlar dışında veri sızdırılmaz, sağlayıcı sözleşmesi veri işleyen (processor) olarak kayıt altına alınır. Gelen webhook'lar (ödeme onayı, kargo durumu, e-belge yanıtı) HMAC/imza doğrulamasından geçmeden işlenmez; confused-deputy ve sahte-callback riski kapatılır. Sağlayıcı kesintisinde fail-open değil fail-safe: ödeme/e-belge gibi parasal-yasal çağrılarda belirsiz durum 'beklemede' işaretlenir, sessizce başarılı sayılmaz. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -836,15 +832,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Her dış çağrı timeout + sınırlı retry (exponential backoff + jitter) + circuit-breaker ardına alınır; sağlayıcı yavaşlarsa istek senkron bloklanmaz, iş kuyruğuna düşer."
        }
       ]
      },
@@ -862,15 +850,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Yavaş/oran-sınırlı sağlayıcı (SMS, OCR, LLM) ardına bir devre kesici tek sağlayıcının tüm thread havuzunu tüketmesini engeller; sağlayıcı health'i izlenir, ardışık hata circuit'i açar ve yedek sağlayıcıya/kuyruğa düşürür."
        }
       ]
      },
@@ -1306,6 +1286,18 @@
     ]
    },
    {
+    "id": "block-services-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Sözleşme testi (contract test): her sağlayıcı driver'ı kategori Port'unun tüm metotlarını ve hata sözleşmesini sağladığı doğrulanır -- sahte sağlayıcı ile kontrol. Sağlayıcı değişiminin (iyzico->PayTR) çağıran modül kodunu değiştirmeden çalıştığı test edilir. Gelen webhook imza doğrulaması: geçersiz imzalı callback reddedilir, geçerli olan tek kez işlenir (idempotency). Tenant-A'nın credential'ıyla tenant-B'nin sağlayıcı çağrısı yapılamadığı (credential izolasyonu) doğrulanır."
+     }
+    ]
+   },
+   {
     "id": "block-services-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1324,7 +1316,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Bu sayfa bir ürün modülü değil; tüm modüllerin dış dünyaya çıktığı paylaşılan adapter katmanının kataloğudur. Her kategori bir Port; modüller bu Port'u çağırır, sağlayıcı değişimi modül kodunu etkilemez."
        }
       ]
      },
@@ -1333,16 +1325,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Çekirdek yalnız Port arayüzlerini (PaymentPort, EBelgePort, SmsPort, StoragePort, LlmPort...) ve sağlayıcı çözümleme (resolver) sözleşmesini tanımlar; somut sağlayıcı SDK'ları çekirdeğe sızmaz, sınırda tutulur."
        }
       ]
      },
@@ -1351,7 +1334,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Sağlayıcı seçimi + credential çözümleme tenant-kapsamlıdır; driver kayıt defteri (registry) hangi kategoride hangi sağlayıcıların aktif olduğunu auto-discover eder. Dış çağrılar timeout/retry/circuit-breaker disiplinine bağlıdır."
        }
       ]
      },
@@ -1360,7 +1343,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Modüller asla sağlayıcı SDK'sını doğrudan import etmez; yalnız kategori Port'unu çağırır (örn. 'fatura kes' -> EBelgePort, somut entegratörü bilmeden). Dış etki gerektiren çağrılar Contract sınırında outbox/iş kuyruğu üzerinden iletilir."
        }
       ]
      },
@@ -1369,7 +1352,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Aynı Port'u farklı dağıtımlar/edition'lar farklı sağlayıcı setiyle kullanır; on-prem MinIO/Ollama, SaaS S3/OpenAI seçer. Uygulama kodu değişmez, yalnız sağlayıcı konfigürasyonu değişir."
        }
       ]
      }

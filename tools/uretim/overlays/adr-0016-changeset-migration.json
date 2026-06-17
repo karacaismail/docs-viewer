@@ -1,0 +1,39 @@
+{
+ "featureDefs": [
+  {
+   "name": "Yedi-alan operation sözleşmesi",
+   "desc": "Her yapısal değişiklik operation'ı yedi alanla tanımlanır: precondition, invariant, validation, risk, rollback, audit, preview. Eksik alanlı operation tanımsızdır; geçersiz ChangeSet asla uygulanmaz. AI önerir, doğrulama motoru tek yazma yetkisidir.",
+   "critical": true
+  },
+  {
+   "name": "Üç geri-alma sınıfı + durum makinesi",
+   "desc": "Geri-alma üç sınıfa ayrılır: tersine çevrilebilir, expand-contract ile aşamalı, telafi-edilemez (snapshot son çare). Migration ve rollback birer durum makinesiyle ilerler; geri-alınamaz adımlar akışın sonuna bırakılır.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Hayır — bu bir ürün modülü değil, geliştirme adımı (ADR-0016, Faz 2). Karar ChangeSet zarfını ve migration yaşam döngüsünü sabitler; uygulaması kernel sözleşmesi (k-sozlesme) ile migration eğitim ünitesidir. Kanonik kayıt docs/ ADR serisidir.",
+  "kernel": "schema (ChangeSet tipli zarf, tip değişikliği veri/metadata), authz (değişiklik yetkisi + optimistic locking sahipliği), audit (her operation'ın olayı).",
+  "core": "bitemporal (versiyon geçmişi, expand-contract çift-yaz penceresi), Contract (sözleşmenin kendisi), Money/pii (etkilenen alan sınıfları için risk hesabı).",
+  "modules": "",
+  "apps": ""
+ },
+ "moduleUsage": [],
+ "ecaExample": "trigger:\n  event: changeset.submitted\ncondition:\n  all:\n    - actor.capability >= \"schema.changeset.apply\"\n    - changeset.baseVersion == archetype.current_version\n    - changeset.operations.all_have_seven_fields\n    - not loop_detected\naction:\n  - emit: changeset.applied\n  - emit: migration.state_advanced\nguards:\n  max_depth: 6\n  idempotency_key: \"changeset:{changeSetId}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "AI ham SQL üretemez; yalnız tipli ChangeSet önerir, deterministik doğrulama motoru uygular — veri kaybı kapısı budur.",
+  "Yedi-alanı eksik operation içeren ChangeSet doğrulamada düşer (deny-by-default); geçersiz değişiklik asla yazılmaz.",
+  "baseVersion uyuşmazsa optimistic locking devreye girer; son-yazan-kazanır değil, merge-uyarısı gösterilir.",
+  "Telafi-edilemez (geri-alınamaz) adımlar akışın sonuna bırakılır; snapshot yalnız son çaredir, audit zorunludur."
+ ],
+ "perfNotes": {
+  "code": "// expand-contract: önce yeni kolon eklenir + çift-yaz, sonra eski kolon contract; kesintisiz tip değişimi",
+  "perf": "Expand-contract ile tip değişiminde çift-yaz penceresi kesinti üretmez; durum makinesi her adımı idempotent ve kaldığı yerden sürdürülebilir kılar. remove_field soft-delete + snapshot ile telafi penceresi bırakır."
+ },
+ "testNotes": [
+  "Yedi-alanı eksik operation içeren ChangeSet'in doğrulamada reddedildiği.",
+  "baseVersion uyuşmazlığında ChangeSet'in optimistic locking ile reddedilip merge-uyarısı verdiği.",
+  "Tersine / expand-contract / telafi-edilemez üç sınıfın doğru seçildiği ve geri-alınamazın akış sonunda kaldığı.",
+  "Migration durum makinesinin kesintide kaldığı yerden idempotent sürdüğü."
+ ]
+}

@@ -201,7 +201,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Dosya / Dizin Yapısı — birincil yetenek",
+      "term": "Üç-katmanlı dizin sözleşmesi",
       "definition": [
        {
         "type": "strong",
@@ -209,25 +209,16 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "framework/ (Layer 0 kernel + scale + layer1 + sdk), modules/ (Layer 2 first-party ürünler), ui/ + docs/ + tests/. Her dosya türünün tek yeri vardır; komşuluk yapıyla görünür olur — kernel tabanda, ürünler üstte, asla ters yön."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Kernel iç bölümlemesi",
       "definition": [
        {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
-       }
-      ]
-     },
-     {
-      "term": "Gözlemlenebilirlik",
-      "definition": [
-       {
-        "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "kernel/ altında schema (ArcheType engine), identity, authz (RBAC+ABAC+ReBAC+RLS), tenancy, events (bus + outbox), polyglot (embedded JS / sidecar / WASM), registry + manifest. Her çapraz-kesen yetenek ayrı klasör; sorumluluk sınırı dizinle dayatılır."
        }
       ]
      }
@@ -415,15 +406,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "authz tek klasörde toplanır (RBAC+ABAC+ReBAC+RLS); yetki mantığı ürünlere dağılmaz, çapraz-kesen güvenlik tek noktadan dayatılır. tr_compliance/ (KVKK, SGK, MERSİS) ayrı sınırda; mevzuat bağımlı kod ürün mantığına karışmaz, denetlenebilir kalır. sdk/ üçüncü-parti entegrasyonun tek yüzeyi olarak konumlanır; kernel iç API'sine doğrudan erişim dizin sınırıyla engellenir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -451,15 +434,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "// scale/ ayrı klasör: projection.py, counter.py, workers.py, scheduler.py, saga.py, idempotency.py — ölçek primitifleri ürün kodundan ayrı"
        }
       ]
      },
@@ -477,15 +452,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Ölçek primitifleri (projection, counter, idempotency, saga) framework/scale/ altında izole; ürün modülü bunları içe aktarır ama yeniden yazmaz. search/ FTS + pgvector + reranker tek yerde, ürünler arası tekrar yok."
        }
       ]
      },
@@ -921,6 +888,18 @@
     ]
    },
    {
+    "id": "block-file-layout-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Her dosya türünün sözleşmedeki tek klasörüne yazıldığı (import-linter ile katman sınırı). modules/ içindeki ürünün framework/kernel iç modüllerine doğrudan değil sdk üzerinden bağlandığı. kernel/ dizininin hiçbir modules/ paketine bağımlı olmadığı (ters bağımlılık reddi)."
+     }
+    ]
+   },
+   {
     "id": "block-file-layout-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -939,7 +918,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Bu sayfa ürün modülü değil; önerilen monorepo dizin yapısının haritasıdır. Yeni gelen geliştiricinin saniyede dosya yerini bulması ve mimari katman sınırının fiziksel klasörle dayatılması için kabul kriteri niteliğindedir. Pratiğe kernel/scale/layer1 sayfalarının yerleşim referansı olarak bağlanır."
        }
       ]
      },
@@ -948,16 +927,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "kernel/ dizini taban: schema, identity, authz, tenancy, events, polyglot, registry — tüm üst katmanlar buraya bağımlı, kernel hiçbir üst katmana bağımlı değil."
        }
       ]
      },
@@ -966,7 +936,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "framework/layer1/ paylaşılan çekirdek yetenekler (party, file, workflow, notification, audit, search, money, i18n, webhook, api); sdk/ (python + typescript) tek entegrasyon yüzeyi."
        }
       ]
      },
@@ -975,7 +945,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "modules/ altında first-party ürünler (commerce, accounting/ebelge-edefter-beyanname, hrms, pms, lms, cms, mrp, ai, tr_compliance/KVKK-SGK-MERSİS)."
        }
       ]
      },
@@ -984,7 +954,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "ui/ (Flowbite React — Next.js yasak); ürün paneli bu katmandan beslenir."
        }
       ]
      }

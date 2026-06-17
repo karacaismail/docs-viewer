@@ -1,0 +1,41 @@
+{
+ "featureDefs": [
+  {
+   "name": "Her deprecation = bir codemod kuralı (zorunlu kapı)",
+   "desc": "Bir API kullanımdan kaldırıldığında (deprecated) beraberinde AST tabanlı bir codemod kuralı yayınlanır. CI'daki codemod-check kapısı yeni bir deprecation görüp karşılığında codemod dosyası yoksa PR'ı bloke eder; bu disiplin uyum oranını yüksek tutar.",
+   "critical": true
+  },
+  {
+   "name": "AI yazıp uygulayan kendini-yükselten döngü",
+   "desc": "Klasik araçta codemod'u insan yazar; burada AI deprecation notlarını okur, LibCST/Rector kuralı üretir, tüketici reposunda koşar ve PR açar. Eski kod yeni API'ye deterministik dönüşür; serbest elle düzenleme değil, kurallı dönüşüm.",
+   "critical": true
+  },
+  {
+   "name": "Expand-contract + BC modu",
+   "desc": "Şema/tanım değişimi tipli ChangeSet olarak akar: ekle -> çift-yaz -> backfill -> daralt. Backward-compat modu açıkken eski ve yeni API aynı anda çalışır; tüketiciler codemod ile geçtikten sonra eski API daraltılır."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Bu sayfa ürün modülü değil; 50 yıllık sürdürülebilirlik için 'migration aracı = AI' ilkesini ve kendini-yükselten upgrade döngüsünü tanımlayan sus kapısıdır. Pratiğe tipli ChangeSet sözleşmesi ve deterministik codemod uygulaması olarak bağlanır.",
+  "kernel": "Çekirdek API değişimlerini tipli ChangeSet olarak sözleşmeler; eski tanımdan yeni şemaya geçiş AST üzerinde deterministik codemod ile yapılır, dinamik elle DDL/edit değil. Motor dönüşümü doğrular.",
+  "core": "/codemods/ klasöründe her deprecation için ayrı kural dosyası; expand-contract yaşam döngüsü (ekle/çift-yaz/backfill/daralt) core migration disiplinine bağlıdır. BC modu çift API penceresini yönetir.",
+  "modules": "Tüketici modüller codemod'u alıp birleştirir; eski API kullanan modül kodu codemod ile yeni API'ye otomatik taşınır, modül sahibi elle yeniden yazmaz.",
+  "apps": "Tüm dağıtımlar aynı codemod kümesini çalıştırarak sürüm atlar; uygulama kodu manuel upgrade beklemeden yeni API'ye deterministik geçer."
+ },
+ "moduleUsage": [],
+ "securityNotes": [
+  "AI üretimi codemod kör güvenilmez; her codemod insan-onaylı PR + yeşil test kapısından geçer, doğrudan main'e otomatik merge edilmez.",
+  "Codemod kapsamı yalnız hedef deprecation'a sınırlı olmalı; AST dönüşümünün beklenmedik dosyalara (kapsam-dışı) dokunmadığı doğrulanır.",
+  "BC modu açık kalan eski API bir saldırı/teknik-borç yüzeyidir; daralt aşaması (contract) zamanında kapatılır, çift-API süresiz açık bırakılmaz."
+ ],
+ "perfNotes": {
+  "code": "Codemod metin yerine AST/CST (LibCST/Rector) üzerinde çalışır; bu yapı-temelli dönüşüm regex'e göre güvenli ve büyük repolarda deterministiktir. codemod-check.yml her deprecation için kuralın varlığını CI'da doğrular.",
+  "perf": "Tek codemod kuralı milyonlarca kaydı/çağrıyı tek geçişte dönüştürür (banka IBAN, tapu OCR, KKB skor analojileri); manuel taşıma 50 yıl ölçeklenmez, codemod ölçeklenir."
+ },
+ "testNotes": [
+  "codemod-check kapısı testi: codemod'suz bir deprecation eklendiğinde CI PR'ı bloke eder.",
+  "Determinism testi: aynı codemod aynı girdi üzerinde iki kez koşturulunca aynı çıktıyı üretir (idempotent dönüşüm).",
+  "Kapsam testi: codemod yalnız hedef deprecation'ı dönüştürür, ilgisiz kodu değiştirmez.",
+  "BC modu testi: çift-yaz penceresinde eski ve yeni API aynı sonucu verir; daralt sonrası eski API reddedilir."
+ ]
+}

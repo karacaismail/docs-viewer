@@ -1,0 +1,42 @@
+{
+ "featureDefs": [
+  {
+   "name": "Headless ArcheType (surface:none)",
+   "desc": "Dashboard/UI'sız varlık artık hack değil tanım: ArcheType hiçbir Surface'a projekte olmadan da var olabilir.",
+   "critical": true
+  },
+  {
+   "name": "Çok-ArcheType Surface",
+   "desc": "Tek sayfa birden çok ArcheType'ı projekte eder; vitrin-depo ayrımı (Surface ile ArcheType ayrı versiyonlanır).",
+   "critical": true
+  },
+  {
+   "name": "Tenant-pinli Workflow",
+   "desc": "Workflow Surface'tan bağımsız versiyonlanır ve tenant'a sabitlenebilir; süreç değişimi yüzeyi kırmaz.",
+   "critical": true
+  },
+  {
+   "name": "Otomatik MCP tool projeksiyonu",
+   "desc": "Her ArcheType agent'lara otomatik MCP aracı olur; capability scope tanımdan türer, ayrıca yazılmaz.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Beşli denklem yapı eksenini (Domain > ArcheType > Fragment > Atom + Contract) sabitler; bu karar kernel'in projeksiyon mantığını ve SDK doğrulamasını doğrudan belirler.",
+  "kernel": "Kanonik kayıt kernel/k-surface; Surface birinci-sınıf kavram olarak burada tanımlanır, ArcheType'ı projekte eder.",
+  "core": "Projection motoru core'da: ArcheType -> Surface izdüşümü + Workflow bağımsız versiyon ekseni.",
+  "modules": "Module paylaşılan ArcheType üzerinden entegre olur (app'ler arası entegrasyon mekanikleşir); Surface tanımı module yüzeyini bağlamaz.",
+  "apps": "App'ler aynı ArcheType'ı farklı Surface'larda sergiler — aynı malı farklı vitrinlerde gösterme analojisi."
+ },
+ "moduleUsage": [],
+ "ecaExample": "trigger:\n  event: archetype.defined\ncondition:\n  all:\n    - actor.capability >= \"archetype:project\"\n    - not surface_cycle_detected\naction:\n  - emit: surface.projection_built\n  - emit: mcp.tool_registered\nguards:\n  max_depth: 6\n  idempotency_key: \"surface-projection:{archetype_id}:{rev}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Her ArcheType otomatik MCP tool'a açıldığı için capability scope tanımdan türetilmeli; aksi halde headless ArcheType yetkisiz agent erişimine açık kalır.",
+  "Çok-ArcheType Surface'ta projeksiyon her ArcheType'ın kendi izin kurallarını korumalı; Surface birleştirmesi authz'yi gevşetemez."
+ ],
+ "testNotes": [
+  "Projeksiyon bütünlüğü gate'i: SDK doğrulayıcısı Surface'ın referans verdiği her ArcheType'ın var ve projekte-edilebilir olduğunu denetler.",
+  "surface:none invariant'ı: headless ArcheType hiçbir Surface'a zorunlu bağlanmamalı, yine de MCP tool üretmeli.",
+  "Workflow bağımsız versiyon testi: Surface revizyonu Workflow versiyonunu değiştirmemeli (ayrı eksen kanıtı)."
+ ]
+}

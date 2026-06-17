@@ -257,7 +257,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Karar kapsamı",
+      "term": "Viewer = bağımsız private repo (docs-viewer)",
       "definition": [
        {
         "type": "strong",
@@ -265,16 +265,29 @@
        },
        {
         "type": "text",
-        "text": "ADR'nin bağladığı invariant; alternatifler ve seçilen yön."
+        "text": "Viewer, ağır polyglot framework CI'sının arkasına değil, kendi bağımsız private GitHub reposuna yerleşir; hafif statik SPA dakikalar içinde kurulur ve deploy döner, Stage 0'ı beklemez."
        }
       ]
      },
      {
-      "term": "Uygulama etkisi",
+      "term": "content-source/ tek doğruluk kaynağı",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Kaynak içerik content-source/ altında tek doğruluk kaynağıdır; mimari analiz raporları (framework kararları) repoya girmez, içerik PR'ları küçük kalır. Framework değiştikçe content-source otomasyonla (openclaw+n8n) güncellenir."
+       }
+      ]
+     },
+     {
+      "term": "Revizyon tetikleyicisi (üç koşul)",
       "definition": [
        {
         "type": "text",
-        "text": "Bu kararın kod/şema/test üzerindeki bağlayıcı sonucu."
+        "text": "Monorepo'ya taşıma kararı kapalı değil; Stage 0 + packages/tokens olgunluğu + sık manuel sync üç koşulu birleşince yeniden açılır. Karar geri-döndürülebilir tutulur."
        }
       ]
      }
@@ -462,15 +475,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Private repo: viewer kaynağı ve framework spesifikasyon içeriği herkese açık değil; erişim repo-düzeyinde sınırlanır. Mimari analiz raporları (iç framework kararları) bilinçli olarak repo dışında tutulur — hassas iç bilgi viewer reposuna sızmaz. İçerik senkronu otomasyonu (openclaw+n8n) yazma yetkisiyle çalışır; senkron credential'ları repo-dışı secret olarak yönetilir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -498,15 +503,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Bağımsız repo = bağımsız hafif CI; statik SPA build'i ağır polyglot framework pipeline'ından ayrıştığı için dakikalar içinde döner."
        }
       ]
      },
@@ -524,15 +521,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "İçerik PR'ları küçük tutulduğu için CI yükü ve gözden geçirme süresi düşük kalır; viewer Stage 0'a bağımlı olmadan bugün yayınlanır."
        }
       ]
      },
@@ -968,6 +957,18 @@
     ]
    },
    {
+    "id": "block-adr-0001-repo-konumu-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Repo doğrulaması: runtime/hedef kod docs-viewer içine yazılmadığı kontrol edilir (sınır ihlali kapısı). content-source/ tek kaynak: içeriğin başka bir yoldan değil yalnız content-source/ üzerinden geldiği doğrulanır. Deploy bağımsızlığı: viewer CI'sının framework release'ine bağlı olmadan tek başına yeşil geçtiği doğrulanır."
+     }
+    ]
+   },
+   {
     "id": "block-adr-0001-repo-konumu-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -986,7 +987,7 @@
        },
        {
         "type": "text",
-        "text": "Dolaylı — bu sayfa kararı/bilgiyi tanımlar; entegrasyon onu uygulayan birimlerde gerçekleşir."
+        "text": "Bu sayfa bir ürün modülü ya da runtime kabiliyeti değil; viewer'ın nerede yaşayacağına dair bir geliştirme-adımı kararıdır (ADR). Etkisi repo topolojisi ve CI/deploy hattıdır, çekirdek/modül runtime'ına bağlanmaz."
        }
       ]
      },
@@ -995,16 +996,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": ""
        }
       ]
      },
@@ -1013,7 +1005,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": ""
        }
       ]
      },
@@ -1022,7 +1014,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": ""
        }
       ]
      },
@@ -1031,7 +1023,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Viewer deploy'u bağımsızdır; framework release döngüsüne bağlanmaz, kendi GitHub Actions hattıyla yayınlanır."
        }
       ]
      }

@@ -1,0 +1,42 @@
+{
+ "featureDefs": [
+  {
+   "name": "Tek-komut bootstrap (sdk up)",
+   "desc": "Deterministik olarak Docker Compose v1 profilini reçeteleyen komut: Debian + PostgreSQL + FastAPI/GraphQL + Keycloak OIDC + seed; sihir değil, aynı kit aynı ortamı kurar.",
+   "critical": true
+  },
+  {
+   "name": "Test-first scaffold sırası",
+   "desc": "Tüm üretim aynı sırayı izler: testler ÖNCE (kırmızı) → bildirimsel tanımlar → saf hook → manifest; scaffold bu sırayı dosya iskeletine gömer.",
+   "critical": true
+  },
+  {
+   "name": "Tipli hook contract (HookContext)",
+   "desc": "SDK'nın geliştiriciye sunduğu dar ve tipli yüzey: tenant/user/trace/events/tax/storage/ai/logger ve read-only db; yazma yalnız aggregate üzerinden, AI'a verilen yüzey kasıtlı dardır.",
+   "critical": true
+  },
+  {
+   "name": "Sınır testi (importlinter)",
+   "desc": "Bir Kaya/Domain'in başka birinin internal'ına dokunmasını derleme/CI zamanında engelleyen boundary kontrolü; mimari sınır kod incelemesine bırakılmaz.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "CLI üretim hattının giriş kapısıdır: sdk archetype tek komutla ArcheType (Büyük Taş) ve theme üretir; Kaya/Domain ve Dağ ise tek-komut buildable değildir, geliştirici kompozisyonuyla kurulur.",
+  "kernel": "sdk up çekirdek dev-ortamı deterministik reçeteler; sdk check/build doğrulama kapıları + WASM sandbox uyumlu paketleme verir.",
+  "core": "sdk archetype çok-aşamalı AI sorularıyla (seven-questions) tekil bildirimsel varlık üretir; sdk theme create token + Surface şablon + a11y/perf iskeleti verir.",
+  "modules": "Kaya/Domain seviyesi: birden çok ArcheType'ı birleştirerek geliştirici eliyle kurulur; CLI tek komutla üretmez, kompozisyon yüzeyi sunar.",
+  "apps": "Dağ seviyesi: Kaya/Domain'leri birleştirir; yine tek-komut değil, geliştirici kompozisyonudur."
+ },
+ "moduleUsage": [],
+ "testNotes": [
+  "Scaffold'un ürettiği iskelet test-önce sırayı somutlaştırır: tests/ klasörü (pytest + vitest) kırmızı testlerle gelir, geliştirici tanım ve hook'u bu testleri yeşile çevirmek için yazar.",
+  "Test piramidi katmanlıdır: unit (SDK mock'lu), integration (gerçek DB + gerçek event bus, framework test harness), E2E (Playwright + dev server), boundary (importlinter ile sınır ihlali).",
+  "sdk check determinizmin kapısıdır: aynı kit aynı ortamı kurmazsa doğrulama başarısız olmalı — reprodüksiyon edilebilirlik bir kabul kriteridir."
+ ],
+ "securityNotes": [
+  "Hook'a verilen db read-only'dir ve yazma yalnız aggregate üzerinden yapılır; bu, hook yüzeyinden gelen kontrolsüz yazma/veri sızıntısı riskini sınırlayan kasıtlı bir daraltmadır.",
+  "Paketleme WASM sandbox uyumludur: üçüncü taraf kodun izole çalıştırılması, geniş yetkili çalıştırma yüzeyini kapatır.",
+  "HookContext tenant/user/trace taşır; AI'a sunulan yüzeyin dar ve tipli olması (YAML tanım + saf hook) prompt yüzeyinden gelebilecek istenmeyen yan etkileri sınırlar."
+ ]
+}

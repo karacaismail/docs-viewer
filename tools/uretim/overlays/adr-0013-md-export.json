@@ -1,0 +1,27 @@
+{
+ "featureDefs": [
+  {
+   "name": "Deterministik blocksToMarkdown",
+   "desc": "Sayfa blok modelini (17 blok tipi tam kapsam) UI'dan bağımsız saf fonksiyonla aynı girdi-aynı çıktı garantisiyle Markdown'a çeviren dönüştürücü.",
+   "critical": true
+  },
+  {
+   "name": "Dört CI kapısı",
+   "desc": "Golden fixture (referans çıktı), 240 sayfa smoke, blok parite (her blok tipi kapsanıyor mu) ve ref/link bütünlüğü — MD regresyonunu merge öncesi yakalayan kapı seti.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Bu bir karar implikasyonudur: MD çıktısı 'kemikleştirilmiş sözleşme' ilan edildiği için, blok modeline dokunan her değişiklik bu sözleşmeyi koruma yükümlülüğü doğurur.",
+  "kernel": "blocksToMarkdown engine'de saf fonksiyon olarak yaşar (src/engine/blocksToMarkdown.ts); render ve UI katmanından bağımsızdır ki LLM bağlamı ve kopyalama kaynağı tek ve güvenilir kalsın.",
+  "core": "Yeni bir blok tipi eklemek artık serbest bir UI işi değildir: parite kapısı + golden güncellemesi yapılmadan blok tipi sisteme giremez (kabul edilen maliyet).",
+  "modules": "",
+  "apps": ""
+ },
+ "moduleUsage": [],
+ "testNotes": [
+  "Karar testi kapı olarak kurgular: golden fixture çıktının byte düzeyinde stabilitesini, smoke 240 sayfanın hiçbirinde çevirinin patlamadığını, parite 17 blok tipinin tamamının kapsandığını, ref kapısı link/çapraz-referansların kırılmadığını doğrular.",
+  "blocksToMarkdown saf fonksiyon olduğu için test edilebilirliği yüksektir: yan etki yok, DOM yok — golden fixture'lar bu saflığın doğrudan sonucudur.",
+  "Yeni blok tipi PR'ı parite kapısında kırmızı kalır; bu kasıtlı bir kapıdır — geliştiriciyi golden + parite güncellemesine zorlar."
+ ]
+}

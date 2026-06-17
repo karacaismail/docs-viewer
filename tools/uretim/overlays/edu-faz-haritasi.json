@@ -1,0 +1,28 @@
+{
+ "featureDefs": [
+  {
+   "name": "Vibecoding hazırlık eşiği",
+   "desc": "Bir inşa fazında AI ile üretime başlamadan önce tamamlanmış olması gereken ünite kümesi; eşik 'AI'ın çıktısını değerlendirip yanlışı reddedebilme' yetkinliğidir, kod yazma hızı değil.",
+   "critical": true
+  },
+  {
+   "name": "Faz → Ünite → Çıktı sözleşmesi",
+   "desc": "Her inşa fazını (0-7) ön koşul ünitelere ve 'çalışan + testi olan' somut çıktıya bağlayan eşleme tablosu; ünitesi eksik fazda ilerlemek haritanın tek ihlal biçimidir.",
+   "critical": true
+  },
+  {
+   "name": "Çapraz-kesen ünite akışı",
+   "desc": "u10 (deploy) Faz 1'den itibaren her fazda, u24 (i18n/jurisdiction) Faz 3'te sözleşme + Faz 6'da rejim matrisi olarak tekrar devreye giren, tek faza sığmayan ünitelerin izi.",
+   "critical": false
+  }
+ ],
+ "moduleUsage": [],
+ "testNotes": [
+  "Bu sayfa test-önce sırasını eğitim diline çevirir: her fazın çıktısı SDK iskeletinden gelir, iskelet de 'önce test planı → sonra ArcheType/şema → sonra üretim' sırasını gömer; faz çıktısı tanım gereği testi olan bir parçadır.",
+  "Eşiğin operasyonel testi 'ünite bitti mi' değil 'AI'ın bu fazdaki çıktısını reddedebiliyor musun' sorusudur — Faz 0'da 'parada float' önerisini, Faz 1'de tenant-scope'suz sorguyu, Faz 5'te N+1/SSRF/kuruş kaymasını yakalayabilme bu yetkinliğin kanıtıdır."
+ ],
+ "securityNotes": [
+  "Faz 5 eşiği (u19 OWASP) doğrudan güvenlik yargısıdır: AI'ın 'çalışıyor' dediği kodda SSRF ve enjeksiyon yüzeyini görememek, hazırlık eşiğinin altında üretim yapmanın somut riskidir.",
+  "Faz 1 eşiği tenant-scope farkındalığını (u06) zorunlu kılar; bu eşik atlanırsa çok-kiracılı sızıntı, üretim anında değil aylar sonra fark edilir."
+ ]
+}

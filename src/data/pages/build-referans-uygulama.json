@@ -395,7 +395,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Kanonik Referans Uygulama — OrderOps — birincil yetenek",
+      "term": "OrderOps kanonik referans uygulaması",
       "definition": [
        {
         "type": "strong",
@@ -403,25 +403,25 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "Dar kapsamlı (sipariş yönetimi) ama üretim davranışları tamamlanmış enterprise foundation referansı; çekirdek ve SDK iddialarının ilk çalışan bütünleşik kanıtı."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Sekiz kanıt kapısı",
       "definition": [
        {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Tanım, Tenancy, Yetki, Migration, Hata, Yedek, Deploy, Gözlem — her biri otomatik test veya tatbikat kanıtıyla geçmek zorunda; mutlu-akış demosu yeterli değil."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "Kopyalanabilir kalıp",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "Diğer uygulamalar OrderOps yapı ağacını (Domain → ArcheType → Fragment → Workflow → Surface → Contract) ve kanıt kapılarını kopyalar."
        }
       ]
      }
@@ -609,15 +609,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Tenant izolasyonu tüm sorgu yollarında sıfır-kaçak olmalı; komşu tenant siparişi 'bulunamadı' gibi davranmalı, varlığını sızdırmamalı. Yüksek tutarlı siparişte onaylayan ile oluşturanın aynı kişi olamaması (segregation of duties) bir invariant'tır; step-up dış etki kapısında zorunludur. Müşteri iletişim alanları PII olarak maskelenir; sipariş logları ham iletişim verisi taşımaz, audit kaydı silinemez. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -645,15 +637,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Sipariş toplamı kalem toplamına eşit olmalı; tutar Decimal/Money ile hesaplanır, float değil."
        }
       ]
      },
@@ -671,15 +655,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Create/read p95 <300 ms, submit p95 <500 ms, aylık hata oranı <%0,1 SLO hedefidir."
        }
       ]
      },
@@ -975,7 +951,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Kanonik Referans Uygulama — OrderOps",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Kanonik Referans Uygulama — OrderOps\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: order.submit_requested\ncondition:\n  all:\n    - actor.capability >= \"SubmitOrder\"\n    - order.currency_defined\n    - not (order.amount > approval_threshold and actor == order.creator)\naction:\n  - transition: order -> pending_approval\n  - emit: order.submitted\nguards:\n  max_depth: 6\n  idempotency_key: \"order:{{order.id}}:submit\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1115,6 +1091,18 @@
     ]
    },
    {
+    "id": "block-build-referans-uygulama-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "İki tenant izolasyon testi, rol × aksiyon capability matrisi testi ve aynı idempotency anahtarıyla tekrar testi zorunlu çıkış kapısıdır. Workflow geçersiz geçiş testi ve audit bütünlük testi mutlu-akış dışı davranışı kanıtlar. Migration expand/backfill/contract + yarıda kesilme, tenant restore RPO/RTO tatbikatı ve rollback kanıtı tamamlanmadan referans 'geçti' sayılmaz."
+     }
+    ]
+   },
+   {
     "id": "block-build-referans-uygulama-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1133,7 +1121,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Hayır — OrderOps bir ürün modülü değil, çekirdek+SDK iddialarını tanımdan deploy'a kanıtlayan referans tatbikattır. Tek altyapı adaptörünü kanıtlar, tam e-ticaret hedeflemez."
        }
       ]
      },
@@ -1142,16 +1130,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Tenancy ve yetki kapıları doğrudan çekirdeği sınar: komşu tenant okuma/yazma tüm sorgu yollarında sıfır olmalı, rol × aksiyon matrisi ve step-up kuralları testli olmalı."
        }
       ]
      },
@@ -1160,7 +1139,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Order/Customer ArcheType, OrderLine Fragment, durum makinesi Workflow ve OrderContract v1 SDK üzerinden tanımlanır; aynı tanımlar temiz kurulumda deterministik sonuç üretir."
        }
       ]
      },
@@ -1169,7 +1148,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Order Management domain'i tek contract sınırı ve sahiplikle modellenir; migration kapısı expand/backfill/contract ve yarıda kesilme senaryosunu kanıtlar."
        }
       ]
      },
@@ -1178,7 +1157,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Surface katmanı (Order List, Detail, Approval Queue) erişilebilir ve role göre projekte edilir; deploy kapısı Docker Compose temiz kurulum + canary + rollback kanıtı ister."
        }
       ]
      }
@@ -1191,13 +1170,21 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-build-referans-uygulama-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-build-referans-uygulama-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Order Management — taslaktan onaya sipariş yaşam döngüsü, versiyonlu durum makinesi ile."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Customer — sipariş sahipliği ve PII maskeleme örneği."
+      }
+     ]
     ]
    },
    {

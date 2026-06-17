@@ -392,15 +392,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "'AI kendi çıktısını onaylayamaz' kuralı bir güvenlik sınırıdır: author == approver olduğunda dört-göz ilkesi çöker; kapı bunu makinece engellemeli, sosyal sözleşmeye bırakmamalı. Yüksek-riskli adımlarda step-up onay (ADR-0015) zorunludur; deploy/migration gibi geri-alınması zor işlemler ek kimlik doğrulama olmadan tetiklenememeli. Ortam-paritesi eksikse dev'de görünmeyen runtime hatası prod'da açığa dönüşebilir; Debian hedef paritesi sessiz davranış farkını kapatan bir güvenlik kontrolüdür. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -758,7 +750,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — ADR-0024: Geliştirici Akışı Kapıları — Zorunlu Yönetişim",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — ADR-0024: Geliştirici Akışı Kapıları — Zorunlu Yönetişim\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: merge_request.opened\ncondition:\n  all:\n    - ci.lint == pass\n    - ci.test == pass\n    - ci.build == pass\n    - ci.e2e == pass\n    - ci.a11y == pass\n    - ci.size_budget == pass\n    - ci.coverage >= threshold\n    - reviewer.is_human == true\n    - not author.equals(approver)\naction:\n  - emit: merge.allowed\nguards:\n  max_depth: 6\n  idempotency_key: \"gate:{mr.id}:{mr.head_sha}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -898,6 +890,18 @@
     ]
    },
    {
+    "id": "block-adr-0024-dev-workflow-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Kapı bütünlüğü testi: kapılardan biri kırmızıyken merge denemesi reddedilmeli; tek bir kapının atlanabildiği bir yol kalmadığını doğrula (mutlu-yol yeterli değil ilkesi). Test-first disiplini ölçülebilir olmalı: implementasyondan önce başarısız olan, sonra geçen test izi; 'test-sonrası alışkanlığı' başarısızlık modunu yakalayan kontrol. prod→dev migration tool'unun gerçek bir prod şemasını dev'e kayıpsız taşıdığını doğrulayan round-trip testi; ortam-paritesi için dev ve Debian-hedef çıktısının aynı olduğunu karşılaştır."
+     }
+    ]
+   },
+   {
     "id": "block-adr-0024-dev-workflow-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -916,7 +920,7 @@
        },
        {
         "type": "text",
-        "text": "Dolaylı — bu sayfa kararı/bilgiyi tanımlar; entegrasyon onu uygulayan birimlerde gerçekleşir."
+        "text": "Hayır — bu bir karardır (ADR) ve geliştirici akışına zorunlu yönetişim kapıları koyar; çalışan bileşen değil. Etkisi: hiçbir merge/release bu kapılar yeşil olmadan geçemez. 'Bilgisayar hazırla → geliştir → push' mutlu-yolu yeterli sayılmaz."
        }
       ]
      },
@@ -925,16 +929,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "CI kapıları kernel davranış sözleşmesini korur: build+test+e2e+a11y+size+coverage. Ortam-paritesi (Debian hedef) kernel'in dev ve prod'da aynı davranmasını garanti eder; sessiz runtime farklarını erken yakalar."
        }
       ]
      },
@@ -943,7 +938,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Test-first ve 'AI kendi çıktısını onaylayamaz' kuralı çekirdek üretim akışının girişine bağımsız bir doğrulama katmanı ekler; prod→dev migration tool çekirdek veri göçünü güvenli kılar."
        }
       ]
      },
@@ -952,7 +947,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Modül katkısı da aynı kapılardan geçer: küçük PR + insan review + CI yeşili. Modül kendi kalite kapısını atlayamaz; conformance ve bu workflow kapıları birlikte zorlanır."
        }
       ]
      },
@@ -961,7 +956,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Yüksek-riskli adımlarda (örn. üretim deploy) step-up onay (ADR-0015) devreye girer; uygulama üretim hattı bu kapılar olmadan release üretemez."
        }
       ]
      }

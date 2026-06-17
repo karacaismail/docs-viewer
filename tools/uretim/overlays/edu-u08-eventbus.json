@@ -1,0 +1,44 @@
+{
+ "featureDefs": [
+  {
+   "name": "Transactional outbox: dual-write tuzağının çözümü",
+   "desc": "İş kaydı (aggregate satırı) ile yayınlanacak olay aynı DB transaction'ında yazılır; ayrı bir worker outbox satırlarını mesaj broker'ına iletir. Böylece 'DB yazıldı ama olay kayboldu' tutarsızlığı imkânsızlaşır.",
+   "critical": true
+  },
+  {
+   "name": "Idempotent consumer + at-least-once teslimat",
+   "desc": "Teslimat en-az-bir-kez olduğundan tüketici aynı olayı iki kez alabilir; idempotency_key ile 'bu olayı gördüm mü' kontrolü çift işlemeyi engeller. Pratikte 'at-least-once + idempotent' = exactly-once processing verir.",
+   "critical": true
+  },
+  {
+   "name": "DLQ + retry bütçesi disiplini",
+   "desc": "İşlenemeyen olay sınırlı kez (3-5) exponential backoff + jitter ile yeniden denenir; hâlâ başarısızsa Dead Letter Queue'ya düşer ve alarm üretir. Sonsuz retry yerine insan incelemesi; DLQ'ya bakılmazsa sessiz veri kaybı."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Bu sayfa ürün modülü değil; modüller arası gevşek bağın (Contract sınırı) neden event bus + outbox ile kurulduğunu öğreten ileri eğitim ünitesidir. Pratiğe ArcheType save pipeline'ının otomatik outbox üretmesi olarak bağlanır.",
+  "kernel": "Çekirdek save pipeline'ı her aggregate write'ında aynı transaction içinde outbox satırını da yazar; modül geliştirici outbox kodu yazmaz, her write otomatik outbox-aware olur. Event sözleşmesi (geçmiş zaman, tek anlam) çekirdekçe tiplenir.",
+  "core": "Outbox tablosu tenant_id + aggregate_type/id + payload + status taşır; relay worker 'pending' satırları FOR UPDATE SKIP LOCKED ile çeker, yayınlar, sent işaretler. Retry/backoff ve DLQ politikası core disiplinine bağlıdır.",
+  "modules": "Modüller birbirini doğrudan çağırmaz; 'order.completed' yayınlar, ilgilenenler dinler. Yeni bir tüketici (kargo, fatura, puan) eklemek üretici modül kodunu hiç değiştirmez — bağ kopmaz ama zayıflar.",
+  "apps": "scale-webhook relay, arama indexer ve l1-notification worker'ları aynı outbox'ı tüketir; uygulamalar arası olay yayını kayıp veya çift yayın olmadan dağılır."
+ },
+ "moduleUsage": [],
+ "ecaExample": "trigger:\n  event: order.completed\ncondition:\n  all:\n    - actor.capability >= \"order.write\"\n    - tenant_scoped\n    - not loop_detected\naction:\n  - outbox.append: order.completed   # aggregate write ile AYNI transaction\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:order:{order_id}:completed\"\n  external_effects: relayed_async   # commit sonrası relay worker iletir",
+ "securityNotes": [
+  "Outbox payload'ı PII içerebilir; tenant_id zorunlu ve RLS ile filtrelenir, relay worker komşu-tenant satırını okuyamaz.",
+  "Tüketici idempotency_key kontrolü olmadan retry'da çift işleme yapar (ör. iki kez fatura/çift tahsilat) — at-least-once'ın güvenlik gerekçesi budur.",
+  "DLQ'daki zehirli mesaj (poison message) sonsuz retry ile worker havuzunu kilitleyebilir; sınırlı retry + DLQ + alarm bu DoS yüzeyini kapatır.",
+  "Dış tüketiciye giden olay yalnız o tüketicinin görmeye yetkili olduğu alanları taşımalı; olay payload'ı en-az-yetki ilkesiyle daraltılır."
+ ],
+ "perfNotes": {
+  "code": "Relay sorgusu kısmi indeks (status='pending') + FOR UPDATE SKIP LOCKED ile contention'sız paralel worker; retry exponential backoff + jitter (min(60*2^attempts, 3600)) ile thundering-herd engellenir.",
+  "perf": "Outbox tablosu hızla büyür; published satırlar belirli süre sonra archive/partition'a taşınır. Consumer lag izlenir — bir tüketici düşerse outbox sayesinde mesaj kaybolmaz, yalnız geç işlenir, restart'ta lag erir."
+ },
+ "testNotes": [
+  "Dual-write testi: publish/relay başarısızken aggregate write commit oldu mu — outbox satırı 'pending' kalmalı, olay kaybolmamalı.",
+  "Idempotency: aynı olay iki kez teslim edildiğinde tüketici tek kez işler (idempotency_key).",
+  "SKIP LOCKED: iki paralel relay aynı pending satırı çift almaz.",
+  "DLQ akışı: N başarısız denemeden sonra olay DLQ'ya düşer ve alarm üretir; replay sonrası bir kez işlenir.",
+  "Event vs Command ayrımı: yayınlanan mesaj geçmiş-zaman olay (order.completed), gelecek-zaman komut (send-email) değil — sözleşme testiyle doğrulanır."
+ ]
+}

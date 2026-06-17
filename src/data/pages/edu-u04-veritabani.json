@@ -855,7 +855,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Öğrenme hedefi",
+      "term": "ArcheType → tablo eşlemesi",
       "definition": [
        {
         "type": "strong",
@@ -863,16 +863,56 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin okuyucuya kazandırdığı bağlayıcı yetkinlik."
+        "text": "Bir ArcheType bir PostgreSQL tablosuna karşılık gelir: field = kolon, belge = satır, UUID v7 birincil anahtar. Ders, soyut ArcheType kavramını somut CREATE TABLE + indeks + FK çıktısına bağlar."
        }
       ]
      },
      {
-      "term": "Uygulanabilir çıktı",
+      "term": "Tenant-scope FK kapısı (otomatik)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Framework her "
+       },
+       {
+        "type": "term",
+        "text": "foreign key",
+        "termId": "term-foreign-key-edu-u04-veritabani"
+       },
+       {
+        "type": "text",
+        "text": " üstüne otomatik tenant kontrolü ekler: bir link tenant-A'dan tenant-B'ye gidemez. Çok-kiracılı izolasyonun veritabanı katmanındaki güvenlik garantisidir."
+       }
+      ]
+     },
+     {
+      "term": "İndeks seçimi (yaz/oku dengesi)",
       "definition": [
        {
         "type": "text",
-        "text": "Dersin sonunda üretilen çalıştırılabilir/denetlenebilir eser."
+        "text": "İndeks okuma O(N)→O(log N) hızlandırır ama her INSERT/UPDATE indeksi de günceller; bu yüzden yalnız sık WHERE/ORDER/"
+       },
+       {
+        "type": "term",
+        "text": "JOIN",
+        "termId": "term-join-edu-u04-veritabani"
+       },
+       {
+        "type": "text",
+        "text": " edilen kolonlara indeks konur, yazma-ağır tablolarda az tutulur."
+       }
+      ]
+     },
+     {
+      "term": "Transaction + ACID atomikliği",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Para transferi gibi çok adımlı işlem 'ya hepsi ya hiçbiri' (BEGIN/COMMIT/ROLLBACK) garantisiyle çalışır; Atomicity/Consistency/Isolation/Durability mali sistemlerde varsayılan."
        }
       ]
      }
@@ -1060,15 +1100,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "DERS HEDEFİ — bu ders ArcheType'tan önceki veritabanı temelidir; tenant_id kolonu ve tenant-scope FK kontrolü her örnek tabloda gösterilir, kaçak senaryosu (tenant-A linkinin tenant-B'ye gitmesi) engellenir. Foreign key yetim kaydı engeller (var olmayan id'ye INSERT → hata); silme davranışı bilinçle seçilir: ON DELETE CASCADE / SET NULL / RESTRICT — yanlış seçim veri kaybı veya yetim bırakır. Dual write tuzağı: 'DB'ye yaz, sonra Kafka'ya yaz' ikinci yazma başarısız olursa tutarsızlık doğurur; çözüm Transactional Outbox (DB içi kuyruk satırı + ayrı worker) — iki sistem atomik tutulamaz. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1096,15 +1128,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "CREATE INDEX ... (tenant_id, created_at DESC); EXPLAIN ANALYZE ile 'Seq Scan' tespit edilip doğru kolona indeks eklenir"
        }
       ]
      },
@@ -1122,15 +1146,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "100k satırda WHERE musteri_id='X': indekssiz ~100k satır taranır, B-tree ile ~17 okuma (log₂ 100000) — yaklaşık 1000× fark. Yanlış endpoint yavaşlığının ilk şüphelisi eksik indekstir."
        }
       ]
      },
@@ -1563,6 +1579,27 @@
        }
       ]
      ]
+    ]
+   },
+   {
+    "id": "block-edu-u04-veritabani-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Transaction davranışı integration testte gerçek test DB ile doğrulanır: ikinci UPDATE'te hata enjekte edilip ROLLBACK sonrası birinci UPDATE'in de geri alındığı (atomiklik) kanıtlanır. "
+     },
+     {
+      "type": "term",
+      "text": "Migration",
+      "termId": "term-migration-edu-u04-veritabani"
+     },
+     {
+      "type": "text",
+      "text": " testi şema değişikliğinin (yeni kolon/indeks) ileri ve geri (up/down) çalıştığını ve mevcut veriyi bozmadığını doğrular; production'a güvenli geçişin kapısıdır. Tenant-scope FK kontrolü için negatif test: başka tenant'ın id'siyle link kurma denemesi reddedilmeli — happy path bunu görmez."
+     }
     ]
    },
    {

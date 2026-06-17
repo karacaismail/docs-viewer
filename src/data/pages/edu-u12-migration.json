@@ -1070,7 +1070,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Öğrenme hedefi",
+      "term": "Expand/Contract şema evrimi",
       "definition": [
        {
         "type": "strong",
@@ -1078,16 +1078,33 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin okuyucuya kazandırdığı bağlayıcı yetkinlik."
+        "text": "Dersin öğrettiği temel teknik: Expand (yeni yapıyı ekle, eski çalışır) → Migrate/Backfill → Switch (kod yeniyi okur) → Contract (eskiyi sil). Her adım ayrı PR + ayrı deploy; kullanıcı hissetmez."
        }
       ]
      },
      {
-      "term": "Uygulanabilir çıktı",
+      "term": "Migration durum makinesi",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Dersin sonunda üretilen çalıştırılabilir/denetlenebilir eser."
+        "text": "ChangeSet drafted'tan archived'a kapı-kapı ilerler (validated, impact_analyzed, expanded, backfilled, dual_read_enabled, contracted, verified...); ayrı bir geri-alma durum makinesi (rollback_requested → ... → closed). Yarım/yıkıcı göç engellenir."
+       }
+      ]
+     },
+     {
+      "term": "Forward-only ↔ kontrollü rollback uzlaşması",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Varsayılan felsefe forward-only ('ileri git ve düzelt'); geri-alma yalnız iki kontrollü sınıfta devreye girer (canlı-öncesi taslak, tersine-çevrilebilir/expand-contract). Telafi-edilemez sınıf forward-only, son çare snapshot restore."
        }
       ]
      }
@@ -1275,15 +1292,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Veri varken alan silme gerçek silme değil soft-delete + 30 gün saklama: pencere içinde geri-açılabilir — veri kaybı/yanlış silme riski azaltılır. Backfill batch'leri (1k-10k satır, partiler arası bekleme) replication slot'u bunaltmamalı; tek transaction büyük tabloyu kilitlerse kullanıcı kesintisi (erişilebilirlik/kullanılabilirlik ihlali) doğar. Telafi-edilemez işlemler (gönderilmiş e-posta) geri alınamaz; saga telafisi iş-mantığı tersidir, teknik restore değil. Geri-alınamaz aksiyonlar akışın sonuna, tüm hatalı olabilen adımlardan sonra konur. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1778,6 +1787,18 @@
        }
       ]
      ]
+    ]
+   },
+   {
+    "id": "block-edu-u12-migration-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Migration testing: üretim verisinin anonimleştirilmiş kopyasında önceden çalıştır, SÜRESİNİ ölç; 10 dakikadan uzunsa batch küçült. 'Test'te geçti, üretimde patladı' önlenir. Backfill yeniden-çalıştırılabilir olmalı: INSERT ON CONFLICT DO UPDATE ile aynı batch iki kez çalışsa bile idempotent. En klasik felaket testi: ALTER TABLE ... ADD COLUMN ... NOT NULL tek adımda tabloyu kilitler — önce NULLABLE + backfill, NOT NULL en son; bu sıra doğrulanır. Durable execution (DBOS/Postgres checkpoint) ile ChangeSet apply yarıda kalmaz; migration durakları checkpoint'lenir, işlem ölse bile tutarlı kalır (bkz. sus-durable)."
+     }
     ]
    },
    {

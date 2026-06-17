@@ -334,7 +334,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Öğrenme hedefi",
+      "term": "Aşama 0 — sınır çizme promptu",
       "definition": [
        {
         "type": "strong",
@@ -342,16 +342,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin okuyucuya kazandırdığı bağlayıcı yetkinlik."
+        "text": "AI'a kod yazdırmadan önce ne kullanmayacağını (Prisma yok → SQLAlchemy 2.0 async + Alembic; AGPLv3 lisans; pluggy modül altyapısı) kesin dille söyleyip yalnız klasör ağacı + onay sorusu isteme adımı."
        }
       ]
      },
      {
-      "term": "Uygulanabilir çıktı",
+      "term": "Aşama 1 — şema temeli promptu",
       "definition": [
        {
         "type": "text",
-        "text": "Dersin sonunda üretilen çalıştırılabilir/denetlenebilir eser."
+        "text": "database.py (async bağlantı) + User/Post modelleri + Alembic migration komutları; uzun açıklama yok, sadece kod + nereye yapıştırılacağı + Türkçe yorum + onay sorusu."
+       }
+      ]
+     },
+     {
+      "term": "Aşama 2 — auth + pluggy hook iskeleti",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "JWT auth + RBAC (Admin/Yazar) ardından pluggy ile modül kanca (hook) iskeleti; parça parça, önce auth onayı sonra pluggy. Çekirdeği dışa açan genişleme noktası bu adımda kurulur."
+       }
+      ]
+     },
+     {
+      "term": "Aşama 3 — Dockerfile + compose dağıtım",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Çok-mimari (x86 + arm64) Dockerfile + uygulama ve PostgreSQL'i tek komutla ayağa kaldıran docker-compose.yml; süreç 'docker-compose up -d yaptın mı?' onayıyla kapanır."
        }
       ]
      }
@@ -539,15 +561,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Aşama 0 sınır promptu bir guardrail'dır: AI'ın 'en kolay bildiği' yapıyı (yanlış ORM, yanlış lisans) üretmesini önler; teknik borcu sözleşmeyle baştan kapatır. Güvenlik kapısı (JWT auth + RBAC) modül sisteminden ÖNCE Aşama 2'de kurulur; çekirdek dışa açılmadan kimlik/yetki yüzeyi hazır olur, açık hook üzerine kurulmaz. Lisans kararı (AGPLv3, SDK MIT) prompt'a gömülüdür; SaaS-rakip korumalı open-core sınırı AI'ın ürettiği her dosyada tutarlı kalır. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1045,6 +1059,18 @@
     ]
    },
    {
+    "id": "block-edu-vibecoding-waterfall-fastapi-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Her aşama sonunda AI'a sorduran açık onay sorusu ('bu yapıyı onaylıyor musun? / kodları eklediniz mi?') geçit görevi görür — bir aşama doğrulanmadan sonrakine geçilmez. Kök Bağlam Komutu (edu-vibecoding-ilk-nokta) verilip 'Anladım' alınmadan adımlara başlanmamalı; ön-koşul kapısı. Aşama 0'da kod üretilmemeli; yalnız klasör ağacı dönmeli — AI erken kod yazarsa prompt disiplini ihlal edilmiş demektir."
+     }
+    ]
+   },
+   {
     "id": "block-edu-vibecoding-waterfall-fastapi-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1063,7 +1089,7 @@
        },
        {
         "type": "text",
-        "text": "Dolaylı — bu sayfa kararı/bilgiyi tanımlar; entegrasyon onu uygulayan birimlerde gerçekleşir."
+        "text": "Hayır — bu bir ürün/modül değil, AI'a büyük bir projeyi kademeli (waterfall) inşa ettirmenin kopyalanabilir prompt haritası; çıktısı disiplin, kod yüzeyi değil."
        }
       ]
      },
@@ -1072,16 +1098,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Aşama 2 promptu auth + RBAC ile kernel'in kimlik/yetki kavramını; pluggy hook iskeleti ise modül-genişleme yüzeyini AI'a kademeli kurdurur."
        }
       ]
      },
@@ -1090,7 +1107,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Aşama 1'de Contract/şema temeli (User/Post + migration) tek tanımdan başlatılır; sonraki katmanlar bunun üstüne biner."
        }
       ]
      },
@@ -1099,7 +1116,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "pluggy hook altyapısı, ArcheType modül modelinin Python referans implementasyonu — topluluk modülü buradan bağlanır."
        }
       ]
      },
@@ -1108,7 +1125,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Üretilen FastAPI CMS'in kendisi nihai App; her aşama bir sonraki katmanı onaylı şekilde ekler."
        }
       ]
      }

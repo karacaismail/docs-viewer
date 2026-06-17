@@ -1,0 +1,36 @@
+{
+ "featureDefs": [
+  {
+   "name": "Üç-katmanlı dizin sözleşmesi",
+   "desc": "framework/ (Layer 0 kernel + scale + layer1 + sdk), modules/ (Layer 2 first-party ürünler), ui/ + docs/ + tests/. Her dosya türünün tek yeri vardır; komşuluk yapıyla görünür olur — kernel tabanda, ürünler üstte, asla ters yön.",
+   "critical": true
+  },
+  {
+   "name": "Kernel iç bölümlemesi",
+   "desc": "kernel/ altında schema (ArcheType engine), identity, authz (RBAC+ABAC+ReBAC+RLS), tenancy, events (bus + outbox), polyglot (embedded JS / sidecar / WASM), registry + manifest. Her çapraz-kesen yetenek ayrı klasör; sorumluluk sınırı dizinle dayatılır.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Bu sayfa ürün modülü değil; önerilen monorepo dizin yapısının haritasıdır. Yeni gelen geliştiricinin saniyede dosya yerini bulması ve mimari katman sınırının fiziksel klasörle dayatılması için kabul kriteri niteliğindedir. Pratiğe kernel/scale/layer1 sayfalarının yerleşim referansı olarak bağlanır.",
+  "kernel": "kernel/ dizini taban: schema, identity, authz, tenancy, events, polyglot, registry — tüm üst katmanlar buraya bağımlı, kernel hiçbir üst katmana bağımlı değil.",
+  "core": "framework/layer1/ paylaşılan çekirdek yetenekler (party, file, workflow, notification, audit, search, money, i18n, webhook, api); sdk/ (python + typescript) tek entegrasyon yüzeyi.",
+  "modules": "modules/ altında first-party ürünler (commerce, accounting/ebelge-edefter-beyanname, hrms, pms, lms, cms, mrp, ai, tr_compliance/KVKK-SGK-MERSİS).",
+  "apps": "ui/ (Flowbite React — Next.js yasak); ürün paneli bu katmandan beslenir."
+ },
+ "moduleUsage": [],
+ "securityNotes": [
+  "authz tek klasörde toplanır (RBAC+ABAC+ReBAC+RLS); yetki mantığı ürünlere dağılmaz, çapraz-kesen güvenlik tek noktadan dayatılır.",
+  "tr_compliance/ (KVKK, SGK, MERSİS) ayrı sınırda; mevzuat bağımlı kod ürün mantığına karışmaz, denetlenebilir kalır.",
+  "sdk/ üçüncü-parti entegrasyonun tek yüzeyi olarak konumlanır; kernel iç API'sine doğrudan erişim dizin sınırıyla engellenir."
+ ],
+ "perfNotes": {
+  "code": "// scale/ ayrı klasör: projection.py, counter.py, workers.py, scheduler.py, saga.py, idempotency.py — ölçek primitifleri ürün kodundan ayrı",
+  "perf": "Ölçek primitifleri (projection, counter, idempotency, saga) framework/scale/ altında izole; ürün modülü bunları içe aktarır ama yeniden yazmaz. search/ FTS + pgvector + reranker tek yerde, ürünler arası tekrar yok."
+ },
+ "testNotes": [
+  "Her dosya türünün sözleşmedeki tek klasörüne yazıldığı (import-linter ile katman sınırı).",
+  "modules/ içindeki ürünün framework/kernel iç modüllerine doğrudan değil sdk üzerinden bağlandığı.",
+  "kernel/ dizininin hiçbir modules/ paketine bağımlı olmadığı (ters bağımlılık reddi)."
+ ]
+}

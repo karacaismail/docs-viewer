@@ -255,7 +255,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Politika yüzeyi",
+      "term": "Kaynak + varsayım beyanı",
       "definition": [
        {
         "type": "strong",
@@ -263,16 +263,46 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı kural/kapı; deny-by-default ve kanıtlanabilir uygulama."
+        "text": "Her değişiklik kullanılan kaynakları, varsayımları ve bilinmeyenleri listeler; 'şunu yap' tek komutu yasak."
        }
       ]
      },
      {
-      "term": "Kapı koşulu",
+      "term": "Bağımsız eleştiri (üreten onaylayamaz)",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "İhlalde işi reddeden deterministik kontrol (CI veya runtime)."
+        "text": "Temiz bağlamlı ikinci AI veya işi üretmeyen insan saldırgan review yapar; ilk cevabı doğrulayan yönlendirici prompt yasak."
+       }
+      ]
+     },
+     {
+      "term": "Deterministik doğrulama kapısı",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Tip, lint, birim, property, contract, tenancy, güvenlik ve gerektiğinde yük testleri; eşik/invariant gevşetmek yasak."
+       }
+      ]
+     },
+     {
+      "term": "İnsan merge kararı + rollback planı",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Merge için insan reviewer kararı + yeşil CI + geri-alma planı zorunlu; AI kendi merge/release kararını veremez."
        }
       ]
      }
@@ -460,15 +490,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Kırmızı çizgi: AI'ın ürettiği test, aynı AI çıktısının doğruluğunu tek başına kanıtlamaz — en az bir bağımsız oracle (mevcut sözleşme, property invariant, golden veri, haricî standart veya işi üretmeyen reviewer) gerekir. Failure mode: AI aynı yanlış varsayımla kodu+testi+açıklamayı üretirse sahte-yeşil oluşur; eleştiri oturumu temiz bağlamda veya farklı reviewer ile yapılarak kırılır. Üretim aşamasında kernel iç API'sine izinsiz erişim yasak; yetki sınırı beyandaki kaynak listesiyle denetlenir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -826,7 +848,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — AI Üretim Sözleşmesi — Üreten Onaylayamaz",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — AI Üretim Sözleşmesi — Üreten Onaylayamaz\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: change.merge_requested\ncondition:\n  all:\n    - reviewer.identity != producer.identity\n    - independent_oracle_present\n    - ci.status == \"green\"\n    - not threshold_relaxed\naction:\n  - emit: merge.approved\n  - record: rollback_plan\nguards:\n  max_depth: 6\n  idempotency_key: \"merge-gate:{change_id}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -966,6 +988,18 @@
     ]
    },
    {
+    "id": "block-sus-ai-uretim-sozlesmesi-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bağımsızlık invariant'ı: merge'i isteyen kimlik ile reviewer kimliği farklı olmalı (üreten onaylayamaz kuralı otomatik denetlenir). Eşik-kilidi testi: bir testi geçirmek için invariant veya eşik gevşetilirse gate kırılır (diff'te eşik değişimi flag'lenir). Oracle-varlık kapısı: AI üretimi değişiklik en az bir bağımsız oracle referansı taşımadan merge edilemez. Beyan-bütünlüğü: değişiklik kaynak + varsayım listesi içermiyorsa CI reddeder."
+     }
+    ]
+   },
+   {
     "id": "block-sus-ai-uretim-sozlesmesi-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -984,7 +1018,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Sözleşme AI-eşliğinde geliştirmenin governance kapısı; her ArcheType/Surface üretimi bu aşama dizisinden geçmeden kernel'e giremez."
        }
       ]
      },
@@ -993,16 +1027,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Kernel iç API'sine izinsiz erişim üretim aşamasında yasak; bağımsız oracle (mevcut sözleşme/property invariant) kernel sınırını korur."
        }
       ]
      },
@@ -1011,7 +1036,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Doğrulama aşaması core'un contract + tenancy + güvenlik testlerini koşar; sahte-yeşil bu katmanda yakalanır."
        }
       ]
      },
@@ -1020,7 +1045,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Module üretimi de aynı altı aşamayı taşır; üreten AI'ın öz-eleştirisi bağımsız review yerine geçmez."
        }
       ]
      },
@@ -1029,7 +1054,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "App release kararı insan reviewer + rollback planına bağlı; AI release tetikleyemez."
        }
       ]
      }

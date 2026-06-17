@@ -551,7 +551,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Öğrenme hedefi",
+      "term": "Görev Kartı = kapalı iş sözleşmesi",
       "definition": [
        {
         "type": "strong",
@@ -559,16 +559,29 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin okuyucuya kazandırdığı bağlayıcı yetkinlik."
+        "text": "Her geliştirme tek bir Görev Kartı ile başlar: hedef, kapsam, non-goal, invariant, kabul testleri, doğrulama komutları ve durdurma koşulu. Araç yalnız bu kartın sınırında üretir; geniş prompt AI'ın varsayım alanını büyütür, kart hem üretimi küçültür hem reviewer'ın neyi doğrulayacağını görünür yapar."
        }
       ]
      },
      {
-      "term": "Uygulanabilir çıktı",
+      "term": "Üretim ile bağımsız review ayrımı",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Üretim ve saldırgan review farklı oturum ya da farklı kişi tarafından yürütülür (Prompt 4). Aynı konuşmada yapılırsa aynı varsayım iki kez doğru sanılır; ayrı oturum reviewer'ın ilk çözümü savunmadan, yanlış olduğunu varsayarak kanıt aramasını sağlar."
+       }
+      ]
+     },
+     {
+      "term": "Faz + seviye prompt çarpımı (parametrik)",
       "definition": [
        {
         "type": "text",
-        "text": "Dersin sonunda üretilen çalıştırılabilir/denetlenebilir eser."
+        "text": "Tek tek yüzlerce prompt yazmak yerine, altı faz (gereksinim→işletim) ile dokuz granülerlik seviyesi (kernel→Atom) köşeli alanları doldurularak çarpılır. Önce seviye seçilir, sonra faz uygulanır; komşuluk kuralı atlamayı reddeder."
        }
       ]
      }
@@ -756,15 +769,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Prompt 9 (doğrulama fazı) güvenliği kabul kapısı yapar: auth/RBAC negatif testleri, raw SQL yasağı → ORM parametreli sorgu, dosya yükleme web kökü dışı + yeniden adlandır + içerik/MIME doğrulama. Çok-kiracılık izolasyonu testle kanıtlanır: bir kiracının verisinin diğerine sızmadığı (RLS) gösterilmeden görev bitmez; tenant negatif testi yoksa görev tamamlanmamıştır. Sır yönetimi koddan ayrı: frontend bundle'ına VITE_ önekiyle gizli anahtar sızdırılmaz; CI sırları OIDC/şifreli tutulur, log'a yazılmaz. CI kırmızıyken (Prompt 5) semptomu gizlemek için test, coverage eşiği, güvenlik kontrolü veya lint kuralı gevşetilmez; yalnız kök neden düzeltilir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -792,15 +797,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "# Prompt 8/17/19 kısıtı: async def içinde bloklama yok (Ruff ASYNC); ilişkiler lazy=\"raise\" + açık eager"
        }
       ]
      },
@@ -818,15 +815,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Doğrulama fazı performansı kapı yapar: N+1 yok (lazy=raise), liste uçları keyset (cursor) pagination, OFFSET yasak. Çok-arch dağıtımda QEMU emülasyonundan kaçınılır, native arm64 + amd64 runner kullanılır."
        }
       ]
      },
@@ -1262,6 +1251,18 @@
     ]
    },
    {
+    "id": "block-edu-prompt-kutuphanesi-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Her promptun tek görev, açık non-goal ve çalıştırılabilir doğrulama komutu taşıdığı. Üretim ile bağımsız review'ün farklı oturumda yürütüldüğü ve review'ün önce-kırmızı/sonra-yeşil kanıtı ölçtüğü. Köşeli alanlar (GÖREV/KAPSAM/KOMUTLAR) doldurulmadan promptun gönderilmediği; sahte-yeşil testin reddedildiği. Seviye prompt'larının komşuluk kuralını (her seviye yalnız bir alt komşusuna bağlanır) ihlal eden planı reddettiği."
+     }
+    ]
+   },
+   {
     "id": "block-edu-prompt-kutuphanesi-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1280,7 +1281,7 @@
        },
        {
         "type": "text",
-        "text": "Dolaylı — bu sayfa kararı/bilgiyi tanımlar; entegrasyon onu uygulayan birimlerde gerçekleşir."
+        "text": "Bu sayfa ürün modülü değil; Claude, Cursor ve Antigravity'de aynı kalite kapılarıyla kullanılacak kopyala-çalıştır prompt kütüphanesidir. Araç değişir, görev sözleşmesi değişmez. Pratiğe AI üretim sözleşmesi, başlangıç rotası ve waterfall yol haritası eğitim sayfalarına bağlanır."
        }
       ]
      },
@@ -1289,16 +1290,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": ""
        }
       ]
      },
@@ -1307,7 +1299,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": ""
        }
       ]
      },
@@ -1316,7 +1308,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": ""
        }
       ]
      },
@@ -1325,7 +1317,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": ""
        }
       ]
      }

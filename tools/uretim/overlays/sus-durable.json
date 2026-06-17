@@ -1,0 +1,35 @@
+{
+ "featureDefs": [
+  {
+   "name": "Postgres-native durable execution (DBOS)",
+   "desc": "Uzun iş akışı her adımdan sonra mevcut Postgres'e checkpoint'lenir; çöküş/yeniden başlatma sonrası son tamamlanan adımdan devam eder. Ayrı Temporal/Restate kümesi gerekmez — mevcut altyapıya oturur.",
+   "critical": true
+  },
+  {
+   "name": "ChangeSet apply = durable, idempotent süreç",
+   "desc": "ChangeSet uygulama tek atomik adım değil durum makineli süreç; durable execution sayesinde yarıda kalmaz, idempotent biçimde kaldığı yerden devam eder. Migration durakları (expanded/backfilled/contracted) checkpoint'lenir.",
+   "critical": true
+  },
+  {
+   "name": "AI ajan + uzun-saga güvenilirliği",
+   "desc": "Saatlerce çalışan AI ajan task'ı veya çok-adımlı saga, sunucu yeniden başlatmada sıfırdan başlamaz. @DBOS.workflow / @DBOS.step dekoratörü her adımı kalıcı kılar.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Mevcut Saga + Outbox primitive'leri DBOS Transact üstüne oturur; durable execution ölçek katmanının güvenilirlik kapısını bağlar. Konum: framework/scale/durable/, ek altyapı yok.",
+  "kernel": "Event Bus / işlem akışı kernel primitive'leri ile uyumlu; durable execution policy değil, çekirdek-yakını güvenilirlik primitive'i.",
+  "core": "In-tree Workflow ve Migration çekirdeği checkpoint'lerden faydalanır; ChangeSet apply (k-sozlesme) durum makinesi bash/işlem ölse de tutarlı kalır.",
+  "modules": "Saga (scale-saga) ve Workers (scale-workers) modülleri DBOS Transact üstünde checkpoint'li koşar.",
+  "apps": "AI ajan yüzeyleri uzun task'larda kaldığı yerden devam eder; operasyon yeniden başlatmaktan korkmaz."
+ },
+ "securityNotes": [
+  "Checkpoint'ler mevcut Postgres'te durur: ek orkestratör altyapısı (ve onun saldırı yüzeyi/sır yönetimi) eklenmez — saldırı yüzeyi dar tutulur.",
+  "Idempotent devam: çöküş sonrası yeniden yürütme tamamlanmış adımı tekrar yan-etkiyle çalıştırmaz; finansal/iletişim adımlarında çift-işlem (double-spend / çift e-posta) önlenir."
+ ],
+ "testNotes": [
+  "Çöküş-kurtarma testi: 4 adımlı akış 3. adımda öldürülür; yeniden başlatmada 1-2 checkpoint'li olduğu, 3'ten devam ettiği doğrulanır (sıfırdan başlamaz).",
+  "Idempotency testi: aynı adımın iki kez yürütülmesi tek mantıksal etki üretir (yan etki tekrarlanmaz).",
+  "ChangeSet apply durable testi: migration durakları checkpoint'lenir; süreç ortasında işlem sonlandırılsa bile sistem tutarlı duruma döner (bkz. edu-u12, k-sozlesme)."
+ ]
+}

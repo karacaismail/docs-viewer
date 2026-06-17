@@ -407,7 +407,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Politika yüzeyi",
+      "term": "ArcheType tek doğruluk kaynağı",
       "definition": [
        {
         "type": "strong",
@@ -415,16 +415,38 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı kural/kapı; deny-by-default ve kanıtlanabilir uygulama."
+        "text": "Geliştirici yalnız amacı yazar (alanlar, tipler, ilişkiler, izinler); DB tablosu, REST+GraphQL, authz policy, state machine, arka plan işleri ve admin formu bu tek tanımdan türetilir. 'Model your domain, derive the rest.'"
        }
       ]
      },
      {
-      "term": "Kapı koşulu",
+      "term": "Deterministik scaffold türetme (form/tablo/detay)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Tek tanımdan üç görünüm: form (tip→widget eşlemesi), tablo (record-title + anahtar/durum/tarih), detay (gruplu salt-okuma + audit zaman çizelgesi). AI önerir, motor deterministik uygular."
+       }
+      ]
+     },
+     {
+      "term": "Tip→widget eşleme kuralı",
       "definition": [
        {
         "type": "text",
-        "text": "İhlalde işi reddeden deterministik kontrol (CI veya runtime)."
+        "text": "metin→girdi, para→para+birim, seçim→dropdown/etiket, ilişki→canlı arama, dosya→yükleme+önizleme. Zorunlular üstte, PII ayrı bölüm, sistem alanları formda görünmez."
+       }
+      ]
+     },
+     {
+      "term": "Tablo/detay görünürlük politikası",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tabloda uzun metin/ham dosya/PII/sistem/dizi alanları gizli; record-title ilk sütun. Detay görünümünde gruplu salt-okuma + audit timeline. Görünürlük tanımdan türetilir, elle kodlanmaz."
        }
       ]
      }
@@ -612,15 +634,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "İzinler (authz policy) ArcheType tanımının parçasıdır; tek kaynaktan türetildiği için permission bir yerde tanımlanıp başka yerde unutulamaz — sürüklenme (drift) kaynaklı yetki boşluğu kapanır. PII alanları tanımda işaretlenir; form ayrı bölüme alır, tabloda gizlenir, sistem alanları formda hiç görünmez — varsayılan en-az-ifşa türetilmiş davranıştır. Tek doğruluk + sıfır kopya, validation kuralının 7 yerde tekrar edip birinin eksik kalması riskini ortadan kaldırır; ilk hata zinciri bozamaz çünkü zincir tek tanımdan üretilir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -648,15 +662,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Scaffold türetme deterministiktir (AI önerir, motor uygular); runtime'da reflection değil, üretim/derleme aşamasında bir kez türetilir."
        }
       ]
      },
@@ -674,15 +680,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Tek tanımdan üretim, aynı bilgiyi elle 7 yerde senkron tutma maliyetini sıfırlar; yeni alan eklemek tek satırlık değişiklik, tüm türev katmanlar yeniden üretilir."
        }
       ]
      },
@@ -1118,6 +1116,18 @@
     ]
    },
    {
+    "id": "block-sus-declarative-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Tanımdaki tip değişimi (örn. metin→para) formda doğru widget'ı (para+birim) deterministik üretmeli. PII işaretli alan tabloda gizlenmeli, formda ayrı bölümde, sistem alanları formda hiç görünmemeli. Tek tanımda alan eklenince DB migration + API şema + form/tablo/detay hepsi tutarlı yeniden türetilmeli (sıfır kopya). Authz policy tanımda değişince türetilen tüm yüzeylerde (API + form) aynı izin yansımalı — sürüklenme olmamalı."
+     }
+    ]
+   },
+   {
     "id": "block-sus-declarative-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1136,7 +1146,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — declarative türetme ArcheType'ın çekirdek felsefesidir; ayrı modül değil, schema yüzeyinin (k-schema) tüm üst katmanlara yayılan üretim disiplinidir."
        }
       ]
      },
@@ -1145,16 +1155,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "framework/kernel/schema/ ArcheType tanımı tek doğruluk; kernel authz policy, tenancy scope ve state machine'i buradan türetir; üst katmanlar tanımı introspect eder."
        }
       ]
      },
@@ -1163,7 +1164,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Contract/ArcheType tanımından DB migration, REST+GraphQL şema, validation ve background job otomatik üretilir — geliştirici migration veya API tanımı yazmaz."
        }
       ]
      },
@@ -1172,7 +1173,16 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Referans olgunluk: Ash (Elixir resource→her şey), "
+       },
+       {
+        "type": "term",
+        "text": "EdgeDB/Gel",
+        "termId": "term-edgedb-gel-sus-declarative"
+       },
+       {
+        "type": "text",
+        "text": " (DB-üretimli introspectable migration), Convex (TS-first AI-codegen). ArcheType bu üçünün birleşimine yükselir."
        }
       ]
      },
@@ -1181,7 +1191,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Her App form/tablo/detay ekranını ArcheType tanımından türetir; yüzey tarafı k-surface, sözleşme k-sozlesme referans alınır."
        }
       ]
      }

@@ -1,0 +1,32 @@
+{
+ "featureDefs": [
+  {
+   "name": "Tek-kaynak token katmanı",
+   "desc": "tokens.css değerleri tutar, globals.css semantik class'ları tanımlar; palet rengi component içinde verilmez.",
+   "critical": true
+  },
+  {
+   "name": "Token-dışı renk yasağı kapısı",
+   "desc": "Ham renk literali (hex/rgb) component'te kullanılamaz; her renk token referansından gelir, lint ile zorlanır.",
+   "critical": true
+  },
+  {
+   "name": "Yeniden-değerlendirme tetikleyicisi",
+   "desc": "İkinci tüketici ortaya çıkması ya da globals.css 1.500 satırı aşması bu kararın gözden geçirilmesini başlatır.",
+   "critical": false
+  }
+ ],
+ "securityNotes": [
+  "Token-dışı renk yasağı denetlenmezse stil kararları component'lere sızar ve tek-kaynak ilkesi sessizce bozulur; lint kapısı bu sapmayı PR'da yakalamalı.",
+  "Tailwind geri eklenirse build katmanı + konfig + bağımlılık geri gelir ama hiçbir tasarım kararını değiştirmez; karar gerekçesi bu maliyeti reddeder."
+ ],
+ "perfNotes": {
+  "code": "Stil hattı iki dosyaya (tokens.css + globals.css) indirilir; ek derleme adımı ve utility sınıf üretimi yoktur.",
+  "perf": "Bağımlılık ve build adımı azaldığından kurulum/derleme yüzeyi küçülür; runtime'da CSS custom property çözümü tarayıcı-yerel."
+ },
+ "testNotes": [
+  "Component kaynaklarında ham renk literali aranıp bulunmadığı (yalnız token referansı) lint kapısıyla doğrulanmalı.",
+  "Yeni bir stilin globals.css'e semantik class olarak eklendiği, component'e inline yazılmadığı kontrol edilmeli.",
+  "globals.css satır sayısı eşiğe (1.500) yaklaştığında yeniden-değerlendirme uyarısı üretilmeli."
+ ]
+}

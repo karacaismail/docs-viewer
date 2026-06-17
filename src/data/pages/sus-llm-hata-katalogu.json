@@ -464,7 +464,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Politika yüzeyi",
+      "term": "Hata sınıfı → mevcut kapı eşlemesi",
       "definition": [
        {
         "type": "strong",
@@ -472,16 +472,20 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı kural/kapı; deny-by-default ve kanıtlanabilir uygulama."
+        "text": "AI üretilen kodun tekrar eden anlamsal hata sınıfları (halüsinasyon, eski API, bağlam kaybı, sahte tamamlama, sahte yeşil, dalkavukluk, aşırı/eksik mühendislik, kapsam kayması, async bloklama/N+1) her biri projede onu zaten yakalayan somut bir kapıya bağlanır. Yeni kural icat edilmez."
        }
       ]
      },
      {
-      "term": "Kapı koşulu",
+      "term": "AI çıktısı kabul kapısı (6 madde)",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "İhlalde işi reddeden deterministik kontrol (CI veya runtime)."
+        "text": "Bir AI çıktısı kabul edilmeden önce: kanıt (diff+test çıktısı) var, sahte yeşil değil, bağımsız eleştiri yapıldı, kapsam dar, yeni bağımlılık onaylı, faz DoD'si geçti."
        }
       ]
      }
@@ -669,15 +673,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "AI hataları çoğunlukla sözdizimsel değil anlamsaldır: derlenir, testten geçer ama yanlış davranır — linter ve test tek başına yetmez, her sınıf bir savunmaya bağlanmalı. Sahte yeşil (reward hacking): AI testi zayıflatıp/silip geçirebilir; testler commit'li ve salt-okunur tutulur, governanceHonesty kapısı ve test-önce sıra zorunludur. İterasyon paradoksu: 'düzelt' dedikçe AI yeni açık ekler ve pattern locking ile aynı yanlış çözümü tekrarlar; iki başarısız denemeden sonra dur, bağlamı temizle, farklı yaklaşım dene veya insana devret. Halüsinasyon/slopsquatting: uydurma paket/import lockfile pinleme + yeni bağımlılık insan onayı + mypy/tsc sembol kontrolüyle engellenir. Tek doğruluk otoritesi testtir, modelin kesinlik dili değil; dalkavukluk/aşırı güvene karşı her çıktı test/lint ile doğrulanır. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -705,15 +701,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "async def handler(...):  # içinde senkron I/O veya lazy load → bloklama / N+1"
        }
       ]
      },
@@ -731,15 +719,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Doğrulama fazı kapısı (Prompt 9): Ruff ASYNC kuralı, ilişkilerde lazy='raise', keyset (keyset pagination) ile N+1 ve async bloklama yakalanır."
        }
       ]
      },
@@ -1175,6 +1155,18 @@
     ]
    },
    {
+    "id": "block-sus-llm-hata-katalogu-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Kabul kapısı kontrol listesi her AI çıktısında uygulanır: kanıt (diff+test çıktısı), sahte-yeşil değil, bağımsız eleştiri, dar kapsam, onaylı bağımlılık, faz DoD'si. Sahte tamamlama (TODO/stub bırakıp 'bitti' der) DoD kapısı + bağımsız eleştiri + 'çalıştığını kanıtla' (diff + test çıktısı) ile yakalanır. Yeni bir hata sınıfı görülürse önce mevcut bir önleme bağlanır; önlem yoksa sözleşmeye eklenir — katalog kapı eşlemesi tam tutulur."
+     }
+    ]
+   },
+   {
     "id": "block-sus-llm-hata-katalogu-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1193,7 +1185,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Bu sayfa ürün modülü değil; AI Üretim Sözleşmesi'nin (Üreten Onaylayamaz NEDEN'i) NE tarafıdır — hata sınıflarını mevcut kapılara bağlayan somut katalog. Yeni terminoloji/araç getirmez."
        }
       ]
      },
@@ -1202,16 +1194,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": ""
        }
       ]
      },
@@ -1220,7 +1203,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Deterministik kapılar hata sınıflarını yakalar: lockfile + yeni bağımlılık insan onayı (halüsinasyon), sürüm kuralları + lint (eski API), commit'li/salt-okunur testler + governanceHonesty kapısı + test-önce sıra (sahte yeşil), Üreten≠Eleştiren bağımsız oturum (dalkavukluk), küçük atomik PR + komşuluk kuralı + git diff review (kapsam kayması), doğrulama fazı kapısı Ruff ASYNC + lazy='raise' + keyset pagination (async bloklama/N+1)."
        }
       ]
      },
@@ -1229,7 +1212,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": ""
        }
       ]
      },
@@ -1238,7 +1221,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": ""
        }
       ]
      }

@@ -1,0 +1,22 @@
+{
+ "integration": {
+  "shouldIntegrate": "Hayır — bu bir eğitim ünitesidir (Ünite 14), çalışan kod değil. İki ayrı derdi ve çözümünü öğretir: yavaşlık → cache, kapasite tüketimi → rate limit. İkisi de Layer-1 öncesi middleware'da çalışır ve Redis'i sever; gerçek implementasyon scale-cache ve scale-ratelimit cluster'larındadır.",
+  "kernel": "Cache ve rate limit Layer-1 primitive'lerinden önce middleware katmanında durur; çekirdek bu ara katmanı her isteğin geçtiği nokta olarak konumlar.",
+  "core": "Cache-aside deseni (önce cache, yoksa DB+cache) ve token bucket (saniyede X token, biterse 429) bu ünitenin öğrettiği temel primitive davranışlarıdır.",
+  "modules": "Quota tier'ı (Ücretsiz 100/saat, Pro 10K/saat, Enterprise limitsiz) plan-bazlı gating örneğidir; saatlik counter Redis'te tutulur, saat dönünce sıfırlanır.",
+  "apps": "Frontend de cache yapar (React Query/SWR, staleTime); kullanıcı 'kaydet' tıklayınca ilgili cache invalidate edilir — invalidation hem istemci hem sunucu tarafında geçerlidir."
+ },
+ "securityNotes": [
+  "Rate limit DDoS koruması ve adil kullanım kapısıdır: bir kullanıcı/IP sistemi tek başına yıkamaz, limit aşılınca standart 429 (Too Many Requests) döner.",
+  "Public endpoint'te rate limit her zaman zorunludur, internal API'de en az; kullanıcı limite yaklaşınca 'X/10000 kullanıldı' header'ı bilgilendirici olarak döner."
+ ],
+ "perfNotes": {
+  "code": "Cache key deterministik olmalı (örn. cust:42:profile); TTL belirgin (60sn–1 saat); cache miss'te DB'den çek + cache'e yaz, PUT/PATCH'te key'i sil.",
+  "perf": "DB sorgusu ~100ms, Redis okuma ~1ms — yaklaşık 100x hız. Cache yalnız aynı sorguya günde 100+ istek varsa anlamlıdır."
+ },
+ "testNotes": [
+  "Invalidation'ın bilgisayar biliminin zor problemlerinden biri olduğu kavranmalı: DB güncellenince ilgili cache key'i silinmezse kullanıcı eski fiyatı görür, sipariş eski fiyattan geçer.",
+  "Üç cache deseninin riski ayırt edilebilmeli: cache-aside (nadiren race condition), write-through (yazma yavaşlar), write-behind (cache patlarsa veri kaybı).",
+  "Token bucket'ın anlık burst'e izin verip sürekli yüksek yükü engellediği; leaky/sliding window ile maliyet-hassasiyet farkı açıklanabilmeli."
+ ]
+}

@@ -237,7 +237,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Karar kapsamı",
+      "term": "Namespace: tenant-scoped ad + rezerve defteri",
       "definition": [
        {
         "type": "strong",
@@ -245,16 +245,46 @@
        },
        {
         "type": "text",
-        "text": "ADR'nin bağladığı invariant; alternatifler ve seçilen yön."
+        "text": "Karar kapsamı: ArcheType adları tenant-scoped; rezerve-kelime kayıt defteri; çakışmada AI son-ek önerir. Çapraz-tenant ad çakışmasını baştan önler."
        }
       ]
      },
      {
-      "term": "Uygulama etkisi",
+      "term": "Eşzamanlılık: optimistic lock (son-yazan-kazanır değil)",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Bu kararın kod/şema/test üzerindeki bağlayıcı sonucu."
+        "text": "ChangeSet baseVersion ile optimistic lock; çakışmada merge-uyarısı. Kayıp güncellemeyi engeller."
+       }
+      ]
+     },
+     {
+      "term": "Kota/abuse: per-tenant sınır + circuit breaker",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Tenant başına ArcheType/kayıt üst sınırı + token-rate circuit breaker; noisy-neighbor izolasyonu; plana göre değişir."
+       }
+      ]
+     },
+     {
+      "term": "Public KVKK: zorunlu rıza + audit",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Public form veri topluyorsa aydınlatma + açık rıza bu sürümde zorunlu; yayın sihirbazına gömülü; rıza audit'e yazılır."
        }
       ]
      }
@@ -442,15 +472,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Public KVKK: veri toplayan public form aydınlatma + açık rıza olmadan yayınlanamaz; rıza kaydı audit'e yazılır — ihlal baştan önlenir. Noisy-neighbor izolasyonu: token-rate circuit breaker bir tenant'ın diğerlerini tüketmesini engeller (kaynak tüketimi güvenliği). Namespace rezerve-kelime defteri: çapraz-tenant ad çakışması ve rezerve ad ele geçirme engellenir. Optimistic lock kayıp güncellemeyi (lost update) önler; son-yazan-kazanır kabul edilmez. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -948,6 +970,18 @@
     ]
    },
    {
+    "id": "block-adr-0021-acik-kararlar-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Namespace çakışma testi: aynı ad iki tenant'ta izole; rezerve kelime reddi; AI son-ek önerisi. Eşzamanlılık testi: eş-zamanlı iki ChangeSet baseVersion uyuşmazlığında merge-uyarısı üretir, sessiz üzerine yazma yok. i18n testi: tek locale (TR) ile başlayan etiket yapısına ikinci dil eklenince migration gerekmez. Kota testi: tenant ArcheType/kayıt üst sınırı ve token-rate breaker plan değerine göre tetiklenir. Public KVKK testi: rızasız public form yayını reddedilir; rıza audit kaydı doğrulanır."
+     }
+    ]
+   },
+   {
     "id": "block-adr-0021-acik-kararlar-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -966,7 +1000,7 @@
        },
        {
         "type": "text",
-        "text": "Dolaylı — bu sayfa kararı/bilgiyi tanımlar; entegrasyon onu uygulayan birimlerde gerçekleşir."
+        "text": "Beş açık karar merge-first kapatıldı: her biri sahip sayfaya da entegre edildi, dolayısıyla namespace/eşzamanlılık motoru, i18n yapısı, rate-limit ve gizlilik akışını birlikte bağlar."
        }
       ]
      },
@@ -975,16 +1009,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Namespace ve eşzamanlılık (ChangeSet baseVersion optimistic lock) k-sozlesme'de; rezerve-kelime defteri kernel seviyesinde."
        }
       ]
      },
@@ -993,7 +1018,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "i18n gün-1 locale-anahtarlı etiket (varsayılan TR) in-tree i18n çekirdeğine; public rıza akışı gizlilik çekirdeğine oturur."
        }
       ]
      },
@@ -1002,7 +1027,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Kota/abuse scale-ratelimit ile her modülün ArcheType/kayıt üretimini sınırlar; noisy-neighbor izolasyonu modüller arası."
        }
       ]
      },
@@ -1011,7 +1036,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Public yayın sihirbazı (app yüzeyi) rıza metnini zorunlu kılar; plan bazlı kota app paketine bağlı."
        }
       ]
      }

@@ -825,7 +825,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Anti-pattern Özeti — birincil yetenek",
+      "term": "Day-1 zorunlu kernel concern'leri",
       "definition": [
        {
         "type": "strong",
@@ -833,25 +833,46 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "Auth, authz, tenancy sonradan eklenemez; baştan kernel'de olmalı. 'Önce tek müşteri / auth'ı sonra' yaklaşımı 6-12 aylık retrofit ve güvensiz geçiş üretir. Doğrusu day-1 multi-tenant + day-1 auth."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "ArcheType tablo-per-tip (polimorfizm)",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Tek JSON column ya da tek Document tablo + type switching anemic domain'dir (WordPress wp_postmeta / Strapi acısı). Her ArcheType fiziksel tablo olur; davranış varsa Strategy policy modülü, sadece etiketse value object enum."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "Modül izolasyonu (public API + event bus)",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "Modül doğrudan başka modülün DB'sine erişmez; yalnız public API + event bus üzerinden konuşur. Tight coupling refactor'u imkansız kılar. Sınır CI'da zorlanmalı, yazılı 'dokunma' kuralı 6 ayda çürür."
+       }
+      ]
+     },
+     {
+      "term": "Dağıtık tutarlılık: outbox + saga, 2PC değil",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Cross-aggregate / distributed transaction (2PC) fragile ve yavaştır. Doğrusu outbox + saga + compensation + idempotency. Senkron hook saf fonksiyon olmalı, polyglot transaction geçişi yapmamalı."
        }
       ]
      }
@@ -1039,15 +1060,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Authz'ı application-level if-check ile yapmak tek bir unutmada data leak üretir; doğrusu query layer'a örülmüş yetki + RLS defense-in-depth (iki katman). PgBouncer + SET (session) cross-tenant veri sızdırır çünkü bağlantı havuzdan paylaşılır; tenant context SET LOCAL ile transaction'a bağlanmalı. Submittable ArcheType'ı normal CRUD gibi güncellemek finansal bütünlüğü bozar; docstatus + submitted kayıt immutable olmalı (e-Belge/muhasebe entegritesi). Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1075,15 +1088,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Hot counter'ı ACID transaction'da artırmak viral içerikte lock contention üretir; approximate sayım + Redis INCR + sharded counter ile yazılır."
        }
       ]
      },
@@ -1101,15 +1106,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "2PC distributed transaction yüksek latency ve kırılganlık getirir; outbox + idempotency ile asenkron, geri-kazanılabilir yan etki tercih edilir. Mikroservis day-1 prematüredir, modüler monolit sonra extract edilir."
        }
       ]
      },
@@ -1545,6 +1542,18 @@
     ]
    },
    {
+    "id": "block-anti-patterns-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Modül sınırı CI'da test edilmeli: bir modülün başka modülün tablosuna/iç paketine import'u build'i kırmalı (Shopify dersi, sosyal kural yetmez). RLS testi: authz kodu atlansa bile RLS politikası cross-tenant satırı döndürmemeli (defense-in-depth doğrulaması). Submittable ArcheType testi: docstatus=submitted kayıtta alan güncellemesi reddedilmeli (immutability assert). Upgrade/codemod testi: BC kıran değişiklik için codemod (Rector/AI) eski kullanımı dönüştürebilmeli; big-bang rewrite yerine kademeli deprecation doğrulanmalı."
+     }
+    ]
+   },
+   {
     "id": "block-anti-patterns-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1563,7 +1572,16 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Bağımsız bir rehber sayfa (build "
+       },
+       {
+        "type": "term",
+        "text": "cluster",
+        "termId": "term-cluster-anti-patterns"
+       },
+       {
+        "type": "text",
+        "text": "); 24 tuzağı niyesi+doğrusuyla listeler. Diğer kararlara (k-schema, edu-u25, sus-*) referans verir ama içeriklerini tekrarlamaz."
        }
       ]
      },
@@ -1572,16 +1590,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Auth/authz/tenancy tuzakları kernel'in day-1 sorumluluklarını gerekçelendirir; RLS defense-in-depth, SET LOCAL (transaction) tenant izolasyonu."
        }
       ]
      },
@@ -1590,7 +1599,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Billing/catalog/customer core'a konmaz; Layer 2 modül ya da Party generic + role modülü. Feed fan-out kernel'e değil, primitive kernel + Layer 2 policy."
        }
       ]
      },
@@ -1599,7 +1608,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Modüller arası tight coupling ve global mutable modül state yasak; hook registry + semver kontrat ile gevşek bağlanma."
        }
       ]
      },

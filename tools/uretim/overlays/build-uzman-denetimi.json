@@ -1,0 +1,28 @@
+{
+ "featureDefs": [
+  {
+   "name": "İsimli reviewer kapısı (P0 kilometre taşı)",
+   "desc": "Her P0 kilometre taşında isimli bir reviewer ve yazılı karar (onay / şartlı onay / red) zorunludur. Açık kritik bulgu kapanmadan sonraki faz başlamaz; bulgular risk defterine bağlanır.",
+   "critical": true
+  },
+  {
+   "name": "Bağımsız doğrulama ilkesi",
+   "desc": "Uzman kendi ürettiği kritik kontrolün tek doğrulayıcısı olamaz; AI review'u uzman imzası yerine geçmez. Üreten-onaylayamaz disiplininin insan-uzman tarafıdır.",
+   "critical": true
+  },
+  {
+   "name": "Erken çağırma (faz-kayması önleme)",
+   "desc": "Uzman yalnız finalde değil, temel model ve veri kararları geri döndürülemez hale gelmeden çağrılır; haftalık tasarım review + her faz çıkışı ritmi başarısızlık modunu kapatır."
+  }
+ ],
+ "moduleUsage": [],
+ "securityNotes": [
+  "Güvenlik uzmanı kapısı kimlik/yetki/tenant tamamlanınca ve her public release öncesi devrededir; tenant kaçağı veya kritik/yüksek açık fazı durdurur (threat model, RLS, secret, supply chain, pentest kanıtı incelenir).",
+  "PostgreSQL/SRE kapısı restore kanıtsızlığında durdurur: WAL/PITR ve gerçek restore denemesi, kapasite ve runbook olmadan migration/yedek kilometre taşı geçilmez.",
+  "Hukuk/muhasebe domain kapısı PII, vergi, bordro, e-imza davranışı değişince mevzuat kaynağı + retention + hesap invariant'ı doğrular; yanlış mevzuat yorumu fazı durdurur."
+ ],
+ "testNotes": [
+  "Accessibility/UX reviewer her ana Surface release öncesi klavye, ekran okuyucu ve 60+ görev testini inceler; ana görev tamamlanamıyorsa veya ciddi WCAG ihlali varsa durdurur — bu, e2e/erişilebilirlik test kapısının insan-onay karşılığıdır.",
+  "Review paketi kanıt zinciri test çıktısına dayanır: diff + karar özeti + varsayımlar + test çıktısı + açık riskler review'dan 24 saat önce paylaşılır; bulgu kapanışı yeniden-test kanıtıyla aynı kayda bağlanır."
+ ]
+}

@@ -1,0 +1,38 @@
+{
+ "featureDefs": [
+  {
+   "name": "Hata sınıfı → mevcut kapı eşlemesi",
+   "desc": "AI üretilen kodun tekrar eden anlamsal hata sınıfları (halüsinasyon, eski API, bağlam kaybı, sahte tamamlama, sahte yeşil, dalkavukluk, aşırı/eksik mühendislik, kapsam kayması, async bloklama/N+1) her biri projede onu zaten yakalayan somut bir kapıya bağlanır. Yeni kural icat edilmez.",
+   "critical": true
+  },
+  {
+   "name": "AI çıktısı kabul kapısı (6 madde)",
+   "desc": "Bir AI çıktısı kabul edilmeden önce: kanıt (diff+test çıktısı) var, sahte yeşil değil, bağımsız eleştiri yapıldı, kapsam dar, yeni bağımlılık onaylı, faz DoD'si geçti.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Bu sayfa ürün modülü değil; AI Üretim Sözleşmesi'nin (Üreten Onaylayamaz NEDEN'i) NE tarafıdır — hata sınıflarını mevcut kapılara bağlayan somut katalog. Yeni terminoloji/araç getirmez.",
+  "kernel": "",
+  "core": "Deterministik kapılar hata sınıflarını yakalar: lockfile + yeni bağımlılık insan onayı (halüsinasyon), sürüm kuralları + lint (eski API), commit'li/salt-okunur testler + governanceHonesty kapısı + test-önce sıra (sahte yeşil), Üreten≠Eleştiren bağımsız oturum (dalkavukluk), küçük atomik PR + komşuluk kuralı + git diff review (kapsam kayması), doğrulama fazı kapısı Ruff ASYNC + lazy='raise' + keyset pagination (async bloklama/N+1).",
+  "modules": "",
+  "apps": ""
+ },
+ "moduleUsage": [],
+ "securityNotes": [
+  "AI hataları çoğunlukla sözdizimsel değil anlamsaldır: derlenir, testten geçer ama yanlış davranır — linter ve test tek başına yetmez, her sınıf bir savunmaya bağlanmalı.",
+  "Sahte yeşil (reward hacking): AI testi zayıflatıp/silip geçirebilir; testler commit'li ve salt-okunur tutulur, governanceHonesty kapısı ve test-önce sıra zorunludur.",
+  "İterasyon paradoksu: 'düzelt' dedikçe AI yeni açık ekler ve pattern locking ile aynı yanlış çözümü tekrarlar; iki başarısız denemeden sonra dur, bağlamı temizle, farklı yaklaşım dene veya insana devret.",
+  "Halüsinasyon/slopsquatting: uydurma paket/import lockfile pinleme + yeni bağımlılık insan onayı + mypy/tsc sembol kontrolüyle engellenir.",
+  "Tek doğruluk otoritesi testtir, modelin kesinlik dili değil; dalkavukluk/aşırı güvene karşı her çıktı test/lint ile doğrulanır."
+ ],
+ "perfNotes": {
+  "code": "async def handler(...):  # içinde senkron I/O veya lazy load → bloklama / N+1",
+  "perf": "Doğrulama fazı kapısı (Prompt 9): Ruff ASYNC kuralı, ilişkilerde lazy='raise', keyset (keyset pagination) ile N+1 ve async bloklama yakalanır."
+ },
+ "testNotes": [
+  "Kabul kapısı kontrol listesi her AI çıktısında uygulanır: kanıt (diff+test çıktısı), sahte-yeşil değil, bağımsız eleştiri, dar kapsam, onaylı bağımlılık, faz DoD'si.",
+  "Sahte tamamlama (TODO/stub bırakıp 'bitti' der) DoD kapısı + bağımsız eleştiri + 'çalıştığını kanıtla' (diff + test çıktısı) ile yakalanır.",
+  "Yeni bir hata sınıfı görülürse önce mevcut bir önleme bağlanır; önlem yoksa sözleşmeye eklenir — katalog kapı eşlemesi tam tutulur."
+ ]
+}

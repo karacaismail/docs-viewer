@@ -1,0 +1,52 @@
+{
+ "featureDefs": [
+  {
+   "name": "Tipli kinetik aksiyon yüzeyi",
+   "desc": "AI ham SQL yazmaz; JSON-Schema imzalı, amaç-odaklı action'lar (publish_order, approve_invoice, cancel_subscription) çağırır. Her çağrı validation + authz + audit'ten geçer.",
+   "critical": true
+  },
+  {
+   "name": "Yetki tavanı kesişim kuralı",
+   "desc": "Etkin yetki = kullanıcı_rolü ∩ agent_capability ∩ tool_scope ∩ aksiyon_riski ∩ ortam. Ajan asla principal değil; temsil ettiği aktörün yetkisini aşamaz (delegasyon, kimliğe bürünme değil).",
+   "critical": true
+  },
+  {
+   "name": "Kapatılamaz korumalar (hard invariant)",
+   "desc": "Tenant izolasyonu (RLS), PII/KVKK maskeleme, audit ve şema-değişim güvenliğini kapatan aksiyon yüzeyde tanımlanamaz ve capability allowlist'ine asla giremez.",
+   "critical": true
+  },
+  {
+   "name": "Aksiyon taksonomisi (risk/onay/geri-alma)",
+   "desc": "Her aksiyon risk sınıfı taşır: Read/Suggest/Draft AI'a doğrudan; ApplySchema/Migration/DeleteField/PermissionChange/PublishPublic motorla + insan onayıyla; DisableProtection yasak.",
+   "critical": true
+  },
+  {
+   "name": "Out-of-band step-up onay",
+   "desc": "Dış-etkili, parasal, hukuki veya yıkıcı aksiyonlar (e-posta/webhook, ödeme, silme, public yayın) ayrı güvenli kanaldan onay ister; Otopilot'ta bile akış bu kavşakta durur.",
+   "critical": true
+  }
+ ],
+ "ecaExample": "trigger:\n  event: action.invoked\ncondition:\n  all:\n    - actor.capability >= action.required_capability\n    - action.capability subset_of (user.role ∩ tool.scope)\n    - action.name not in [\"DisableProtection\"]\n    - not loop_detected\naction:\n  - emit: authz.evaluate\n  - emit: audit.append\nguards:\n  max_depth: 6\n  idempotency_key: \"action:{action_id}:{actor_id}\"\n  external_effects: step_up_required",
+ "moduleUsage": [
+  "k-authz her aksiyon çağrısını merkezî politika kapısından geçirir (kesişim kuralı burada zorlanır).",
+  "s-ai ajanı MCP üzerinden yalnız ilan edilmiş action'lara erişir; ham veri katmanına dokunamaz.",
+  "layer1-workflow ECA sözleşmesini aksiyon side-effect'lerine bağlar; sus-conformance üretilmiş uyumluluk testlerini doğrular."
+ ],
+ "securityNotes": [
+  "AI ham SQL (INSERT INTO ...) atabilirse governance açığı ve injection-benzeri risk doğar; tipli action yüzeyi tek geçiş noktası olmalı.",
+  "Etkin yetki birleşim olarak hesaplanırsa ajan aktörün üstünde yetki kazanır; kural kesişim olmalı ve capability allowlist'iyle daha da daraltılmalı.",
+  "RLS/PII/audit/şema-güvenliğini kapatan bir aksiyon yüzeye sızarsa hard invariant çöker; bu dört koruma beyandan gelir ve aksiyonla devre dışı bırakılamaz.",
+  "Yüksek-riskli aksiyon step-up olmadan uygulanırsa geri-alınamaz/parasal işlem korumasız kalır; out-of-band onay zorunludur."
+ ],
+ "perfNotes": {
+  "code": "Her action ayrı dosya (framework/kernel/actions/), manifest'te listeli; çağrı imza doğrulama -> authz kesişim -> audit append sırasıyla işlenir.",
+  "perf": "Düşük-riskli Read/Suggest/Draft doğrudan akar; yalnız orta/yüksek-risk aksiyonlar insan-onayı/step-up kavşağında bloklanır, sıcak yol hızlı kalır."
+ },
+ "testNotes": [
+  "DisableProtection aksiyonunun yüzeyde tanımlanamadığı ve capability allowlist'ine eklenemediği doğrulanmalı.",
+  "Ajan capability'si kullanıcı rolünü aşan bir aksiyon istediğinde kesişim kuralının çağrıyı reddettiği test edilmeli.",
+  "Parasal/yıkıcı/public aksiyonların step-up onayı olmadan uygulanmadığı, Otopilot modunda bile durduğu kontrol edilmeli.",
+  "Taksonomideki her aksiyonun beyan edilen risk/onay/geri-alma sınıfıyla (ör. DeleteField -> çift onay + soft-delete 30g) uygulandığı doğrulanmalı.",
+  "Her başarılı ve reddedilen aksiyon çağrısının audit'e değişmez kayıt olarak gittiği test edilmeli."
+ ]
+}

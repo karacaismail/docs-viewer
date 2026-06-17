@@ -1,0 +1,52 @@
+{
+ "featureDefs": [
+  {
+   "name": "Model + prompt versiyon pinleme",
+   "desc": "Her AI çağrısı pinlenmiş model sürümü + prompt sürümü ile koşar; test edilmiş rollback hedefi tutulur. Yeni sürüm eval geçmeden trafiğe alınmaz.",
+   "critical": true
+  },
+  {
+   "name": "Eval dataset + CI gating",
+   "desc": "Eval dataset sistemin kalbi; model/prompt değişimi drift ölçümü ve eval skoru CI kapısından geçmeden merge edilemez. Skor düşüşü build'i kırar.",
+   "critical": true
+  },
+  {
+   "name": "Maliyet circuit breaker",
+   "desc": "Günlük bütçe + tenant kotası + token-rate eşiği; eşik aşılınca AI çağrıları kesilir. Maliyet patlaması sessizce gerçekleşemez.",
+   "critical": true
+  },
+  {
+   "name": "Üç kill-switch (tenant/agent/MCP)",
+   "desc": "Tenant, agent ve MCP düzeyinde bağımsız acil kapatma. İncident anında ilgili katman izole edilir; tüm sistem durdurulmadan sorunlu yüzey susturulur.",
+   "critical": true
+  },
+  {
+   "name": "Input/output guardrail",
+   "desc": "PII/injection/halüsinasyon filtresi giriş ve çıkışta; tenant verisi eğitime gitmez. Guardrail Contract düzeyinde tanımlı, tüm AI endpoint'lerine otomatik dahil.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — governance ve operasyon tek bir modül değil, AI çağrısı yapan her yüzeyin çapraz-kesen kuralıdır; cc-obs ve cc-obs-deep sayfalarına entegre edilir.",
+  "kernel": "Authz (kill-switch tetikleme yüksek-yetki capability'si ister), tenancy (maliyet kotası + kill-switch tenant-scoped), bus (drift/bütçe-aşımı olayları runbook/alarm tetikler).",
+  "core": "AI çağrı kontratına model_version + prompt_version + guardrail alanları; eval skoru ve maliyet sayacı zorunlu metadata.",
+  "modules": "cc-obs (governance göstergeleri), cc-obs-deep (runbook + kill-switch), edu-u20 (yedek/restore tatbikatı).",
+  "apps": "AI özelliği barındıran her App pinlenmiş sürümle çağrı yapar; feature flag ve prompt rollback kontrolünü tüketir."
+ },
+ "ecaExample": "trigger:\n  event: ai.cost_threshold_exceeded\ncondition:\n  all:\n    - tenant.daily_spend >= tenant.budget\n    - not killswitch.active(tenant)\naction:\n  - activate: killswitch.tenant\n  - emit: incident.cost_breaker_tripped\n  - notify: oncall_sre\nguards:\n  idempotency_key: \"breaker:{tenant}:{date}\"\n  external_effects: step_up_required\n  rollback: prompt_and_model_pin",
+ "securityNotes": [
+  "Kill-switch tetikleme yıkıcı bir eylemdir: yüksek-yetki capability + step-up doğrulama ister, her tetikleme audit log'a yazılır; tenant/agent/MCP düzeyinde izolasyon sağlar.",
+  "Guardrail çift yönlüdür: girişte prompt-injection ve PII, çıkışta halüsinasyon/veri-sızıntısı filtrelenir; tenant verisi model eğitimine asla gönderilmez (deny-by-default).",
+  "Versiyon pinleme tedarik-zinciri güvenliğidir: model/prompt sürümü sabitlenmeden trafiğe alınamaz, sessiz model değişimi (drift) CI gating ile yakalanır."
+ ],
+ "perfNotes": {
+  "code": "Maliyet sayacı ve guardrail her çağrıda çalışır ama hafif tutulur: token-rate sayımı in-memory + kısa TTL, ağır eval yalnız CI'da koşar, istek yolunda değil.",
+  "perf": "Circuit breaker açıkken AI çağrıları erken reddedilir (fail-fast); böylece bütçe aşımı hem maliyeti hem de upstream sağlayıcıya gereksiz yükü durdurur."
+ },
+ "testNotes": [
+  "Eval skoru eşik altına düşen prompt/model değişimi CI'da merge'i bloke etmeli (gating).",
+  "Tenant günlük bütçe aşımı -> tenant kill-switch otomatik aktif + incident olayı üretilmeli; idempotent olmalı (gün içinde bir kez).",
+  "Pinlenmemiş model sürümüyle AI çağrısı reddedilmeli; rollback hedefi her zaman test edilmiş olmalı.",
+  "Output guardrail: PII içeren yanıt maskelenmeli/reddedilmeli; tenant verisinin eğitim akışına gitmediği doğrulanmalı."
+ ]
+}

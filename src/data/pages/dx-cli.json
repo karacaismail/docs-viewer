@@ -410,7 +410,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Module CLI + Scaffolding — birincil yetenek",
+      "term": "Tek-komut bootstrap (sdk up)",
       "definition": [
        {
         "type": "strong",
@@ -418,25 +418,42 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "Deterministik olarak Docker Compose v1 profilini reçeteleyen komut: Debian + PostgreSQL + FastAPI/GraphQL + Keycloak OIDC + seed; sihir değil, aynı kit aynı ortamı kurar."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Test-first scaffold sırası",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Tüm üretim aynı sırayı izler: testler ÖNCE (kırmızı) → bildirimsel tanımlar → saf hook → manifest; scaffold bu sırayı dosya iskeletine gömer."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "Tipli hook contract (HookContext)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "SDK'nın geliştiriciye sunduğu dar ve tipli yüzey: tenant/user/trace/events/tax/storage/ai/logger ve read-only db; yazma yalnız aggregate üzerinden, AI'a verilen yüzey kasıtlı dardır."
+       }
+      ]
+     },
+     {
+      "term": "Sınır testi (importlinter)",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "Bir Kaya/Domain'in başka birinin internal'ına dokunmasını derleme/CI zamanında engelleyen boundary kontrolü; mimari sınır kod incelemesine bırakılmaz."
        }
       ]
      }
@@ -624,15 +641,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Hook'a verilen db read-only'dir ve yazma yalnız aggregate üzerinden yapılır; bu, hook yüzeyinden gelen kontrolsüz yazma/veri sızıntısı riskini sınırlayan kasıtlı bir daraltmadır. Paketleme WASM sandbox uyumludur: üçüncü taraf kodun izole çalıştırılması, geniş yetkili çalıştırma yüzeyini kapatır. HookContext tenant/user/trace taşır; AI'a sunulan yüzeyin dar ve tipli olması (YAML tanım + saf hook) prompt yüzeyinden gelebilecek istenmeyen yan etkileri sınırlar. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1130,6 +1139,18 @@
     ]
    },
    {
+    "id": "block-dx-cli-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Scaffold'un ürettiği iskelet test-önce sırayı somutlaştırır: tests/ klasörü (pytest + vitest) kırmızı testlerle gelir, geliştirici tanım ve hook'u bu testleri yeşile çevirmek için yazar. Test piramidi katmanlıdır: unit (SDK mock'lu), integration (gerçek DB + gerçek event bus, framework test harness), E2E (Playwright + dev server), boundary (importlinter ile sınır ihlali). sdk check determinizmin kapısıdır: aynı kit aynı ortamı kurmazsa doğrulama başarısız olmalı — reprodüksiyon edilebilirlik bir kabul kriteridir."
+     }
+    ]
+   },
+   {
     "id": "block-dx-cli-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1148,7 +1169,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "CLI üretim hattının giriş kapısıdır: sdk archetype tek komutla ArcheType (Büyük Taş) ve theme üretir; Kaya/Domain ve Dağ ise tek-komut buildable değildir, geliştirici kompozisyonuyla kurulur."
        }
       ]
      },
@@ -1157,16 +1178,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "sdk up çekirdek dev-ortamı deterministik reçeteler; sdk check/build doğrulama kapıları + WASM sandbox uyumlu paketleme verir."
        }
       ]
      },
@@ -1175,7 +1187,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "sdk archetype çok-aşamalı AI sorularıyla (seven-questions) tekil bildirimsel varlık üretir; sdk theme create token + Surface şablon + a11y/perf iskeleti verir."
        }
       ]
      },
@@ -1184,7 +1196,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Kaya/Domain seviyesi: birden çok ArcheType'ı birleştirerek geliştirici eliyle kurulur; CLI tek komutla üretmez, kompozisyon yüzeyi sunar."
        }
       ]
      },
@@ -1193,7 +1205,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Dağ seviyesi: Kaya/Domain'leri birleştirir; yine tek-komut değil, geliştirici kompozisyonudur."
        }
       ]
      }

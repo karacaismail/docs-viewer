@@ -1,0 +1,41 @@
+{
+ "featureDefs": [
+  {
+   "name": "Metadata-driven tanım -> 9+ otomatik çıktı",
+   "desc": "Tek tanım (alanlar, izinler, naming) PostgreSQL tablosu, REST + GraphQL, varsayılan Surface, permission engine, audit logger, search indexer, hook noktaları ve MCP tool spec'ini üretir.",
+   "critical": true
+  },
+  {
+   "name": "Fiziksel tablo (JSON-her-şey değil)",
+   "desc": "Her ArcheType kendi tabMusteriSikayeti tablosuna indeksli kolon olarak yazılır; WHERE/ORDER/JOIN hızlı kalır.",
+   "critical": true
+  },
+  {
+   "name": "Submittable yaşam döngüsü (docstatus 0/1/2)",
+   "desc": "draft -> submitted -> cancelled; submit'te mali alanlar kilitlenir, düzeltme = iptal + yeni belge.",
+   "critical": true
+  },
+  {
+   "name": "Tenant özelleştirme (custom field + property setter)",
+   "desc": "Tenant kod değiştirmeden alan ekler (custom field) veya mevcut alanın özelliğini değiştirir (property setter); değişiklik yalnız o tenant'ta görünür.",
+   "critical": false
+  }
+ ],
+ "moduleUsage": [],
+ "ecaExample": "trigger:\n  event: archetype.submitted\ncondition:\n  all:\n    - record.docstatus == 1\n    - actor.capability >= \"invoice:submit\"\n    - not already_posted\naction:\n  - emit: ledger.journal_created\n  - emit: stock.decremented\n  - emit: notification.customer_emailed\nguards:\n  max_depth: 6\n  idempotency_key: \"on-submit:{archetype}:{record_id}:{rev}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Permission engine kuralları query'ye otomatik WHERE ekler (ifowner ile kullanıcı yalnız kendi kayıtlarını görür); izin kodda değil tanımda olduğu için bypass yüzeyi daralır.",
+  "Custom field tenant-scoped: bir tenant'ın eklediği alan başka tenant'ın şemasına sızmamalı.",
+  "Submit sonrası mali alan kilidi mali integrity sınırıdır; submitted belgede tutar/no değiştirme denemesi reddedilmeli."
+ ],
+ "perfNotes": {
+  "code": "GET /api/resource/MusteriSikayeti?filters=[[\"oncelik\",\"=\",\"acil\"]]  # kolon indeksli, EAV taraması yok",
+  "perf": "Her ArcheType gerçek tabloya yazıldığı için B-tree index WHERE/ORDER BY'ı hızlandırır; EAV (id,attr,value) tek-tablo yolu sorgu cehennemine düşer. Naming series SIK-{YYYY}-{####} distributed-safe worker-lock ile üretilir, yüksek eşzamanlılıkta çakışmaz."
+ },
+ "testNotes": [
+  "Otomatik-çıktı kapısı: bir ArcheType tanımı deploy edilince DB tablosu, REST + GraphQL şeması, audit kaydı ve MCP tool spec'i üretildi mi doğrulanır.",
+  "docstatus invariant'ı: submitted (1) belgede mali alan UPDATE'i reddedilmeli; cancel (2) ters yevmiye + stok geri yükleme hook'unu tetiklemeli.",
+  "Tenant izolasyonu: custom field yalnız ekleyen tenant'ın sorgusunda görünmeli, diğer tenant'ta görünmemeli.",
+  "Permission: Customer rolü ifowner=true ile yalnız kendi kayıtlarını listelemeli (başkasının kaydı dönmemeli)."
+ ]
+}

@@ -1,0 +1,43 @@
+{
+ "featureDefs": [
+  {
+   "name": "Görev Kartı = kapalı iş sözleşmesi",
+   "desc": "Her geliştirme tek bir Görev Kartı ile başlar: hedef, kapsam, non-goal, invariant, kabul testleri, doğrulama komutları ve durdurma koşulu. Araç yalnız bu kartın sınırında üretir; geniş prompt AI'ın varsayım alanını büyütür, kart hem üretimi küçültür hem reviewer'ın neyi doğrulayacağını görünür yapar.",
+   "critical": true
+  },
+  {
+   "name": "Üretim ile bağımsız review ayrımı",
+   "desc": "Üretim ve saldırgan review farklı oturum ya da farklı kişi tarafından yürütülür (Prompt 4). Aynı konuşmada yapılırsa aynı varsayım iki kez doğru sanılır; ayrı oturum reviewer'ın ilk çözümü savunmadan, yanlış olduğunu varsayarak kanıt aramasını sağlar.",
+   "critical": true
+  },
+  {
+   "name": "Faz + seviye prompt çarpımı (parametrik)",
+   "desc": "Tek tek yüzlerce prompt yazmak yerine, altı faz (gereksinim→işletim) ile dokuz granülerlik seviyesi (kernel→Atom) köşeli alanları doldurularak çarpılır. Önce seviye seçilir, sonra faz uygulanır; komşuluk kuralı atlamayı reddeder.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Bu sayfa ürün modülü değil; Claude, Cursor ve Antigravity'de aynı kalite kapılarıyla kullanılacak kopyala-çalıştır prompt kütüphanesidir. Araç değişir, görev sözleşmesi değişmez. Pratiğe AI üretim sözleşmesi, başlangıç rotası ve waterfall yol haritası eğitim sayfalarına bağlanır.",
+  "kernel": "",
+  "core": "",
+  "modules": "",
+  "apps": ""
+ },
+ "moduleUsage": [],
+ "securityNotes": [
+  "Prompt 9 (doğrulama fazı) güvenliği kabul kapısı yapar: auth/RBAC negatif testleri, raw SQL yasağı → ORM parametreli sorgu, dosya yükleme web kökü dışı + yeniden adlandır + içerik/MIME doğrulama.",
+  "Çok-kiracılık izolasyonu testle kanıtlanır: bir kiracının verisinin diğerine sızmadığı (RLS) gösterilmeden görev bitmez; tenant negatif testi yoksa görev tamamlanmamıştır.",
+  "Sır yönetimi koddan ayrı: frontend bundle'ına VITE_ önekiyle gizli anahtar sızdırılmaz; CI sırları OIDC/şifreli tutulur, log'a yazılmaz.",
+  "CI kırmızıyken (Prompt 5) semptomu gizlemek için test, coverage eşiği, güvenlik kontrolü veya lint kuralı gevşetilmez; yalnız kök neden düzeltilir."
+ ],
+ "perfNotes": {
+  "code": "# Prompt 8/17/19 kısıtı: async def içinde bloklama yok (Ruff ASYNC); ilişkiler lazy=\"raise\" + açık eager",
+  "perf": "Doğrulama fazı performansı kapı yapar: N+1 yok (lazy=raise), liste uçları keyset (cursor) pagination, OFFSET yasak. Çok-arch dağıtımda QEMU emülasyonundan kaçınılır, native arm64 + amd64 runner kullanılır."
+ },
+ "testNotes": [
+  "Her promptun tek görev, açık non-goal ve çalıştırılabilir doğrulama komutu taşıdığı.",
+  "Üretim ile bağımsız review'ün farklı oturumda yürütüldüğü ve review'ün önce-kırmızı/sonra-yeşil kanıtı ölçtüğü.",
+  "Köşeli alanlar (GÖREV/KAPSAM/KOMUTLAR) doldurulmadan promptun gönderilmediği; sahte-yeşil testin reddedildiği.",
+  "Seviye prompt'larının komşuluk kuralını (her seviye yalnız bir alt komşusuna bağlanır) ihlal eden planı reddettiği."
+ ]
+}

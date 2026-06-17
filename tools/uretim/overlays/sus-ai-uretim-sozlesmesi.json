@@ -1,0 +1,44 @@
+{
+ "featureDefs": [
+  {
+   "name": "Kaynak + varsayım beyanı",
+   "desc": "Her değişiklik kullanılan kaynakları, varsayımları ve bilinmeyenleri listeler; 'şunu yap' tek komutu yasak.",
+   "critical": true
+  },
+  {
+   "name": "Bağımsız eleştiri (üreten onaylayamaz)",
+   "desc": "Temiz bağlamlı ikinci AI veya işi üretmeyen insan saldırgan review yapar; ilk cevabı doğrulayan yönlendirici prompt yasak.",
+   "critical": true
+  },
+  {
+   "name": "Deterministik doğrulama kapısı",
+   "desc": "Tip, lint, birim, property, contract, tenancy, güvenlik ve gerektiğinde yük testleri; eşik/invariant gevşetmek yasak.",
+   "critical": true
+  },
+  {
+   "name": "İnsan merge kararı + rollback planı",
+   "desc": "Merge için insan reviewer kararı + yeşil CI + geri-alma planı zorunlu; AI kendi merge/release kararını veremez.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Sözleşme AI-eşliğinde geliştirmenin governance kapısı; her ArcheType/Surface üretimi bu aşama dizisinden geçmeden kernel'e giremez.",
+  "kernel": "Kernel iç API'sine izinsiz erişim üretim aşamasında yasak; bağımsız oracle (mevcut sözleşme/property invariant) kernel sınırını korur.",
+  "core": "Doğrulama aşaması core'un contract + tenancy + güvenlik testlerini koşar; sahte-yeşil bu katmanda yakalanır.",
+  "modules": "Module üretimi de aynı altı aşamayı taşır; üreten AI'ın öz-eleştirisi bağımsız review yerine geçmez.",
+  "apps": "App release kararı insan reviewer + rollback planına bağlı; AI release tetikleyemez."
+ },
+ "moduleUsage": [],
+ "ecaExample": "trigger:\n  event: change.merge_requested\ncondition:\n  all:\n    - reviewer.identity != producer.identity\n    - independent_oracle_present\n    - ci.status == \"green\"\n    - not threshold_relaxed\naction:\n  - emit: merge.approved\n  - record: rollback_plan\nguards:\n  max_depth: 6\n  idempotency_key: \"merge-gate:{change_id}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Kırmızı çizgi: AI'ın ürettiği test, aynı AI çıktısının doğruluğunu tek başına kanıtlamaz — en az bir bağımsız oracle (mevcut sözleşme, property invariant, golden veri, haricî standart veya işi üretmeyen reviewer) gerekir.",
+  "Failure mode: AI aynı yanlış varsayımla kodu+testi+açıklamayı üretirse sahte-yeşil oluşur; eleştiri oturumu temiz bağlamda veya farklı reviewer ile yapılarak kırılır.",
+  "Üretim aşamasında kernel iç API'sine izinsiz erişim yasak; yetki sınırı beyandaki kaynak listesiyle denetlenir."
+ ],
+ "testNotes": [
+  "Bağımsızlık invariant'ı: merge'i isteyen kimlik ile reviewer kimliği farklı olmalı (üreten onaylayamaz kuralı otomatik denetlenir).",
+  "Eşik-kilidi testi: bir testi geçirmek için invariant veya eşik gevşetilirse gate kırılır (diff'te eşik değişimi flag'lenir).",
+  "Oracle-varlık kapısı: AI üretimi değişiklik en az bir bağımsız oracle referansı taşımadan merge edilemez.",
+  "Beyan-bütünlüğü: değişiklik kaynak + varsayım listesi içermiyorsa CI reddeder."
+ ]
+}

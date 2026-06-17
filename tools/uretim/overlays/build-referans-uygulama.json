@@ -1,0 +1,43 @@
+{
+ "featureDefs": [
+  {
+   "name": "OrderOps kanonik referans uygulaması",
+   "desc": "Dar kapsamlı (sipariş yönetimi) ama üretim davranışları tamamlanmış enterprise foundation referansı; çekirdek ve SDK iddialarının ilk çalışan bütünleşik kanıtı.",
+   "critical": true
+  },
+  {
+   "name": "Sekiz kanıt kapısı",
+   "desc": "Tanım, Tenancy, Yetki, Migration, Hata, Yedek, Deploy, Gözlem — her biri otomatik test veya tatbikat kanıtıyla geçmek zorunda; mutlu-akış demosu yeterli değil."
+  },
+  {
+   "name": "Kopyalanabilir kalıp",
+   "desc": "Diğer uygulamalar OrderOps yapı ağacını (Domain → ArcheType → Fragment → Workflow → Surface → Contract) ve kanıt kapılarını kopyalar."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Hayır — OrderOps bir ürün modülü değil, çekirdek+SDK iddialarını tanımdan deploy'a kanıtlayan referans tatbikattır. Tek altyapı adaptörünü kanıtlar, tam e-ticaret hedeflemez.",
+  "kernel": "Tenancy ve yetki kapıları doğrudan çekirdeği sınar: komşu tenant okuma/yazma tüm sorgu yollarında sıfır olmalı, rol × aksiyon matrisi ve step-up kuralları testli olmalı.",
+  "core": "Order/Customer ArcheType, OrderLine Fragment, durum makinesi Workflow ve OrderContract v1 SDK üzerinden tanımlanır; aynı tanımlar temiz kurulumda deterministik sonuç üretir.",
+  "modules": "Order Management domain'i tek contract sınırı ve sahiplikle modellenir; migration kapısı expand/backfill/contract ve yarıda kesilme senaryosunu kanıtlar.",
+  "apps": "Surface katmanı (Order List, Detail, Approval Queue) erişilebilir ve role göre projekte edilir; deploy kapısı Docker Compose temiz kurulum + canary + rollback kanıtı ister."
+ },
+ "moduleUsage": [
+  "Order Management — taslaktan onaya sipariş yaşam döngüsü, versiyonlu durum makinesi ile.",
+  "Customer — sipariş sahipliği ve PII maskeleme örneği."
+ ],
+ "ecaExample": "trigger:\n  event: order.submit_requested\ncondition:\n  all:\n    - actor.capability >= \"SubmitOrder\"\n    - order.currency_defined\n    - not (order.amount > approval_threshold and actor == order.creator)\naction:\n  - transition: order -> pending_approval\n  - emit: order.submitted\nguards:\n  max_depth: 6\n  idempotency_key: \"order:{{order.id}}:submit\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Tenant izolasyonu tüm sorgu yollarında sıfır-kaçak olmalı; komşu tenant siparişi 'bulunamadı' gibi davranmalı, varlığını sızdırmamalı.",
+  "Yüksek tutarlı siparişte onaylayan ile oluşturanın aynı kişi olamaması (segregation of duties) bir invariant'tır; step-up dış etki kapısında zorunludur.",
+  "Müşteri iletişim alanları PII olarak maskelenir; sipariş logları ham iletişim verisi taşımaz, audit kaydı silinemez."
+ ],
+ "perfNotes": {
+  "code": "Sipariş toplamı kalem toplamına eşit olmalı; tutar Decimal/Money ile hesaplanır, float değil.",
+  "perf": "Create/read p95 <300 ms, submit p95 <500 ms, aylık hata oranı <%0,1 SLO hedefidir."
+ },
+ "testNotes": [
+  "İki tenant izolasyon testi, rol × aksiyon capability matrisi testi ve aynı idempotency anahtarıyla tekrar testi zorunlu çıkış kapısıdır.",
+  "Workflow geçersiz geçiş testi ve audit bütünlük testi mutlu-akış dışı davranışı kanıtlar.",
+  "Migration expand/backfill/contract + yarıda kesilme, tenant restore RPO/RTO tatbikatı ve rollback kanıtı tamamlanmadan referans 'geçti' sayılmaz."
+ ]
+}

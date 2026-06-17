@@ -1,0 +1,42 @@
+{
+ "featureDefs": [
+  {
+   "name": "6 mimari katman + 8 granülerlik ekseni",
+   "desc": "Atomik Tip → Kernel → Scale → In-tree Core → Stack → App katman yığını; iş kırılımı ayrı eksen (Dağ→Atom, fibonacci SP). Her katman yalnız altındakini bilir; çağrı yönü statik kontrol edilir.",
+   "critical": true
+  },
+  {
+   "name": "ArcheType diferansiyatörü",
+   "desc": "Metadata-driven varlık tanımı: kod yazmadan tablo + form + API üretimi. Her Surface bir+ ArcheType projeksiyonu; her ArcheType bir Domain'e ait. Üretim hattının asıl çıktısı.",
+   "critical": true
+  },
+  {
+   "name": "Dört kontrol düzlemi",
+   "desc": "Ops/DevOps, Developer-admin, Müşteri-admin, Public/Frontpages. ArcheType Boyut 3'te müşteri prompt'uyla; modül Boyut 2'de geliştiricice üretilir — üretim kapısı düzleme göre farklılaşır.",
+   "critical": false
+  },
+  {
+   "name": "Capability composition (enum değil flag)",
+   "desc": "İş modelleri additif konfigürasyon; yıkıcı migration yerine yetenek açma. Aynı tenant aynı anda çok modlu olabilir — 50 yıl yaşam hedefinin somut karşılığı.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Bu master harita üretim hattının çerçeve sözleşmesidir: yeni bir özelliğin hangi katmana ve hangi granülerliğe oturacağını belirler, dolayısıyla hangi güvenlik/test/entegrasyon kapısının bağlandığını saptar.",
+  "kernel": "Dar 6 modül (Schema/ArcheType, Identity, Authz, Tenancy, Event Bus + Polyglot, Module Registry); ölçek-uyumu kernel'e primitive olarak girer, policy değil.",
+  "core": "In-tree core 12 ortak yetenek (Party, File, Workflow, Notification, Audit, Search, Calendar, Money, i18n, Realtime, Settings, Migration); swappable disiplinle.",
+  "modules": "Layer-2 stack'leri iş kurallarını taşır; TR uyumu first-class. Feed fan-out gibi politika kararları daima modül katmanında.",
+  "apps": "Layer-3 community marketplace asıl ürünleri taşır; tek panel, varsayılan entegre."
+ },
+ "securityNotes": [
+  "Katman çağrı yönü tek-yön: alt katmana atlamak (ör. Büyük Taş → Atom) yasak ve otomatik kontrol edilir; ihlal güvenlik sınırı ihlalidir.",
+  "6-eksen orthogonal model (Locale ⊥ Jurisdiction ⊥ Currency ⊥ Tax ⊥ Timezone ⊥ Data Residency) + Policy Resolver: politika koddan ayrı; hepsini locale'a bağlamak klasik güvenlik/uyum hatası.",
+  "Resolver kurmak %50; operasyonel sertleştirme (backfill + cache + failure mode + 4-göz config + decision-trace) ve global kimlik modelleri olmadan prod incident garanti.",
+  "Tenancy kernel'de birinci sınıf; çok-kiracı izolasyon her stack için varsayılan."
+ ],
+ "testNotes": [
+  "Yeni özellik için katman testi: çağrı yönü ihlali (alt katmana atlama) CI'da reddedilir.",
+  "Granülerlik ataması test edilir: her iş kalemi atomik bir granülerlik seviyesine oturur, SP fibonacci ile otomatik atanır (Atom=1 … Dağ=34+).",
+  "Capability flag'leri additif olduğundan, mevcut tenant davranışı yeni yetenek açıldığında regresyona uğramamalı — geriye dönük uyum testi şart."
+ ]
+}

@@ -1,0 +1,41 @@
+{
+ "featureDefs": [
+  {
+   "name": "OWASP kontrol listesi handler kapısı",
+   "desc": "Her yazma handler'ı altı zorunlu kontrolden geçer: parametreli sorgu (injection), capability doğrulaması (broken access/IDOR), Pydantic girdi şeması (validation), rate limit + token TTL (insecure design), çıktı escape (XSS — framework varsayılanı), audit kaydı (logging failures). AI bunları varsayılan üretmez; üretim sözleşmesinde zorunlu boyut olarak istenir.",
+   "critical": true
+  },
+  {
+   "name": "OWASP LLM Top 10 (2025) savunma sahipliği",
+   "desc": "Klasik web OWASP'ının yanına LLM uygulamalarına özgü on risk eklenir ve her birinin tek bir savunma sahibi vardır: prompt injection için provenance ayrımı + ChangeSet kapısı, sensitive disclosure için PII maskeleme, improper output handling için tipli ChangeSet, excessive agency için capability kesişimi, unbounded consumption için maliyet circuit breaker. Tek katman yetmez; katmanlı savunma.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Bu sayfa ürün modülü değil; OWASP Top 10 ve OWASP LLM Top 10'u somut saldırı→savunma eşlemeleriyle öğreten güvenlik dersidir. Pratiğe her ArcheType handler'ındaki yetki kontrolü, CI tarama kapısı ve LLM yazma-yolundaki ChangeSet sözleşmesi olarak bağlanır.",
+  "kernel": "authz (her endpoint capability doğrular — broken access/IDOR savunması), tenancy (RLS ile information disclosure engeli, embedding aramaya da uygulanır), audit (saldırı görünür olur — logging failures savunması).",
+  "core": "pii (sensitive disclosure için maskeleme + retention), Money/bitemporal etkilenen alan risk sınıfları, Contract (girdi şeması + çıktı guardrail sözleşmesi), keyset (audit/alarm listeleme).",
+  "modules": "",
+  "apps": ""
+ },
+ "moduleUsage": [],
+ "securityNotes": [
+  "Injection: kullanıcı girdisi asla string concat ile sorguya girmez; yalnız parametreli/ORM sorgu — ham SQL deny-by-default reddedilir.",
+  "Broken access/IDOR: nesne referansı (/order/123) tek başına yetki vermez; her erişim aktörün capability'sini ve tenant sahipliğini DB'de doğrular.",
+  "Cryptographic failures: parola argon2/bcrypt (10+ round), düz/MD5/SHA-1 yasak; aktarım HTTPS zorunlu, gizli anahtar koddan ayrı.",
+  "Prompt injection (OWASP LLM01, iki yıldır birinci): trusted talimat ile untrusted veri provenance ile ayrılır, deterministik politika LLM dışında çalışır, capability daraltılır, egress kısıtlanır — katmanlı.",
+  "SSRF: sunucu tarafı URL fetch yalnız allowlist'e; bulut metadata uç noktası (169.254.x) bloklanır.",
+  "Logging failures: güvenlik olayı yapısal log + alarm üretir; sessiz başarısızlık yok, audit append-only."
+ ],
+ "perfNotes": {
+  "code": "query(\"SELECT * FROM user WHERE name = \" + name)  // injection açığı: girdi koda dönüşür → parametreli: query(\"... WHERE name = $1\", [name])",
+  "perf": "Rate limit sayaçları sabit maliyetli (Redis); RLS predicate'leri index'li, sorgu planını bozmaz. WAF/rate-limit gateway katmanında çalışır, uygulama yükünü azaltır. LLM10 unbounded consumption: maliyet circuit breaker + kota ile koşu başına tavan."
+ },
+ "testNotes": [
+  "ID değiştirerek (IDOR) komşu kaydı okuma denemesinin capability + tenant kontrolüyle reddedildiği.",
+  "String concat içeren sorgu girişiminin reddedilip yalnız parametreli sorgunun çalıştığı (injection).",
+  "Stored/reflected XSS yükünün çıktıda escape edildiği ve CSP header'ının uygulandığı.",
+  "Prompt injection denemesinin (untrusted veride gizli talimat) ChangeSet kapısında düştüğü ve capability sınırını aşamadığı.",
+  "Brute force / sınırsız şifre-sıfırlama denemesinin rate limit + token TTL ile engellendiği."
+ ]
+}

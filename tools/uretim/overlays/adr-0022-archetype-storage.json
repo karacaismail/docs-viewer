@@ -1,0 +1,37 @@
+{
+ "featureDefs": [
+  {
+   "name": "Hibrit ArcheType depolama",
+   "desc": "Varsayılan paylaşılan şema + JSONB + FK; yalnız yüksek-hacimli ArcheType için opt-in fiziksel tablo. Tablo-per-tip kararı geri çevrildi.",
+   "critical": true
+  },
+  {
+   "name": "Dinamik DDL yasağı",
+   "desc": "Müşteri çalışma zamanında tablo yaratamaz; depolama paylaşılan şema üzerinden yürür, böylece DB şişmesi ve yatay tablo büyümesi engellenir.",
+   "critical": true
+  },
+  {
+   "name": "Metadata/Strategy dispatch",
+   "desc": "Tip ayrımı runtime metadata ve Strategy deseniyle yapılır; if/else type-switch yasaktır (open/closed ihlali)."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Hayır — bu bir mimari depolama kararıdır (geliştirme adımı). Önceki tablo-per-tip kararını geri çevirir ve çekirdeğin ArcheType verisini nasıl sakladığını sabitler; çalışma zamanında dinamik şema üretimi olmaz.",
+  "kernel": "Çekirdek depolama katmanı varsayılan olarak paylaşılan şema + JSONB + FK kullanır; migrate veri ve metadata seviyesinde yürür, dinamik DDL üretilmez.",
+  "core": "Tip dispatch çekirdekte runtime metadata ve Strategy deseniyle çözülür; if/else type-switch kombinatoryel kaosu önlemek için yasaklanır.",
+  "modules": "Yüksek-hacimli ArcheType opt-in fiziksel tabloya terfi edebilir; terfi kriteri net ve izlenebilir olmalı, iki kod yolu (paylaşılan + opt-in) bu sınırda buluşur.",
+  "apps": "JSONB raporlamada projection veya materialized view gerektirebilir; uygulama katmanı ağır sorguları bu yansımalar üzerinden okur."
+ },
+ "securityNotes": [
+  "Müşterinin tablo yaratamaması bir izolasyon ve bütünlük güvencesidir: dinamik DDL olmadığı için kiracı kaynaklı şema büyümesi ve enjeksiyon yüzeyi ortadan kalkar."
+ ],
+ "perfNotes": {
+  "code": "Tip ayrımı metadata/Strategy ile yapılır (if/else yasak); paylaşılan şema varsayılan, opt-in tablo yalnız yüksek-hacim için.",
+  "perf": "Tablo-per-tip aşırı join ve sürekli index ile DB'yi yorardı; hibrit, JSONB esnekliğini opt-in tablo performansıyla dengeler, ağır raporlama materialized view'a iner."
+ },
+ "testNotes": [
+  "Varsayılan yolda dinamik DDL üretilmediği ve müşterinin tablo yaratamadığı doğrulanır.",
+  "Tip dispatch'ın metadata/Strategy ile çözüldüğü, kod tabanında if/else type-switch bulunmadığı kontrol edilir.",
+  "Yüksek-hacimli ArcheType'ın opt-in tabloya terfi kriterinin izlenebilir olduğu ve migrate'in veri/metadata seviyesinde çalıştığı gözden geçirilir."
+ ]
+}

@@ -1,0 +1,39 @@
+{
+ "featureDefs": [
+  {
+   "name": "Bağımlılık-sıralı faz zinciri",
+   "desc": "Faz 0 Atomik Tipler -> Faz 1 Kernel -> Faz 2 Scale primitives -> Faz 3 Layer 1 -> Faz 4 Layer 2 + DX -> Faz 5 Scale proof; az bağımlı modülden başlanır, üstüne yığılır.",
+   "critical": true
+  },
+  {
+   "name": "Faz başına bitiş kriteri",
+   "desc": "Her fazın gözlenebilir kapanış kanıtı vardır (tip kataloğu donmuş, config-flag ile in-process->Redis swap, S3->R2 backend değişimi core'a dokunmadan, 10K+ TPS sustained).",
+   "critical": true
+  },
+  {
+   "name": "Paralel sürdürülebilirlik aşamaları",
+   "desc": "Build fazlarına eş zamanlı 4 sürdürülebilirlik aşaması (sınır kapıları / sözleşme katmanı / kendini-yükselten döngü / DX+AI); her aşamanın bir fazda eşiği vardır.",
+   "critical": false
+  },
+  {
+   "name": "Capability-first ürün sıralaması",
+   "desc": "Her faz capability tablosuna yeni satır ekler (b2c/b2b/d2c -> marketplace/subscription/o2o -> ...); mevcut yapı bozulmadan büyür.",
+   "critical": false
+  }
+ ],
+ "securityNotes": [
+  "Resolver, resolver-ops ve identity-models Faz 1'de ayrılmaz üçlüdür; resolver olmadan operasyon kurulamaz, ops olmadan resolver canlıya alınmaz, identity-models olmadan resolver yanlış kullanıcıyı tanır.",
+  "İlk Layer 2 modülü yazılmadan ÖNCE sınır kapıları (import-linter + boundaries.yml CI + BC politikası) kurulmazsa modüller arası izinsiz bağımlılıklar sessizce birikir.",
+  "İlk AI ajanı üretime alınmadan ÖNCE tipli action yüzeyi + declarative türetme hazır olmalı; sonra eklemek güvenlik açığı bırakır."
+ ],
+ "perfNotes": {
+  "code": "Faz 2 outbox + CQRS projection + hot counter + saga ile ölçek primitifleri config-flag arkasına alınır; module kodu in-process->Redis geçişinde değişmez.",
+  "perf": "Faz 5 ölçek kanıtı hedefi 10K+ TPS sustained, p99 < 500ms, multi-region replication; kernel hiç değişmeden bu yüke ulaşılır."
+ },
+ "testNotes": [
+  "Faz 0 tip kataloğu donduktan sonra Faz 1 ArcheType engine'in bu kataloğu değiştirmeden tükettiği doğrulanmalı.",
+  "Faz 2'de config-flag ile in-process -> Redis Streams geçişinde module kodunun değişmediği test edilmeli.",
+  "Faz 3'te File backend S3'ten R2'ye ve Search backend Meilisearch'a swap edildiğinde core kodunun ve API'nin sabit kaldığı kontrol edilmeli.",
+  "Faz 4'te boundary ihlalinin CI'da fail ürettiği (Packwerk-style kapı) doğrulanmalı."
+ ]
+}

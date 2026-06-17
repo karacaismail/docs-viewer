@@ -1,0 +1,29 @@
+{
+ "featureDefs": [
+  {
+   "name": "Ayrık editöryel overlay katmanı",
+   "desc": "Sözlük zenginleştirmesi kaynak içerik dosyalarına dağıtılmaz; tek tools/migrate/glossary-enrichment.json dosyasında tutulur. Kaynak pristine kalır, zenginleştirme tek diff'te incelenip geri alınabilir.",
+   "critical": true
+  },
+  {
+   "name": "foldTurkish(label) anahtarı",
+   "desc": "Overlay kaydı, etiketin Türkçe karakter katlanmış (foldTurkish) biçimiyle anahtarlanır; 'şğıöçü' farkları eşleşmeyi bozmaz. Aynı terim farklı yazımlarda da aynı zenginleştirmeye bağlanır.",
+   "critical": false
+  },
+  {
+   "name": "label@stem sayfa-kapsamlı anahtar (Rev.1)",
+   "desc": "Aynı terimin farklı sayfada farklı anlamı olabilir; label@stem anahtarı çok-bağlamlı varyantı mümkün kılar. Genel anahtar düşerken sayfaya özgü varyant öne çıkar.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Bu bir geliştirme adımı (ADR) kaydıdır; kararın implikasyonu üretim hattının nasıl çalıştığıdır. Kanonik ADR docs/ serisinde, bu sayfa gerekçe + 5N1K eğitim katmanıdır.",
+  "core": "Zenginleştirme migration adımında uygulanır: overlay okunur, foldTurkish/label@stem anahtarıyla kaynak enrich'e harmanlanır. Kaynak dosya değişmez.",
+  "modules": "Yeni terim kaydı bu overlay'e değil, ilgili kaynak dosyanın enrich.terms alanına yazılır; overlay yalnızca mevcut etiketleri zenginleştirir."
+ },
+ "testNotes": [
+  "Overlay anahtarı (foldTurkish(label) veya label@stem) kaynaktaki bir etikete çözümlenmezse uyarı vermeli; sahipsiz zenginleştirme sessizce yutulmamalı.",
+  "Kaynak pristine garantisi: migration sonrası kaynak içerik dosyalarının diff'i boş olmalı; zenginleştirme yalnız çıktı katmanında görünmeli.",
+  "label@stem varyantı genel label anahtarını gölgelemeli; aynı terim için sayfa-kapsamlı kayıt önceliklenmeli."
+ ]
+}

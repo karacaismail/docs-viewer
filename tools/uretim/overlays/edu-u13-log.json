@@ -1,0 +1,32 @@
+{
+ "featureDefs": [
+  {
+   "name": "Yapısal log + correlation ID",
+   "desc": "Düz metin değil JSON: {timestamp, level, message (sabit), correlation_id, user_id, error stack}. Her HTTP request'e UUID correlation_id atanır; A→B→C→D zincirinden geçen bir işlem tek aramayla bulunur. Loki/Grafana alanları indeksler.",
+   "critical": true
+  },
+  {
+   "name": "Log seviyesi disiplini",
+   "desc": "DEBUG üretimde kapalı (disk şişmesin), INFO normal iş olayı, WARN beklenmedik ama hata değil, ERROR exception + alarm. FATAL gereksiz. 'Az log = çözülmez, çok log = bulunamaz, doğru yapısal log = tek aramayla bulunur.'",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Bu sayfa ürün modülü değil; log disiplinini (seviyeler, correlation ID, yapısal log, PII redaction, log injection) öğreten eğitim ünitesidir. Log altyapısı cc-obs cluster'ında işlenir.",
+  "kernel": "",
+  "core": "Her HTTP middleware request'e UUID correlation_id atar, logger her satıra otomatik ekler; logger backend'de structlog, frontend'de pino/Sentry browser SDK ile yapısal çıktı üretir. Log toplama (Loki/Elasticsearch) tüm sunuculardan tek yere akıtır.",
+  "modules": "",
+  "apps": ""
+ },
+ "moduleUsage": [],
+ "securityNotes": [
+  "Log injection: kullanıcı input'u log'a doğrudan yazılmaz; saldırgan name alanına '\\n[ERROR] Admin password reset OK' yazarsa sahte log üretir. Çözüm: her zaman yapısal log — logger.info('login', {user: req.body.name}) ile alan escape edilir.",
+  "PII redaction: email/telefon/T.C. kimlik no log'a yazılmadan önce maskelenir (KVKK + GDPR); log dosyası sızsa bile kişisel veri açığa çıkmaz.",
+  "DEBUG üretimde kapalı tutulur; aksi halde sorgu detayları ve hassas veri log'a düşer ve disk şişer."
+ ],
+ "testNotes": [
+  "Üretim log'unun yapısal (JSON) olduğu ve zorunlu alanları (timestamp ISO 8601 UTC, level, sabit message, correlation_id) taşıdığı doğrulanır; ERROR'da tam stack trace bulunur.",
+  "Aynı request'in tüm log satırlarında ortak correlation_id geçtiği ve zincir boyunca tek aramayla izlenebildiği test edilir.",
+  "PII alanlarının maskelendiği ve kullanıcı input'unun escape edilerek log injection'ın engellendiği kontrol edilir."
+ ]
+}

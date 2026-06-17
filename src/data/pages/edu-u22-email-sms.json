@@ -745,7 +745,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Öğrenme hedefi",
+      "term": "Deliverability triple (SPF/DKIM/DMARC)",
       "definition": [
        {
         "type": "strong",
@@ -753,16 +753,42 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin okuyucuya kazandırdığı bağlayıcı yetkinlik."
+        "text": "Domain'in mail göndermeye yetkili sunucu listesi (SPF), her mesaja kriptografik imza (DKIM) ve uyumsuzlukta politika (DMARC). Üçü birden DNS'te yoksa Gmail/Outlook mesajı spam'a düşürür."
        }
       ]
      },
      {
-      "term": "Uygulanabilir çıktı",
+      "term": "Bounce + complaint suppression list",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Hard bounce ve spam şikâyeti webhook'tan gelir, kullanıcı kalıcı bastırma listesine yazılır. Listeye yazılan adrese bir daha gönderim yapılmaz; aksi reputation kaybıdır."
+       }
+      ]
+     },
+     {
+      "term": "Multi-channel fallback zinciri",
       "definition": [
        {
         "type": "text",
-        "text": "Dersin sonunda üretilen çalıştırılabilir/denetlenebilir eser."
+        "text": "Push → email → SMS sıralı denenir; bir önceki kanal teyitlenmezse (açılmadı/tıklanmadı) bir sonrakine geçilir. Kritik bildirim (ödeme, randevu) tek kanala bağlanmaz."
+       }
+      ]
+     },
+     {
+      "term": "Managed gönderici (SES/SendGrid)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Self-hosted SMTP yerine IP reputation hazır managed sağlayıcı. Yeni IP'nin sıfır reputation'ı modern sistemde yasaktır."
        }
       ]
      }
@@ -950,15 +976,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "SPF/DKIM/DMARC üçlüsü kimlik sahteciliğini (spoofing) önler; eksikse domain adına sahte mail atılabilir ve marka reputation'ı zarar görür. DMARC politikası p=none ile başlayıp rapor toplayarak p=quarantine/p=reject'e yükseltilmeli; doğrudan reject meşru maili keser. Bounce/complaint webhook endpoint'i imza doğrulamalı (SES SNS signature); doğrulanmamış webhook ile suppression list zehirlenebilir. Suppression list KVKK açısından da işler: 'spam' işaretleyen kullanıcıya gönderimi durdurmak rıza ihlalini önler. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -986,15 +1004,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Idempotency: aynı (user, template, day) anahtarıyla tekrar gönderim engellenir; worker event'i iki kez işlese bile tek mail çıkar."
        }
       ]
      },
@@ -1012,15 +1022,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Gönderim senkron HTTP isteğinde değil worker kuyruğunda yapılır; sağlayıcı rate limit'ine (SES saniye/gün kotası) takılan istekler geri-basınçla (backpressure) sıraya alınır, kullanıcı isteği bloklanmaz."
        }
       ]
      },
@@ -1456,6 +1458,18 @@
     ]
    },
    {
+    "id": "block-edu-u22-email-sms-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "mail-tester.com veya benzeri ile deliverability skoru 10/10 doğrulanmadan ilk transactional mail (şifre sıfırlama, fatura) açılmamalı. Bounce webhook testi: sahte hard-bounce event'i enjekte et → users.email_status = bounced olmalı ve sonraki gönderim atlanmalı. Idempotency testi: aynı (user, template, day) iki kez tetikle → tek gönderim assert et. Fallback testi: push 'açılmadı' simüle et → email tetiklenmeli; email tıklanmadı → SMS son şans olarak gitmeli."
+     }
+    ]
+   },
+   {
     "id": "block-edu-u22-email-sms-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1474,7 +1488,7 @@
        },
        {
         "type": "text",
-        "text": "Dolaylı — bu sayfa kararı/bilgiyi tanımlar; entegrasyon onu uygulayan birimlerde gerçekleşir."
+        "text": "Bu bir eğitim sayfası; mimari sahip l1-notification cluster'ıdır. Sayfa o cluster'ın güvenilirlik boyutunu öğretir."
        }
       ]
      },
@@ -1501,7 +1515,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Email/SMS gönderimi l1-notification primitive'i üzerinden; gönderici sağlayıcı (SES/SendGrid) ve şablon bu katmanda. Doğrudan SMTP modülden çağrılmaz."
        }
       ]
      },
@@ -1510,7 +1524,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "CRM ekibi şikâyet/bounce oranını izler; bildirim tüketen her modül (fatura, randevu) kendi event'ini yayar, gönderim kararını vermez."
        }
       ]
      },

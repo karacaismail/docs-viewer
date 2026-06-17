@@ -1,0 +1,45 @@
+{
+ "featureDefs": [
+  {
+   "name": "Deliverability triple (SPF/DKIM/DMARC)",
+   "desc": "Domain'in mail göndermeye yetkili sunucu listesi (SPF), her mesaja kriptografik imza (DKIM) ve uyumsuzlukta politika (DMARC). Üçü birden DNS'te yoksa Gmail/Outlook mesajı spam'a düşürür.",
+   "critical": true
+  },
+  {
+   "name": "Bounce + complaint suppression list",
+   "desc": "Hard bounce ve spam şikâyeti webhook'tan gelir, kullanıcı kalıcı bastırma listesine yazılır. Listeye yazılan adrese bir daha gönderim yapılmaz; aksi reputation kaybıdır.",
+   "critical": true
+  },
+  {
+   "name": "Multi-channel fallback zinciri",
+   "desc": "Push → email → SMS sıralı denenir; bir önceki kanal teyitlenmezse (açılmadı/tıklanmadı) bir sonrakine geçilir. Kritik bildirim (ödeme, randevu) tek kanala bağlanmaz.",
+   "critical": false
+  },
+  {
+   "name": "Managed gönderici (SES/SendGrid)",
+   "desc": "Self-hosted SMTP yerine IP reputation hazır managed sağlayıcı. Yeni IP'nin sıfır reputation'ı modern sistemde yasaktır.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Bu bir eğitim sayfası; mimari sahip l1-notification cluster'ıdır. Sayfa o cluster'ın güvenilirlik boyutunu öğretir.",
+  "core": "Email/SMS gönderimi l1-notification primitive'i üzerinden; gönderici sağlayıcı (SES/SendGrid) ve şablon bu katmanda. Doğrudan SMTP modülden çağrılmaz.",
+  "modules": "CRM ekibi şikâyet/bounce oranını izler; bildirim tüketen her modül (fatura, randevu) kendi event'ini yayar, gönderim kararını vermez."
+ },
+ "securityNotes": [
+  "SPF/DKIM/DMARC üçlüsü kimlik sahteciliğini (spoofing) önler; eksikse domain adına sahte mail atılabilir ve marka reputation'ı zarar görür.",
+  "DMARC politikası p=none ile başlayıp rapor toplayarak p=quarantine/p=reject'e yükseltilmeli; doğrudan reject meşru maili keser.",
+  "Bounce/complaint webhook endpoint'i imza doğrulamalı (SES SNS signature); doğrulanmamış webhook ile suppression list zehirlenebilir.",
+  "Suppression list KVKK açısından da işler: 'spam' işaretleyen kullanıcıya gönderimi durdurmak rıza ihlalini önler."
+ ],
+ "perfNotes": {
+  "code": "Idempotency: aynı (user, template, day) anahtarıyla tekrar gönderim engellenir; worker event'i iki kez işlese bile tek mail çıkar.",
+  "perf": "Gönderim senkron HTTP isteğinde değil worker kuyruğunda yapılır; sağlayıcı rate limit'ine (SES saniye/gün kotası) takılan istekler geri-basınçla (backpressure) sıraya alınır, kullanıcı isteği bloklanmaz."
+ },
+ "testNotes": [
+  "mail-tester.com veya benzeri ile deliverability skoru 10/10 doğrulanmadan ilk transactional mail (şifre sıfırlama, fatura) açılmamalı.",
+  "Bounce webhook testi: sahte hard-bounce event'i enjekte et → users.email_status = bounced olmalı ve sonraki gönderim atlanmalı.",
+  "Idempotency testi: aynı (user, template, day) iki kez tetikle → tek gönderim assert et.",
+  "Fallback testi: push 'açılmadı' simüle et → email tetiklenmeli; email tıklanmadı → SMS son şans olarak gitmeli."
+ ]
+}

@@ -490,7 +490,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Politika yüzeyi",
+      "term": "Postgres-native durable execution (DBOS)",
       "definition": [
        {
         "type": "strong",
@@ -498,16 +498,33 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı kural/kapı; deny-by-default ve kanıtlanabilir uygulama."
+        "text": "Uzun iş akışı her adımdan sonra mevcut Postgres'e checkpoint'lenir; çöküş/yeniden başlatma sonrası son tamamlanan adımdan devam eder. Ayrı Temporal/Restate kümesi gerekmez — mevcut altyapıya oturur."
        }
       ]
      },
      {
-      "term": "Kapı koşulu",
+      "term": "ChangeSet apply = durable, idempotent süreç",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "İhlalde işi reddeden deterministik kontrol (CI veya runtime)."
+        "text": "ChangeSet uygulama tek atomik adım değil durum makineli süreç; durable execution sayesinde yarıda kalmaz, idempotent biçimde kaldığı yerden devam eder. Migration durakları (expanded/backfilled/contracted) checkpoint'lenir."
+       }
+      ]
+     },
+     {
+      "term": "AI ajan + uzun-saga güvenilirliği",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Saatlerce çalışan AI ajan task'ı veya çok-adımlı saga, sunucu yeniden başlatmada sıfırdan başlamaz. @DBOS.workflow / @DBOS.step dekoratörü her adımı kalıcı kılar."
        }
       ]
      }
@@ -695,15 +712,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Checkpoint'ler mevcut Postgres'te durur: ek orkestratör altyapısı (ve onun saldırı yüzeyi/sır yönetimi) eklenmez — saldırı yüzeyi dar tutulur. Idempotent devam: çöküş sonrası yeniden yürütme tamamlanmış adımı tekrar yan-etkiyle çalıştırmaz; finansal/iletişim adımlarında çift-işlem (double-spend / çift e-posta) önlenir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1201,6 +1210,18 @@
     ]
    },
    {
+    "id": "block-sus-durable-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Çöküş-kurtarma testi: 4 adımlı akış 3. adımda öldürülür; yeniden başlatmada 1-2 checkpoint'li olduğu, 3'ten devam ettiği doğrulanır (sıfırdan başlamaz). Idempotency testi: aynı adımın iki kez yürütülmesi tek mantıksal etki üretir (yan etki tekrarlanmaz). ChangeSet apply durable testi: migration durakları checkpoint'lenir; süreç ortasında işlem sonlandırılsa bile sistem tutarlı duruma döner (bkz. edu-u12, k-sozlesme)."
+     }
+    ]
+   },
+   {
     "id": "block-sus-durable-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1219,7 +1240,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Mevcut Saga + Outbox primitive'leri DBOS Transact üstüne oturur; durable execution ölçek katmanının güvenilirlik kapısını bağlar. Konum: framework/scale/durable/, ek altyapı yok."
        }
       ]
      },
@@ -1228,16 +1249,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Event Bus / işlem akışı kernel primitive'leri ile uyumlu; durable execution policy değil, çekirdek-yakını güvenilirlik primitive'i."
        }
       ]
      },
@@ -1246,7 +1258,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "In-tree Workflow ve Migration çekirdeği checkpoint'lerden faydalanır; ChangeSet apply (k-sozlesme) durum makinesi bash/işlem ölse de tutarlı kalır."
        }
       ]
      },
@@ -1255,7 +1267,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Saga (scale-saga) ve Workers (scale-workers) modülleri DBOS Transact üstünde checkpoint'li koşar."
        }
       ]
      },
@@ -1264,7 +1276,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "AI ajan yüzeyleri uzun task'larda kaldığı yerden devam eder; operasyon yeniden başlatmaktan korkmaz."
        }
       ]
      }

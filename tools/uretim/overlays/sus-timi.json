@@ -1,0 +1,35 @@
+{
+ "featureDefs": [
+  {
+   "name": "ArcheType = substrattan ayrılmış stabil sözleşme",
+   "desc": "IBM i'nin TIMI deseni gibi: uygulama fiziksel substrata (PostgreSQL, REST formatı, depolama) değil, versiyonlu ve snapshot'lı stabil bir ara katmana yazar. Substrat değişse (Postgres → başka DB → WASM) ArcheType API'si değişmez; uygulamalar dokunulmaz. Soyutlama = uzun-ömür.",
+   "critical": true
+  },
+  {
+   "name": "Substrat-bağımsız uygulayıcı sınırı",
+   "desc": "ArcheType tanımı (alanlar, validators, hook'lar) fiziksel implementasyondan ayrılır. Substrat değişince yalnız yeni substrat için ArcheType uygulayıcısı yazılır; uygulama katmanı sadece ArcheType API'sini bilir. 30 yıl sonra başka substrat ekibi yeni uygulayıcı yazsa da uygulamalar dokunulmaz.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Bu sayfa ürün modülü değil; ArcheType'ı bir sürdürülebilirlik (uzun-ömür) sözleşmesi olarak resmileştiren sus dersidir. TIMI emsaliyle (35+ yıl, 25 işlemci nesli) substrat soyutlamasının kapı olmasını savunur. Pratiğe kernel schema'nın substrat-bağımsız spec'i olarak bağlanır.",
+  "kernel": "schema (ArcheType sözleşme + substrat-bağımsız spec; framework/kernel/schema/ — sözleşme burada tanımlı, substrat uygulayıcısı altta değişir).",
+  "core": "bitemporal (sözleşmenin versiyonlu/snapshot'lı tutulması — eski biçim korunur), Contract (substrat değişse de değişmeyen API yüzeyi).",
+  "modules": "",
+  "apps": ""
+ },
+ "moduleUsage": [],
+ "securityNotes": [
+  "Substrat değişiminde güvenlik garantisi sözleşmede kalır: yetki/tenant/audit kuralları ArcheType katmanında tanımlı, alttaki DB değişse de yeniden yazılmaz, sızıntı penceresi açılmaz.",
+  "Stabil sözleşme geçişi tek seferde değil aşamalı yapılır; eski ve yeni substrat uygulayıcısı bir süre birlikte koşarken veri bütünlüğü ve erişim kontrolü iki tarafta da doğrulanır."
+ ],
+ "perfNotes": {
+  "code": "# uygulama -> ArcheType API (stabil) -> substrat uygulayıcısı (Postgres|...|WASM, değişebilir)",
+  "perf": "Soyutlama katmanı uzun-ömür için maliyet kabul eder: çağrı ArcheType sözleşmesinden substrat uygulayıcısına iner. Substrat değişiminde uygulama yeniden yazılmadığından geçiş maliyeti tek noktaya (uygulayıcı) yoğunlaşır, sistem geneline yayılmaz."
+ },
+ "testNotes": [
+  "Substrat uygulayıcısı değiştiğinde (örn. Postgres → alternatif) uygulama katmanının dokunulmadan aynı ArcheType API'siyle çalıştığı.",
+  "ArcheType sözleşmesinin versiyonlu/snapshot'lı olduğu; eski tüketicinin substrat evrilse de eski biçimde yanıt aldığı.",
+  "Yetki/tenant/audit kurallarının substrat değil ArcheType katmanında tanımlı kaldığı (geçişte yeniden yazılmadığı)."
+ ]
+}

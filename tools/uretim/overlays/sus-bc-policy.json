@@ -1,0 +1,21 @@
+{
+ "integration": {
+  "shouldIntegrate": "Kısmen — bu bir sözleşme kapısı (governance gate), ürün modülü değil. Korunan üç kutsal yüzey kernel'de yaşar: ArcheType şeması, modül API'si, AI-aksiyon yüzeyi. Bu üçünden birini kıran PR CI'da otomatik reddedilir; modüller ve uygulamalar sözleşmeyi tüketir, gevşetemez.",
+  "kernel": "BC kapısı kernel'in dış dünyaya verdiği sözü zorlar: çekirdek API yüzeyi ve ArcheType sözleşme snapshot'ları kayıtlıdır; bir değişiklik tüketiciyi kırarsa hata çekirdekte kabul edilir, patch geri alınır (Linus disiplini).",
+  "core": "Sözleşme dosyası (POLICY.md) + snapshot karşılaştırması çekirdek doğrulamanın parçasıdır; geri uyumsuz değişiklik istendiğinde yeni sürüm tarihi açılır, eski sürüm dönüşüm katmanıyla yaşatılır (Stripe yöntemi).",
+  "modules": "Modül API'si kutsal yüzeylerden biridir; bir modül kendi yayımladığı arayüzü kıramaz, kernel sözleşmesini de gevşetemez. İlk dış entegratör/modül doğduğu an sözleşme doğar ve geriye yol kalmaz.",
+  "apps": "Distribution/Edition'lar 10 yıl sonra hâlâ çalışan bir yüzey bulur; uygulama sözleşme tanımlamaz, ona güvenir — kırılmazlık garantisi onların entegrasyon güvenidir."
+ },
+ "moduleUsage": [],
+ "ecaExample": "trigger:\n  event: pull_request.opened\ncondition:\n  all:\n    - surface in [\"archetype_schema\",\"module_api\",\"ai_action\"]\n    - contract_snapshot_diff.breaking == true\naction:\n  - emit: contract.violation\n  - block: merge\nguards:\n  max_depth: 6\n  idempotency_key: \"bc-guard:{pr.id}:{pr.head_sha}\"\n  external_effects: none",
+ "securityNotes": [
+  "Sözleşme snapshot dosyaları (archetype_contract/*.json) bütünlük açısından kritiktir: snapshot'ı sessizce değiştirebilen biri BC kapısını etkisizleştirir; snapshot değişikliği ayrı review + imza gerektirmeli.",
+  "Geri-alma (revert) kapısı insan tartışmasına gerek kalmadan korur ama otomasyonun kendisi bir güç noktasıdır; revert tetikleyicisini manipüle edebilen biri meşru patch'leri de düşürebilir, bu yüzden kapı mantığı denetlenebilir olmalı.",
+  "Eski sürümü dönüşüm katmanıyla yaşatmak (sürüm alanı) saldırı yüzeyini büyütür: terk edilmiş eski sürüm yolları yamasız kalabilir; her yaşayan sürümün güvenlik bakımı sürmeli."
+ ],
+ "testNotes": [
+  "BC kapısı çift yönlü test edilmeli: geri-uyumsuz değişiklik içeren PR reddedilmeli, geri-uyumlu (yeni alan ekleyen) PR geçmeli — kapının hem bloke ettiğini hem yanlış-pozitif üretmediğini kanıtla.",
+  "Eski-tüketici golden testi: önceki sürüm sözleşmesine yazılmış bir istemci/çağrı yeni sürümde aynen çalışmalı ('8 hane hep 8 hane okunur' senaryosu).",
+  "Sürüm birlikte-yaşam testi: eski ve yeni sürüm aynı anda ayakta, dönüşüm katmanı eski formatı yeniye kayıpsız çeviriyor; sözleşmenin kırılmadan evrildiğini doğrula."
+ ]
+}

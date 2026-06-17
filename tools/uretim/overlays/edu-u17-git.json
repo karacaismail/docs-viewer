@@ -1,0 +1,34 @@
+{
+ "featureDefs": [
+  {
+   "name": "Trunk-based dal stratejisi",
+   "desc": "Tek uzun-ömürlü dal (main) + saatler/günler ömürlü feature dalları; yarım iş feature-flag arkasında main'e merge edilir, long-lived branch yoktur.",
+   "critical": true
+  },
+  {
+   "name": "Conventional Commits → otomatik semver",
+   "desc": "feat/fix/BREAKING CHANGE prefix'leri commit'ten changelog ve sürüm bump'ını deterministik üretir; mesaj formatı sözleşmedir.",
+   "critical": false
+  },
+  {
+   "name": "Merge kapısı: yeşil CI + bağımsız reviewer",
+   "desc": "PR'da deterministik test + lint + tsc geçmeden ve ayrı bir gözden geçiren onaylamadan main'e merge yok; tek kişi de kendi PR'ını review akışından geçirir.",
+   "critical": true
+  },
+  {
+   "name": "Pre-commit hook zinciri",
+   "desc": "Husky + lint-staged ile her commit öncesi ESLint + Prettier + tip kontrolü; bozuk kod commit yüzeyine giremez.",
+   "critical": false
+  }
+ ],
+ "moduleUsage": [],
+ "testNotes": [
+  "Git disiplini kendisi test üretmez ama testin kapı olduğu yeri tanımlar: PR'da koşan suite deterministik olmalı (flaky test merge'i kilitler, güveni çürütür).",
+  "Conventional commit prefix'i ile semver bump'ı arasındaki eşleme bir kontrat testidir: 'feat' MINOR, 'fix' PATCH, 'BREAKING CHANGE' MAJOR üretmeli; release otomasyonu bu eşlemeyi doğrulamadan tag atmamalı.",
+  "AI ajan üretimi için kural: ajanın açtığı feature dalı, PR açıklaması (ne/neden/test sonucu) ve yeşil CI olmadan merge edilmez — insan yargısı bu kapıda devrededir."
+ ],
+ "securityNotes": [
+  "main'e direkt push, gözden geçirilmemiş kodu üretime taşıma yüzeyidir; branch protection (review + yeşil CI zorunlu) bu yüzeyi kapatır.",
+  "Conventional commit BREAKING CHANGE işareti yalnız changelog için değil, kırıcı bir API değişikliğinin sürüm sözleşmesine yansıması için kritiktir — atlanırsa tüketici sessizce kırılır."
+ ]
+}

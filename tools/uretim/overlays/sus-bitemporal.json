@@ -1,0 +1,18 @@
+{
+ "testNotes": [
+  "Immutability testi: update veya delete arka planda yeni satır olarak yazılmalı, eski satır asla fiziksel silinmemeli — 'üzerine yazma yok' invariantı doğrudan sınanır.",
+  "Time-travel testi: AS OF '<tarih>' sorgusu o an'da sistemin bildiği görüntüyü döndürür; geriye dönük düzeltme (Mart'ta Ocak ay-sonunu zammak) eski pencereyi bozmamalı.",
+  "valid_time ile system_time ayrımı testi: aynı gerçek zaman için (valid sabit) farklı sistem zamanlarına yazılan satırlar ayrı tutulur; 'ne biliyorduk, ne zaman' iki ekseni ayrı çözer.",
+  "is_temporal: true bayrağı testi: ArcheType işaretlenince bitemporal kolonların (valid_from/to, system_from/to) ve otomatik versiyonlamanın devreye girdiği doğrulanır; işaretsiz tip eski davranışta kalır."
+ ],
+ "securityNotes": [
+  "KVKK silme talebi bitemporal ile çelişmez: 'silinmez' kayıt modeli ile 'silme hakkı' arasındaki köprü, hard-delete yerine erişimi-kapatma/maskeleme + denetim izini koruma olarak tasarlanmalı — silme talebinin kendisi de bir kayıt olur.",
+  "Denetim sorusu otomatik cevaplanır: 'o tarihte hangi kişisel veri vardı' (KVKK), 'o ay neye dayanarak hesapladık' (muhasebe), 'o anda model neyi biliyordu' (AI) — üç ihtiyaç tek bitemporal mekanizmayla; tarihçe kurcalanamaz olduğu için forensic güveni yüksektir.",
+  "Geçmiş satır erişimi RLS'e tabidir: time-travel sorgusu tenant context'i atlamamalı; geçmiş görüntü de aynı satır-seviyesi izolasyonu ile kapsanır."
+ ],
+ "perfNotes": {
+  "code": "Update/delete'in yeni-satır olarak yazılması tabloyu büyütür; valid/system zaman kolonları ve AS OF sorguları için zaman aralığı indeksleri (GiST/range) gerekir.",
+  "perf": "Trigger/history-tablosu/manuel kopya gerekmez (default-on bitemporal); maliyet artan satır sayısı ve indeks bakımı — büyüyen tarihçe için retention/arşivleme politikası ayrı planlanır."
+ },
+ "moduleUsage": []
+}

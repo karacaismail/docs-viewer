@@ -782,7 +782,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Öğrenme hedefi",
+      "term": "Decimal para tipi zorunluluğu",
       "definition": [
        {
         "type": "strong",
@@ -790,16 +790,51 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin okuyucuya kazandırdığı bağlayıcı yetkinlik."
+        "text": "Para numeric(18,2)/numeric(18,4) ile tutulur, float/real/double yasaktır; 0.1+0.2 yaklaşıklığı para hattından çıkarılır."
        }
       ]
      },
      {
-      "term": "Uygulanabilir çıktı",
+      "term": "Belirli yuvarlama yönü",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "ROUND_HALF_UP açıkça seçilir; yuvarlama DB'ye bırakılmaz, aksi halde daireler arası kuruş farkı doğar."
+       }
+      ]
+     },
+     {
+      "term": "UTC saklama + yerel gösterim",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Sunucu saati UTC, kolon timestamptz; yerel saate çeviri yalnız frontend gösteriminde (Intl) yapılır."
+       }
+      ]
+     },
+     {
+      "term": "Para birimi ayrı kolon",
       "definition": [
        {
         "type": "text",
-        "text": "Dersin sonunda üretilen çalıştırılabilir/denetlenebilir eser."
+        "text": "currency char(3) ISO 4217 ayrı kolonda tutulur; tutarın yanına 'TL' string'i yapıştırılmaz."
+       }
+      ]
+     },
+     {
+      "term": "Veri-tablolu tatil takvimi",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tatil günleri (tarih + tatil_adı + ülke) ayrı tabloda; kod içinde sabit liste tutulmaz, her yıl değişen TR takvimi veriyle güncellenir."
        }
       ]
      }
@@ -987,15 +1022,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Para float'ta tutulursa her işlemde kuruş sapması birikir; 1000 müşterili sistemde yıllık gizli kayıp büyür ve bilanço denetimde tutmaz. Yuvarlama yönü belirlenmezse aynı tutar farklı satırlarda farklı yuvarlanır (562.50 vs 562.49) ve kullanıcı itirazı doğar. Zaman timestamp (tz'siz) tutulursa DST geçişinde randevu/işlem saatleri kayar; timestamptz ile offset bilgisi korunur. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1023,15 +1050,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "numeric kolonlar Decimal'in DB karşılığıdır; timestamptz UTC + offset tutar, gösterim katmanı Intl.DateTimeFormat/NumberFormat ile yerelleştirir."
        }
       ]
      },
@@ -1049,15 +1068,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Tatil ve kur sorguları ayrı tablodan tarih indeksiyle çözülür; sabit-liste yeniden derleme yerine veri güncellemesi yeterli olur."
        }
       ]
      },
@@ -1490,6 +1501,18 @@
        }
       ]
      ]
+    ]
+   },
+   {
+    "id": "block-edu-u02b-para-tarih-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "0.10 + 0.20 toplamının tam 0.30 verdiği (Decimal) ve float sonucunun (0.30000000000000004) reddedildiği doğrulanmalı. Bölünen tutarın (4500/8) tüm paylarda ROUND_HALF_UP ile tutarlı yuvarlandığı ve toplamın korunduğu test edilmeli. DST sınırındaki bir an (Mart 03:00 yok / Ekim 03:00 iki kez) UTC'ye çevrildiğinde tek anlamlı değere çözülmeli. 23:55'te girilen ve 00:05'te tamamlanan işlemin hangi güne ait olduğunun UTC + yetki alanı kuralıyla deterministik belirlendiği kontrol edilmeli. Form '100,00' girdisinin backend'de Decimal('100.00') olarak alındığı doğrulanmalı."
+     }
     ]
    },
    {

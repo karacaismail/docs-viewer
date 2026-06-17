@@ -251,7 +251,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Karar kapsamı",
+      "term": "Tek-kaynak token katmanı",
       "definition": [
        {
         "type": "strong",
@@ -259,16 +259,29 @@
        },
        {
         "type": "text",
-        "text": "ADR'nin bağladığı invariant; alternatifler ve seçilen yön."
+        "text": "tokens.css değerleri tutar, globals.css semantik class'ları tanımlar; palet rengi component içinde verilmez."
        }
       ]
      },
      {
-      "term": "Uygulama etkisi",
+      "term": "Token-dışı renk yasağı kapısı",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Ham renk literali (hex/rgb) component'te kullanılamaz; her renk token referansından gelir, lint ile zorlanır."
+       }
+      ]
+     },
+     {
+      "term": "Yeniden-değerlendirme tetikleyicisi",
       "definition": [
        {
         "type": "text",
-        "text": "Bu kararın kod/şema/test üzerindeki bağlayıcı sonucu."
+        "text": "İkinci tüketici ortaya çıkması ya da globals.css 1.500 satırı aşması bu kararın gözden geçirilmesini başlatır."
        }
       ]
      }
@@ -456,15 +469,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Token-dışı renk yasağı denetlenmezse stil kararları component'lere sızar ve tek-kaynak ilkesi sessizce bozulur; lint kapısı bu sapmayı PR'da yakalamalı. Tailwind geri eklenirse build katmanı + konfig + bağımlılık geri gelir ama hiçbir tasarım kararını değiştirmez; karar gerekçesi bu maliyeti reddeder. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -492,15 +497,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Stil hattı iki dosyaya (tokens.css + globals.css) indirilir; ek derleme adımı ve utility sınıf üretimi yoktur."
        }
       ]
      },
@@ -518,15 +515,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Bağımlılık ve build adımı azaldığından kurulum/derleme yüzeyi küçülür; runtime'da CSS custom property çözümü tarayıcı-yerel."
        }
       ]
      },
@@ -959,6 +948,18 @@
        }
       ]
      ]
+    ]
+   },
+   {
+    "id": "block-adr-0004-token-css-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Component kaynaklarında ham renk literali aranıp bulunmadığı (yalnız token referansı) lint kapısıyla doğrulanmalı. Yeni bir stilin globals.css'e semantik class olarak eklendiği, component'e inline yazılmadığı kontrol edilmeli. globals.css satır sayısı eşiğe (1.500) yaklaştığında yeniden-değerlendirme uyarısı üretilmeli."
+     }
     ]
    },
    {

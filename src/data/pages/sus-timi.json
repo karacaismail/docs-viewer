@@ -362,7 +362,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Politika yüzeyi",
+      "term": "ArcheType = substrattan ayrılmış stabil sözleşme",
       "definition": [
        {
         "type": "strong",
@@ -370,16 +370,29 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı kural/kapı; deny-by-default ve kanıtlanabilir uygulama."
+        "text": "IBM i'nin TIMI deseni gibi: uygulama fiziksel substrata (PostgreSQL, REST formatı, depolama) değil, versiyonlu ve snapshot'lı stabil bir ara katmana yazar. Substrat değişse (Postgres → başka DB → WASM) ArcheType API'si değişmez; uygulamalar dokunulmaz. "
+       },
+       {
+        "type": "term",
+        "text": "Soyutlama",
+        "termId": "term-soyutlama-sus-timi"
+       },
+       {
+        "type": "text",
+        "text": " = uzun-ömür."
        }
       ]
      },
      {
-      "term": "Kapı koşulu",
+      "term": "Substrat-bağımsız uygulayıcı sınırı",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "İhlalde işi reddeden deterministik kontrol (CI veya runtime)."
+        "text": "ArcheType tanımı (alanlar, validators, hook'lar) fiziksel implementasyondan ayrılır. Substrat değişince yalnız yeni substrat için ArcheType uygulayıcısı yazılır; uygulama katmanı sadece ArcheType API'sini bilir. 30 yıl sonra başka substrat ekibi yeni uygulayıcı yazsa da uygulamalar dokunulmaz."
        }
       ]
      }
@@ -567,15 +580,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Substrat değişiminde güvenlik garantisi sözleşmede kalır: yetki/tenant/audit kuralları ArcheType katmanında tanımlı, alttaki DB değişse de yeniden yazılmaz, sızıntı penceresi açılmaz. Stabil sözleşme geçişi tek seferde değil aşamalı yapılır; eski ve yeni substrat uygulayıcısı bir süre birlikte koşarken veri bütünlüğü ve erişim kontrolü iki tarafta da doğrulanır. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -603,15 +608,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "# uygulama -> ArcheType API (stabil) -> substrat uygulayıcısı (Postgres|...|WASM, değişebilir)"
        }
       ]
      },
@@ -629,15 +626,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Soyutlama katmanı uzun-ömür için maliyet kabul eder: çağrı ArcheType sözleşmesinden substrat uygulayıcısına iner. Substrat değişiminde uygulama yeniden yazılmadığından geçiş maliyeti tek noktaya (uygulayıcı) yoğunlaşır, sistem geneline yayılmaz."
        }
       ]
      },
@@ -1073,6 +1062,18 @@
     ]
    },
    {
+    "id": "block-sus-timi-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Substrat uygulayıcısı değiştiğinde (örn. Postgres → alternatif) uygulama katmanının dokunulmadan aynı ArcheType API'siyle çalıştığı. ArcheType sözleşmesinin versiyonlu/snapshot'lı olduğu; eski tüketicinin substrat evrilse de eski biçimde yanıt aldığı. Yetki/tenant/audit kurallarının substrat değil ArcheType katmanında tanımlı kaldığı (geçişte yeniden yazılmadığı)."
+     }
+    ]
+   },
+   {
     "id": "block-sus-timi-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1091,7 +1092,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Bu sayfa ürün modülü değil; ArcheType'ı bir sürdürülebilirlik (uzun-ömür) sözleşmesi olarak resmileştiren sus dersidir. TIMI emsaliyle (35+ yıl, 25 işlemci nesli) substrat soyutlamasının kapı olmasını savunur. Pratiğe kernel schema'nın substrat-bağımsız spec'i olarak bağlanır."
        }
       ]
      },
@@ -1100,16 +1101,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "schema (ArcheType sözleşme + substrat-bağımsız spec; framework/kernel/schema/ — sözleşme burada tanımlı, substrat uygulayıcısı altta değişir)."
        }
       ]
      },
@@ -1118,7 +1110,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "bitemporal (sözleşmenin versiyonlu/snapshot'lı tutulması — eski biçim korunur), Contract (substrat değişse de değişmeyen API yüzeyi)."
        }
       ]
      },
@@ -1127,7 +1119,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": ""
        }
       ]
      },
@@ -1136,7 +1128,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": ""
        }
       ]
      }

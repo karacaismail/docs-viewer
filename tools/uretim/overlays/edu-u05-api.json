@@ -1,0 +1,36 @@
+{
+ "featureDefs": [
+  {
+   "name": "Method-eylem eşlemesi",
+   "desc": "GET oku / POST oluştur / PUT tam değiştir / PATCH kısmi / DELETE sil — URL kaynağı, method eylemi taşır; doğru method doğru cache, retry ve log davranışını belirler.",
+   "critical": true
+  },
+  {
+   "name": "Idempotency-Key ile güvenli retry",
+   "desc": "POST tabiatı gereği idempotent değildir; istemci ürettiği unique key ile aynı isteği tekrarlasa da sunucu ikinciyi yutar — ağ koparsa kart bir kez çekilir.",
+   "critical": true
+  },
+  {
+   "name": "Status-code sözleşmesi",
+   "desc": "200/201/204/400/401/403/404/409/422/429/500 — frontend hangi UX'i göstereceğini (düzelt, giriş yap, yetki yok, merge ekranı, bekle) status'a göre seçer.",
+   "critical": true
+  },
+  {
+   "name": "REST + GraphQL ikiz üretimi",
+   "desc": "ArcheType tanımlandığında framework hem REST hem GraphQL ucunu otomatik üretir; istemci kullanım pattern'ine göre seçer, geliştirici seçmez.",
+   "critical": false
+  }
+ ],
+ "moduleUsage": [],
+ "ecaExample": "trigger:\n  event: http.post\n  path: /api/orders\ncondition:\n  all:\n    - request.has_idempotency_key\n    - not seen(request.idempotency_key)\n    - actor.capability >= \"order.create\"\naction:\n  - emit: order.created\n  - respond: 201 Created\nguards:\n  max_depth: 6\n  idempotency_key: \"{request.idempotency_key}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "401 ve 403 farkı bir güvenlik ayrımıdır: 401 kimlik yok (authentication), 403 yetki yok (authorization/RBAC); ikisini karıştırmak yetki sızıntısına veya yanlış UX'e yol açar.",
+  "Idempotency-Key parasal POST'larda çift-tahsilatı önler ama key tahmin edilebilirse saldırgan başkasının isteğini eşleştirmeye çalışabilir; key istemci-üretimi, yeterince entropili ve aktöre bağlı olmalı.",
+  "CORS bir tarayıcı güvenlik kuralıdır: farklı origin'den API çağrısı için sunucu açıkça izin vermeli; 429 + Retry-After ise abuse/aşırı-yük karşısında rate-limit savunmasıdır."
+ ],
+ "testNotes": [
+  "Idempotency golden test: aynı key ile iki POST → tek transaction, ikinci istek birinci cevabı aynen döner; ağ-kopması retry senaryosu simüle edilmeli.",
+  "Method idempotency invariant'i: GET/PUT/DELETE tekrar-güvenli, PATCH/POST varsayılan değil — her endpoint için bu işaretin doğru olduğunu doğrula.",
+  "Status-code sözleşme testi: validation hatası 422 (field-level), eski sürüm yazımı 409 (optimistic concurrency), rate-limit 429 (Retry-After header dolu) döndüğünü kanıtla."
+ ]
+}

@@ -1,0 +1,33 @@
+{
+ "featureDefs": [
+  {
+   "name": "Sözleşme yüzeyi + revert kapısı",
+   "desc": "'Don't break userspace' (Linux) karşılığı: sistemin dışarıya verdiği değişmez söz (API/format/davranış) korunur; ihlal eden değişiklik CI'da geri alınır. Dış entegratör 5 yıl sonra kırılmamış sistem bulur.",
+   "critical": true
+  },
+  {
+   "name": "CI sınır denetçisi (mekanizma > niyet)",
+   "desc": "Shopify Packwerk karşılığı: import-linter (Python) + TS sınır denetçisi her PR'da modül komşuluk ihlalini reddeder. Uzun-ömür iyi tasarımdan değil, kişiye bağlı olmayan otomatik denetimden gelir — insan unutur, mekanizma unutmaz.",
+   "critical": true
+  },
+  {
+   "name": "Tarih-versiyon + dönüşüm katmanı",
+   "desc": "Stripe (14 yıl API) karşılığı: çekirdek tek-versiyon kalır, eski sürümleri bir dönüşüm katmanı yaşatır; içerik evrilirken sözleşme sabit durur."
+  },
+  {
+   "name": "Deprecation + codemod döngüsü",
+   "desc": "Drupal Rector karşılığı: kullanımdan kaldırma bildirimi + AI-yürütücülü LibCST codemod, yükseltmeyi otomatik kod dönüşümüyle taşır; breaking-change maliyetini düşürür."
+  }
+ ],
+ "moduleUsage": [],
+ "securityNotes": [
+  "ASIL MESAJ — uzun-ömür (30-50 yıl) 'güzel mimari'den değil mekanizmadan gelir; her mekanizmanın yanında onu zorlayan bir makine (CI kapısı) olmalıdır, yazılı politika tek başına yetmez.",
+  "Sözleşme yüzeyi bir güvenlik/uyumluluk sınırıdır: yeni geliştirici eski kuralı bilmeden baskı altında kısayol bulur; tek koruma sınırı her PR'da kontrol eden denetçidir (Linux/Shopify modeli).",
+  "TIMI soyutlama (IBM i, 35 yıl) karşılığı stabil substrat-bağımsız arayüz: ArcheType alt katman değişse de üst sözleşmeyi korur, böylece altyapı göçü ekosistemi kırmaz."
+ ],
+ "testNotes": [
+  "Bitemporal kayıt (XTDB karşılığı: Postgres'te valid_time + system_time) geçmişe-bakış garantisini test eder: eski bir tarihteki durum sorgusu, sonradan gelen düzeltmelerden etkilenmeden o günün gerçeğini döndürmeli.",
+  "Sözleşme yüzeyi regresyon testi: yayımlanmış API/format için golden snapshot tutulur; bir değişiklik sözleşmeyi bozarsa CI kırmızı olur (revert kapısının test tarafı).",
+  "Codemod döngüsü test edilir: deprecation kuralı bir örnek repoda otomatik dönüşümle uygulanıp sonucun derlenip testleri geçtiği doğrulanır — yükseltme yolu kanıtlanmadan duyurulmaz."
+ ]
+}

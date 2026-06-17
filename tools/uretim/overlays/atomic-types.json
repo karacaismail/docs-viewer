@@ -1,0 +1,53 @@
+{
+ "featureDefs": [
+  {
+   "name": "Type registry (genişletilebilir)",
+   "desc": "Scalar/composite tip kataloğu; her tip validate/coerce/serialize/widget dörtlüsü sağlar. Module yeni tip ekleyebilir.",
+   "critical": true
+  },
+  {
+   "name": "Money / Decimal(20,4)",
+   "desc": "Float yasak; sabit-hassasiyet Decimal + ISO 4217 currency çifti. Aritmetik yalnız aynı currency içinde, çapraz işlem FX dönüşümü zorunlu.",
+   "critical": true
+  },
+  {
+   "name": "ID Generator (UUID v7 / ULID / Snowflake / tenant-prefix)",
+   "desc": "Distributed-safe, timestamp-ordered, collision-free kimlik. Tenant-prefix ile log'tan sahip okunur.",
+   "critical": true
+  },
+  {
+   "name": "Reference / Link + tenant-scope",
+   "desc": "ArcheType'lar arası FK; cascade, orphan tespiti ve tenant-scope kontrolü tipin içinde. Cross-tenant link DB seviyesinde reddedilir.",
+   "critical": true
+  },
+  {
+   "name": "Version / ETag (optimistic concurrency)",
+   "desc": "Lock'suz eşzamanlılık; UPDATE WHERE version=:expected, eşleşmezse 409 Conflict + merge ekranı.",
+   "critical": false
+  },
+  {
+   "name": "Encryption Field (AES-256-GCM)",
+   "desc": "PII/secret alan seviyesi şifreleme; key versioning + rotation. Yalnız yetkili rolde decrypt.",
+   "critical": false
+  }
+ ],
+ "moduleUsage": [],
+ "securityNotes": [
+  "Reference tipi cross-tenant link'i otomatik reddeder (tenant-scope check) — tahta üzerinden veri sızıntısının atomik düzeydeki kapısı.",
+  "URL tipi scheme allowlist uygular: http(s)/mailto kabul, file:/javascript: red — SSRF ve metadata-endpoint sızıntısı engellenir.",
+  "Encryption Field PII'yi at-rest şifreler; key rotation ile eski anahtarla yazılmış veri yeni anahtara taşınır.",
+  "Soft Delete + hard-delete policy KVKK/GDPR silme talebinin altyapısı; deleted_at sonra bekleme sonra kalıcı silme + audit kaydı.",
+  "Email tipi MX + disposable kontrolü ile sahte/geçici hesap kaydını atomik düzeyde keser."
+ ],
+ "perfNotes": {
+  "code": "counter.increment('post:42:likes')  # API tek; backend deploy'a göre swap edilir",
+  "perf": "UUID v7'nin ilk 48 biti timestamp olduğu için B-tree index sıralı kalır, yüksek-insert'te latency bozulmaz. Counter (hot) tipinde sharded counter row-lock contention'ı kırar: tek satıra UPDATE yerine N shard'a INCR, okurken SUM(shards) — viral yükte (100k/dk) lock'suz. Vector tipi HNSW index ile milyonlarca embedding arasında ms-altı ANN sağlar."
+ },
+ "testNotes": [
+  "Money: 19.99 x 3 = 59.9700 tam; float tortusu yasaklanır (property testi).",
+  "Decimal invariant'ı: 0.1 + 0.2 == 0.3 — muhasebe oracle'ı bu eşitliği gevşetmeye izin vermez.",
+  "Reference: tenant A'dan tenant B hedefine link kurma denemesi red dönmeli (negatif güvenlik testi).",
+  "ID Generator: eşzamanlı 5000 insert'te collision sıfır; üretilen ID'ler monoton sortable.",
+  "Version/ETag: iki eşzamanlı PUT'tan ikincisi 409 almalı, kayıp güncelleme olmamalı."
+ ]
+}

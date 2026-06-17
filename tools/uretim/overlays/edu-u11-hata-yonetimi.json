@@ -1,0 +1,52 @@
+{
+ "featureDefs": [
+  {
+   "name": "Hata sınıflandırma kapısı",
+   "desc": "Her hata üç kova: beklenen (validation→400, retry yok), geçici (5xx/timeout→backoff retry), kalıcı (bozuk veri→DLQ). 'Tekrar denersem geçer mi?' sorusu yönlendirir; ayrım yapılmazsa ya sonsuz retry ya sessiz yutma.",
+   "critical": true
+  },
+  {
+   "name": "Idempotency anahtar tablosu",
+   "desc": "İşlenen idempotency_key'ler saklanır (INSERT ON CONFLICT DO NOTHING); aynı key tekrar gelirse işlem atlanır. Retry edilen işlemin çift-etki üretmesini (çift ödeme) engelleyen çekirdek mekanizma.",
+   "critical": true
+  },
+  {
+   "name": "Exponential backoff + jitter retry",
+   "desc": "Max 3-5 deneme, 100ms başlangıç, 2x çarpan, 30s tavan, ±%20 jitter. Yalnız idempotent işlemde çalışır; jitter thundering-herd'i, tavan kullanıcı beklemesini sınırlar.",
+   "critical": true
+  },
+  {
+   "name": "Circuit breaker",
+   "desc": "Dış sistem süreklı 503 dönüyorsa devre AÇIK'a geçer, bir süre hiç istek gönderilmez. Çöken servisi bombardımandan korur, fail-fast ile istek yolunu boşaltır.",
+   "critical": false
+  },
+  {
+   "name": "DLQ + alarm",
+   "desc": "Retry'ı geçemeyen mesaj park alanına (DLQ) düşer + Slack/email alarm. Kuyruk değil parking-lot; insan inceler. DLQ yoksa sonsuz retry log/CPU yakar, asıl hata görünmez.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — hata yönetimi tek modül değil, her dış sistem çağrısının (banka/email/SMS/kargo) ve worker'ın çapraz-kesen kuralı; outbox + saga + DLQ yüzeylerine yayılır.",
+  "kernel": "Bus (worker mesaj tüketimi + retry sayacı), tenancy (DLQ + idempotency tablosu tenant-scoped), authz (DLQ inceleme/replay yüksek-yetki ister).",
+  "core": "Contract'a idempotency_key zorunluluğu + retry politikası alanları; dış-efektli action'lar deklaratif olarak 'retryable mı / idempotent mi' işaretlenir.",
+  "modules": "scale-saga (telafi adımları), scale-idempotency (anahtar tablosu), cc-obs (alarm + Sentry), sus-durable (dayanıklı kuyruk).",
+  "apps": "Dış çağrı yapan her App idempotency-key üretir; frontend çift-tıklamayı debounce eder, otomatik retry yapmaz."
+ },
+ "ecaExample": "trigger:\n  event: external_call.failed\ncondition:\n  all:\n    - error.kind == \"transient\"\n    - attempt < policy.max_attempts\n    - action.idempotent == true\naction:\n  - retry: with_backoff_jitter\nelse:\n  - move_to: dead_letter_queue\n  - alert: oncall\nguards:\n  idempotency_key: \"req:{client_idempotency_key}\"\n  max_attempts: 5\n  external_effects: at_most_once",
+ "securityNotes": [
+  "Idempotency-key çift-etkiye karşı güvenlik kontrolüdür: ödeme/sipariş gibi para hareketlerinde aynı key bir kez işlenir, retry ve replay saldırısı çift tahsilat üretemez.",
+  "DLQ inceleme ve replay yüksek-yetki ister; park edilen mesaj PII içerebileceğinden DLQ tenant-scoped ve erişim audit'lidir.",
+  "Hata mesajları kullanıcıya sızdırılmaz: iç stack/kaynak detayı Sentry'e gider, kullanıcı yalnız 'tekrar dene' görür — bilgi ifşası (information disclosure) engellenir."
+ ],
+ "perfNotes": {
+  "code": "Retry yalnız transient hatada ve idempotent action'da tetiklenir; kalıcı hata anında DLQ'ya gider, gereksiz deneme yapılmaz.",
+  "perf": "Jitter (±%20) clientların aynı anda retry yapıp thundering-herd üretmesini engeller; circuit breaker açıkken fail-fast ile çöken upstream'e yük bindirmez, kuyruk tıkanmaz."
+ },
+ "testNotes": [
+  "Aynı idempotency-key ile iki kez gelen ödeme isteği tek kez işlenmeli (çift tahsilat olmamalı).",
+  "Transient (503) hata max_attempts kadar backoff ile denenmeli; sınır aşılınca DLQ'ya düşmeli + alarm üretmeli.",
+  "Kalıcı hata (JSON parse) retry edilmeden doğrudan DLQ'ya gitmeli.",
+  "Circuit breaker: ardışık başarısızlık eşiği aşılınca devre AÇIK olmalı, açık durumda istek gönderilmemeli (fail-fast)."
+ ]
+}

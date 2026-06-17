@@ -674,7 +674,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Öğrenme hedefi",
+      "term": "İlk Çalışan Kanıt (kırmızı→yeşil→CI)",
       "definition": [
        {
         "type": "strong",
@@ -682,16 +682,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin okuyucuya kazandırdığı bağlayıcı yetkinlik."
+        "text": "İlk başarı büyük ürün ekranı değil, en küçük uçtan uca kanıttır: bir test önce doğru nedenle kırmızı, en küçük uygulamayla yeşil, ve aynı commit temiz CI ortamında yeşil. Bu, spec + kod + araç zinciri + ekibin aynı noktada buluştuğunu doğrular."
        }
       ]
      },
      {
-      "term": "Uygulanabilir çıktı",
+      "term": "Önce doğru repo: docs-viewer ≠ runtime",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "docs-viewer çalışan ürünün kendisi değil, ürünün anayasası ve yapım sırasıdır; runtime kodu ayrı repoda yaşar. İlk 90 dakikanın bir adımı repo doğrulamasıdır — yanlışlıkla viewer reposuna runtime kodu yazmak engellenir."
+       }
+      ]
+     },
+     {
+      "term": "Üç rol ayrımı: Üreten / Eleştiren / İşleten",
       "definition": [
        {
         "type": "text",
-        "text": "Dersin sonunda üretilen çalıştırılabilir/denetlenebilir eser."
+        "text": "Üreten görev kartını AI'a verip küçük diff üretir ama kendi çıktısını onaylamaz; Eleştiren ayrı bağlamda diff/test/varsayımlara saldırır; İşleten temiz terminalde adımları sıfırdan tekrarlar. 'Benim makinemde çalıştı' kanıt sayılmaz."
+       }
+      ]
+     },
+     {
+      "term": "Dur ve küçült kapısı",
+      "definition": [
+       {
+        "type": "text",
+        "text": "AI 20'den fazla dosya değiştirmek, yeni servis eklemek veya test beklentisini gevşetmek isterse görev durdurulur ve tek davranışa indirilir. Aynı hata iki denemede çözülmezse üçüncü deneme yeni kod değil, kök neden + en küçük yeniden üretim ister."
        }
       ]
      }
@@ -879,15 +901,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Bağımsız eleştiri kapısı bir güvenlik kontrolüdür: işi üretmeyen kişi diff'i ve testleri incelemeden görev kapanmaz (tek-kişi onay yok). İşleten temiz ortamda komutları sıfırdan tekrarlar; gizli yerel durum/credential'a bağımlı 'çalıştı' iddiası kanıt sayılmaz (tekrar-üretilebilirlik). Runtime kodunun docs-viewer reposuna yazılmaması bir sınır kuralıdır; karışık repo sınırı sonraki erişim/sır yönetimi hatalarının kökenidir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -915,15 +929,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "İlk başarıyı kanıtlayan komutlar: uv sync; uv run pytest; uv run ruff check .; uv run pyright; uv run uvicorn ...; curl -fsS /health. Hepsi görev kaydına eklenir."
        }
       ]
      },
@@ -941,15 +947,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "İlk oturumun amacı performans değil tekrar edilebilir iş ritmidir; kapsam tek davranışa (ör. /health 200 + {status:ok}) indirilerek geri bildirim döngüsü dakikalar mertebesinde tutulur."
        }
       ]
      },
@@ -1385,6 +1383,18 @@
     ]
    },
    {
+    "id": "block-edu-baslangic-rotasi-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Kırmızı kanıt: /health endpoint'i yokken testin başarısız olduğu çıktı kaydedilir (önce-kırmızı disiplini). Yeşil kanıt: en küçük uygulamadan sonra test + ruff + pyright temiz geçer. Çalışan davranış: /health yerelde beklenen {status:ok} JSON'unu döndürür. CI kapısı: aynı commit GitHub Actions'ta aynı komutlarla yeşil geçmeden görev bitmiş sayılmaz. Bağımsız review kapısı: Eleştiren gereksiz dosya / gevşetilmiş test / gizli varsayım bulduğunda görev geri döner."
+     }
+    ]
+   },
+   {
     "id": "block-edu-baslangic-rotasi-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1403,7 +1413,7 @@
        },
        {
         "type": "text",
-        "text": "Dolaylı — bu sayfa kararı/bilgiyi tanımlar; entegrasyon onu uygulayan birimlerde gerçekleşir."
+        "text": "Bu sayfa ürün modülü değil; ekibin teoriden çalışan sisteme geçişini başlatan Gün-1 rotasıdır. Pratiğe iterasyon ritüeli ve ilk dikey dilim için tekrar edilebilir iş ritmi olarak bağlanır; runtime kabiliyeti tanımlamaz."
        }
       ]
      },
@@ -1412,16 +1422,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": ""
        }
       ]
      },
@@ -1430,7 +1431,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": ""
        }
       ]
      },
@@ -1439,7 +1440,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": ""
        }
       ]
      },
@@ -1448,7 +1449,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "İlk dilim hedef runtime reposunun kökünde Python 3.12 + uv + FastAPI ile /health endpoint'i, bir kırmızı→yeşil test ve GitHub Actions kurar; docs-viewer yalnız kanonik rehber olarak açık kalır."
        }
       ]
      }

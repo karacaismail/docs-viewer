@@ -895,7 +895,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Öğrenme hedefi",
+      "term": "Metadata-driven tanım -> 9+ otomatik çıktı",
       "definition": [
        {
         "type": "strong",
@@ -903,16 +903,78 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin okuyucuya kazandırdığı bağlayıcı yetkinlik."
+        "text": "Tek tanım (alanlar, izinler, naming) PostgreSQL tablosu, REST + "
+       },
+       {
+        "type": "term",
+        "text": "GraphQL",
+        "termId": "term-graphql-edu-u03-doctype"
+       },
+       {
+        "type": "text",
+        "text": ", varsayılan Surface, permission engine, audit logger, search indexer, "
+       },
+       {
+        "type": "term",
+        "text": "hook",
+        "termId": "term-hook-edu-u03-doctype"
+       },
+       {
+        "type": "text",
+        "text": " noktaları ve MCP tool spec'ini üretir."
        }
       ]
      },
      {
-      "term": "Uygulanabilir çıktı",
+      "term": "Fiziksel tablo (JSON-her-şey değil)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Her ArcheType kendi tabMusteriSikayeti tablosuna indeksli kolon olarak yazılır; WHERE/ORDER/JOIN hızlı kalır."
+       }
+      ]
+     },
+     {
+      "term": "Submittable yaşam döngüsü (docstatus 0/1/2)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "draft -> submitted -> cancelled; submit'te mali alanlar kilitlenir, düzeltme = iptal + yeni belge."
+       }
+      ]
+     },
+     {
+      "term": "Tenant özelleştirme (custom field + property setter)",
       "definition": [
        {
         "type": "text",
-        "text": "Dersin sonunda üretilen çalıştırılabilir/denetlenebilir eser."
+        "text": "Tenant kod değiştirmeden alan ekler ("
+       },
+       {
+        "type": "term",
+        "text": "custom field",
+        "termId": "term-custom-field-edu-u03-doctype"
+       },
+       {
+        "type": "text",
+        "text": ") veya mevcut alanın özelliğini değiştirir ("
+       },
+       {
+        "type": "term",
+        "text": "property setter",
+        "termId": "term-property-setter-edu-u03-doctype"
+       },
+       {
+        "type": "text",
+        "text": "); değişiklik yalnız o tenant'ta görünür."
        }
       ]
      }
@@ -1100,15 +1162,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Permission engine kuralları query'ye otomatik WHERE ekler (ifowner ile kullanıcı yalnız kendi kayıtlarını görür); izin kodda değil tanımda olduğu için bypass yüzeyi daralır. Custom field tenant-scoped: bir tenant'ın eklediği alan başka tenant'ın şemasına sızmamalı. Submit sonrası mali alan kilidi mali integrity sınırıdır; submitted belgede tutar/no değiştirme denemesi reddedilmeli. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1136,15 +1190,16 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
+        "text": "GET /api/resource/MusteriSikayeti?filters=[[\"oncelik\",\"=\",\"acil\"]]  # kolon indeksli, "
        },
        {
-        "type": "code",
-        "text": "if (type==...)"
+        "type": "term",
+        "text": "EAV",
+        "termId": "term-eav-edu-u03-doctype"
        },
        {
         "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": " taraması yok"
        }
       ]
      },
@@ -1162,15 +1217,16 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
+        "text": "Her ArcheType gerçek tabloya yazıldığı için B-tree index WHERE/ORDER BY'ı hızlandırır; EAV (id,attr,value) tek-tablo yolu sorgu cehennemine düşer. "
        },
        {
-        "type": "code",
-        "text": "async def"
+        "type": "term",
+        "text": "Naming series",
+        "termId": "term-naming-series-edu-u03-doctype"
        },
        {
         "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": " SIK-{YYYY}-{####} distributed-safe worker-lock ile üretilir, yüksek eşzamanlılıkta çakışmaz."
        }
       ]
      },
@@ -1466,7 +1522,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — ArcheType ile Model — anlatımsal giriş",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — ArcheType ile Model — anlatımsal giriş\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: archetype.submitted\ncondition:\n  all:\n    - record.docstatus == 1\n    - actor.capability >= \"invoice:submit\"\n    - not already_posted\naction:\n  - emit: ledger.journal_created\n  - emit: stock.decremented\n  - emit: notification.customer_emailed\nguards:\n  max_depth: 6\n  idempotency_key: \"on-submit:{archetype}:{record_id}:{rev}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1603,6 +1659,27 @@
        }
       ]
      ]
+    ]
+   },
+   {
+    "id": "block-edu-u03-doctype-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Otomatik-çıktı kapısı: bir ArcheType tanımı deploy edilince DB tablosu, REST + GraphQL şeması, audit kaydı ve MCP tool spec'i üretildi mi doğrulanır. "
+     },
+     {
+      "type": "term",
+      "text": "docstatus",
+      "termId": "term-docstatus-edu-u03-doctype"
+     },
+     {
+      "type": "text",
+      "text": " invariant'ı: submitted (1) belgede mali alan UPDATE'i reddedilmeli; cancel (2) ters yevmiye + stok geri yükleme hook'unu tetiklemeli. Tenant izolasyonu: custom field yalnız ekleyen tenant'ın sorgusunda görünmeli, diğer tenant'ta görünmemeli. Permission: Customer rolü ifowner=true ile yalnız kendi kayıtlarını listelemeli (başkasının kaydı dönmemeli)."
+     }
     ]
    },
    {

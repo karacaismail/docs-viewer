@@ -1,0 +1,45 @@
+{
+ "featureDefs": [
+  {
+   "name": "Day-1 zorunlu kernel concern'leri",
+   "desc": "Auth, authz, tenancy sonradan eklenemez; baştan kernel'de olmalı. 'Önce tek müşteri / auth'ı sonra' yaklaşımı 6-12 aylık retrofit ve güvensiz geçiş üretir. Doğrusu day-1 multi-tenant + day-1 auth.",
+   "critical": true
+  },
+  {
+   "name": "ArcheType tablo-per-tip (polimorfizm)",
+   "desc": "Tek JSON column ya da tek Document tablo + type switching anemic domain'dir (WordPress wp_postmeta / Strapi acısı). Her ArcheType fiziksel tablo olur; davranış varsa Strategy policy modülü, sadece etiketse value object enum.",
+   "critical": true
+  },
+  {
+   "name": "Modül izolasyonu (public API + event bus)",
+   "desc": "Modül doğrudan başka modülün DB'sine erişmez; yalnız public API + event bus üzerinden konuşur. Tight coupling refactor'u imkansız kılar. Sınır CI'da zorlanmalı, yazılı 'dokunma' kuralı 6 ayda çürür.",
+   "critical": true
+  },
+  {
+   "name": "Dağıtık tutarlılık: outbox + saga, 2PC değil",
+   "desc": "Cross-aggregate / distributed transaction (2PC) fragile ve yavaştır. Doğrusu outbox + saga + compensation + idempotency. Senkron hook saf fonksiyon olmalı, polyglot transaction geçişi yapmamalı.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Bağımsız bir rehber sayfa (build cluster); 24 tuzağı niyesi+doğrusuyla listeler. Diğer kararlara (k-schema, edu-u25, sus-*) referans verir ama içeriklerini tekrarlamaz.",
+  "kernel": "Auth/authz/tenancy tuzakları kernel'in day-1 sorumluluklarını gerekçelendirir; RLS defense-in-depth, SET LOCAL (transaction) tenant izolasyonu.",
+  "core": "Billing/catalog/customer core'a konmaz; Layer 2 modül ya da Party generic + role modülü. Feed fan-out kernel'e değil, primitive kernel + Layer 2 policy.",
+  "modules": "Modüller arası tight coupling ve global mutable modül state yasak; hook registry + semver kontrat ile gevşek bağlanma."
+ },
+ "securityNotes": [
+  "Authz'ı application-level if-check ile yapmak tek bir unutmada data leak üretir; doğrusu query layer'a örülmüş yetki + RLS defense-in-depth (iki katman).",
+  "PgBouncer + SET (session) cross-tenant veri sızdırır çünkü bağlantı havuzdan paylaşılır; tenant context SET LOCAL ile transaction'a bağlanmalı.",
+  "Submittable ArcheType'ı normal CRUD gibi güncellemek finansal bütünlüğü bozar; docstatus + submitted kayıt immutable olmalı (e-Belge/muhasebe entegritesi)."
+ ],
+ "perfNotes": {
+  "code": "Hot counter'ı ACID transaction'da artırmak viral içerikte lock contention üretir; approximate sayım + Redis INCR + sharded counter ile yazılır.",
+  "perf": "2PC distributed transaction yüksek latency ve kırılganlık getirir; outbox + idempotency ile asenkron, geri-kazanılabilir yan etki tercih edilir. Mikroservis day-1 prematüredir, modüler monolit sonra extract edilir."
+ },
+ "testNotes": [
+  "Modül sınırı CI'da test edilmeli: bir modülün başka modülün tablosuna/iç paketine import'u build'i kırmalı (Shopify dersi, sosyal kural yetmez).",
+  "RLS testi: authz kodu atlansa bile RLS politikası cross-tenant satırı döndürmemeli (defense-in-depth doğrulaması).",
+  "Submittable ArcheType testi: docstatus=submitted kayıtta alan güncellemesi reddedilmeli (immutability assert).",
+  "Upgrade/codemod testi: BC kıran değişiklik için codemod (Rector/AI) eski kullanımı dönüştürebilmeli; big-bang rewrite yerine kademeli deprecation doğrulanmalı."
+ ]
+}

@@ -258,7 +258,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Karar kapsamı",
+      "term": "İki mod / tek motor",
       "definition": [
        {
         "type": "strong",
@@ -266,16 +266,55 @@
        },
        {
         "type": "text",
-        "text": "ADR'nin bağladığı invariant; alternatifler ve seçilen yön."
+        "text": "Otopilot (AI sürer, sonuç-önce, tek tık) ve Atölye (insan sürer, [a,b,c,d] DecisionCard + sub_prompt) aynı karar ağacının iki görünümü; insan-kararı kilidi korunur."
        }
       ]
      },
      {
-      "term": "Uygulama etkisi",
+      "term": "Deterministic faker önizleme",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "6 satır sentetik veri LLM'den değil deterministic faker'dan üretilir; 'örnek veri' etiketli ve export'tan korumalı."
+       }
+      ]
+     },
+     {
+      "term": "Dış-sinyalli güven skoru",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Güven validation/self-consistency/token olasılığı/risk/geçmişten gelir; model self-report'u tek başına kullanılmaz; eşik 0.80/0.60-0.80/0.60."
+       }
+      ]
+     },
+     {
+      "term": "Riskli kararda ön-seçimsizlik",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "PII/parasal/hukuki/yıkıcı kararlarda AI önerisi ön-seçili gelmez; otomasyon yanlılığı bilinçli olarak kırılır."
+       }
+      ]
+     },
+     {
+      "term": "Journey state machine",
       "definition": [
        {
         "type": "text",
-        "text": "Bu kararın kod/şema/test üzerindeki bağlayıcı sonucu."
+        "text": "idle->completed akışı + hata durumları; her hata öğretici mesaj ve geri dönüş yolu taşır."
        }
       ]
      }
@@ -463,15 +502,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Sentetik önizleme LLM ile üretilirse 'örnek veri' kanıtlanamaz ve gerçek-görünümlü veri export'a sızabilir; deterministic faker + export koruması bunu engeller. Güven yalnız model self-report'undan okunursa güven yanılsaması doğar; dış sinyaller (validation/risk/geçmiş) olmadan eşik kararı güvenilmez. Riskli kararda AI önerisi ön-seçili gelirse otomasyon yanlılığı kullanıcıyı düşünmeden onaya iter; ön-seçimsizlik bu kavşakta zorunludur. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -499,15 +530,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Önizleme deterministic faker'dan tek geçişte üretilir; güven sinyalleri (self-consistency/risk) karar başına toplanıp eşikle karşılaştırılır."
        }
       ]
      },
@@ -525,15 +548,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "LLM çağrısı önizleme için kullanılmadığından sonuç-önce render düşük gecikmeli; faker çıktısı seed'e göre tekrarlanabilir/cache'lenebilir."
        }
       ]
      },
@@ -829,7 +844,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — ADR-0018: AI-first UX/UED — İki Mod, Sonuç-önce Önizleme, Güven Kalibrasyonu",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — ADR-0018: AI-first UX/UED — İki Mod, Sonuç-önce Önizleme, Güven Kalibrasyonu\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: decision_card.confirmed\ncondition:\n  all:\n    - card.risk_class in [\"pii\", \"monetary\", \"legal\", \"destructive\"]\n    - actor.capability >= \"suggest\"\n    - not preselect_applied\naction:\n  - emit: preview.synthetic_render\n  - require: explicit_user_choice\nguards:\n  max_depth: 3\n  idempotency_key: \"journey:{journey_id}:{card_id}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -966,6 +981,18 @@
        }
       ]
      ]
+    ]
+   },
+   {
+    "id": "block-adr-0018-ai-first-ux-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Aynı seed ile sentetik önizleme her çağrıda aynı 6 satırı vermeli (deterministik) ve export akışında bloklanmalı. Güven 0.60 altındaysa düşük-güven görünümü, 0.80 üstündeyse tek-tık Otopilot yolu seçildiği doğrulanmalı. PII/parasal/hukuki/yıkıcı kararda hiçbir seçeneğin ön-seçili gelmediği test edilmeli. Otopilot ve Atölye modlarının aynı karar ağacından geçtiği ve insan-kararı kilidinin her iki modda korunduğu kontrol edilmeli. Journey state machine her hata durumunda öğretici mesaj + geri dönüş yolu üretmeli."
+     }
     ]
    },
    {

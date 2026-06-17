@@ -917,15 +917,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Blameless post-mortem 'sistem' sorgular 'kişi' değil: 'niye Ali yanlış config push etti' yerine 'niye sistem yanlış config'i validation'sız kabul etti' — suçlama kültürü hatayı gizler, öğrenme kültürü raporlatır ve düzeltir. Config validation eksikliği bir güvenlik açığıdır: yanlış/zararlı config'in deploy'a sızmaması için pipeline doğrulama kapısı zorunludur; incident'ın ilk hedefi DURDUR (rollback/flag kapat/traffic shift), sebep aramak sonra. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -953,15 +945,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Observability üçlüsü kod yoluna gömülür: metrics (sayılabilir RPS/latency/error), logs (zaman damgalı kayıt), traces (request'in modüller arası span yolculuğu) deploy'dan ÖNCE tanımlanır."
        }
       ]
      },
@@ -978,25 +962,31 @@
       "term": "Performans optimizasyonu",
       "definition": [
        {
-        "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 "
-       },
-       {
         "type": "term",
         "text": "SLO",
         "termId": "term-slo-edu-u10-deploy"
        },
        {
         "type": "text",
-        "text": " bütçesi; gerekli indeks."
+        "text": " %99.9 → "
+       },
+       {
+        "type": "term",
+        "text": "error budget",
+        "termId": "term-error-budget-edu-u10-deploy"
+       },
+       {
+        "type": "text",
+        "text": " ~43 dk/ay; bütçe %85 tükendiyse yeni feature DEĞİL stabilizasyon — "
+       },
+       {
+        "type": "term",
+        "text": "MTTR",
+        "termId": "term-mttr-edu-u10-deploy"
+       },
+       {
+        "type": "text",
+        "text": " (kurtarma süresi) reliability'nin kilit metriğidir, canary erken yakalayarak büyük etkiden korur."
        }
       ]
      },
@@ -1429,6 +1419,36 @@
        }
       ]
      ]
+    ]
+   },
+   {
+    "id": "block-edu-u10-deploy-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "CI her commit'te test/lint/build koşturur: bozuk kod main'e karışmasın — kırmızı build CD'yi tetiklemez, yeşil olmayan hiçbir şey canlıya çıkmaz. Canary kapısı testi: yeni sürüm %5 trafiğe açılır, error rate/latency SLO içinde kalırsa kademe yükselir; metrik bozulursa otomatik geri alınır. "
+     },
+     {
+      "type": "term",
+      "text": "Feature flag",
+      "termId": "term-feature-flag-edu-u10-deploy"
+     },
+     {
+      "type": "text",
+      "text": " testi: flag KAPALI deploy edilen özellik kullanıcıya görünmez (dark launch); flag aç/kapat deploy gerektirmeden davranışı değiştirir, rollback'siz geri alma kanıtlanır. Rollback drill: "
+     },
+     {
+      "type": "term",
+      "text": "blue/green",
+      "termId": "term-blue-green-edu-u10-deploy"
+     },
+     {
+      "type": "text",
+      "text": " traffic switch ile önceki sürüme anında dönüş; restore/rollback notu runbook'ta hazır ve denenmiş olmalı."
+     }
     ]
    },
    {

@@ -212,7 +212,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Karar kapsamı",
+      "term": "Tek birincil eksen (yolculuk/inşa)",
       "definition": [
        {
         "type": "strong",
@@ -220,16 +220,38 @@
        },
        {
         "type": "text",
-        "text": "ADR'nin bağladığı invariant; alternatifler ve seçilen yön."
+        "text": "Öğren -> Çekirdek -> Üret -> İşlet tek omurga; tech-stack/domain/olgunluk birincil eksen değil facet'e iner. Rail 1'in ~7 eksen karışıklığını çözer."
        }
       ]
      },
      {
-      "term": "Uygulama etkisi",
+      "term": "Tipli ilişki kenarı",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "related düz liste yerine {type, target}: belongs-to / uses / extends. Sayfa içi 'Ait olduğu Module / Kullanan App' bağlam kutusu bundan türer."
+       }
+      ]
+     },
+     {
+      "term": "Granülerlik breadcrumb (ikincil)",
       "definition": [
        {
         "type": "text",
-        "text": "Bu kararın kod/şema/test üzerindeki bağlayıcı sonucu."
+        "text": "App -> Module -> ArcheType ikincil breadcrumb bileşeni; granülerlik artık modellenir, navigasyonda kaybolmaz."
+       }
+      ]
+     },
+     {
+      "term": "Prefix-coupling gevşetme",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kategori dosya-prefix'ine bağlıyken açık categoryId/granularity metadata'sına taşınır; ad değişimi IA'yı kırmaz, kategori değişiminde slug 301."
        }
       ]
      }
@@ -417,15 +439,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Prefix-coupling gevşetmede kategori değişimi slug 301 (l1-redirect) ile yönetilmeli; aksi halde eski URL'ler kırılır ve derin link bütünlüğü bozulur. 'Yeni sayfa nereye girer' yönetişim kuralı olmadan eksen kayması büyür — IA tutarlılığı bir bütünlük kontrolüdür. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -923,6 +937,18 @@
     ]
    },
    {
+    "id": "block-adr-0023-ia-navigasyon-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Slug kararlılığı gate'i: ad değişiminde slug sabit kalmalı; kategori değişiminde 301 zinciri doğrulanmalı (deterministik gate). A11y kapısı: yeni breadcrumb + bağlam kutusu bileşenleri klavye + ekran okuyucu testinden geçmeli (Faz 2-3 migrate koşulu). İlişki-tipi şema testi: related kenarı yalnız belongs-to/uses/extends tiplerinden birini taşımalı, serbest metin reddedilmeli."
+     }
+    ]
+   },
+   {
     "id": "block-adr-0023-ia-navigasyon-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -941,7 +967,7 @@
        },
        {
         "type": "text",
-        "text": "Dolaylı — bu sayfa kararı/bilgiyi tanımlar; entegrasyon onu uygulayan birimlerde gerçekleşir."
+        "text": "IA bağlayıcı prensip kararı; Faz 2-3 motor şemalarını ve sayfa metadata'sını değiştirir, bu yüzden bileşen + migrate katmanı doğrudan etkilenir."
        }
       ]
      },
@@ -950,16 +976,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Granülerlik ekseni (App/Module/ArcheType) kernel terminolojisiyle hizalı; IA bu kavramları breadcrumb'a yansıtır."
        }
       ]
      },
@@ -968,7 +985,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Tipli ilişki şeması (related -> {type,target}) src/engine/components/schemas'ta tanımlanır; bağlam kutusu + breadcrumb bileşeni core render katmanında."
        }
       ]
      },
@@ -977,7 +994,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Sayfa kendi categoryId'sini taşıyınca module yeniden adlandırması IA'yı kırmaz; 'Kullanan App' kenarı module-app bağını gösterir."
        }
       ]
      },
@@ -986,7 +1003,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "App granülerlik düzeyi breadcrumb'ın kökü; tech-stack simetrisi (backend+frontend bitişik) app yüzeyinde tutarlı."
        }
       ]
      }

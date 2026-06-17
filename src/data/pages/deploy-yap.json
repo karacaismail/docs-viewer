@@ -994,7 +994,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Deploy — yap otomasyonu — birincil yetenek",
+      "term": "yap shell fonksiyonu",
       "definition": [
        {
         "type": "strong",
@@ -1002,25 +1002,51 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "Mac ~/.config/yap.zsh: tek satırla commit + push; ilk kurulumda git init + repo open + Pages on. Mesaj verilmezse tarihli otomatik mesaj. Geliştirici hiç ham git komutu girmez."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "deploy-pages.yml (build→deploy)",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "İki ayrı job: build (Node 22, npm build, VITE_BASE alt-dizin, SPA 404 fallback, upload-pages-artifact) ve deploy (deploy-pages). concurrency 'pages' tek kuyruk, cancel-in-progress. Frontend yayını için zorunlu."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "ci.yml test geçidi",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "lint + typecheck + test + build; PR ve main push'ta koşar. Kırmızı build main'e ve dolayısıyla yayına gidemez — bozuk commit kapıda durur."
+       }
+      ]
+     },
+     {
+      "term": "İlk Pages açma (kişisel token)",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "Workflow'un dahili token'ı Pages'i ilk kez açamaz (GitHub güvenlik kısıtı); yap bunu kullanıcının kişisel token'ıyla bir kez açar, sonrasını Actions devralır."
+       }
+      ]
+     },
+     {
+      "term": "Backend deploy (ayrı pipeline)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Hetzner/Debian için deploy-backend.yml deseni: docker build + registry push + SSH'tan docker compose pull && up. Bilinçli olarak henüz kurulu değil; backend'de yalnız ci.yml testleri koşar."
        }
       ]
      }
@@ -1208,15 +1234,16 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
+      "text": "deploy-"
      },
      {
-      "type": "code",
-      "text": "pii"
+      "type": "term",
+      "text": "pages workflow",
+      "termId": "term-pages-workflow-deploy-yap"
      },
      {
       "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "'u least-privilege izinle koşar: contents:read + pages:write + id-token:write; daha geniş yazma izni verilmez, OIDC token'ı Pages deploy'a kapsamlanır. Free plan'da Pages yalnız public repo'da çalışır; bu yüzden yayınlanan her şey halka açık varsayılır — sır/anahtar/iç URL repoya girmemeli, secret'lar Actions secret olarak tutulmalı (kanonik karar adr-0003). Cowork sandbox git push yapamaz; push her zaman Mac'teki yap ile yapılır — kontrolsüz ortamdan yayına çıkış yüzeyi kapalı tutulur. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1244,15 +1271,16 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
+        "text": "yap istemci tarafında yalnız commit + push yapar (saniyeler); ağır build/test GitHub "
        },
        {
-        "type": "code",
-        "text": "if (type==...)"
+        "type": "term",
+        "text": "runner",
+        "termId": "term-runner-deploy-yap"
        },
        {
         "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "'a devredilir, geliştiricinin makinesini meşgul etmez."
        }
       ]
      },
@@ -1270,15 +1298,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "concurrency 'pages' + cancel-in-progress aynı anda tek deploy kuyruğu tutar; hızlı ardışık push'larda yalnız en son sürüm yayınlanır, gereksiz runner zamanı harcanmaz."
        }
       ]
      },
@@ -1714,6 +1734,18 @@
     ]
    },
    {
+    "id": "block-deploy-yap-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Deploy kapısı CI'ın son halkasıdır: ci.yml (lint/typecheck/test/build) geçmeden deploy-pages tetiklenmemeli; kırmızı build yayına çıkmamalı. SPA 404 fallback: bilinmeyen derin yol dist/404.html'e düşüp router base path ile doğru sayfaya çözülmeli. İlk Pages açma: dahili token ile deneme 'Resource not accessible by integration' vermeli; kişisel token (gh api) ile bir kez açılınca Actions devralmalı. Rollback: git revert sonrası bir sonraki CI koşusu önceki yayını geri getirmeli — manuel sunucu müdahalesi gerekmemeli."
+     }
+    ]
+   },
+   {
     "id": "block-deploy-yap-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1732,7 +1764,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Hayır — deploy-yap bir ürün değil dağıtım otomasyon süreci; çıktısı CI/CD boru hattı ve Pages yayını, ArcheType yüzeyi değil. Mac → GitHub → canlı site akışını standartlaştırır."
        }
       ]
      },
@@ -1741,16 +1773,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Doğrudan kernel tüketmez; dağıtım katmanı çekirdeğin dışında, ürettiği statik SPA'yı yayına taşır."
        }
       ]
      },
@@ -1759,7 +1782,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Build çıktısı (web/dist) Pages artifact'i olur; VITE_BASE ile monorepo alt-dizin base path'i Contract dışı bir paketleme detayı."
        }
       ]
      },
@@ -1768,7 +1791,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "GitHub Actions runner (ubuntu-latest), upload-pages-artifact + deploy-pages aksiyon ikilisi; gh CLI ile Pages açma/izleme."
        }
       ]
      },
@@ -1777,7 +1800,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Her frontend App deploy-pages.yml + vite base path ile yayınlanır; backend App'ler için deploy ayrı SSH/Docker pipeline gerektirir."
        }
       ]
      }

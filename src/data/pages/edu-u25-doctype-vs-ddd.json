@@ -1227,7 +1227,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Öğrenme hedefi",
+      "term": "Tip ayrımının üç doğru yaklaşımı",
       "definition": [
        {
         "type": "strong",
@@ -1235,16 +1235,20 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin okuyucuya kazandırdığı bağlayıcı yetkinlik."
+        "text": "Klasik DDD'nin üç yaklaşımı runtime metadata olarak yaşar: farklı kural+yaşam döngüsü için ayrı aggregate (paylaşılan şema+JSONB, opt-in fiziksel tablo terfisi), aynı kavramda tipe göre davranış için Strategy/policy, sadece etiket/filtre için value object enum."
        }
       ]
      },
      {
-      "term": "Uygulanabilir çıktı",
+      "term": "Tek tablo + type-switching yasağı",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Dersin sonunda üretilen çalıştırılabilir/denetlenebilir eser."
+        "text": "if(type=='invoice')...else if(type=='contract') dispatch anemic domain anti-pattern'i; open/closed ihlali ve kombinatoryel kaos üretir. Bu projede yapılmaz; tip ayrımı runtime metadata/Strategy ile çözülür."
        }
       ]
      }
@@ -1432,15 +1436,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Müşteri/son-kullanıcı yeni tablo yaratamaz; değişken alanlar JSONB ile çözülür — yatay tablo büyümesi engellenir, ortamlar arası (prod/dev/beta) migrate basitleşir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1468,15 +1464,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "if type==invoice ... else if contract ...  // anti-pattern: her yeni tip tüm switch'lere dokunur"
        }
       ]
      },
@@ -1494,15 +1482,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Tablo-per-tip yüzlerce tabloya index dağıtır, kompleks işlemde aşırı join üretir; hibrit çözüm sabit az tablo + JSONB GIN index ile yükü tek noktada yoğunlaştırır."
        }
       ]
      },
@@ -1938,6 +1918,18 @@
     ]
    },
    {
+    "id": "block-edu-u25-doctype-vs-ddd-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Yeni tip tanımının otomatik fiziksel tablo (dinamik DDL) yaratmadığı, paylaşılan şema+JSONB'ye yazdığı doğrulanır. Tip davranışının policy/Strategy interface implementasyonuyla (örn. InvoicePolicy implements DocPolicy) çözüldüğü, if/else type-switching içermediği test edilir. Yüksek-hacimli tipin fiziksel tabloya terfisinin yalnız açık opt-in ile gerçekleştiği kontrol edilir."
+     }
+    ]
+   },
+   {
     "id": "block-edu-u25-doctype-vs-ddd-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1956,7 +1948,7 @@
        },
        {
         "type": "text",
-        "text": "Dolaylı — bu sayfa kararı/bilgiyi tanımlar; entegrasyon onu uygulayan birimlerde gerçekleşir."
+        "text": "Bu sayfa ürün modülü değil; ArcheType'ın klasik DDD eleştirisine (anemic domain) karşı doğru kurulumunu öğreten eğitim ünitesidir. Pratiğe tipli aksiyon yüzeyi ve ChangeSet sözleşmesi olarak bağlanır."
        }
       ]
      },
@@ -1965,16 +1957,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "ArcheType depolama modeli: varsayılan paylaşılan şema + JSONB (GIN index); yalnız yüksek-hacimli tipler açık opt-in ile fiziksel tabloya terfi eder. Şema sabit kalır, tip değişikliği veri/metadata'dır, dinamik DDL yok."
        }
       ]
      },
@@ -1983,7 +1966,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Tip davranışı policy/Strategy class olarak auto-discover edilir; CRUD API ve form metadata'dan render edilir. Üç yaklaşım (ayrı aggregate / Strategy / value object) tek tablo+if-else olmadan birlikte yaşar."
        }
       ]
      },
@@ -1992,7 +1975,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": ""
        }
       ]
      },
@@ -2001,7 +1984,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": ""
        }
       ]
      }

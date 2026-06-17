@@ -1,0 +1,38 @@
+{
+ "featureDefs": [
+  {
+   "name": "Modüler monolit sınır disiplini",
+   "desc": "Tek deploy birimi, çoklu bounded context. Sınır yazılım disipliniyle korunur: importlinter + CI kapısı, bir modül diğerinin internal'ına dokunursa derleme fail. Mikroservise sadece extraction trigger'da geçilir.",
+   "critical": true
+  },
+  {
+   "name": "Metadata-driven şema",
+   "desc": "Şema kodda değil sistem tablosunda satır. Fiziksel PostgreSQL tablosu, REST+GraphQL endpoint, form/list render, permission tanıma, search index, audit dinleme ve hook noktaları (before_save/after_insert) tanımdan otomatik türetilir.",
+   "critical": true
+  },
+  {
+   "name": "AI-first altyapı primitive'leri",
+   "desc": "Vektör store kernel-adjacent (pgvector default), her kayıt save'inde opt-in embedding projeksiyonu, hibrit arama (BM25+vector RRF), bağlam başına otomatik MCP expose. AI sonradan yapıştırılan özellik değil omurganın parçası.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Bu sayfa ürün modülü değil; sistemin uyduğu 7 temel kararın (modüler monolit, metadata-driven, AI-first, polyglot, scale-primitive, Türkiye uyumu, açık gerilimler) çerçevesidir. Tüm modüller bu kararlara uyar.",
+  "kernel": "Scale primitive'leri (event bus, outbox, hot counter, projection), vektör store, e-Belge Provider ve Tax Authority Adapter Layer 1 in-tree olarak kernel'de oturur — her modül aynı altyapıyı paylaşır.",
+  "core": "Bounded context sınır guard'ı, metadata şema türetme motoru ve capability flag kompozisyonu (tenant_capabilities) core disiplinini oluşturur; enum yasak, eklemeli flag standart.",
+  "modules": "Scale politikası (push/pull/hybrid feed kararı, celebrity threshold, reservation timing) ve iş kuralları modül seviyesinde yaşar; bir tenant'ta birden çok yetenek yan yana açılır.",
+  "apps": "Tüm app'ler tek kernel'e bağlanır, varsayılan entegre gelir; paylaşılan kayıt tipleri (Party) mekanizmasıyla tek panel vaadi tutulur."
+ },
+ "ecaExample": "trigger:\n  event: tenant.capability.enable_requested\ncondition:\n  all:\n    - actor.role == \"tenant_admin\"\n    - capability not in tenant_capabilities\n    - not migration_destructive\naction:\n  - append: tenant_capabilities(capability)\n  - emit: capability.enabled\nguards:\n  max_depth: 6\n  idempotency_key: \"tenant:{tenant_id}:cap:{capability}\"\n  external_effects: none",
+ "securityNotes": [
+  "İlke = yazı = sosyal söz, çürür; ilkeyi yaşatan makinedir. Modüler monolit sınırı CI sınır kapısıyla, AI-first güvenlik katmanı aksiyon onayıyla kanıtlanır — guard yoksa ilke garanti edilmez.",
+  "Config-as-Data: politika kuralları (KVKK, GDPR, vergi oranı, consent, sanctions) kodda değil versiyonlanmış config'te; kod deploy'u olmadan kural değişir, decision_trace audit + deny-by-default fallback zorunlu.",
+  "Resolver kurmak ≠ işletmek: cache miss eski kuralla cevap = yasal ihlal; config typo = ceza; resolver çökünce deny-by-default ('bilmiyorsan en kısıtlayıcıya uy'). 5 katman operasyonel disiplin (backfill, 3-katman cache, failure mode, 4-göz governance, decision-trace) şart.",
+  "WASM/Extism untrusted marketplace kodu için capability sandbox: 'sadece şu kaydı okur, network yok' kısıtı — güvenilmeyen genişletmeyi izole eder."
+ ],
+ "testNotes": [
+  "CI sınır kapısı: modül A modül B'nin internal'ına dokunursa importlinter fail (Packwerk muadili Python disiplini).",
+  "Capability kompozisyon testi: enum kullanımı yasak, tenant_capabilities flag tablosu üzerinden eklemeli açılış; yıkıcı migration'a düşmediği doğrulanır.",
+  "Config governance: kural değişikliği 4-göz onayı geçer, decision_trace audit kaydı üretilir, fallback deny-by-default test edilir."
+ ]
+}

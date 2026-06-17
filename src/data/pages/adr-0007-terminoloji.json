@@ -314,7 +314,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Karar kapsamı",
+      "term": "Genişletme birimi = module (Drupal dili)",
       "definition": [
        {
         "type": "strong",
@@ -322,16 +322,29 @@
        },
        {
         "type": "text",
-        "text": "ADR'nin bağladığı invariant; alternatifler ve seçilen yön."
+        "text": "Karar kapsamı: genişletme birimi için eski WordPress terimi terk edilir, 'module' benimsenir; eski terim yalnız karşılaştırmada geçer. AI-codegen'in doğru zihinsel modele oturması için tutarlı sözlük şarttır."
        }
       ]
      },
      {
-      "term": "Uygulama etkisi",
+      "term": "Kernel ≠ core ayrımı",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Kernel = sistem geneli, core = app çekirdeği; yer değiştirmez. Karar, iki kavramın eşanlamlı kullanımını yapısal olarak yasaklar."
+       }
+      ]
+     },
+     {
+      "term": "SDK + Theme sınırı",
       "definition": [
        {
         "type": "text",
-        "text": "Bu kararın kod/şema/test üzerindeki bağlayıcı sonucu."
+        "text": "SDK kernel üstü geliştirme altyapısı (sözleşme + iskelet üretici + CLI); ArcheType ve theme'i tek komutla üretir, kernel iç API'sine dokundurmaz. Theme sunum katmanı; iş mantığını/core module'ü değiştirmez, Edition'ı gerçekleştirir."
        }
       ]
      }
@@ -519,15 +532,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Tutarlı sözlük güvenlik etkisi taşır: kernel (sistem geneli, geniş yetki sınırı) ile core (app çekirdeği, dar kapsam) karışırsa yetki sınırı yanlış konumlanır; ayrım yapısal olarak korunur. Eski link slug'ları korunur (link kararlılığı > ad kozmetiği); kabul edilen maliyet: eski slug'larda yasak terim yaşar ama yüzey URL'leri değişmez. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1025,6 +1030,18 @@
     ]
    },
    {
+    "id": "block-adr-0007-terminoloji-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "CI yasak-kelime kapısı (yasaklar.test.ts) genişletme birimi için eski terimi reddeder; üretilen her içerik bu kapıdan geçer. Kernel/core eşanlamlı kullanımı testle yakalanır; slug sabitliği regresyon testiyle korunur (254 eski geçiş çevrildi, slug'lar değişmedi)."
+     }
+    ]
+   },
+   {
     "id": "block-adr-0007-terminoloji-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1043,7 +1060,7 @@
        },
        {
         "type": "text",
-        "text": "Dolaylı — bu sayfa kararı/bilgiyi tanımlar; entegrasyon onu uygulayan birimlerde gerçekleşir."
+        "text": "Bu karar terminoloji sözleşmesini bağlar: tüm üretim çıktıları (içerik, kod, AGENTS.md) kernel/core ayrımını ve 'module' dilini kullanmak zorundadır; sözleşme kernel/k-terminoloji sayfasında yaşar."
        }
       ]
      },
@@ -1052,16 +1069,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Sistem geneli anlamı sabitlenir; runtime'ı kernel sağlar, SDK kernel iç API'sine erişmez."
        }
       ]
      },
@@ -1070,7 +1078,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "App çekirdeği anlamı sabitlenir; theme core module'ü değiştirmez, yalnız token/layout sunumu."
        }
       ]
      },
@@ -1079,7 +1087,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Genişletme birimi 'module' (Kaya/Domain — bounded-context); ArcheType (Büyük Taş) bunları kompoze eden tekil bildirimsel varlıktır."
        }
       ]
      },
@@ -1088,7 +1096,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "App = Dağ; geliştirici kompozisyon eforu. Edition bir Theme'i pinler, Distribution = Edition + config + sektör içeriği."
        }
       ]
      }

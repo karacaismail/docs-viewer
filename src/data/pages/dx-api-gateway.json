@@ -798,7 +798,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "API Gateway + Developer Portal — birincil yetenek",
+      "term": "Tek-giriş gateway katmanı",
       "definition": [
        {
         "type": "strong",
@@ -806,25 +806,38 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "Public API'ye gelen tüm istekler tek katmanda karşılanır: auth (JWT/API key), rate limit, versioning route (/v1, /v2), logging, caching, CORS, webhook imza doğrulama. Backend service'ler bu yükü taşımaz, gateway'in geçirdiği header'a güvenir."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Self-service Developer Portal",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Geliştirici kayıt → API key al → dene akışı; interaktif docs (Swagger/Stoplight), 5 dakikalık quickstart, changelog, status page. Portal olmadan key'i satış ekibi elden verir, bu ölçeklenmez."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "OpenAPI 3.x kaynağından üretim",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "Makinece-okunabilir OpenAPI spec'ten Swagger UI, SDK (Stainless/OpenAPI Generator ile TS/Python/Go) ve contract test üretilir. Spec, tsoa veya zod-to-openapi ile koddan otomatik türetilir."
+       }
+      ]
+     },
+     {
+      "term": "Stripe-tarzı API key disiplini",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Canlı/test ayrımı prefix ile (sk_live_xxx / sk_test_xxx), Idempotency-Key header desteği, her response'ta X-Request-Id, hem makine hem insan okunur hata mesajları."
        }
       ]
      }
@@ -1012,15 +1025,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Auth tek noktada (gateway) yapılır; backend yalnız gateway'in enjekte ettiği kimlik header'ına güvenir, ama bu header dış dünyadan geliyorsa reddedilmeli (header spoofing'e karşı iç ağ izolasyonu/imza). API key plaintext saklanmaz; key_hash tutulur, sızıntıda anahtar geri-türetilemez. last_used ile şüpheli kullanım izlenir. Webhook signature doğrulaması: dış sistemden gelen webhook'lar imzayla doğrulanmalı, doğrulanmamış payload iş akışına sokulmamalı. Rate limit gateway'de zorlanır; customer tier'ına göre kota brute-force ve abuse'ü sınırlar (DoS yüzeyi azalır). Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1048,15 +1053,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "GET yanıtları gateway'de TTL'li cache'lenir; backend her isteğe gitmez. Idempotency-Key header'ı tekrarlı POST'u tek işleme indirir."
        }
       ]
      },
@@ -1074,15 +1071,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Tek katmanda auth/rate limit/log yapmak 100 endpoint'in her birinde tekrar etmekten hem hızlı hem tutarlıdır; rate limit sayacı paylaşılan store'da (Redis) tutularak yatay ölçekte tek karar verir."
        }
       ]
      },
@@ -1518,6 +1507,18 @@
     ]
    },
    {
+    "id": "block-dx-api-gateway-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Auth testi: gateway'i atlayan doğrudan backend isteği (header enjekte edilmiş) reddedilmeli; yalnız gateway üzerinden gelen kimliğe güvenilmeli. Rate limit testi: tier kotası aşıldığında 429 dönmeli ve sayaç paylaşılan store'da tutarlı olmalı (çok-instance). OpenAPI contract testi: yayınlanan endpoint spec'le uyumlu yanıt vermeli; spec sürüklenirse (drift) test kırılmalı. API key testi: sk_test_ anahtarı canlı kaynağa erişememeli; key_hash eşleşmesi ve last_used güncellemesi doğrulanmalı."
+     }
+    ]
+   },
+   {
     "id": "block-dx-api-gateway-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1536,7 +1537,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Bir geliştirici-deneyimi (dx) altyapı sayfası; ürün modülü değil, tüm public API'lerin önündeki ortak araç. Sorumlulukları scale-ratelimit, sus-versioning ve cc-security ile birleşir."
        }
       ]
      },
@@ -1563,7 +1564,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "API key tablosu (customer_id, key_hash, last_used) ve auth doğrulaması gateway'de; backend service iş mantığı + DB erişimine odaklanır, auth/rate limit bilmez."
        }
       ]
      },
@@ -1572,7 +1573,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Rate limit kararı scale-ratelimit ile, versiyon yönlendirmesi sus-versioning ile uyumlu; herhangi bir public endpoint açan modül gateway'in arkasından servis verir."
        }
       ]
      },

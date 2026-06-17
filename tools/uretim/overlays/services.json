@@ -1,0 +1,42 @@
+{
+ "featureDefs": [
+  {
+   "name": "Tek kategori-arayüzü, çok sağlayıcı (driver pattern)",
+   "desc": "Her dış servis kategorisi (ödeme, e-belge, SMS, depolama, LLM, kargo...) tek bir Port arayüzü tanımlar; iyzico/Stripe ya da NetGSM/Twilio gibi sağlayıcılar bu arayüzü uygulayan değiştirilebilir driver'lardır. Çağıran kod somut sağlayıcıyı bilmez, yalnız kategoriyi çağırır.",
+   "critical": true
+  },
+  {
+   "name": "Tenant başına sağlayıcı seçimi ve credential izolasyonu",
+   "desc": "Hangi tenant'ın hangi SMS/ödeme/e-belge sağlayıcısını kullandığı ve API anahtarları runtime konfigürasyonudur; bir tenant iyzico, diğeri PayTR kullanabilir. Anahtarlar tenant-kapsamlı saklanır ve asla koda gömülmez.",
+   "critical": true
+  },
+  {
+   "name": "TR-yerel sağlayıcı kapsaması",
+   "desc": "Kategori arayüzleri Türkiye'ye özgü zorunlu entegratörleri (GİB e-belge, NetGSM, Yurtiçi/Aras kargo, BKM, SGK, MERSİS, TC Kimlik) global sağlayıcılarla aynı Port arkasında birleştirir; yerel mevzuat sağlayıcısı eklemek yeni kategori değil yeni driver'dır."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Bu sayfa bir ürün modülü değil; tüm modüllerin dış dünyaya çıktığı paylaşılan adapter katmanının kataloğudur. Her kategori bir Port; modüller bu Port'u çağırır, sağlayıcı değişimi modül kodunu etkilemez.",
+  "kernel": "Çekirdek yalnız Port arayüzlerini (PaymentPort, EBelgePort, SmsPort, StoragePort, LlmPort...) ve sağlayıcı çözümleme (resolver) sözleşmesini tanımlar; somut sağlayıcı SDK'ları çekirdeğe sızmaz, sınırda tutulur.",
+  "core": "Sağlayıcı seçimi + credential çözümleme tenant-kapsamlıdır; driver kayıt defteri (registry) hangi kategoride hangi sağlayıcıların aktif olduğunu auto-discover eder. Dış çağrılar timeout/retry/circuit-breaker disiplinine bağlıdır.",
+  "modules": "Modüller asla sağlayıcı SDK'sını doğrudan import etmez; yalnız kategori Port'unu çağırır (örn. 'fatura kes' -> EBelgePort, somut entegratörü bilmeden). Dış etki gerektiren çağrılar Contract sınırında outbox/iş kuyruğu üzerinden iletilir.",
+  "apps": "Aynı Port'u farklı dağıtımlar/edition'lar farklı sağlayıcı setiyle kullanır; on-prem MinIO/Ollama, SaaS S3/OpenAI seçer. Uygulama kodu değişmez, yalnız sağlayıcı konfigürasyonu değişir."
+ },
+ "moduleUsage": [],
+ "securityNotes": [
+  "Sağlayıcı API anahtarları tenant-kapsamlı secret store'da; koda/repo'ya gömülmez, log'a yazılmaz, audit'te maskelenir.",
+  "Dış sağlayıcıya giden PII minimize edilir; e-belge/KYC gibi zorunlu alanlar dışında veri sızdırılmaz, sağlayıcı sözleşmesi veri işleyen (processor) olarak kayıt altına alınır.",
+  "Gelen webhook'lar (ödeme onayı, kargo durumu, e-belge yanıtı) HMAC/imza doğrulamasından geçmeden işlenmez; confused-deputy ve sahte-callback riski kapatılır.",
+  "Sağlayıcı kesintisinde fail-open değil fail-safe: ödeme/e-belge gibi parasal-yasal çağrılarda belirsiz durum 'beklemede' işaretlenir, sessizce başarılı sayılmaz."
+ ],
+ "perfNotes": {
+  "code": "Her dış çağrı timeout + sınırlı retry (exponential backoff + jitter) + circuit-breaker ardına alınır; sağlayıcı yavaşlarsa istek senkron bloklanmaz, iş kuyruğuna düşer.",
+  "perf": "Yavaş/oran-sınırlı sağlayıcı (SMS, OCR, LLM) ardına bir devre kesici tek sağlayıcının tüm thread havuzunu tüketmesini engeller; sağlayıcı health'i izlenir, ardışık hata circuit'i açar ve yedek sağlayıcıya/kuyruğa düşürür."
+ },
+ "testNotes": [
+  "Sözleşme testi (contract test): her sağlayıcı driver'ı kategori Port'unun tüm metotlarını ve hata sözleşmesini sağladığı doğrulanır -- sahte sağlayıcı ile kontrol.",
+  "Sağlayıcı değişiminin (iyzico->PayTR) çağıran modül kodunu değiştirmeden çalıştığı test edilir.",
+  "Gelen webhook imza doğrulaması: geçersiz imzalı callback reddedilir, geçerli olan tek kez işlenir (idempotency).",
+  "Tenant-A'nın credential'ıyla tenant-B'nin sağlayıcı çağrısı yapılamadığı (credential izolasyonu) doğrulanır."
+ ]
+}

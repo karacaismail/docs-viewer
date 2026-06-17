@@ -450,15 +450,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "AGENTS.md 'bağlayıcı sözleşme' olduğundan onu değiştirebilen herkes AI ajanının davranışını değiştirir; paket dosyaları yetki + review kapısı altında olmalı (prompt-injection yüzeyi). llms.txt herkese açıktır; içine kanonik link ve granülerlik tablosu dışında hassas iç karar/eşik konmamalı — kamuya açık dosya bir saldırgan için de haritadır. Bağlam paketi güncel değilse AI eski sözleşmeye göre plan üretir; 'kararlar değiştikçe paket güncellenmeli' maliyeti bir governance riskidir, ihmal edilirse sessiz davranış sapması doğar. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -956,6 +948,18 @@
     ]
    },
    {
+    "id": "block-adr-0012-llm-baglam-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bağlam paketindeki kanonik linklerin kırık olmadığını ve işaret ettikleri kernel/backend sayfalarının var olduğunu doğrulayan link-bütünlüğü testi. Granülerlik eş-anlam tablosunun ADR-0015 §3b genişlemesiyle tutarlı kaldığını doğrulayan kontrol — iki karar arasındaki granülerlik tanımı çelişmemeli. Örnek komut → beklenen granülerlik seviyesi golden testi ('X dağ yap' deterministik bir seviyeye düşmeli); paket değişince bu eşlemenin kasıtsız kaymadığını yakalar."
+     }
+    ]
+   },
+   {
     "id": "block-adr-0012-llm-baglam-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -974,7 +978,7 @@
        },
        {
         "type": "text",
-        "text": "Dolaylı — bu sayfa kararı/bilgiyi tanımlar; entegrasyon onu uygulayan birimlerde gerçekleşir."
+        "text": "Hayır — bu bir karar (ADR) ve onun implikasyonudur, çalışan bileşen değil. Çıktısı repo kökündeki bağlam paketidir (AGENTS.md / CLAUDE.md / public/llms.txt). Kararın etkisi: her AI ajanı komutu bu pakete göre planlar; paket güncel tutulmazsa planlar sapar."
        }
       ]
      },
@@ -983,16 +987,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Bağlam paketi kanonik kaynak olarak kernel/backend sayfalarına işaret eder; granülerlik tablosu ve komut grameri kernel terminolojisini (ArcheType, module) bağlayıcı kılar."
        }
       ]
      },
@@ -1001,7 +996,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Komut grameri eş-anlam tablosu ('dağ yap' → granülerlik seviyesi) çekirdek üretim akışının girişini normalize eder; AI komutu önce bu tabloda bir plana düşer."
        }
       ]
      },
@@ -1010,7 +1005,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Modüller paket içinde ayrı bağlam tanımlamaz; AGENTS.md tek bağlayıcı sözleşmedir. Bir modülün özel komut davranışı varsa onu kanonik kaynak sayfasına bağlar, pakete kopya gömmez."
        }
       ]
      },
@@ -1019,7 +1014,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Uygulama üretimi 'crm dağ yap' gibi komutlarla tetiklenir; bu komutun tutarlı plana düşmesi bu kararın doğrudan çıktısıdır."
        }
       ]
      }

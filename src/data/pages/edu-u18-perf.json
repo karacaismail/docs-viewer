@@ -739,7 +739,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Öğrenme hedefi",
+      "term": "Ölçmeden optimize etme: percentile bütçesi",
       "definition": [
        {
         "type": "strong",
@@ -747,16 +747,29 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin okuyucuya kazandırdığı bağlayıcı yetkinlik."
+        "text": "Performans ortalama ile değil p50/p95/p99 percentile ile değerlendirilir; hedef p50<100ms, p95<500ms, p99<2s. Müşteri en yavaş %1'de (p99) şikâyet eder, ortalama bunu gizler. Optimizasyon kararı daima ölçüme dayanır, sezgiye değil."
        }
       ]
      },
      {
-      "term": "Uygulanabilir çıktı",
+      "term": "N+1 sorgu avı: eager-load / JOIN",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "ORM ilişki erişimi (customer.orders) arka planda her satır için ayrı SELECT üretir: 100 satır = 101 sorgu. EXPLAIN'de değil yalnız slow query log'da görünür; çözüm include/eager-load veya tek JOIN. En gizli ve en yaygın performans katili."
+       }
+      ]
+     },
+     {
+      "term": "EXPLAIN ANALYZE + slow query log",
       "definition": [
        {
         "type": "text",
-        "text": "Dersin sonunda üretilen çalıştırılabilir/denetlenebilir eser."
+        "text": "Sorgunun gerçek planı EXPLAIN ANALYZE ile okunur: Seq Scan (full table) yavaş, Index Scan hızlı. log_min_duration_statement (ör. 500ms) ile yavaş sorgular otomatik log'a düşer; haftalık en yavaş 10 sorgu çözülür."
        }
       ]
      }
@@ -944,15 +957,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Yavaş/pahalı sorgu yüzeyi aynı zamanda bir DoS yüzeyidir; sayfalama/limit zorunlu, sınırsız list endpoint'i (LIMIT'siz) bir saldırganın DB'yi kilitlemesine izin verir. EXPLAIN ANALYZE çıktısı, slow query log ve trace satırları PII/sorgu parametresi içerebilir; bu kayıtlar maskelenmeli ve erişimi kısıtlanmalı. Load test (k6/Artillery) yalnız izole ortamda; üretime karşı yetkisiz yük testi kasıtlı DoS sayılır. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -980,15 +985,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "EXPLAIN ANALYZE'da Seq Scan görülürse filtre/join alanına index eklenir; N+1 tespit edilirse include/eager-load veya tek JOIN'e dönülür. Ağır endpoint k6 ile 100 RPS load test'ten geçirilir, hedef p95<300ms."
        }
       ]
      },
@@ -1006,15 +1003,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Performans bütçesi: API p95<300ms (sarı 300-500ms, kırmızı >500ms), API p99<1s, DB query p95<50ms, FCP<1.5s, LCP<2.5s. p99 = sistemin tansiyonu; eşik aşılınca alarm, optimizasyon ölçüm-driven yapılır (profiling, flame graph: py-spy/node --prof)."
        }
       ]
      },
@@ -1450,6 +1439,18 @@
     ]
    },
    {
+    "id": "block-edu-u18-perf-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "N+1 regresyon testi: kritik endpoint'in ürettiği sorgu sayısı sabitlenir (ör. <=2); ilişki büyüdükçe sorgu sayısı artarsa test kırılır. Performans bütçe testi: load test çıktısında p95 eşiği (ör. <300ms) geçilince CI kırmızı. Index varlığı testi: sık filtrelenen alanda Seq Scan yerine Index Scan kullanıldığı EXPLAIN ile doğrulanır. Sayfalama testi: list endpoint'i LIMIT'siz tüm satırı döndürmez (DoS/perf koruması)."
+     }
+    ]
+   },
+   {
     "id": "block-edu-u18-perf-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1468,7 +1469,7 @@
        },
        {
         "type": "text",
-        "text": "Dolaylı — bu sayfa kararı/bilgiyi tanımlar; entegrasyon onu uygulayan birimlerde gerçekleşir."
+        "text": "Bu sayfa ürün modülü değil; sistemin hızını ölçüp yavaşı kanıta dayalı bulup düzeltmeyi öğreten eğitim ünitesidir. Pratiğe cc-obs gözlemlenebilirlik altyapısı ve save pipeline'ın sorgu disiplini olarak bağlanır."
        }
       ]
      },
@@ -1477,16 +1478,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Çekirdek tüm istekleri otomatik latency histogram'ına (p50/p95/p99) ve trace'e bağlar; modül geliştirici ölçüm kodu yazmaz. Tenant-kapsamlı sorgu çekirdek tarafından zorlanır, bu da plan/index stratejisini belirler."
        }
       ]
      },
@@ -1495,7 +1487,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Slow query log eşiği, index stratejisi ve N+1 önleyici eager-load core depolama disiplinine aittir; ArcheType JSONB alanları için GIN index, sık filtrelenen alanlar için b-tree index core tarafından planlanır."
        }
       ]
      },
@@ -1504,7 +1496,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Modüller ilişki erişimini eager-load/include ile yazar, döngü içinde sorgu yapmaz; ağır rapor sorguları senkron endpoint yerine iş kuyruğuna/projeksiyona kaydırılır."
        }
       ]
      },
@@ -1513,7 +1505,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Frontend FCP/LCP bütçesi (FCP<1.5s, LCP<2.5s) bundle size ve CDN ile; her dağıtım p95>500ms alarmını proaktif (müşteri şikâyetinden önce) Grafana üzerinden izler."
        }
       ]
      }

@@ -1,0 +1,46 @@
+{
+ "featureDefs": [
+  {
+   "name": "İlk Çalışan Kanıt (kırmızı→yeşil→CI)",
+   "desc": "İlk başarı büyük ürün ekranı değil, en küçük uçtan uca kanıttır: bir test önce doğru nedenle kırmızı, en küçük uygulamayla yeşil, ve aynı commit temiz CI ortamında yeşil. Bu, spec + kod + araç zinciri + ekibin aynı noktada buluştuğunu doğrular.",
+   "critical": true
+  },
+  {
+   "name": "Önce doğru repo: docs-viewer ≠ runtime",
+   "desc": "docs-viewer çalışan ürünün kendisi değil, ürünün anayasası ve yapım sırasıdır; runtime kodu ayrı repoda yaşar. İlk 90 dakikanın bir adımı repo doğrulamasıdır — yanlışlıkla viewer reposuna runtime kodu yazmak engellenir.",
+   "critical": true
+  },
+  {
+   "name": "Üç rol ayrımı: Üreten / Eleştiren / İşleten",
+   "desc": "Üreten görev kartını AI'a verip küçük diff üretir ama kendi çıktısını onaylamaz; Eleştiren ayrı bağlamda diff/test/varsayımlara saldırır; İşleten temiz terminalde adımları sıfırdan tekrarlar. 'Benim makinemde çalıştı' kanıt sayılmaz."
+  },
+  {
+   "name": "Dur ve küçült kapısı",
+   "desc": "AI 20'den fazla dosya değiştirmek, yeni servis eklemek veya test beklentisini gevşetmek isterse görev durdurulur ve tek davranışa indirilir. Aynı hata iki denemede çözülmezse üçüncü deneme yeni kod değil, kök neden + en küçük yeniden üretim ister."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Bu sayfa ürün modülü değil; ekibin teoriden çalışan sisteme geçişini başlatan Gün-1 rotasıdır. Pratiğe iterasyon ritüeli ve ilk dikey dilim için tekrar edilebilir iş ritmi olarak bağlanır; runtime kabiliyeti tanımlamaz.",
+  "kernel": "",
+  "core": "",
+  "modules": "",
+  "apps": "İlk dilim hedef runtime reposunun kökünde Python 3.12 + uv + FastAPI ile /health endpoint'i, bir kırmızı→yeşil test ve GitHub Actions kurar; docs-viewer yalnız kanonik rehber olarak açık kalır."
+ },
+ "moduleUsage": [],
+ "securityNotes": [
+  "Bağımsız eleştiri kapısı bir güvenlik kontrolüdür: işi üretmeyen kişi diff'i ve testleri incelemeden görev kapanmaz (tek-kişi onay yok).",
+  "İşleten temiz ortamda komutları sıfırdan tekrarlar; gizli yerel durum/credential'a bağımlı 'çalıştı' iddiası kanıt sayılmaz (tekrar-üretilebilirlik).",
+  "Runtime kodunun docs-viewer reposuna yazılmaması bir sınır kuralıdır; karışık repo sınırı sonraki erişim/sır yönetimi hatalarının kökenidir."
+ ],
+ "perfNotes": {
+  "code": "İlk başarıyı kanıtlayan komutlar: uv sync; uv run pytest; uv run ruff check .; uv run pyright; uv run uvicorn ...; curl -fsS /health. Hepsi görev kaydına eklenir.",
+  "perf": "İlk oturumun amacı performans değil tekrar edilebilir iş ritmidir; kapsam tek davranışa (ör. /health 200 + {status:ok}) indirilerek geri bildirim döngüsü dakikalar mertebesinde tutulur."
+ },
+ "testNotes": [
+  "Kırmızı kanıt: /health endpoint'i yokken testin başarısız olduğu çıktı kaydedilir (önce-kırmızı disiplini).",
+  "Yeşil kanıt: en küçük uygulamadan sonra test + ruff + pyright temiz geçer.",
+  "Çalışan davranış: /health yerelde beklenen {status:ok} JSON'unu döndürür.",
+  "CI kapısı: aynı commit GitHub Actions'ta aynı komutlarla yeşil geçmeden görev bitmiş sayılmaz.",
+  "Bağımsız review kapısı: Eleştiren gereksiz dosya / gevşetilmiş test / gizli varsayım bulduğunda görev geri döner."
+ ]
+}

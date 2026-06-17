@@ -1249,7 +1249,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Faz 0 — Atomik Tipler — birincil yetenek",
+      "term": "Type registry (genişletilebilir)",
       "definition": [
        {
         "type": "strong",
@@ -1257,25 +1257,82 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "Scalar/composite tip kataloğu; her tip validate/coerce/serialize/widget dörtlüsü sağlar. Module yeni tip ekleyebilir."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Money / Decimal(20,4)",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Float yasak; sabit-hassasiyet "
+       },
+       {
+        "type": "term",
+        "text": "Decimal",
+        "termId": "term-decimal-atomic-types"
+       },
+       {
+        "type": "text",
+        "text": " + "
+       },
+       {
+        "type": "term",
+        "text": "ISO 4217",
+        "termId": "term-iso-4217-atomic-types"
+       },
+       {
+        "type": "text",
+        "text": " currency çifti. Aritmetik yalnız aynı currency içinde, çapraz işlem FX dönüşümü zorunlu."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "ID Generator (UUID v7 / ULID / Snowflake / tenant-prefix)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Distributed-safe, timestamp-ordered, collision-free kimlik. Tenant-prefix ile log'tan sahip okunur."
+       }
+      ]
+     },
+     {
+      "term": "Reference / Link + tenant-scope",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "ArcheType'lar arası FK; cascade, orphan tespiti ve tenant-scope kontrolü tipin içinde. Cross-tenant link DB seviyesinde reddedilir."
+       }
+      ]
+     },
+     {
+      "term": "Version / ETag (optimistic concurrency)",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "Lock'suz eşzamanlılık; UPDATE WHERE version=:expected, eşleşmezse 409 Conflict + merge ekranı."
+       }
+      ]
+     },
+     {
+      "term": "Encryption Field (AES-256-GCM)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "PII/secret alan seviyesi şifreleme; key versioning + rotation. Yalnız yetkili rolde decrypt."
        }
       ]
      }
@@ -1463,15 +1520,25 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
+      "text": "Reference tipi cross-tenant link'i otomatik reddeder (tenant-scope check) — tahta üzerinden veri sızıntısının atomik düzeydeki kapısı. URL tipi scheme allowlist uygular: http(s)/mailto kabul, file:/javascript: red — "
      },
      {
-      "type": "code",
-      "text": "pii"
+      "type": "term",
+      "text": "SSRF",
+      "termId": "term-ssrf-atomic-types"
      },
      {
       "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": " ve metadata-endpoint sızıntısı engellenir. Encryption Field PII'yi at-rest şifreler; key rotation ile eski anahtarla yazılmış veri yeni anahtara taşınır. Soft Delete + hard-delete policy KVKK/"
+     },
+     {
+      "type": "term",
+      "text": "GDPR",
+      "termId": "term-gdpr-atomic-types"
+     },
+     {
+      "type": "text",
+      "text": " silme talebinin altyapısı; deleted_at sonra bekleme sonra kalıcı silme + audit kaydı. Email tipi MX + disposable kontrolü ile sahte/geçici hesap kaydını atomik düzeyde keser. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1499,15 +1566,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "counter.increment('post:42:likes')  # API tek; backend deploy'a göre swap edilir"
        }
       ]
      },
@@ -1525,15 +1584,16 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
+        "text": "UUID v7'nin ilk 48 biti timestamp olduğu için B-tree index sıralı kalır, yüksek-insert'te latency bozulmaz. Counter (hot) tipinde "
        },
        {
-        "type": "code",
-        "text": "async def"
+        "type": "term",
+        "text": "sharded counter",
+        "termId": "term-sharded-counter-atomic-types"
        },
        {
         "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": " row-lock contention'ı kırar: tek satıra UPDATE yerine N shard'a INCR, okurken SUM(shards) — viral yükte (100k/dk) lock'suz. Vector tipi HNSW index ile milyonlarca embedding arasında ms-altı ANN sağlar."
        }
       ]
      },
@@ -1966,6 +2026,27 @@
        }
       ]
      ]
+    ]
+   },
+   {
+    "id": "block-atomic-types-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Money: 19.99 x 3 = 59.9700 tam; float tortusu yasaklanır (property testi). Decimal invariant'ı: 0.1 + 0.2 == 0.3 — muhasebe oracle'ı bu eşitliği gevşetmeye izin vermez. Reference: tenant A'dan tenant B hedefine link kurma denemesi red dönmeli (negatif güvenlik testi). ID Generator: eşzamanlı 5000 insert'te collision sıfır; üretilen ID'ler monoton sortable. Version/"
+     },
+     {
+      "type": "term",
+      "text": "ETag",
+      "termId": "term-etag-atomic-types"
+     },
+     {
+      "type": "text",
+      "text": ": iki eşzamanlı PUT'tan ikincisi 409 almalı, kayıp güncelleme olmamalı."
+     }
     ]
    },
    {

@@ -251,7 +251,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Karar kapsamı",
+      "term": "Headless ArcheType (surface:none)",
       "definition": [
        {
         "type": "strong",
@@ -259,16 +259,46 @@
        },
        {
         "type": "text",
-        "text": "ADR'nin bağladığı invariant; alternatifler ve seçilen yön."
+        "text": "Dashboard/UI'sız varlık artık hack değil tanım: ArcheType hiçbir Surface'a projekte olmadan da var olabilir."
        }
       ]
      },
      {
-      "term": "Uygulama etkisi",
+      "term": "Çok-ArcheType Surface",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Bu kararın kod/şema/test üzerindeki bağlayıcı sonucu."
+        "text": "Tek sayfa birden çok ArcheType'ı projekte eder; vitrin-depo ayrımı (Surface ile ArcheType ayrı versiyonlanır)."
+       }
+      ]
+     },
+     {
+      "term": "Tenant-pinli Workflow",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Workflow Surface'tan bağımsız versiyonlanır ve tenant'a sabitlenebilir; süreç değişimi yüzeyi kırmaz."
+       }
+      ]
+     },
+     {
+      "term": "Otomatik MCP tool projeksiyonu",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Her ArcheType agent'lara otomatik MCP aracı olur; capability scope tanımdan türer, ayrıca yazılmaz."
        }
       ]
      }
@@ -456,15 +486,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Her ArcheType otomatik MCP tool'a açıldığı için capability scope tanımdan türetilmeli; aksi halde headless ArcheType yetkisiz agent erişimine açık kalır. Çok-ArcheType Surface'ta projeksiyon her ArcheType'ın kendi izin kurallarını korumalı; Surface birleştirmesi authz'yi gevşetemez. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -822,7 +844,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — ADR-0010: Surface Birinci-Sınıf — Beşli Denklem",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — ADR-0010: Surface Birinci-Sınıf — Beşli Denklem\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: archetype.defined\ncondition:\n  all:\n    - actor.capability >= \"archetype:project\"\n    - not surface_cycle_detected\naction:\n  - emit: surface.projection_built\n  - emit: mcp.tool_registered\nguards:\n  max_depth: 6\n  idempotency_key: \"surface-projection:{archetype_id}:{rev}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -962,6 +984,18 @@
     ]
    },
    {
+    "id": "block-adr-0010-surface-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Projeksiyon bütünlüğü gate'i: SDK doğrulayıcısı Surface'ın referans verdiği her ArcheType'ın var ve projekte-edilebilir olduğunu denetler. surface:none invariant'ı: headless ArcheType hiçbir Surface'a zorunlu bağlanmamalı, yine de MCP tool üretmeli. Workflow bağımsız versiyon testi: Surface revizyonu Workflow versiyonunu değiştirmemeli (ayrı eksen kanıtı)."
+     }
+    ]
+   },
+   {
     "id": "block-adr-0010-surface-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -980,7 +1014,7 @@
        },
        {
         "type": "text",
-        "text": "Dolaylı — bu sayfa kararı/bilgiyi tanımlar; entegrasyon onu uygulayan birimlerde gerçekleşir."
+        "text": "Beşli denklem yapı eksenini (Domain > ArcheType > Fragment > Atom + Contract) sabitler; bu karar kernel'in projeksiyon mantığını ve SDK doğrulamasını doğrudan belirler."
        }
       ]
      },
@@ -989,16 +1023,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Kanonik kayıt kernel/k-surface; Surface birinci-sınıf kavram olarak burada tanımlanır, ArcheType'ı projekte eder."
        }
       ]
      },
@@ -1007,7 +1032,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Projection motoru core'da: ArcheType -> Surface izdüşümü + Workflow bağımsız versiyon ekseni."
        }
       ]
      },
@@ -1016,7 +1041,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Module paylaşılan ArcheType üzerinden entegre olur (app'ler arası entegrasyon mekanikleşir); Surface tanımı module yüzeyini bağlamaz."
        }
       ]
      },
@@ -1025,7 +1050,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "App'ler aynı ArcheType'ı farklı Surface'larda sergiler — aynı malı farklı vitrinlerde gösterme analojisi."
        }
       ]
      }

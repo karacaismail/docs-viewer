@@ -1015,15 +1015,16 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
+      "text": "Rate limit DDoS koruması ve adil kullanım kapısıdır: bir kullanıcı/IP sistemi tek başına yıkamaz, limit aşılınca standart "
      },
      {
-      "type": "code",
-      "text": "pii"
+      "type": "term",
+      "text": "429",
+      "termId": "term-429-edu-u14-cache-ratelimit"
      },
      {
       "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": " (Too Many Requests) döner. Public endpoint'te rate limit her zaman zorunludur, internal API'de en az; kullanıcı limite yaklaşınca 'X/10000 kullanıldı' header'ı bilgilendirici olarak döner. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1051,15 +1052,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Cache key deterministik olmalı (örn. cust:42:profile); TTL belirgin (60sn–1 saat); cache miss'te DB'den çek + cache'e yaz, PUT/PATCH'te key'i sil."
        }
       ]
      },
@@ -1077,15 +1070,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "DB sorgusu ~100ms, Redis okuma ~1ms — yaklaşık 100x hız. Cache yalnız aynı sorguya günde 100+ istek varsa anlamlıdır."
        }
       ]
      },
@@ -1521,6 +1506,18 @@
     ]
    },
    {
+    "id": "block-edu-u14-cache-ratelimit-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Invalidation'ın bilgisayar biliminin zor problemlerinden biri olduğu kavranmalı: DB güncellenince ilgili cache key'i silinmezse kullanıcı eski fiyatı görür, sipariş eski fiyattan geçer. Üç cache deseninin riski ayırt edilebilmeli: cache-aside (nadiren race condition), write-through (yazma yavaşlar), write-behind (cache patlarsa veri kaybı). Token bucket'ın anlık burst'e izin verip sürekli yüksek yükü engellediği; leaky/sliding window ile maliyet-hassasiyet farkı açıklanabilmeli."
+     }
+    ]
+   },
+   {
     "id": "block-edu-u14-cache-ratelimit-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1539,7 +1536,7 @@
        },
        {
         "type": "text",
-        "text": "Dolaylı — bu sayfa kararı/bilgiyi tanımlar; entegrasyon onu uygulayan birimlerde gerçekleşir."
+        "text": "Hayır — bu bir eğitim ünitesidir (Ünite 14), çalışan kod değil. İki ayrı derdi ve çözümünü öğretir: yavaşlık → cache, kapasite tüketimi → rate limit. İkisi de Layer-1 öncesi middleware'da çalışır ve Redis'i sever; gerçek implementasyon scale-cache ve scale-ratelimit cluster'larındadır."
        }
       ]
      },
@@ -1548,16 +1545,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Cache ve rate limit Layer-1 primitive'lerinden önce middleware katmanında durur; çekirdek bu ara katmanı her isteğin geçtiği nokta olarak konumlar."
        }
       ]
      },
@@ -1566,7 +1554,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Cache-aside deseni (önce cache, yoksa DB+cache) ve token bucket (saniyede X token, biterse 429) bu ünitenin öğrettiği temel primitive davranışlarıdır."
        }
       ]
      },
@@ -1575,7 +1563,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Quota tier'ı (Ücretsiz 100/saat, Pro 10K/saat, Enterprise limitsiz) plan-bazlı gating örneğidir; saatlik counter Redis'te tutulur, saat dönünce sıfırlanır."
        }
       ]
      },
@@ -1584,7 +1572,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Frontend de cache yapar (React Query/SWR, staleTime); kullanıcı 'kaydet' tıklayınca ilgili cache invalidate edilir — invalidation hem istemci hem sunucu tarafında geçerlidir."
        }
       ]
      }

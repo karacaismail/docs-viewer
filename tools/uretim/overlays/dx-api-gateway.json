@@ -1,0 +1,45 @@
+{
+ "featureDefs": [
+  {
+   "name": "Tek-giriş gateway katmanı",
+   "desc": "Public API'ye gelen tüm istekler tek katmanda karşılanır: auth (JWT/API key), rate limit, versioning route (/v1, /v2), logging, caching, CORS, webhook imza doğrulama. Backend service'ler bu yükü taşımaz, gateway'in geçirdiği header'a güvenir.",
+   "critical": true
+  },
+  {
+   "name": "Self-service Developer Portal",
+   "desc": "Geliştirici kayıt → API key al → dene akışı; interaktif docs (Swagger/Stoplight), 5 dakikalık quickstart, changelog, status page. Portal olmadan key'i satış ekibi elden verir, bu ölçeklenmez.",
+   "critical": true
+  },
+  {
+   "name": "OpenAPI 3.x kaynağından üretim",
+   "desc": "Makinece-okunabilir OpenAPI spec'ten Swagger UI, SDK (Stainless/OpenAPI Generator ile TS/Python/Go) ve contract test üretilir. Spec, tsoa veya zod-to-openapi ile koddan otomatik türetilir.",
+   "critical": false
+  },
+  {
+   "name": "Stripe-tarzı API key disiplini",
+   "desc": "Canlı/test ayrımı prefix ile (sk_live_xxx / sk_test_xxx), Idempotency-Key header desteği, her response'ta X-Request-Id, hem makine hem insan okunur hata mesajları.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Bir geliştirici-deneyimi (dx) altyapı sayfası; ürün modülü değil, tüm public API'lerin önündeki ortak araç. Sorumlulukları scale-ratelimit, sus-versioning ve cc-security ile birleşir.",
+  "core": "API key tablosu (customer_id, key_hash, last_used) ve auth doğrulaması gateway'de; backend service iş mantığı + DB erişimine odaklanır, auth/rate limit bilmez.",
+  "modules": "Rate limit kararı scale-ratelimit ile, versiyon yönlendirmesi sus-versioning ile uyumlu; herhangi bir public endpoint açan modül gateway'in arkasından servis verir."
+ },
+ "securityNotes": [
+  "Auth tek noktada (gateway) yapılır; backend yalnız gateway'in enjekte ettiği kimlik header'ına güvenir, ama bu header dış dünyadan geliyorsa reddedilmeli (header spoofing'e karşı iç ağ izolasyonu/imza).",
+  "API key plaintext saklanmaz; key_hash tutulur, sızıntıda anahtar geri-türetilemez. last_used ile şüpheli kullanım izlenir.",
+  "Webhook signature doğrulaması: dış sistemden gelen webhook'lar imzayla doğrulanmalı, doğrulanmamış payload iş akışına sokulmamalı.",
+  "Rate limit gateway'de zorlanır; customer tier'ına göre kota brute-force ve abuse'ü sınırlar (DoS yüzeyi azalır)."
+ ],
+ "perfNotes": {
+  "code": "GET yanıtları gateway'de TTL'li cache'lenir; backend her isteğe gitmez. Idempotency-Key header'ı tekrarlı POST'u tek işleme indirir.",
+  "perf": "Tek katmanda auth/rate limit/log yapmak 100 endpoint'in her birinde tekrar etmekten hem hızlı hem tutarlıdır; rate limit sayacı paylaşılan store'da (Redis) tutularak yatay ölçekte tek karar verir."
+ },
+ "testNotes": [
+  "Auth testi: gateway'i atlayan doğrudan backend isteği (header enjekte edilmiş) reddedilmeli; yalnız gateway üzerinden gelen kimliğe güvenilmeli.",
+  "Rate limit testi: tier kotası aşıldığında 429 dönmeli ve sayaç paylaşılan store'da tutarlı olmalı (çok-instance).",
+  "OpenAPI contract testi: yayınlanan endpoint spec'le uyumlu yanıt vermeli; spec sürüklenirse (drift) test kırılmalı.",
+  "API key testi: sk_test_ anahtarı canlı kaynağa erişememeli; key_hash eşleşmesi ve last_used güncellemesi doğrulanmalı."
+ ]
+}

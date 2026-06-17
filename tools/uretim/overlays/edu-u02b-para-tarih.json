@@ -1,0 +1,45 @@
+{
+ "featureDefs": [
+  {
+   "name": "Decimal para tipi zorunluluğu",
+   "desc": "Para numeric(18,2)/numeric(18,4) ile tutulur, float/real/double yasaktır; 0.1+0.2 yaklaşıklığı para hattından çıkarılır.",
+   "critical": true
+  },
+  {
+   "name": "Belirli yuvarlama yönü",
+   "desc": "ROUND_HALF_UP açıkça seçilir; yuvarlama DB'ye bırakılmaz, aksi halde daireler arası kuruş farkı doğar.",
+   "critical": true
+  },
+  {
+   "name": "UTC saklama + yerel gösterim",
+   "desc": "Sunucu saati UTC, kolon timestamptz; yerel saate çeviri yalnız frontend gösteriminde (Intl) yapılır.",
+   "critical": true
+  },
+  {
+   "name": "Para birimi ayrı kolon",
+   "desc": "currency char(3) ISO 4217 ayrı kolonda tutulur; tutarın yanına 'TL' string'i yapıştırılmaz.",
+   "critical": false
+  },
+  {
+   "name": "Veri-tablolu tatil takvimi",
+   "desc": "Tatil günleri (tarih + tatil_adı + ülke) ayrı tabloda; kod içinde sabit liste tutulmaz, her yıl değişen TR takvimi veriyle güncellenir.",
+   "critical": false
+  }
+ ],
+ "securityNotes": [
+  "Para float'ta tutulursa her işlemde kuruş sapması birikir; 1000 müşterili sistemde yıllık gizli kayıp büyür ve bilanço denetimde tutmaz.",
+  "Yuvarlama yönü belirlenmezse aynı tutar farklı satırlarda farklı yuvarlanır (562.50 vs 562.49) ve kullanıcı itirazı doğar.",
+  "Zaman timestamp (tz'siz) tutulursa DST geçişinde randevu/işlem saatleri kayar; timestamptz ile offset bilgisi korunur."
+ ],
+ "perfNotes": {
+  "code": "numeric kolonlar Decimal'in DB karşılığıdır; timestamptz UTC + offset tutar, gösterim katmanı Intl.DateTimeFormat/NumberFormat ile yerelleştirir.",
+  "perf": "Tatil ve kur sorguları ayrı tablodan tarih indeksiyle çözülür; sabit-liste yeniden derleme yerine veri güncellemesi yeterli olur."
+ },
+ "testNotes": [
+  "0.10 + 0.20 toplamının tam 0.30 verdiği (Decimal) ve float sonucunun (0.30000000000000004) reddedildiği doğrulanmalı.",
+  "Bölünen tutarın (4500/8) tüm paylarda ROUND_HALF_UP ile tutarlı yuvarlandığı ve toplamın korunduğu test edilmeli.",
+  "DST sınırındaki bir an (Mart 03:00 yok / Ekim 03:00 iki kez) UTC'ye çevrildiğinde tek anlamlı değere çözülmeli.",
+  "23:55'te girilen ve 00:05'te tamamlanan işlemin hangi güne ait olduğunun UTC + yetki alanı kuralıyla deterministik belirlendiği kontrol edilmeli.",
+  "Form '100,00' girdisinin backend'de Decimal('100.00') olarak alındığı doğrulanmalı."
+ ]
+}

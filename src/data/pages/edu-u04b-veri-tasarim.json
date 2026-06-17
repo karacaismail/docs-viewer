@@ -796,7 +796,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Öğrenme hedefi",
+      "term": "Normalleştirme (1NF/2NF/3NF)",
       "definition": [
        {
         "type": "strong",
@@ -804,16 +804,42 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin okuyucuya kazandırdığı bağlayıcı yetkinlik."
+        "text": "Her bilgi tek yerde durur: 1NF her kolonda tek değer (virgüllü liste yasak), 2NF her sütun birincil anahtarın tamamına bağlı, 3NF transitive bağımlılık yok. İsim değişince tek nokta güncellenir, tutarsızlık olmaz."
        }
       ]
      },
      {
-      "term": "Uygulanabilir çıktı",
+      "term": "Foreign key bütünlüğü",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Çocuk tablodaki _id kolonu başka tabloyu işaret eder (siparis.musteri_id → musteri.id). Veritabanı 'olmayan kayda referans'ı reddeder; bütünlüğü uygulama değil DB korur (ON DELETE RESTRICT)."
+       }
+      ]
+     },
+     {
+      "term": "Junction tablo (many-to-many)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Çok-çoklu ilişki üçüncü bir tabloyla kurulur: siparis_kalem(siparis_id, urun_id, adet, fiyat). Bileşik anahtar (siparis_id, urun_id) tekildir. 'Bu ürün hangi siparişlerde?' sorusu tek sorguyla cevaplanır."
+       }
+      ]
+     },
+     {
+      "term": "Kontrollü denormalize (CQRS okuma)",
       "definition": [
        {
         "type": "text",
-        "text": "Dersin sonunda üretilen çalıştırılabilir/denetlenebilir eser."
+        "text": "Temel veri her zaman normalleştirilmiştir; denormalize yalnız okuma yavaşladıysa, cache çözmediyse ve outbox/event ile güncel tutuluyorsa caizdir. CQRS okuma projeksiyonu son çaredir."
        }
       ]
      }
@@ -1037,15 +1063,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Çok-çoklu sorgu junction tablodan tek SELECT ile çözülür: SELECT siparis_id FROM siparis_kalem WHERE urun_id = ?; virgüllü liste bu sorguyu imkânsız kılardı."
        }
       ]
      },
@@ -1063,15 +1081,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "100M satırlı tabloda JOIN p99 > 500ms'ye çıkarsa denormalize değil önce index ve cache denenir; çözmezse CQRS okuma projeksiyonu eklenir, projeksiyon outbox/event ile senkron tutulur (stale kalmaz)."
        }
       ]
      },
@@ -1507,6 +1517,18 @@
     ]
    },
    {
+    "id": "block-edu-u04b-veri-tasarim-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "FK constraint testi: olmayan musteri_id ile sipariş INSERT'i DB tarafından reddedilmeli (uygulama kontrolüne güvenme). ON DELETE RESTRICT testi: siparişi olan müşteri silinmeye çalışıldığında engellenmeli; önce çocuk kayıtlar taşınmalı. Bileşik anahtar testi: aynı (siparis_id, urun_id) ikilisi ikinci kez eklenememe (unique violation) assert et. Denormalize tutarlılık testi: kaynak değiştiğinde okuma projeksiyonu event ile güncellenmeli; stale projeksiyon hata olarak yakalanmalı."
+     }
+    ]
+   },
+   {
     "id": "block-edu-u04b-veri-tasarim-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1525,7 +1547,7 @@
        },
        {
         "type": "text",
-        "text": "Dolaylı — bu sayfa kararı/bilgiyi tanımlar; entegrasyon onu uygulayan birimlerde gerçekleşir."
+        "text": "Eğitim sayfası; ilişki türü kararı ArcheType tanımlanırken (k-schema) verilir. Sayfa o kararın doğru yapılması için normalleştirme/FK/junction disiplinini öğretir."
        }
       ]
      },
@@ -1552,7 +1574,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "ArcheType tanımında ilişki türü seçilir (1:1, 1:N, N:N); many-to-many için junction tablo k-schema engine tarafından otomatik üretilir."
        }
       ]
      },
@@ -1561,7 +1583,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Denormalize okuma projeksiyonları scale-projections katmanında tutulur; temel normalleştirilmiş veri modüllerde değişmez kalır."
        }
       ]
      },

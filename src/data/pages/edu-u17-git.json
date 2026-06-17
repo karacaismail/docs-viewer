@@ -820,7 +820,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Öğrenme hedefi",
+      "term": "Trunk-based dal stratejisi",
       "definition": [
        {
         "type": "strong",
@@ -828,16 +828,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin okuyucuya kazandırdığı bağlayıcı yetkinlik."
+        "text": "Tek uzun-ömürlü dal (main) + saatler/günler ömürlü feature dalları; yarım iş feature-flag arkasında main'e merge edilir, long-lived branch yoktur."
        }
       ]
      },
      {
-      "term": "Uygulanabilir çıktı",
+      "term": "Conventional Commits → otomatik semver",
       "definition": [
        {
         "type": "text",
-        "text": "Dersin sonunda üretilen çalıştırılabilir/denetlenebilir eser."
+        "text": "feat/fix/BREAKING CHANGE prefix'leri commit'ten changelog ve sürüm bump'ını deterministik üretir; mesaj formatı sözleşmedir."
+       }
+      ]
+     },
+     {
+      "term": "Merge kapısı: yeşil CI + bağımsız reviewer",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "PR'da deterministik test + lint + tsc geçmeden ve ayrı bir gözden geçiren onaylamadan main'e merge yok; tek kişi de kendi PR'ını review akışından geçirir."
+       }
+      ]
+     },
+     {
+      "term": "Pre-commit hook zinciri",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Husky + lint-staged ile her commit öncesi ESLint + Prettier + tip kontrolü; bozuk kod commit yüzeyine giremez."
        }
       ]
      }
@@ -1025,15 +1047,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "main'e direkt push, gözden geçirilmemiş kodu üretime taşıma yüzeyidir; branch protection (review + yeşil CI zorunlu) bu yüzeyi kapatır. Conventional commit BREAKING CHANGE işareti yalnız changelog için değil, kırıcı bir API değişikliğinin sürüm sözleşmesine yansıması için kritiktir — atlanırsa tüketici sessizce kırılır. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1528,6 +1542,18 @@
        }
       ]
      ]
+    ]
+   },
+   {
+    "id": "block-edu-u17-git-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Git disiplini kendisi test üretmez ama testin kapı olduğu yeri tanımlar: PR'da koşan suite deterministik olmalı (flaky test merge'i kilitler, güveni çürütür). Conventional commit prefix'i ile semver bump'ı arasındaki eşleme bir kontrat testidir: 'feat' MINOR, 'fix' PATCH, 'BREAKING CHANGE' MAJOR üretmeli; release otomasyonu bu eşlemeyi doğrulamadan tag atmamalı. AI ajan üretimi için kural: ajanın açtığı feature dalı, PR açıklaması (ne/neden/test sonucu) ve yeşil CI olmadan merge edilmez — insan yargısı bu kapıda devrededir."
+     }
     ]
    },
    {

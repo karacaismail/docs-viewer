@@ -1754,7 +1754,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Yönetici özeti — birincil yetenek",
+      "term": "6 mimari katman + 8 granülerlik ekseni",
       "definition": [
        {
         "type": "strong",
@@ -1762,25 +1762,42 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "Atomik Tip → Kernel → Scale → In-tree Core → Stack → App katman yığını; iş kırılımı ayrı eksen (Dağ→Atom, fibonacci SP). Her katman yalnız altındakini bilir; çağrı yönü statik kontrol edilir."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "ArcheType diferansiyatörü",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Metadata-driven varlık tanımı: kod yazmadan tablo + form + API üretimi. Her Surface bir+ ArcheType projeksiyonu; her ArcheType bir Domain'e ait. Üretim hattının asıl çıktısı."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "Dört kontrol düzlemi",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "Ops/DevOps, Developer-admin, Müşteri-admin, Public/Frontpages. ArcheType Boyut 3'te müşteri prompt'uyla; modül Boyut 2'de geliştiricice üretilir — üretim kapısı düzleme göre farklılaşır."
+       }
+      ]
+     },
+     {
+      "term": "Capability composition (enum değil flag)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "İş modelleri additif konfigürasyon; yıkıcı migration yerine yetenek açma. Aynı tenant aynı anda çok modlu olabilir — 50 yıl yaşam hedefinin somut karşılığı."
        }
       ]
      }
@@ -1968,15 +1985,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Katman çağrı yönü tek-yön: alt katmana atlamak (ör. Büyük Taş → Atom) yasak ve otomatik kontrol edilir; ihlal güvenlik sınırı ihlalidir. 6-eksen orthogonal model (Locale ⊥ Jurisdiction ⊥ Currency ⊥ Tax ⊥ Timezone ⊥ Data Residency) + Policy Resolver: politika koddan ayrı; hepsini locale'a bağlamak klasik güvenlik/uyum hatası. Resolver kurmak %50; operasyonel sertleştirme (backfill + cache + failure mode + 4-göz config + decision-trace) ve global kimlik modelleri olmadan prod incident garanti. Tenancy kernel'de birinci sınıf; çok-kiracı izolasyon her stack için varsayılan. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -2474,6 +2483,18 @@
     ]
    },
    {
+    "id": "block-overview-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Yeni özellik için katman testi: çağrı yönü ihlali (alt katmana atlama) CI'da reddedilir. Granülerlik ataması test edilir: her iş kalemi atomik bir granülerlik seviyesine oturur, SP fibonacci ile otomatik atanır (Atom=1 … Dağ=34+). Capability flag'leri additif olduğundan, mevcut tenant davranışı yeni yetenek açıldığında regresyona uğramamalı — geriye dönük uyum testi şart."
+     }
+    ]
+   },
+   {
     "id": "block-overview-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -2492,7 +2513,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Bu master harita üretim hattının çerçeve sözleşmesidir: yeni bir özelliğin hangi katmana ve hangi granülerliğe oturacağını belirler, dolayısıyla hangi güvenlik/test/entegrasyon kapısının bağlandığını saptar."
        }
       ]
      },
@@ -2501,16 +2522,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Dar 6 modül (Schema/ArcheType, Identity, Authz, Tenancy, Event Bus + Polyglot, Module Registry); ölçek-uyumu kernel'e primitive olarak girer, policy değil."
        }
       ]
      },
@@ -2519,7 +2531,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "In-tree core 12 ortak yetenek (Party, File, Workflow, Notification, Audit, Search, Calendar, Money, i18n, Realtime, Settings, Migration); swappable disiplinle."
        }
       ]
      },
@@ -2528,7 +2540,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Layer-2 stack'leri iş kurallarını taşır; TR uyumu first-class. Feed fan-out gibi politika kararları daima modül katmanında."
        }
       ]
      },
@@ -2537,7 +2549,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Layer-3 community marketplace asıl ürünleri taşır; tek panel, varsayılan entegre."
        }
       ]
      }

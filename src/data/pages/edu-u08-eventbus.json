@@ -641,7 +641,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Öğrenme hedefi",
+      "term": "Transactional outbox: dual-write tuzağının çözümü",
       "definition": [
        {
         "type": "strong",
@@ -649,16 +649,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin okuyucuya kazandırdığı bağlayıcı yetkinlik."
+        "text": "İş kaydı (aggregate satırı) ile yayınlanacak olay aynı DB transaction'ında yazılır; ayrı bir worker outbox satırlarını mesaj broker'ına iletir. Böylece 'DB yazıldı ama olay kayboldu' tutarsızlığı imkânsızlaşır."
        }
       ]
      },
      {
-      "term": "Uygulanabilir çıktı",
+      "term": "Idempotent consumer + at-least-once teslimat",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Teslimat en-az-bir-kez olduğundan tüketici aynı olayı iki kez alabilir; idempotency_key ile 'bu olayı gördüm mü' kontrolü çift işlemeyi engeller. Pratikte '"
+       },
+       {
+        "type": "term",
+        "text": "at-least-once",
+        "termId": "term-at-least-once-edu-u08-eventbus"
+       },
+       {
+        "type": "text",
+        "text": " + idempotent' = exactly-once processing verir."
+       }
+      ]
+     },
+     {
+      "term": "DLQ + retry bütçesi disiplini",
       "definition": [
        {
         "type": "text",
-        "text": "Dersin sonunda üretilen çalıştırılabilir/denetlenebilir eser."
+        "text": "İşlenemeyen olay sınırlı kez (3-5) exponential backoff + jitter ile yeniden denenir; hâlâ başarısızsa Dead Letter Queue'ya düşer ve alarm üretir. Sonsuz retry yerine insan incelemesi; DLQ'ya bakılmazsa sessiz veri kaybı."
        }
       ]
      }
@@ -846,15 +868,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Outbox payload'ı PII içerebilir; tenant_id zorunlu ve RLS ile filtrelenir, relay worker komşu-tenant satırını okuyamaz. Tüketici idempotency_key kontrolü olmadan retry'da çift işleme yapar (ör. iki kez fatura/çift tahsilat) — at-least-once'ın güvenlik gerekçesi budur. DLQ'daki zehirli mesaj (poison message) sonsuz retry ile worker havuzunu kilitleyebilir; sınırlı retry + DLQ + alarm bu DoS yüzeyini kapatır. Dış tüketiciye giden olay yalnız o tüketicinin görmeye yetkili olduğu alanları taşımalı; olay payload'ı en-az-yetki ilkesiyle daraltılır. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -882,15 +896,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Relay sorgusu kısmi indeks (status='pending') + FOR UPDATE SKIP LOCKED ile contention'sız paralel worker; retry exponential backoff + jitter (min(60*2^attempts, 3600)) ile thundering-herd engellenir."
        }
       ]
      },
@@ -908,15 +914,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Outbox tablosu hızla büyür; published satırlar belirli süre sonra archive/partition'a taşınır. Consumer lag izlenir — bir tüketici düşerse outbox sayesinde mesaj kaybolmaz, yalnız geç işlenir, restart'ta lag erir."
        }
       ]
      },
@@ -1212,7 +1210,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Event Bus & Outbox",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Event Bus & Outbox\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: order.completed\ncondition:\n  all:\n    - actor.capability >= \"order.write\"\n    - tenant_scoped\n    - not loop_detected\naction:\n  - outbox.append: order.completed   # aggregate write ile AYNI transaction\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:order:{order_id}:completed\"\n  external_effects: relayed_async   # commit sonrası relay worker iletir",
     "copyEnabled": true
    },
    {
@@ -1352,6 +1350,32 @@
     ]
    },
    {
+    "id": "block-edu-u08-eventbus-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "term",
+      "text": "Dual-write",
+      "termId": "term-dual-write-edu-u08-eventbus"
+     },
+     {
+      "type": "text",
+      "text": " testi: publish/relay başarısızken aggregate write commit oldu mu — outbox satırı 'pending' kalmalı, olay kaybolmamalı. Idempotency: aynı olay iki kez teslim edildiğinde tüketici tek kez işler (idempotency_key). SKIP LOCKED: iki paralel relay aynı pending satırı çift almaz. DLQ akışı: N başarısız denemeden sonra olay DLQ'ya düşer ve alarm üretir; replay sonrası bir kez işlenir. Event vs "
+     },
+     {
+      "type": "term",
+      "text": "Command",
+      "termId": "term-command-edu-u08-eventbus"
+     },
+     {
+      "type": "text",
+      "text": " ayrımı: yayınlanan mesaj geçmiş-zaman olay (order.completed), gelecek-zaman komut (send-email) değil — sözleşme testiyle doğrulanır."
+     }
+    ]
+   },
+   {
     "id": "block-edu-u08-eventbus-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1370,7 +1394,7 @@
        },
        {
         "type": "text",
-        "text": "Dolaylı — bu sayfa kararı/bilgiyi tanımlar; entegrasyon onu uygulayan birimlerde gerçekleşir."
+        "text": "Bu sayfa ürün modülü değil; modüller arası gevşek bağın (Contract sınırı) neden event bus + outbox ile kurulduğunu öğreten ileri eğitim ünitesidir. Pratiğe ArcheType save pipeline'ının otomatik outbox üretmesi olarak bağlanır."
        }
       ]
      },
@@ -1379,16 +1403,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Çekirdek save pipeline'ı her aggregate write'ında aynı transaction içinde outbox satırını da yazar; modül geliştirici outbox kodu yazmaz, her write otomatik outbox-aware olur. Event sözleşmesi (geçmiş zaman, tek anlam) çekirdekçe tiplenir."
        }
       ]
      },
@@ -1397,7 +1412,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Outbox tablosu tenant_id + aggregate_type/id + payload + status taşır; relay worker 'pending' satırları FOR UPDATE SKIP LOCKED ile çeker, yayınlar, sent işaretler. Retry/backoff ve DLQ politikası core disiplinine bağlıdır."
        }
       ]
      },
@@ -1406,7 +1421,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Modüller birbirini doğrudan çağırmaz; 'order.completed' yayınlar, ilgilenenler dinler. Yeni bir tüketici (kargo, fatura, puan) eklemek üretici modül kodunu hiç değiştirmez — bağ kopmaz ama zayıflar."
        }
       ]
      },
@@ -1415,7 +1430,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "scale-webhook relay, arama indexer ve l1-notification worker'ları aynı outbox'ı tüketir; uygulamalar arası olay yayını kayıp veya çift yayın olmadan dağılır."
        }
       ]
      }

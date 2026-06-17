@@ -535,7 +535,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Politika yüzeyi",
+      "term": "Tarih-versiyon + pinleme",
       "definition": [
        {
         "type": "strong",
@@ -543,16 +543,42 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı kural/kapı; deny-by-default ve kanıtlanabilir uygulama."
+        "text": "Her sürüm bir tarih etiketiyle adlandırılır (2026-06-01); müşteri hesabı ilk istekte o sürüme pinlenir ve değiştirmedikçe orada kalır — major/minor numarasından daha net bir sözleşme."
        }
       ]
      },
      {
-      "term": "Kapı koşulu",
+      "term": "Response transform katmanı",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Çekirdek yalnız en güncel sürümü üretir; dönüşüm katmanı yanıtı her müşterinin pin'lendiği eski sürüme çevirir. Çekirdek temiz tek-sürüm kalır, eskiler katmanda yaşar."
+       }
+      ]
+     },
+     {
+      "term": "İsimli kapılar (named gates)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Sürümler arası fark 'if v < ...' koşuluyla değil, isimli soyut modül olarak ifade edilir (Stripe deseni); yıllar içinde okunabilirliği korur."
+       }
+      ]
+     },
+     {
+      "term": "ChangeSet ile ArcheType evrimi",
       "definition": [
        {
         "type": "text",
-        "text": "İhlalde işi reddeden deterministik kontrol (CI veya runtime)."
+        "text": "ArcheType değişimi ChangeSet'le yapılır; deprecate_field yıkıcı değildir (geri-açılabilir), remove_field yıkıcıdır → soft-delete + onay. Her değişiklik audit'lenir ve sürümlenir."
        }
       ]
      }
@@ -740,15 +766,16 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
+      "text": "Her sürüm değişikliği audit'lenir ("
      },
      {
-      "type": "code",
-      "text": "pii"
+      "type": "ref",
+      "text": "l1-audit",
+      "refId": "l1-audit"
      },
      {
       "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "); pinli sürüm + audit izi, 'hangi müşteri hangi sözleşmeyle çalışıyordu' sorusunu geriye dönük açıklanabilir kılar — uyum ve denetim yüzeyi. Çekirdeği 'if v < 2025' zincirlerinden arındırmak yalnız okunabilirlik değil güvenlik kazancıdır: dallanma azaldıkça gözden kaçan kontrol yolu (yetki/scope atlanan eski dal) yüzeyi de daralır. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -776,15 +803,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "framework/contracts/response_transforms/*.py — her sürüm değişikliği bir dönüşüm modülü; çekirdek tek-sürüm yazar"
        }
       ]
      },
@@ -802,15 +821,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Transform katmanı yanıt yolunda çalışır; sürüm sayısı arttıkça zincir uzar — pin'lenmiş sürüme tek-atlama (çok-adımlı zincir yerine doğrudan hedefe) dönüşüm, gecikmeyi sürüm sayısından bağımsız tutmanın yoludur."
        }
       ]
      },
@@ -1243,6 +1254,18 @@
        }
       ]
      ]
+    ]
+   },
+   {
+    "id": "block-sus-versioning-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Sürdürülebilirlik kapısı bir uyumluluk testidir: eski bir tarih-sürümüne pinli istemcinin yanıtı, çekirdek evrilmiş olsa bile o sürümün şemasıyla birebir eşleşmeli — 2011 entegrasyonunun 2025'te çalışması bu testle güvenceye alınır. Her response_transform modülü için golden fixture mantığı geçerlidir: modern çekirdek yanıtı + hedef sürüm = beklenen eski yanıt; transform bu eşlemeyi bozarsa kapı kırmızı kalmalı. remove_field'in yıkıcılığı bir kapıyla zorlanır: alan kaldırma soft-delete + açık onay olmadan geçmemeli; deprecate_field'in geri-açılabilirliği ise regresyon testiyle korunmalı."
+     }
     ]
    },
    {

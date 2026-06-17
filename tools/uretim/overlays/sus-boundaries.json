@@ -1,0 +1,28 @@
+{
+ "featureDefs": [
+  {
+   "name": "import-linter katman zinciri kapısı",
+   "desc": "kernel < scale < core < modules katman zinciri import-linter contract'ıyla (forbidden/independence/layers) zorlatılır; module'ler birbirinin internal'ına dokunamaz (privacy contract). CI'da lint-imports koşar, ihlalde exit code 1 ile PR bloke olur — sınırı insan değil makine korur.",
+   "critical": true
+  },
+  {
+   "name": "Capability flag = boundary disiplini",
+   "desc": "E-ticaret modelleri (b2c/b2b/marketplace/dropship/subscription/social) ayrı capability flag boundary'leridir; her capability kendi modül sınırına sahiptir ve çapraz iletişim yalnız event bus üstündendir. Bir capability kırılsa diğeri çalışmaya devam eder.",
+   "critical": false
+  }
+ ],
+ "moduleUsage": [],
+ "securityNotes": [
+  "Privacy contract bir güvenlik sınırıdır: module'ün başka bir module'ün internal'ına (yetki/tenant kontrolünü atlayarak) erişmesi makine tarafından engellenir; yetki yüzeyi yalnız public API'ye kapsanır.",
+  "Makine-zorlamalı sınır 'sosyal sözleşme çürümesi'ni kapatır: baskı altında kısayol bulan veya sınırı bilmeyen yeni geliştirici, güvenlik-kritik internal'a sessizce bağımlılık ekleyemez — CI reddeder."
+ ],
+ "perfNotes": {
+  "code": "lint-imports statik analizdir; runtime maliyeti yok, yalnız CI'da koşar. Contract kök dizindeki .importlinter dosyasında bildirimseldir.",
+  "perf": "Sınır ilk Layer 2 module'ü yazılmadan konmalı: sonradan eklemek refactor maliyetini patlatır. Erken konulan turnike, geç gelen O(n) bağımlılık temizliğini önler."
+ },
+ "testNotes": [
+  "Contract'ı mimar yazar, CI uygular: sınır ihlali bir PR yorumu/ricası değil, deterministik bir build fail'idir — 'izin verir misin' tartışması ortadan kalkar.",
+  "Yeni gelen geliştirici sınırı 1 dakikada öğrenir çünkü ihlal anında CI hatırlatır; dokümantasyon değil, kapı öğretir.",
+  "s-ecommerce-models capability flag boundary'sinin en zengin örneğidir: her capability'nin kendi sınırında izole koştuğu ve çapraz çağrının yalnız event bus üstünden geçtiği test edilmeli."
+ ]
+}

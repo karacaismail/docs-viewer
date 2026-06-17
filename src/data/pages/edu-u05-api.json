@@ -1173,7 +1173,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Öğrenme hedefi",
+      "term": "Method-eylem eşlemesi",
       "definition": [
        {
         "type": "strong",
@@ -1181,16 +1181,42 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin okuyucuya kazandırdığı bağlayıcı yetkinlik."
+        "text": "GET oku / POST oluştur / PUT tam değiştir / PATCH kısmi / DELETE sil — URL kaynağı, method eylemi taşır; doğru method doğru cache, retry ve log davranışını belirler."
        }
       ]
      },
      {
-      "term": "Uygulanabilir çıktı",
+      "term": "Idempotency-Key ile güvenli retry",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "POST tabiatı gereği idempotent değildir; istemci ürettiği unique key ile aynı isteği tekrarlasa da sunucu ikinciyi yutar — ağ koparsa kart bir kez çekilir."
+       }
+      ]
+     },
+     {
+      "term": "Status-code sözleşmesi",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "200/201/204/400/401/403/404/409/422/429/500 — frontend hangi UX'i göstereceğini (düzelt, giriş yap, yetki yok, merge ekranı, bekle) status'a göre seçer."
+       }
+      ]
+     },
+     {
+      "term": "REST + GraphQL ikiz üretimi",
       "definition": [
        {
         "type": "text",
-        "text": "Dersin sonunda üretilen çalıştırılabilir/denetlenebilir eser."
+        "text": "ArcheType tanımlandığında framework hem REST hem GraphQL ucunu otomatik üretir; istemci kullanım pattern'ine göre seçer, geliştirici seçmez."
        }
       ]
      }
@@ -1378,15 +1404,16 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
+      "text": "401 ve 403 farkı bir güvenlik ayrımıdır: 401 kimlik yok (authentication), 403 yetki yok (authorization/RBAC); ikisini karıştırmak yetki sızıntısına veya yanlış UX'e yol açar. Idempotency-Key parasal POST'larda çift-tahsilatı önler ama key tahmin edilebilirse saldırgan başkasının isteğini eşleştirmeye çalışabilir; key istemci-üretimi, yeterince entropili ve aktöre bağlı olmalı. "
      },
      {
-      "type": "code",
-      "text": "pii"
+      "type": "term",
+      "text": "CORS",
+      "termId": "term-cors-edu-u05-api"
      },
      {
       "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": " bir tarayıcı güvenlik kuralıdır: farklı origin'den API çağrısı için sunucu açıkça izin vermeli; 429 + Retry-After ise abuse/aşırı-yük karşısında rate-limit savunmasıdır. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1744,7 +1771,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — API: REST ve GraphQL — pratik anlatım",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — API: REST ve GraphQL — pratik anlatım\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: http.post\n  path: /api/orders\ncondition:\n  all:\n    - request.has_idempotency_key\n    - not seen(request.idempotency_key)\n    - actor.capability >= \"order.create\"\naction:\n  - emit: order.created\n  - respond: 201 Created\nguards:\n  max_depth: 6\n  idempotency_key: \"{request.idempotency_key}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1881,6 +1908,18 @@
        }
       ]
      ]
+    ]
+   },
+   {
+    "id": "block-edu-u05-api-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Idempotency golden test: aynı key ile iki POST → tek transaction, ikinci istek birinci cevabı aynen döner; ağ-kopması retry senaryosu simüle edilmeli. Method idempotency invariant'i: GET/PUT/DELETE tekrar-güvenli, PATCH/POST varsayılan değil — her endpoint için bu işaretin doğru olduğunu doğrula. Status-code sözleşme testi: validation hatası 422 (field-level), eski sürüm yazımı 409 (optimistic concurrency), rate-limit 429 (Retry-After header dolu) döndüğünü kanıtla."
+     }
     ]
    },
    {

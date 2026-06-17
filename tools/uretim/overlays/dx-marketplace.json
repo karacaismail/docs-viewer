@@ -1,0 +1,35 @@
+{
+ "featureDefs": [
+  {
+   "name": "Üç-artefakt yayın hattı (app/module/theme)",
+   "desc": "SDK'nın ürettiği üç artefaktı dağıtır: app (core + ilk ArcheType'lar), module (özel ArcheType paketi) ve theme (token seti + Surface şablonları). Her artefakt semver'lenir, izin manifesti'yle yayınlanır ve hedefe (backend/web) göre paketlenir.",
+   "critical": true
+  },
+  {
+   "name": "Semver + API-version sözleşmesi",
+   "desc": "Framework ve her module semver alır; hook contract'ı api_version taşır (örn. '1.0'). Kararsız hook'lar 'experimental' kanalda breaking change yapabilir, production uyarısı verir; deprecation 2 minor sonra kaldırılır, ara dönemde uyarı log'lanır.",
+   "critical": true
+  },
+  {
+   "name": "WASM/Extism capability sandbox",
+   "desc": "Marketplace'ten gelen üçüncü-parti module untrusted kabul edilir ve WASM/Extism runtime'da deny-by-default capability sandbox'ında koşar: 'yalnız şu ArcheType'ı okur, network yok, disk yok' diye kısıtlanır. First-party module sidecar/embedded olabilir, third-party için WASM zorunludur.",
+   "critical": true
+  }
+ ],
+ "moduleUsage": [],
+ "securityNotes": [
+  "Yayın öncesi güvenlik review + sandbox sertifikasyonu kapısı (LandX O03): üçüncü-parti module güvenlik denetimi, imzalı bundle ve supply-chain doğrulamasından geçmeden yayına çıkamaz — marketplace'in kara kutusu budur.",
+  "Capability manifesti deny-by-default'tur: kurulum öncesi izinler beyan edilir, tenant admin açık consent verir; theme yalnız sunum (token/şablon) izniyle sınırlıdır, iş mantığına erişemez.",
+  "WASM sandbox supply-chain saldırısını sınırlar: kötücül bir module ağ/disk yokluğu nedeniyle veri sızdıramaz; capability'si yalnız beyan ettiği ArcheType yüzeyine kapsanır (en az yetki).",
+  "İmzalı bundle + supply-chain doğrulama, marketplace üzerinden tedarik zinciri zehirlenmesini (sahte/değiştirilmiş paket) engeller; imza tutmuyorsa kurulum reddedilir."
+ ],
+ "perfNotes": {
+  "code": "WASM runtime module'ü izole bellek alanında koşar; capability çağrıları host fonksiyonlarına köprülenir. Auto-update opsiyoneldir, breaking change'de manuel onaya düşer.",
+  "perf": "Sandbox izolasyonu native sidecar'a göre çağrı başına ek maliyet getirir; sık çağrılan first-party module'ler embedded/sidecar tutularak bu maliyetten kaçınılır, untrusted yük WASM'de izole edilir."
+ },
+ "testNotes": [
+  "Her yayın deny-by-default capability manifesti taşımalı ve kurulum öncesi beyan ettiği izinlerle koştuğu doğrulanmalı: manifestte olmayan bir capability'yi runtime'da çağıran module sertifikasyondan geçmez.",
+  "Semver/uyum aralığı testi: app/core/kernel sürüm aralığı dışına çıkan module kurulumu engellenmeli; experimental kanaldaki hook'un production'da uyarı ürettiği doğrulanmalı.",
+  "Theme'in iş mantığına dokunamadığı (yalnız token/Surface şablonu) negatif testle kanıtlanmalı."
+ ]
+}

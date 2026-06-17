@@ -253,7 +253,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Karar kapsamı",
+      "term": "Agent asla principal değil — kesişimle yetki",
       "definition": [
        {
         "type": "strong",
@@ -261,16 +261,42 @@
        },
        {
         "type": "text",
-        "text": "ADR'nin bağladığı invariant; alternatifler ve seçilen yön."
+        "text": "AI ajanın etkin yetkisi kullanıcı ∩ capability ∩ tool_scope ∩ aksiyon_riski kesişimidir, asla birleşim. Ajan kendi başına bir principal (yetki sahibi) değildir; yalnız çağıran kullanıcının sahip olduğu ve aracın izin verdiği aksiyonların ortak kümesini çağırabilir. Bu, OWASP excessive agency'nin üç kökünü (aşırı işlev, aşırı yetki, aşırı otonomi) tek noktadan kapatır."
        }
       ]
      },
      {
-      "term": "Uygulama etkisi",
+      "term": "Bağlayıcı aksiyon taksonomisi + DisableProtection yasağı",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Her aksiyon risk sınıfına göre taksonomilenir ve bu sınıf bağlayıcıdır. Koruma-kapatan aksiyonlar (RLS kapatma, PII maskeyi kaldırma, audit'i susturma, şema değiştirme) DisableProtection sınıfındadır ve hiçbir aktör/ajan için açılamaz. Korumalar kapatılamaz kuralı default ajan davranışının tabanıdır."
+       }
+      ]
+     },
+     {
+      "term": "Step-up: dış etkili/parasal/yıkıcı aksiyona out-of-band onay",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Dış etki yaratan, para hareketi içeren veya yıkıcı (geri-dönülemez) aksiyonlar için bant-dışı (out-of-band) insan onayı zorunludur. Ajan planlayabilir ama bu sınıf aksiyonu onay olmadan uygulayamaz; otonomi planlamayla sınırlı, uygulama capability-gated."
+       }
+      ]
+     },
+     {
+      "term": "AGENTS.md uzlaştırması: planla serbest, uygula kapılı",
       "definition": [
        {
         "type": "text",
-        "text": "Bu kararın kod/şema/test üzerindeki bağlayıcı sonucu."
+        "text": "AGENTS.md sözleşmesi planlamayı serbest bırakır, uygulamayı capability ile kapılar. Ajan keşif/öneri/plan üretebilir; gerçek mutasyon yalnız politika kapısı yetki verdiğinde gerçekleşir."
        }
       ]
      }
@@ -458,15 +484,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "OWASP excessive agency üç kökten (aşırı işlev, aşırı yetki, aşırı otonomi) kapanır: tool_scope işlevi, capability kesişimi yetkiyi, step-up otonomiyi sınırlar. Ajan asla principal değildir; daima çağıran kullanıcı kimliği altında ve onun yetkisinin alt-kümesiyle çalışır — yükseltilmiş bir 'servis hesabı' gibi davranamaz (confused-deputy önlenir). DisableProtection sınıfı (RLS kapatma, PII maske kaldırma, audit susturma, şema değiştirme) hiçbir aktör/ajan için açılamaz; korumalar tasarımca kapatılamaz. Dış etkili/parasal/yıkıcı aksiyon out-of-band step-up onayı ister; prompt-injection ile kandırılan bir ajan onay olmadan para gönderemez/veri silemez. Etkin yetki birleşim değil kesişimdir: kullanıcının olmadığı bir yetkiyi ajan capability'si veremez, ajanın olmadığı bir yetkiyi kullanıcı tek başına ajan üzerinden kullanamaz. Her tool çağrısı merkezî politika kapısından ve audit'ten geçer; ajan aksiyonları kullanıcı aksiyonlarıyla aynı denetim izine yazılır, denetçi sonradan okur. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -494,15 +512,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Politika kapısı her tool çağrısında effective_capability = user_caps ∩ tool_scope ∩ action_risk hesaplar; capability seti önbelleğe alınır, kesişim O(küçük-küme) maliyetiyle hot-path'te kalır."
        }
       ]
      },
@@ -520,15 +530,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Maliyet her tool çağrısına bir politika değerlendirmesi + capability bakımı eklemektir; kesişim küçük yetki kümeleri üzerinde olduğundan ucuzdur, step-up yalnız işaretli (dış etkili/parasal/yıkıcı) aksiyonlarda tetiklenir, sıcak yol yavaşlamaz."
        }
       ]
      },
@@ -824,7 +826,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — ADR-0015: Aksiyon Taksonomisi ve Agent Yetki Modeli",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — ADR-0015: Aksiyon Taksonomisi ve Agent Yetki Modeli\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: agent.action_requested\ncondition:\n  all:\n    - actor.is_agent == true\n    - effective_capability >= action.required_capability   # kullanici ∩ capability ∩ tool_scope ∩ aksiyon_riski\n    - action.class != \"DisableProtection\"\n    - tenant_scoped\n    - not loop_detected\naction:\n  - policy_gate.evaluate: action\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{actor}:{action_id}\"\n  external_effects: step_up_required   # dis etkili/parasal/yikici -> out-of-band onay\n  forbidden_classes: [\"DisableProtection\"]",
     "copyEnabled": true
    },
    {
@@ -964,6 +966,18 @@
     ]
    },
    {
+    "id": "block-adr-0015-aksiyon-taksonomisi-yetki-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Kesişim testi: kullanıcıda olmayan bir yetki ajan capability'sinde olsa bile etkin yetkiye dahil edilmez (birleşim değil kesişim). DisableProtection testi: RLS/PII/audit/şema kapatma aksiyonu hiçbir aktör/ajan için yetkilendirilemez, daima reddedilir. Step-up testi: dış etkili/parasal/yıkıcı aksiyon out-of-band onay olmadan uygulanmaz; onaysız çağrı 'beklemede/red' döner. Confused-deputy testi: ajan, çağıran kullanıcının yetmediği veriye kullanıcı kimliği altında bile erişemez (yetki tavanı kullanıcıdır). Prompt-injection senaryosu: kötü-niyetli talimat ajanı yıkıcı aksiyona yönlendirse de politika kapısı + step-up uygulamayı durdurur. AGENTS.md uzlaştırması: ajan planı serbest üretir ama capability-gated uygulama yetki olmadan mutasyon yapmaz."
+     }
+    ]
+   },
+   {
     "id": "block-adr-0015-aksiyon-taksonomisi-yetki-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -982,7 +996,7 @@
        },
        {
         "type": "text",
-        "text": "Dolaylı — bu sayfa kararı/bilgiyi tanımlar; entegrasyon onu uygulayan birimlerde gerçekleşir."
+        "text": "Bu sayfa bir ürün modülü değil; AI aksiyon yüzeyine yetki tavanı koyan ve default AI ajan davranışını tanımlayan bir geliştirme-adımı kararıdır (ADR). Pratiğe merkezî politika kapısı (sus-actions) ve yetkilendirme çekirdeği (kernel-authz) olarak bağlanır."
        }
       ]
      },
@@ -991,16 +1005,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Çekirdek (kernel-authz) etkin yetkiyi kullanıcı ∩ capability ∩ tool_scope ∩ aksiyon_riski olarak hesaplar; ajan bir principal olarak temsil edilmez, daima çağıran kullanıcının kimliği altında ve onun yetkisinin alt-kümesiyle çalışır (confused-deputy önlenir). DisableProtection sınıfı çekirdekçe reddedilir."
        }
       ]
      },
@@ -1009,7 +1014,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Aksiyon taksonomisi (sus-actions) her tipli aksiyona risk sınıfı ve gerekli capability atar; merkezî politika kapısı her tool çağrısında bu kesişimi zorlar. Step-up gereği (dış etki/parasal/yıkıcı) core tarafından işaretlenir ve out-of-band onay akışını tetikler."
        }
       ]
      },
@@ -1018,7 +1023,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Modüller aksiyonu tipli olarak tanımlar (serbest imperatif kod değil); ajan modülün açtığı aksiyonları yalnız capability-gated çağırır. Modül kendi koruma sınırını (RLS/PII/audit) kapatma yetkisi sunamaz."
        }
       ]
      },
@@ -1027,7 +1032,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Tüm dağıtımlarda aynı politika kapısı geçerlidir; ajan uygulamada kullanıcının görmediği/yetmediği veriye veya aksiyona kullanıcı kimliği altında bile erişemez, yetki tavanı uygulama bağımsızdır."
        }
       ]
      }

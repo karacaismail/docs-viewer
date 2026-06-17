@@ -1,0 +1,53 @@
+{
+ "featureDefs": [
+  {
+   "name": "Presigned PUT URL üretimi",
+   "desc": "Backend, 15 dk geçerli imzalı yükleme URL'i üretir; kısıt olarak max boyut ve content-type gömülür. Browser direkt object storage'a yükler, backend RAM'i akıştan tamamen çıkar.",
+   "critical": true
+  },
+  {
+   "name": "Sunucu-taraflı MIME doğrulama",
+   "desc": "Frontend'in bildirdiği content-type ve dosya uzantısı güvenilmez kabul edilir; backend magic-bytes ile gerçek tipi tespit eder (file --mime-type). evil.png.exe tuzağı bu katmanda kırılır.",
+   "critical": true
+  },
+  {
+   "name": "ClamAV virüs tarama işi",
+   "desc": "Yükleme tamamlanınca async worker dosyayı ClamAV ile tarar; clean değilse dosya silinir + olay loglanır. image_status temiz tarama bitene kadar 'ready' olmaz.",
+   "critical": true
+  },
+  {
+   "name": "Async optimize zinciri (sharp/FFmpeg)",
+   "desc": "Worker tarafında image resize/WebP dönüşümü (sharp) ve video HLS encode (FFmpeg). İstek yolunu bloke etmez; ayrı worker pool, sonuç SSE ile bildirilir.",
+   "critical": false
+  },
+  {
+   "name": "Storage tier yaşam döngüsü",
+   "desc": "Hot/warm/cold tier geçişi erişim yaşına göre otomatik (30/90 gün). Maliyet politikası object storage lifecycle kuralı olarak tanımlanır.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — dosya yükleme tek bir l1-file modülü değil; presigned URL üretimi, webhook alımı ve worker zinciri kernel + scale yüzeylerini kullanır.",
+  "kernel": "Authz (presigned URL yalnız upload:write capability'si olana üretilir), tenancy (dosya metadata + object key tenant-scoped), bus (upload-done olayı virüs tarama + optimize işlerini tetikler).",
+  "core": "Contract'a file-field tipi; tip→validation (max boyut, izinli MIME seti) deklaratif tanımdan türetilir.",
+  "modules": "scale-webhook (S3 upload-done geri çağrısı), cc-security (antivirüs + MIME politikası), l1-file (metadata + arama indeksi).",
+  "apps": "Belge/foto yükleyen her App presigned URL endpoint'ini tüketir; ham dosyayı backend'e POST etmez."
+ },
+ "ecaExample": "trigger:\n  event: storage.upload_completed\ncondition:\n  all:\n    - object.size <= field.max_bytes\n    - object.mime in field.allowed_mime\naction:\n  - persist: file_metadata\n  - enqueue: clamav_scan\n  - enqueue: image_optimize\nguards:\n  idempotency_key: \"upload:{object_key}:{etag}\"\n  external_effects: scan_then_serve\n  on_scan_fail: delete_and_alert",
+ "securityNotes": [
+  "Presigned URL kısıtları sunucuda gömülür (content-length-range + content-type); böylece client URL'i ele geçirse bile 50MB üstü veya izinsiz tip yükleyemez.",
+  "İçerik tipi tespiti magic-bytes ile yapılır, uzantı ve client-MIME asla güvenilmez; double-extension (evil.png.exe) ve polyglot dosyalar bu katmanda reddedilir.",
+  "Tarama bitene kadar dosya servis edilmez (scan-then-serve); clean olmayan dosya silinir, kullanıcıya kötü amaçlı içerik servis etme sorumluluğu doğmaz.",
+  "Object key tenant-scoped; bir tenant'ın imzalı URL'i başka tenant'ın namespace'ine yazamaz, path-traversal anahtar üretiminde engellenir."
+ ],
+ "perfNotes": {
+  "code": "Yükleme istek yolundan tamamen çıkar: backend yalnız imza üretir (<100ms) ve metadata yazar; tarama/optimize ayrı worker pool'da async koşar.",
+  "perf": "Backend RAM kullanımı dosya boyutundan bağımsız sabit kalır; eşzamanlı büyük yüklemeler OOM üretmez. FFmpeg encode CPU-ağır olduğu için dedicated pool ve eşzamanlılık limiti şart."
+ },
+ "testNotes": [
+  "Presigned URL ile max_bytes üstü PUT denemesi storage tarafından 400 ile reddedilmeli.",
+  "Uzantısı .png ama magic-bytes'ı executable olan dosya MIME doğrulamada reddedilmeli.",
+  "ClamAV pozitif (EICAR test dosyası) -> dosya silinmeli + image_status 'rejected', servis edilmemeli.",
+  "Webhook idempotency: aynı object_key + etag için iki kez upload-done gelirse metadata bir kez yazılmalı, optimize bir kez kuyruğa girmeli."
+ ]
+}

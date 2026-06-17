@@ -1,0 +1,22 @@
+{
+ "integration": {
+  "shouldIntegrate": "Hayır — bu bir eğitim ünitesidir (Ünite 02), çalışan kod değil. Atomik tiplerden önceki temeli öğretir: bit/byte/karakter, scalar/composite ayrımı, validator+coercion sırası ve neden paranın Decimal olduğu. Çekirdek tip sistemine kavramsal hazırlıktır.",
+  "kernel": "Çekirdeğin primitive tipleri (Money, Phone, Email, DateTime) bu ünitenin hedefidir; öğrenci bir tip tanımlandığında validator+coercion+widget+serializer+DB kolonunun otomatik geldiğini kavrar.",
+  "core": "Money = (Decimal, currency) gibi composite tipler domain kavramını korur; validator+coercion tip seviyesine taşınır ki module geliştirici her form için ayrı doğrulama yazmasın.",
+  "modules": "Personel ArcheType mini-projesi (ad-soyad String, TCKN String, maaş Money, departman Reference) ünitenin tipleri gerçek alan seçimine uygulamasıdır.",
+  "apps": "Uygulama katmanı her zaman canonical veriyle çalışır: frontend hangi locale ile gelirse gelsin backend tek doğru biçimi (Decimal+currency, E.164, UTF-8) görür."
+ },
+ "securityNotes": [
+  "Validator (örn. IBAN MOD-97, TCKN kontrolü) yanlış verinin DB'ye girmesini engelleyen kapıdır; geçmeyen input 400 Bad Request döner.",
+  "Coercion girişi canonical forma çeker ('1.299,50 TL' → Decimal('1299.50') + 'TRY'); ham kullanıcı girdisi hiçbir zaman doğrudan saklanmaz."
+ ],
+ "perfNotes": {
+  "code": "Para daima Decimal(20,4) + ayrı currency kolonu; float yalnız istatistik/grafik için kabul edilir, mali kayıtta asla.",
+  "perf": "Validator+coercion tip seviyesinde olduğu için DB'deki veri her zaman canonical; bu, tüm aggregate/raporlama sorgularının doğru çalışmasının kilididir."
+ },
+ "testNotes": [
+  "0.1+0.2 ≠ 0.3 örneğiyle float'ın para için neden reddedildiği gösterilebilmeli; 200k fatura kaleminde birikimli kaymanın Decimal ile sıfır olduğu kavranmalı.",
+  "Scalar (tek kolon) ve composite (Money, Address, Phone — çok kolon, tek domain kavramı) ayrımı projeden iki örnekle açıklanabilmeli.",
+  "Validator ve coercion'ın hangi sırada çalıştığı (önce coercion canonical'a çeker, sonra validator doğrular) ve UTF-8'in Türkçe karakter için neden zorunlu olduğu sözlü olarak doğrulanmalı."
+ ]
+}

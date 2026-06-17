@@ -1227,7 +1227,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Felsefe ve ana prensipler — birincil yetenek",
+      "term": "Modüler monolit sınır disiplini",
       "definition": [
        {
         "type": "strong",
@@ -1235,25 +1235,33 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "Tek deploy birimi, çoklu bounded context. Sınır yazılım disipliniyle korunur: importlinter + CI kapısı, bir modül diğerinin internal'ına dokunursa derleme fail. Mikroservise sadece extraction trigger'da geçilir."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Metadata-driven şema",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Şema kodda değil sistem tablosunda satır. Fiziksel PostgreSQL tablosu, REST+GraphQL endpoint, form/list render, permission tanıma, search index, audit dinleme ve hook noktaları (before_save/after_insert) tanımdan otomatik türetilir."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "AI-first altyapı primitive'leri",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "Vektör store kernel-adjacent (pgvector default), her kayıt save'inde opt-in embedding projeksiyonu, hibrit arama (BM25+vector RRF), bağlam başına otomatik MCP expose. AI sonradan yapıştırılan özellik değil omurganın parçası."
        }
       ]
      }
@@ -1441,15 +1449,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "İlke = yazı = sosyal söz, çürür; ilkeyi yaşatan makinedir. Modüler monolit sınırı CI sınır kapısıyla, AI-first güvenlik katmanı aksiyon onayıyla kanıtlanır — guard yoksa ilke garanti edilmez. Config-as-Data: politika kuralları (KVKK, GDPR, vergi oranı, consent, sanctions) kodda değil versiyonlanmış config'te; kod deploy'u olmadan kural değişir, decision_trace audit + deny-by-default fallback zorunlu. Resolver kurmak ≠ işletmek: cache miss eski kuralla cevap = yasal ihlal; config typo = ceza; resolver çökünce deny-by-default ('bilmiyorsan en kısıtlayıcıya uy'). 5 katman operasyonel disiplin (backfill, 3-katman cache, failure mode, 4-göz governance, decision-trace) şart. WASM/Extism untrusted marketplace kodu için capability sandbox: 'sadece şu kaydı okur, network yok' kısıtı — güvenilmeyen genişletmeyi izole eder. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1807,7 +1807,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Felsefe ve ana prensipler",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Felsefe ve ana prensipler\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: tenant.capability.enable_requested\ncondition:\n  all:\n    - actor.role == \"tenant_admin\"\n    - capability not in tenant_capabilities\n    - not migration_destructive\naction:\n  - append: tenant_capabilities(capability)\n  - emit: capability.enabled\nguards:\n  max_depth: 6\n  idempotency_key: \"tenant:{tenant_id}:cap:{capability}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -1947,6 +1947,18 @@
     ]
    },
    {
+    "id": "block-philosophy-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "CI sınır kapısı: modül A modül B'nin internal'ına dokunursa importlinter fail (Packwerk muadili Python disiplini). Capability kompozisyon testi: enum kullanımı yasak, tenant_capabilities flag tablosu üzerinden eklemeli açılış; yıkıcı migration'a düşmediği doğrulanır. Config governance: kural değişikliği 4-göz onayı geçer, decision_trace audit kaydı üretilir, fallback deny-by-default test edilir."
+     }
+    ]
+   },
+   {
     "id": "block-philosophy-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1965,7 +1977,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Bu sayfa ürün modülü değil; sistemin uyduğu 7 temel kararın (modüler monolit, metadata-driven, AI-first, polyglot, scale-primitive, Türkiye uyumu, açık gerilimler) çerçevesidir. Tüm modüller bu kararlara uyar."
        }
       ]
      },
@@ -1974,16 +1986,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Scale primitive'leri (event bus, outbox, hot counter, projection), vektör store, e-Belge Provider ve Tax Authority Adapter Layer 1 in-tree olarak kernel'de oturur — her modül aynı altyapıyı paylaşır."
        }
       ]
      },
@@ -1992,7 +1995,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Bounded context sınır guard'ı, metadata şema türetme motoru ve capability flag kompozisyonu (tenant_capabilities) core disiplinini oluşturur; enum yasak, eklemeli flag standart."
        }
       ]
      },
@@ -2001,7 +2004,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Scale politikası (push/pull/hybrid feed kararı, celebrity threshold, reservation timing) ve iş kuralları modül seviyesinde yaşar; bir tenant'ta birden çok yetenek yan yana açılır."
        }
       ]
      },
@@ -2010,7 +2013,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Tüm app'ler tek kernel'e bağlanır, varsayılan entegre gelir; paylaşılan kayıt tipleri (Party) mekanizmasıyla tek panel vaadi tutulur."
        }
       ]
      }

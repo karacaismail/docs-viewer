@@ -269,7 +269,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Karar kapsamı",
+      "term": "Hibrit ArcheType depolama",
       "definition": [
        {
         "type": "strong",
@@ -277,16 +277,29 @@
        },
        {
         "type": "text",
-        "text": "ADR'nin bağladığı invariant; alternatifler ve seçilen yön."
+        "text": "Varsayılan paylaşılan şema + JSONB + FK; yalnız yüksek-hacimli ArcheType için opt-in fiziksel tablo. Tablo-per-tip kararı geri çevrildi."
        }
       ]
      },
      {
-      "term": "Uygulama etkisi",
+      "term": "Dinamik DDL yasağı",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Müşteri çalışma zamanında tablo yaratamaz; depolama paylaşılan şema üzerinden yürür, böylece DB şişmesi ve yatay tablo büyümesi engellenir."
+       }
+      ]
+     },
+     {
+      "term": "Metadata/Strategy dispatch",
       "definition": [
        {
         "type": "text",
-        "text": "Bu kararın kod/şema/test üzerindeki bağlayıcı sonucu."
+        "text": "Tip ayrımı runtime metadata ve Strategy deseniyle yapılır; if/else type-switch yasaktır (open/closed ihlali)."
        }
       ]
      }
@@ -474,15 +487,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Müşterinin tablo yaratamaması bir izolasyon ve bütünlük güvencesidir: dinamik DDL olmadığı için kiracı kaynaklı şema büyümesi ve enjeksiyon yüzeyi ortadan kalkar. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -510,15 +515,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Tip ayrımı metadata/Strategy ile yapılır (if/else yasak); paylaşılan şema varsayılan, opt-in tablo yalnız yüksek-hacim için."
        }
       ]
      },
@@ -536,15 +533,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Tablo-per-tip aşırı join ve sürekli index ile DB'yi yorardı; hibrit, JSONB esnekliğini opt-in tablo performansıyla dengeler, ağır raporlama materialized view'a iner."
        }
       ]
      },
@@ -980,6 +969,18 @@
     ]
    },
    {
+    "id": "block-adr-0022-archetype-storage-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Varsayılan yolda dinamik DDL üretilmediği ve müşterinin tablo yaratamadığı doğrulanır. Tip dispatch'ın metadata/Strategy ile çözüldüğü, kod tabanında if/else type-switch bulunmadığı kontrol edilir. Yüksek-hacimli ArcheType'ın opt-in tabloya terfi kriterinin izlenebilir olduğu ve migrate'in veri/metadata seviyesinde çalıştığı gözden geçirilir."
+     }
+    ]
+   },
+   {
     "id": "block-adr-0022-archetype-storage-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -998,7 +999,7 @@
        },
        {
         "type": "text",
-        "text": "Dolaylı — bu sayfa kararı/bilgiyi tanımlar; entegrasyon onu uygulayan birimlerde gerçekleşir."
+        "text": "Hayır — bu bir mimari depolama kararıdır (geliştirme adımı). Önceki tablo-per-tip kararını geri çevirir ve çekirdeğin ArcheType verisini nasıl sakladığını sabitler; çalışma zamanında dinamik şema üretimi olmaz."
        }
       ]
      },
@@ -1007,16 +1008,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Çekirdek depolama katmanı varsayılan olarak paylaşılan şema + JSONB + FK kullanır; migrate veri ve metadata seviyesinde yürür, dinamik DDL üretilmez."
        }
       ]
      },
@@ -1025,7 +1017,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Tip dispatch çekirdekte runtime metadata ve Strategy deseniyle çözülür; if/else type-switch kombinatoryel kaosu önlemek için yasaklanır."
        }
       ]
      },
@@ -1034,7 +1026,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Yüksek-hacimli ArcheType opt-in fiziksel tabloya terfi edebilir; terfi kriteri net ve izlenebilir olmalı, iki kod yolu (paylaşılan + opt-in) bu sınırda buluşur."
        }
       ]
      },
@@ -1043,7 +1035,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "JSONB raporlamada projection veya materialized view gerektirebilir; uygulama katmanı ağır sorguları bu yansımalar üzerinden okur."
        }
       ]
      }

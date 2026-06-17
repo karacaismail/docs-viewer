@@ -1,0 +1,40 @@
+{
+ "featureDefs": [
+  {
+   "name": "Viewer = bağımsız private repo (docs-viewer)",
+   "desc": "Viewer, ağır polyglot framework CI'sının arkasına değil, kendi bağımsız private GitHub reposuna yerleşir; hafif statik SPA dakikalar içinde kurulur ve deploy döner, Stage 0'ı beklemez.",
+   "critical": true
+  },
+  {
+   "name": "content-source/ tek doğruluk kaynağı",
+   "desc": "Kaynak içerik content-source/ altında tek doğruluk kaynağıdır; mimari analiz raporları (framework kararları) repoya girmez, içerik PR'ları küçük kalır. Framework değiştikçe content-source otomasyonla (openclaw+n8n) güncellenir.",
+   "critical": true
+  },
+  {
+   "name": "Revizyon tetikleyicisi (üç koşul)",
+   "desc": "Monorepo'ya taşıma kararı kapalı değil; Stage 0 + packages/tokens olgunluğu + sık manuel sync üç koşulu birleşince yeniden açılır. Karar geri-döndürülebilir tutulur."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Bu sayfa bir ürün modülü ya da runtime kabiliyeti değil; viewer'ın nerede yaşayacağına dair bir geliştirme-adımı kararıdır (ADR). Etkisi repo topolojisi ve CI/deploy hattıdır, çekirdek/modül runtime'ına bağlanmaz.",
+  "kernel": "",
+  "core": "",
+  "modules": "",
+  "apps": "Viewer deploy'u bağımsızdır; framework release döngüsüne bağlanmaz, kendi GitHub Actions hattıyla yayınlanır."
+ },
+ "moduleUsage": [],
+ "securityNotes": [
+  "Private repo: viewer kaynağı ve framework spesifikasyon içeriği herkese açık değil; erişim repo-düzeyinde sınırlanır.",
+  "Mimari analiz raporları (iç framework kararları) bilinçli olarak repo dışında tutulur — hassas iç bilgi viewer reposuna sızmaz.",
+  "İçerik senkronu otomasyonu (openclaw+n8n) yazma yetkisiyle çalışır; senkron credential'ları repo-dışı secret olarak yönetilir."
+ ],
+ "perfNotes": {
+  "code": "Bağımsız repo = bağımsız hafif CI; statik SPA build'i ağır polyglot framework pipeline'ından ayrıştığı için dakikalar içinde döner.",
+  "perf": "İçerik PR'ları küçük tutulduğu için CI yükü ve gözden geçirme süresi düşük kalır; viewer Stage 0'a bağımlı olmadan bugün yayınlanır."
+ },
+ "testNotes": [
+  "Repo doğrulaması: runtime/hedef kod docs-viewer içine yazılmadığı kontrol edilir (sınır ihlali kapısı).",
+  "content-source/ tek kaynak: içeriğin başka bir yoldan değil yalnız content-source/ üzerinden geldiği doğrulanır.",
+  "Deploy bağımsızlığı: viewer CI'sının framework release'ine bağlı olmadan tek başına yeşil geçtiği doğrulanır."
+ ]
+}

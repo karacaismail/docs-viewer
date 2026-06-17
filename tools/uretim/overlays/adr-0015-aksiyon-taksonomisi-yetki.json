@@ -1,0 +1,52 @@
+{
+ "featureDefs": [
+  {
+   "name": "Agent asla principal değil — kesişimle yetki",
+   "desc": "AI ajanın etkin yetkisi kullanıcı ∩ capability ∩ tool_scope ∩ aksiyon_riski kesişimidir, asla birleşim. Ajan kendi başına bir principal (yetki sahibi) değildir; yalnız çağıran kullanıcının sahip olduğu ve aracın izin verdiği aksiyonların ortak kümesini çağırabilir. Bu, OWASP excessive agency'nin üç kökünü (aşırı işlev, aşırı yetki, aşırı otonomi) tek noktadan kapatır.",
+   "critical": true
+  },
+  {
+   "name": "Bağlayıcı aksiyon taksonomisi + DisableProtection yasağı",
+   "desc": "Her aksiyon risk sınıfına göre taksonomilenir ve bu sınıf bağlayıcıdır. Koruma-kapatan aksiyonlar (RLS kapatma, PII maskeyi kaldırma, audit'i susturma, şema değiştirme) DisableProtection sınıfındadır ve hiçbir aktör/ajan için açılamaz. Korumalar kapatılamaz kuralı default ajan davranışının tabanıdır.",
+   "critical": true
+  },
+  {
+   "name": "Step-up: dış etkili/parasal/yıkıcı aksiyona out-of-band onay",
+   "desc": "Dış etki yaratan, para hareketi içeren veya yıkıcı (geri-dönülemez) aksiyonlar için bant-dışı (out-of-band) insan onayı zorunludur. Ajan planlayabilir ama bu sınıf aksiyonu onay olmadan uygulayamaz; otonomi planlamayla sınırlı, uygulama capability-gated.",
+   "critical": true
+  },
+  {
+   "name": "AGENTS.md uzlaştırması: planla serbest, uygula kapılı",
+   "desc": "AGENTS.md sözleşmesi planlamayı serbest bırakır, uygulamayı capability ile kapılar. Ajan keşif/öneri/plan üretebilir; gerçek mutasyon yalnız politika kapısı yetki verdiğinde gerçekleşir."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Bu sayfa bir ürün modülü değil; AI aksiyon yüzeyine yetki tavanı koyan ve default AI ajan davranışını tanımlayan bir geliştirme-adımı kararıdır (ADR). Pratiğe merkezî politika kapısı (sus-actions) ve yetkilendirme çekirdeği (kernel-authz) olarak bağlanır.",
+  "kernel": "Çekirdek (kernel-authz) etkin yetkiyi kullanıcı ∩ capability ∩ tool_scope ∩ aksiyon_riski olarak hesaplar; ajan bir principal olarak temsil edilmez, daima çağıran kullanıcının kimliği altında ve onun yetkisinin alt-kümesiyle çalışır (confused-deputy önlenir). DisableProtection sınıfı çekirdekçe reddedilir.",
+  "core": "Aksiyon taksonomisi (sus-actions) her tipli aksiyona risk sınıfı ve gerekli capability atar; merkezî politika kapısı her tool çağrısında bu kesişimi zorlar. Step-up gereği (dış etki/parasal/yıkıcı) core tarafından işaretlenir ve out-of-band onay akışını tetikler.",
+  "modules": "Modüller aksiyonu tipli olarak tanımlar (serbest imperatif kod değil); ajan modülün açtığı aksiyonları yalnız capability-gated çağırır. Modül kendi koruma sınırını (RLS/PII/audit) kapatma yetkisi sunamaz.",
+  "apps": "Tüm dağıtımlarda aynı politika kapısı geçerlidir; ajan uygulamada kullanıcının görmediği/yetmediği veriye veya aksiyona kullanıcı kimliği altında bile erişemez, yetki tavanı uygulama bağımsızdır."
+ },
+ "moduleUsage": [],
+ "ecaExample": "trigger:\n  event: agent.action_requested\ncondition:\n  all:\n    - actor.is_agent == true\n    - effective_capability >= action.required_capability   # kullanici ∩ capability ∩ tool_scope ∩ aksiyon_riski\n    - action.class != \"DisableProtection\"\n    - tenant_scoped\n    - not loop_detected\naction:\n  - policy_gate.evaluate: action\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{actor}:{action_id}\"\n  external_effects: step_up_required   # dis etkili/parasal/yikici -> out-of-band onay\n  forbidden_classes: [\"DisableProtection\"]",
+ "securityNotes": [
+  "OWASP excessive agency üç kökten (aşırı işlev, aşırı yetki, aşırı otonomi) kapanır: tool_scope işlevi, capability kesişimi yetkiyi, step-up otonomiyi sınırlar.",
+  "Ajan asla principal değildir; daima çağıran kullanıcı kimliği altında ve onun yetkisinin alt-kümesiyle çalışır — yükseltilmiş bir 'servis hesabı' gibi davranamaz (confused-deputy önlenir).",
+  "DisableProtection sınıfı (RLS kapatma, PII maske kaldırma, audit susturma, şema değiştirme) hiçbir aktör/ajan için açılamaz; korumalar tasarımca kapatılamaz.",
+  "Dış etkili/parasal/yıkıcı aksiyon out-of-band step-up onayı ister; prompt-injection ile kandırılan bir ajan onay olmadan para gönderemez/veri silemez.",
+  "Etkin yetki birleşim değil kesişimdir: kullanıcının olmadığı bir yetkiyi ajan capability'si veremez, ajanın olmadığı bir yetkiyi kullanıcı tek başına ajan üzerinden kullanamaz.",
+  "Her tool çağrısı merkezî politika kapısından ve audit'ten geçer; ajan aksiyonları kullanıcı aksiyonlarıyla aynı denetim izine yazılır, denetçi sonradan okur."
+ ],
+ "perfNotes": {
+  "code": "Politika kapısı her tool çağrısında effective_capability = user_caps ∩ tool_scope ∩ action_risk hesaplar; capability seti önbelleğe alınır, kesişim O(küçük-küme) maliyetiyle hot-path'te kalır.",
+  "perf": "Maliyet her tool çağrısına bir politika değerlendirmesi + capability bakımı eklemektir; kesişim küçük yetki kümeleri üzerinde olduğundan ucuzdur, step-up yalnız işaretli (dış etkili/parasal/yıkıcı) aksiyonlarda tetiklenir, sıcak yol yavaşlamaz."
+ },
+ "testNotes": [
+  "Kesişim testi: kullanıcıda olmayan bir yetki ajan capability'sinde olsa bile etkin yetkiye dahil edilmez (birleşim değil kesişim).",
+  "DisableProtection testi: RLS/PII/audit/şema kapatma aksiyonu hiçbir aktör/ajan için yetkilendirilemez, daima reddedilir.",
+  "Step-up testi: dış etkili/parasal/yıkıcı aksiyon out-of-band onay olmadan uygulanmaz; onaysız çağrı 'beklemede/red' döner.",
+  "Confused-deputy testi: ajan, çağıran kullanıcının yetmediği veriye kullanıcı kimliği altında bile erişemez (yetki tavanı kullanıcıdır).",
+  "Prompt-injection senaryosu: kötü-niyetli talimat ajanı yıkıcı aksiyona yönlendirse de politika kapısı + step-up uygulamayı durdurur.",
+  "AGENTS.md uzlaştırması: ajan planı serbest üretir ama capability-gated uygulama yetki olmadan mutasyon yapmaz."
+ ]
+}

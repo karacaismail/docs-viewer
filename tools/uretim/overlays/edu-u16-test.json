@@ -1,0 +1,45 @@
+{
+ "featureDefs": [
+  {
+   "name": "Determinizm altyapısı (her şeyden önce)",
+   "desc": "testcontainers ile sabit imaj etiketli gerçek Postgres, freezegun ile donuk saat, Hypothesis derandomize, PYTHONHASHSEED=0 ve transaction-rollback izolasyonu. Rastgele geçip rastgele kalan test = yok hükmünde.",
+   "critical": true
+  },
+  {
+   "name": "Üretilen-uygulama altın yolu",
+   "desc": "Motor ile çıktıyı AYRI test eden zincir: ArcheType tanımı → kod/şema/migration → çalışan GraphQL. En az 3 temsilî altın uygulama (çok-kiracılı, dosya-yüklemeli, rol-tabanlı) uçtan uca yeşil olmadan release yok.",
+   "critical": true
+  },
+  {
+   "name": "Mutation testing (testin testi)",
+   "desc": "Çekirdek modüllere (codegen, izin, validasyon) kasıtlı mutant enjekte edip testlerin yakalayıp yakalamadığını ölçer; AI'ın kendi ödevini notlama yanlılığını ifşa eder. Haftalık, hedef %80+ mutant öldürme.",
+   "critical": true
+  },
+  {
+   "name": "Test piramidi katman dengesi",
+   "desc": "Tabanda çok ve hızlı unit (%70), ortada integration (%20), tepede az ve yavaş e2e (%10). Ters piramit suite süresini şişirir, developer testi çalıştırmaz, bug üretime kaçar."
+  }
+ ],
+ "testNotes": [
+  "DERS HEDEFİ — bu ders TEST dersidir; her boyut burada örnekli olmalı, sözlük terimlerine (unit/integration/e2e/mock/stub/snapshot) ek pratik katman sunulur.",
+  "UNIT katmanı: saf fonksiyon, DB/network/dosya YOK, bağımlılık mock'lı, <100ms. Hedef %80 satır. Örnek: vergi hesaplayan fonksiyona kenar değerler (0, negatif, ondalık yuvarlama) verip beklenen çıktıyı doğrula. Her yeni fonksiyonla birlikte (TDD: önce kırmızı test).",
+  "INTEGRATION katmanı: gerçek test DB (testcontainers Postgres, sabit imaj etiketi — asla 'latest'), httpx.AsyncClient + pytest-asyncio. Her endpoint için 200 happy path + 400/401/403/500 sad path. Çok-kiracılı kapıda kiracı-A kaydını kiracı-B token'ıyla isteyip 404/403 beklenir (BOLA testi).",
+  "E2E katmanı (journey): Playwright ile gerçek tarayıcı, gerçek form doldurma. 5-15 happy path yolculuk: login → ArcheType kaydı oluştur → liste → düzenle → sil. Dakika seviyesi olduğu için az tut; kırılganlığı azaltmak için data-testid kullan, sabit bekleme (sleep) yerine durum bekle.",
+  "LOOP / döngü güvenliği: e2e yolculuk bir döngü veya yeniden-tetikleme içeriyorsa (örn. webhook → işlem → webhook), test max_depth=6 sınırının aşılmadığını ve loop_detected bayrağının devreye girdiğini doğrulamalı; idempotency anahtarıyla aynı olay iki kez gelince ikinci çağrının no-op olduğu kanıtlanır.",
+  "MOCK vs STUB ayrımı testte: stub sahte cevap döner (ödeme sağlayıcı 'success'), mock çağrının yapıldığını da doğrular (charge tam 1 kez ve doğru tutarla çağrıldı mı). Gerçek dış servis (banka/SMS) test'te asla çağrılmaz — çift faturalama/çift gönderim riski.",
+  "SNAPSHOT / golden: codegen çıktısı ve görsel render için ilk doğru hal kaydedilir; sonraki koşuda fark çıkarsa fail. Snapshot güncellemesi otomatik kabul edilmez — insan el ile inceler (docSync golden ile aynı disiplin).",
+  "PROPERTY-BASED: Hypothesis/fast-check ile yüzlerce rastgele girdi üretip değişmezleri (invariant) sınar; ama derandomize=True ile aynı tohum, tekrarlanabilir başarısızlık. Codegen ve validasyon gibi kombinatoryal yüzeyler için unit'i tamamlar.",
+  "DOĞRULAMA BAĞIMSIZLIĞI: testler AI üreten modelden bağımsız ve deterministik olmalı; AI kendi çıktısını 'yeşil' ilan edemez. CI kırmızıyken çıktı doğru sayılmaz, kabul kriteri metni olmadan ekran/test yazdırılmaz.",
+  "MOBİL TABAN: ana akış 320 CSS piksel genişlikte ve 1rem temel font ile test edilir; erişilebilirlik @axe-core/playwright ile e2e'ye iliştirilir (ihlal = fail)."
+ ],
+ "ecaExample": "trigger:\n  event: ders.test_dersi.tamamlandi\ncondition:\n  all:\n    - actor.capability >= \"edu:lesson.complete\"\n    - ci_status == \"green\"\n    - not loop_detected\naction:\n  - emit: edu.ilerleme.guncelle\n  - emit: edu.rozet.test_piramidi.ver\nguards:\n  max_depth: 6\n  idempotency_key: \"edu:u16:{actor_id}:{lesson_version}\"\n  external_effects: none",
+ "securityNotes": [
+  "BOLA/çok-kiracılı izolasyon testi kritik kapı: her endpoint integration testinde kiracı sınırı aşma denemesi (başka kiracının id'siyle istek) 403/404 ile reddedilmeli; sadece happy path test eden bir suite bu açığı göremez.",
+  "GraphQL gün-1 koruması: depth guard + auth guard açılmadan üretime çıkılmaz; Schemathesis/graphql-cop ile şema fuzzing CI'da koşulur.",
+  "Dış etki (ödeme/SMS) içeren e2e yolculukta gerçek sağlayıcı çağrılmaz; step-up/onay gereken adımlar mock'lanır ama 'onay istendi mi' mock ile doğrulanır."
+ ],
+ "perfNotes": {
+  "code": "her test transaction içinde çalışıp rollback; PYTHONHASHSEED=0 + sabit seed; freezegun ile datetime.now() dondurulur",
+  "perf": "Hız bütçesi katmanı belirler: unit <100ms (yüzlerce, her commit), integration saniye (onlarca, her PR), e2e dakika (5-15, merge öncesi). Ters piramit = 30-45 dk suite = developer çalıştırmaz; yavaş suite test yokluğuna eşdeğerdir."
+ }
+}

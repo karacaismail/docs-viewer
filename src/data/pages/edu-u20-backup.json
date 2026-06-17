@@ -951,15 +951,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Ransomware modeli: çalışan kimlik bilgisi backup hedefini de silebileceği için air-gap zorunlu — ayrı hesap/kimlik, immutable bucket, yazma yetkisi backup-yazıcı dışına kapalı. Backup içeriği üretim verisidir: at-rest şifreleme + erişim auditlenir; restore izni step-up doğrulama ister, sıradan operatör tek başına geri yükleyemez. Sentetik önizleme verisi gerçek backup'a karışmamalı: 'örnek veri' etiketi restore sonrası temizlik sorgusunda filtre anahtarıdır. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -987,15 +979,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Incremental + WAL archive, full backup yükünü üretim trafiğinden ayırır; full yalnız haftalık pencere."
        }
       ]
      },
@@ -1013,15 +997,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "RPO ~saniye (WAL streaming), RTO restore süresi = veri boyutu / IO bandı; drill ölçümü RTO'yu kanıt olarak sabitler."
        }
       ]
      },
@@ -1454,6 +1430,18 @@
        }
       ]
      ]
+    ]
+   },
+   {
+    "id": "block-edu-u20-backup-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Restore drill testi üretim kapısıdır: backup alındı yeşili değil, staging'e geri yükleyip smoke test geçti yeşili sayılır. ChangeSet rollback testi: tersine operation'ın orijinal durumu birebir geri getirdiğini, yan etki bırakmadığını doğrula. Soft-delete 30 gün penceresi testi: silinen kayıt pencere içinde geri gelir, pencere sonunda hard-purge edilir. Air-gap immutable bucket testi: süresi dolmamış nesneye write/delete denemesi reddedilmeli (object-lock retention kanıtı). WAL/PITR testi: belirli bir an'a (yanlış DELETE öncesi) restore senaryosu CI dışı drill olarak periyodik koşulur, sonucu evidence'a yazılır."
+     }
     ]
    },
    {

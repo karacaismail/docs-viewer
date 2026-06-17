@@ -1,0 +1,41 @@
+{
+ "featureDefs": [
+  {
+   "name": "Görünürlük + dokunma + kontrast eşikleri",
+   "desc": "Yazı >=16px (1rem), dokunma alanı >=44x44px, kontrast >=4.5:1 (büyük yazı 3:1). 60+ için tasarlanan iyi UX gence de daha iyi UX'tir.",
+   "critical": true
+  },
+  {
+   "name": "Progressive form + affedicilik",
+   "desc": "Tek kolon, label inputun üstünde, adım göstergesi (1/3), otomatik kaydet (localStorage), her yıkıcı aksiyona onay + geri al.",
+   "critical": true
+  },
+  {
+   "name": "İnsan-dilinde hata mesajı",
+   "desc": "'INVALID_INPUT' değil 'E-posta @ içermeli (örn: ad@gmail.com)'; backend kullanıcı-dostu + i18n'den geçen hata döndürür.",
+   "critical": true
+  },
+  {
+   "name": "Sentetik önizleme (deterministic faker, LLM değil)",
+   "desc": "Önizleme verisi faker katmanından; 6 örnek satır, locale-farkında, 'örnek veri' etiketli, export'a kapalı. LLM yalnız domain/alan tespiti yapar.",
+   "critical": true
+  }
+ ],
+ "moduleUsage": [],
+ "ecaExample": "trigger:\n  event: ai.suggestion_ready\ncondition:\n  all:\n    - confidence >= 0.80\n    - decision.class not in [\"pii\",\"financial\",\"legal\",\"destructive\"]\naction:\n  - emit: ui.one_tap_accept\nelse:\n  - emit: ui.active_selection_required\nguards:\n  confidence_source: external_signal\n  preselect_high_risk: false\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Sentetik önizleme PII-güvenli: faker regex/domain kurallarıyla üretir, gerçek veri sızdırmaz; 'örnek veri' etiketi gerçek sanılıp export edilmesini önler.",
+  "Otomasyon yanlılığı kapısı: PII/parasal/hukuki/yıkıcı kararlarda AI-önerisi ön-seçili gelmez, aktif seçim zorunludur; 60+ kullanıcının düşünmeden onaylaması engellenir.",
+  "Güven dış sinyalden hesaplanır (validation geçişi, self-consistency, token olasılığı, risk cezası, geçmiş override oranı) — modelin 'eminim' self-report'u güven sayılmaz (RLHF emin-sesi ödüllendirir)."
+ ],
+ "perfNotes": {
+  "code": "<button class=\"min-h-[44px] px-4 text-base font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50\">",
+  "perf": "Önizleme için deterministic faker LLM çağrısından çok daha hızlı ve tutarlı: tek-alan/önizlemede ağ gecikmesi yok, öngörülebilir çıktı. Mobile-first 360px'e çizilir; font-size >=1rem ve min-h-[44px] tap target SCSS/Tailwind tokenleriyle sabitlenir."
+ },
+ "testNotes": [
+  "Erişilebilirlik gate'i (WCAG 2.2 AA): kontrast >=4.5:1, tap target >=44x44px, tüm işlev klavyeyle erişilebilir, semantic HTML + ARIA doğrulanır.",
+  "Güven eşiği testi: >=0.80 otopilot kapalı; 0.60-0.80 atölye kartı açık; <0.60 aktif seçim zorunlu — eşik sınırları davranışı belirler.",
+  "Ön-seçim politikası: yüksek-riskli karar kartında AI-önerisi ön-seçili GELMEMELİ (negatif test).",
+  "Hata mesajı oracle'ı: kullanıcıya dönen mesaj jargon kodu (INVALID_INPUT vb.) içermemeli, düzeltme yönergesi taşımalı."
+ ]
+}

@@ -595,15 +595,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Sözleşme snapshot dosyaları (archetype_contract/*.json) bütünlük açısından kritiktir: snapshot'ı sessizce değiştirebilen biri BC kapısını etkisizleştirir; snapshot değişikliği ayrı review + imza gerektirmeli. Geri-alma (revert) kapısı insan tartışmasına gerek kalmadan korur ama otomasyonun kendisi bir güç noktasıdır; revert tetikleyicisini manipüle edebilen biri meşru patch'leri de düşürebilir, bu yüzden kapı mantığı denetlenebilir olmalı. Eski sürümü dönüşüm katmanıyla yaşatmak (sürüm alanı) saldırı yüzeyini büyütür: terk edilmiş eski sürüm yolları yamasız kalabilir; her yaşayan sürümün güvenlik bakımı sürmeli. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -961,7 +953,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Sözleşme kapısı — \"Don't break userspace\"",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Sözleşme kapısı — \"Don't break userspace\"\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: pull_request.opened\ncondition:\n  all:\n    - surface in [\"archetype_schema\",\"module_api\",\"ai_action\"]\n    - contract_snapshot_diff.breaking == true\naction:\n  - emit: contract.violation\n  - block: merge\nguards:\n  max_depth: 6\n  idempotency_key: \"bc-guard:{pr.id}:{pr.head_sha}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -1101,6 +1093,18 @@
     ]
    },
    {
+    "id": "block-sus-bc-policy-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "BC kapısı çift yönlü test edilmeli: geri-uyumsuz değişiklik içeren PR reddedilmeli, geri-uyumlu (yeni alan ekleyen) PR geçmeli — kapının hem bloke ettiğini hem yanlış-pozitif üretmediğini kanıtla. Eski-tüketici golden testi: önceki sürüm sözleşmesine yazılmış bir istemci/çağrı yeni sürümde aynen çalışmalı ('8 hane hep 8 hane okunur' senaryosu). Sürüm birlikte-yaşam testi: eski ve yeni sürüm aynı anda ayakta, dönüşüm katmanı eski formatı yeniye kayıpsız çeviriyor; sözleşmenin kırılmadan evrildiğini doğrula."
+     }
+    ]
+   },
+   {
     "id": "block-sus-bc-policy-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1119,7 +1123,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Kısmen — bu bir sözleşme kapısı (governance gate), ürün modülü değil. Korunan üç kutsal yüzey kernel'de yaşar: ArcheType şeması, modül API'si, AI-aksiyon yüzeyi. Bu üçünden birini kıran PR CI'da otomatik reddedilir; modüller ve uygulamalar sözleşmeyi tüketir, gevşetemez."
        }
       ]
      },
@@ -1128,16 +1132,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "BC kapısı kernel'in dış dünyaya verdiği sözü zorlar: çekirdek API yüzeyi ve ArcheType sözleşme snapshot'ları kayıtlıdır; bir değişiklik tüketiciyi kırarsa hata çekirdekte kabul edilir, patch geri alınır (Linus disiplini)."
        }
       ]
      },
@@ -1146,7 +1141,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Sözleşme dosyası (POLICY.md) + snapshot karşılaştırması çekirdek doğrulamanın parçasıdır; geri uyumsuz değişiklik istendiğinde yeni sürüm tarihi açılır, eski sürüm dönüşüm katmanıyla yaşatılır (Stripe yöntemi)."
        }
       ]
      },
@@ -1155,7 +1150,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Modül API'si kutsal yüzeylerden biridir; bir modül kendi yayımladığı arayüzü kıramaz, kernel sözleşmesini de gevşetemez. İlk dış entegratör/modül doğduğu an sözleşme doğar ve geriye yol kalmaz."
        }
       ]
      },
@@ -1164,7 +1159,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Distribution/Edition'lar 10 yıl sonra hâlâ çalışan bir yüzey bulur; uygulama sözleşme tanımlamaz, ona güvenir — kırılmazlık garantisi onların entegrasyon güvenidir."
        }
       ]
      }

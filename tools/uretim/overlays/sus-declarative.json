@@ -1,0 +1,46 @@
+{
+ "featureDefs": [
+  {
+   "name": "ArcheType tek doğruluk kaynağı",
+   "desc": "Geliştirici yalnız amacı yazar (alanlar, tipler, ilişkiler, izinler); DB tablosu, REST+GraphQL, authz policy, state machine, arka plan işleri ve admin formu bu tek tanımdan türetilir. 'Model your domain, derive the rest.'",
+   "critical": true
+  },
+  {
+   "name": "Deterministik scaffold türetme (form/tablo/detay)",
+   "desc": "Tek tanımdan üç görünüm: form (tip→widget eşlemesi), tablo (record-title + anahtar/durum/tarih), detay (gruplu salt-okuma + audit zaman çizelgesi). AI önerir, motor deterministik uygular.",
+   "critical": true
+  },
+  {
+   "name": "Tip→widget eşleme kuralı",
+   "desc": "metin→girdi, para→para+birim, seçim→dropdown/etiket, ilişki→canlı arama, dosya→yükleme+önizleme. Zorunlular üstte, PII ayrı bölüm, sistem alanları formda görünmez.",
+   "critical": false
+  },
+  {
+   "name": "Tablo/detay görünürlük politikası",
+   "desc": "Tabloda uzun metin/ham dosya/PII/sistem/dizi alanları gizli; record-title ilk sütun. Detay görünümünde gruplu salt-okuma + audit timeline. Görünürlük tanımdan türetilir, elle kodlanmaz.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — declarative türetme ArcheType'ın çekirdek felsefesidir; ayrı modül değil, schema yüzeyinin (k-schema) tüm üst katmanlara yayılan üretim disiplinidir.",
+  "kernel": "framework/kernel/schema/ ArcheType tanımı tek doğruluk; kernel authz policy, tenancy scope ve state machine'i buradan türetir; üst katmanlar tanımı introspect eder.",
+  "core": "Contract/ArcheType tanımından DB migration, REST+GraphQL şema, validation ve background job otomatik üretilir — geliştirici migration veya API tanımı yazmaz.",
+  "modules": "Referans olgunluk: Ash (Elixir resource→her şey), EdgeDB/Gel (DB-üretimli introspectable migration), Convex (TS-first AI-codegen). ArcheType bu üçünün birleşimine yükselir.",
+  "apps": "Her App form/tablo/detay ekranını ArcheType tanımından türetir; yüzey tarafı k-surface, sözleşme k-sozlesme referans alınır."
+ },
+ "securityNotes": [
+  "İzinler (authz policy) ArcheType tanımının parçasıdır; tek kaynaktan türetildiği için permission bir yerde tanımlanıp başka yerde unutulamaz — sürüklenme (drift) kaynaklı yetki boşluğu kapanır.",
+  "PII alanları tanımda işaretlenir; form ayrı bölüme alır, tabloda gizlenir, sistem alanları formda hiç görünmez — varsayılan en-az-ifşa türetilmiş davranıştır.",
+  "Tek doğruluk + sıfır kopya, validation kuralının 7 yerde tekrar edip birinin eksik kalması riskini ortadan kaldırır; ilk hata zinciri bozamaz çünkü zincir tek tanımdan üretilir."
+ ],
+ "perfNotes": {
+  "code": "Scaffold türetme deterministiktir (AI önerir, motor uygular); runtime'da reflection değil, üretim/derleme aşamasında bir kez türetilir.",
+  "perf": "Tek tanımdan üretim, aynı bilgiyi elle 7 yerde senkron tutma maliyetini sıfırlar; yeni alan eklemek tek satırlık değişiklik, tüm türev katmanlar yeniden üretilir."
+ },
+ "testNotes": [
+  "Tanımdaki tip değişimi (örn. metin→para) formda doğru widget'ı (para+birim) deterministik üretmeli.",
+  "PII işaretli alan tabloda gizlenmeli, formda ayrı bölümde, sistem alanları formda hiç görünmemeli.",
+  "Tek tanımda alan eklenince DB migration + API şema + form/tablo/detay hepsi tutarlı yeniden türetilmeli (sıfır kopya).",
+  "Authz policy tanımda değişince türetilen tüm yüzeylerde (API + form) aynı izin yansımalı — sürüklenme olmamalı."
+ ]
+}

@@ -674,7 +674,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Öğrenme hedefi",
+      "term": "Üç-aşamalı güvenlik sırası (kim/ne/ne yaptı)",
       "definition": [
        {
         "type": "strong",
@@ -682,16 +682,70 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin okuyucuya kazandırdığı bağlayıcı yetkinlik."
+        "text": "Her erişim authentication (kim?) -> authorization (ne yapabilir?) -> audit (ne yaptı?) sırasını izler. Bir API isteğinin yolculuğu: "
+       },
+       {
+        "type": "term",
+        "text": "TLS",
+        "termId": "term-tls-edu-u07-security"
+       },
+       {
+        "type": "text",
+        "text": " handshake -> token decode+verify -> tenant scope set -> permission check ("
+       },
+       {
+        "type": "term",
+        "text": "RBAC",
+        "termId": "term-rbac-edu-u07-security"
+       },
+       {
+        "type": "text",
+        "text": ") -> business logic hook -> audit emit. Bu zincir dersin omurgasıdır."
        }
       ]
      },
      {
-      "term": "Uygulanabilir çıktı",
+      "term": "RBAC/ABAC/ReBAC yetki modelleri",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Dersin sonunda üretilen çalıştırılabilir/denetlenebilir eser."
+        "text": "RBAC (izin rollere atanır) çoğu sistem için yeterlidir; "
+       },
+       {
+        "type": "term",
+        "text": "ABAC",
+        "termId": "term-abac-edu-u07-security"
+       },
+       {
+        "type": "text",
+        "text": " niteliklere göre dinamik karar verir (örn. 'kendi hastasının kaydı'); "
+       },
+       {
+        "type": "term",
+        "text": "ReBAC",
+        "termId": "term-rebac-edu-u07-security"
+       },
+       {
+        "type": "text",
+        "text": " izni ilişkilerden türetir (Google Docs paylaşımı). Öğrenci her birini bir örnekle ayırt edebilmelidir."
+       }
+      ]
+     },
+     {
+      "term": "Session vs JWT trade-off",
+      "definition": [
+       {
+        "type": "term",
+        "text": "Session",
+        "termId": "term-session-edu-u07-security"
+       },
+       {
+        "type": "text",
+        "text": " (stateful, anında revoke, storage maliyeti) küçük/orta SaaS için; JWT (stateless, ölçeklenir, revoke ek yapı ister) mikroservis/distributed için; hibrit (JWT + revoke-list cache) modern SaaS çoğunluğunun seçimi. Seçim senaryoya göre gerekçelendirilmelidir."
        }
       ]
      }
@@ -879,15 +933,25 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
+      "text": "Broken Access Control (OWASP A01): permission check business logic'ten ÖNCE çalışmalı; tenant scope query layer'da otomatik set edilir, üst kattan değil — cross-tenant erişim teknik olarak imkansız kılınır (deny-by-default), aksi halde IDOR/yetki yükseltme açığı doğar. Cryptographic Failures (OWASP A02): "
      },
      {
-      "type": "code",
-      "text": "pii"
+      "type": "term",
+      "text": "encryption at rest",
+      "termId": "term-encryption-at-rest-edu-u07-security"
      },
      {
       "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": " (DB/disk çalınsa açılmaz, KVKK/PCI-DSS şartı) VE in transit (TLS/HTTPS, plain HTTP yasak) ayrı ayrı zorunlu; biri eksikse sızıntıda veri korunmaz. Ders bu ikisinin neden birlikte gerektiğini öğretir. Identification & Authentication Failures (OWASP A07): JWT imzası public key ile doğrulanır ve süre kontrol edilir ('none' algoritma/kabul edilmemiş imza reddedilir); şirket dışı login'de 2FA zorunlu, 3 başarısız denemede geçici kilit + email — credential stuffing/brute-force sınırlanır. "
+     },
+     {
+      "type": "term",
+      "text": "CSRF",
+      "termId": "term-csrf-edu-u07-security"
+     },
+     {
+      "type": "text",
+      "text": ": session cookie'lerin doğal zaafıdır; state-changing isteklerde anti-CSRF token ile çözülür. Ders session'ı seçen öğrenciye bu maliyeti hatırlatır. Security Logging Failures (OWASP A09): audit log append-only'dir — DB seviyesinde UPDATE/DELETE revoke edilir, yalnız sistem yazar, kimse silemez/değiştiremez. Aksi halde 'denetim manipüle edildi' iddiası savunulamaz; adli/regülatif gereklilik bu garantiye dayanır. KVKK silme akışı bütünlük gerektirir: soft-delete (deleted_at=now) -> 30 gün -> hard-delete + audit + KVKK kayıt mektubu; her aşama audit'lenir, geri dönüş yok. 'Beni unutun' talebi denetlenebilir biçimde yürütülmeli. Audit kaydı PII içerebilir (before/after, IP, UA): CISO'nun şüpheli pattern (gece, çok sayıda indirme, yabancı IP) raporu için tutulan bu veri kendisi de en az yetki ile korunmalı — denetim verisi yeni bir sızıntı yüzeyi olmamalı. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -915,15 +979,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "JWT doğrulama stateless'tır, her istekte DB'ye gitmez (imza+exp kontrolü); session her istekte server-side state okur. Hibrit modelde revoke-list cache'te tutulur, böylece JWT'nin iptal zayıflığı düşük gecikmeyle kapatılır."
        }
       ]
      },
@@ -941,15 +997,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Tenant scope query layer'da otomatik enjekte edilir, böylece her sorgu en başından tek tenant'a kapsanır — uygulama katmanında elle filtreleme hatasının hem güvenlik hem performans (gereksiz tam tarama) maliyeti önlenir."
        }
       ]
      },
@@ -1382,6 +1430,18 @@
        }
       ]
      ]
+    ]
+   },
+   {
+    "id": "block-edu-u07-security-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Bu bir EĞİTİM ünitesidir (Ünite 07, orta seviye, 70 dk): kabul kriteri öğrenci yeterliliğidir — authn/authz farkını, üç yetki modelini, session/JWT trade-off'unu, at-rest+in-transit zorunluluğunu, audit append-only gerekçesini ve KVKK akışını anlatabilmesi checklist ile ölçülür. Negatif güvenlik testleri ders boyunca somutlaştırılmalı: cross-tenant erişim denemesi 403/boş dönmeli, yetkisiz rol 403 almalı, audit tablosuna UPDATE/DELETE denemesi DB seviyesinde reddedilmeli — 'öğretilen kural' çalışan testle doğrulanır. edu-u08 (Event Bus & Outbox) öncülüdür: bu ünite biter, modüllerin doğrudan değil olayla bağlandığı bir sonraki derse köprü kurulur."
+     }
     ]
    },
    {

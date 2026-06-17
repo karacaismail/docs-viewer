@@ -1,0 +1,38 @@
+{
+ "featureDefs": [
+  {
+   "name": "Tarih-versiyon + pinleme",
+   "desc": "Her sürüm bir tarih etiketiyle adlandırılır (2026-06-01); müşteri hesabı ilk istekte o sürüme pinlenir ve değiştirmedikçe orada kalır — major/minor numarasından daha net bir sözleşme.",
+   "critical": true
+  },
+  {
+   "name": "Response transform katmanı",
+   "desc": "Çekirdek yalnız en güncel sürümü üretir; dönüşüm katmanı yanıtı her müşterinin pin'lendiği eski sürüme çevirir. Çekirdek temiz tek-sürüm kalır, eskiler katmanda yaşar.",
+   "critical": true
+  },
+  {
+   "name": "İsimli kapılar (named gates)",
+   "desc": "Sürümler arası fark 'if v < ...' koşuluyla değil, isimli soyut modül olarak ifade edilir (Stripe deseni); yıllar içinde okunabilirliği korur.",
+   "critical": true
+  },
+  {
+   "name": "ChangeSet ile ArcheType evrimi",
+   "desc": "ArcheType değişimi ChangeSet'le yapılır; deprecate_field yıkıcı değildir (geri-açılabilir), remove_field yıkıcıdır → soft-delete + onay. Her değişiklik audit'lenir ve sürümlenir.",
+   "critical": false
+  }
+ ],
+ "moduleUsage": [],
+ "testNotes": [
+  "Sürdürülebilirlik kapısı bir uyumluluk testidir: eski bir tarih-sürümüne pinli istemcinin yanıtı, çekirdek evrilmiş olsa bile o sürümün şemasıyla birebir eşleşmeli — 2011 entegrasyonunun 2025'te çalışması bu testle güvenceye alınır.",
+  "Her response_transform modülü için golden fixture mantığı geçerlidir: modern çekirdek yanıtı + hedef sürüm = beklenen eski yanıt; transform bu eşlemeyi bozarsa kapı kırmızı kalmalı.",
+  "remove_field'in yıkıcılığı bir kapıyla zorlanır: alan kaldırma soft-delete + açık onay olmadan geçmemeli; deprecate_field'in geri-açılabilirliği ise regresyon testiyle korunmalı."
+ ],
+ "securityNotes": [
+  "Her sürüm değişikliği audit'lenir ({{ref:l1-audit}}); pinli sürüm + audit izi, 'hangi müşteri hangi sözleşmeyle çalışıyordu' sorusunu geriye dönük açıklanabilir kılar — uyum ve denetim yüzeyi.",
+  "Çekirdeği 'if v < 2025' zincirlerinden arındırmak yalnız okunabilirlik değil güvenlik kazancıdır: dallanma azaldıkça gözden kaçan kontrol yolu (yetki/scope atlanan eski dal) yüzeyi de daralır."
+ ],
+ "perfNotes": {
+  "code": "framework/contracts/response_transforms/*.py — her sürüm değişikliği bir dönüşüm modülü; çekirdek tek-sürüm yazar",
+  "perf": "Transform katmanı yanıt yolunda çalışır; sürüm sayısı arttıkça zincir uzar — pin'lenmiş sürüme tek-atlama (çok-adımlı zincir yerine doğrudan hedefe) dönüşüm, gecikmeyi sürüm sayısından bağımsız tutmanın yoludur."
+ }
+}

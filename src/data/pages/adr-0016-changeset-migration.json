@@ -251,7 +251,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Karar kapsamı",
+      "term": "Yedi-alan operation sözleşmesi",
       "definition": [
        {
         "type": "strong",
@@ -259,16 +259,20 @@
        },
        {
         "type": "text",
-        "text": "ADR'nin bağladığı invariant; alternatifler ve seçilen yön."
+        "text": "Her yapısal değişiklik operation'ı yedi alanla tanımlanır: precondition, invariant, validation, risk, rollback, audit, preview. Eksik alanlı operation tanımsızdır; geçersiz ChangeSet asla uygulanmaz. AI önerir, doğrulama motoru tek yazma yetkisidir."
        }
       ]
      },
      {
-      "term": "Uygulama etkisi",
+      "term": "Üç geri-alma sınıfı + durum makinesi",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Bu kararın kod/şema/test üzerindeki bağlayıcı sonucu."
+        "text": "Geri-alma üç sınıfa ayrılır: tersine çevrilebilir, expand-contract ile aşamalı, telafi-edilemez (snapshot son çare). Migration ve rollback birer durum makinesiyle ilerler; geri-alınamaz adımlar akışın sonuna bırakılır."
        }
       ]
      }
@@ -456,15 +460,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "AI ham SQL üretemez; yalnız tipli ChangeSet önerir, deterministik doğrulama motoru uygular — veri kaybı kapısı budur. Yedi-alanı eksik operation içeren ChangeSet doğrulamada düşer (deny-by-default); geçersiz değişiklik asla yazılmaz. baseVersion uyuşmazsa optimistic locking devreye girer; son-yazan-kazanır değil, merge-uyarısı gösterilir. Telafi-edilemez (geri-alınamaz) adımlar akışın sonuna bırakılır; snapshot yalnız son çaredir, audit zorunludur. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -492,15 +488,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "// expand-contract: önce yeni kolon eklenir + çift-yaz, sonra eski kolon contract; kesintisiz tip değişimi"
        }
       ]
      },
@@ -518,15 +506,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Expand-contract ile tip değişiminde çift-yaz penceresi kesinti üretmez; durum makinesi her adımı idempotent ve kaldığı yerden sürdürülebilir kılar. remove_field soft-delete + snapshot ile telafi penceresi bırakır."
        }
       ]
      },
@@ -822,7 +802,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — ADR-0016: ChangeSet Sözleşmesi + Migration Yaşam Döngüsü",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — ADR-0016: ChangeSet Sözleşmesi + Migration Yaşam Döngüsü\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: changeset.submitted\ncondition:\n  all:\n    - actor.capability >= \"schema.changeset.apply\"\n    - changeset.baseVersion == archetype.current_version\n    - changeset.operations.all_have_seven_fields\n    - not loop_detected\naction:\n  - emit: changeset.applied\n  - emit: migration.state_advanced\nguards:\n  max_depth: 6\n  idempotency_key: \"changeset:{changeSetId}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -962,6 +942,18 @@
     ]
    },
    {
+    "id": "block-adr-0016-changeset-migration-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Yedi-alanı eksik operation içeren ChangeSet'in doğrulamada reddedildiği. baseVersion uyuşmazlığında ChangeSet'in optimistic locking ile reddedilip merge-uyarısı verdiği. Tersine / expand-contract / telafi-edilemez üç sınıfın doğru seçildiği ve geri-alınamazın akış sonunda kaldığı. Migration durum makinesinin kesintide kaldığı yerden idempotent sürdüğü."
+     }
+    ]
+   },
+   {
     "id": "block-adr-0016-changeset-migration-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -980,7 +972,7 @@
        },
        {
         "type": "text",
-        "text": "Dolaylı — bu sayfa kararı/bilgiyi tanımlar; entegrasyon onu uygulayan birimlerde gerçekleşir."
+        "text": "Hayır — bu bir ürün modülü değil, geliştirme adımı (ADR-0016, Faz 2). Karar ChangeSet zarfını ve migration yaşam döngüsünü sabitler; uygulaması kernel sözleşmesi (k-sozlesme) ile migration eğitim ünitesidir. Kanonik kayıt docs/ ADR serisidir."
        }
       ]
      },
@@ -989,16 +981,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "schema (ChangeSet tipli zarf, tip değişikliği veri/metadata), authz (değişiklik yetkisi + optimistic locking sahipliği), audit (her operation'ın olayı)."
        }
       ]
      },
@@ -1007,7 +990,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "bitemporal (versiyon geçmişi, expand-contract çift-yaz penceresi), Contract (sözleşmenin kendisi), Money/pii (etkilenen alan sınıfları için risk hesabı)."
        }
       ]
      },
@@ -1016,7 +999,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": ""
        }
       ]
      },
@@ -1025,7 +1008,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": ""
        }
       ]
      }

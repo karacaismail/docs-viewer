@@ -898,7 +898,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Build Sırası — Faz 0-7 — birincil yetenek",
+      "term": "Bağımlılık-sıralı faz zinciri",
       "definition": [
        {
         "type": "strong",
@@ -906,25 +906,38 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "Faz 0 Atomik Tipler -> Faz 1 Kernel -> Faz 2 Scale primitives -> Faz 3 Layer 1 -> Faz 4 Layer 2 + DX -> Faz 5 Scale proof; az bağımlı modülden başlanır, üstüne yığılır."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Faz başına bitiş kriteri",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Her fazın gözlenebilir kapanış kanıtı vardır (tip kataloğu donmuş, config-flag ile in-process->Redis swap, S3->R2 backend değişimi core'a dokunmadan, 10K+ TPS sustained)."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "Paralel sürdürülebilirlik aşamaları",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "Build fazlarına eş zamanlı 4 sürdürülebilirlik aşaması (sınır kapıları / sözleşme katmanı / kendini-yükselten döngü / DX+AI); her aşamanın bir fazda eşiği vardır."
+       }
+      ]
+     },
+     {
+      "term": "Capability-first ürün sıralaması",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her faz capability tablosuna yeni satır ekler (b2c/b2b/d2c -> marketplace/subscription/o2o -> ...); mevcut yapı bozulmadan büyür."
        }
       ]
      }
@@ -1112,15 +1125,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Resolver, resolver-ops ve identity-models Faz 1'de ayrılmaz üçlüdür; resolver olmadan operasyon kurulamaz, ops olmadan resolver canlıya alınmaz, identity-models olmadan resolver yanlış kullanıcıyı tanır. İlk Layer 2 modülü yazılmadan ÖNCE sınır kapıları (import-linter + boundaries.yml CI + BC politikası) kurulmazsa modüller arası izinsiz bağımlılıklar sessizce birikir. İlk AI ajanı üretime alınmadan ÖNCE tipli action yüzeyi + declarative türetme hazır olmalı; sonra eklemek güvenlik açığı bırakır. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1148,15 +1153,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Faz 2 outbox + CQRS projection + hot counter + saga ile ölçek primitifleri config-flag arkasına alınır; module kodu in-process->Redis geçişinde değişmez."
        }
       ]
      },
@@ -1174,15 +1171,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Faz 5 ölçek kanıtı hedefi 10K+ TPS sustained, p99 < 500ms, multi-region replication; kernel hiç değişmeden bu yüke ulaşılır."
        }
       ]
      },
@@ -1615,6 +1604,18 @@
        }
       ]
      ]
+    ]
+   },
+   {
+    "id": "block-build-sequence-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Faz 0 tip kataloğu donduktan sonra Faz 1 ArcheType engine'in bu kataloğu değiştirmeden tükettiği doğrulanmalı. Faz 2'de config-flag ile in-process -> Redis Streams geçişinde module kodunun değişmediği test edilmeli. Faz 3'te File backend S3'ten R2'ye ve Search backend Meilisearch'a swap edildiğinde core kodunun ve API'nin sabit kaldığı kontrol edilmeli. Faz 4'te boundary ihlalinin CI'da fail ürettiği (Packwerk-style kapı) doğrulanmalı."
+     }
     ]
    },
    {

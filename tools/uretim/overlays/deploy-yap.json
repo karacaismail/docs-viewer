@@ -1,0 +1,52 @@
+{
+ "featureDefs": [
+  {
+   "name": "yap shell fonksiyonu",
+   "desc": "Mac ~/.config/yap.zsh: tek satırla commit + push; ilk kurulumda git init + repo open + Pages on. Mesaj verilmezse tarihli otomatik mesaj. Geliştirici hiç ham git komutu girmez.",
+   "critical": true
+  },
+  {
+   "name": "deploy-pages.yml (build→deploy)",
+   "desc": "İki ayrı job: build (Node 22, npm build, VITE_BASE alt-dizin, SPA 404 fallback, upload-pages-artifact) ve deploy (deploy-pages). concurrency 'pages' tek kuyruk, cancel-in-progress. Frontend yayını için zorunlu.",
+   "critical": true
+  },
+  {
+   "name": "ci.yml test geçidi",
+   "desc": "lint + typecheck + test + build; PR ve main push'ta koşar. Kırmızı build main'e ve dolayısıyla yayına gidemez — bozuk commit kapıda durur.",
+   "critical": true
+  },
+  {
+   "name": "İlk Pages açma (kişisel token)",
+   "desc": "Workflow'un dahili token'ı Pages'i ilk kez açamaz (GitHub güvenlik kısıtı); yap bunu kullanıcının kişisel token'ıyla bir kez açar, sonrasını Actions devralır.",
+   "critical": false
+  },
+  {
+   "name": "Backend deploy (ayrı pipeline)",
+   "desc": "Hetzner/Debian için deploy-backend.yml deseni: docker build + registry push + SSH'tan docker compose pull && up. Bilinçli olarak henüz kurulu değil; backend'de yalnız ci.yml testleri koşar.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Hayır — deploy-yap bir ürün değil dağıtım otomasyon süreci; çıktısı CI/CD boru hattı ve Pages yayını, ArcheType yüzeyi değil. Mac → GitHub → canlı site akışını standartlaştırır.",
+  "kernel": "Doğrudan kernel tüketmez; dağıtım katmanı çekirdeğin dışında, ürettiği statik SPA'yı yayına taşır.",
+  "core": "Build çıktısı (web/dist) Pages artifact'i olur; VITE_BASE ile monorepo alt-dizin base path'i Contract dışı bir paketleme detayı.",
+  "modules": "GitHub Actions runner (ubuntu-latest), upload-pages-artifact + deploy-pages aksiyon ikilisi; gh CLI ile Pages açma/izleme.",
+  "apps": "Her frontend App deploy-pages.yml + vite base path ile yayınlanır; backend App'ler için deploy ayrı SSH/Docker pipeline gerektirir."
+ },
+ "securityNotes": [
+  "deploy-pages workflow'u least-privilege izinle koşar: contents:read + pages:write + id-token:write; daha geniş yazma izni verilmez, OIDC token'ı Pages deploy'a kapsamlanır.",
+  "Free plan'da Pages yalnız public repo'da çalışır; bu yüzden yayınlanan her şey halka açık varsayılır — sır/anahtar/iç URL repoya girmemeli, secret'lar Actions secret olarak tutulmalı (kanonik karar adr-0003).",
+  "Cowork sandbox git push yapamaz; push her zaman Mac'teki yap ile yapılır — kontrolsüz ortamdan yayına çıkış yüzeyi kapalı tutulur."
+ ],
+ "perfNotes": {
+  "code": "yap istemci tarafında yalnız commit + push yapar (saniyeler); ağır build/test GitHub runner'a devredilir, geliştiricinin makinesini meşgul etmez.",
+  "perf": "concurrency 'pages' + cancel-in-progress aynı anda tek deploy kuyruğu tutar; hızlı ardışık push'larda yalnız en son sürüm yayınlanır, gereksiz runner zamanı harcanmaz."
+ },
+ "testNotes": [
+  "Deploy kapısı CI'ın son halkasıdır: ci.yml (lint/typecheck/test/build) geçmeden deploy-pages tetiklenmemeli; kırmızı build yayına çıkmamalı.",
+  "SPA 404 fallback: bilinmeyen derin yol dist/404.html'e düşüp router base path ile doğru sayfaya çözülmeli.",
+  "İlk Pages açma: dahili token ile deneme 'Resource not accessible by integration' vermeli; kişisel token (gh api) ile bir kez açılınca Actions devralmalı.",
+  "Rollback: git revert sonrası bir sonraki CI koşusu önceki yayını geri getirmeli — manuel sunucu müdahalesi gerekmemeli."
+ ],
+ "moduleUsage": []
+}

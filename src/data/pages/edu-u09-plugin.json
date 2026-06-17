@@ -701,7 +701,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Öğrenme hedefi",
+      "term": "Manifest + registry + capability scope",
       "definition": [
        {
         "type": "strong",
@@ -709,16 +709,47 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin okuyucuya kazandırdığı bağlayıcı yetkinlik."
+        "text": "Modül çekirdeğe dokunmadan eklenir: manifest (name, version, requires, hooks, archetypes, permissions) yüklenmeden okunur; "
+       },
+       {
+        "type": "term",
+        "text": "registry",
+        "termId": "term-registry-edu-u09-plugin"
+       },
+       {
+        "type": "text",
+        "text": " hangi modülün hangi sürümde hangi tenant'ta aktif olduğunu tutar ve çakışma/bağımlılığı çözer; capability scope modülün hangi ArcheType'a, event'e ve API'ye erişebileceğini sözleşmeyle sınırlar."
        }
       ]
      },
      {
-      "term": "Uygulanabilir çıktı",
+      "term": "Gün-1 WASM sandbox + permission scope",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Üçüncü taraf modüller gün-1'den itibaren WASM sandbox içinde çalışır; permission scope bu sandbox'ın izin sözleşmesidir. Modül tam yetkiyle değil, kullanıcı onaylı dar yetkiyle çalışır — kapsam dışı erişim 403. Kötü niyetli ya da hatalı modül sistemi çökertemez."
+       }
+      ]
+     },
+     {
+      "term": "Altı adımlı yaşam döngüsü + contract test",
       "definition": [
        {
         "type": "text",
-        "text": "Dersin sonunda üretilen çalıştırılabilir/denetlenebilir eser."
+        "text": "install → migration → activate → run → deactivate → uninstall: her adım kendi hook'unu çalıştırır, deactivate veriyi durdurur silmez, uninstall migrate-down ile temizler. "
+       },
+       {
+        "type": "term",
+        "text": "Contract test",
+        "termId": "term-contract-test-edu-u09-plugin"
+       },
+       {
+        "type": "text",
+        "text": " çekirdek güncellenince modül API'sinin geriye uyumlu kaldığını CI'da garanti eder."
        }
       ]
      }
@@ -906,15 +937,16 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
+      "text": "Modül tam yetkiyle çalışmaz; capability scope kullanıcı onayıyla daraltılır (örn. yalnız Order okur) — onaylanmayan ArcheType/API erişimi 403, deny-by-default. WASM sandbox gün-1 zorunlu; üçüncü taraf kodu izole runtime'da çalışır, host kaynaklarına yalnız permission scope sözleşmesi kadar erişir. Manifest yüklenmeden doğrulanır: "
      },
      {
-      "type": "code",
-      "text": "pii"
+      "type": "term",
+      "text": "semver",
+      "termId": "term-semver-edu-u09-plugin"
      },
      {
       "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": " eşleşmesi + istenen izinlerin izin verilebilir olduğu kontrol edilir; geçmeyen modül kurulmaz. Uninstall adımı migrate-down ile veriyi siler/arşivler; yarım kalan kaynak ve hayalet hook bırakmaz (temiz kaldırma). Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -942,15 +974,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "apply_filter(\"order_total\", total)  // filter: veriyi zincirleme dönüştürür   |   do_action(\"order_placed\", order)  // action: yan etki, sonuç dönmez"
        }
       ]
      },
@@ -968,15 +992,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Hook'lar run aşamasında performans + hata izleme altında çalışır; sandbox çağrı sınırı host'u korur. Registry sorgusu (yüklü mü, hangi sürüm) sabit maliyetli; çakışma çözümü kurulum anında, sıcak yolda değil."
        }
       ]
      },
@@ -1412,6 +1428,18 @@
     ]
    },
    {
+    "id": "block-edu-u09-plugin-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Capability scope dışı bir ArcheType'a erişen modül çağrısının 403 ile reddedildiği (deny-by-default). Çekirdek yeni hook eklendiğinde mevcut modüllerin contract test ile hâlâ çalıştığı (geriye uyum, semver MINOR). Altı adımlı yaşam döngüsünün (install→uninstall) doğru sırada koştuğu; deactivate'in veriyi sildirmediği, uninstall'ın migrate-down yaptığı. Manifest izin/semver doğrulaması geçmeyen modülün kurulmadığı."
+     }
+    ]
+   },
+   {
     "id": "block-edu-u09-plugin-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1430,7 +1458,7 @@
        },
        {
         "type": "text",
-        "text": "Dolaylı — bu sayfa kararı/bilgiyi tanımlar; entegrasyon onu uygulayan birimlerde gerçekleşir."
+        "text": "Bu sayfa ürün modülü değil; çekirdeği bozmadan davranış eklemenin (module mimarisi) ilkelerini öğreten eğitim ünitesidir. Pratiğe kernel registry/manifest yüklemesi, capability deny-by-default yetkilendirme ve yükleme modeli kararı (gün-1 WASM) olarak bağlanır."
        }
       ]
      },
@@ -1439,16 +1467,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "registry + manifest yükleme/çakışma çözümü, authz (capability scope — deny-by-default, kapsam dışı 403), tenancy (modül tenant başına aktif/pasif, RLS bağlamı), events (hook noktaları: before_insert, validate, on_submit, on_change), polyglot (gün-1 WASM sandbox izolasyonu)."
        }
       ]
      },
@@ -1457,7 +1476,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "schema (modülün kendi ArcheType migration'ları çekirdek framework'ü kullanır), Contract (modül API kapısı + contract test geriye-uyum), audit (lifecycle olayları)."
        }
       ]
      },
@@ -1466,7 +1485,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": ""
        }
       ]
      },
@@ -1475,7 +1494,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": ""
        }
       ]
      }

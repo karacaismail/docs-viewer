@@ -1,0 +1,31 @@
+{
+ "featureDefs": [
+  {
+   "name": "Yalnız dinamik import (lazy chunk)",
+   "desc": "ECharts WBS görselleştirmesi sadece gerektiğinde yüklenen ayrı bir chunk'tır; eager bundle bütçesi korunur. Kararın doğrudan implikasyonu: ağır araç dolapta durur, ana yükü şişirmez.",
+   "critical": true
+  },
+  {
+   "name": "Erişilebilir liste fallback'i (zorunlu)",
+   "desc": "Canvas yoksa WBS ağacı erişilebilir bir liste olarak sunulur; görsel bağımlılık erişilebilirliği düşürmez. Karar implikasyonu: yeni runtime bağımlılığı eklemek a11y sözünü bozamaz.",
+   "critical": true
+  },
+  {
+   "name": "size-limit CI kapısı denetimi",
+   "desc": "Anti-stack defteri yeni runtime bağımlılığının kaydını ister; size-limit kapısı lazy-chunk sınırının korunduğunu her PR'da doğrular. Mimar kararının makine-zorlamalı tarafı."
+  }
+ ],
+ "moduleUsage": [],
+ "perfNotes": {
+  "code": "WBS blok bileşeninde dynamic import('echarts'); canvas yoksa erişilebilir <ul/ol> ağaç render",
+  "perf": "Olumlu sonuç: etkileşimli ağaç sunumu sağlanır, eager bundle bütçesi lazy-chunk ile korunur. Kabul edilen maliyet: kayıtlı ve kapsamı sınırlı yeni runtime bağımlılığı (yalnız WBS yüzeyinde)."
+ },
+ "securityNotes": [
+  "GELİŞTİRME ADIMI — bu ADR bir karar + gerekçe + 5N1K eğitim setidir; kanonik kayıt docs/ ADR serisidir, overlay onu çoğaltmaz, implikasyon boyutlarını ekler.",
+  "Yeni runtime bağımlılığı supply-chain yüzeyini genişletir: ECharts sürümü sabitlenmeli ve bağımlılık tarama kapsamına alınmalı; anti-stack defteri kaydı bu denetimin izini tutar."
+ ],
+ "testNotes": [
+  "Fallback davranışı test edilmeli: canvas/WebGL devre dışıyken WBS'nin erişilebilir liste olarak render olduğu ve klavye + ekran okuyucuyla gezilebildiği e2e/a11y testiyle doğrulanır (axe ihlali = fail).",
+  "Lazy chunk testi: ECharts'ın yalnız WBS yüzeyi açıldığında yüklendiği, ana giriş bundle'ında yer almadığı bundle analizi/size-limit ile kanıtlanır."
+ ]
+}

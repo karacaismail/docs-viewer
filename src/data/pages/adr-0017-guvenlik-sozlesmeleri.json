@@ -456,15 +456,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "RLS context'i transaction'da SET LOCAL ile bağlanır, asla SET ile: SET oturum boyu kalıp connection pool'da bir sonraki tenant'a sızar — bu OWASP A01 Broken Access Control'ün doğrudan tetikleyicisidir. Bağlam yoksa sıfır satır (fail-closed): tenant context set edilmemişse sorgu boş döner, açık tarafa düşmez; eksik bağlam veri sızıntısına değil hataya yol açmalı. Migration BYPASSRLS auditli ve dar kapsamlı: RLS'i atlayan tek rol şema değişikliği içindir, uygulama yolu bu rolü asla kullanamaz, her kullanımı forensic log'a düşer. sub_prompt = untrusted input (OWASP LLM01 Prompt Injection): kullanıcı/dış kaynaktan gelen prompt parçası asla güvenli sayılmaz; Rule of Two ile yetkili işlem + dış etki + ham model çıktısı aynı anda birleşemez. Red-team corpus reddi bir regresyon kapısıdır: bilinen injection saldırı seti CI'da denenir, herhangi biri geçerse build kırılır — savunma kanıtlanana kadar yayın yok. PII sınıflandırma matrisi (sınıf × liste/detay/public/silme): her alan hangi sınıfta, listede görünür mü, detayda maskeli mi, public yüzeye çıkar mı, silme talebinde nasıl işlenir — varsayılan en kısıtlayıcı sınıf, açma bilinçli karar. Forensic audit ayrımı (human/agent/model/tool/approval/changeset/hash/delegation): bir yazmanın insan mı ajan mı model mi tarafından, hangi onayla, hangi delegasyonla yapıldığı ayrı tutulur; hash zinciri olay-sonrası kurcalama tespiti sağlar. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -822,7 +814,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — ADR-0017: Güvenlik Sözleşmeleri — RLS/Audit/sub_prompt/PII",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — ADR-0017: Güvenlik Sözleşmeleri — RLS/Audit/sub_prompt/PII\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: tenant.scoped_write_requested\ncondition:\n  all:\n    - session.tenant_context == \"set_local\"\n    - actor.capability >= \"write:order\"\n    - not sub_prompt.untrusted_violates_rule_of_two\naction:\n  - emit: order.persisted\n  - audit.record: { actor_kind, approval_ref, changeset_hash, delegation_chain }\nguards:\n  max_depth: 6\n  idempotency_key: \"tenant:{tenant_id}:order:{client_request_id}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -959,6 +951,18 @@
        }
       ]
      ]
+    ]
+   },
+   {
+    "id": "block-adr-0017-guvenlik-sozlesmeleri-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Çapraz-tenant negatif testi gerçek Postgres üzerinde: Tenant A, B'nin kaydını okuyamaz/yazamaz/reference ile bağlayamaz — mock değil, RLS politikası canlı sınanır. SET (LOCAL'siz) kullanımına karşı statik kapı: kod tabanında çıplak SET tenant denemesi lint/grep kapısında reddedilir. Bağlamsız sorgu testi: tenant context set edilmeden çalışan sorgu sıfır satır döndürmeli, hata değil sızıntı da değil. Prompt-injection corpus testi: red-team seti reddedilir; yeni saldırı paterni eklendikçe corpus büyür, kapı sıkılaşır. PII matris testi: her PII alanı için liste/detay/public/silme davranışı sınıfına uygun mu otomatik doğrulanır."
+     }
     ]
    },
    {

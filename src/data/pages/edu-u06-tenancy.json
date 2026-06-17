@@ -363,7 +363,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Öğrenme hedefi",
+      "term": "Otomatik tenant scope",
       "definition": [
        {
         "type": "strong",
@@ -371,16 +371,47 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin okuyucuya kazandırdığı bağlayıcı yetkinlik."
+        "text": "Query katmanının her SELECT/UPDATE/DELETE'e otomatik WHERE tenant_id = :current eklemesi; cross-tenant sızıntının teknik garantisi, insan müdahalesinden bağımsız."
        }
       ]
      },
      {
-      "term": "Uygulanabilir çıktı",
+      "term": "Üç izolasyon seviyesi",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Row-level (aynı tablo + tenant_id kolonu, bu projenin seçimi), "
+       },
+       {
+        "type": "term",
+        "text": "schema-level",
+        "termId": "term-schema-level-edu-u06-tenancy"
+       },
+       {
+        "type": "text",
+        "text": " (tenant başına PostgreSQL schema) ve "
+       },
+       {
+        "type": "term",
+        "text": "cluster-level",
+        "termId": "term-cluster-level-edu-u06-tenancy"
+       },
+       {
+        "type": "text",
+        "text": " (tenant başına DB instance) arasında maliyet/izolasyon dengesi."
+       }
+      ]
+     },
+     {
+      "term": "Sub-tenant hiyerarşisi",
       "definition": [
        {
         "type": "text",
-        "text": "Dersin sonunda üretilen çalıştırılabilir/denetlenebilir eser."
+        "text": "Bir tenant altındaki iş birimleri (holding altı şirketler); konsolide rapor + ayrı operasyon ihtiyacını karşılar."
        }
       ]
      }
@@ -568,15 +599,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Cross-tenant veri sızıntısı bu ünitenin merkezi tehdididir: izolasyonu kod incelemesiyle (bir gün unutulur) değil, query katmanında zorunlu scope ile garanti etmek tek güvenli desendir — callout 'critical' olarak işaretli. İzolasyon seviyesi seçimi bir güvenlik/regülasyon kararıdır: regülasyon fiziksel ayrım istediğinde row-level yetmez, cluster-level (ayrı DB instance) gerekir; seçim tehdit modeline göre yapılır. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1071,6 +1094,32 @@
        }
       ]
      ]
+    ]
+   },
+   {
+    "id": "block-edu-u06-tenancy-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "term",
+      "text": "Tenant scope",
+      "termId": "term-tenant-scope-edu-u06-tenancy"
+     },
+     {
+      "type": "text",
+      "text": "'un asıl testi negatif testtir: A tenant'ının oturumuyla B tenant'ının kaydına erişim denemesi boş sonuç dönmeli — scope eklenmemiş bir sorgu yolunu bulan test, bu üniteyi gerçekten anladığının kanıtıdır. Scope query katmanında zorlandığı için her yeni repository/sorgu yolu otomatik kapsanmalı; geliştiricinin elle WHERE yazmayı unuttuğu durum testle yakalanmalı, kod incelemesine bırakılmamalı. "
+     },
+     {
+      "type": "term",
+      "text": "Sub-tenant",
+      "termId": "term-sub-tenant-edu-u06-tenancy"
+     },
+     {
+      "type": "text",
+      "text": " senaryosunda konsolide rapor, üst tenant kapsamında alt birimleri toplarken yine izolasyonu korumalı: bir holding bir başkasının alt-şirketini görememeli."
+     }
     ]
    },
    {

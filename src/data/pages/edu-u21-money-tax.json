@@ -878,7 +878,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Öğrenme hedefi",
+      "term": "Tarih-bağlı kur defteri",
       "definition": [
        {
         "type": "strong",
@@ -886,16 +886,47 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin okuyucuya kazandırdığı bağlayıcı yetkinlik."
+        "text": "fx_rate(from, to, rate, valid_at); geçmiş işlem her zaman işlem tarihindeki kurla okunur, anlık kurla yeniden hesaplanmaz."
        }
       ]
      },
      {
-      "term": "Uygulanabilir çıktı",
+      "term": "ArcheType-bazlı vergi oranı tablosu",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "tax_rate(category, country, rate, valid_from, valid_to); oran sabit kodlanmaz, tarihe ve yetki alanına göre sorgulanır."
+       }
+      ]
+     },
+     {
+      "term": "Reverse charge / OSS kararı",
       "definition": [
        {
         "type": "text",
-        "text": "Dersin sonunda üretilen çalıştırılabilir/denetlenebilir eser."
+        "text": "AB B2B'de alıcı VAT no'lu ise sıfır oran + ters yükleme; B2C'de OSS ile satıcı ülkesi basitleştirmesi."
+       }
+      ]
+     },
+     {
+      "term": "Ödeme sağlayıcı seçim matrisi",
+      "definition": [
+       {
+        "type": "text",
+        "text": "TR için Iyzico/PayTR, uluslararası abonelik için Stripe, vergi yükü devri için Paddle ("
+       },
+       {
+        "type": "term",
+        "text": "Merchant of Record",
+        "termId": "term-merchant-of-record-edu-u21-money-tax"
+       },
+       {
+        "type": "text",
+        "text": ")."
        }
       ]
      }
@@ -1083,15 +1114,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Vergi oranı sabit kodlanırsa (const KDV = 0.20) oran değişiminde tüm fatura sessizce yanlışlanır; oran tablodan tarihe göre çözülmeli. Anlık kurla geçmiş işlem yeniden hesaplanırsa muhasebe açığı doğar ve denetimde hesap verilemez; fx_date değişmez kayıt olmalı. Reverse charge yanlış uygulanırsa (B2B'ye KDV eklemek veya B2C'ye eklememek) denetim cezası riski oluşur. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1119,15 +1142,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "tax_rate ve fx_rate sorguları (category, country, valid_from) ve (from, to, valid_at) bileşik indeksiyle nokta-tarih çözümler."
        }
       ]
      },
@@ -1145,15 +1160,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Fatura kesiminde tek tarih-aralığı sorgusu; geçmiş kur için tablo immutable olduğundan sonuç cache'lenebilir."
        }
       ]
      },
@@ -1589,6 +1596,18 @@
     ]
    },
    {
+    "id": "block-edu-u21-money-tax-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Geçmiş tarihli fatura yeniden açıldığında orijinal fx_rate ile aynı toplamı vermeli (anlık kurla değil). Oran tablosunda valid_to dolu eski kayıt ile yeni kayıt arası geçişte doğru oranın seçildiği doğrulanmalı. AB B2B (VAT no var) faturasında oran sıfır + reverse charge etiketi; B2C faturasında tam oran üretildiği test edilmeli. Decimal(18,2) toplam = amount * (1 + tax_rate) ve dönüştürülmüş tutar = amount * fx_rate kuruş sapmasız hesaplanmalı."
+     }
+    ]
+   },
+   {
     "id": "block-edu-u21-money-tax-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1665,13 +1684,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-edu-u21-money-tax-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-edu-u21-money-tax-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-billing fatura kalemine amount/currency/fx_rate/fx_date/tax_rate kolonlarını uygular."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-accounting kur farkını ve stopajı muhasebe defterine yansıtır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "cc-tr KDV %1/%10/%20 ve stopaj oranlarını yetki alanına bağlar."
+      }
+     ]
     ]
    },
    {

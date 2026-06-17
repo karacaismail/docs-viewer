@@ -1,0 +1,34 @@
+{
+ "featureDefs": [
+  {
+   "name": "Tip ayrımının üç doğru yaklaşımı",
+   "desc": "Klasik DDD'nin üç yaklaşımı runtime metadata olarak yaşar: farklı kural+yaşam döngüsü için ayrı aggregate (paylaşılan şema+JSONB, opt-in fiziksel tablo terfisi), aynı kavramda tipe göre davranış için Strategy/policy, sadece etiket/filtre için value object enum.",
+   "critical": true
+  },
+  {
+   "name": "Tek tablo + type-switching yasağı",
+   "desc": "if(type=='invoice')...else if(type=='contract') dispatch anemic domain anti-pattern'i; open/closed ihlali ve kombinatoryel kaos üretir. Bu projede yapılmaz; tip ayrımı runtime metadata/Strategy ile çözülür.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Bu sayfa ürün modülü değil; ArcheType'ın klasik DDD eleştirisine (anemic domain) karşı doğru kurulumunu öğreten eğitim ünitesidir. Pratiğe tipli aksiyon yüzeyi ve ChangeSet sözleşmesi olarak bağlanır.",
+  "kernel": "ArcheType depolama modeli: varsayılan paylaşılan şema + JSONB (GIN index); yalnız yüksek-hacimli tipler açık opt-in ile fiziksel tabloya terfi eder. Şema sabit kalır, tip değişikliği veri/metadata'dır, dinamik DDL yok.",
+  "core": "Tip davranışı policy/Strategy class olarak auto-discover edilir; CRUD API ve form metadata'dan render edilir. Üç yaklaşım (ayrı aggregate / Strategy / value object) tek tablo+if-else olmadan birlikte yaşar.",
+  "modules": "",
+  "apps": ""
+ },
+ "moduleUsage": [],
+ "securityNotes": [
+  "Müşteri/son-kullanıcı yeni tablo yaratamaz; değişken alanlar JSONB ile çözülür — yatay tablo büyümesi engellenir, ortamlar arası (prod/dev/beta) migrate basitleşir."
+ ],
+ "perfNotes": {
+  "code": "if type==invoice ... else if contract ...  // anti-pattern: her yeni tip tüm switch'lere dokunur",
+  "perf": "Tablo-per-tip yüzlerce tabloya index dağıtır, kompleks işlemde aşırı join üretir; hibrit çözüm sabit az tablo + JSONB GIN index ile yükü tek noktada yoğunlaştırır."
+ },
+ "testNotes": [
+  "Yeni tip tanımının otomatik fiziksel tablo (dinamik DDL) yaratmadığı, paylaşılan şema+JSONB'ye yazdığı doğrulanır.",
+  "Tip davranışının policy/Strategy interface implementasyonuyla (örn. InvoicePolicy implements DocPolicy) çözüldüğü, if/else type-switching içermediği test edilir.",
+  "Yüksek-hacimli tipin fiziksel tabloya terfisinin yalnız açık opt-in ile gerçekleştiği kontrol edilir."
+ ]
+}

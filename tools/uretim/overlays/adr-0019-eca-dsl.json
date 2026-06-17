@@ -1,0 +1,44 @@
+{
+ "featureDefs": [
+  {
+   "name": "Declarative JSON DSL (event/condition/action)",
+   "desc": "Otomasyon kuralı serbest JS/SQL/shell değil; event-condition-action üçlüsünden oluşan bildirimsel JSON'dur. Action allowlist'ten seçilir, AI önerir, motor doğrular ve uygular. v1'de keyfi kod yürütme yoktur.",
+   "critical": true
+  },
+  {
+   "name": "Güvenlik kapısı (loop/tenant/derinlik/idempotency)",
+   "desc": "Her kural uygulanmadan önce kapıdan geçer: sonsuz döngü tespiti, yan-tenant erişimi reddi, geri-alınamaz yan etki kontrolü, maksimum zincir derinliği 6, idempotency key zorunluluğu. Kapı, no-code kullanıcının yıkıcı kural kurmasını engeller.",
+   "critical": true
+  },
+  {
+   "name": "Dış etki delegasyonu (n8n allowlist + step-up)",
+   "desc": "Dış etkili aksiyon (e-posta, webhook, ödeme) doğrudan ECA'dan değil, allowlist'li n8n akışına delege edilir; parasal/hukuki etkide step-up kimlik doğrulama gerekir. ECA yalnızca tetikler, kapıyı kendi açmaz.",
+   "critical": true
+  },
+  {
+   "name": "Mod ayrımı (Otopilot / Atölye)",
+   "desc": "Otopilot modunda güvenli ECA otomatik çalışır (parasal/hukuki olanlar step-up'a düşer); Atölye modunda her ECA ayrı bir kart ve sub_prompt olarak kullanıcıya sunulur.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Bu bir geliştirme adımı (ADR); akış yeni sayfa açılmadan sahip cluster'a (layer1-workflow) entegre edildi. Kararın implikasyonu: motor layer1'de, dış etki n8n'de.",
+  "core": "ECA motoru layer1/layer1-workflow içinde; event bus'tan tetiklenir, condition'ı değerlendirir, allowlist action'ı uygular. Güvenlik kapısı motorun ayrılmaz parçasıdır.",
+  "modules": "Dış etkili akışlar n8n allowlist'inde tanımlı; e-posta l1-notification'a, ödeme ilgili modüle step-up ardından delege edilir. Modüller ECA'ya kural enjekte etmez, AI önerir motor doğrular."
+ },
+ "ecaExample": "trigger:\n  event: invoice.overdue\ncondition:\n  all:\n    - actor.capability >= \"billing.dunning\"\n    - invoice.tenant_id == context.tenant_id\n    - not loop_detected\n    - chain_depth < 6\naction:\n  - emit: notification.dunning_reminder\n  - delegate: n8n.flow.payment_retry\nguards:\n  max_depth: 6\n  idempotency_key: \"dunning:{invoice.id}:{day}\"\n  external_effects: step_up_required\n  cross_tenant: deny",
+ "securityNotes": [
+  "Serbest kod yasağı injection (SQL/shell/JS) yüzeyini sıfırlar; action yalnız allowlist'ten geldiği için motor değerlendirdiği şeyi tam bilir.",
+  "Yan-tenant kapısı: condition ve action tenant_id eşitliğini zorlar; bir tenant'ın kuralı başka tenant'ın verisine dokunamaz.",
+  "Geri-alınamaz yan etki (ödeme, e-posta) doğrudan ECA'dan çıkmaz; n8n allowlist + step-up ile yetkili kanaldan geçer, böylece otomasyon parayı tek başına hareket ettiremez.",
+  "Sonsuz döngü ve maks derinlik 6 kapısı, bir kuralın başka kuralı tetikleyip özyinelemeli patlamaya yol açmasını (event storm) engeller.",
+  "Idempotency key zorunlu: aynı tetik iki kez gelse bile aksiyon bir kez uygulanır; çift gönderim/çift tahsilat önlenir."
+ ],
+ "testNotes": [
+  "Kapı testi: cross-tenant action içeren kural reddedilmeli; condition tenant eşitliği sağlamıyorsa uygulama engellenmeli.",
+  "Döngü testi: A→B→A zincirini kuran kurallar loop_detected ile durdurulmalı; derinlik 6'yı aşan zincir kesilmeli.",
+  "Idempotency testi: aynı idempotency_key ile iki tetik → tek aksiyon assert et.",
+  "Delegasyon testi: dış etkili (ödeme) aksiyon doğrudan yürütülmemeli; step_up_required bayrağı set edilip n8n akışına delege edilmeli.",
+  "Allowlist testi: allowlist dışı action içeren kural doğrulamada reddedilmeli (serbest kod kabul edilmemeli)."
+ ]
+}

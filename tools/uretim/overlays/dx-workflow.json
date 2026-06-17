@@ -1,0 +1,39 @@
+{
+ "featureDefs": [
+  {
+   "name": "Tek-komut sdk up (dev-env pariteleştirme)",
+   "desc": "Docker Compose ile tek komutta yerel geliştirme ortamı: Keycloak identity, seed verisi ve .env/sır yönetimi ayağa kalkar. macOS M-serisi ↔ Debian/AMD platform-bağımlı ikili tuzağını container ile kapatır.",
+   "critical": true
+  },
+  {
+   "name": "sdk archetype / theme üretimi (tek-komut + çok-aşamalı AI)",
+   "desc": "Tek-komut yalnız ArcheType ve theme üretir; app ve module geliştirici kompozisyonudur. AI taslak üretir, insan reviewer onaylar — üretilen üretimi ayrı doğrulanır.",
+   "critical": true
+  },
+  {
+   "name": "sdk check (tip + tenant-izolasyon + conformance)",
+   "desc": "Geliştirme aşamasında capability manifest, tip kontrolü, çok-kiracılı izolasyon ve conformance tek komutla denetlenir; sessiz (exception fırlatmayan) runtime hatasını erken yakalamanın ilk kapısıdır."
+  },
+  {
+   "name": "CI/CD gate zinciri",
+   "desc": "lint + test + build + e2e + a11y + size + coverage kapıları yeşil olmadan merge yok; branch koruma, merge öncesi yeşil CI ve semver etiket zorunlu. Rollback ve deploy profili (Debian + Docker Compose) tanımlı."
+  }
+ ],
+ "moduleUsage": [],
+ "testNotes": [
+  "TEST-FIRST ZORUNLU — 'geliştir' aşaması (3) testi sonraya bırakmaz; ArcheType/theme üretiminden ve app/module kompozisyonundan önce kabul kriteri ve testler yazılır. Akışın en sık atlanan ve en tehlikeli noktasıdır.",
+  "CI/CD aşaması (5) altı kapıyı birlikte koşar: lint, unit+integration test, build, e2e (Playwright), a11y (axe), bundle size, coverage. Hiçbiri kırmızıyken merge edilmez; AI kendi çıktısını yeşil ilan edemez.",
+  "Entegrasyon aşaması (4) sessiz runtime hatasını (çalışıyor ama yanlış) hedefler: exception fırlatmayan ama davranışı bozan değişiklikler ancak davranışa bağlı testle yakalanır; prod→dev migration ve KVKK uyumlu test verisiyle doğrulanır.",
+  "Deploy aşaması (7) sonrası mavi-yeşil/canary ile yayılır; tenant provisioning, observability/log ve cache invalidation deploy-sonrası ops testinin parçasıdır (mutlu-yol değil tam akış)."
+ ],
+ "securityNotes": [
+  "Sır yönetimi iki yerde kritik: yerel .env (aşama 2) ve CI sırları (aşama 5); sır repoya veya log'a sızmamalı, deploy profiline ayrı enjekte edilmelidir.",
+  "Çok-kiracılı izolasyon sdk check ile geliştirmede, güvenlik kapısıyla release öncesi iki kez doğrulanır; tenant kaçağı release'i durdurur.",
+  "Marketplace yayınında (aşama 8) her ArcheType/theme/module/app izin manifesti ve kernel uyum aralığı ile yayımlanır; manifestsiz yayın engellenir."
+ ],
+ "ecaExample": "trigger:\n  event: ci.pipeline.tamamlandi\ncondition:\n  all:\n    - actor.capability >= \"dx:merge\"\n    - gates.lint && gates.test && gates.e2e && gates.a11y && gates.size && gates.coverage\n    - reviewer.human_approved == true\n    - not loop_detected\naction:\n  - emit: dx.merge.izin_ver\n  - emit: dx.deploy.tetikle\nguards:\n  max_depth: 6\n  idempotency_key: \"dx:deploy:{commit_sha}\"\n  external_effects: deploy_requires_approval",
+ "perfNotes": {
+  "code": "Docker Compose tek-komut dev-env; lazy/kompozisyon ile eager bundle bütçesi korunur",
+  "perf": "size kapısı (size-limit) ve coverage kapısı CI'da zorlanır; ortam-paritesi container ile sabitlenir, böylece 'bende çalışıyordu' regresyonları engellenir."
+ }
+}

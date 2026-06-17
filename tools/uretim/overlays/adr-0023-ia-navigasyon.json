@@ -1,0 +1,41 @@
+{
+ "featureDefs": [
+  {
+   "name": "Tek birincil eksen (yolculuk/inşa)",
+   "desc": "Öğren -> Çekirdek -> Üret -> İşlet tek omurga; tech-stack/domain/olgunluk birincil eksen değil facet'e iner. Rail 1'in ~7 eksen karışıklığını çözer.",
+   "critical": true
+  },
+  {
+   "name": "Tipli ilişki kenarı",
+   "desc": "related düz liste yerine {type, target}: belongs-to / uses / extends. Sayfa içi 'Ait olduğu Module / Kullanan App' bağlam kutusu bundan türer.",
+   "critical": true
+  },
+  {
+   "name": "Granülerlik breadcrumb (ikincil)",
+   "desc": "App -> Module -> ArcheType ikincil breadcrumb bileşeni; granülerlik artık modellenir, navigasyonda kaybolmaz.",
+   "critical": false
+  },
+  {
+   "name": "Prefix-coupling gevşetme",
+   "desc": "Kategori dosya-prefix'ine bağlıyken açık categoryId/granularity metadata'sına taşınır; ad değişimi IA'yı kırmaz, kategori değişiminde slug 301.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "IA bağlayıcı prensip kararı; Faz 2-3 motor şemalarını ve sayfa metadata'sını değiştirir, bu yüzden bileşen + migrate katmanı doğrudan etkilenir.",
+  "kernel": "Granülerlik ekseni (App/Module/ArcheType) kernel terminolojisiyle hizalı; IA bu kavramları breadcrumb'a yansıtır.",
+  "core": "Tipli ilişki şeması (related -> {type,target}) src/engine/components/schemas'ta tanımlanır; bağlam kutusu + breadcrumb bileşeni core render katmanında.",
+  "modules": "Sayfa kendi categoryId'sini taşıyınca module yeniden adlandırması IA'yı kırmaz; 'Kullanan App' kenarı module-app bağını gösterir.",
+  "apps": "App granülerlik düzeyi breadcrumb'ın kökü; tech-stack simetrisi (backend+frontend bitişik) app yüzeyinde tutarlı."
+ },
+ "moduleUsage": [],
+ "securityNotes": [
+  "Prefix-coupling gevşetmede kategori değişimi slug 301 (l1-redirect) ile yönetilmeli; aksi halde eski URL'ler kırılır ve derin link bütünlüğü bozulur.",
+  "'Yeni sayfa nereye girer' yönetişim kuralı olmadan eksen kayması büyür — IA tutarlılığı bir bütünlük kontrolüdür."
+ ],
+ "testNotes": [
+  "Slug kararlılığı gate'i: ad değişiminde slug sabit kalmalı; kategori değişiminde 301 zinciri doğrulanmalı (deterministik gate).",
+  "A11y kapısı: yeni breadcrumb + bağlam kutusu bileşenleri klavye + ekran okuyucu testinden geçmeli (Faz 2-3 migrate koşulu).",
+  "İlişki-tipi şema testi: related kenarı yalnız belongs-to/uses/extends tiplerinden birini taşımalı, serbest metin reddedilmeli."
+ ]
+}

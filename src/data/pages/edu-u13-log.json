@@ -880,7 +880,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Öğrenme hedefi",
+      "term": "Yapısal log + correlation ID",
       "definition": [
        {
         "type": "strong",
@@ -888,16 +888,16 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin okuyucuya kazandırdığı bağlayıcı yetkinlik."
+        "text": "Düz metin değil JSON: {timestamp, level, message (sabit), correlation_id, user_id, error stack}. Her HTTP request'e UUID correlation_id atanır; A→B→C→D zincirinden geçen bir işlem tek aramayla bulunur. Loki/Grafana alanları indeksler."
        }
       ]
      },
      {
-      "term": "Uygulanabilir çıktı",
+      "term": "Log seviyesi disiplini",
       "definition": [
        {
         "type": "text",
-        "text": "Dersin sonunda üretilen çalıştırılabilir/denetlenebilir eser."
+        "text": "DEBUG üretimde kapalı (disk şişmesin), INFO normal iş olayı, WARN beklenmedik ama hata değil, ERROR exception + alarm. FATAL gereksiz. 'Az log = çözülmez, çok log = bulunamaz, doğru yapısal log = tek aramayla bulunur.'"
        }
       ]
      }
@@ -1085,15 +1085,16 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
+      "text": "Log injection: kullanıcı input'u log'a doğrudan yazılmaz; saldırgan name alanına '\\n[ERROR] Admin password reset OK' yazarsa sahte log üretir. Çözüm: her zaman yapısal log — logger.info('login', {user: req.body.name}) ile alan escape edilir. "
      },
      {
-      "type": "code",
-      "text": "pii"
+      "type": "term",
+      "text": "PII redaction",
+      "termId": "term-pii-redaction-edu-u13-log"
      },
      {
       "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": ": email/telefon/T.C. kimlik no log'a yazılmadan önce maskelenir (KVKK + GDPR); log dosyası sızsa bile kişisel veri açığa çıkmaz. DEBUG üretimde kapalı tutulur; aksi halde sorgu detayları ve hassas veri log'a düşer ve disk şişer. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1591,6 +1592,18 @@
     ]
    },
    {
+    "id": "block-edu-u13-log-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Üretim log'unun yapısal (JSON) olduğu ve zorunlu alanları (timestamp ISO 8601 UTC, level, sabit message, correlation_id) taşıdığı doğrulanır; ERROR'da tam stack trace bulunur. Aynı request'in tüm log satırlarında ortak correlation_id geçtiği ve zincir boyunca tek aramayla izlenebildiği test edilir. PII alanlarının maskelendiği ve kullanıcı input'unun escape edilerek log injection'ın engellendiği kontrol edilir."
+     }
+    ]
+   },
+   {
     "id": "block-edu-u13-log-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1609,7 +1622,7 @@
        },
        {
         "type": "text",
-        "text": "Dolaylı — bu sayfa kararı/bilgiyi tanımlar; entegrasyon onu uygulayan birimlerde gerçekleşir."
+        "text": "Bu sayfa ürün modülü değil; log disiplinini (seviyeler, correlation ID, yapısal log, PII redaction, log injection) öğreten eğitim ünitesidir. Log altyapısı cc-obs cluster'ında işlenir."
        }
       ]
      },
@@ -1618,16 +1631,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": ""
        }
       ]
      },
@@ -1636,7 +1640,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Her HTTP middleware request'e UUID correlation_id atar, logger her satıra otomatik ekler; logger backend'de structlog, frontend'de pino/Sentry browser SDK ile yapısal çıktı üretir. Log toplama (Loki/Elasticsearch) tüm sunuculardan tek yere akıtır."
        }
       ]
      },
@@ -1645,7 +1649,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": ""
        }
       ]
      },
@@ -1654,7 +1658,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": ""
        }
       ]
      }
