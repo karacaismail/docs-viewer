@@ -1,0 +1,41 @@
+{
+ "featureDefs": [
+  {
+   "name": "Tekilleştirme (dedup)",
+   "desc": "Bulanık eşleştirme ile yinelenen kayıtlar tespit edilir; birleştirme önerisi insan onayına düşer, otomatik birleştirme yalnız yüksek-skor + tersine alınabilir (audit'li) yapılır.",
+   "critical": true
+  },
+  {
+   "name": "Normalizasyon ve doğrulama",
+   "desc": "Adres/telefon/vergi-no kurallı normalize edilir, format/checksum doğrulanır; geçersiz kayıt quarantine'e alınır, kaynak değer korunur (geri-alınabilir)."
+  },
+  {
+   "name": "Zenginleştirme",
+   "desc": "Dış kaynaktan (referans veri) eksik alanlar doldurulur; her zenginleştirme provenance ile işaretlenir, hangi kaynak/güven skoru audit'e yazılır."
+  },
+  {
+   "name": "Geri-alınabilir toplu işlem",
+   "desc": "Her temizleme çalışması bir batch; öncesi/sonrası bitemporal saklanır, hatalı kural toplu geri alınabilir (idempotent reverse)."
+  }
+ ],
+ "moduleUsage": [
+  "s-crm: Müşteri/party kayıtları en sık temizleme hedefi; tekilleştirme sonrası tek altın kayıt (golden record) CRM'e döner.",
+  "l1-import: İçe aktarılan ham veri önce temizleme hattından geçirilir, sonra hedef modüle yazılır.",
+  "kernel-authz: 'toplu birleştir' ve 'toplu sil' capability deny-by-default; geri-alınamaz işlemler ayrı yetki + onay ister."
+ ],
+ "ecaExample": "trigger:\n  event: cleansing.batch_requested\ncondition:\n  all:\n    - actor.capability >= \"data.cleanse\"\n    - match_score >= auto_merge_threshold\n    - not idempotency_seen(batch.id)\naction:\n  - snapshot_before: affected_records\n  - apply: dedup + normalize + enrich\n  - emit: cleansing.batch_applied\nguards:\n  max_depth: 3\n  idempotency_key: \"cleanse:{batch.id}\"\n  external_effects: reversible_via_snapshot",
+ "securityNotes": [
+  "Temizlenen kayıtlar pii sınıfı; tenant RLS ile izole, zenginleştirme için dışarı çıkan veride kişisel alan minimize edilir.",
+  "Otomatik birleştirme yalnız eşik üstü + geri-alınabilir; eşik altı insan onayı ister (deny-by-default), kör birleştirme yapılmaz.",
+  "Her batch öncesi snapshot bitemporal saklanır; hatalı kural sonucu kayıp veri geri alınabilir, audit izi değiştirilemez."
+ ],
+ "perfNotes": {
+  "code": "Aday eşleşme blocking key ile daraltılır (tam kartezyen yerine), batch (created_at, id) keyset ile işlenir.",
+  "perf": "Tekilleştirme blocking + canopy ile O(n²) yerine alt-küme karşılaştırması; zenginleştirme dış çağrıları rate-limit + cache'li."
+ },
+ "testNotes": [
+  "Dedup eşik: eşik altı eşleşme otomatik birleşmez, onay kuyruğuna düşer.",
+  "Geri-alma: uygulanan batch idempotent reverse ile öncesi haline döner.",
+  "Idempotency: aynı batch.id iki kez çalıştırılırsa tek kez uygulanır."
+ ]
+}

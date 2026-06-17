@@ -131,7 +131,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Proje Portföy & PMO Operasyonu — çekirdek yetenek",
+      "term": "Portfolio Item",
       "definition": [
        {
         "type": "strong",
@@ -139,41 +139,34 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Proje/girişim kaydı: stratejik hedef bağı, faz, durum ve önceliklendirme skoru."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Resource Plan",
       "definition": [
        {
         "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
-       },
-       {
-        "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Kapasite vs talep: kişi/rol ataması, allocation %, çakışma ve over-allocation uyarısı."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Prioritization Model",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Skorlama (örn. değer/efor, WSJF) ile portföy sıralaması; karar gerekçesi izlenir."
+       }
+      ]
+     },
+     {
+      "term": "PMO Governance",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Aşama kapısı (stage-gate) onayları, durum raporu ve risk/issue kaydı."
        }
       ]
      }
@@ -361,15 +354,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Portföy ve bütçe verisi hassas; capability deny-by-default + RLS ile yalnız yetkili rol görür. Stage-gate onayı ve önceliklendirme değişikliği audit'e yazılır; karar kim verdi izlenir. Aday durumda kapsam küçük tutulur; kanıtlanmamış runtime vaadi verilmez (deny-by-default). Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -397,15 +382,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Portföy ve kaynak listeleri keyset ile sayfalanır; kapasite raporu materialized projeksiyondan okur."
        }
       ]
      },
@@ -423,15 +400,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Planlama döngüsü (çeyrek başı) yoğun yeniden hesap; allocation çakışma kontrolü worker'a alınır."
        }
       ]
      },
@@ -727,7 +696,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Proje Portföy & PMO Operasyonu",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Proje Portföy & PMO Operasyonu\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: StageGateRequested\ncondition:\n  all:\n    - actor.capability >= \"pmo:gate:approve\"\n    - portfolio_item.status == \"in_review\"\n    - not resource_conflict\naction:\n  - emit: GateApproved\n  - emit: PortfolioItemAdvanced\nguards:\n  max_depth: 6\n  idempotency_key: \"gate:{portfolio_item_id}:{stage}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -867,6 +836,18 @@
     ]
    },
    {
+    "id": "block-s-pmo-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "resource_conflict kapısı: çakışan kaynak ataması olan kalemin gate'ten geçemediği doğrulanır. Bitemporal: geçmiş önceliklendirme kararının düzeltilmesi mevcut portföyü bozmadan kaydedilir. Idempotent gate: aynı stage onayı iki kez gelince tek ilerleme üretildiği test edilir."
+     }
+    ]
+   },
+   {
     "id": "block-s-pmo-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -885,7 +866,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Aday (candidate) Layer-2 ürün; katalogda eksik olduğu için fırsat olarak eklendi. Olgunlaşınca yetki/audit/event-bus kernel'den gelir."
        }
       ]
      },
@@ -894,16 +875,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Party (kaynak/sahip) + capability + audit + tenancy kernel'den; portföy verisi tenant-scoped."
        }
       ]
      },
@@ -912,7 +884,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "PMO core module'ü portföy + governance yapısını taşır; kaynak planlama ek module olarak biner."
        }
       ]
      },
@@ -921,7 +893,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "s-hrms kapasite kaynağı + l1-notification kapı hatırlatma + l1-analytics portföy raporu ile kompoze edilir."
        }
       ]
      },
@@ -930,7 +902,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "PMO app'i tek panel; aynı Party ve proje kaydı finans/HR modülleriyle default entegre."
        }
       ]
      }
@@ -943,13 +915,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-pmo-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-pmo-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "PMO App: portföy önceliklendirme, stage-gate onayları ve durum raporu."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Kaynak Yönetimi App: kapasite-talep dengesi, allocation ve çakışma uyarıları."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Yönetim Paneli App: portföy sağlığı, risk/issue özeti ve karar geçmişi."
+      }
+     ]
     ]
    },
    {

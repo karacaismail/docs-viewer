@@ -1,0 +1,51 @@
+{
+ "featureDefs": [
+  {
+   "name": "Cache-aside (varsayılan) + strateji dispatch",
+   "desc": "Kod önce cache'e bakar, yoksa kaynaktan çeker + yazar; cache çökse bile sistem kaynaktan çalışır. Strateji veri tipine göre runtime dispatch (cache-aside / write-through / write-behind / CDN-edge / app-memory LRU) — if-zinciri değil.",
+   "critical": true
+  },
+  {
+   "name": "Anahtar-bazlı + bağımlılık-haritalı invalidation",
+   "desc": "Yazımda YALNIZ ilgili anahtar(lar) + bağlı projeksiyon anahtarları düşer; 'flush all' anti-pattern (cache-miss fırtınası). Key disiplini: <entity>:<id>:<version> — şema değişince eski cache otomatik geçersiz.",
+   "critical": true
+  },
+  {
+   "name": "Stampede (thundering herd) koruması",
+   "desc": "TTL bitince N istek aynı anda kaynağa gitmesin: distributed lock / singleflight veya stale-while-revalidate (eski cache'i kullan, arka planda yenile)."
+  },
+  {
+   "name": "Tutarlılık penceresi disiplini",
+   "desc": "Stale okuma kabul edilebilir mi karar alanına bağlı: fiyat=HAYIR (cache yok), mesai saati=EVET. Kritik yolda read-after-write; stale pencere audit'li."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — cache bağımsız ürün değil, repository/middleware katmanına örülü bir scale primitive'i; doğruluk kaynağı DEĞİL (kaynak Postgres). Çıkarılırsa hız düşer ama tutarlılık DB'den korunur; yalnız Contract sınırında okur.",
+  "kernel": "ArcheType hibrit depolamada JSONB satırı güncellenince yalnız o varlık + bağlı projeksiyon anahtarları düşürülür; module geliştirici geniş flush yazmaz, invalidation kayıt yazımına haritalanır.",
+  "core": "Cache anahtarı tenant_id taşır (komşu-tenant okuması engellenir); TTL + invalidation kuralı core depolama/SRE disiplinine bağlı; tutarlılık write-through/write-behind ile seçilir.",
+  "modules": "scale-projections okuma-modeli cache'ten beslenir, scale-outbox event'i event-based invalidate tetikler, scale-counter sıcak sayaçları app-memory'de tutar — yalnız Contract.",
+  "apps": "Tüm app'ler aynı cache katmanını paylaşır (Redis tek düğüm → Cluster shard+replica); cache miss kaynaktan dolar, doğruluk tek kaynaktan (DB) gelir."
+ },
+ "moduleUsage": [
+  "scale-projections: okuma-optimize projeksiyon anahtarları cache'lenir; kaynak değişince ilgili anahtar düşer.",
+  "scale-outbox: kayıt değişim event'i event-based invalidation tetikler (poisoning/stale önler).",
+  "scale-counter: sık artan sayaçlar app-memory/Redis'te tutulur; periyodik flush ile kaynağa yazılır.",
+  "Tüm module'ler: repository katmanı cache-aside ile sorar; ek kod minimal, key + TTL beyan edilir."
+ ],
+ "ecaExample": "trigger:\n  event: entity.updated\n  when: tenant_scoped\ncondition:\n  all:\n    - actor.capability >= \"cache.invalidate\"\n    - not loop_detected\naction:\n  - cache.invalidate: \"{entity}:{id}:*\"        # yalnız ilgili anahtar(lar)\n  - cache.invalidate_dependents: projection_keys # flush-all DEĞİL\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{id}:cache-inval\"\n  external_effects: none",
+ "securityNotes": [
+  "Cache anahtarı tenant_id taşır; komşu-tenant verisi cache üzerinden okunamaz (izolasyon RLS ile tutarlı).",
+  "Cache poisoning: yanlış veri girerse TTL boyunca kalır → write-through veya event-based invalidate; cache doğruluk kaynağı değildir, kaynak Postgres.",
+  "Stale read riski karar alanına göre değerlendirilir (fiyat=cache yok); kritik yolda read-after-write, stale pencere audit'li."
+ ],
+ "perfNotes": {
+  "code": "Stampede için singleflight (aynı key 2. kez aynı anda hesaplanmaz) / distributed lock; invalidation anahtar-bazlı, bağımlılık-haritalı (flush-all yasak gibi).",
+  "perf": "DB 100ms vs Redis 1ms ≈ 100x; TTL veri tazelenme süresine göre (katalog 1 saat, profil 5 dk, yetki 60 sn LRU, asset 30 gün CDN). Redis tek düğüm → Cluster (shard+replica) ölçeklenir."
+ },
+ "testNotes": [
+  "Yazım sonrası YALNIZ ilgili anahtar düşer; flush-all olmaz (bağımlılık-haritalı invalidation).",
+  "Stampede: TTL bitince N eşzamanlı istek kaynağa tek sorgu gönderir (singleflight/lock).",
+  "Komşu-tenant verisi cache'ten okunamaz (tenant_id anahtar izolasyonu).",
+  "Kritik yol read-after-write: yazımdan sonra aynı istemci taze değeri okur (stale değil)."
+ ]
+}

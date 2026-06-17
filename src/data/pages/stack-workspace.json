@@ -457,15 +457,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Tek SSO tüm parçalara erişim verir ama her parça ayrı capability ister; deny-by-default, bir parçaya yetki diğerini açmaz. Mail/dosya/takvim içeriği pii sınıfı; KVKK veri yerliliği için self-host, tenant RLS ile izolasyon, çapraz-tenant paylaşım açık onay ister. Deliverability anahtarları (DKIM/SMTP) KMS'te; reseller müşteri domain'i adına işlem yaparken delegasyon audit'e bitemporal yazılır. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -963,6 +955,18 @@
     ]
    },
    {
+    "id": "block-stack-workspace-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "SSO: bir parçada oturum açan kullanıcı diğer parçaya yeniden giriş yapmadan geçer, capability eksikse erişim reddedilir. Tenant izolasyon: A tenant'ı B tenant'ının drive dosyasını listeleyemez (RLS doğrulaması). Bildirim: workspace bildirimi quiet-hours penceresine saygı duyar, kritik güvenlik uyarısı bypass eder."
+     }
+    ]
+   },
+   {
     "id": "block-stack-workspace-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -981,7 +985,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Workspace bağımsız bir ürün değil, mevcut Mail + Comms + Drive + Scheduling parçalarını tek SSO altında paketleyen yatay stack'tir; her parça kendi başına satılabilir ama kimlik/yetki/audit ortak kernel'den gelir."
        }
       ]
      },
@@ -990,16 +994,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "identity (tek oturum/2FA), authz (parça başına capability deny-by-default), tenancy (RLS ile tenant izolasyonu), event-bus (parçalar arası olay), audit (bitemporal erişim izi)."
        }
       ]
      },
@@ -1008,7 +1003,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Party (kullanıcı/grup tek kaynak), Notification (quiet-hours'a saygılı), Storage (Drive dosya + sürüm), Calendar primitive."
        }
       ]
      },
@@ -1017,7 +1012,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "s-mail (custom domain, paylaşımlı kutu, deliverability), s-comms (Jitsi video + kanal), stack-drive (dosya/sürüm/paylaşım), s-scheduling (uygunluk/tampon/hatırlatma)."
        }
       ]
      },
@@ -1026,7 +1021,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Tek workspace kabuğu: mail, takvim, drive, chat tek oturumla; reseller/MSP paneli müşteri domain'lerini yönetir."
        }
       ]
      }

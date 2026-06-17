@@ -438,7 +438,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Agent Runtime — MCP, Araç Kaydı, Bellek, Orkestrasyon — çekirdek yetenek",
+      "term": "ArcheType action → MCP tool (A01/A02)",
       "definition": [
        {
         "type": "strong",
@@ -446,41 +446,55 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Her ArcheType action'ı otomatik MCP endpoint olur (stdio/sse/streaming-http); Tool Registry input/output şema + side-effect bayrakları (read_only/idempotent/destructive/requires_confirmation/blast_radius/cost_class) + semantik arama taşır."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Agent kimliği + yetki kesişimi (A03)",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Etkin yetki = kullanıcı_yetki ∩ agent_scope ∩ session_limit; agent ASLA principal değil. Privilege escalation testi sıfır; tool execution sandbox + ihlal/incident."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Tenant-izolasyonlu bellek + PII hijyeni (A04)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Kısa/uzun/epizodik/prosedürel bellek + hibrit retrieval; uzun-dönem saklamadan ÖNCE PII temizliği (memory hygiene) — gizlilik ihlali engellenir."
+       }
+      ]
+     },
+     {
+      "term": "LLM sağlayıcı soyutlaması + gözlemlenebilirlik (A07/A08)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Anthropic/OpenAI/Azure/Bedrock/Ollama tek soyutlamada; routing/fallback/retry/circuit breaker — tek sağlayıcıya kilit yok. Her çağrı: token/latency/maliyet/trace/hallucination skoru (tenant/agent/feature attribution)."
+       }
+      ]
+     },
+     {
+      "term": "Durable agent orkestrasyonu (A09/A10/A11)",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "plan-execute-reflect / multi-agent / DAG; checkpoint&resume + human-in-the-loop (DBOS/Temporal deseni); birleşik SSE/WS stream + konuşma/threading/context compaction."
        }
       ]
      }
@@ -668,15 +682,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Agent asla principal değil; etkin yetki = kullanıcı ∩ agent_scope ∩ session_limit (ADR-0015). Privilege escalation testi sıfır — kesişim uygulanmazsa agent kullanıcı yetkisini aşar (kritik failure mode). Her tool side-effect/idempotency/blast_radius/cost_class anotasyonu taşır; destructive/requires_confirmation tool onaysız çalışmaz (HITL) — yıkıcı işlem blast-radius'la sınırlı. Bellek (A04) uzun-dönem saklamadan önce PII temizliği zorunlu; tenant-izolasyonlu — bir tenant'ın belleği/embedding'i başka tenant retrieval'ına sızmaz. LLM çağrıları (A08) tam izli: maliyet tenant/agent/feature'a attribute; tek sağlayıcıya bağımlılık yok (fallback+circuit breaker). Dış-etkili agent aksiyonu step-up gerektirir. Boyut 3 müşteri-admin PROMPT→ArcheType serbest kod/DDL değildir; capability-gated + hibrit depolama (paylaşılan şema + JSONB); externalReviewRequired — bağımsız güvenlik reviewer şart. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -704,15 +710,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "LLM provider routing cost-optimal (A07); embedding A05 pgvector HNSW; context window compaction (A11) token bütçesini korur; agent workflow durable (checkpoint&resume) — uzun görev kaldığı yerden."
        }
       ]
      },
@@ -730,15 +728,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Tool discovery semantik arama indeksli; vector hybrid search (vector+BM25+filter); LLM çağrısı streaming (SSE/WS, backpressure/buffering A10); bellek retrieval keyset + tenant-partition."
        }
       ]
      },
@@ -1034,7 +1024,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Agent Runtime — MCP, Araç Kaydı, Bellek, Orkestrasyon",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Agent Runtime — MCP, Araç Kaydı, Bellek, Orkestrasyon\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: agent.tool_invocation_requested\ncondition:\n  all:\n    - effective_capability == user_cap ∩ agent_scope ∩ session_limit\n    - tool.blast_radius <= allowed\n    - not loop_detected\naction:\n  - if: tool.destructive\n    require: human_in_the_loop      # A09 HITL\n  - execute: tool_in_sandbox        # A03, cost-tracked A08\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{agent}:{tool}:{call_id}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1174,6 +1164,18 @@
     ]
    },
    {
+    "id": "block-k-agent-runtime-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Her agent çağrısında etkin yetki = kullanıcı ∩ agent_scope ∩ session_limit; privilege escalation testi sıfır (kullanıcı yetkisini aşan tool reddedilir). Her tool input/output şeması + side-effect/idempotency/blast_radius/cost_class anotasyonu taşır; anotasyonsuz tool expose edilmez. Destructive tool onaysız (HITL olmadan) çalışmaz; requires_confirmation kapısı geçilmeden işlem yürümez (deny path). Bellek uzun-dönem saklamada PII temizlenir; komşu-tenant bellek/embedding retrieval'a sızmaz (izolasyon). LLM sağlayıcı fallback + retry + circuit breaker çalışır; tek sağlayıcı düşünce alternatife geçer (bağımlılık yok); her çağrı maliyet attribution'ı üretir."
+     }
+    ]
+   },
+   {
     "id": "block-k-agent-runtime-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1192,7 +1194,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — kernel-seviyesi yatay yetenek (ürün/stack DEĞİL). Tüm app'lerin AI/agent yeteneğinin güvenlik, maliyet ve gözlemlenebilirlik temelini belirler; agent'ı birinci-sınıf vatandaş yapar (insan-öncelikli Frappe/Odoo/Drupal'da yok). AI Üretim Sözleşmesi + s-ai ile birlikte okunur."
        }
       ]
      },
@@ -1201,16 +1203,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Authz (capability kesişimi — ön koşul kernel-authz), Tenancy (bellek/trace tenant-izolasyonu — ön koşul kernel-tenancy), Identity (agent-user binding), Bus (tool olay yayını) kernel'den; bu katman bunların üstüne agent kimliği ekler."
        }
       ]
      },
@@ -1219,7 +1212,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Audit (her tool çağrısı + privilege kararı iz bırakır), config-as-data (provider/model/prompt registry), PII sınıflandırma (bellek hijyeni) core kontratı."
        }
       ]
      },
@@ -1228,7 +1221,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "l1-search (A05 vector store eşdeğeri — pgvector/HNSW), scale-realtime (A10 SSE/WS primitifleri), k-bus (tool olayları), k-control-planes (Boyut 3 müşteri-admin) ile bağlanır — yalnız Contract."
        }
       ]
      },
@@ -1237,7 +1230,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Her app'in ArcheType action'ları otomatik agent tool'u olur; SaaS müşterisi PROMPT ile capability-gated ArcheType oluşturur (Boyut 3) — serbest kod/DDL değil, tipli + hibrit depolama."
        }
       ]
      }

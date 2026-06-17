@@ -355,7 +355,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Survey / Feedback — çekirdek yetenek",
+      "term": "Anket (Survey) + soru tipi ArcheType'ı",
       "definition": [
        {
         "type": "strong",
@@ -363,41 +363,42 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Çok-sayfa anket + dallanma (branch logic) + soru tipleri (çoktan seçmeli/derece/açık uçlu); Typeform/SurveyMonkey muadili Layer-2 çekirdek."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Yanıt (Response) toplama + kısmi kayıt",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Anonim/kimlikli yanıt; sayfa-sayfa kısmi kayıt + devam; tekil yanıt (tek kişi tek kez) opsiyonu."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "AI tema analizi (açık uçlu)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Açık uçlu yanıtların tema/duygu kümelenmesi; LLM çağrısı agent-runtime üzerinden, tenant-izolasyonlu, maliyet+kalite izli."
+       }
+      ]
+     },
+     {
+      "term": "Sonuç paylaşım linki + erişim kapısı",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Tahmin edilemez paylaşım token'ı; salt-okur sonuç; süre/parola/tek-kullanım opsiyonu."
        }
       ]
      }
@@ -585,15 +586,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Yanıtlayan email/kimlik + açık uçlu metin pii=true (+retention); anonim anket gerçekten anonim (kimlik bağı tutulmaz). RLS tenant-scoped. AI tema analizi tenant-izolasyonlu; yanıt verisi başka tenant promptuna sızmaz; LLM çağrısı bütçeli + denetlenebilir (agent-runtime A08). Sonuç paylaşım token'ı tahmin edilemez (imzalı/rastgele); survey.respond ve sonuç-görüntüleme capability deny-by-default. Tekil yanıt kontrolü atomik; çift gönderim idempotency ile tek sayılır (oy/NPS manipülasyonu engellenir). Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -621,15 +614,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Yanıt yazımı hızlı; AI tema analizi asenkron worker'da (ana akışı bloklamaz); embedding pgvector (l1-search / agent-runtime A05)."
        }
       ]
      },
@@ -647,15 +632,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Yanıt listeleri/agregasyon keyset; (tenant_id, survey_id) indeksi; büyük anket sonuçları materialized özet; tema kümeleme batch."
        }
       ]
      },
@@ -951,7 +928,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Survey / Feedback",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Survey / Feedback\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: survey_response.submitted\ncondition:\n  all:\n    - actor.capability >= \"survey.respond\"\n    - response.tenant_scoped\n    - not loop_detected\naction:\n  - persist: response\n  - enqueue: ai.theme_analysis   # agent-runtime, async, cost-tracked\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{survey_id}:{respondent_or_session}\"\n  external_effects: llm_call_budgeted",
     "copyEnabled": true
    },
    {
@@ -1091,6 +1068,18 @@
     ]
    },
    {
+    "id": "block-s-survey-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Komşu-tenant anket/yanıt sorgusu sıfır döndürür (RLS). Anonim ankette yanıtlayan kimliği saklanmaz; kimlikli ankette Contact bağı kurulur. Aynı yanıt ikinci kez gönderilince çift sayılmaz (idempotency); tekil-yanıt kuralı ikinci denemeyi reddeder. AI tema analizi yanıt verisini tenant sınırında tutar; çapraz-tenant tema sızıntısı yok. Sonuç linki süre/parola kapısı geçilmeden veriyi açmaz (deny path)."
+     }
+    ]
+   },
+   {
     "id": "block-s-survey-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1109,7 +1098,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Layer-2 SaaS ürünü; kendi anket/yanıt ArcheType'larını ve UI'sını tanımlar, yetki/audit/event-bus framework'ten gelir. AI tema analizi agent-runtime'ı tüketir, kendi LLM altyapısını kurmaz."
        }
       ]
      },
@@ -1118,16 +1107,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Tenancy (anket+yanıt tenant_id ile izole, RLS), Identity (anket sahibi + opsiyonel yanıtlayan), Audit (yayın/kapama izi) kernel'den."
        }
       ]
      },
@@ -1136,7 +1116,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "App core'una bağlı; Survey bir Domain (Kaya) olarak core sözleşmelerine uyar, core module değişmez. PII (yanıtlayan kimliği) sınıflandırması core'dan."
        }
       ]
      },
@@ -1145,7 +1125,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "k-agent-runtime (AI tema analizi: LLM provider + prompt + observability), Notification (davet/hatırlatma) module'lerini tüketir — yalnız Contract."
        }
       ]
      },
@@ -1154,7 +1134,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "CRM app'i yanıtlayanı Contact olarak paylaşır; NPS/feedback geçmişi aynı Party'de toplanır, çift kayıt yok."
        }
       ]
      }
@@ -1167,13 +1147,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-survey-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-survey-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "k-agent-runtime: açık uçlu yanıt → embedding + tema kümeleme; LLM çağrısı capability-gated, cost attribution tenant/feature bazlı."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Notification: anket daveti + hatırlatma email/SMS (İYS/ETK opt-in kapısıyla)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "CRM app: yanıtlayan → Contact; NPS skoru segment ve takip (consent kapısıyla)."
+      }
+     ]
     ]
    },
    {

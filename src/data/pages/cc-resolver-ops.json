@@ -1451,7 +1451,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Resolver Operasyonel Sertleştirme — Migration, Cache, Failure, Governance — çekirdek yetenek",
+      "term": "Jurisdiction backfill (confidence-scored)",
       "definition": [
        {
         "type": "strong",
@@ -1459,41 +1459,59 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Mevcut kullanıcılara IP geo + signup country + payment + delivery sinyallerinden jurisdiction ataması; yüksek confidence otomatik, orta/düşük insan onayı veya self-service düzeltme."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Shadow → opt-in → full rollout",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Resolver eski sistemle paralel çalışır, karar farkları log'lanır; %5 beta sonra kademeli, feature flag (cc-rollout) ile her aşama kontrollü."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Deny-by-default failure mode",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Resolver çökünce en sıkı fallback policy yüklenir; marketing skip, sanctions check zorunlu, audit 'resolver_fallback' tag, SRE alarm. Sessiz kabul yasal ihlal sayılır."
+       }
+      ]
+     },
+     {
+      "term": "4-göz config governance",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Jurisdiction config draft (compliance) → review (legal) → approve (CTO) → deploy; üç farklı kişi, OpenFGA yetki ayrımı, her adım audit. CHECK constraint ile draft_by≠reviewed_by≠approved_by."
+       }
+      ]
+     },
+     {
+      "term": "Decision-trace (5 yıl)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Her resolver kararının input/resolved-axes/applied-policy/outcome kaydı; 'neden bu kural uygulandı' sorusunun 5 yıl sonra cevabı, month-partition, %100 sampling async insert."
        }
       ]
      }
@@ -1681,15 +1699,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Failure mode deny-by-default: resolver çöktüğünde varsayılan kabul = sanctions/data-residency ihlali; fallback en sıkı kural seti olmalı, request reddi DEĞİL (UX yıkar) ama sessiz kabul de değil. Config governance tek kişi yetkisi YASAK: draft/review/approve üç farklı identity, OpenFGA ile ayrık capability; CHECK constraint DB seviyesinde garanti (uygulama bypass edilse bile). Cache invalidation hot path: config değişince eski kuralla cevap vermek yasal ihlal; event-based flush (config-update → Redis per-jurisdiction key) gecikmesi audit'lenmeli. decision_trace PII içerir (user_country, payment_country); 5 yıl retention yasal ama erişim capability deny-by-default, RLS ile sınırlı. Backfill düşük-confidence kullanıcıyı otomatik atamak toplu yanlış jurisdiction = toplu ihlal; orta/düşük mutlaka insan onayı veya self-service. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1717,15 +1727,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "-- decision_trace async batch insert, month partition\nINSERT INTO decision_trace (...) VALUES (...);\n-- okuma: keyset (decided_at, trace_id), month partition pruning\nSELECT * FROM decision_trace\nWHERE user_id = $1 AND decided_at >= $2\nORDER BY decided_at DESC, trace_id DESC LIMIT 50;"
        }
       ]
      },
@@ -1743,15 +1745,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Resolver hot-path: 3-katmanlı cache (L1 in-process LRU 60sn, L2 Redis 5dk/1saat/6saat, L3 Postgres source-of-truth). Cache miss tek query ~5ms acceptable. decision_trace %100 sampling ama async batch insert — senkron yazım request latency'sini öldürür. Trace okuması month-partition + keyset, OFFSET yok."
        }
       ]
      },
@@ -2047,7 +2041,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Resolver Operasyonel Sertleştirme — Migration, Cache, Failure, Governance",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Resolver Operasyonel Sertleştirme — Migration, Cache, Failure, Governance\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: jurisdiction_config.deploy_requested\ncondition:\n  all:\n    - actor.capability >= \"config:deploy\"\n    - draft_by != reviewed_by\n    - reviewed_by != approved_by\n    - not loop_detected\naction:\n  - emit: config.deployed\n  - emit: cache.invalidate(per_jurisdiction)\nguards:\n  max_depth: 6\n  idempotency_key: \"config-deploy:{jurisdiction_code}:{effective_from}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -2187,6 +2181,18 @@
     ]
    },
    {
+    "id": "block-cc-resolver-ops-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Shadow mode'da karar farkının < %1 olduğu, full migration öncesi onay metriği olarak doğrulanır. Resolver çökünce fallback policy'nin en sıkı kural setini yüklediği, marketing skip + sanctions zorunlu + audit tag attığı test edilir. Config deploy'da draft_by=reviewed_by veya reviewed_by=approved_by ise CHECK constraint'in reddettiği doğrulanır. Cache invalidation event'inin config-update sonrası per-jurisdiction key'i flush ettiği, pod L1'lerinin yeniden DB'den çektiği doğrulanır. decision_trace'in idempotency ile DST geçiş gününde duplikat fatura kararı üretmediği test edilir."
+     }
+    ]
+   },
+   {
     "id": "block-cc-resolver-ops-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -2205,7 +2211,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Resolver canlıya alınmadan ÖNCE bu 5 katman hazır olmalı; aksi halde prod incident ve toplu yasal ihlal riski."
        }
       ]
      },
@@ -2214,16 +2220,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "OpenFGA capability deny-by-default config governance'ın temeli; her config adımı farklı capability (compliance:write, legal:approve, config:deploy) gerektirir."
        }
       ]
      },
@@ -2232,7 +2229,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "decision_trace l1-audit'in delil zincirine bağlı, append-only; config_change tablosu bitemporal (effective_from), 4-göz CHECK constraint DB seviyesinde."
        }
       ]
      },
@@ -2241,7 +2238,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "cc-jurisdiction-resolver (resolver'ın kendisi), cc-rollout (feature flag), cc-compliance-matrix (kural seti) ile birlikte çalışır."
        }
       ]
      },
@@ -2250,7 +2247,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Compliance/legal config app'i (4-göz workflow); SRE observability app'i (decision-trace + fallback alarm dashboard)."
        }
       ]
      }

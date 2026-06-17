@@ -1,0 +1,52 @@
+{
+ "featureDefs": [
+  {
+   "name": "Talep/stok tahmini",
+   "desc": "Geçmiş satış serisinden talep ve yeniden sipariş noktası tahmini; tahminler kaynak veriye bağlı, deterministik değil — açıklanabilir.",
+   "critical": true
+  },
+  {
+   "name": "Churn tahmini",
+   "desc": "Abonelik/müşteri davranışından ayrılma riski skoru; risk_score audit'lenir, karar insan onayına bağlanabilir.",
+   "critical": true
+  },
+  {
+   "name": "Feature store / besleme",
+   "desc": "Projection/materialized view'lardan model girdileri; outbox ile asenkron besleme, çevrimiçi sorguyu yormaz."
+  },
+  {
+   "name": "Tahmin açıklanabilirliği",
+   "desc": "Her tahmin için kaynak sinyaller ve model/versiyon metadata; forensic izlenebilirlik."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Veri-yoğun karar (stok, talep, churn) olan tenant için Faz 2-3'te entegre; yeterli geçmiş veri yoksa eklenmez.",
+  "kernel": "Layer-2 SaaS ürünü; ArcheType engine ile şema, audit + tenancy framework'ten. Tahmin kayıtları model_id + prompt/feature versiyonu ile audit'lenir.",
+  "core": "Kernel + Scale (projections, timeseries) + Layer-1 üstüne. Model girdileri projection katmanından beslenir.",
+  "modules": "s-inventory talep tahmini, s-subscription-analytics churn tüketir.",
+  "apps": "Stack squad ürünü; AI squad model yaşam döngüsü ve değerlendirme için."
+ },
+ "ecaExample": "trigger:\n  event: subscription.usage_updated\ncondition:\n  all:\n    - actor.capability >= \"predictive:churn:score\"\n    - not loop_detected\naction:\n  - emit: churn.score_computed\n  - emit: retention.review_suggested\nguards:\n  max_depth: 6\n  idempotency_key: \"churn:{customer_id}:{period}\"\n  external_effects: none",
+ "securityNotes": [
+  "Tahmin girdileri müşteri davranış verisi (PII); RLS ile tenant izolasyonu, retention bildirimli.",
+  "Model çıktısı karar verici değil öneri; yüksek etki eylemi step-up onayına bağlanır (deny-by-default).",
+  "Her tahmin model_id + feature versiyonu ile audit'lenir — regresyon ve üretilebilirlik için.",
+  "Eğitim verisinde cross-tenant sızıntı engellenir; modeller tenant sınırına saygılı beslenir."
+ ],
+ "perfNotes": {
+  "code": "REFRESH MATERIALIZED VIEW CONCURRENTLY mv_demand_features; -- outbox-tetikli, çevrimiçi sorguyu bloklamaz",
+  "perf": "Model girdileri materialized view/projection üzerinden; ağır toplama asenkron. Skor sorguları keyset; serileştirilmiş tahmin sonuçları cache, kaynak değişince ilgili anahtar invalidate."
+ },
+ "moduleUsage": [
+  "s-inventory: talep/stok tahminini yeniden sipariş kararında kullanır.",
+  "s-subscription-analytics: churn skorunu elde tutma kampanyalarına bağlar.",
+  "scale-projections: tahmin için materialized view/feature beslemesini sağlar.",
+  "scale-timeseries: zaman serisi girdilerini barındırır."
+ ],
+ "testNotes": [
+  "Açıklanabilirlik testi: her tahmin kaydı model_id + feature versiyonu içerir.",
+  "RLS testi: bir tenant'ın tahmin girdileri/çıktıları başka tenant'a sızmaz.",
+  "Karar kapısı testi: yüksek etki önerisi otomatik uygulanmaz, step-up onayı ister.",
+  "Idempotency testi: aynı (customer_id, period) için churn skoru tekrar tetiklendiğinde çift kayıt oluşmaz."
+ ]
+}

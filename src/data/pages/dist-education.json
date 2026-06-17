@@ -305,7 +305,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Okul / Eğitim Distribution — çekirdek yetenek",
+      "term": "Öğrenci ↔ veli ↔ sınıf Party grafiği",
       "definition": [
        {
         "type": "strong",
@@ -313,41 +313,42 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Öğrenci, veli (guardian) ve sınıf/şube ilişkileri tek Party grafiğinde; bir veli çok öğrenci, bir öğrenci çok veli (boşanma/vasi) — esnek ilişki, çift kayıt yok."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Not (grade) + karne dönemi",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Sınav/ödev notu → dönem ortalaması → karne; bitemporal dönem sürümü (düzeltme yeni sürüm, eski karne silinmez)."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Yoklama (attendance) + devamsızlık",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Günlük/ders bazlı yoklama; devamsızlık eşiği → veliye otomatik bildirim (İYS/ETK kapısı)."
+       }
+      ]
+     },
+     {
+      "term": "Veli iletişim + duyuru",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Sınıf/okul duyurusu, veli-öğretmen mesajlaşması; Notification module köprüsü, consent kapılı."
        }
       ]
      }
@@ -535,15 +536,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Öğrenci reşit değil → en yüksek PII hassasiyeti (+retention); not/yoklama/iletişim pii=true. RLS tenant-scoped — bir okul başka okulun öğrencisini göremez. Veli-öğrenci bağı yetki kapısı: veli yalnız kendi çocuğunun notunu/yoklamasını görür (deny-by-default); öğretmen yalnız kendi sınıfı. Okul ücreti/taksit Money kuruş hassasiyetinde tamsayı + para birimi; float yok, tahsilat audit'li. Bitemporal: onaylanan karne/dönem notu silinmez; düzeltme yeni sürüm — not değişikliği izi (kim/ne zaman) korunur. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -571,15 +564,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Yoklama günlük batch + anlık giriş; karne hesabı dönem kapanışında; veli bildirimi asenkron worker (eşik tetikli)."
        }
       ]
      },
@@ -597,15 +582,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Öğrenci/not/yoklama listeleri keyset pagination; (tenant_id, class_id) + (student_id, term) indeksi; sınıf bazlı sorgu sayfalanır."
        }
       ]
      },
@@ -901,7 +878,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Okul / Eğitim Distribution",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Okul / Eğitim Distribution\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: attendance.absence_recorded\ncondition:\n  all:\n    - actor.capability >= \"attendance.write\"\n    - student.tenant_scoped\n    - absence_count >= threshold\n    - not loop_detected\naction:\n  - notify: [\"guardian\"]   # İYS/ETK kapısı, reşit-değil → veli rızası\nguards:\n  max_depth: 6\n  pii: true\n  idempotency_key: \"{tenant}:{student_id}:{date}\"\n  external_effects: consent_required",
     "copyEnabled": true
    },
    {
@@ -1041,6 +1018,18 @@
     ]
    },
    {
+    "id": "block-dist-education-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Komşu-tenant (başka okul) öğrenci/not/yoklama sorgusu sıfır döndürür (RLS). Veli yalnız kendi çocuğunun verisini görür; başka öğrenciyi sorgulayınca reddedilir (deny path). Aynı gün aynı öğrenci için yoklama ikinci kez yazılınca çift devamsızlık/bildirim oluşmaz (idempotency). Karne düzeltmesi eski karneyi silmez; yeni bitemporal sürüm + değişiklik izi kalır. Reşit olmayan öğrenci adına veli rızası olmadan pazarlama/duyuru bildirimi gitmez (consent kapısı)."
+     }
+    ]
+   },
+   {
     "id": "block-dist-education-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1059,7 +1048,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — bu bir Distribution (eğitim sektör paketi): Party + Notification + Billing kesişimi; Stack ⊂ Edition ⊂ Distribution taksonomisinde gelişmiş okul-yönetimi UI/UX ile teslim edilir. Çekirdek module'leri Contract üzerinden kompoze eder."
        }
       ]
      },
@@ -1068,16 +1057,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Party (öğrenci/veli/öğretmen), Tenancy (her okul tenant'ı RLS ile izole), Identity (rol bazlı: yönetici/öğretmen/veli), Audit (not/yoklama izi) kernel'den."
        }
       ]
      },
@@ -1086,7 +1066,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Money (taksit/tahsilat, kuruş + para birimi), bitemporal (karne/dönem sürümü), PII (reşit olmayan öğrenci verisi — yüksek hassasiyet), i18n; core sözleşmelerine uyar."
        }
       ]
      },
@@ -1095,7 +1075,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "cc-identity-models (veli/öğrenci kimlik modeli), Notification (yoklama/duyuru), Billing (okul ücreti taksiti) module'lerini tüketir — yalnız Contract."
        }
       ]
      },
@@ -1104,7 +1084,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Eğitim distribution'ı tek panelde; aynı veli Party'sini iletişim/ödeme app'leriyle paylaşır; öğrenci-veli-sınıf grafiği tek kaynak."
        }
       ]
      }
@@ -1117,13 +1097,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-dist-education-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-dist-education-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "cc-identity-models: veli/öğrenci/öğretmen için full_name + E.164 telefon + TC kimlik; reşit olmayan için yaş/veri minimizasyonu."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Notification: devamsızlık eşiği/karne/duyuru → veliye email/SMS (İYS opt-in; reşit olmayan adına veli rızası)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Billing: okul ücreti taksit planı → tahsilat; gecikme hatırlatması (consent kapısıyla)."
+      }
+     ]
     ]
    },
    {

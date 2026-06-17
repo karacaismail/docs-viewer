@@ -1,0 +1,47 @@
+{
+ "featureDefs": [
+  {
+   "name": "Konu/yanıt hiyerarşisi ve moderasyon",
+   "desc": "Topic/Post ArcheType'ları; yayın/gizle/kilitle durum geçişleri. Moderasyon aksiyonları (sil, taşı, ban) capability'ye bağlı (deny-by-default) ve audit'lenir; düzenleme geçmişi bitemporal saklanır.",
+   "critical": true
+  },
+  {
+   "name": "B2B alan/üyelik kapsamı",
+   "desc": "Topluluk alanları (space) tenant'a ve üyelik rolüne göre RLS ile sınırlı; özel alanlar yalnızca davetli üyelere görünür. Üyelik PII içerir.",
+   "critical": true
+  },
+  {
+   "name": "İtibar ve denetimli özetleme",
+   "desc": "Üye katkı puanı projeksiyondan; istenirse AI ile konu özeti capability arkasında. Otomatik içerik üretimi yoktur, yalnızca yardımcı özet.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Yeni gönderi/mention bildirim ve indeksleme tetiklediği için event-bus üzerinden entegre olmalı; arama doğrudan tabloya bağlanmaz.",
+  "kernel": "authz (moderasyon/alan capability'leri), tenancy (RLS ile alan izolasyonu), event-bus (post.created, post.flagged), audit (moderasyon aksiyonları).",
+  "core": "bitemporal (düzenleme geçmişi), pii (üye profili), Contract (topluluk kullanım koşulları kabulü), keyset (konu/yanıt akışı sayfalama).",
+  "modules": "Notification (mention/yanıt bildirimi), Search (konu indeksleme), Helpdesk (topluluk → talep dönüşümü).",
+  "apps": "Storefront/portal edition içine gömülü topluluk; SSO ile ortak kimlik."
+ },
+ "moduleUsage": [
+  "Notification: post.created/mention → ilgili üyeye bildirim tetiği.",
+  "Search: post.created → asenkron indeksleme; keyset ile sonuç akışı.",
+  "Helpdesk: çözülmemiş topluluk sorusu → destek talebi köprüsü.",
+  "Audit: flag/sil/taşı moderasyon zinciri aktör kimliğiyle izlenir."
+ ],
+ "ecaExample": "trigger:\n  event: post.created\ncondition:\n  all:\n    - actor.capability >= \"community.post.write\"\n    - not loop_detected\n    - not post.contains_blocked_terms\naction:\n  - emit: search.index_requested\n  - emit: notification.mention_dispatch\nguards:\n  max_depth: 6\n  idempotency_key: \"post:{post.id}:create\"\n  external_effects: none",
+ "securityNotes": [
+  "Moderasyon ve alan yönetimi deny-by-default capability ile; sıradan üye silme/taşıma yapamaz.",
+  "Özel alan içerikleri RLS ile davetli üyeye kapalı; cross-tenant/cross-space sızıntı engellenir.",
+  "Üye profili pii; dışa aktarım ve mention bildiriminde minimum alan ilkesi, erişim audit'lenir."
+ ],
+ "perfNotes": {
+  "code": "Konu ve yanıt akışı keyset (created_at, id) ile; popüler konularda OFFSET kullanılmaz.",
+  "perf": "Alan başına okunmamış/aktif konu sayacı (space_id, state) kısmi index; itibar puanı projeksiyon tablosundan okunur."
+ },
+ "testNotes": [
+  "Yetkisiz üyenin başkasının gönderisini silemediği/taşıyamadığı.",
+  "Aynı post.created'ın tekrarında tek index_requested üretildiği.",
+  "Özel alana davetsiz üyenin erişiminin RLS ile reddedildiği."
+ ]
+}

@@ -304,7 +304,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Performance & Competency — çekirdek yetenek",
+      "term": "Objective / Key Result",
       "definition": [
        {
         "type": "strong",
@@ -312,41 +312,34 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Hedef + ölçülebilir anahtar sonuç ağacı; sahiplik, dönem, ilerleme yüzdesi ve cascade (şirket→ekip→birey)."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Review Cycle",
       "definition": [
        {
         "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
-       },
-       {
-        "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Dönemsel değerlendirme süreci: self / manager / peer aşamaları, takvim, kilitlenme ve onay durumu."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "360 Feedback",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Çok-kaynaklı geri bildirim toplama; anonimlik politikası, soru seti ve yetkinlik eşlemesi."
+       }
+      ]
+     },
+     {
+      "term": "Competency Matrix",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Rol bazlı yetkinlik çerçevesi + seviye; skill-gap çıkarımı ve gelişim planı bağı."
        }
       ]
      }
@@ -534,15 +527,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Performans notu ve maaş etkisi hassas veridir; capability deny-by-default + listede gizli/detayda maskeli. 360 feedback anonimliği: değerlendiren kimliği yetkisiz role açılmaz; 'göster' eylemi audit'e yazılır. Calibration verisi tenant izolasyonu ile RLS arkasında; cross-tenant kıyas mümkün değil. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -570,15 +555,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Review listesi ve OKR ağacı keyset ile sayfalanır; org-wide raporlar materialized projeksiyondan okur."
        }
       ]
      },
@@ -596,15 +573,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Dönem kapanışında (cycle close) toplu hesap dalgası; worker'a alınır, eşzamanlı yük dağıtılır."
        }
       ]
      },
@@ -900,7 +869,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Performance & Competency",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Performance & Competency\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: ReviewCycleOpened\ncondition:\n  all:\n    - actor.capability >= \"performance:review:write\"\n    - cycle.status == \"active\"\n    - reviewer != subject\naction:\n  - emit: SelfReviewRequested\n  - emit: ManagerReviewRequested\nguards:\n  max_depth: 6\n  idempotency_key: \"review:{cycle_id}:{employee_id}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -1040,6 +1009,18 @@
     ]
    },
    {
+    "id": "block-s-performance-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "reviewer != subject kuralı: kişinin kendini manager-review yapamadığı doğrulanır. Bitemporal: geçmiş dönem notunun düzeltilmesi mevcut dönemi bozmadan kayıt altına alınır. Anonim 360: yetkisiz rolün değerlendiren kimliğine erişemediği test edilir."
+     }
+    ]
+   },
+   {
     "id": "block-s-performance-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1058,7 +1039,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Layer-2 HR ürünü; yetki/audit/event-bus kernel'den gelir, kendi ArcheType ve UI'sını tanımlar. Tek başına satılabilir ama altyapı ortaktır."
        }
       ]
      },
@@ -1067,16 +1048,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Party (employee) kimliği, capability tabanlı yetki, audit ve tenancy kernel'den; performans verisi tenant-scoped."
        }
       ]
      },
@@ -1085,7 +1057,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "HR app core module'ü employee/org yapısını taşır; performance bunun üstüne oturan module'dür."
        }
       ]
      },
@@ -1094,7 +1066,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "s-hrms employee kaynağı + l1-notification döngü hatırlatması + l1-analytics ilerleme raporu ile kompoze."
        }
       ]
      },
@@ -1103,7 +1075,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "HRMS app'inde tek panel; CRM/ERP'deki aynı Party kaydı performans değerlendirmesine de bağlanır."
        }
       ]
      }
@@ -1116,13 +1088,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-performance-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-performance-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "HRMS App: OKR ağacı, review cycle takvimi ve 360 feedback toplama akışı."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Yönetici Paneli App: ekip ilerlemesi, calibration ve yetkinlik matrisi görünümü."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Çalışan Self-Service App: kendi hedefleri, self-review ve aldığı geri bildirim."
+      }
+     ]
     ]
    },
    {

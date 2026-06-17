@@ -705,7 +705,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Feature Flag + Kademeli Rollout — çekirdek yetenek",
+      "term": "Flag türleri (release/experiment/ops/permission)",
       "definition": [
        {
         "type": "strong",
@@ -713,41 +713,42 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Release (gizli özellik), experiment (A/B), ops (kill-switch), permission (premium) flag'leri; backend ve frontend AYNI flag'i okur, default OFF."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Kademeli % rollout",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "%1 internal → %5 beta → %10 → %50 → %100; her adımda metrik kapısı (error rate, p95 latency). Tenant whitelist + random yüzde."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Kill-switch",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Sorun çıkınca özelliği saniyeler içinde %0'a çekme; deploy/rollback olmadan. SRE erişimine sahip, audit'li."
+       }
+      ]
+     },
+     {
+      "term": "Flag TTL + temizlik",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Her flag'in sona erme tarihi (technical debt); %100 + 30-60 gün sonra iki dal birleştirilir, ölü dal silinir."
        }
       ]
      }
@@ -935,15 +936,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Kill-switch capability deny-by-default — yalnız SRE/yetkili rol tetikleyebilir; üretim güvenlik vanası, herkese açık olamaz, her tetik audit'li. Flag açma (launch) ile deploy ayrı yetki: geliştirici deploy eder ama özelliği canlıya alma kararı ürün/SRE'nin (rol ayrımı). Permission flag (premium) yetki kapısı olarak kullanılıyorsa client-side okuma yetmez — sunucu tarafı capability ile doğrulanmalı, aksi halde bypass. Flag çöplüğü güvenlik riski: ölü dal kodu unutulursa kapalı sanılan özellik açık kalabilir; TTL zorunlu. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -971,15 +964,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "-- flag çözümü (cache'li, tenant + yüzde)\nSELECT enabled, rollout_pct, whitelist\nFROM feature_flag\nWHERE flag_name = $1;\n-- karar: whitelist[tenant] OR hash(user_id, flag) % 100 < rollout_pct"
        }
       ]
      },
@@ -997,15 +982,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Flag okuması hot-path — in-process cache + Redis, her request DB sorgusu değil. Yüzde kararı deterministik hash (kullanıcı tutarlılığı), random değil. Kill-switch cache invalidation event'i saniye içinde tüm pod'lara yayılmalı."
        }
       ]
      },
@@ -1301,7 +1278,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Feature Flag + Kademeli Rollout",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Feature Flag + Kademeli Rollout\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: feature_flag.kill_switch_triggered\ncondition:\n  all:\n    - actor.capability >= \"flag:killswitch\"\n    - flag.status == \"active\"\n    - not loop_detected\naction:\n  - emit: flag.disabled(rollout_pct=0)\n  - emit: audit.log(reason)\nguards:\n  max_depth: 6\n  idempotency_key: \"killswitch:{flag_name}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -1441,6 +1418,18 @@
     ]
    },
    {
+    "id": "block-cc-rollout-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Default OFF flag'in açılmadan görünmediği, backend ve frontend'in aynı kararı verdiği doğrulanır. Kademeli rollout'ta yüzde kararının deterministik (aynı kullanıcı tutarlı) olduğu test edilir. Kill-switch'in saniyeler içinde tüm trafiği %0'a çektiği ve audit kaydı ürettiği doğrulanır. Kill-switch'in idempotent olduğu (iki kez tetiklenince hata vermediği) test edilir. Premium permission flag'inin sunucu tarafında doğrulandığı, client bypass'ına kapalı olduğu doğrulanır."
+     }
+    ]
+   },
+   {
     "id": "block-cc-rollout-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1459,7 +1448,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Her yeni özellik için; deploy ile launch'u ayırır. Bug fix bile risk taşıyorsa flag arkasından."
        }
       ]
      },
@@ -1468,16 +1457,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Tenant whitelist + capability deny-by-default: flag açma kararı ürün/SRE'nin, deploy geliştiricinin — iki rol ayrı. Kill-switch yetkisi sınırlı."
        }
       ]
      },
@@ -1486,7 +1466,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Flag değişimleri (özellikle kill-switch tetiği) audit'li; flag durumu bitemporal — 'şu an hangi flag kimde açıktı' yeniden üretilebilir."
        }
       ]
      },
@@ -1495,7 +1475,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "cc-resolver-ops resolver rollout'unu, l1-experiment deneyleri bu flag altyapısını kullanır; tek flag kaynağı (Unleash veya custom feature_flags)."
        }
       ]
      },
@@ -1504,7 +1484,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Ürün ekibi için flag yönetim app'i (rollout %, whitelist); SRE için kill-switch app'i; geliştirici flag'i koda gömer."
        }
       ]
      }

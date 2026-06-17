@@ -197,7 +197,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Randevu Edition — çekirdek yetenek",
+      "term": "Tek-sayfa müşteri rezervasyonu",
       "definition": [
        {
         "type": "strong",
@@ -205,41 +205,29 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Hizmet seç → saat seç → onay akışı; çekirdek takvim (s-scheduling) değişmez, fark yalnızca UX paketinde. Slot çakışması idempotent rezervasyonla önlenir."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "No-show depozito akışı",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Randevuda depozito alımı + iadesi; money tipi, gelmeyen müşteride depozito mahsubu audit'lenir."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Personel bazlı takvim + SMS hatırlatma",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Personel başına slot görünümü; SMS hatırlatma varsayılan, gönderim consent/quiet-hours kapsamında."
        }
       ]
      }
@@ -427,15 +415,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Müşteri tarafı anonim/self-service rezervasyon — yalnızca kendi randevusuna erişim, başka müşterinin slotuna deny-by-default. Depozito money tipi minor-unit; iade/mahsup idempotent olmalı, aksi halde çift tahsilat/çift iade. SMS hatırlatma consent + quiet-hours kapsamında; rıza dışı bildirim gönderilmez. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -933,6 +913,18 @@
     ]
    },
    {
+    "id": "block-edition-randevu-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Aynı slota eşzamanlı iki rezervasyonun yalnız birinin tuttuğu (idempotent/lock) doğrulanır. No-show'da depozito mahsubunun audit kaydı ürettiği test edilir. Edition'ın parent core ArcheType'ını değiştirmediği, yalnız UI override sunduğu doğrulanır."
+     }
+    ]
+   },
+   {
     "id": "block-edition-randevu-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -951,7 +943,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Edition = aynı core module seti ve kod; fark UI/UX/pazara çıkış paketinde. Fonksiyon eklemek Edition işi değil — o ihtiyaç parent stack-service'e gider."
        }
       ]
      },
@@ -960,16 +952,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Parent stack-service'in tenancy/capability'sini aynen miras alır; Edition kendi kernel/capability tanımlamaz."
        }
       ]
      },
@@ -978,7 +961,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Rezervasyon ve depozito core'dan gelir (money + audit); Edition yalnız sunum katmanı, yeni ArcheType eklemez."
        }
       ]
      },
@@ -987,7 +970,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "stack-service + s-scheduling üstüne UX paketi; kuaför/klinik/stüdyo funnel'ları aynı core'u farklı landing/onboarding ile sunar."
        }
       ]
      },
@@ -996,7 +979,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Müşteri tek-sayfa rezervasyon app'i; işletme günlük şerit görünüm app'i — ikisi de parent stack verisi üzerinde."
        }
       ]
      }

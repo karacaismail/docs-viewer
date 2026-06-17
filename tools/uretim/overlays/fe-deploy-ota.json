@@ -1,0 +1,52 @@
+{
+ "featureDefs": [
+  {
+   "name": "Web CI/CD → Hetzner (Docker + Caddy)",
+   "desc": "PR: Biome lint + TS check + Vitest/MSW + Playwright E2E + Lighthouse + axe-core a11y kapısı. Main merge → Docker image build → Hetzner registry → SSH compose pull (auto-TLS Caddy).",
+   "critical": true
+  },
+  {
+   "name": "Kendi OTA server'ı (FastAPI + Object Storage)",
+   "desc": "GET /channels/:channel/manifest → {latestVersion, bundleUrl, sha256, mandatory}; POST releases (sha256 doğrulama); kanal bazlı yüzde + audience (org/tenant tier) rollout; rollback endpoint. Capgo self-host (Supabase çelişkisi yok).",
+   "critical": true
+  },
+  {
+   "name": "Store rollout — Organization (12×14 muafiyet)",
+   "desc": "D-U-N-S → Apple Developer enrollment + Google Play Console Organization; verified Organization 12 tester × 14 gün kuralından MUAF (kritik path'ten çıkar); TestFlight internal Beta App Review gereksiz.",
+   "critical": true
+  },
+  {
+   "name": "OTA kademeli rollout + otomatik rollback",
+   "desc": "Tag ota-v* → bundle build + SHA256 + manifest → Object Storage → POST /releases → %10 gözlem → %50 → %100 veya crash-rate'e göre otomatik rollback (n8n 30 dk kontrol)."
+  },
+  {
+   "name": "OpenClaw + n8n otomasyon noktaları",
+   "desc": "PR→review özet (Slack/WhatsApp); test fail→geliştiriciye WhatsApp; release→Crowdin sync + PostHog flag; Sentry spike→severity bildirim; KYC→KYB queue→Veriff webhook."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet ama operasyon/teslim katmanı — çalışma-zamanı modülü değil; kodu geliştirici makinesinden sunucuya taşıyıp güncel tutan boru hattı. Web (Docker/Caddy) + mobil (Fastlane/TestFlight/Play) + OTA (kendi server) üç hattı tek release disiplininde birleştirir.",
+  "kernel": "Doğrudan kernel modülü değil; ancak OTA rollout audience'ı tenant tier/org id'ye bağlanır (entitlement düzlemi), release kararı capability'li (admin).",
+  "core": "Audit (release/rollout/rollback izi), config-as-data (kanal/rollout yüzdesi); core sözleşmesini değiştirmez, app'leri dağıtır.",
+  "modules": "OTA server (apps/ota-server) bağımsız servis; Object Storage (Hetzner) bundle deposu; CI hattı (GitHub Actions) ile bağlanır — Contract: manifest + rollout + rollback.",
+  "apps": "Tüm FE app'leri bu hattan yayınlanır; web compose pull, iOS TestFlight, Android Play, JS-only değişiklik OTA ile — tek sürümleme disiplini."
+ },
+ "ecaExample": "trigger:\n  event: ota.release_published   # tag ota-v*\ncondition:\n  all:\n    - actor.capability >= \"release.publish\"\n    - bundle.sha256_verified\n    - not loop_detected\naction:\n  - upload: object_storage\n  - rollout: { percentage: 10, audience: [tenant_tier] }\n  - watch: crash_rate            # 30dk → 50% → 100% ya da rollback\nguards:\n  max_depth: 6\n  idempotency_key: \"ota:{channel}:{release_id}\"\n  external_effects: store_review_or_step_up",
+ "securityNotes": [
+  "OTA bundle bütünlüğü: SHA256 doğrulama zorunlu (manifest + yüklemede); imzasız/eşleşmeyen bundle reddedilir — kötücül güncelleme engellenir.",
+  "Release/rollback admin capability deny-by-default (release.publish); POST /releases yalnız yetkili; Fastlane match sertifika/secret encrypted-at-rest.",
+  "Rollout audience tenant tier/org id bazlı; bir tenant'a giden bundle başka tenant'a sızmaz; mandatory flag zorunlu güncellemeyi kontrollü uygular.",
+  "Store uyumu: Apple identity verification + Google evrak doğrulama; Organization (verified) tüzel kişilik — KYC/KYB (Veriff) akışı denetlenebilir."
+ ],
+ "perfNotes": {
+  "code": "JS-only değişiklik OTA ile store review'suz dağıtılır (hızlı); native değişiklik Fastlane (gym/supply) store hattından; bundle CDN edge'de (Cloudflare/BunnyCDN).",
+  "perf": "Kademeli rollout (%10→%50→%100) crash-rate gözlemiyle; manifest sorgusu hafif (version diff); Object Storage + CDN ile bundle indirme edge'den (düşük gecikme)."
+ },
+ "testNotes": [
+  "PR kapıları: Biome lint + TS + Vitest + Playwright E2E + Lighthouse skor + axe-core a11y geçmeden merge edilmez.",
+  "OTA manifest SHA256 doğrulanır; eşleşmeyen/bozuk bundle client tarafından reddedilir (bütünlük).",
+  "Rollout %10 gözlem → crash-rate eşiği aşılırsa otomatik rollback; aşılmazsa %50→%100 (kademeli güvenlik).",
+  "Aynı release ikinci kez publish edilince çift dağıtım olmaz (idempotency_key=ota:channel:release_id).",
+  "Organization hesap 12 tester × 14 gün kuralından muaf; release.publish capability'siz kullanıcı yayın yapamaz (deny path)."
+ ]
+}

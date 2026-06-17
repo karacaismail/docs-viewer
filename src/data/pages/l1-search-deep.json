@@ -784,7 +784,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Arama Derinleştirme — autocomplete, faceted, did-you-mean — çekirdek yetenek",
+      "term": "Autocomplete (typeahead) endpoint",
       "definition": [
        {
         "type": "strong",
@@ -792,41 +792,64 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "2-3 harf sonra öneri; 150ms debounce, önceki sorgular cache'li; pg_trgm + GIN index ya da Meilisearch suggester üstüne kurulur."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Faceted aggregation (kategori filtreler)",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "'Marka: Apple (24)' sayımları her arama sonrası; çoklu seçim AND/OR; aggregation tenant-scope WHERE altında çalışır."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Did-you-mean (yazım düzeltme)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Levenshtein ≤2 / pg_trgm similarity(); 'eklma' → 'elma' önerisi; TR phonetic varyantı ile kullanıcı kaybedilmez."
+       }
+      ]
+     },
+     {
+      "term": "Search analytics tablosu",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "search_queries(query, results_count, clicked_position, user_id, ts); results_count=0 = içerik boşluğu, günlük rapor; pii=düşük ama tenant-scoped."
+       }
+      ]
+     },
+     {
+      "term": "Index sync (save → outbox → index update)",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "ArcheType kaydı değişince outbox event → search index güncellenir; eventual consistency, çift güncelleme idempotent."
+       }
+      ]
+     },
+     {
+      "term": "Spatial search (PostGIS ST_DWithin)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "'yakın eczane' arama filtresi + coğrafi yakınlık; scale-gis primitive'i ile birlikte."
        }
       ]
      }
@@ -1014,15 +1037,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Faceted sayım ve arama sonuçları tenant-scope WHERE + RLS ile sınırlı; bir tenant'ın index kaydı başka tenant aramasında görünmez. Index'e yalnız capability ile görünür alanlar girer; pii/para alanları ham index'lenmez, sonuçta deny-by-default filtrelenir. search_queries log'u kişiyi izleyebilir (pii=orta) — purpose-binding + retention ile tutulur, audit'lenir. Ağır arama / autocomplete endpoint'i rate-limit'li (debounce sunucuda da doğrulanır) — tuş başına istek seli engellenir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1050,15 +1065,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Autocomplete pg_trgm GIN index ya da Meilisearch prefix; faceted sayım önbelleğe alınır; did-you-mean similarity() eşik filtreli; index sync asenkron worker."
        }
       ]
      },
@@ -1076,15 +1083,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Debounce 150ms istemci + sunucu; sonuç + facet keyset (cursor) sayfalı; 100K+ doküman Postgres FTS'i zorlar → Meilisearch'e geçiş gerekir."
        }
       ]
      },
@@ -1380,7 +1379,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Arama Derinleştirme — autocomplete, faceted, did-you-mean",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Arama Derinleştirme — autocomplete, faceted, did-you-mean\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: archetype.saved\ncondition:\n  all:\n    - actor.capability >= \"resource:read\"\n    - not loop_detected\naction:\n  - enqueue: search.index.upsert   # outbox, eventual\n  - emit: search.analytics.logged\nguards:\n  max_depth: 6\n  idempotency_key: \"searchidx:{tenant}:{archetype_id}:{rev}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -1520,6 +1519,18 @@
     ]
    },
    {
+    "id": "block-l1-search-deep-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Tenant izolasyon testi: bir tenant'ın index kaydı komşu tenant aramasında asla görünmez. Did-you-mean testi: 'eklma' sorgusu 'elma' önerir (similarity eşiği). Sıfır-sonuç testi: results_count=0 satırı search_queries'e yazılır, günlük rapora düşer. Index sync idempotency: aynı save event iki kez işlense tek upsert oluşur."
+     }
+    ]
+   },
+   {
     "id": "block-l1-search-deep-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1538,7 +1549,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Arama bir Layer-1 primitive'inin derinleştirmesi: BM25 + vector üstüne typeahead/faceted/did-you-mean/analytics ekler; kendi servisi (Meilisearch) olsa da yetki + tenant-scope framework'ten gelir, yeniden icat etmez."
        }
       ]
      },
@@ -1547,16 +1558,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Faceted aggregation ve sonuçlar tenant-scope WHERE + capability ile sınırlanır; kullanıcının göremediği ArcheType alanı index'e girse de sonuçta filtrelenir (deny-by-default)."
        }
       ]
      },
@@ -1565,7 +1567,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Index'lenecek alanlar ArcheType şemasından türetilir; para/pii alanları index'e ham girmez, görünür projeksiyon alanları index'lenir."
        }
       ]
      },
@@ -1574,7 +1576,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Ölçek sınıfına göre: <100K Postgres FTS + pg_trgm, 100K-10M Meilisearch, 10M+ OpenSearch; vector için pgvector — boyut büyüdükçe motor değişir, sözleşme sabit."
        }
       ]
      },
@@ -1583,7 +1585,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "App input + dropdown panel + facet sidebar gösterir; 'sıfır sonuç' aramalar ürün ekibine içerik fırsatı raporu olarak döner."
        }
       ]
      }

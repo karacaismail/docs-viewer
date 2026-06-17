@@ -1,0 +1,52 @@
+{
+ "featureDefs": [
+  {
+   "name": "Orchestration saga (merkezi koordinatör)",
+   "desc": "Adım sırasını ve telafiyi merkezi koordinatör bilir; modüler monolit için tercih. Choreography (event-reaktif, koordinatörsüz) mikroservise uygun, monolitte fazla karmaşık.",
+   "critical": true
+  },
+  {
+   "name": "DBOS durable execution",
+   "desc": "Postgres-native durable workflow; ek orkestratör kümesi yok. Process crash olursa kaldığı yerden devam eder. Reddedilen alternatif: Temporal (ayrı altyapı maliyeti).",
+   "critical": true
+  },
+  {
+   "name": "Telafi (compensation) adımları",
+   "desc": "Her ileri adımın iş-mantığı tersi (refund/release/iptal); bir adım fail edince önceki adımlar geri alınır. ROLLBACK'in cross-aggregate karşılığı.",
+   "critical": true
+  },
+  {
+   "name": "Geri-alınamaz aksiyon sıralaması",
+   "desc": "Telafi edilemez etkiler (gönderilmiş e-posta) akışın SONUNA konur; üç geri-alma sınıfı (tersine / expand-contract / telafi-edilemez) ChangeSet sözleşmesinde tanımlı."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — cross-aggregate (Order→Payment→Stock→Shipping) tutarlılık için zorunlu; 2'den fazla adımlı her iş akışında saga, distributed transaction (2PC/XA) yerine doğru desendir.",
+  "kernel": "ChangeSet sözleşmesinin (k-sozlesme) çalışma-zamanı yürütücüsü; üç geri-alma sınıfı kernel kontratında tanımlı, saga telafisi snapshot restore değil iş-mantığı tersidir.",
+  "core": "Saga adımları her biri ayrı aggregate'in DBOS.transaction'ıdır; core ArcheType save pipeline'ı outbox'a yazar, saga bu olayları orkestratör sırasıyla tüketir.",
+  "modules": "Order/Payment/Stock/Shipping module'leri yalnız kendi adımını + telafisini tanımlar; orchestration koordinatörü Contract sınırında adımları zincirler, module'ler birbirini doğrudan çağırmaz.",
+  "apps": "Sipariş onayı, abonelik yenileme, fatura kesme gibi çok-app iş akışları aynı saga motorunu paylaşır; her app kendi adım/telafi çiftini kayıtlar."
+ },
+ "moduleUsage": [
+  "Commerce/Order app: place_order_saga (charge→reserve→ship→finalize); StockUnavailable'da refund, ShippingFailed'da release+refund.",
+  "Subscription app: yenileme sagası — ödeme alınamazsa abonelik aktivasyonu geri alınır.",
+  "Revenue app: fatura kesme adımı fail ederse upstream rezervasyon telafi edilir.",
+  "Tüm module'ler: geri-alınamaz adım (e-posta/SMS) saga'nın sonuna pinlenir."
+ ],
+ "ecaExample": "trigger:\n  event: order.placed\ncondition:\n  all:\n    - actor.capability >= \"order.write\"\n    - tenant_scoped\n    - not loop_detected\naction:\n  - saga.start: place_order\n  - saga.step: payment.charge\n  - saga.step: stock.reserve        # fail -> compensate(payment.refund)\n  - saga.step: shipping.create      # fail -> compensate(stock.release, payment.refund)\n  - saga.step: order.finalize       # irreversible adimlar en sonda\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:order:{order_id}:place\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Her saga adımı tenant_scoped + capability deny-by-default; payment.charge ve refund komşu-tenant siparişine dokunamaz (RLS).",
+  "Telafi adımları audit'li ve bitemporal kaydedilir — hangi adım ne zaman geri alındı, kim tetikledi izlenebilir.",
+  "Geri-alınamaz dış etki (e-posta, fon transferi) step_up gerektirir ve akışın sonuna konur; erken tetiklenirse telafi edilemez veri sızıntısı/finansal kayıp riski."
+ ],
+ "perfNotes": {
+  "code": "DBOS workflow Postgres'i durable log olarak kullanır — ek altyapı yok; @DBOS.workflow + @DBOS.transaction ile her adım idempotent ve crash-resumable. Çok yüksek throughput senaryosunda Temporal (history replay) alternatif.",
+  "perf": "Saga adımları senkron zincirlenir; dış etkiler (relay/bildirim) outbox üzerinden asenkron iletilir. 2PC/XA'nın blocking lock maliyeti yok — adım-başına commit + telafi modeli daha yüksek eşzamanlılık sağlar."
+ },
+ "testNotes": [
+  "Orta-adım fail: stock.reserve başarısızken payment.charge commit oldu mu — payment.refund telafisi tetiklenmeli, para iadesi tam olmalı.",
+  "İdempotency: aynı order.place iki kez tetiklense saga tek kez yürür (idempotency_key), çift charge olmaz.",
+  "Crash recovery: process workflow ortasında ölürse DBOS kaldığı adımdan devam eder, tamamlanmış adımları tekrar yürütmez.",
+  "Geri-alınamaz sıra: e-posta adımı finalize'dan önce tetiklenemez (irreversible-last invariant'i)."
+ ]
+}

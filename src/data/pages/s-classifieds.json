@@ -1525,7 +1525,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Classifieds — Lead-Gen Marketplace (İlan / Eşleştirme Platformu) — çekirdek yetenek",
+      "term": "Listing (İlan) ArcheType — Order DEĞİL",
       "definition": [
        {
         "type": "strong",
@@ -1533,41 +1533,60 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Çekirdek varlık: title, description, price_ish (yönlendirme, bağlayıcı değil), photos[], location, category_id, owner_kind (consumer/business/manufacturer), status. Sahibinden/arsam.net deseni. Cart/Order/Checkout YASAK; yanlış ArcheType seçimi e-ticaret mimarisine sürükler."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Lead (İlgilenme) tablosu — ana ölçü",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "listing_id × user_id, contact_type (view/call/msg), opened_at. E-ticarette sipariş; classifieds'te lead = KPI. Kontak açıldığında insert; time-to-match buradan hesaplanır."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Relay messaging + PII maskeleme",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Telefon/email backend'de tutulur, UI'de gösterilmez (call masking). POST /listing/:id/contact relay başlatır; satıcı alıcı numarasını görmez. Phishing'e karşı dahili mesajlaşma."
+       }
+      ]
+     },
+     {
+      "term": "Promotion (Doping/Boost) capability",
+      "definition": [
+       {
+        "type": "text",
+        "text": "listing_id, type (boost/highlight), start, end, paid_amount. Cron her saat aktif boost'ları görünürlüğe çevirir. Gelirin %30-50'si; tutarlar Money (Decimal). Komisyon DEĞİL."
+       }
+      ]
+     },
+     {
+      "term": "Membership paketi (kurumsal) + kota",
+      "definition": [
+       {
+        "type": "text",
+        "text": "tenant_id, package_id, monthly_fee, listing_quota, doping_credit. Galerici/emlakçı aylık sabit ücret; en kârlı kanal. Komisyonsuz, kota tüketimli."
+       }
+      ]
+     },
+     {
+      "term": "Moderation worker (AI + insan kuyruğu)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "listing_id, ai_score, human_decision, status, reason. Yeni ilan -> AI score -> otomatik kabul (>0.8) veya insan kuyruğu. Sahte ilan/scam = classifieds'in en kritik mimari yatırımı."
        }
       ]
      }
@@ -1755,15 +1774,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "PII deny-by-default: telefon/email kullanıcıya gösterilmeden auth + capability kontrolü; relay messaging ile satıcı alıcı numarasını hiç görmez (pii-flag). Sahte ilan/scam: yeni ilan AI moderation kuyruğundan geçer; KYC + telefon doğrulama olmadan kontak açılamaz; şikayet -> ilan kaldırma audit'li. Doping/membership tutarları Money (Decimal); satıcı yalnız kendi ilan/lead/hakediş verisini görür (RLS tenant + owner-scoped). Komisyon akışı olmadığından chargeback yüzeyi değil scam yüzeyi korunur. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1791,15 +1802,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "owner_kind ile model türetme saf strateji (consumer/business/manufacturer dispatch); enum-switch yerine capability flag tablosu. Doping görünürlük kuralı saf fonksiyon."
        }
       ]
      },
@@ -1817,15 +1820,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Faceted arama indeksli (kategori+lokasyon+fiyat bileşik); ilan listesi keyset pagination; aktif boost'lar zaman-pencereli indeks; moderation skorlama asenkron worker."
        }
       ]
      },
@@ -2121,7 +2116,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Classifieds — Lead-Gen Marketplace (İlan / Eşleştirme Platformu)",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Classifieds — Lead-Gen Marketplace (İlan / Eşleştirme Platformu)\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: listing.contact_requested\n  when: \"tenant_scoped AND listing.status == 'active'\"\ncondition:\n  all:\n    - actor.capability >= \"classifieds.lead.open\"\n    - not loop_detected\n    - actor.phone_verified == true\naction:\n  - record: lead { listing_id, user_id, contact_type, opened_at, bitemporal: true }\n  - emit: messaging.relay_started        # PII maskeli, telefon backend'de\n  - emit: notification.seller_new_lead   # outbox idempotent\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{listing}:{user}:contact\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -2261,6 +2256,18 @@
     ]
    },
    {
+    "id": "block-s-classifieds-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Komşu satıcının ilan/lead sorgusu sıfır döndürür (RLS). Kontak açılınca telefon/email response'ta sızmaz; yalnız relay kanalı döner. Aynı kullanıcı+ilan ikinci kez lead üretmez / idempotent kontak. Doping ücreti ve membership Money/Decimal; hiçbir kod yolunda GMV komisyonu hesaplanmaz (lead-gen invariant). ai_score < 0.8 ilan otomatik insan kuyruğuna düşer, public aramada görünmez."
+     }
+    ]
+   },
+   {
     "id": "block-s-classifieds-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -2279,7 +2286,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — ama s-commerce/s-marketplace'ten AYRI mimari. Listing-first; transaction depth = lead-gen. Kernel zorunlu (kimlik/tenancy/audit), ödeme yalnız doping/membership için Contract (komisyon yok)."
        }
       ]
      },
@@ -2288,16 +2295,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Listing.owner_id ve Lead.user_id Party'den türer; tenancy RLS ile satıcı kendi ilanını/lead'ini görür. PII (telefon/email) money/pii-flag ile işaretli, audit append-only."
        }
       ]
      },
@@ -2306,7 +2304,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Kendi Listing/Lead/Promotion ArcheType'larını tanımlar; e-ticaret core'unun Cart/Order sözleşmelerini KULLANMAZ. transaction_depth bayrağı core ayrımını netleştirir."
        }
       ]
      },
@@ -2315,7 +2313,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "l1-search (faceted) ilan aramasını, l1-notification lead alert'lerini, cc-security trust katmanını sağlar. s-marketplace (full-transaction, komisyon) AYRI modül — karıştırma 6 ayı geri çevirir."
        }
       ]
      },
@@ -2324,7 +2322,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Storefront ilan arama/detay/ilan-ver formu + in-app messaging; ödeme modülü yalnız doping+membership tahsilatına bağlanır, sipariş/komisyon akışı yok."
        }
       ]
      }
@@ -2337,13 +2335,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-classifieds-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-classifieds-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Storefront app: faceted ilan arama + listing card (foto+başlık+price_ish+lokasyon+kurumsal rozet+doping işareti)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Messaging app: relay (telefon gizli) — satıcı/alıcı platform içinde konuşur, PII açığa çıkmaz."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Moderation app: AI score kuyruğu + insan onay; eşik altı ilan otomatik insan kuyruğuna düşer."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Payment/Billing app: doping ve membership tahsilatı (Money/Decimal); GMV komisyonu YOK — yanlış model gelir tablosunu bozar."
+      }
+     ]
     ]
    },
    {

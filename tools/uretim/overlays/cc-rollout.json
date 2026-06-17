@@ -1,0 +1,49 @@
+{
+ "featureDefs": [
+  {
+   "name": "Flag türleri (release/experiment/ops/permission)",
+   "desc": "Release (gizli özellik), experiment (A/B), ops (kill-switch), permission (premium) flag'leri; backend ve frontend AYNI flag'i okur, default OFF.",
+   "critical": true
+  },
+  {
+   "name": "Kademeli % rollout",
+   "desc": "%1 internal → %5 beta → %10 → %50 → %100; her adımda metrik kapısı (error rate, p95 latency). Tenant whitelist + random yüzde.",
+   "critical": true
+  },
+  {
+   "name": "Kill-switch",
+   "desc": "Sorun çıkınca özelliği saniyeler içinde %0'a çekme; deploy/rollback olmadan. SRE erişimine sahip, audit'li.",
+   "critical": true
+  },
+  {
+   "name": "Flag TTL + temizlik",
+   "desc": "Her flag'in sona erme tarihi (technical debt); %100 + 30-60 gün sonra iki dal birleştirilir, ölü dal silinir.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Her yeni özellik için; deploy ile launch'u ayırır. Bug fix bile risk taşıyorsa flag arkasından.",
+  "kernel": "Tenant whitelist + capability deny-by-default: flag açma kararı ürün/SRE'nin, deploy geliştiricinin — iki rol ayrı. Kill-switch yetkisi sınırlı.",
+  "core": "Flag değişimleri (özellikle kill-switch tetiği) audit'li; flag durumu bitemporal — 'şu an hangi flag kimde açıktı' yeniden üretilebilir.",
+  "modules": "cc-resolver-ops resolver rollout'unu, l1-experiment deneyleri bu flag altyapısını kullanır; tek flag kaynağı (Unleash veya custom feature_flags).",
+  "apps": "Ürün ekibi için flag yönetim app'i (rollout %, whitelist); SRE için kill-switch app'i; geliştirici flag'i koda gömer."
+ },
+ "ecaExample": "trigger:\n  event: feature_flag.kill_switch_triggered\ncondition:\n  all:\n    - actor.capability >= \"flag:killswitch\"\n    - flag.status == \"active\"\n    - not loop_detected\naction:\n  - emit: flag.disabled(rollout_pct=0)\n  - emit: audit.log(reason)\nguards:\n  max_depth: 6\n  idempotency_key: \"killswitch:{flag_name}\"\n  external_effects: none",
+ "securityNotes": [
+  "Kill-switch capability deny-by-default — yalnız SRE/yetkili rol tetikleyebilir; üretim güvenlik vanası, herkese açık olamaz, her tetik audit'li.",
+  "Flag açma (launch) ile deploy ayrı yetki: geliştirici deploy eder ama özelliği canlıya alma kararı ürün/SRE'nin (rol ayrımı).",
+  "Permission flag (premium) yetki kapısı olarak kullanılıyorsa client-side okuma yetmez — sunucu tarafı capability ile doğrulanmalı, aksi halde bypass.",
+  "Flag çöplüğü güvenlik riski: ölü dal kodu unutulursa kapalı sanılan özellik açık kalabilir; TTL zorunlu."
+ ],
+ "perfNotes": {
+  "code": "-- flag çözümü (cache'li, tenant + yüzde)\nSELECT enabled, rollout_pct, whitelist\nFROM feature_flag\nWHERE flag_name = $1;\n-- karar: whitelist[tenant] OR hash(user_id, flag) % 100 < rollout_pct",
+  "perf": "Flag okuması hot-path — in-process cache + Redis, her request DB sorgusu değil. Yüzde kararı deterministik hash (kullanıcı tutarlılığı), random değil. Kill-switch cache invalidation event'i saniye içinde tüm pod'lara yayılmalı."
+ },
+ "testNotes": [
+  "Default OFF flag'in açılmadan görünmediği, backend ve frontend'in aynı kararı verdiği doğrulanır.",
+  "Kademeli rollout'ta yüzde kararının deterministik (aynı kullanıcı tutarlı) olduğu test edilir.",
+  "Kill-switch'in saniyeler içinde tüm trafiği %0'a çektiği ve audit kaydı ürettiği doğrulanır.",
+  "Kill-switch'in idempotent olduğu (iki kez tetiklenince hata vermediği) test edilir.",
+  "Premium permission flag'inin sunucu tarafında doğrulandığı, client bypass'ına kapalı olduğu doğrulanır."
+ ]
+}

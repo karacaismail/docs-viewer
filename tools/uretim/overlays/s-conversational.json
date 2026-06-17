@@ -1,0 +1,51 @@
+{
+ "featureDefs": [
+  {
+   "name": "Conversation/Session ArcheType",
+   "desc": "Kanal (web/WhatsApp/IG), kullanıcı, mesaj dizisi, durum (open/handed-off/closed), intent. Çok kanallı oturum tek modelde; mesaj geçmişi append-only.",
+   "critical": true
+  },
+  {
+   "name": "Intent/NLU + bot akışı",
+   "desc": "Niyet sınıflandırma, slot dolumu, akış (karşılama/ürün sorma/sipariş durumu). Kural + LLM hibrit; yanıt kaynağı izlenebilir (RAG/knowledge base)."
+  },
+  {
+   "name": "Human handoff (insana devir)",
+   "desc": "Bot çözemezse canlı temsilciye devir; SLA + atama. Devir noktası ve bağlam korunur; müşteri tekrar anlatmaz.",
+   "critical": true
+  },
+  {
+   "name": "Conversational commerce (sepet->ödeme)",
+   "desc": "Mesaj içinden ürün/katalog -> sepet linki -> link tabanlı ödeme. Satış mesajda kapanır; Commerce ArcheType'ları (Cart/Order) framework'ten."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-2 SaaS ürünü (satış botu + müşteri hizmeti). Kernel + Scale + Layer-1 üstüne oturur; kendi Conversation ArcheType'ını tanımlar, yetki/audit/event-bus framework'ten gelir. Commerce/CRM/Comms ile entegre.",
+  "kernel": "Kimlik/tenancy (RLS)/audit + ArcheType engine kernel'den; kullanıcı Party'den türer. Mesaj/oturum bitemporal append-only; PII (telefon/içerik) pii-flag.",
+  "core": "Conversational core module; intent modelleri ve akışlar additif capability — core sözleşmesi sabit, yeni akış veri/konfigürasyon olarak.",
+  "modules": "s-comms (inbox/atama/SLA), s-channel-hub (WhatsApp/Telegram/IG kanalları), Commerce (katalog/sepet/ödeme), CRM (müşteri bağı) yalnız Contract üzerinden.",
+  "apps": "Inbox/agent app canlı devri yönetir; Commerce app mesajdan gelen sepet linkini aynı Cart/Order ArcheType'ıyla işler, çift kayıt yok."
+ },
+ "moduleUsage": [
+  "Comms/Inbox app: bot çözemediğinde oturum canlı temsilciye atanır (SLA + bağlam korunur).",
+  "Channel Hub app: WhatsApp/Telegram/IG DM kanallarından mesaj alır; tek Conversation modeline yazar.",
+  "Commerce app: mesaj içi katalog -> sepet linki -> ödeme; satış Cart/Order ArcheType'ında kapanır.",
+  "CRM app: konuşma müşteri kaydına bağlanır; intent/etiket fırsat veya destek talebine dönüşür."
+ ],
+ "ecaExample": "trigger:\n  event: conversation.message_received\n  when: \"tenant_scoped AND channel in allowlist\"\ncondition:\n  all:\n    - actor.capability >= \"conversation.bot.respond\"\n    - not loop_detected\n    - bot.confidence >= threshold\naction:\n  - record: message { conversation_id, body, direction, ts, pii: true }\n  - emit: bot.reply_sent          # düşük güvende: handoff.requested\n  - emit: crm.contact_touched     # outbox idempotent\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{conversation}:{message_id}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Konuşma içeriği + telefon PII: tenant-scoped RLS, pii-flag; temsilci yalnız atandığı oturumu görür (capability deny-by-default).",
+  "Kanal parametresi allowlist'e karşı doğrulanır; gelen webhook imza ile doğrulanır (spoof engelleme).",
+  "Mesaj geçmişi değişmez audit append-only; bot kararı + handoff izlenebilir. Ödeme linki ile satış step-up/3DS Commerce'te."
+ ],
+ "perfNotes": {
+  "code": "Intent yönlendirme saf sınıflandırma -> akış dispatch; if (intent==...) zinciri YASAK, akış tablosu/strateji. LLM çağrısı yan-etki sınırında.",
+  "perf": "Mesaj akışı asenkron worker; oturum listesi keyset pagination; bot yanıt cache (sık intent); gelen webhook idempotent dedupe."
+ },
+ "testNotes": [
+  "Düşük bot güveninde oturum insana devredilir, bağlam korunur (müşteri tekrar anlatmaz).",
+  "Aynı kanal mesajı (webhook retry) ikinci kez işlenmez (idempotency).",
+  "Temsilci komşu oturumu görmez (RLS); PII yetkisiz response'ta sızmaz.",
+  "Geçersiz imzalı webhook reddedilir."
+ ]
+}

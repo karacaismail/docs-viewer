@@ -1,0 +1,36 @@
+{
+ "featureDefs": [
+  {
+   "name": "Tek-sayfa müşteri rezervasyonu",
+   "desc": "Hizmet seç → saat seç → onay akışı; çekirdek takvim (s-scheduling) değişmez, fark yalnızca UX paketinde. Slot çakışması idempotent rezervasyonla önlenir.",
+   "critical": true
+  },
+  {
+   "name": "No-show depozito akışı",
+   "desc": "Randevuda depozito alımı + iadesi; money tipi, gelmeyen müşteride depozito mahsubu audit'lenir.",
+   "critical": true
+  },
+  {
+   "name": "Personel bazlı takvim + SMS hatırlatma",
+   "desc": "Personel başına slot görünümü; SMS hatırlatma varsayılan, gönderim consent/quiet-hours kapsamında.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Edition = aynı core module seti ve kod; fark UI/UX/pazara çıkış paketinde. Fonksiyon eklemek Edition işi değil — o ihtiyaç parent stack-service'e gider.",
+  "kernel": "Parent stack-service'in tenancy/capability'sini aynen miras alır; Edition kendi kernel/capability tanımlamaz.",
+  "core": "Rezervasyon ve depozito core'dan gelir (money + audit); Edition yalnız sunum katmanı, yeni ArcheType eklemez.",
+  "modules": "stack-service + s-scheduling üstüne UX paketi; kuaför/klinik/stüdyo funnel'ları aynı core'u farklı landing/onboarding ile sunar.",
+  "apps": "Müşteri tek-sayfa rezervasyon app'i; işletme günlük şerit görünüm app'i — ikisi de parent stack verisi üzerinde."
+ },
+ "securityNotes": [
+  "Müşteri tarafı anonim/self-service rezervasyon — yalnızca kendi randevusuna erişim, başka müşterinin slotuna deny-by-default.",
+  "Depozito money tipi minor-unit; iade/mahsup idempotent olmalı, aksi halde çift tahsilat/çift iade.",
+  "SMS hatırlatma consent + quiet-hours kapsamında; rıza dışı bildirim gönderilmez."
+ ],
+ "testNotes": [
+  "Aynı slota eşzamanlı iki rezervasyonun yalnız birinin tuttuğu (idempotent/lock) doğrulanır.",
+  "No-show'da depozito mahsubunun audit kaydı ürettiği test edilir.",
+  "Edition'ın parent core ArcheType'ını değiştirmediği, yalnız UI override sunduğu doğrulanır."
+ ]
+}

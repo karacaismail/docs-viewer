@@ -1,0 +1,42 @@
+{
+ "featureDefs": [
+  {
+   "name": "Tarayıcı tabanlı akış kaydı/oynatma",
+   "desc": "Tekrarlı UI adımlarının (tıkla/yaz/oku) kaydı ve deterministik oynatımı; her oynatma idempotency_key ile, yarıda kalan akış güvenli yeniden denenir.",
+   "critical": true
+  },
+  {
+   "name": "Hibrit API + UI köprüsü",
+   "desc": "API olan yerde API, olmayan yerde UI otomasyonu; hedef sisteme erişim capability deny-by-default ile sınırlı.",
+   "critical": true
+  },
+  {
+   "name": "Çalışma günlüğü + denetim",
+   "desc": "Her otomasyon koşusunun adım/sonuç kaydı audit'lenir; hata anında ekran/durum delili saklanır.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "API'siz/tekrarlı UI iş akışlarının otomasyonu gerektiğinde; aday (candidate) kategori, katalog boşluğunu kapatır.",
+  "kernel": "Her otomasyon tanımı tenant'a izole (RLS); hedef sistem credential'ları capability deny-by-default + secret store.",
+  "core": "Koşu kayıtları audit'lenir; harici efekt (UI tıklama) geri alınamaz olduğundan idempotency ve dry-run zorunlu.",
+  "modules": "Bir platform-horizontal yetenek; diğer modüllerin entegrasyon boşluklarını UI üzerinden doldurur.",
+  "apps": "Otomasyon kurulum/izleme app'i; tetiklenen akışlar arka planda koşar."
+ },
+ "moduleUsage": [
+  "s-etl: API tabanlı veri entegrasyonu olan yerde tercih edilir; RPA-lite yalnız API olmayan UI akışları için devreye girer.",
+  "s-audit: otomasyon koşularının adım ve hata delillerini hash-chain'e bağlar.",
+  "cc-rollout: yeni otomasyon akışı feature-flag + kill-switch arkasından kademeli açılır.",
+  "l1-experiment: değil — RPA deney değil; otomasyon koşusu deterministik tekrar."
+ ],
+ "securityNotes": [
+  "Hedef sistem credential'ları en hassas varlık — capability deny-by-default, secret store; koşu log'una düz metin yazılmaz.",
+  "UI otomasyonu harici geri-alınamaz efekt üretir (örn. form gönderimi); idempotency_key + dry-run zorunlu, aksi halde çift işlem.",
+  "Otomasyon başka sistemde işlem yapar; o sistemdeki yetki sınırı RPA hesabının capability'si ile eşlenmeli, aşırı yetki verilmez."
+ ],
+ "testNotes": [
+  "Aynı akışın iki kez oynatılmasında idempotency ile çift işlem üretmediği doğrulanır.",
+  "Adım ortasında hata olunca akışın güvenli durduğu ve durum delilinin saklandığı test edilir.",
+  "Credential'ın koşu log'una sızmadığı doğrulanır."
+ ]
+}

@@ -1,0 +1,63 @@
+{
+ "featureDefs": [
+  {
+   "name": "Chart of Accounts + Journal/GL (çift taraflı)",
+   "desc": "Tek Düzen Hesap Planı (TR default) + IFRS/GAAP; çift taraflı yevmiye, dönem kapanışı + kilitleme; muhasebe omurgası.",
+   "critical": true
+  },
+  {
+   "name": "e-Belge (e-Fatura/e-Arşiv/e-İrsaliye, UBL-TR 1.2)",
+   "desc": "UBL-TR 1.2 XML + mali mühür/e-imza; özel entegratör (İzibiz/eLogo/Foriba); B2B tescilli/B2C ayrımı; GİB'e iletim.",
+   "critical": true
+  },
+  {
+   "name": "e-Defter (XBRL-GL + berat)",
+   "desc": "XBRL-GL yevmiye + büyük defter, SHA-256 berat; takvim ayını izleyen 3. ayın son günü periyodik gönderim — bitemporal + audit.",
+   "critical": true
+  },
+  {
+   "name": "Beyanname (KDV1/2, MUHSGK, Geçici, BA/BS)",
+   "desc": "Aylık KDV, birleşik MUHSGK, Geçici/Kurumlar, yıllık BA/BS (5K TL eşik); GİB üzerinden; dönem verisinden türetilir.",
+   "critical": true
+  },
+  {
+   "name": "AP/AR + Banka mutabakat",
+   "desc": "Supplier/customer cari, 3-way match (fatura-PO-mal kabul), aging/dunning; MT940 ekstre import + mutabakat.",
+   "critical": false
+  },
+  {
+   "name": "AI-first capture (banka feed → kategorize → JE)",
+   "desc": "Banka feed → AI auto-categorize → journal entry önerisi → kullanıcı onayı → kural öğrenme; fiş/fatura OCR; anomali tespiti.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-2 finance stack; diğer ürünlerin (POS/satış/satın alma) e-Fatura/e-Arşiv/e-Defter event'lerini tüketir; kendi ArcheType + UI'sı var ama yetki/audit/event-bus/tenancy framework'ten gelir.",
+  "kernel": "Her yevmiye + belge tenant_id ile izole (RLS); muhasebeci/mali müşavir Identity'den; tüm mali kayıt Audit'li (değişmezlik) — kernel'den miras.",
+  "core": "Tutar Decimal/Currency (float DEĞİL); kayıtlar bitemporal (effective_date) + audit + dönem kilidi; e-Belge purpose-binding ile saklanır.",
+  "modules": "Outbox (GİB gönderimi at-least-once), worker (e-Defter berat/beyanname üretimi), FX (TCMB kur), scheduler (periyodik gönderim) module'lerini tüketir; entegratör driver değişse sözleşme sabit.",
+  "apps": "POS/satış/satın alma app'leri 'fatura kesildi' event'i yayar → muhasebe e-Belge'ye çevirir; mali müşavir app'i çoklu mükellef yönetir (practice management)."
+ },
+ "moduleUsage": [
+  "POS/Satış app: satış → e-Arşiv/e-Fatura event → muhasebe UBL-TR'ye çevirip GİB'e gönderir (outbox idempotent).",
+  "Satın alma app: fatura → 3-way match (PO + mal kabul) → AP cari + yevmiye.",
+  "Notification: beyanname son günü yaklaşınca mali müşavire hatırlatma; berat gönderimi başarısızsa uyarı."
+ ],
+ "ecaExample": "trigger:\n  event: invoice.issued\ncondition:\n  all:\n    - actor.capability >= \"accounting.einvoice.send\"\n    - tenant.einvoice_registered\n    - not loop_detected\naction:\n  - enqueue: gib.ubl_tr.transmit   # outbox, at-least-once\n  - emit: journal.entry_posted\nguards:\n  max_depth: 6\n  idempotency_key: \"einvoice:{tenant}:{invoice_id}\"\n  external_effects: integrator_api",
+ "securityNotes": [
+  "Mali veri + müşteri/tedarikçi VKN/TCKN pii=true (+retention); RLS tenant-scoped — başka mükellefin defteri görülmez.",
+  "accounting.* capability deny-by-default; mali müşavir yalnız yetkili olduğu mükellefleri görür (practice management izolasyonu).",
+  "e-Belge/e-Defter audit + değişmezlik (berat SHA-256); dönem kilidi sonrası geri tarihli kayıt engellenir.",
+  "GİB/entegratör credential secret=true; gönderim idempotency key ile çift fatura/berat üretmez."
+ ],
+ "perfNotes": {
+  "code": "Yevmiye/belge listesi keyset (cursor) + (tenant_id, dönem, hesap) index; e-Defter berat + beyanname üretimi asenkron worker; GİB gönderimi outbox + retry.",
+  "perf": "Aylık/dönemsel toplu üretim (e-Defter, beyanname) arka plan job; senkron GİB çağrısı yerine kuyruk; rapor export streaming."
+ },
+ "testNotes": [
+  "Komşu-mükellef yevmiye/belge sorgusu sıfır döndürür (RLS + practice management).",
+  "Money testi: tutar Decimal/Currency kuruş kaybı olmadan; KDV oranları doğru hesaplanır.",
+  "Idempotency testi: aynı fatura iki kez gönderilse tek e-Fatura GİB'e gider.",
+  "Dönem kilidi testi: kapanmış döneme geri tarihli yevmiye reddedilir."
+ ]
+}

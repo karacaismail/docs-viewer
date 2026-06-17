@@ -1,0 +1,44 @@
+{
+ "featureDefs": [
+  {
+   "name": "Dikey copilot paketi (aynı kod)",
+   "desc": "Bir Stack'in departman bağlamına özel asistan ambalajı. Edition kuralı gereği fark kodda değil projeksiyon/sunum beyanındadır (edition_overrides); aynı core module + aynı agent runtime, dikey UX + GTM.",
+   "critical": true
+  },
+  {
+   "name": "Departman bağlamlı asistan",
+   "desc": "Asistan yalnız o departmanın ArcheType'larına ve yetkili eylemlerine erişir; bağlam (rol, departman, veri kapsamı) capability ile sınırlı. Genel değil dikey: prompt'lar ve örnekler departmana göre kuratörlü.",
+   "critical": true
+  },
+  {
+   "name": "Onaylı eylem yüzeyi",
+   "desc": "Copilot serbest eylem üretmez; agent runtime'ın izinli araç (tool) kümesi üstünden çalışır. Yan etkili eylemler ChangeSet/onay kapısından geçer; karar audit'li.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "SaaS Fırsat Haritası adayı (Edition). Yeni stack/fonksiyon üretmeden, mevcut stack'i dikey copilot deneyimiyle pazara çıkarır. Taksonomi: Stack ⊂ Edition ⊂ Distribution; edition kernel/module koduna dokunmaz.",
+  "kernel": "Edition_overrides projeksiyon katmanındadır; yetki/audit/event-bus parent stack'le aynı. Agent eylemleri capability deny-by-default ile yetkilendirilir, audit'lenir.",
+  "core": "Veri sözleşmesi (money/bitemporal/audit) parent stack'ten gelir; Edition yalnız sunum ve copilot bağlamını değiştirir.",
+  "modules": "Aynı core module seti üstüne biner; copilot, k-agent-runtime'ın izinli araçlarıyla bu module'lerin eylemlerini çağırır.",
+  "apps": "Kullanıcı departman asistanıyla konuşur; asistan izinli eylemi önerir, yan etkili olan onay kapısından geçince uygulanır."
+ },
+ "ecaExample": "trigger:\n  event: copilot.action.requested\ncondition:\n  all:\n    - actor.capability >= \"agent:invoke\"\n    - tool in department_allowed_tools\n    - not loop_detected\naction:\n  - run: agent_tool(scoped=department)\n  - require: changeset_review_if_side_effect\nguards:\n  max_depth: 6\n  idempotency_key: \"copilot:{tenant}:{request_id}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Edition_overrides yalnız sunum/projeksiyon beyanıdır; bir capability'yi gevşetemez — yetki kararı parent module'de kalır.",
+  "Copilot eylemleri agent runtime'ın izinli araç kümesiyle sınırlı; deny-by-default, departman kapsamı dışına çıkamaz.",
+  "Yan etkili eylemler ChangeSet/onay kapısından geçer ve audit'lenir; serbest/otomatik uygulanmaz.",
+  "Kullanıcı prompt'u untrusted girdidir; araç çağrısına çevrilirken kapsam ve yetki yeniden doğrulanır.",
+  "RLS ile tenant ve departman veri izolasyonu; asistan başka departmanın/komşu tenant'ın verisini göremez."
+ ],
+ "perfNotes": {
+  "code": "edition_overrides build-time projeksiyon beyanıdır; copilot için ek runtime kod yolu açılmaz.",
+  "perf": "Tek core module + tek agent runtime üstünde N departman edition'ı tutulduğu için bakım yükü stack başına sabit; edition kapatmak kod silmeden GTM kapatmaktır."
+ },
+ "testNotes": [
+  "edition_overrides bir capability'yi gevşetemez (yetki parent module'de kalır).",
+  "Copilot departman kapsamı dışındaki aracı/veriyi çağıramaz (deny-by-default).",
+  "Yan etkili eylem onay kapısı olmadan uygulanmaz; idempotency ile çift uygulanmaz.",
+  "Komşu tenant/departman verisi RLS ile görünmez."
+ ]
+}

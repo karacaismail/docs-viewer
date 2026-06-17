@@ -304,7 +304,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Multi-currency Consolidation — çekirdek yetenek",
+      "term": "Çok-para birimi konsolidasyon motoru",
       "definition": [
        {
         "type": "strong",
@@ -312,41 +312,46 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Birden çok tüzel kişiliğin defterlerini ortak raporlama para birimine çevirip eler; spot/ortalama/kapanış kurları kalem tipine göre seçilir."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Transfer pricing eliminasyonu",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Grup içi alış/satış ve borç/alacak kalemlerinin karşılıklı elenmesi; intercompany eşleşmesi tutmazsa fark hesabına düşer ve raporlanır."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Kur farkı (CTA) hesaplama",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Yeniden değerleme ve çeviri farklarının özkaynak altında ayrı kalemde (cumulative translation adjustment) izlenmesi."
+       }
+      ]
+     },
+     {
+      "term": "Konsolidasyon dönemi kilidi",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Kapatılan konsolidasyon döneminin yeniden açılması bitemporal düzeltme kaydı gerektirir; geçmiş silinmez, düzeltme yeni efektif tarihle yazılır."
        }
       ]
      }
@@ -534,15 +539,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Konsolide rapor grup geneli finansal görünüm — capability deny-by-default, yalnızca grup CFO rolü; entity yöneticisi sadece kendi entity'sini görür (RLS). Kur tablosu bitemporal: geçmişe dönük kur değişimi (düzeltme) eski kararı silmez, yeni efektif tarihle eklenir; aksi halde kapanmış dönem manipüle edilebilir. Money kalemleri minor-unit integer; float yuvarlama eliminasyonda fark hesabını şişirir, audit'te açıklanamayan sapma doğurur. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -570,15 +567,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "SELECT entity_id, sum(amount_minor) FILTER (WHERE intercompany)\nFROM ledger_line\nWHERE tenant_id = $1 AND period_id = $2\nGROUP BY entity_id;"
        }
       ]
      },
@@ -596,15 +585,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Konsolidasyon period_id + tenant_id keyset üzerinden batch çalışır, satır satır değil. Eliminasyon eşleştirmesi grup içi anahtar üzerinde indexlenir; aksi halde N×M intercompany taraması."
        }
       ]
      },
@@ -1040,6 +1021,18 @@
     ]
    },
    {
+    "id": "block-s-consolidation-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Intercompany alış/satış tam eşleşince eliminasyon bakiyesinin sıfırlandığı, eşleşmeyince fark hesabına düştüğü doğrulanır. Kapanmış konsolidasyon döneminde düzeltmenin yeni efektif tarihle yazıldığı, geçmişin değişmediği test edilir. Kur tipi seçimi (kapanış vs ortalama) kalem tipine göre doğru uygulanır."
+     }
+    ]
+   },
+   {
     "id": "block-s-consolidation-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1058,7 +1051,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Birden çok tüzel kişilik / para birimi olan müşterilerde; tek şirket tek para biriminde gereksiz."
        }
       ]
      },
@@ -1067,16 +1060,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Tenant = grup; alt tüzel kişilikler tenant içi entity. Capability deny-by-default: konsolide rapor okuma yetkisi entity bazlı değil grup bazlı verilir."
        }
       ]
      },
@@ -1085,7 +1069,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Money tipi zorunlu (currency + minor units); tüm kur çevrimleri audit'lenir, bitemporal kur tablosu 'hangi kuru ne zaman bildik' sorusunu yanıtlar."
        }
       ]
      },
@@ -1094,7 +1078,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "s-revenue-recognition, s-fpa ve genel muhasebe defterinden okur; kendi konsolidasyon ArcheType'larını üstüne tanımlar."
        }
       ]
      },
@@ -1103,7 +1087,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Grup CFO'su için konsolide rapor app'i; her entity kendi defter app'inde çalışır, konsolidasyon yukarıda toplar."
        }
       ]
      }
@@ -1116,13 +1100,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-consolidation-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-consolidation-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-fpa: konsolide bütçe-gerçekleşen karşılaştırması için grup seviyesi rakamları buradan alır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-revenue-recognition: grup içi gelir kalemlerini eliminasyon öncesi/sonrası ayrımıyla besler."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-audit: kur çevrimi ve eliminasyon adımlarının delil zincirini hash-chain'e bağlar."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "cc-resolver-ops: her entity'nin jurisdiction/para birimi ekseni resolver'dan gelir; konsolidasyon raporlama para birimini sabitler."
+      }
+     ]
     ]
    },
    {

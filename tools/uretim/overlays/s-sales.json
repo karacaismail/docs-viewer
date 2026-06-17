@@ -1,0 +1,47 @@
+{
+ "featureDefs": [
+  {
+   "name": "Teklif → Sipariş yaşam döngüsü",
+   "desc": "Quote ArcheType'ı draft/sent/accepted/expired durumlarıyla; kabul edildiğinde idempotent biçimde SalesOrder'a dönüşür. Fiyat satırları money tipi (minor units + currency), vergi matrahı bitemporal saklanır.",
+   "critical": true
+  },
+  {
+   "name": "Quote automation (AI)",
+   "desc": "Geçmiş kabul oranı, müşteri segmenti ve stok durumuna göre teklif taslağı + iskonto önerisi üretir. Öneri capability'si olan kullanıcı için açılır; her öneri audit'e karar gerekçesiyle yazılır.",
+   "critical": false
+  },
+  {
+   "name": "Fiyat listesi ve iskonto kuralları",
+   "desc": "Müşteri/kanal bazlı çok para birimli fiyat listeleri; iskonto onayı yetki seviyesine bağlı (deny-by-default), eşik üstü iskonto step-up onayı ister.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Sipariş, fiyat değişimi ve teklif kabulü diğer ürünleri tetiklediği için event-bus üzerinden entegre olmalı; doğrudan tablo erişimi değil.",
+  "kernel": "authz (iskonto/teklif onay capability'leri), tenancy (RLS ile tenant izolasyonu), event-bus (order.created, quote.accepted), audit (her durum geçişi).",
+  "core": "money (satır tutarları, vergi), bitemporal (fiyat ve vergi geçerlilik tarihleri), Contract (müşteri ile mutabık sipariş koşulları), keyset (teklif/sipariş listeleme).",
+  "modules": "Inventory (stok rezervasyonu/availability), Revenue Recognition (kabul → gelir tetiği), CRM (müşteri kaydı, fırsat).",
+  "apps": "Storefront edition'a sipariş akışı; POS ile ortak fiyat listesi."
+ },
+ "moduleUsage": [
+  "Inventory: teklif satırı için stok availability sorgusu; sipariş onayında rezervasyon.",
+  "Revenue Recognition: quote.accepted → performance obligation oluşturma tetiği.",
+  "CRM: teklifi açan fırsat/müşteri ilişkisi; kazanma oranı geri besleme.",
+  "Procurement: stokta olmayan kalem için satınalma talebi köprüsü."
+ ],
+ "ecaExample": "trigger:\n  event: quote.accepted\ncondition:\n  all:\n    - actor.capability >= \"sales.order.create\"\n    - not loop_detected\n    - quote.total.currency == tenant.base_currency\naction:\n  - emit: order.created\n  - emit: inventory.reserve_requested\nguards:\n  max_depth: 6\n  idempotency_key: \"quote:{quote.id}:accept\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "İskonto eşik kontrolü deny-by-default; eşik üstü iskonto için capability + step-up.",
+  "Fiyat listesi ve müşteri tutarları RLS ile tenant'a kapalı; cross-tenant fiyat sızıntısı engellenir.",
+  "Teklif PDF/dışa aktarımı pii içerir; erişim audit'lenir, imzalı kısa ömürlü URL ile sunulur."
+ ],
+ "perfNotes": {
+  "code": "Teklif/sipariş listeleri keyset pagination ile (created_at, id) sıralı; OFFSET kullanılmaz.",
+  "perf": "Açık teklif sayısı (tenant_id, state) kısmi index'iyle dashboard sayacı sabit maliyetli; toplamlar projeksiyon tablosundan okunur."
+ },
+ "testNotes": [
+  "quote.accepted'ın aynı idempotency_key ile iki kez işlenmesinde tek order.created üretildiği.",
+  "Para birimi base_currency dışındaysa kabul akışının guard ile durması.",
+  "Eşik üstü iskontonun step-up olmadan reddedildiği ve audit'e yazıldığı."
+ ]
+}

@@ -1,0 +1,46 @@
+{
+ "featureDefs": [
+  {
+   "name": "Edition = projeksiyon beyanı, kod değil",
+   "desc": "Edition farkı kodda değil projeksiyon beyanındadır — Surface'in edition_overrides'ı. Aynı core module seti, gelişmiş UI estetiği (BambooHR-sınıfı) + akıcı UX akışı. Kernel'e ve module koduna dokunmaz; stack sayısını artırmaz, parent stack'in varyantı olarak yaşar.",
+   "critical": true
+  },
+  {
+   "name": "Üç iç içe halka taksonomisi",
+   "desc": "Stack ⊂ Edition ⊂ Distribution. Stack: satılabilir yatay paket (fonksiyonel olarak eksiksiz). Edition: stack'in gelişmiş UI/UX ambalajı + pazara çıkış (landing, fiyat merdiveni, onboarding, reklam anahtar kelime seti). Distribution: Edition + sektör config + hazır içerik — sektöre en gelişmiş deneyimle iner.",
+   "critical": true
+  },
+  {
+   "name": "Sınır kuralı: Edition mi yeni stack mı",
+   "desc": "Varyant YENİ ALICI PROFİLİ gerektiriyorsa Edition değil yeni stack açılır. YENİ FONKSİYON gerekiyorsa o iş parent stack'e gider, Edition'a değil. Edition yalnız deneyim + pazara çıkış taşır.",
+   "critical": true
+  },
+  {
+   "name": "Reklamlı kanal hedefleme birimi",
+   "desc": "Edition reklam bütçesinin hedefleme birimidir: anahtar kelime + landing edition başına kurulur, dönüşüm edition bazında okunur. ROI tutmayan edition kapatılır — stack'e ve koda dokunulmaz.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Edition, yeni stack üretmeden pazara çıkış mekanizmasıdır. Frappe HRMS fonksiyon olarak yeter ama BambooHR estetiğinde değildir; Edition tam bu farkı projeksiyon katmanında kapatır.",
+  "kernel": "Edition kernel'e dokunmaz; Surface (Projection) katmanında edition_overrides ile çalışır. Yetki/audit/event-bus parent stack'le aynı.",
+  "core": "Core module seti aynıdır; money/bitemporal/audit Contract'tan gelir. Edition yalnız sunum/projeksiyon değiştirir, veri sözleşmesini değil.",
+  "modules": "Edition module kodunu değiştirmez; aynı module'lerin üstüne edition_overrides beyanı bindirir.",
+  "apps": "SaaS Products şemsiyesi: Stacks + Editions + Distributions (paketler) VE Ürün Modülleri (s-*) birlikte SaaS ürünleridir; modüller bu paketleri oluşturan yapı taşlarıdır."
+ },
+ "moduleUsage": [],
+ "securityNotes": [
+  "Edition_overrides yalnız projeksiyon/sunum beyanıdır; capability ve RLS kararı parent stack'in module'lerinde kalır, edition bunları gevşetemez.",
+  "Yeni alıcı profili Edition'la değil yeni stack'le açılır — yetki yüzeyi varyant ambalajıyla genişletilmez.",
+  "Distribution'ın sektör config'i ve içeriği de kernel/module koduna dokunmaz; deny-by-default sınırları korunur."
+ ],
+ "perfNotes": {
+  "code": "edition_overrides build-time projeksiyon beyanıdır; runtime'da ek kod yolu açmaz.",
+  "perf": "Tek core module seti üstünde N edition tutulduğu için bakım ve test yükü stack başına sabit kalır; edition kapatmak kod silmeden landing kapatmaktır."
+ },
+ "testNotes": [
+  "Edition aynı core module testlerini paylaşır; yalnız projeksiyon farkı için override testi eklenir.",
+  "edition_overrides bir capability'yi gevşetemez (yetki kararı parent module'de kalır).",
+  "Sınır kuralı: 'yeni fonksiyon' içeren bir edition isteği reddedilir, iş parent stack'e yönlendirilir."
+ ]
+}

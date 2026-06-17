@@ -188,7 +188,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "People Edition (HR) — çekirdek yetenek",
+      "term": "BambooHR-sınıfı görsel dil",
       "definition": [
        {
         "type": "strong",
@@ -196,41 +196,29 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Boşluklu yerleşim, insan fotoğrafı öncelikli kartlar, tek-ekran özet. Aynı core module seti — fark yalnız UI estetiği."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "İnsan-öncelikli UX akışı",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "İzin isteme 2 tık; onboarding sihirbazı; yönetici onayı mobilde tek dokunuş. Fonksiyon eklenmez, akış kısaltılır."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Pazara-çıkış paketi",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Landing, fiyat, onboarding — Edition'a özel reklamlı kanal paketi; hedef alıcı 'yazılımcı arayüzü' istemeyen İK yöneticisi."
        }
       ]
      }
@@ -418,15 +406,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Edition yalnız sunum katmanı: yetki/audit/RLS parent stack-hrms'ten gelir, Edition kendi güvenlik mantığı eklemez (yüzey farkı güvenlik sınırı değildir). Çalışan fotoğrafı ve özlük verisi pii (+retention); photo-card projeksiyonu da aynı RLS + capability kapısına tabidir. Entitlement kapalı projeksiyon yüzeyde görünmez — Edition farkı entitlement'la zorlanır, kod çatallanmasıyla değil. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -454,15 +434,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Sıfır yeni iş-mantığı: edition_overrides salt deklaratif projeksiyon değişimi; aynı okuma modeli, farklı render bileşeni. Bakım maliyeti core'la paylaşılır (tek kod tabanı)."
        }
       ]
      },
@@ -480,15 +452,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Tek-ekran özet projection_of okuma modelinden; foto-kart ek alan (avatar) çeker ama sorgu yapısı core ile aynı, ölçek farkı yok."
        }
       ]
      },
@@ -784,7 +748,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — People Edition (HR)",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — People Edition (HR)\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: surface.render_requested\n  when: \"edition == 'people'\"\ncondition:\n  all:\n    - actor.capability >= \"hrms.read\"\n    - entitlement.projection_enabled(\"people.photo_card\")\n    - tenant_scoped\naction:\n  - project: Employee.as = photo-card   # core kodu degismez\n  - render: people_edition_surface\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:surface:employee:people\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -924,6 +888,18 @@
     ]
    },
    {
+    "id": "block-edition-people-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Edition pariteleri: People Edition core stack-hrms ile aynı fonksiyonel testleri geçer (davranış değişmedi). Projeksiyon farkı: aynı Employee kaydı core'da form, People'da photo-card render eder; veri aynı. Entitlement kapısı: people projeksiyonu kapalıyken yüzeyde görünmez (core form'a düşer). Edition fonksiyon eklemez: People'a özel iş-mantığı testi YOKtur — yeni ihtiyaç parent stack'e gider (sözleşme invariant'i)."
+     }
+    ]
+   },
+   {
     "id": "block-edition-people-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -942,7 +918,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — ama Edition sözleşmesiyle: core module seti ve kod stack-hrms ile AYNIDIR; fark UI estetiği, UX akışı ve pazara-çıkış paketindedir. Fonksiyon eklemek Edition işi değildir — o ihtiyaç parent stack'e gider."
        }
       ]
      },
@@ -951,16 +927,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Kendi ArcheType/şema tanımlamaz; kernel ve parent stack'in ArcheType'larını Surface projeksiyon beyanıyla (k-surface) farklı yüzle gösterir — entitlement (be-kararlar E1) hangi projeksiyonun açık olduğunu söyler."
        }
       ]
      },
@@ -969,7 +936,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "stack-hrms core'u fonksiyonel olarak eksiksiz temeldir; People Edition core'a dokunmaz, yalnız edition_overrides ile projeksiyon (photo-card vs form) değiştirir."
        }
       ]
      },
@@ -978,7 +945,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Yeni module eklemez; mevcut HRMS module'lerini olduğu gibi kullanır. Davranış/iş-mantığı parent stack'te kalır."
        }
       ]
      },
@@ -987,7 +954,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "People Edition bir HRMS App'in UX paketlenmesidir; aynı veriyi/aynı Workflow'u kullanır, farklı landing+fiyat+onboarding ile satılır."
        }
       ]
      }
@@ -1000,13 +967,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-edition-people-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-edition-people-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "stack-hrms: tüm fonksiyonel core buradan gelir; Edition yalnız sunum katmanını değiştirir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "k-surface (Surface engine): Party/Employee ArcheType'ı photo-card projeksiyonuyla gösterilir (core düz form)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Entitlement (be-kararlar E1): hangi Edition projeksiyonunun açık olduğunu belirler; kapalı projeksiyon render edilmez."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "stack-editions: Edition sözleşmesinin (aynı kod, farklı paket) genel kuralı buradan miras alınır."
+      }
+     ]
     ]
    },
    {

@@ -497,7 +497,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Workers + Scheduler — birincil yetenek",
+      "term": "Idempotent Job Handler",
       "definition": [
        {
         "type": "strong",
@@ -505,25 +505,51 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "Her job bir idempotency_key taşır; handler önce 'bu key işlendi mi' kontrolü yapar (processed_jobs tablosu, UNIQUE constraint). At-least-once teslimatta retry/restart sonucu değiştirmez. money/external-effect job'larında zorunlu."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Outbox Relay Worker",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Outbox tablosundan keyset cursor ile okuyan, event-bus'a yayınlayıp satırı 'published' işaretleyen recurring worker. Transactional outbox pattern'in teslimat ucu; DB commit ile event yayını arasındaki atomikliği sağlar."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "Projection Rebuild Worker",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "Read-model'i event akışından yeniden kuran job. Stale projeksiyonu tespit edip arka planda yeniden hesaplar; UI'yi bloklamaz."
+       }
+      ]
+     },
+     {
+      "term": "Scheduler (cron)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Recurring job'ları (her gün 02:00 cleanup, abandonment reminder) tetikleyen tek scheduler pod. Tenant'lar arası adil sıralama + quiet-hours uyumu."
+       }
+      ]
+     },
+     {
+      "term": "Priority + Backoff Retry",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "payment webhook yüksek, marketing email düşük öncelik. Hata sonrası exponential backoff + max retry; aşılınca dead-letter queue'ya düşer."
        }
       ]
      }
@@ -711,15 +737,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Job payload'ında tenant_id taşınır; handler her sorguyu RLS altında koşturur — komşu tenant verisi worker'da da görünmez. Capability deny-by-default: job:schedule / job:run yetkisi olmayan aktör kuyruğa iş atamaz. idempotency_key money/external-effect job'larında zorunlu; çift teslimat çift tahsilat üretemez. Dead-letter queue'daki payload PII içerebilir — maskelenmiş loglanır, retention'a tabidir. Webhook delivery worker'ı SSRF'e karşı allow-list + step-up gerektiren dış efektleri ayrı işaretler. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -747,15 +765,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Outbox relay keyset cursor (WHERE id > :last ORDER BY id LIMIT :n) ile okur; OFFSET kullanmaz."
        }
       ]
      },
@@ -773,15 +783,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Keyset sayfalama outbox büyüse de O(1) ilerler; kuyruk başına ayrı worker pool ve autoscale ile p99 teslimat gecikmesi sabit kalır."
        }
       ]
      },
@@ -1077,7 +1079,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Workers + Scheduler",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Workers + Scheduler\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: cart.abandoned\ncondition:\n  all:\n    - actor.capability >= \"job:schedule\"\n    - not loop_detected\n    - within_quiet_hours == false\naction:\n  - schedule:\n      job: send_abandonment_reminder\n      delay: 15m\n      queue: emails\n      priority: low\nguards:\n  max_depth: 6\n  idempotency_key: \"cart:{cart_id}:abandon-reminder\"\n  external_effects: rate_limited",
     "copyEnabled": true
    },
    {
@@ -1217,6 +1219,18 @@
     ]
    },
    {
+    "id": "block-scale-workers-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Aynı job'ı iki kez tetikle → tek yan etki (idempotency kanıtı). Worker restart simülasyonu → in-flight job kaybolmaz, yeniden alınır. Quiet-hours penceresinde scheduled reminder ertelenir, içeride değil. Dead-letter: max retry aşıldığında job DLQ'ya düşer, ana kuyruğu bloklamaz."
+     }
+    ]
+   },
+   {
     "id": "block-scale-workers-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1235,7 +1249,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Workers bir Scale primitive'idir; kernel'in event-bus'ı ve outbox'ı bunsuz teslim edilemez. Bütün async iş (mail, fan-out, projection, webhook) buradan akar."
        }
       ]
      },
@@ -1244,16 +1258,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Event-bus yayınını (outbox relay) ve audit yazımını worker tetikler; tenant bağlamı job payload'ında taşınır, handler RLS altında koşar."
        }
       ]
      },
@@ -1262,7 +1267,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "money/bitemporal yazan job'lar Contract üstünden gider; ham SQL değil. processed_jobs ledger'ı audit'e bağlı."
        }
       ]
      },
@@ -1271,7 +1276,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Her module kendi @job handler'larını tanımlar; kuyruk adı ve öncelik manifest'te beyan edilir. Worker module koduna saf-fonksiyon yüzeyinden dokunur."
        }
       ]
      },
@@ -1280,7 +1285,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "App bir job'u 'kuyruğa at' der, senkron cevabı hemen döner; sonuç hazır olunca realtime/webhook ile bildirilir."
        }
       ]
      }

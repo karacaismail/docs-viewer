@@ -690,7 +690,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "i18n, Money, Realtime, Webhook, API Gateway, Calendar, Reporting — birincil yetenek",
+      "term": "i18n / Localization primitive",
       "definition": [
        {
         "type": "strong",
@@ -698,25 +698,69 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "gettext .po (modül başına tr/en), ArcheType label çevirisi, sayı/tarih/para biçimi (TR 1.000,50 vs US), CLDR çoğul, RTL desteği."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Money + Tax + FX (Currency/ExchangeRate)",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Currency (ISO 4217, decimals) + ExchangeRate (Decimal, effective_date, TCMB/ECB); vergi adapter (KDV/VAT/GST); tutar float DEĞİL Decimal."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "Realtime (SSE / WebSocket / Presence)",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "SSE tek yönlü (notification, live counter), WebSocket çift yönlü (chat, co-edit), Presence Redis pub/sub + heartbeat."
+       }
+      ]
+     },
+     {
+      "term": "Webhook + API Gateway",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Giden webhook (HMAC + exponential backoff + dead letter), gelen webhook (imza + idempotency), ArcheType→otomatik "
+       },
+       {
+        "type": "term",
+        "text": "REST",
+        "termId": "term-rest-layer1-misc"
+       },
+       {
+        "type": "text",
+        "text": "+GraphQL+OpenAPI 3.1, per-tenant throttling."
+       }
+      ]
+     },
+     {
+      "term": "Calendar (RRULE / timezone / iCal)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Event + recurrence (RRULE) + exception + IANA timezone (DST), iCal/.ics export, CalDAV sync, boş-slot uygunluk sorgusu."
+       }
+      ]
+     },
+     {
+      "term": "Reporting + Dashboard (no-code)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "No-code query builder, scheduled export, dashboard widget (KPI/trend/gauge), CSV/Excel/PDF; Saved View tenant-scoped."
        }
       ]
      }
@@ -904,15 +948,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Giden webhook HMAC imzalı + dead letter; gelen webhook imza doğrulama + idempotency (replay engellenir). API Gateway endpoint'leri capability deny-by-default + per-tenant/per-key throttling; yetkisiz alan expose edilmez. Webhook config + raporlar RLS tenant-scoped; başka tenant'ın aboneliği/raporu görülmez. FX/money değişiklikleri audit'li (bitemporal effective_date); kur kaynağı (TCMB/ECB) izlenir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -940,15 +976,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Webhook teslimi outbox + asenkron worker (exp-backoff); realtime Redis pub/sub ile fan-out; rapor export arka plan job + streaming; SSE proxy-friendly HTTP."
        }
       ]
      },
@@ -966,15 +994,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "WebSocket/SSE ölçeği için Redis Pub/Sub; ağır rapor senkron değil scheduled export; API throttling tenant kotasıyla aşırı yükü keser."
        }
       ]
      },
@@ -1270,7 +1290,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — i18n, Money, Realtime, Webhook, API Gateway, Calendar, Reporting",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — i18n, Money, Realtime, Webhook, API Gateway, Calendar, Reporting\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: archetype.event_published\ncondition:\n  all:\n    - actor.capability >= \"webhook.subscribe\"\n    - subscription.tenant_scoped\n    - not loop_detected\naction:\n  - enqueue: webhook.deliver   # outbox, HMAC, exp-backoff\n  - on_fail: dead_letter\nguards:\n  max_depth: 6\n  idempotency_key: \"webhook:{tenant}:{subscription_id}:{event_id}\"\n  external_effects: signed_delivery",
     "copyEnabled": true
    },
    {
@@ -1410,6 +1430,18 @@
     ]
    },
    {
+    "id": "block-layer1-misc-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Webhook idempotency: aynı event iki kez yayılsa tek teslim (idempotency key). Money testi: Currency/Decimal kuruş kaybı olmadan biçimlenir; TR 1.000,50 vs US 1,000.50 doğru. Tenant izolasyon testi: bir tenant'ın webhook config/raporu komşu tenant'a görünmez (RLS). Calendar testi: RRULE + DST geçişinde doğru oturum üretir; iCal export geçerli .ics."
+     }
+    ]
+   },
+   {
     "id": "block-layer1-misc-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1428,7 +1460,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Layer-1 in-tree primitive paketi: i18n/money/realtime/webhook/calendar/reporting her ürünün tekrar yazmaması için bir kez framework içinde sunulur; ürünler tüketir, yeniden icat etmez."
        }
       ]
      },
@@ -1437,16 +1469,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Webhook config + Saved View + raporlar tenant-scoped (RLS); API Gateway endpoint'leri capability deny-by-default; her ArcheType alanı yetkiyle expose edilir."
        }
       ]
      },
@@ -1455,7 +1478,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Money alanları Decimal/Currency (float değil); FX bitemporal (effective_date) + audit; ArcheType→REST/GraphQL otomatik üretimde para/pii serileştirmesi korunur."
        }
       ]
      },
@@ -1464,7 +1487,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Outbox (giden webhook at-least-once), worker (rapor export), Redis pub/sub (presence/realtime), scheduler (TCMB kur 15:30) module'lerini birlikte sağlar."
        }
       ]
      },
@@ -1473,7 +1496,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Tüm app'ler tarih seçici, para gösterimi, dil değiştirme, anlık bildirim, rapor widget'ını buradan tüketir — ürün başına tekrar yok."
        }
       ]
      }

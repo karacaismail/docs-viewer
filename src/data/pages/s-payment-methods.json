@@ -1269,7 +1269,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Yerel Ödeme Yöntemleri — SEPA, iDEAL, Pix, UPI, BKM Taksit, PSD2 SCA — çekirdek yetenek",
+      "term": "Jurisdiction → payment_methods resolver",
       "definition": [
        {
         "type": "strong",
@@ -1277,41 +1277,77 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "tenant_capabilities.payment_methods (JSONB) jurisdiction'a göre aktif yöntemleri seçer; locale'e DEĞİL jurisdiction'a bağlı; capability deny-by-default."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Gateway router (Iyzico/Stripe/MercadoPago/Razorpay)",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "jurisdiction → gateway client; TR Iyzico, AB Stripe/Adyen, BR MercadoPago, IN Razorpay; pazar başına en uygun."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "PSD2 SCA (3DS2) akışı",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "AB/AEA'da Strong Customer Authentication zorunlu; Stripe Payment Intents 3DS2 redirect; TRA/düşük tutar istisnaları."
+       }
+      ]
+     },
+     {
+      "term": "TR taksit seçici (BKM Express)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "3-12 taksit + banka bonus; checkout UI ana parçası — yoksa dönüşüm yarıya iner; AB'de gösterilmez (jurisdiction bağlı)."
+       }
+      ]
+     },
+     {
+      "term": "Webhook + idempotent processed_payments",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Gateway onay webhook'u (l1-webhook-in); processed_payments(idempotency_key, gateway, status, amount, currency); çift kesme YASAK."
+       }
+      ]
+     },
+     {
+      "term": "Money: multi-currency Decimal ledger",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Tutar Decimal/Currency (float değil); kur cc-fx-ledger'dan; vergi "
+       },
+       {
+        "type": "term",
+        "text": "MoR",
+        "termId": "term-mor-s-payment-methods"
+       },
+       {
+        "type": "text",
+        "text": " (Paddle) ya da cc-compliance-matrix'ten."
        }
       ]
      }
@@ -1499,15 +1535,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Kart/IBAN/telefon pii=true (+retention); ödeme kaydı RLS tenant-scoped — başka tenant'ın ödemesi görülmez. payment.charge capability deny-by-default; AB'de SCA geçmeden charge reddedilir (PSD2 zorunlu). Webhook imza doğrulaması + idempotency key zorunlu; çift kesme/replay engellenir (processed_payments unique). PAN saklanmaz (PCI); gateway token'ı tutulur; tüm ödeme aksiyonu audit'lenir (purpose-binding). Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1535,15 +1563,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Gateway çağrısı timeout + retry (idempotency key korur); webhook async işlenir; ödeme listesi keyset (cursor) + (tenant_id, ts) index."
        }
       ]
      },
@@ -1561,15 +1581,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Senkron 3DS2 redirect dışında ağ I/O asenkron; webhook onayı kuyruğa alınır, checkout isteği bloklanmaz."
        }
       ]
      },
@@ -1865,7 +1877,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Yerel Ödeme Yöntemleri — SEPA, iDEAL, Pix, UPI, BKM Taksit, PSD2 SCA",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Yerel Ödeme Yöntemleri — SEPA, iDEAL, Pix, UPI, BKM Taksit, PSD2 SCA\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: payment.authorized\ncondition:\n  all:\n    - actor.capability >= \"payment.charge\"\n    - jurisdiction in sca_required ? sca_passed : true\n    - not loop_detected\naction:\n  - persist: processed_payment   # idempotent, money=Decimal\n  - emit: order.paid\nguards:\n  max_depth: 6\n  idempotency_key: \"pay:{tenant}:{gateway}:{intent_id}\"\n  external_effects: gateway_capture",
     "copyEnabled": true
    },
    {
@@ -2005,6 +2017,18 @@
     ]
    },
    {
+    "id": "block-s-payment-methods-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Jurisdiction testi: TR'de taksit selector görünür, AB'de görünmez; AB'de SCA zorunlu dallanır. Idempotency testi: aynı webhook iki kez gelse tek processed_payment, çift kesme yok. Tenant izolasyon testi: bir tenant'ın ödeme kaydı komşu tenant'a görünmez (RLS). Money testi: tutar Decimal/Currency kuruş kaybı olmadan, doğru para biriminde kaydedilir."
+     }
+    ]
+   },
+   {
     "id": "block-s-payment-methods-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -2023,7 +2047,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Layer-2 core-operations primitive'i: yerel ödeme yöntemleri jurisdiction resolver + gateway router + webcheck framework'üne oturur; SCA/taksit/webhook framework primitive'lerini tüketir, yeniden icat etmez."
        }
       ]
      },
@@ -2032,16 +2056,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "payment_methods capability deny-by-default tenant tier'ına göre; ödeme kaydı tenant-scoped (RLS); kart/IBAN pii=true audit'lenir."
        }
       ]
      },
@@ -2050,7 +2065,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Tutar Decimal/Currency (float değil), multi-currency; ödeme bitemporal + audit kayıtlı; purpose-binding ile saklanır."
        }
       ]
      },
@@ -2059,7 +2074,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "cc-jurisdiction-resolver (yöntem seçimi), scale-webhook (onay), cc-fx-ledger (kur), s-billing (recurring) module'lerini tüketir; gateway istemcisi pazara göre değişir, sözleşme sabit."
        }
       ]
      },
@@ -2068,7 +2083,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Checkout app jurisdiction'a göre yöntem listesini dinamik gösterir; TR taksit selector, AB 3DS2 redirect, BR Pix QR, IN UPI deep link."
        }
       ]
      }
@@ -2081,13 +2096,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-payment-methods-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-payment-methods-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Checkout app: jurisdiction → ödeme yöntemi listesi (TR taksit selector, AB SEPA/iDEAL, BR Pix QR, IN UPI deep link)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Muhasebe app: onaylanan ödeme → TL/çoklu para gelir kaydı; e-Arşiv/e-Fatura tetikler."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Notification: ödeme başarılı/başarısız → müşteriye bildirim (ETK/İYS kapısı); 3DS2 SCA adımı için yönlendirme."
+      }
+     ]
     ]
    },
    {

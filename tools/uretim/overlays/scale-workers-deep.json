@@ -1,0 +1,52 @@
+{
+ "featureDefs": [
+  {
+   "name": "Dört iş tipi (immediate/delayed/recurring/scheduled)",
+   "desc": "Hemen çalış, X süre sonra, cron aralıklı ve belli tarihte; tek scheduler katmanında. 'Sepet hatırlatma 1 saat sonra', 'günlük rapor 06:00', 'Black Friday 00:00' aynı API ile ifade edilir.",
+   "critical": true
+  },
+  {
+   "name": "Durable execution tercihi (DBOS/Postgres-native)",
+   "desc": "Mevcut karara uygun olarak iş durumu Postgres'te durable tutulur; worker crash'inde iş kaybolmaz, kaldığı yerden devam eder. BullMQ (Redis) ve Temporal alternatif strateji; backend deployment profiline göre swappable.",
+   "critical": true
+  },
+  {
+   "name": "Idempotency + exponential retry + DLQ",
+   "desc": "1s/2s/4s/8s artan backoff, N denemeden sonra Dead Letter Queue + alarm. Her iş idempotency_key taşır; retry sonrası çift e-posta/çift fatura olmaz (processed_jobs ON CONFLICT DO NOTHING)."
+  },
+  {
+   "name": "Öncelik kuyruğu + visibility timeout",
+   "desc": "High (kullanıcı bekliyor) > Normal (arka plan) > Low (toplu); worker iş aldığında görünürlük süresi başlar, crash'te iş başka worker'a geçer."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "evet — background jobs async sistemin omurgasıdır; scale primitive olarak tek interface (enqueue/schedule/cron) arkasında backend (DBOS/BullMQ/Temporal) deployment'a göre swappable olmalı. Module geliştirici işi sıraya koyar, altta hangi runner olduğunu bilmez.",
+  "kernel": "Bus (event → job enqueue köprüsü); Tenancy (her iş tenant-scoped payload + RLS); Authz (işin yürüteceği action capability kontrolü tetikleyen aktörden devralınır).",
+  "core": "Audit (job lifecycle: enqueued/started/retried/failed/DLQ delili); Money (parasal iş — fatura/tahsilat — idempotent + external_effects).",
+  "modules": "scale-outbox (transactional enqueue — DB commit ile iş atomik), scale-saga (multi-step durable workflow), s-* ürünleri async işlerini bu katmana verir.",
+  "apps": "Tüm app'ler senkron yapılamayan işi (e-posta, rapor, OCR, webhook) buraya devreder; on-call DLQ'yu izler."
+ },
+ "moduleUsage": [
+  "Tüm stack'ler: e-posta/SMS gönderimi, PDF üretimi, dış API çağrısı gibi yan etkili işleri HIGH/NORMAL/LOW önceliğiyle bu katmana enqueue eder",
+  "s-accounting: e-Defter periyodik gönderimi (cron: ayı izleyen 3. ay sonu) + beyanname hatırlatma scheduled job",
+  "scale-outbox: DB transaction commit'iyle birlikte iş atomik enqueue (event kaybı yok)",
+  "scale-saga: order->pay->ship gibi çok adımlı işlemi durable checkpoint'lerle bu runner üstünde yürütür"
+ ],
+ "ecaExample": "trigger:\n  event: order.created\ncondition:\n  all:\n    - actor.capability >= \"order.create\"\n    - tenant_scoped\n    - not loop_detected\naction:\n  - enqueue:\n      job: send_order_email\n      priority: high\n      retry: { attempts: 5, backoff: exponential }\nguards:\n  max_depth: 6\n  idempotency_key: \"email:order:{order_id}\"\n  external_effects: email_send\n  dlq: { on_exhaust: alert_oncall }",
+ "securityNotes": [
+  "Idempotency zorunlu: idempotency_key + processed_jobs (ON CONFLICT DO NOTHING) ile retry çift yan etki üretmez (çift e-posta/çift tahsilat engellenir).",
+  "Job payload tenant-scoped; worker işi yürütürken tetikleyen aktörün capability'sini taşır — yetki yükseltme (privilege escalation) olmaz.",
+  "Parasal işler (fatura/tahsilat) money bayrağı + external_effects; başarısız iş DLQ'ya düşer, sessizce yutulmaz.",
+  "Cron tanımları audit'li; zamanlanmış iş bir tenant'ın verisini başka tenant kapsamında çalıştıramaz (RLS payload doğrulaması)."
+ ],
+ "perfNotes": {
+  "code": "Durable runner işi Postgres'e yazar (DBOS) veya Redis'e (BullMQ); worker pool kuyruktan çeker, exponential backoff 1s/2s/4s/8s; başarısız -> DLQ. Visibility timeout ile crash'te iş yeniden teslim edilir.",
+  "perf": "Synchronous (email 5sn kullanıcıyı bekletir) yerine async; HIGH öncelik kullanıcı-bekleyen işi öne alır, LOW toplu işi geciktirir. Recurring işler scheduler'da tek tetikleyiciyle çoğalmadan çalışır."
+ },
+ "testNotes": [
+  "Retry idempotency: aynı iş 5 kez denenip her seferinde tek yan etki üretir (çift e-posta yok).",
+  "DLQ: N deneme tükenince iş DLQ'ya düşer + alarm tetiklenir; manuel replay çalışır.",
+  "Crash dayanıklılığı: worker iş ortasında ölürse visibility timeout sonrası iş başka worker'da kaldığı yerden devam eder (durable).",
+  "Cron doğruluğu: '0 6 * * *' tanımı günde tam bir kez tetiklenir; tenant izolasyonu korunur."
+ ]
+}

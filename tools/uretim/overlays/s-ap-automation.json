@@ -1,0 +1,51 @@
+{
+ "featureDefs": [
+  {
+   "name": "Fatura yakalama (OCR/ingest)",
+   "desc": "Tedarikçi faturası yakalama (e-posta/OCR/EDI); yakalanan belge idempotent kaydedilir, kaynak iz audit'li.",
+   "critical": true
+  },
+  {
+   "name": "3-yönlü eşleştirme",
+   "desc": "Sipariş (PO) ↔ irsaliye (GRN) ↔ fatura tutar/miktar eşleştirme; uyuşmazlık istisna akışına düşer. Tutarlar money tipi.",
+   "critical": true
+  },
+  {
+   "name": "Onay akışı",
+   "desc": "Tutar eşiğine göre çok kademeli onay zinciri; capability deny-by-default, her onay audit'li."
+  },
+  {
+   "name": "Ödeme planlama",
+   "desc": "Vade ve nakit pozisyonuna göre ödeme planı; ödeme dış efekt — idempotent + step-up onayı."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Tedarikçi fatura hacmi olan tenant için aday (SaaS Fırsat Haritası); katalogda eksik olduğu için candidate. Taksonomi: Stack subset of Edition subset of Distribution.",
+  "kernel": "ArcheType engine ile fatura/PO/eşleştirme şeması, audit + tenancy framework'ten; tutar alanları money tipi, değişiklikler bitemporal.",
+  "core": "Kernel + Scale + Layer-1 üstüne; belge yakalama için outbox/kuyruk, eşleştirme deterministik kural.",
+  "modules": "s-accounting GL kaydı, s-purchase PO köprüsü, s-billing/finance nakit planı.",
+  "apps": "Muhasebe/AP ekibi onaylar; tedarikçi portal opsiyonel; backend OCR/eşleştirme."
+ },
+ "ecaExample": "trigger:\n  event: invoice.captured\ncondition:\n  all:\n    - actor.capability >= \"ap:invoice:match\"\n    - not loop_detected\n    - three_way_match(po, grn, invoice)\naction:\n  - emit: invoice.matched\n  - emit: payment.scheduled\nguards:\n  max_depth: 6\n  idempotency_key: \"ap:{supplier_id}:{invoice_no}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Tutar alanları money tipi + audit; eşleştirme/onay değişiklikleri bitemporal — 'o tarihte ne onaylandı' izlenir.",
+  "Çok kademeli onay capability deny-by-default; eşik üstü fatura yetkisiz onaylanamaz (görevler ayrılığı/SoD).",
+  "Ödeme dış efekti idempotent + step-up; aynı fatura iki kez ödenmez (duplicate payment koruması).",
+  "Tedarikçi/fatura PII RLS ile tenant-izole; KVKK retention bildirimli."
+ ],
+ "perfNotes": {
+  "code": "INSERT INTO ap_invoice (...) ON CONFLICT (supplier_id, invoice_no) DO NOTHING; -- duplicate koruması",
+  "perf": "Fatura ingest idempotent upsert; aynı tedarikçi+fatura no çift kayıt yaratmaz. Eşleştirme deterministik kurallarla, ağır OCR asenkron kuyruk. Açık fatura listesi keyset sayfalama."
+ },
+ "moduleUsage": [
+  "s-accounting: eşleşen fatura GL kaydına ve borç hesabına işlenir.",
+  "s-purchase: sipariş (PO) ve irsaliye (GRN) verisi 3-yönlü eşleştirmeyi besler.",
+  "finance/s-billing: ödeme planı nakit pozisyonu ve vade ile hizalanır."
+ ],
+ "testNotes": [
+  "3-yönlü eşleştirme testi: PO/GRN/fatura tutar-miktar uyuşmazlığı istisna akışına düşer.",
+  "Duplicate testi: aynı tedarikçi+fatura no ile gelen ikinci belge çift ödeme/kayıt yaratmaz.",
+  "Onay eşiği testi: eşik üstü fatura tek kademeyle onaylanamaz (SoD).",
+  "Money testi: tutar yuvarlama ve para birimi alanlarında doğru, audit'li."
+ ]
+}

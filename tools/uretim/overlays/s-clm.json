@@ -1,0 +1,42 @@
+{
+ "featureDefs": [
+  {
+   "name": "Sözleşme yaşam döngüsü durumları",
+   "desc": "Taslak → müzakere → imza bekliyor → yürürlükte → yenileme/fesih durum makinesi; her geçiş Contract kuralıyla doğrulanır, geçiş audit'e yazılır.",
+   "critical": true
+  },
+  {
+   "name": "Madde çıkarımı (clause extraction)",
+   "desc": "AI ile yüklenen sözleşmeden madde/yükümlülük/tarih çıkarımı; çıktı guardrail'den geçer, ham metne referans (provenance) saklanır, insan onayı olmadan yürürlüğe girmez.",
+   "critical": true
+  },
+  {
+   "name": "e-İmza akışı",
+   "desc": "İmza talebi sıralı/paralel imzacılara gider; imza dış efekt, step-up doğrulama, imzalı PDF hash'i bitemporal kayda bağlanır."
+  },
+  {
+   "name": "Yenileme ve yükümlülük takvimi",
+   "desc": "Çıkarılan tarihlerden (fesih ihbarı, otomatik yenileme) hatırlatma üretilir; layer1-notification ile quiet-hours'a saygılı gönderilir."
+  }
+ ],
+ "moduleUsage": [
+  "Accounting / Muhasebe: Sözleşme bedeli ve ödeme planı money tipiyle gelir tahakkukuna bağlanır (revenue recognition tetiği).",
+  "s-crm: Sözleşme bir hesap/fırsat ile ilişkilenir; karşı taraf party olarak tek kaynaktan gelir.",
+  "kernel-authz: 'sözleşme imzala' capability deny-by-default; imza yetkisi tutar eşiğine göre kademeli (onay matrisi)."
+ ],
+ "ecaExample": "trigger:\n  event: contract.signature_requested\ncondition:\n  all:\n    - actor.capability >= \"clm.sign\"\n    - contract.value <= actor.signing_limit\n    - not idempotency_seen(contract.version_hash)\naction:\n  - dispatch_envelope: signers\n  - emit: contract.out_for_signature\nguards:\n  max_depth: 4\n  idempotency_key: \"clm:{contract.id}:{contract.version_hash}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Sözleşme içeriği ve karşı taraf verisi pii sınıfı; tenant RLS ile izole, madde çıkarımı için AI'a giden metinde kişisel veri maskelenir (input guardrail).",
+  "İmza capability tutar eşiğiyle kademeli; deny-by-default, eşik üstü imza dört göz + step-up ister.",
+  "AI clause extraction çıktısı doğrudan yürürlüğe girmez; insan onayı + provenance referansı zorunlu, halüsinasyon guardrail'i devrede."
+ ],
+ "perfNotes": {
+  "code": "Sözleşme listesi (yenileme_tarihi, id) keyset; clause extraction senkron değil, doküman yüklenince async worker.",
+  "perf": "Büyük PDF'lerde çıkarım sayfa bazlı parçalanır; AI maliyet guardrail'i tenant token kotasıyla sınırlanır."
+ },
+ "testNotes": [
+  "Durum makinesi: yürürlükteki sözleşme doğrudan taslağa dönemez, geçiş reddedilir.",
+  "Idempotency: aynı version_hash ile iki imza talebi tek zarf üretir.",
+  "Clause extraction: çıkarılan fesih tarihi insan onayı bekleyen kuyruğa düşer, otomatik yürürlüğe girmez."
+ ]
+}

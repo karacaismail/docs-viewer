@@ -1,0 +1,55 @@
+{
+ "featureDefs": [
+  {
+   "name": "Sevkiyat Optimizasyonu",
+   "desc": "Sipariş → araç/rota ataması; kapasite, zaman penceresi ve maliyet kısıtlarıyla planlama. Plan bir ArcheType varlığıdır; her değişiklik bitemporal + audit'lenir.",
+   "critical": true
+  },
+  {
+   "name": "Kargo/Taşıyıcı Entegrasyonu",
+   "desc": "Birden çok kargo firması adapter'ı (etiket, takip, fiyat sorgu). Dış çağrılar Contract arkasında; idempotent gönderim ile çift kargo etiketi üretilmez.",
+   "critical": true
+  },
+  {
+   "name": "Takip + Durum Makinesi",
+   "desc": "Sevkiyat durumları (hazırlanıyor → yolda → teslim) izinli geçişlerle ilerler; her geçiş event yayınlar ve müşteriye bildirim tetikler.",
+   "critical": false
+  },
+  {
+   "name": "Navlun/Maliyet Mutabakatı",
+   "desc": "Taşıyıcı faturası ile planlanan navlun mutabakatı; tutar money Contract'ı üstünden (minor-unit + currency), fark kalemleri audit'li.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Layer-2 SaaS ürünü; Kernel + Scale + Layer-1 üstüne oturur. Kendi ArcheType'larını ve UI'sını sunar; yetki/audit/event-bus framework'ten gelir. TR fiyatlandırması + Türkçe arayüz + Türk muhasebe entegrasyonu farkı.",
+  "kernel": "Sevkiyat olayları event-bus'a yayınlanır; capability deny-by-default ile yetki; tüm plan/durum değişiklikleri audit'lenir, RLS ile tenant izolasyonu.",
+  "core": "Navlun/maliyet money Contract'ı üstünden; sevkiyat tarihçesi bitemporal. Dış kargo çağrıları outbox/worker üstünden idempotent.",
+  "modules": "Inventory'den stok rezervasyonu, Sales/POS'tan sipariş, Purchase'tan tedarik girdisini alır; teslimat olayını geri yayınlar.",
+  "apps": "App sevkiyat oluşturur; rota/etiket üretimi worker'a kuyruğa girer, hazır olunca realtime bildirim."
+ },
+ "ecaExample": "trigger:\n  event: order.ready_to_ship\ncondition:\n  all:\n    - actor.capability >= \"shipment:create\"\n    - carrier.available == true\n    - not loop_detected\naction:\n  - schedule:\n      job: request_carrier_label\n      queue: shipments\n  - transition: shipment -> label_requested\nguards:\n  max_depth: 6\n  idempotency_key: \"shipment:{order_id}:label\"\n  external_effects: rate_limited",
+ "securityNotes": [
+  "Kargo adapter çağrıları idempotent; retry çift etiket/çift gönderim üretmez.",
+  "Capability deny-by-default: shipment:create / shipment:cancel yetkisi olmayan aktör sevkiyatı değiştiremez.",
+  "Navlun tutarları money Contract'ından; istemci-tarafı manipülasyon mutabakatı bozamaz.",
+  "Taşıyıcı API anahtarları tenant'a izole; RLS ile komşu tenant sevkiyatı görünmez.",
+  "Adres/alıcı PII'si maskeli loglanır, retention'a tabidir."
+ ],
+ "perfNotes": {
+  "code": "Aktif sevkiyat listesi keyset cursor ile sayfalanır; dış kargo çağrıları worker kuyruğunda batch'lenir.",
+  "perf": "Takip durumu projeksiyondan okunur; yüksek sevkiyat hacminde liste ve takip ekranı sabit gecikmeyle gelir."
+ },
+ "moduleUsage": [
+  "Inventory: sevkiyat için stok rezervasyonu ve düşümü.",
+  "Sales / POS: hazır siparişi sevkiyat planına dönüştürme.",
+  "Purchase: gelen tedarik sevkiyatlarının takibi.",
+  "Marketing/CRM: teslimat durumuna bağlı müşteri bildirimi."
+ ],
+ "testNotes": [
+  "Aynı sipariş için ikinci etiket isteği idempotency ile tekilleştirilir.",
+  "Geçersiz sevkiyat durum geçişi reddedilir (yalnız izinli geçiş).",
+  "Navlun mutabakatında taşıyıcı faturası ile plan farkı kalem bazında raporlanır.",
+  "Komşu tenant'ın sevkiyatı RLS ile görünmez."
+ ]
+}

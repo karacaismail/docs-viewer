@@ -506,7 +506,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Backend Karar Defteri — 24/24 — çekirdek yetenek",
+      "term": "Varsayılan-basit, ölçek-opsiyonel kernel",
       "definition": [
        {
         "type": "strong",
@@ -514,41 +514,51 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Varsayılan tek Postgres'te yaşar (kuyruk, arama, event dahil); ölçek isteyen Celery+Redis, Kafka/RabbitMQ, Meilisearch, S3, k8s'i adaptör olarak açar. WordPress basitliği + Shopify dayanıklılığı."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Tenant izolasyonu (RLS + ORM scope)",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "ORM zorunlu scope + Postgres RLS birlikte; SET LOCAL app.tenant_id transaction-scoped bağlam. pgTAP policy testleri + her ArcheType için 'komşu tenant okuyamaz' generated test + CI RLS-kapalı kaçak taraması."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Outbox event bus + Postgres kuyruk",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Varsayılan: Outbox + Postgres polling, broker arayüz arkasında; Postgres-içi kuyruk (procrastinate/pgqueuer). Ölçek opsiyonu Kafka/RabbitMQ + Celery adaptörleri."
+       }
+      ]
+     },
+     {
+      "term": "Veri yaşam döngüsü (E9)",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "ArcheType'ta PII bayrağı + retention + crypto-shredding ile unutulma hakkı (bitemporal'le barışık); çok-yargı bölgesi (KVKK/GDPR + ABD/AU/CA/JP/MENA/Asya) jurisdiction resolver."
+       }
+      ]
+     },
+     {
+      "term": "AI-native MCP + üretim ADR'leri",
+      "definition": [
+       {
+        "type": "text",
+        "text": "MCP kernel'in parçası, her Action otomatik MCP tool'u; aksiyon taksonomisi + agent yetki modeli, ChangeSet, güvenlik sözleşmeleri, ECA declarative DSL (ADR-0014…0022)."
        }
       ]
      }
@@ -736,15 +746,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Tenant izolasyonu ORM scope + RLS çift katman; CI'da RLS-kapalı kaçak taraması, pgTAP policy birim testleri. Yetki iki-düzlem tek PDP kapısı (entitlement + ReBAC/ABAC), deny-by-default; motor arayüz arkasında. Secrets: SOPS + age (git'te şifreli), tenant secret'ları DB'de zarf-şifreli kernel sözleşmesi. E9 crypto-shredding: PII tenant/kayıt anahtarıyla şifreli; unutulma hakkında veri değil anahtar imha — bitemporal 'geçmiş silinmez' ile barışık. Migration review: deterministik kapılar (tip, test, kural) esas; yerel mini-LLM yalnız ek gözden geçiren, karar verici değil. Rate limit/metering Edition'dan beslenen kernel middleware; metering olayları outbox'a. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -772,15 +774,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "SET LOCAL app.tenant_id = $1; -- transaction-scoped RLS bağlamı, pool-uyumlu"
        }
       ]
      },
@@ -798,15 +792,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Varsayılan tek Postgres (kuyruk/arama/event) — düşük operasyon yükü. Outbox + polling broker'sız çalışır; ölçek gerekince Kafka/Meilisearch/S3 adaptör olarak takılır. PITR için pgBackRest + WAL arşiv, aylık restore tatbikatı."
        }
       ]
      },
@@ -1102,7 +1088,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Backend Karar Defteri — 24/24",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Backend Karar Defteri — 24/24\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: archetype.action_invoked\ncondition:\n  all:\n    - actor.capability >= \"action:execute\"\n    - not loop_detected\n    - pdp.allow(entitlement, rebac)\naction:\n  - emit: outbox.event_written\n  - emit: metering.usage_recorded\nguards:\n  max_depth: 6\n  idempotency_key: \"action:{change_set_id}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1242,6 +1228,18 @@
     ]
    },
    {
+    "id": "block-be-kararlar-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "RLS testi: her ArcheType için 'komşu tenant okuyamaz' generated test + pgTAP policy birim testleri. Migration determinizmi: ArcheType diff'ten üretilen migration tekrarlanabilir; lint + opsiyonel LLM review. Geriye uyumluluk testi: tarih-versiyon + pinleme + named gate ile eski entegrasyon hâlâ çalışır (Stripe deseni). Outbox testi: event yazımı işlemle atomik; broker arayüzü değişse de teslim garantili. Crypto-shredding testi: anahtar imhası sonrası PII okunamaz, kayıt iskeleti denetim için kalır."
+     }
+    ]
+   },
+   {
     "id": "block-be-kararlar-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1260,7 +1258,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Bu defter 24/24 kararlaştırılmış backend kernel kararlarıdır; her satır bağlayıcı, revizyon ADR ister. Tüm Layer-2 ürünleri bu kararların üstüne inşa edilir."
        }
       ]
      },
@@ -1269,16 +1267,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "kernel-identity kendi modeli + Authlib (OIDC/SAML) + gün-1 passkey; iki-düzlem yetki (entitlement + ReBAC/ABAC tek PDP); OTel gün-1 (tenant_id/correlation zorunlu)."
        }
       ]
      },
@@ -1287,7 +1276,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "SQLAlchemy 2.0 (Core+ORM) + Pydantic v2; Alembic migration'ı ArcheType diff üretir; FastAPI uçları async, iş mantığı sync saf fonksiyonlar."
        }
       ]
      },
@@ -1296,7 +1285,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "sdk app create → ArcheType tanımı + test iskeleti + tipli client; module yükleme gün-1 WASM sandbox."
        }
       ]
      },
@@ -1305,7 +1294,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Dört deploy profili: kolay panel+PaaS / self-host compose / müşteri k8s-swarm / yönetilen bulut."
        }
       ]
      }

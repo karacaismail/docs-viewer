@@ -1,0 +1,45 @@
+{
+ "featureDefs": [
+  {
+   "name": "Fan-out politikası (push/pull/hybrid)",
+   "desc": "Kernel primitive (event-bus, outbox, async worker, hot counter, projection) sağlar; Feed modülü policy yazar — normal kullanıcı push, ~10K üstü celebrity pull, hybrid merge. Asıl iş burada, model değil.",
+   "critical": true
+  },
+  {
+   "name": "Hot counter (engagement)",
+   "desc": "Like/repost/reply sayaçları kontenttte sıcak nokta; CRDT/counter primitive ile çakışmasız artırılır, projection'a periyodik yansıtılır, doğrudan satır kilidi alınmaz.",
+   "critical": true
+  },
+  {
+   "name": "Moderation / T&S kuyruğu",
+   "desc": "AI ön-filtre içeriği skorlar, eşik üstü insan review kuyruğuna düşer; karar audit'e bitemporal yazılır, otomatik ban capability deny-by-default.",
+   "critical": true
+  },
+  {
+   "name": "Görünürlük (audience) kapısı",
+   "desc": "Public/followers/friends/close-friends/private görünürlüğü her okuma yolunda zorunlu; feed projection'ı audience filtresini içerir, sızıntı engellenir."
+  }
+ ],
+ "moduleUsage": [
+  "scale-outbox: Post yayınlandığında fan-out işleri outbox üzerinden atomik kuyruğa alınır; çift dağıtım idempotency ile önlenir.",
+  "scale-counter: Like/repost gibi yüksek-frekanslı sayaçlar hot counter primitive ile tutulur, satır kilidi yerine çakışmasız artırım.",
+  "scale-workers: Fan-out, ranking ve moderation async worker havuzunda; backpressure ile yüksek trafikte kuyruk şişmesi yönetilir.",
+  "layer1-notification: Etkileşim bildirimi (beğeni/yorum) quiet-hours'a saygılı, batch'lenerek gönderilir."
+ ],
+ "ecaExample": "trigger:\n  event: post.published\ncondition:\n  all:\n    - author.follower_count < celebrity_threshold\n    - not idempotency_seen(post.id + \":fanout\")\naction:\n  - enqueue_fanout: push_to_follower_feeds\n  - emit: feed.fanout_started\nguards:\n  max_depth: 4\n  idempotency_key: \"fanout:{post.id}\"\n  external_effects: async_via_outbox",
+ "securityNotes": [
+  "Audience görünürlüğü her okuma yolunda RLS + projection filtresiyle zorlanır; private/close-friends içerik yanlış feed'e sızamaz.",
+  "Block/mute ilişkisi okuma ve bildirim yolunda deny-by-default uygulanır; engellenen kullanıcı içeriği göremez, etkileşemez.",
+  "Moderation kararı (ban/kısıtlama) ayrı capability + audit izi; AI ön-filtre tek başına kalıcı yaptırım uygulayamaz, insan onayı şart."
+ ],
+ "perfNotes": {
+  "code": "Feed okuma keyset (score, post_id) ile sayfalanır, OFFSET yok; fan-out yazımı outbox+worker, senkron değil. Hot counter satır kilidi almaz.",
+  "perf": "Celebrity threshold (~10K) push maliyetini pull'a kaydırır; hybrid merge okuma anında celebrity post'larını çeker. Ölçek = domain: fan-out + ranking + moderation hacmi tasarımın merkezi, teslimat detayı değil."
+ },
+ "testNotes": [
+  "Fan-out: normal kullanıcı post'u takipçi feed'lerine push edilir; celebrity post'u push edilmez, okuma anında pull ile gelir.",
+  "Idempotency: aynı post.id ile iki fan-out tetiği tek dağıtım üretir.",
+  "Audience: private post yalnız yazarın feed'inde; takipçi olmayan RLS ile göremez.",
+  "Hot counter: 1000 eşzamanlı beğeni kayıpsız sayılır, projection tutarlı yakınsar."
+ ]
+}

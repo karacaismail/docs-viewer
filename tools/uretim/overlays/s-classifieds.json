@@ -1,0 +1,61 @@
+{
+ "featureDefs": [
+  {
+   "name": "Listing (İlan) ArcheType — Order DEĞİL",
+   "desc": "Çekirdek varlık: title, description, price_ish (yönlendirme, bağlayıcı değil), photos[], location, category_id, owner_kind (consumer/business/manufacturer), status. Sahibinden/arsam.net deseni. Cart/Order/Checkout YASAK; yanlış ArcheType seçimi e-ticaret mimarisine sürükler.",
+   "critical": true
+  },
+  {
+   "name": "Lead (İlgilenme) tablosu — ana ölçü",
+   "desc": "listing_id × user_id, contact_type (view/call/msg), opened_at. E-ticarette sipariş; classifieds'te lead = KPI. Kontak açıldığında insert; time-to-match buradan hesaplanır.",
+   "critical": true
+  },
+  {
+   "name": "Relay messaging + PII maskeleme",
+   "desc": "Telefon/email backend'de tutulur, UI'de gösterilmez (call masking). POST /listing/:id/contact relay başlatır; satıcı alıcı numarasını görmez. Phishing'e karşı dahili mesajlaşma."
+  },
+  {
+   "name": "Promotion (Doping/Boost) capability",
+   "desc": "listing_id, type (boost/highlight), start, end, paid_amount. Cron her saat aktif boost'ları görünürlüğe çevirir. Gelirin %30-50'si; tutarlar Money (Decimal). Komisyon DEĞİL."
+  },
+  {
+   "name": "Membership paketi (kurumsal) + kota",
+   "desc": "tenant_id, package_id, monthly_fee, listing_quota, doping_credit. Galerici/emlakçı aylık sabit ücret; en kârlı kanal. Komisyonsuz, kota tüketimli."
+  },
+  {
+   "name": "Moderation worker (AI + insan kuyruğu)",
+   "desc": "listing_id, ai_score, human_decision, status, reason. Yeni ilan -> AI score -> otomatik kabul (>0.8) veya insan kuyruğu. Sahte ilan/scam = classifieds'in en kritik mimari yatırımı.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — ama s-commerce/s-marketplace'ten AYRI mimari. Listing-first; transaction depth = lead-gen. Kernel zorunlu (kimlik/tenancy/audit), ödeme yalnız doping/membership için Contract (komisyon yok).",
+  "kernel": "Listing.owner_id ve Lead.user_id Party'den türer; tenancy RLS ile satıcı kendi ilanını/lead'ini görür. PII (telefon/email) money/pii-flag ile işaretli, audit append-only.",
+  "core": "Kendi Listing/Lead/Promotion ArcheType'larını tanımlar; e-ticaret core'unun Cart/Order sözleşmelerini KULLANMAZ. transaction_depth bayrağı core ayrımını netleştirir.",
+  "modules": "l1-search (faceted) ilan aramasını, l1-notification lead alert'lerini, cc-security trust katmanını sağlar. s-marketplace (full-transaction, komisyon) AYRI modül — karıştırma 6 ayı geri çevirir.",
+  "apps": "Storefront ilan arama/detay/ilan-ver formu + in-app messaging; ödeme modülü yalnız doping+membership tahsilatına bağlanır, sipariş/komisyon akışı yok."
+ },
+ "moduleUsage": [
+  "Storefront app: faceted ilan arama + listing card (foto+başlık+price_ish+lokasyon+kurumsal rozet+doping işareti).",
+  "Messaging app: relay (telefon gizli) — satıcı/alıcı platform içinde konuşur, PII açığa çıkmaz.",
+  "Moderation app: AI score kuyruğu + insan onay; eşik altı ilan otomatik insan kuyruğuna düşer.",
+  "Payment/Billing app: doping ve membership tahsilatı (Money/Decimal); GMV komisyonu YOK — yanlış model gelir tablosunu bozar."
+ ],
+ "ecaExample": "trigger:\n  event: listing.contact_requested\n  when: \"tenant_scoped AND listing.status == 'active'\"\ncondition:\n  all:\n    - actor.capability >= \"classifieds.lead.open\"\n    - not loop_detected\n    - actor.phone_verified == true\naction:\n  - record: lead { listing_id, user_id, contact_type, opened_at, bitemporal: true }\n  - emit: messaging.relay_started        # PII maskeli, telefon backend'de\n  - emit: notification.seller_new_lead   # outbox idempotent\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{listing}:{user}:contact\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "PII deny-by-default: telefon/email kullanıcıya gösterilmeden auth + capability kontrolü; relay messaging ile satıcı alıcı numarasını hiç görmez (pii-flag).",
+  "Sahte ilan/scam: yeni ilan AI moderation kuyruğundan geçer; KYC + telefon doğrulama olmadan kontak açılamaz; şikayet -> ilan kaldırma audit'li.",
+  "Doping/membership tutarları Money (Decimal); satıcı yalnız kendi ilan/lead/hakediş verisini görür (RLS tenant + owner-scoped). Komisyon akışı olmadığından chargeback yüzeyi değil scam yüzeyi korunur."
+ ],
+ "perfNotes": {
+  "code": "owner_kind ile model türetme saf strateji (consumer/business/manufacturer dispatch); enum-switch yerine capability flag tablosu. Doping görünürlük kuralı saf fonksiyon.",
+  "perf": "Faceted arama indeksli (kategori+lokasyon+fiyat bileşik); ilan listesi keyset pagination; aktif boost'lar zaman-pencereli indeks; moderation skorlama asenkron worker."
+ },
+ "testNotes": [
+  "Komşu satıcının ilan/lead sorgusu sıfır döndürür (RLS).",
+  "Kontak açılınca telefon/email response'ta sızmaz; yalnız relay kanalı döner.",
+  "Aynı kullanıcı+ilan ikinci kez lead üretmez / idempotent kontak.",
+  "Doping ücreti ve membership Money/Decimal; hiçbir kod yolunda GMV komisyonu hesaplanmaz (lead-gen invariant).",
+  "ai_score < 0.8 ilan otomatik insan kuyruğuna düşer, public aramada görünmez."
+ ]
+}

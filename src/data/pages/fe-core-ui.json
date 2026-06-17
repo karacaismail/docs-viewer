@@ -1416,7 +1416,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Frontend — Çekirdek + UI + State + API — birincil yetenek",
+      "term": "Çekirdek (React 19 + Vite 6 + TS strict)",
       "definition": [
        {
         "type": "strong",
@@ -1424,25 +1424,68 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "pnpm + Vite 6 + React 19 + TypeScript 5.6 strict ('any' yasak, noUncheckedIndexedAccess) + React Router v7 (type-safe loader/action) + Capacitor mobil shell."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "UI & stil (Flowbite Pro + Radix + ECharts)",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Flowbite Pro base + Radix headless primitive; SCSS :root token tek doğruluk kaynağı → Tailwind okur; Phosphor icons; ECharts; dnd-kit; TanStack virtual (100k+ satır)."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "State & data (TanStack Query + RHF + Refine)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Server state TanStack Query v5; client Zustand+persist; form react-hook-form + Zod; URL state nuqs; Refine.dev headless CRUD/access; CASL ability backend ile paylaşılır."
+       }
+      ]
+     },
+     {
+      "term": "API & contract (openapi-typescript + openapi-fetch)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "FastAPI /openapi.json → TS tipleri (openapi-typescript); type-safe openapi-fetch HTTP client; tus-js resumable upload; client-side image compress."
+       }
+      ]
+     },
+     {
+      "term": "Auth (Logto self-host + OIDC PKCE + passkey)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Logto self-host multi-tenant Organizations; OIDC PKCE + refresh token rotation; passkey/WebAuthn + magic link; httpOnly cookie (XSS güvenli); RBAC CASL JSON org role'den türetilir."
+       }
+      ]
+     },
+     {
+      "term": "i18n & format (react-intl + dinero.js)",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "react-intl (ICU MessageFormat); locale dosyaları tr/en/ar (Crowdin sync); RTL (dir + tailwindcss-rtl); date-fns-tz; para dinero.js (BigInt, IEEE 754 hatasız); libphonenumber."
        }
       ]
      }
@@ -1630,15 +1673,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Session httpOnly cookie + refresh token rotation (XSS'e karşı); OIDC PKCE — token tarayıcı JS'ine sızmaz. RBAC CASL ability JSON backend ile paylaşılır; frontend yetki kontrolü UI gizleme amaçlı, gerçek yetki backend deny-by-default ile zorlanır (client'a güvenilmez). TypeScript strict ('any' yasak) + Zod runtime doğrulama → tip/girdi güvenliği; openapi-fetch type-safe çağrı. Passkey/WebAuthn phishing-resistant + biometric; KYC dosya upload tus resumable, client-side compress (ham belge minimumda tutulur). Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1666,15 +1701,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Vite 6 HMR + tree-shake (Phosphor weight, openapi-fetch küçük); TanStack virtual 100k+ satır; TanStack Query cache + optimistic + persistence; nuqs URL state."
        }
       ]
      },
@@ -1692,15 +1719,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Concurrent React 19 + Suspense; image lazy (native loading=lazy/unlazy); offline-first paused mutations; ECharts büyük dataset tema-able."
        }
       ]
      },
@@ -2136,6 +2155,18 @@
     ]
    },
    {
+    "id": "block-fe-core-ui-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Tip sözleşmesi testi: openapi-typescript çıktısı FastAPI /openapi.json ile uyumlu (drift yok). Yetki testi: CASL ability backend kararını yansıtır; client gizlese de backend deny-by-default zorlar. Form testi: react-hook-form + Zod nested/array doğrulama; submit backend Pydantic ile aynı schema. Para testi: dinero.js BigInt ile kuruş kaybı/IEEE 754 hatası yok."
+     }
+    ]
+   },
+   {
     "id": "block-fe-core-ui-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -2154,7 +2185,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Frontend çekirdek stack: tüm app'lerin paylaştığı temel UI/state/API/auth katmanı; bir kez kurulur, ürünler tüketir — her ürün kendi butonunu/formunu icat etmez (tutarlılık)."
        }
       ]
      },
@@ -2163,16 +2194,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Auth backend kernel-identity ile hizalı (Logto OIDC); RBAC CASL ability JSON backend (FastAPI) ile paylaşılır → frontend yetki deny-by-default kernel kararını yansıtır, kendi başına yetki vermez."
        }
       ]
      },
@@ -2181,7 +2203,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Tip sözleşmesi backend'den türer: openapi-typescript FastAPI /openapi.json'dan, Zod schema backend Pydantic ile paylaşılır → tek doğruluk kaynağı; para dinero.js (float değil)."
        }
       ]
      },
@@ -2190,7 +2212,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "TanStack Query server state + Refine headless CRUD ArcheType→REST/GraphQL endpoint'lerini tüketir; offline queue TanStack paused mutations + idb-keyval; realtime Zustand WS subscribe."
        }
       ]
      },
@@ -2199,7 +2221,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Her app paylaşılan core-ui kütüphanesinden form/tablo/buton/komut paleti alır; auth session Logto SDK + Zustand sync ile tüm app'lerde ortak."
        }
       ]
      }

@@ -378,7 +378,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "CMS Stack — birincil yetenek",
+      "term": "Headless Content Delivery API",
       "definition": [
        {
         "type": "strong",
@@ -386,25 +386,56 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "Headless API (REST + GraphQL) + edge cache; içerik sunumdan ayrı (content-as-API, omnichannel). FastAPI Content Delivery + Flowbite React storefront."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Block-based authoring",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Blok tabanlı editör (BlockNote/Editor.js/Lexical); yapısal içerik, sürüm ve onay akışı audit'li."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "SEO yüzeyi",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "Slug (TR karakter normalize), canonical, redirect (301/410), sitemap, schema.org, Open Graph."
+       }
+      ]
+     },
+     {
+      "term": "Localization",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Çok-dilli içerik, çeviri akışı, fallback; kernel i18n (ICU MessageFormat + CLDR) ile."
+       }
+      ]
+     },
+     {
+      "term": "Multi-site + domain mapping",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Tek tenant çok site; domain eşleme, site bazlı taksonomi ve tema."
+       }
+      ]
+     },
+     {
+      "term": "Forms + UGC moderasyon",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Form builder + submission; yorum/UGC moderasyon kapısı."
        }
       ]
      }
@@ -592,15 +623,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "İçerik yayın yetkisi capability deny-by-default; editör/onaylayan ayrımı, yetkisiz yayın engellenir. UGC/yorum moderasyon kapısı: onaysız kullanıcı içeriği yayımlanmaz (XSS/sanitization dahil). Tenant izolasyonu RLS; multi-site içeriği komşu tenant'a sızmaz. İçerik sürüm/yayın değişiklikleri audit log'a yazılır (kim, ne zaman, hangi sürüm). Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -628,15 +651,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "GET /content?type=article&cursor=... -- edge cache + keyset; publish sonrası cache invalidate"
        }
       ]
      },
@@ -654,15 +669,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Edge cache içerik teslimini hızlandırır; yayın olayı yalnız ilgili anahtarı invalidate eder. Liste sorguları keyset sayfalama. GraphQL over-fetching'i çözer, REST cache-friendly."
        }
       ]
      },
@@ -958,7 +965,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — CMS Stack",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — CMS Stack\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: content.publish_requested\ncondition:\n  all:\n    - actor.capability >= \"cms:content:publish\"\n    - not loop_detected\naction:\n  - emit: content.published\n  - emit: cdn.cache_invalidated\nguards:\n  max_depth: 6\n  idempotency_key: \"publish:{content_id}:{version}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -1098,6 +1105,18 @@
     ]
    },
    {
+    "id": "block-stack-cms-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Slug normalize testi: Türkçe karakterli başlık URL-uyumlu slug'a doğru dönüşür. Redirect testi: 301/410 yönlendirmeleri canonical ile tutarlı. Cache invalidation testi: yayın sonrası eski içerik edge'den temizlenir. Yayın capability testi: yetkisiz aktör publish edemez; UGC moderasyon onaysız yayımlamaz. RLS testi: multi-site içeriği komşu tenant'a görünmez."
+     }
+    ]
+   },
+   {
     "id": "block-stack-cms-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1116,7 +1135,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "İçerik editörü kendi başına yönetmesi gereken web/blog/katalog yüzeyi olan tenant için Layer-2 stack."
        }
       ]
      },
@@ -1125,16 +1144,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "ArcheType engine ile içerik şeması, otomatik REST/GraphQL, audit + tenancy framework'ten; içerik değişiklikleri audit'lenir, RLS ile tenant-izole."
        }
       ]
      },
@@ -1143,7 +1153,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Headless-first (Next.js yasak — doğru çatal); FastAPI Content Delivery API + edge cache."
        }
       ]
      },
@@ -1152,7 +1162,16 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Authoring, Content Delivery, Page Builder, Theme, Taxonomy, Localization, "
+       },
+       {
+        "type": "term",
+        "text": "SEO",
+        "termId": "term-seo-stack-cms"
+       },
+       {
+        "type": "text",
+        "text": ", Personalization, Forms, Multi-site, Comments alt modülleri."
        }
       ]
      },
@@ -1161,7 +1180,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "İçerik editörü yazar, pazarlama onaylar; Flowbite React storefront ziyaretçiye sunar."
        }
       ]
      }
@@ -1174,13 +1193,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-stack-cms-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-stack-cms-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-marketing: kampanya landing sayfaları ve içerik personalizasyonu CMS yüzeyini tüketir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-commerce: ürün katalog içerik sayfaları ve SEO storefront CMS ile sunulur."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Kernel i18n: çok-dilli içerik string externalization + ICU/CLDR köprüsü."
+      }
+     ]
     ]
    },
    {

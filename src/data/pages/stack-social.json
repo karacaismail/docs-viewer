@@ -504,7 +504,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Social Stack — birincil yetenek",
+      "term": "Fan-out politikası (push/pull/hybrid)",
       "definition": [
        {
         "type": "strong",
@@ -512,25 +512,42 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "Kernel primitive (event-bus, outbox, async worker, hot counter, projection) sağlar; Feed modülü policy yazar — normal kullanıcı push, ~10K üstü celebrity pull, hybrid merge. Asıl iş burada, model değil."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Hot counter (engagement)",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Like/repost/reply sayaçları kontenttte sıcak nokta; CRDT/counter primitive ile çakışmasız artırılır, projection'a periyodik yansıtılır, doğrudan satır kilidi alınmaz."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "Moderation / T&S kuyruğu",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "AI ön-filtre içeriği skorlar, eşik üstü insan review kuyruğuna düşer; karar audit'e bitemporal yazılır, otomatik ban capability deny-by-default."
+       }
+      ]
+     },
+     {
+      "term": "Görünürlük (audience) kapısı",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "Public/followers/friends/close-friends/private görünürlüğü her okuma yolunda zorunlu; feed projection'ı audience filtresini içerir, sızıntı engellenir."
        }
       ]
      }
@@ -718,15 +735,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Audience görünürlüğü her okuma yolunda RLS + projection filtresiyle zorlanır; private/close-friends içerik yanlış feed'e sızamaz. Block/mute ilişkisi okuma ve bildirim yolunda deny-by-default uygulanır; engellenen kullanıcı içeriği göremez, etkileşemez. Moderation kararı (ban/kısıtlama) ayrı capability + audit izi; AI ön-filtre tek başına kalıcı yaptırım uygulayamaz, insan onayı şart. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -754,15 +763,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Feed okuma keyset (score, post_id) ile sayfalanır, OFFSET yok; fan-out yazımı outbox+worker, senkron değil. Hot counter satır kilidi almaz."
        }
       ]
      },
@@ -780,15 +781,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Celebrity threshold (~10K) push maliyetini pull'a kaydırır; hybrid merge okuma anında celebrity post'larını çeker. Ölçek = domain: fan-out + ranking + moderation hacmi tasarımın merkezi, teslimat detayı değil."
        }
       ]
      },
@@ -1084,7 +1077,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Social Stack",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Social Stack\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: post.published\ncondition:\n  all:\n    - author.follower_count < celebrity_threshold\n    - not idempotency_seen(post.id + \":fanout\")\naction:\n  - enqueue_fanout: push_to_follower_feeds\n  - emit: feed.fanout_started\nguards:\n  max_depth: 4\n  idempotency_key: \"fanout:{post.id}\"\n  external_effects: async_via_outbox",
     "copyEnabled": true
    },
    {
@@ -1224,6 +1217,18 @@
     ]
    },
    {
+    "id": "block-stack-social-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Fan-out: normal kullanıcı post'u takipçi feed'lerine push edilir; celebrity post'u push edilmez, okuma anında pull ile gelir. Idempotency: aynı post.id ile iki fan-out tetiği tek dağıtım üretir. Audience: private post yalnız yazarın feed'inde; takipçi olmayan RLS ile göremez. Hot counter: 1000 eşzamanlı beğeni kayıpsız sayılır, projection tutarlı yakınsar."
+     }
+    ]
+   },
+   {
     "id": "block-stack-social-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1300,13 +1305,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-stack-social-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-stack-social-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "scale-outbox: Post yayınlandığında fan-out işleri outbox üzerinden atomik kuyruğa alınır; çift dağıtım idempotency ile önlenir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "scale-counter: Like/repost gibi yüksek-frekanslı sayaçlar hot counter primitive ile tutulur, satır kilidi yerine çakışmasız artırım."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "scale-workers: Fan-out, ranking ve moderation async worker havuzunda; backpressure ile yüksek trafikte kuyruk şişmesi yönetilir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "layer1-notification: Etkileşim bildirimi (beğeni/yorum) quiet-hours'a saygılı, batch'lenerek gönderilir."
+      }
+     ]
     ]
    },
    {

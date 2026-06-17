@@ -1,0 +1,47 @@
+{
+ "featureDefs": [
+  {
+   "name": "RFQ → İhale → Sözleşme akışı",
+   "desc": "İhtiyaç talebinden RFQ'ya, çok turlu tekliften kazanan tedarikçiye uzanan akış. Tedarikçi teklif tutarları money tipinde; teklif açılış/kapanış zamanları bitemporal, kazanan seçimi audit'lenir.",
+   "critical": true
+  },
+  {
+   "name": "Tedarikçi portalı (dış aktör)",
+   "desc": "Tedarikçinin teklif girdiği, dokümana eriştiği dış arayüz. Tedarikçi capability'leri deny-by-default; yalnızca kendi davet edildiği RFQ'yu görür (RLS + scope).",
+   "critical": true
+  },
+  {
+   "name": "Onay zinciri ve harcama eşiği",
+   "desc": "Satınalma siparişi tutar eşiğine göre çok kademeli onay; eşik üstü için step-up. Onay kuralları tenant'a özel yapılandırılır.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Tedarikçi seçimi ve PO oluşturma stok/muhasebe/sözleşme ürünlerini tetiklediği için event-bus üzerinden entegre olmalı.",
+  "kernel": "authz (onay ve tedarikçi capability'leri), tenancy (RLS), event-bus (rfq.awarded, po.created), audit (kazanan seçimi, onaylar).",
+  "core": "money (teklif/PO tutarları), bitemporal (teklif geçerlilik pencereleri), Contract (kazanan tedarikçi ile çerçeve koşulları), pii (tedarikçi iletişim), keyset (RFQ/teklif listeleme).",
+  "modules": "Inventory (PO teslim alımı), Sözleşme/Contract yönetimi (kazanan → sözleşme), Purchase (faturalama köprüsü).",
+  "apps": "Tedarikçi portalı dış edition; iç onay akışı çekirdek UI."
+ },
+ "moduleUsage": [
+  "Sözleşme (k-sozlesme): rfq.awarded → çerçeve sözleşme taslağı tetiği.",
+  "Inventory: po.created → beklenen teslim/giriş kaydı.",
+  "Sales: stoksuz satış kalemi için RFQ talebi köprüsü.",
+  "Audit: çok turlu ihalede her tur ve kazanan gerekçesi izlenir."
+ ],
+ "ecaExample": "trigger:\n  event: rfq.awarded\ncondition:\n  all:\n    - actor.capability >= \"procurement.award.approve\"\n    - not loop_detected\n    - award.amount <= actor.approval_limit\naction:\n  - emit: po.created\n  - emit: contract.draft_requested\nguards:\n  max_depth: 6\n  idempotency_key: \"rfq:{rfq.id}:award\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Tedarikçi portalı dış aktör; deny-by-default capability + scope ile yalnızca davetli RFQ'ya erişim.",
+  "Rakip tedarikçilerin tekliflerinin birbirine sızmaması için RLS + teklif kapanışına dek gizlilik.",
+  "Harcama eşiği üstü PO/award için step-up onay; tüm onaylar pii/aktör kimliğiyle audit'lenir."
+ ],
+ "perfNotes": {
+  "code": "RFQ ve teklif listeleri keyset (deadline, id) ile sayfalanır; tedarikçi başına teklif tekilliği unique index.",
+  "perf": "Açık RFQ ve bekleyen onay sayaçları (tenant_id, state) kısmi index'iyle ucuz; toplamlar projeksiyondan."
+ },
+ "testNotes": [
+  "Davet edilmeyen tedarikçinin RFQ'yu listeleyemediği/eriştiğinde 403 aldığı.",
+  "Aynı rfq.awarded'ın tekrarında tek po.created üretildiği.",
+  "Onay limitini aşan award'ın step-up olmadan reddedildiği."
+ ]
+}

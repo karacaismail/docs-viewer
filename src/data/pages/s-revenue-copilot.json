@@ -131,7 +131,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "AI Satış Zekâsı / Revenue Copilot — çekirdek yetenek",
+      "term": "Fırsat skorlama ve tahmin",
       "definition": [
        {
         "type": "strong",
@@ -139,41 +139,29 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "CRM/Sales verisinden fırsat kapanma olasılığı ve gelir tahmini üretir. Skor ve tahmin projeksiyondan okunur; her skor kararı girdileri ve gerekçesiyle audit'lenir. Para tutarları money tipinde."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Sonraki en iyi aksiyon (NBA)",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Fırsat durumuna göre önerilen aksiyon; yalnızca öneri capability'si olan kullanıcıya gösterilir. Sistem otomatik aksiyon almaz — insan onayı şarttır (deny-by-default)."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Görüşme özeti",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Görüşme notlarını/transkriptini özetler; PII içerdiğinden erişim kısıtlı ve audit'lenir. Özetler bitemporal saklanır (kaynak zamanı + kayıt zamanı)."
        }
       ]
      }
@@ -361,15 +349,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Görüşme özeti ve fırsat verisi pii; erişim deny-by-default capability + RLS ile tenant'a kapalı. Copilot otomatik aksiyon almaz; her NBA insan onayına tabidir, öneri ≠ icra. Skor/öneri kararları model versiyonu + girdileriyle audit'lenir; açıklanabilirlik için saklanır. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -397,15 +377,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Fırsat ve öneri listeleri keyset (score desc, id) ile; OFFSET kullanılmaz."
        }
       ]
      },
@@ -423,15 +395,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Skor yeniden hesaplama asenkron ve idempotent (revision key); panel skorları projeksiyon tablosundan okunur, model anlık çağrılmaz."
        }
       ]
      },
@@ -727,7 +691,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — AI Satış Zekâsı / Revenue Copilot",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — AI Satış Zekâsı / Revenue Copilot\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: opportunity.updated\ncondition:\n  all:\n    - actor.capability >= \"revenue.copilot.view\"\n    - not loop_detected\n    - opportunity.stage != \"closed\"\naction:\n  - emit: score.recompute_requested\n  - emit: nba.suggestion_drafted\nguards:\n  max_depth: 6\n  idempotency_key: \"opp:{opportunity.id}:score:{revision}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -867,6 +831,18 @@
     ]
    },
    {
+    "id": "block-s-revenue-copilot-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Aynı revision için score.recompute'un tek kez işlendiği (idempotency). Öneri görüntüleme capability'si olmayan kullanıcıya skor/NBA gösterilmediği. Görüşme özeti pii erişiminin RLS + capability ile sınırlandığı ve audit'lendiği."
+     }
+    ]
+   },
+   {
     "id": "block-s-revenue-copilot-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -885,7 +861,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Skorlar ve öneriler CRM/Sales verisinden türediği için event-bus üzerinden besleme almalı; copilot kaynak ürünlerin tablosuna doğrudan yazmaz, yalnızca öneri/skor yayar."
        }
       ]
      },
@@ -894,16 +870,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "authz (öneri/skor görüntüleme capability'leri), tenancy (RLS ile fırsat izolasyonu), event-bus (opportunity.updated, score.recomputed), audit (skor ve öneri kararları)."
        }
       ]
      },
@@ -912,7 +879,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "money (gelir tahmini/fırsat değeri), bitemporal (skor/özet geçmişi), pii (görüşme içeriği), Contract (model çıktısının danışma niteliği — bağlayıcı değil), keyset (fırsat/öneri listeleme)."
        }
       ]
      },
@@ -921,7 +888,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "CRM (fırsat/müşteri kaynağı), Sales (teklif/kapanma verisi), Notification (öneri bildirimi)."
        }
       ]
      },
@@ -930,7 +897,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Satış ekibi paneli; yönetici tahmin panosu."
        }
       ]
      }
@@ -943,13 +910,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-revenue-copilot-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-revenue-copilot-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "CRM: opportunity.updated → skor yeniden hesaplama tetiği."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Sales: quote.accepted/rejected → kazanma oranı geri besleme, model girdisi."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Notification: yüksek öncelikli NBA → ilgili temsilciye bildirim."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Audit: her skor/öneri kararı girdileri + model versiyonuyla izlenir."
+      }
+     ]
     ]
    },
    {

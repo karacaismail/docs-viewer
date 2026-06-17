@@ -131,7 +131,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Hibrit / Tarayıcı Tabanlı RPA-lite — çekirdek yetenek",
+      "term": "Tarayıcı tabanlı akış kaydı/oynatma",
       "definition": [
        {
         "type": "strong",
@@ -139,41 +139,29 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Tekrarlı UI adımlarının (tıkla/yaz/oku) kaydı ve deterministik oynatımı; her oynatma idempotency_key ile, yarıda kalan akış güvenli yeniden denenir."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Hibrit API + UI köprüsü",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "API olan yerde API, olmayan yerde UI otomasyonu; hedef sisteme erişim capability deny-by-default ile sınırlı."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Çalışma günlüğü + denetim",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Her otomasyon koşusunun adım/sonuç kaydı audit'lenir; hata anında ekran/durum delili saklanır."
        }
       ]
      }
@@ -361,15 +349,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Hedef sistem credential'ları en hassas varlık — capability deny-by-default, secret store; koşu log'una düz metin yazılmaz. UI otomasyonu harici geri-alınamaz efekt üretir (örn. form gönderimi); idempotency_key + dry-run zorunlu, aksi halde çift işlem. Otomasyon başka sistemde işlem yapar; o sistemdeki yetki sınırı RPA hesabının capability'si ile eşlenmeli, aşırı yetki verilmez. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -867,6 +847,18 @@
     ]
    },
    {
+    "id": "block-s-rpa-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Aynı akışın iki kez oynatılmasında idempotency ile çift işlem üretmediği doğrulanır. Adım ortasında hata olunca akışın güvenli durduğu ve durum delilinin saklandığı test edilir. Credential'ın koşu log'una sızmadığı doğrulanır."
+     }
+    ]
+   },
+   {
     "id": "block-s-rpa-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -885,7 +877,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "API'siz/tekrarlı UI iş akışlarının otomasyonu gerektiğinde; aday (candidate) kategori, katalog boşluğunu kapatır."
        }
       ]
      },
@@ -894,16 +886,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Her otomasyon tanımı tenant'a izole (RLS); hedef sistem credential'ları capability deny-by-default + secret store."
        }
       ]
      },
@@ -912,7 +895,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Koşu kayıtları audit'lenir; harici efekt (UI tıklama) geri alınamaz olduğundan idempotency ve dry-run zorunlu."
        }
       ]
      },
@@ -921,7 +904,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Bir platform-horizontal yetenek; diğer modüllerin entegrasyon boşluklarını UI üzerinden doldurur."
        }
       ]
      },
@@ -930,7 +913,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Otomasyon kurulum/izleme app'i; tetiklenen akışlar arka planda koşar."
        }
       ]
      }
@@ -943,13 +926,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-rpa-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-rpa-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-etl: API tabanlı veri entegrasyonu olan yerde tercih edilir; RPA-lite yalnız API olmayan UI akışları için devreye girer."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-audit: otomasyon koşularının adım ve hata delillerini hash-chain'e bağlar."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "cc-rollout: yeni otomasyon akışı feature-flag + kill-switch arkasından kademeli açılır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "l1-experiment: değil — RPA deney değil; otomasyon koşusu deterministik tekrar."
+      }
+     ]
     ]
    },
    {

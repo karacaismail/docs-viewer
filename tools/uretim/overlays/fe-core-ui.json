@@ -1,0 +1,57 @@
+{
+ "featureDefs": [
+  {
+   "name": "Çekirdek (React 19 + Vite 6 + TS strict)",
+   "desc": "pnpm + Vite 6 + React 19 + TypeScript 5.6 strict ('any' yasak, noUncheckedIndexedAccess) + React Router v7 (type-safe loader/action) + Capacitor mobil shell.",
+   "critical": true
+  },
+  {
+   "name": "UI & stil (Flowbite Pro + Radix + ECharts)",
+   "desc": "Flowbite Pro base + Radix headless primitive; SCSS :root token tek doğruluk kaynağı → Tailwind okur; Phosphor icons; ECharts; dnd-kit; TanStack virtual (100k+ satır).",
+   "critical": true
+  },
+  {
+   "name": "State & data (TanStack Query + RHF + Refine)",
+   "desc": "Server state TanStack Query v5; client Zustand+persist; form react-hook-form + Zod; URL state nuqs; Refine.dev headless CRUD/access; CASL ability backend ile paylaşılır.",
+   "critical": true
+  },
+  {
+   "name": "API & contract (openapi-typescript + openapi-fetch)",
+   "desc": "FastAPI /openapi.json → TS tipleri (openapi-typescript); type-safe openapi-fetch HTTP client; tus-js resumable upload; client-side image compress.",
+   "critical": true
+  },
+  {
+   "name": "Auth (Logto self-host + OIDC PKCE + passkey)",
+   "desc": "Logto self-host multi-tenant Organizations; OIDC PKCE + refresh token rotation; passkey/WebAuthn + magic link; httpOnly cookie (XSS güvenli); RBAC CASL JSON org role'den türetilir.",
+   "critical": true
+  },
+  {
+   "name": "i18n & format (react-intl + dinero.js)",
+   "desc": "react-intl (ICU MessageFormat); locale dosyaları tr/en/ar (Crowdin sync); RTL (dir + tailwindcss-rtl); date-fns-tz; para dinero.js (BigInt, IEEE 754 hatasız); libphonenumber.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Frontend çekirdek stack: tüm app'lerin paylaştığı temel UI/state/API/auth katmanı; bir kez kurulur, ürünler tüketir — her ürün kendi butonunu/formunu icat etmez (tutarlılık).",
+  "kernel": "Auth backend kernel-identity ile hizalı (Logto OIDC); RBAC CASL ability JSON backend (FastAPI) ile paylaşılır → frontend yetki deny-by-default kernel kararını yansıtır, kendi başına yetki vermez.",
+  "core": "Tip sözleşmesi backend'den türer: openapi-typescript FastAPI /openapi.json'dan, Zod schema backend Pydantic ile paylaşılır → tek doğruluk kaynağı; para dinero.js (float değil).",
+  "modules": "TanStack Query server state + Refine headless CRUD ArcheType→REST/GraphQL endpoint'lerini tüketir; offline queue TanStack paused mutations + idb-keyval; realtime Zustand WS subscribe.",
+  "apps": "Her app paylaşılan core-ui kütüphanesinden form/tablo/buton/komut paleti alır; auth session Logto SDK + Zustand sync ile tüm app'lerde ortak."
+ },
+ "securityNotes": [
+  "Session httpOnly cookie + refresh token rotation (XSS'e karşı); OIDC PKCE — token tarayıcı JS'ine sızmaz.",
+  "RBAC CASL ability JSON backend ile paylaşılır; frontend yetki kontrolü UI gizleme amaçlı, gerçek yetki backend deny-by-default ile zorlanır (client'a güvenilmez).",
+  "TypeScript strict ('any' yasak) + Zod runtime doğrulama → tip/girdi güvenliği; openapi-fetch type-safe çağrı.",
+  "Passkey/WebAuthn phishing-resistant + biometric; KYC dosya upload tus resumable, client-side compress (ham belge minimumda tutulur)."
+ ],
+ "perfNotes": {
+  "code": "Vite 6 HMR + tree-shake (Phosphor weight, openapi-fetch küçük); TanStack virtual 100k+ satır; TanStack Query cache + optimistic + persistence; nuqs URL state.",
+  "perf": "Concurrent React 19 + Suspense; image lazy (native loading=lazy/unlazy); offline-first paused mutations; ECharts büyük dataset tema-able."
+ },
+ "testNotes": [
+  "Tip sözleşmesi testi: openapi-typescript çıktısı FastAPI /openapi.json ile uyumlu (drift yok).",
+  "Yetki testi: CASL ability backend kararını yansıtır; client gizlese de backend deny-by-default zorlar.",
+  "Form testi: react-hook-form + Zod nested/array doğrulama; submit backend Pydantic ile aynı schema.",
+  "Para testi: dinero.js BigInt ile kuruş kaybı/IEEE 754 hatası yok."
+ ]
+}

@@ -798,7 +798,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Frontend — Deploy + OTA + Store Rollout — birincil yetenek",
+      "term": "Web CI/CD → Hetzner (Docker + Caddy)",
       "definition": [
        {
         "type": "strong",
@@ -806,25 +806,51 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "PR: Biome lint + TS check + Vitest/MSW + Playwright E2E + Lighthouse + axe-core a11y kapısı. Main merge → Docker image build → Hetzner registry → SSH compose pull (auto-TLS Caddy)."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Kendi OTA server'ı (FastAPI + Object Storage)",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "GET /channels/:channel/manifest → {latestVersion, bundleUrl, sha256, mandatory}; POST releases (sha256 doğrulama); kanal bazlı yüzde + audience (org/tenant tier) rollout; rollback endpoint. Capgo self-host (Supabase çelişkisi yok)."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "Store rollout — Organization (12×14 muafiyet)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "D-U-N-S → Apple Developer enrollment + Google Play Console Organization; verified Organization 12 tester × 14 gün kuralından MUAF (kritik path'ten çıkar); TestFlight internal Beta App Review gereksiz."
+       }
+      ]
+     },
+     {
+      "term": "OTA kademeli rollout + otomatik rollback",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "Tag ota-v* → bundle build + SHA256 + manifest → Object Storage → POST /releases → %10 gözlem → %50 → %100 veya crash-rate'e göre otomatik rollback (n8n 30 dk kontrol)."
+       }
+      ]
+     },
+     {
+      "term": "OpenClaw + n8n otomasyon noktaları",
+      "definition": [
+       {
+        "type": "text",
+        "text": "PR→review özet (Slack/WhatsApp); test fail→geliştiriciye WhatsApp; release→Crowdin sync + PostHog flag; Sentry spike→severity bildirim; KYC→KYB queue→Veriff webhook."
        }
       ]
      }
@@ -1012,15 +1038,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "OTA bundle bütünlüğü: SHA256 doğrulama zorunlu (manifest + yüklemede); imzasız/eşleşmeyen bundle reddedilir — kötücül güncelleme engellenir. Release/rollback admin capability deny-by-default (release.publish); POST /releases yalnız yetkili; Fastlane match sertifika/secret encrypted-at-rest. Rollout audience tenant tier/org id bazlı; bir tenant'a giden bundle başka tenant'a sızmaz; mandatory flag zorunlu güncellemeyi kontrollü uygular. Store uyumu: Apple identity verification + Google evrak doğrulama; Organization (verified) tüzel kişilik — KYC/KYB (Veriff) akışı denetlenebilir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1048,15 +1066,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "JS-only değişiklik OTA ile store review'suz dağıtılır (hızlı); native değişiklik Fastlane (gym/supply) store hattından; bundle CDN edge'de (Cloudflare/BunnyCDN)."
        }
       ]
      },
@@ -1074,15 +1084,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Kademeli rollout (%10→%50→%100) crash-rate gözlemiyle; manifest sorgusu hafif (version diff); Object Storage + CDN ile bundle indirme edge'den (düşük gecikme)."
        }
       ]
      },
@@ -1378,7 +1380,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Frontend — Deploy + OTA + Store Rollout",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Frontend — Deploy + OTA + Store Rollout\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: ota.release_published   # tag ota-v*\ncondition:\n  all:\n    - actor.capability >= \"release.publish\"\n    - bundle.sha256_verified\n    - not loop_detected\naction:\n  - upload: object_storage\n  - rollout: { percentage: 10, audience: [tenant_tier] }\n  - watch: crash_rate            # 30dk → 50% → 100% ya da rollback\nguards:\n  max_depth: 6\n  idempotency_key: \"ota:{channel}:{release_id}\"\n  external_effects: store_review_or_step_up",
     "copyEnabled": true
    },
    {
@@ -1518,6 +1520,18 @@
     ]
    },
    {
+    "id": "block-fe-deploy-ota-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "PR kapıları: Biome lint + TS + Vitest + Playwright E2E + Lighthouse skor + axe-core a11y geçmeden merge edilmez. OTA manifest SHA256 doğrulanır; eşleşmeyen/bozuk bundle client tarafından reddedilir (bütünlük). Rollout %10 gözlem → crash-rate eşiği aşılırsa otomatik rollback; aşılmazsa %50→%100 (kademeli güvenlik). Aynı release ikinci kez publish edilince çift dağıtım olmaz (idempotency_key=ota:channel:release_id). Organization hesap 12 tester × 14 gün kuralından muaf; release.publish capability'siz kullanıcı yayın yapamaz (deny path)."
+     }
+    ]
+   },
+   {
     "id": "block-fe-deploy-ota-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1536,7 +1550,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet ama operasyon/teslim katmanı — çalışma-zamanı modülü değil; kodu geliştirici makinesinden sunucuya taşıyıp güncel tutan boru hattı. Web (Docker/Caddy) + mobil (Fastlane/TestFlight/Play) + OTA (kendi server) üç hattı tek release disiplininde birleştirir."
        }
       ]
      },
@@ -1545,16 +1559,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Doğrudan kernel modülü değil; ancak OTA rollout audience'ı tenant tier/org id'ye bağlanır (entitlement düzlemi), release kararı capability'li (admin)."
        }
       ]
      },
@@ -1563,7 +1568,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Audit (release/rollout/rollback izi), config-as-data (kanal/rollout yüzdesi); core sözleşmesini değiştirmez, app'leri dağıtır."
        }
       ]
      },
@@ -1572,7 +1577,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "OTA server (apps/ota-server) bağımsız servis; Object Storage (Hetzner) bundle deposu; CI hattı (GitHub Actions) ile bağlanır — Contract: manifest + rollout + rollback."
        }
       ]
      },
@@ -1581,7 +1586,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Tüm FE app'leri bu hattan yayınlanır; web compose pull, iOS TestFlight, Android Play, JS-only değişiklik OTA ile — tek sürümleme disiplini."
        }
       ]
      }

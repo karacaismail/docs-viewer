@@ -1,0 +1,56 @@
+{
+ "featureDefs": [
+  {
+   "name": "Puan Defteri (point ledger)",
+   "desc": "Kazanım/harcama hareketleri append-only ledger'da tutulur; bakiye türetilir, üzerine yazılmaz. Her hareket idempotent + audit'li; çift kazanım/çift harcama engellenir.",
+   "critical": true
+  },
+  {
+   "name": "Kademe (tier) Motoru",
+   "desc": "Eşik/koşul bazlı kademe yükselme-düşme (ör. yıllık harcamaya göre Gold). Kademe geçişleri bitemporal; geriye dönük kampanya düzeltmesi audit iziyle.",
+   "critical": false
+  },
+  {
+   "name": "Referral Kodu + Atıf",
+   "desc": "Tekil referral kodu üretimi, davet → kayıt → dönüşüm atıfı. Self-referral ve döngüsel atıf (loop_detected) engellenir; ödül yalnız geçerli dönüşümde verilir.",
+   "critical": true
+  },
+  {
+   "name": "Ödül/İtfa (redemption)",
+   "desc": "Puanın indirim/hediyeye dönüşümü; itfa anında bakiye kilidi + idempotent düşüm. Parasal karşılık money Contract'ı üstünden (minor-unit).",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Layer-2 SaaS ürünü; Kernel + Scale + Layer-1 üstüne oturur. Smile.io sınıfı sadakat; kendi ArcheType'larını ve UI'sını sunar, yetki/audit/event-bus framework'ten gelir.",
+  "kernel": "Kazanım/itfa olayları event-bus'a yayınlanır; capability deny-by-default ile yetki; ledger tam audit'li, RLS ile tenant izolasyonu.",
+  "core": "Puan ledger'ı para mantığıyla (money Contract) modellenir — append-only, türetilen bakiye; kademe/atıf geçmişi bitemporal.",
+  "modules": "POS/Sales satışından kazanım, Marketing/CRM kampanyasından bonus, Subscription yenilemesinden tier girdisi alır; ödül olayını geri yayınlar.",
+  "apps": "App satışta puan kazandırır, müşteri portalında bakiye/itfa gösterir; toplu kampanya kazanımı worker'da işlenir."
+ },
+ "ecaExample": "trigger:\n  event: order.paid\ncondition:\n  all:\n    - actor.capability >= \"loyalty:accrue\"\n    - order.amount.minor > 0\n    - not loop_detected\naction:\n  - ledger.append:\n      type: accrual\n      points: floor(order.amount.minor / 100)\n  - evaluate: tier_upgrade\nguards:\n  max_depth: 6\n  idempotency_key: \"loyalty:accrue:{order_id}\"\n  external_effects: none",
+ "securityNotes": [
+  "Puan ledger'ı append-only; bakiye türetilir, doğrudan yazılamaz — manipülasyon audit'siz kalamaz.",
+  "İtfa idempotent + bakiye kilidi: aynı itfa iki kez işlenip çift düşüm/çift ödül üretemez.",
+  "Self-referral ve döngüsel atıf (loop_detected) engellenir; ödül yalnız geçerli dönüşümde.",
+  "Capability deny-by-default: loyalty:accrue / loyalty:redeem yetkisi gerekir.",
+  "Müşteri PII'si ve referral grafiği RLS ile tenant'a izole; komşu tenant görünmez."
+ ],
+ "perfNotes": {
+  "code": "Bakiye ledger'dan projeksiyonla türetilir; hareket listesi keyset cursor ile sayfalanır.",
+  "perf": "Türetilmiş bakiye projeksiyonu canlı toplam-sorgusunu önler; milyon hareketli müşteride bakiye sabit gecikmeyle okunur."
+ },
+ "moduleUsage": [
+  "POS / Sales: satış tutarına göre puan kazanımı.",
+  "Marketing / CRM: kampanya/segment bazlı bonus puan ve referral teşviki.",
+  "Subscription Analytics: yenileme ve LTV girdisiyle kademe değerlendirmesi.",
+  "Commerce: itfa edilen puanın sepet indirimine uygulanması."
+ ],
+ "testNotes": [
+  "Aynı sipariş için ikinci kazanım idempotency ile tekilleştirilir.",
+  "İtfa sırasında bakiye kilidi çift harcamayı engeller.",
+  "Self-referral ödül üretmez; döngüsel atıf loop_detected ile reddedilir.",
+  "Kademe eşiği sınırında (tam eşik değeri) yükselme doğru tetiklenir.",
+  "Komşu tenant'ın puan defteri RLS ile görünmez."
+ ]
+}

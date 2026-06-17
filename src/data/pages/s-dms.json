@@ -304,7 +304,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Document Management (DMS) — çekirdek yetenek",
+      "term": "Belge sürümleme (versioning)",
       "definition": [
        {
         "type": "strong",
@@ -312,41 +312,29 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Document ArcheType + sürüm geçmişi; her sürüm bitemporal (hangi tarihte hangi içerik), eski sürüm silinmez. ChangeSet ile geri-alma."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "E-imza akışı (Workflow)",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "İmza talebi → imzacı sırası → tamamlanma aşamaları; ArcheType'tan bağımsız versiyonlanan durum makinesi, tenant'a pinli imza zinciri."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Retention / saklama politikası",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Belge sınıfına göre saklama süresi + yasal hold; süre dolunca crypto-shredding ya da arşiv, audit'li."
        }
       ]
      }
@@ -534,15 +522,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Belge içeriği pii içerebilir (+retention); RLS tenant-scoped; e-imza adımı capability deny-by-default + step_up. Retention süresi dolunca crypto-shredding (KVKK) — anahtar imha, içerik erişilemez; tüm sürüm geçişleri audit'li. İmza bütünlüğü: imzalanan sürüm immutable; sonradan değişiklik yeni sürüm doğurur, imzayı geçersiz kılar. Komşu-tenant belge erişimi sıfır (izolasyon); yasal hold kaydı silmeyi bloklar. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -596,15 +576,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Belge gövdesi object storage'da (presigned URL), metadata DB'de; sürüm listesi keyset pagination; arama/embedding asenkron worker."
        }
       ]
      },
@@ -900,7 +872,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Document Management (DMS)",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Document Management (DMS)\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: document.signature_completed\ncondition:\n  all:\n    - actor.capability >= \"dms.sign\"\n    - tenant_scoped\n    - not loop_detected\naction:\n  - emit: contract.activated            # outbox, idempotent\n  - schedule: retention_check\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:document:{doc_id}:sign\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1040,6 +1012,18 @@
     ]
    },
    {
+    "id": "block-s-dms-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Komşu-tenant Document sorgusu sıfır döndürür (izolasyon). İmzalı sürüm değiştirilemez: edit yeni sürüm açar, eski imza korunur. Retention: süre dolan belge shredding sonrası erişilemez; yasal hold varsa silme reddedilir. İmza akışı idempotent: aynı belge iki kez 'completed' yapamaz (idempotency_key)."
+     }
+    ]
+   },
+   {
     "id": "block-s-dms-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1058,7 +1042,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Layer-2 SaaS ürünü; Kernel + Scale + Layer-1 üstüne oturur, kendi ArcheType'larını tanımlar ama yetki/audit/event-bus framework'ten gelir."
        }
       ]
      },
@@ -1067,16 +1051,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "ArcheType engine ile şema + otomatik REST/GraphQL; tenancy (RLS), audit ve bitemporal alanlar kernel'den, DMS kendi Domain'ini (Kaya) tanımlar."
        }
       ]
      },
@@ -1085,7 +1060,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "App core'una bağlı; core module değişmez, DMS bir Domain olarak core sözleşmelerine uyar; dosya gövdesi stack-drive/object storage'da, metadata kernel'de."
        }
       ]
      },
@@ -1094,7 +1069,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "İmza tamamlanma olayını ilgili iş module'üne (sözleşme/HR/satınalma) yayar; retention süresi dolunca shredding event'i — yalnız Contract üzerinden."
        }
       ]
      },
@@ -1103,7 +1078,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Sözleşme, İK, satınalma app'leri aynı Document ArcheType'ını paylaşır; belge tek yerde, çok app projekte eder."
        }
       ]
      }
@@ -1116,13 +1091,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-dms-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-dms-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Sözleşme/CLM app: imzalanacak sözleşmeyi DMS'e bağlar; e-imza tamamlanınca aktivasyon tetikler."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "HR app: özlük belgelerini retention politikasıyla saklar (yasal süre)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Purchase app: tedarikçi belgelerini sürümlü tutar; eski sürüm denetim için erişilebilir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "RAG/AI app: yayımlanan belge içeriğini arama/embedding indeksine besler (consent kapısıyla)."
+      }
+     ]
     ]
    },
    {

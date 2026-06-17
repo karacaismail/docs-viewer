@@ -836,7 +836,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Frontend — Capacitor Mobile + KYC/KYB — birincil yetenek",
+      "term": "Capacitor 7 native kabuk",
       "definition": [
        {
         "type": "strong",
@@ -844,25 +844,51 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "PWA + iOS/Android native sarmalı; aynı web kodu. Baseline (2026 Mayıs): Node ≥20 LTS, iOS target 14, Android minSdk 23 / targetSdk 35, Kotlin 2.0, JDK 21, Xcode 16+ (M4 native)."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "TC kimlik NFC — kendi Capacitor modülü",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "iOS NFCPassportReader (MIT) + Android jmrtd (LGPL-3.0) sarmalı; eMRTD/ICAO 9303. TC kimlik CAN (6 hane) kullanır (MRZ değil), PACE protokolü zorunlu (BAC reddedilir)."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "KYC akışı — selfie/liveness + belge",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "ML Kit Face Detection + custom challenge (göz kırp/baş çevir); frame'ler backend'e, FastAPI'de DeepFace/FaceNet match. Belge: ML Kit document-scanner + OCR. İmza: react-signature-canvas + PDF embed."
+       }
+      ]
+     },
+     {
+      "term": "KYB — Veriff/Onfido managed",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Vergi levhası, ticaret sicil doğrulaması; Türkiye için Veriff daha güçlü. API-only entegrasyon (dış servis)."
+       }
+      ]
+     },
+     {
+      "term": "Secure storage + biometrik",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Keychain + Android Keystore (capacitor-secure-storage); FaceID/TouchID/BiometricPrompt (capacitor-biometric-auth). Deep link OIDC callback (Universal/App Links)."
        }
       ]
      }
@@ -1050,15 +1076,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "KVKK veri minimizasyonu (2023/1430): TC kimlik no veritabanında SAKLANMAZ; yalnız hash veya tek-seferlik doğrulama jetonu tutulur. DG2 (foto) lokal cihazda karşılaştırılır. Kişisel veri işleme açık rıza + EİDS Tebliği zorunlu; KVK Kurumu izni olmadan TC kimlik akışı açılamaz. PACE protokolü zorunlu (BAC reddedilir); çip CardOS tabanlı — CAN ile erişim, MRZ değil. Apple 'NFC Tag Reading' entitlement gerekli. Selfie frame'leri ve biyometrik veri pii=true + retention; secure storage (Keychain/Keystore) dışında ham biyometri tutulmaz. KYB sonucu audit'li. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1086,15 +1104,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Native module'ler lazy yüklenir; KYC frame'leri stream olarak backend'e gider, cihazda buffer'lanmaz. OTA (live updates) manifest + publicKey ile imzalı kanal (beta/prod)."
        }
       ]
      },
@@ -1112,15 +1122,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "DG2 foto karşılaştırması lokal (round-trip yok); liveness challenge frame-bazlı; document-scanner OCR server-side opsiyonu ağır cihazlarda tercih. Mobil kullanıcı oranı ~%70 — PWA + native paralel."
        }
       ]
      },
@@ -1416,7 +1418,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Frontend — Capacitor Mobile + KYC/KYB",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Frontend — Capacitor Mobile + KYC/KYB\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: kyc.identity_scanned\n  when: \"source == 'tc_nfc' AND pace_verified\"\ncondition:\n  all:\n    - actor.capability >= \"identity.verify\"\n    - consent_explicit == true          # KVKK acik riza\n    - not loop_detected\naction:\n  - identity.attach_claim: verified_person\n  - store: tc_no_hash                    # ham TC no SAKLANMAZ\n  - emit: identity.kyc_completed         # outbox, idempotent\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:kyc:{session_id}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1556,6 +1558,18 @@
     ]
    },
    {
+    "id": "block-fe-mobile-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "TC NFC: PACE doğrulanmadan kimlik claim'i bağlanmaz; BAC denemesi reddedilir. KVKK invariant: akış sonunda DB'de ham TC kimlik no aranır → bulunmamalı (yalnız hash/jeton). Liveness: statik foto (spoof) challenge'ı geçememeli; göz kırp/baş çevir doğrulanmalı. Açık rıza kapısı: consent alınmadan KYC başlatılamaz (deny-by-default). Capacitor baseline: minSdk 23 altı / iOS 14 altı cihazda native module graceful degrade (PWA fallback)."
+     }
+    ]
+   },
+   {
     "id": "block-fe-mobile-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1574,7 +1588,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — mobil yüzey ayrı bir ürün değil, mevcut web Surface'lerinin native projeksiyonudur; KYC/KYB ise kernel identity + party doğrulama akışının cihaz-tarafı ayağıdır."
        }
       ]
      },
@@ -1583,16 +1597,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "KYC sonucu kernel identity'ye doğrulanmış-kimlik claim'i olarak bağlanır; TC kimlik no kernel'de saklanmaz, yalnız hash/tek-seferlik jeton tutulur (KVKK 2023/1430)."
        }
       ]
      },
@@ -1601,7 +1606,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Capacitor config app-bazlı (appId, scheme, OTA manifest); core ArcheType Surface'leri PWA olarak çıkar, native module'ler yalnız cihaz yeteneği (NFC/kamera/biometrik) ekler."
        }
       ]
      },
@@ -1610,7 +1615,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "KYB doğrulama Veriff/Onfido Contract'ı üzerinden çağrılır; sonuç olayı (verified/rejected) party/onboarding module'üne event olarak döner, module dış API'yi doğrudan tüketmez."
        }
       ]
      },
@@ -1619,7 +1624,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "POS (BLE), saha servisi (background geolocation), onboarding (KYC/KYB) app'leri aynı Capacitor modül ekosistemini paylaşır; her app gerekli izinleri (entitlement) açar."
        }
       ]
      }
@@ -1632,13 +1637,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-fe-mobile-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-fe-mobile-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Onboarding app: TC kimlik NFC + selfie/liveness → doğrulanmış kimlik; DG2 (foto) lokal cihazda karşılaştırılır, sunucuya gitmez."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Finans/hesap açılış app: KYB (Veriff) vergi levhası + ticaret sicil doğrulaması."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "POS app: BLE (yazıcı/terminal) + secure storage (anahtar saklama)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Saha servisi app: foreground + background geolocation; push notification (FCM/APNs)."
+      }
+     ]
     ]
    },
    {

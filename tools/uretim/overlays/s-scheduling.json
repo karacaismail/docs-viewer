@@ -1,0 +1,50 @@
+{
+ "featureDefs": [
+  {
+   "name": "Availability + Slot ArcheType'ları",
+   "desc": "Çalışma saatleri, tampon süre, tatil takvimi → türetilen uygunluk slotları; kaynak (kişi/oda) çakışma kontrolü. Bağımsız ürün değil, Workspace/Service stack modülü.",
+   "critical": true
+  },
+  {
+   "name": "Tenant-scoped public rezervasyon sayfası",
+   "desc": "Tenant'a özel public link; portal entegrasyonu. Anonim rezervasyon hız-limitli + bot koruması; tenant izolasyonu link sınırında.",
+   "critical": true
+  },
+  {
+   "name": "Hatırlatma (E-posta/SMS)",
+   "desc": "L1 Notification kanalları; consent kapısıyla gönderim, no-show takibi."
+  },
+  {
+   "name": "Takvim senkron (CalDAV/ICS)",
+   "desc": "Workspace takvimiyle çift yönlü; dış senkron idempotent, çakışma çözümlü."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-2 modül; bağımsız ürün değil (pazar kalabalık, Calendly klonu çok), Workspace ve Service stack'lerinin modülü olarak konumlanır. Clinic/FSM/Education dikeylerine yalnız Contract üzerinden uygunluk sağlar.",
+  "kernel": "Party (kaynak/müşteri), tenancy (RLS), audit kernel'den; Availability/Slot kendi şemasını ArcheType engine ile tanımlar — REST/GraphQL otomatik doğar.",
+  "core": "i18n, Notification (hatırlatma), Settings core'dan; slot üretimi okuma-optimize, public sayfa hız-limitli.",
+  "modules": "Workspace takvim module'üyle CalDAV/ICS senkron; dikey distribution'lara (clinic/fsm) randevu olayı yayar — yalnız Contract.",
+  "apps": "Workspace, Service, Clinic ve FSM app'leri aynı Availability + Slot kaydını paylaşır; çift kayıt yok."
+ },
+ "moduleUsage": [
+  "Workspace app: takvimle çift yönlü senkron; ekip uygunluğunu slot'a yansıtır.",
+  "Service/FSM app: saha randevusu için kaynak uygunluğu + tampon süresini tüketir.",
+  "Clinic app: hekim/oda slot'unu randevu açılışında kullanır (çakışma engeli).",
+  "Education app: ders/oturum rezervasyonunu public sayfa üzerinden alır."
+ ],
+ "ecaExample": "trigger:\n  event: slot.reservation_requested\n  when: tenant_scoped\ncondition:\n  all:\n    - actor.capability >= \"scheduling.book\"\n    - slot_available(resource, time)   # çakışma yok\n    - not loop_detected\naction:\n  - reserve: slot                       # idempotent\n  - emit: notification.reminder_scheduled\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{resource}:{slot}\"\n  external_effects: rate_limit_check",
+ "securityNotes": [
+  "Rezervasyon yapan kişi iletişim verisi pii=true (+retention); RLS tenant-scoped — public sayfa yalnız o tenant'ın slot'unu açar, başka tenant veri sızdırmaz.",
+  "Anonim public rezervasyon hız-limitli + bot koruması (kötüye kullanım/slot doldurma saldırısına karşı); consent olmadan hatırlatma gönderilmez.",
+  "Rezervasyon/iptal capability deny-by-default; dış takvim senkronu idempotent, çakışma çözüm kuralı denetlenebilir (audit)."
+ ],
+ "perfNotes": {
+  "perf": "Slot üretimi/uygunluk sorgusu okuma-optimize + keyset; kaynak+zaman indeksleri; hatırlatma asenkron worker; dış senkron incremental (yalnız değişen slot)."
+ },
+ "testNotes": [
+  "Komşu-tenant slot/rezervasyon sorgusu sıfır döndürür (RLS).",
+  "Aynı slot iki kez rezerve edilemez (çakışma + idempotency).",
+  "Public sayfa hız limiti aşılınca rezervasyon reddedilir (deny path).",
+  "Consent kapalı kişiye hatırlatma gönderilmez."
+ ]
+}

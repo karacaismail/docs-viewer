@@ -1,0 +1,72 @@
+{
+ "featureDefs": [
+  {
+   "name": "Surface — yüzeyin birinci-sınıf tanımı",
+   "desc": "Her sayfa bir Surface'tir; bir veya birden çok ArcheType'ı projekte eder (360° ekran = Party + Order + Ticket). Granül: Büyük/Orta Taş. Ekran artık varlığın gölgesi değil, bağımsız tanım.",
+   "critical": true
+  },
+  {
+   "name": "Domain — bounded context (sınır, birim değil)",
+   "desc": "ArcheType'ların ait olduğu sınır (Çalışanlar, Faturalama); hiçbir zaman tek birim değil. Granül: Kaya. Sınır içi serbest, sınırlar arası yalnız event/API sözleşmesiyle (Contract).",
+   "critical": true
+  },
+  {
+   "name": "Workflow — ArcheType'tan bağımsız durum makinesi",
+   "desc": "Kaydın durum makinesi ayrı kayıt olarak yaşar ve bağımsız versiyonlanır: aynı Invoice tenant-A'da 3, tenant-B'de 5 aşamalı. Yan eksen — granül seviyesi değil; süreç üründen ayrılır.",
+   "critical": true
+  },
+  {
+   "name": "Headless ArcheType (surface: none)",
+   "desc": "UI'sız (API + MCP-only) varlık: webhook log'u, sayaç, entegrasyon kaydı. UI opsiyondur; makine-makine konuşan varlık yüzey yükü taşımaz, agent yine MCP üzerinden görür.",
+   "critical": true
+  },
+  {
+   "name": "Projection — yüzey-varlık eşlemesi + CQRS okuma modeli",
+   "desc": "Bir Surface'in bir ArcheType'tan hangi alanları hangi biçimde gösterdiğinin beyanı; ayrıca projection_of ile salt-okur okuma modeli. Aynı ArcheType farklı yüzlerle görünür — fark kodda değil beyanda."
+  },
+  {
+   "name": "Fragment — satırlı alt-parça (child table karşılığı)",
+   "desc": "ArcheType altında kendi satırları olan parça: SiparişKalemleri, Adresler, ZamanKayıtları. Ana kayıtla yaşam döngüsü paylaşır (onunla doğar/taşınır), kendi iç yapısı vardır. Granül: tipik Küçük Taş (SP 5)."
+  },
+  {
+   "name": "Atom — en küçük bildirimsel bileşen",
+   "desc": "Yapı ekseninin dibi: Fragment'i ve ArcheType gövdesini oluşturan kural/kısıt/davranış parçacığı. Granülerlik Atom'u (SP 1) ile aynı kavramın yapı görünümü. Alan adı (Field/Attribute) bilinçli açık bırakıldı."
+  },
+  {
+   "name": "Contract — modüller arası API sözleşmesi",
+   "desc": "Domain'in dışarıya verdiği söz; sınırlar arası tek geçiş yolu. Yan eksenin üçüncü kavramı; sus-boundaries statik zorlamasının (import-linter deseni) tanım-katmanı karşılığı — kim kime hangi event/endpoint'le konuşur yazılıdır.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — bu kavram kümesi kernel'in yüzey/sınır/davranış ayrışmasının ta kendisi; 'kod yazmadan module üretmek' vaadinin (diferansiyatör = ArcheType) mekanizması, üç eski zinciri (yüzey/birim/süreç) kırmaktır.",
+  "kernel": "Yapı ekseni Domain > ArcheType > Fragment > Atom kernel şemasıdır (kernel-schema); ArcheType engine bu hiyerarşiyi şemadan otomatik REST/GraphQL + audit + tenancy ile doğurur.",
+  "core": "App core'u Domain sınırlarına (Kaya) bölünür; core module bir Domain olarak Contract sözleşmesine uyar, sınır dışına yalnız event/API ile dokunur.",
+  "modules": "Her Layer-2 module kendi ArcheType + Surface + Workflow YAML'larını ekler (be-sdk iskelet ağacı); kernel koduna dokunmadan, paylaşılan Party ArcheType'ını projekte eder.",
+  "apps": "Çok-App dünyası: Party tek tanımdır (layer1-party), on app onu projekte eder — 'app'ler default entegre gelir' vaadinin mekanizması; Surface aynı ArcheType'ı dört kontrol düzlemine (developer-admin / müşteri-admin / public / headless) projekte eder."
+ },
+ "moduleUsage": [
+  "People Edition: aynı Party ArcheType'ını fotoğraflı kart projeksiyonuyla gösterir; core düz form — fark entitlement (be-kararlar E1) ve projeksiyon beyanında.",
+  "Müşteri 360° Surface: Party + Order + Ticket'ı tek yüzeyde projekte eder; dashboard artık hack değil tanım.",
+  "Frontpages/StoreFront app: public kontrol düzlemi Surface'leri (k-control-planes) landing/blog/storefront.",
+  "Entegrasyon module'leri: webhook-log surface:none headless ArcheType — UI yok, API + MCP tool var (be-kararlar 11)."
+ ],
+ "ecaExample": "trigger:\n  event: archetype.defined\n  when: \"spec.has('searchable') OR spec.surface == 'none'\"\ncondition:\n  all:\n    - actor.capability >= \"kernel.archetype.author\"\n    - domain_boundary_respected      # Contract disi erisim yok\n    - not loop_detected\naction:\n  - generate: [rest_api, graphql, mcp_tool_set]   # beyandan turer\n  - generate: pgvector_index           # searchable bayragi varsa\n  - emit: surface.projection_ready     # outbox, idempotent\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{domain}:{archetype}:define\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Agent capability scope tanım düzeyinde: 'bu agent yalnız Complaint ArcheType'ına, yalnız read' — blast radius (layer1-audit) tanımdan hesaplanır, deny-by-default.",
+  "Domain sınırı Contract'la statik zorlanır (import-linter deseni / sus-boundaries): sınır dışı doğrudan erişim derleme/CI'da reddedilir, çamurlaşma engellenir.",
+  "Jurisdiction-duyarlı alan tanımda yaşar (translatable E7, rejim-parametreli E9): aynı ArcheType KVKK'da crypto-shredding, GDPR'da 72-saat akışıyla çalışır.",
+  "Edition-duyarlı Surface entitlement'a bağlı: hangi projeksiyonun açık olduğunu be-kararlar E1 söyler — kapalı projeksiyon yüzeyde render edilmez."
+ ],
+ "perfNotes": {
+  "code": "Surface YAML deklaratif: projections[] ile ArcheType→alan→biçim (card/table/photo-card) beyanı; edition_overrides Edition'a göre projeksiyon değiştirir. surface:none headless varlık hiç UI üretmez. searchable bayrağı tek satırda pgvector kolonu + index doğurur.",
+  "perf": "projection_of salt-okur CQRS okuma modeli ağır listelerde yazma modelinden ayrışır; çok-ArcheType Surface her projeksiyonu bağımsız (keyset) sorgular, tek dev join yerine paralel projeksiyon."
+ },
+ "testNotes": [
+  "Domain sınır testi: sınır dışı doğrudan import/erişim CI'da reddedilir (Contract zorlaması).",
+  "Workflow bağımsızlığı: aynı ArcheType iki tenant'ta farklı aşama sayısıyla çalışır, tarih-pinleme süreç değişikliğini şema değişikliğine dönüştürmez.",
+  "Headless invariant: surface:none ArcheType için UI route üretilmez ama MCP tool seti ve REST/GraphQL doğar.",
+  "Edition-duyarlı projeksiyon: entitlement kapalıysa o projeksiyon yüzeyde görünmez; açıksa doğru biçimde (photo-card vs form) render eder.",
+  "Paylaşılan ArcheType: Party tek tanımdan on app'e projekte edilir, çift kayıt/şema sapması yok."
+ ]
+}

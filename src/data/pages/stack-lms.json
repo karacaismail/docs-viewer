@@ -452,7 +452,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "LMS Stack — birincil yetenek",
+      "term": "Curriculum",
       "definition": [
        {
         "type": "strong",
@@ -460,25 +460,42 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "Course/Chapter/Lesson/Path; ön koşul (prereq) ve sıralama (sequencing) kuralları."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Enrollment + Progress",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Kayıt, % ilerleme ve completion takibi; öğrenenin yolculuğunun tek kaynağı."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "Assessment + Gradebook",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "Quiz/attempt/question-bank/rubric + geçme eşiği → ağırlıklı not ve transkript."
+       }
+      ]
+     },
+     {
+      "term": "Standards (SCORM/xAPI/cmi5)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "İçerik birlikte çalışabilirliği + LRS; 2026 önerisi cmi5 (SCORM 2004 geriye uyum, xAPI ek telemetri)."
        }
       ]
      }
@@ -666,15 +683,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Sınav notu/transkript hassas; capability deny-by-default + RLS ile öğrenen yalnız kendi sonucunu görür. Proctoring/gözetim verisi (kamera/davranış) PII; rıza + saklama politikası + audit zorunlu. Sertifika verifiable credential olarak imzalanır; geçme eşiği aşılmadan üretilmesi engellenir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -702,15 +711,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Curriculum ağacı ve progress listeleri keyset ile sayfalanır; gradebook ağırlıklı not projeksiyondan okur."
        }
       ]
      },
@@ -728,15 +729,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Dönem başı kayıt + sınav günü zirvesi; live-session attendance ve submission worker'a alınır."
        }
       ]
      },
@@ -1032,7 +1025,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — LMS Stack",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — LMS Stack\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: LessonCompleted\ncondition:\n  all:\n    - actor.capability >= \"lms:progress:write\"\n    - enrollment.status == \"active\"\n    - lesson.prereq_satisfied\naction:\n  - emit: ProgressUpdated\n  - emit: CertificateEligibilityChecked\nguards:\n  max_depth: 6\n  idempotency_key: \"progress:{enrollment_id}:{lesson_id}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -1172,6 +1165,18 @@
     ]
    },
    {
+    "id": "block-stack-lms-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Idempotent progress: aynı ders iki kez tamamlanınca ilerlemenin tek sayıldığı doğrulanır. Sequencing: prereq tamamlanmadan sonraki dersin açılmadığı test edilir. Standart uyum: cmi5 AU launch + Completed/Passed verb'lerinin LRS'e doğru yazıldığı kanıtlanır."
+     }
+    ]
+   },
+   {
     "id": "block-stack-lms-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1190,7 +1195,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Layer 2 Stack; kendi ArcheType ve UI'sını tanımlar, yetki/audit/event-bus kernel'den gelir. CMS authoring'den içerik, HRMS'ten employee tüketir."
        }
       ]
      },
@@ -1199,16 +1204,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Party (öğrenen/eğitmen) + capability + audit + tenancy kernel'den; not ve ilerleme tenant-scoped."
        }
       ]
      },
@@ -1217,7 +1213,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "LMS core module'ü curriculum + enrollment yapısını taşır; assessment/certification ek module olarak biner."
        }
       ]
      },
@@ -1226,7 +1222,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "stack-cms içerik kaynağı + s-hrms employee + Zoom/Daily live-session + l1-notification hatırlatma ile kompoze."
        }
       ]
      },
@@ -1235,7 +1231,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "LMS app'inde aynı Party kaydı HR performans ve yetkinlik modülleriyle default entegre."
        }
       ]
      }
@@ -1248,13 +1244,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-stack-lms-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-stack-lms-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "LMS App: kurs/ders authoring, kayıt, ilerleme ve sınav akışı."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Eğitmen App: ödev notlandırma, soru bankası ve canlı oturum yönetimi."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Öğrenen Self-Service App: kayıtlı kurslar, ilerleme, sertifika ve transkript."
+      }
+     ]
     ]
    },
    {

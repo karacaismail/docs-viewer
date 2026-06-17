@@ -1,0 +1,47 @@
+{
+ "featureDefs": [
+  {
+   "name": "Denetim kanıt deposu (append-only)",
+   "desc": "Tüm ürünlerden gelen audit olaylarını değiştirilemez, append-only kanıt zinciri olarak toplar. Her kayıt aktör, capability, before/after ve zaman damgasıyla; bitemporal olarak hem olay hem kayıt zamanı saklanır.",
+   "critical": true
+  },
+  {
+   "name": "KVKK/GDPR veri öznesi hakları",
+   "desc": "Erişim, taşınabilirlik, silme/anonimleştirme taleplerini yönetir. Silme talebi pii alanlarını maskeler ama denetim kanıtını bozmaz; yasal saklama süresi politika ile uygulanır.",
+   "critical": true
+  },
+  {
+   "name": "İşleme envanteri ve rıza",
+   "desc": "Veri işleme faaliyetleri kaydı (ROPA), rıza durumları ve geçerlilik pencereleri bitemporal; rıza geri çekme ilgili ürünlere event ile yayılır.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Denetim olaylarını tüm ürünlerden pasif olarak dinlemesi gerektiği için event-bus tüketicisi olmalı; ürünlere doğrudan bağlanmaz.",
+  "kernel": "audit (ana tüketici), authz (kanıta/talebe erişim capability'leri), tenancy (RLS ile tenant kanıt izolasyonu), event-bus (consent.revoked, erasure.requested).",
+  "core": "bitemporal (olay + kayıt zamanı, rıza pencereleri), pii (veri öznesi alanları), money (cezai/sözleşmesel etki kayıtları), Contract (veri işleyen sözleşmeleri/DPA), keyset (kanıt listeleme).",
+  "modules": "Tüm Layer-2 ürünleri (audit üreticisi), Mail (bildirim/ihbar), Identity (veri öznesi eşleştirme).",
+  "apps": "İç uyum paneli; veri öznesi self-service talep portalı."
+ },
+ "moduleUsage": [
+  "Tüm modüller: ürün audit olaylarını event-bus'tan toplar, kanıt zincirine işler.",
+  "Mail: erasure.completed → veri öznesine bilgilendirme tetiği.",
+  "Identity: erasure.requested → ilgili tüm kayıtların öznesini çözümleme.",
+  "Audit: kanıt zincirinin kendisi de değişmezlik (hash chain) ile doğrulanır."
+ ],
+ "ecaExample": "trigger:\n  event: erasure.requested\ncondition:\n  all:\n    - actor.capability >= \"compliance.erasure.execute\"\n    - not loop_detected\n    - not subject.under_legal_hold\naction:\n  - emit: pii.mask_requested\n  - emit: erasure.completed\nguards:\n  max_depth: 6\n  idempotency_key: \"erasure:{subject.id}:{request.id}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Kanıt deposu append-only; silme talebi pii'yi maskeler ama denetim izini değiştirmez (yasal bütünlük).",
+  "Kanıt ve veri öznesi taleplerine erişim deny-by-default capability + step-up; RLS ile tenant'a kapalı.",
+  "Yasal saklama (legal hold) altındaki kayıt silinemez; çakışma guard ile engellenir ve audit'lenir."
+ ],
+ "perfNotes": {
+  "code": "Kanıt sorguları keyset (occurred_at, id) ile; geniş tarih aralıklarında OFFSET yerine aralık+keyset.",
+  "perf": "Tenant/olay tipine göre kısmi index ile uyum raporu sayaçları ucuz; ağır raporlar projeksiyon tablosundan okunur."
+ },
+ "testNotes": [
+  "erasure.requested sonrası pii'nin maskelendiği ama audit kaydının korunduğu.",
+  "Legal hold altındaki öznede silme akışının guard ile durduğu.",
+  "Aynı erasure.requested'ın tekrarında tek erasure.completed üretildiği."
+ ]
+}

@@ -1,0 +1,46 @@
+{
+ "featureDefs": [
+  {
+   "name": "QR menü + masa oturumu",
+   "desc": "Masa bazlı QR ile açılan sipariş oturumu; aynı masada çok cihaz tek hesaba yazar, oturum kapanışı adisyon kilidi oluşturur.",
+   "critical": true
+  },
+  {
+   "name": "Mutfak ekranı (KDS) akışı",
+   "desc": "Sipariş kaleminin hazırlanıyor/hazır durum geçişleri; istasyon bazlı kuyruk, durum değişimi event olarak masaya ve kasaya yayılır.",
+   "critical": true
+  },
+  {
+   "name": "Adisyon → ödeme → fiş",
+   "desc": "Masa adisyonunun kapanışı money tipi ile toplanır, TR fiş/ödeme entegrasyonuna bağlanır; bölünmüş ödeme idempotent.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Restoran/F&B dikey distribution paketi; QR menü + masa + mutfak ihtiyacı olan işletmeye.",
+  "kernel": "Her şube/işletme tenant; masa, menü, adisyon tenant'a izole (RLS). Personel rolleri (garson/mutfak/kasa) capability deny-by-default.",
+  "core": "Adisyon ve ödeme money tipi + audit; sipariş durum geçişleri ve iptal/ikram kararları denetlenebilir (kim ikram yaptı).",
+  "modules": "s-pos (kasa/ödeme), s-inventory (stok düşümü) ve cc-tr (TR fiş/vergi) üstüne oturur; kendi restoran ArcheType'larını ekler.",
+  "apps": "Müşteri QR menü app'i (anonim oturum), garson app'i, mutfak ekranı app'i (KDS), kasa app'i — hepsi tek tenant verisi üzerinde."
+ },
+ "moduleUsage": [
+  "s-pos: adisyon kapanışı ve ödeme akışını sağlar; restoran modülü masa oturumunu POS satışına bağlar.",
+  "s-inventory: satılan kalem reçetesine göre stok düşümünü tetikler.",
+  "cc-tr: fiş, KDV oranı ve yasal ödeme uyumunu sağlar.",
+  "s-audit: ikram/iptal/adisyon düzeltme kararlarının delil kaydını tutar."
+ ],
+ "securityNotes": [
+  "QR oturumu anonim müşteri — yalnızca kendi masasının açık adisyonuna yazabilir; başka masanın adisyonuna erişim deny-by-default.",
+  "İkram/iptal/indirim personel capability gerektirir; garson tek başına adisyon silemez, audit'te iz kalır.",
+  "Ödeme money tipi minor-unit; bölünmüş ödemede idempotency_key yoksa çift tahsilat riski."
+ ],
+ "perfNotes": {
+  "code": "-- aktif masa adisyonu (keyset, açık oturum)\nSELECT * FROM order_line\nWHERE tenant_id = $1 AND table_session_id = $2\nORDER BY created_at, id;",
+  "perf": "Mutfak ekranı sık polling yerine event push (sipariş durum değişimi); yoğun serviste her masanın adisyonu açık-oturum index'i üzerinden, full-scan değil. KDS kuyruğu istasyon bazlı keyset."
+ },
+ "testNotes": [
+  "Aynı masada iki cihazın tek adisyona yazdığı, oturum kapanışında adisyonun kilitlendiği doğrulanır.",
+  "Mutfak durum geçişinin (hazırlanıyor→hazır) masaya ve kasaya event olarak yayıldığı test edilir.",
+  "Bölünmüş ödemenin idempotency ile çift tahsilat üretmediği doğrulanır."
+ ]
+}

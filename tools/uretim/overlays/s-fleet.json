@@ -1,0 +1,57 @@
+{
+ "featureDefs": [
+  {
+   "name": "Araç (Vehicle) ArcheType'ı",
+   "desc": "Plaka + tip + km + yakıt + atanan sürücü + durum; filo çekirdeği — Samsara muadili envanter varlığı; tenant'a izole.",
+   "critical": true
+  },
+  {
+   "name": "Canlı konum takibi (telematics)",
+   "desc": "GPS ping → time-series; ST_DWithin coğrafi sorgu; sürücü konumu pii=true, retention + amaç bağlama ile.",
+   "critical": true
+  },
+  {
+   "name": "Bakım planı + servis hatırlatma",
+   "desc": "km/tarih eşiği → bakım iş emri; periyodik servis, muayene, sigorta yenileme ECA tetikler.",
+   "critical": true
+  },
+  {
+   "name": "Yakıt + maliyet defteri (money)",
+   "desc": "Yakıt/bakım gideri Decimal/Currency (float değil) TL; araç başı toplam sahip olma maliyeti; muhasebeye fatura.",
+   "critical": false
+  },
+  {
+   "name": "TR muhasebe entegrasyonu",
+   "desc": "Bakım/yakıt gideri → Türk muhasebe ürünleriyle aynı platformda fatura/gider — Samsara'nın TR boşluğu.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-2 SaaS ürünü; kendi Araç/Sürücü/Bakım ArcheType'larını ve UI'sını tanımlar ama yetki/audit/event-bus/tenancy framework'ten gelir, yeniden icat etmez.",
+  "kernel": "Tenancy (her araç tenant_id ile izole, RLS), Identity (sürücü + filo yöneticisi kimliği), Audit (konum/bakım aksiyon izi) kernel'den miras.",
+  "core": "App core'una bağlı; Fleet bir Domain (Kaya) olarak core sözleşmelerine uyar, core module değişmez.",
+  "modules": "Time-series (konum), scale-gis (coğrafi sorgu), worker (telematics ingest) module'lerini tüketir; bakım olayını muhasebeye yalnız Contract ile yayar.",
+  "apps": "FSM/saha app'i araç atamasını filo modülünden çeker; aynı sürücü kaydını paylaşır, çift kayıt yok."
+ },
+ "moduleUsage": [
+  "Helpdesk/FSM app: saha iş emri → en yakın müsait araç (ST_DWithin) atanır.",
+  "Muhasebe app: yakıt/bakım gideri → TL gider kaydı + KDV; döviz abonelik değil.",
+  "Notification: bakım eşiği aşıldı → filo yöneticisine push; sürücüye 'muayene zamanı' SMS (İYS opt-in)."
+ ],
+ "ecaExample": "trigger:\n  event: vehicle.odometer_updated\n  when: \"km >= next_service_km AND tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"fleet.maintenance.schedule\"\n    - not loop_detected\naction:\n  - emit: maintenance.work_order_requested   # outbox, idempotent\n  - notify: [\"fleet_manager\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{vehicle_id}:service:{next_service_km}\"\n  external_effects: none",
+ "securityNotes": [
+  "Sürücü konumu + plaka pii=true (+retention); RLS tenant-scoped — başka tenant'ın aracı/sürücüsü görülmez.",
+  "Sürücü yetkisi capability deny-by-default: sürücü yalnız atandığı aracı görür, tüm filoyu değil.",
+  "Konum geçmişi amaç bağlama (purpose-binding) ile tutulur; telematics ingest idempotency key ile çift ping engellenir."
+ ],
+ "perfNotes": {
+  "code": "Araç/konum listesi keyset (cursor) pagination; (tenant_id, plaka, ts) + GiST coğrafi index; konum ingest asenkron worker + time-series tablo.",
+  "perf": "Yüksek frekanslı GPS ping time-series'e batch yazılır; canlı harita son-konum projeksiyonundan okur, ham log'u taramaz."
+ },
+ "testNotes": [
+  "Komşu-tenant araç/sürücü sorgusu sıfır döndürür.",
+  "Sürücü yalnız kendi atanmış aracını görebilir (capability testi).",
+  "Aynı bakım eşiği iki kez tetiklense tek iş emri üretir (idempotency).",
+  "Yakıt gideri Currency olarak kuruş kaybı olmadan muhasebeye yazılır."
+ ]
+}

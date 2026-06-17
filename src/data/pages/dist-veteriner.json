@@ -132,7 +132,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Veteriner / Hayvan Sağlığı Distribution — çekirdek yetenek",
+      "term": "Hasta (hayvan) kaydı + sahip bağı",
       "definition": [
        {
         "type": "strong",
@@ -140,41 +140,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Hayvan: tür/ırk/yaş/kimlik (çip), sahip (Party), tıbbi geçmiş. Sahip-hayvan ilişkisi; kayıt bitemporal, tıbbi veri hassas (pii-flag)."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Klinik randevu",
       "definition": [
        {
         "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
-       },
-       {
-        "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Randevu: hayvan × veteriner × slot; çakışma engelli, hatırlatma. Randevu durum makinesi (planlandı->geldi->tamamlandı->iptal)."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Aşı/tedavi takibi",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Aşı takvimi, tedavi/reçete, tekrar tarihi hatırlatma. Tıbbi kayıt append-only audit; aşı geçmişi resmî kayda esas."
+       }
+      ]
+     },
+     {
+      "term": "Stok + faturalama",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "İlaç/sarf stok hareketi (ledger); muayene/işlem faturalama. Tutarlar Money (Decimal) + KDV; e-Belge entegrasyonu opsiyonel."
        }
       ]
      }
@@ -362,15 +359,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Tıbbi kayıt + sahip iletişim PII: tenant-scoped RLS, pii-flag; başka kliniğin hasta kaydı sızmaz (capability deny-by-default). Aşı/tedavi geçmişi değişmez audit append-only (resmî kayda esas); geriye değişmez, düzeltme yeni kayıt. Faturalama Money/Decimal + KDV; stok tüketimi ledger'dan, geriye yazılamaz (yeni hareket). Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -398,15 +387,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Randevu çakışma kontrolü saf hesap (slot aralığı); aşı tekrar tarihi kural tablosu, if-zinciri YASAK."
        }
       ]
      },
@@ -424,15 +405,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Randevu/hasta listesi keyset pagination; aşı hatırlatma asenkron worker (cron); ilaç stok bakiyesi ledger projeksiyonu + cache."
        }
       ]
      },
@@ -728,7 +701,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Veteriner / Hayvan Sağlığı Distribution",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Veteriner / Hayvan Sağlığı Distribution\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: vaccination.administered\n  when: \"tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"vet.treatment.record\"\n    - not loop_detected\n    - patient.owner_id is set\naction:\n  - record: vaccination { animal_id, vaccine, dose, ts, bitemporal: true }\n  - emit: inventory.stock_consumed       # ilaç ledger\n  - emit: notification.next_dose_due     # outbox idempotent\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{animal}:{vaccine}:{date}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -868,6 +841,18 @@
     ]
    },
    {
+    "id": "block-dist-veteriner-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Çakışan randevu slotu reddedilir. Aşı kaydı stok tüketimi tetikler; aynı aşı/gün ikinci kez işlenmez (idempotency). Tıbbi kayıt geriye değişmez (audit); düzeltme yeni satır. Komşu klinik hasta/tedavi sorgusu sıfır döndürür (RLS)."
+     }
+    ]
+   },
+   {
     "id": "block-dist-veteriner-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -886,7 +871,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — aday Distribution (dikey): Health + Randevu + Inventory paketinin veteriner alıcı profiline uyarlanması. mevcut katalogda eksik olduğu için aday. Taksonomi: Stack ⊂ Edition ⊂ Distribution. Kernel zorunlu; modüller arası yalnız Contract."
        }
       ]
      },
@@ -895,16 +880,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Kimlik/tenancy (RLS)/audit kernel'den; sahip ve veteriner Party'den türer. Tıbbi kayıt/aşı bitemporal append-only; hassas veri pii-flag; faturalama Money (Decimal)."
        }
       ]
      },
@@ -913,7 +889,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Paket core'u yok; sağlık+randevu+envanter modüllerinin veteriner uyarlaması (hasta = hayvan). Her modül sözleşmesini korur (additif)."
        }
       ]
      },
@@ -922,7 +898,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Randevu modülü (slot/çakışma), Inventory (s-commerce stok ledger), faturalama/e-Belge (s-tax-compliance) yalnız Contract. dist-realestate ile dikey-paket deseni paylaşır."
        }
       ]
      },
@@ -931,7 +907,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Klinik app randevu + hasta kaydı + tedavi; Inventory app ilaç stoğunu aynı Stock Movement ledger'a yazar; faturalama muhasebeye GL postingi, çift kayıt yok."
        }
       ]
      }

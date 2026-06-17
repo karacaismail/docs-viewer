@@ -131,7 +131,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Saha Satış & Perakende Yürütme — çekirdek yetenek",
+      "term": "Saha rota ve ziyaret planı",
       "definition": [
        {
         "type": "strong",
@@ -139,41 +139,25 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Saha temsilcisine günlük rota + ziyaret edilecek nokta listesi; ziyaret check-in/check-out konum doğrulamalı, plan-gerçekleşme audit'e bitemporal yazılır."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Planogram / raf denetimi",
       "definition": [
        {
         "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
-       },
-       {
-        "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Rafta foto + planogram karşılaştırması; uygunsuzluk (out-of-stock, yanlış yerleşim) exception olarak işaretlenir, kanıt görüntü tenant deposunda saklanır."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Saha siparişi ve anlık stok",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Ziyarette alınan sipariş money tipiyle kaydedilir, idempotency_key ile çift sipariş önlenir; bağlantı kopuksa offline kuyruğa alınıp senkronize edilir."
        }
       ]
      }
@@ -361,15 +345,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Saha temsilcisi yalnız atanmış rota/hesapları görür; tenant RLS + temsilci scope ile deny-by-default, başka bölgenin verisi gizli. Konum ve ziyaret kanıtı (foto) pii sınıfı; tenant deposunda izole, çapraz-tenant erişim engellenir. Offline kuyruktan gelen sipariş senkronda idempotency_key ile tekilleştirilir, çift kayıt oluşmaz. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -397,15 +373,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Rota/ziyaret listesi (tarih, id) keyset; raf fotoğrafı async yüklenir, sipariş yazımı outbox üzerinden."
        }
       ]
      },
@@ -423,15 +391,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Mobil senkron batch'lenir; düşük bağlantıda offline kuyruk birikir, bağlantı dönünce keyset sırayla gönderilir."
        }
       ]
      },
@@ -727,7 +687,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Saha Satış & Perakende Yürütme",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Saha Satış & Perakende Yürütme\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: visit.checked_in\ncondition:\n  all:\n    - actor.capability >= \"field.visit\"\n    - geo_within(planned_location, tolerance)\n    - not idempotency_seen(visit.id)\naction:\n  - open_audit_tasks: [shelf_check, order_capture]\n  - emit: visit.started\nguards:\n  max_depth: 3\n  idempotency_key: \"visit:{visit.id}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -867,6 +827,18 @@
     ]
    },
    {
+    "id": "block-s-retail-execution-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Check-in: plan dışı konumdan check-in toleransla reddedilir veya işaretlenir. Offline: bağlantısız alınan sipariş kuyruğa girer, senkronda tek kez yazılır. Scope: temsilci başka bölgenin hesabını listeleyemez (RLS)."
+     }
+    ]
+   },
+   {
     "id": "block-s-retail-execution-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -943,13 +915,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-retail-execution-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-retail-execution-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-crm: Ziyaret edilen nokta bir hesap/party olarak tek kaynaktan gelir; ziyaret geçmişi müşteri kartına işlenir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-inventory: Saha siparişi ve raf out-of-stock bilgisi stok modülüne yansır; anlık stok sorgusu buradan okunur."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Accounting / Muhasebe: Saha siparişi faturaya ve gelir kaydına money tipiyle bağlanır."
+      }
+     ]
     ]
    },
    {

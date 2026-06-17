@@ -614,7 +614,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "PostGIS — coğrafi veri ve sorgular — çekirdek yetenek",
+      "term": "Coğrafi kolon + GiST index",
       "definition": [
        {
         "type": "strong",
@@ -622,41 +622,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "geography(POINT,4326) kolonu ve zorunlu GiST index; index yoksa tablo taraması = ölüm. ArcheType'ta Geo Coordinate alan tipi olarak bildirilir."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Proximity sorgusu (KNN)",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "ORDER BY location <-> point LIMIT K ile en yakın K kayıt; keyset benzeri sayfalama için sıralama anahtarı GiST'ten beslenir."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Geofencing (containment)",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "ST_Contains(zone.boundary, user_location) ile bir noktanın teslimat/yetki bölgesi içinde olup olmadığı; sınır kararı tenant-scoped polygon'a bağlı."
+       }
+      ]
+     },
+     {
+      "term": "Buffer / intersection",
+      "definition": [
+       {
+        "type": "text",
+        "text": "ST_Buffer ve ST_Intersects ile bölge genişletme ve kesişim; rota/alan analizleri."
        }
       ]
      }
@@ -844,15 +841,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Konum verisi PII'dir; kullanıcı koordinatları crypto-shredding kapsamında, retention bildirimi ArcheType'ta tanımlı. Geofencing kararı capability deny-by-default: yetki yoksa bölge sorgusu reddedilir, sonuç sızdırılmaz. Tenant izolasyonu coğrafi satırlarda da RLS ile; komşu tenant'ın delivery_zone polygon'u okunamaz. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -880,15 +869,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "CREATE INDEX shop_loc ON shop USING GIST(location); -- proximity: ORDER BY location <-> point LIMIT 10"
        }
       ]
      },
@@ -906,15 +887,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "GiST index zorunlu; olmadan her sorgu seq-scan. KNN operatörü (<->) index'i kullanır, ORDER BY + LIMIT ile keyset benzeri sayfalama mümkün. Geography hesabı geometry'den pahalı ama 100 km+ mesafede doğru."
        }
       ]
      },
@@ -1210,7 +1183,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — PostGIS — coğrafi veri ve sorgular",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — PostGIS — coğrafi veri ve sorgular\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: order.delivery_address_set\ncondition:\n  all:\n    - actor.capability >= \"delivery:zone:check\"\n    - not loop_detected\n    - st_contains(zone.boundary, order.location)\naction:\n  - emit: order.delivery_zone_confirmed\nguards:\n  max_depth: 6\n  idempotency_key: \"geofence:{order_id}:{zone_id}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -1350,6 +1323,18 @@
     ]
    },
    {
+    "id": "block-scale-gis-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "GiST index varlığı ve sorgu planının seq-scan değil index-scan olduğu doğrulanır. Geography ile geometry mesafe farkı testi: uzun mesafede geometry'nin hatalı, geography'nin doğru sonuç verdiği. Geofencing sınır testi: polygon kenarındaki nokta içeride/dışarıda kararı deterministik. RLS testi: komşu tenant'ın coğrafi kayıtlarına proximity sorgusu sonuç döndürmez."
+     }
+    ]
+   },
+   {
     "id": "block-scale-gis-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1368,7 +1353,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Konum-tabanlı bir özellik (yakın bul, bölge kontrolü, rota) gerekiyorsa entegre edilir; aksi halde eklenmez — varsayılan-basit ilkesi."
        }
       ]
      },
@@ -1377,16 +1362,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "ArcheType şemasındaki Geo Coordinate atomik tipi kolonun POINT olarak haritalanmasını sağlar; RLS politikası coğrafi satırlara da uygulanır."
        }
       ]
      },
@@ -1395,7 +1371,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "PostGIS extension PostgreSQL üzerinde; spatial index (GiST) ve sorgu fonksiyonları çekirdek veri katmanında."
        }
       ]
      },
@@ -1404,7 +1380,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Teslimat bölgesi, mağaza konumu, saha denetimi gibi modüller bu primitive üstüne oturur."
        }
       ]
      },
@@ -1413,7 +1389,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Harita yüzeyi (Mapbox/MapLibre) frontend; backend proximity/containment sorgularını sunar."
        }
       ]
      }

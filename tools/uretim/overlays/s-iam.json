@@ -1,0 +1,47 @@
+{
+ "featureDefs": [
+  {
+   "name": "RBAC — rol-bazlı yetki",
+   "desc": "Role/Permission/Assignment ArcheType'ları; rol→izin eşlemesi, kullanıcıya rol ataması. Kernel capability sözleşmesinin tenant-yapılandırılabilir katmanı.",
+   "critical": true
+  },
+  {
+   "name": "ABAC / ReBAC — öznitelik ve ilişki bazlı",
+   "desc": "OpenFGA muadili: ilişki tuple'ları (user→relation→object) + öznitelik koşulları; 'belge sahibinin ekibi düzenleyebilir' gibi graf-tabanlı yetki çözümü.",
+   "critical": true
+  },
+  {
+   "name": "Yetki kararı (authorization check)",
+   "desc": "check(user, action, resource) → allow/deny; deny-by-default. Karar düşük gecikmeli (cache'li graf), her istek yolunda."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-2 SaaS ürünü; Kernel + Scale + Layer-1 üstüne oturur. Kernel zaten capability deny-by-default taşır; s-iam bunu OpenFGA/Logto sınıfı tenant-yapılandırılabilir RBAC+ABAC/ReBAC yüzeyine çıkarır.",
+  "kernel": "Kernel authz (capability) sözleşmesini genişletir; ArcheType engine ile şema + otomatik REST/GraphQL, tenancy (RLS) ve audit kernel'den, IAM kendi Domain'ini (Kaya) tanımlar.",
+  "core": "App core'una bağlı; core module değişmez. Her ArcheType erişimi IAM kararını çağırır, karar Contract'ı tek kaynak.",
+  "modules": "Tüm Layer-2 module'leri yetki kararını IAM Contract'ından alır (check fonksiyonu); module kendi izin mantığını gömmez, deny-by-default'a uyar.",
+  "apps": "Tüm app'ler aynı rol/ilişki grafını paylaşır; SSO (k-sso) ile kimlik, IAM ile yetki — kimlik doğrulama ve yetkilendirme ayrı katman."
+ },
+ "moduleUsage": [
+  "Tüm module'ler: ArcheType erişiminde check(user, action, resource) çağırır; deny-by-default.",
+  "HR/People app: 'yöneticisi onaylar' ReBAC ilişkisini IAM grafından çözer.",
+  "DMS app: 'belge sahibinin ekibi düzenler' ilişki tuple'ı ile erişim.",
+  "Admin Surface: rol/izin yönetimi IAM'in kendi yüzeyinden; değişiklik audit'li."
+ ],
+ "ecaExample": "trigger:\n  event: access.check_requested\ncondition:\n  all:\n    - tenant_scoped\n    - relation_or_role_grants(user, action, resource)   # deny-by-default\n    - not loop_detected\naction:\n  - decision: allow\n  - emit: access.decision_logged       # outbox, idempotent\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:authz:{user}:{action}:{resource}\"\n  external_effects: none",
+ "securityNotes": [
+  "Deny-by-default çekirdek ilke: eşleşen rol/ilişki yoksa erişim reddedilir; capability kernel sözleşmesiyle hizalı.",
+  "İlişki tuple'ları ve rol atamaları pii bağlamlı; RLS tenant-scoped, komşu-tenant grafı sorgulanamaz.",
+  "Yetki değişikliği (rol/izin/tuple) audit'li + bitemporal — hangi tarihte kim neye erişebiliyordu izlenebilir (denetim/forensics).",
+  "Privilege escalation koruması: rol atama capability'si ayrı ve step_up gerektirir; kendi kendine yetki yükseltme reddedilir."
+ ],
+ "perfNotes": {
+  "perf": "Yetki kararı her istek yolunda — graf cache'li (ilişki tuple index), karar p95 düşük tutulur; ReBAC zincir çözümü sınırlı derinlikte (cycle/derinlik kapısı)."
+ },
+ "testNotes": [
+  "Deny-by-default: tanımsız erişim reddedilir (allow yalnız açık kural/ilişkiyle).",
+  "Komşu-tenant yetki grafı sorgulanamaz (izolasyon).",
+  "ReBAC: 'sahibin ekibi' ilişkisi doğru çözülür; ilişki kalkınca erişim anında kapanır.",
+  "Privilege escalation: kullanıcı kendi rolünü yükseltemez (ayrı capability + step_up)."
+ ]
+}

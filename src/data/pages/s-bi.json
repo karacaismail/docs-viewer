@@ -353,7 +353,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "BI / Dashboard — çekirdek yetenek",
+      "term": "Dashboard + Question + Datasource ArcheType'ları",
       "definition": [
        {
         "type": "strong",
@@ -361,41 +361,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Metabase/Looker muadili çekirdek varlıklar; sorgu/grafik tanımı hibrit şema + JSONB. Veri kaynağı bağlantısı tenant-scoped."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Text-to-SQL (AI)",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Doğal dil → SQL; karar değil öneri, kullanıcı görür/onaylar. Üretilen SQL yalnız izinli şema/satır üzerinde çalışır (RLS + capability WHERE enjeksiyonu)."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Doğal dil sorgu + açıklama",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Soru → sonuç + üretilen sorgunun gerekçesi (provenance); halüsinasyon/atfsız metrik output guardrail'e takılır."
+       }
+      ]
+     },
+     {
+      "term": "Scheduled refresh + projection",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Dashboard verisi okuma-optimize projection'dan; pahalı sorgu asenkron yenilenir, canlı tabloyu yormaz."
        }
       ]
      }
@@ -583,15 +580,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Text-to-SQL çıktısı yalnız izinli şema/satırda çalışır: capability + RLS WHERE olarak enjekte edilir (deny-by-default); yetkisiz tabloya erişim engellenir. SQL enjeksiyonu + tehlikeli ifade (DROP/UPDATE) parse/whitelist ile reddedilir; BI deny-by-default yalnız SELECT. PII kolonları sorgu/sonuçta maskelenir; tenant verisi model eğitimine gitmez; maliyet guardrail (token/sorgu kotası + circuit breaker). Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -619,15 +608,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "NL→SQL üretimi + sonuç render asenkron; pahalı dashboard scheduled refresh ile önceden hesaplanır (span-level tracing)."
        }
       ]
      },
@@ -645,15 +626,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Sorgular okuma-replica/projection üzerinden; sonuç listeleri keyset; sık metrikler materialized; OLTP yolu izole tutulur."
        }
       ]
      },
@@ -949,7 +922,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — BI / Dashboard",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — BI / Dashboard\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: bi.query_requested\ncondition:\n  all:\n    - actor.capability >= \"bi.read\"\n    - requester.can_read(datasource)   # RLS-aware\n    - not loop_detected\naction:\n  - generate: sql_from_nl              # text-to-SQL, onaylı\n  - run: query                          # capability/RLS WHERE enjekte\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{query_hash}:{schema_version}\"\n  external_effects: cost_budget_check",
     "copyEnabled": true
    },
    {
@@ -1089,6 +1062,18 @@
     ]
    },
    {
+    "id": "block-s-bi-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Yetkisiz datasource/tablo text-to-SQL sonucuna girmez (deny path). Komşu-tenant verisi dashboard'da görünmez (izolasyon). Üretilen SQL yalnız SELECT; yazma/DDL ifadesi reddedilir. Maliyet kotası aşılınca sorgu circuit breaker ile reddedilir."
+     }
+    ]
+   },
+   {
     "id": "block-s-bi-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1107,7 +1092,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Layer-2 SaaS ürünü; tek başına değil, diğer app'lerin veri/projection'ı üstüne oturur. Kendi Domain'i (Kaya), kaynaklara yalnız Contract ile (okuma) bağlı."
        }
       ]
      },
@@ -1116,16 +1101,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Tenancy (RLS), capability scope ve audit kernel'den; Dashboard/Question kendi şemasını ArcheType engine ile tanımlar — ArcheType agent'lara MCP tool olarak doğar."
        }
       ]
      },
@@ -1134,7 +1110,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "i18n, Notification, Settings core'dan; metrik sorguları okuma-replica/projection üzerinden çalışır, OLTP yolu korunur."
        }
       ]
      },
@@ -1143,7 +1119,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Diğer module'lerin yayımladığı olay/projection'ı okur (read-only); yazma yapmaz — yalnız Contract."
        }
       ]
      },
@@ -1152,7 +1128,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Tüm app'ler aynı veri kaynağını paylaşır; BI yalnız okur, çift kayıt/yazma yok."
        }
       ]
      }
@@ -1165,13 +1141,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-bi-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-bi-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Sales/CRM app: pipeline metriklerini dashboard'a okur (yetki kullanıcıyla taşınır)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Finance app: gelir/gider projection'ını text-to-SQL ile sorgulatır; sonuç para tipinde (minor unit + currency)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Ops app: operasyon KPI'larını scheduled refresh ile gösterir; canlı tabloyu yormaz."
+      }
+     ]
     ]
    },
    {

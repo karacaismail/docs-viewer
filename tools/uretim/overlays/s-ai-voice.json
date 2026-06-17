@@ -1,0 +1,40 @@
+{
+ "featureDefs": [
+  {
+   "name": "Çağrı karşılama + niyet çözümleme",
+   "desc": "Sesli AI ajanı gelen çağrıyı karşılar, konuşmadan niyeti (randevu/sipariş/destek) çözer; karar değil öneri, güven kalibrasyonu zorunlu.",
+   "critical": true
+  },
+  {
+   "name": "Entegre aksiyon",
+   "desc": "Çözülen niyet ilgili module'e (CRM/randevu/Helpdesk) Contract üzerinden event olarak bağlanır; ajan doğrudan yazmaz, sözleşme sınırında kalır."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet (aday) — Layer-2 SaaS ürünü; Kernel + Scale + Layer-1 üstüne oturur. SaaS Fırsat Haritası kategorisinde eksik olduğu için aday; taksonomi: Stack ⊂ Edition ⊂ Distribution.",
+  "kernel": "Kernel identity (arayan eşleştirme) ve tenancy (RLS); konuşma/niyet ArcheType'ı engine ile tanımlanır, audit kernel'den. Voice Agent kendi Domain'ini (Kaya) tanımlar.",
+  "core": "App core'una bağlı; core module değişmez. Ses akışı dış STT/TTS servisi, niyet/aksiyon kaydı kernel'de.",
+  "modules": "CRM (arayan bağlamı), randevu ve Helpdesk module'lerine niyet event'i yayar; ajan kararı insan onayına/öneriye bağlı, doğrudan module yazmaz — Contract.",
+  "apps": "CRM ve çağrı merkezi app'leri aynı arayan/konuşma verisini paylaşır; görüşme RAG'a beslenebilir."
+ },
+ "moduleUsage": [
+  "s-crm: arayanı Party ile eşleştirir, görüşmeyi aktivite olarak yazar.",
+  "Randevu/booking app: 'randevu al' niyetini slot rezervasyonuna bağlar (öneri → onay).",
+  "Helpdesk app: 'destek' niyetini ticket'a köprüler.",
+  "RAG/AI app: konuşma transkriptini bilgi tabanına besler (consent kapısıyla)."
+ ],
+ "ecaExample": "trigger:\n  event: voice.intent_resolved\ncondition:\n  all:\n    - actor.capability >= \"voice.act\"\n    - confidence >= threshold            # karar degil oneri\n    - tenant_scoped\n    - not loop_detected\naction:\n  - propose: crm.activity_logged        # outbox, idempotent\n  - on_low_confidence: route_to_human\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:call:{call_id}:intent\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Ses kaydı ve transkript pii (+retention); RLS tenant-scoped, komşu-tenant görüşmesi erişilemez.",
+  "AI çıktısı karar değil öneri; düşük güvende insana yönlendir (route_to_human) — otomatik geri-alınamaz aksiyon yok.",
+  "Dış aksiyon (sipariş/randevu) step_up gerektirir; RAG beslemesi consent kapısıyla."
+ ],
+ "perfNotes": {
+  "perf": "STT/TTS dış servis (düşük gecikme kritik); niyet çözümleme asenkron olabilir ama çağrı içi yanıt streaming; transkript indeksleme worker'da."
+ },
+ "testNotes": [
+  "Düşük güven: eşik altı niyet otomatik aksiyona dönüşmez, insana yönlenir.",
+  "Komşu-tenant görüşme/transkript erişimi sıfır (izolasyon).",
+  "Niyet idempotent: aynı çağrı iki kez aktivite/aksiyon üretmez (idempotency_key)."
+ ]
+}

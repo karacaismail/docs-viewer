@@ -1,0 +1,47 @@
+{
+ "featureDefs": [
+  {
+   "name": "BambooHR-sınıfı görsel dil",
+   "desc": "Boşluklu yerleşim, insan fotoğrafı öncelikli kartlar, tek-ekran özet. Aynı core module seti — fark yalnız UI estetiği.",
+   "critical": true
+  },
+  {
+   "name": "İnsan-öncelikli UX akışı",
+   "desc": "İzin isteme 2 tık; onboarding sihirbazı; yönetici onayı mobilde tek dokunuş. Fonksiyon eklenmez, akış kısaltılır.",
+   "critical": true
+  },
+  {
+   "name": "Pazara-çıkış paketi",
+   "desc": "Landing, fiyat, onboarding — Edition'a özel reklamlı kanal paketi; hedef alıcı 'yazılımcı arayüzü' istemeyen İK yöneticisi."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — ama Edition sözleşmesiyle: core module seti ve kod stack-hrms ile AYNIDIR; fark UI estetiği, UX akışı ve pazara-çıkış paketindedir. Fonksiyon eklemek Edition işi değildir — o ihtiyaç parent stack'e gider.",
+  "kernel": "Kendi ArcheType/şema tanımlamaz; kernel ve parent stack'in ArcheType'larını Surface projeksiyon beyanıyla (k-surface) farklı yüzle gösterir — entitlement (be-kararlar E1) hangi projeksiyonun açık olduğunu söyler.",
+  "core": "stack-hrms core'u fonksiyonel olarak eksiksiz temeldir; People Edition core'a dokunmaz, yalnız edition_overrides ile projeksiyon (photo-card vs form) değiştirir.",
+  "modules": "Yeni module eklemez; mevcut HRMS module'lerini olduğu gibi kullanır. Davranış/iş-mantığı parent stack'te kalır.",
+  "apps": "People Edition bir HRMS App'in UX paketlenmesidir; aynı veriyi/aynı Workflow'u kullanır, farklı landing+fiyat+onboarding ile satılır."
+ },
+ "moduleUsage": [
+  "stack-hrms: tüm fonksiyonel core buradan gelir; Edition yalnız sunum katmanını değiştirir.",
+  "k-surface (Surface engine): Party/Employee ArcheType'ı photo-card projeksiyonuyla gösterilir (core düz form).",
+  "Entitlement (be-kararlar E1): hangi Edition projeksiyonunun açık olduğunu belirler; kapalı projeksiyon render edilmez.",
+  "stack-editions: Edition sözleşmesinin (aynı kod, farklı paket) genel kuralı buradan miras alınır."
+ ],
+ "ecaExample": "trigger:\n  event: surface.render_requested\n  when: \"edition == 'people'\"\ncondition:\n  all:\n    - actor.capability >= \"hrms.read\"\n    - entitlement.projection_enabled(\"people.photo_card\")\n    - tenant_scoped\naction:\n  - project: Employee.as = photo-card   # core kodu degismez\n  - render: people_edition_surface\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:surface:employee:people\"\n  external_effects: none",
+ "securityNotes": [
+  "Edition yalnız sunum katmanı: yetki/audit/RLS parent stack-hrms'ten gelir, Edition kendi güvenlik mantığı eklemez (yüzey farkı güvenlik sınırı değildir).",
+  "Çalışan fotoğrafı ve özlük verisi pii (+retention); photo-card projeksiyonu da aynı RLS + capability kapısına tabidir.",
+  "Entitlement kapalı projeksiyon yüzeyde görünmez — Edition farkı entitlement'la zorlanır, kod çatallanmasıyla değil."
+ ],
+ "perfNotes": {
+  "code": "Sıfır yeni iş-mantığı: edition_overrides salt deklaratif projeksiyon değişimi; aynı okuma modeli, farklı render bileşeni. Bakım maliyeti core'la paylaşılır (tek kod tabanı).",
+  "perf": "Tek-ekran özet projection_of okuma modelinden; foto-kart ek alan (avatar) çeker ama sorgu yapısı core ile aynı, ölçek farkı yok."
+ },
+ "testNotes": [
+  "Edition pariteleri: People Edition core stack-hrms ile aynı fonksiyonel testleri geçer (davranış değişmedi).",
+  "Projeksiyon farkı: aynı Employee kaydı core'da form, People'da photo-card render eder; veri aynı.",
+  "Entitlement kapısı: people projeksiyonu kapalıyken yüzeyde görünmez (core form'a düşer).",
+  "Edition fonksiyon eklemez: People'a özel iş-mantığı testi YOKtur — yeni ihtiyaç parent stack'e gider (sözleşme invariant'i)."
+ ]
+}

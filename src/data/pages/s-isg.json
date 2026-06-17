@@ -205,7 +205,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "İSG / EHS Yönetimi — çekirdek yetenek",
+      "term": "Risk değerlendirme",
       "definition": [
        {
         "type": "strong",
@@ -213,41 +213,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Tehlike envanteri, 5x5 risk matrisi, DÖF (düzeltici/önleyici faaliyet) aksiyon akışı; aksiyonlar onay zinciri ve audit ile."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "İSG-KATİP bildirimi",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Sözleşme/atama bildirimleri; resmi entegrasyon dış efekt — idempotent + onay kapısı."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Periyodik eğitim/muayene takibi",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Zorunlu İSG eğitim periyotları ve işe giriş/periyodik sağlık muayenesi takibi; süresi dolan kayıt için hatırlatma."
+       }
+      ]
+     },
+     {
+      "term": "Saha denetim listeleri",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Mobil kontrol listeleri, offline uyumlu; bağlantı gelince senkronizasyon (idempotent)."
        }
       ]
      }
@@ -435,15 +432,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Sağlık muayene verisi özel nitelikli PII; bitemporal + crypto-shredding, RLS ile tenant izolasyonu. İSG-KATİP gibi resmi bildirim dış efekt: idempotent + step-up onayı, çift bildirim engellenir. DÖF onay zinciri capability deny-by-default; yetkisiz aktör aksiyon kapatamaz. Saha denetim offline kayıtları senkronda imza/aktör doğrulanır; geriye dönük değişiklik audit'lenir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -471,15 +460,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "SELECT * FROM training_record WHERE tenant_id=$1 AND due_at < now() ORDER BY due_at, id LIMIT 50; -- süresi dolan"
        }
       ]
      },
@@ -497,15 +478,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Eğitim/muayene son tarih sorguları keyset; (tenant_id, due_at) index. Offline saha kayıtları toplu idempotent upsert ile senkron."
        }
       ]
      },
@@ -801,7 +774,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — İSG / EHS Yönetimi",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — İSG / EHS Yönetimi\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: risk.assessment_submitted\ncondition:\n  all:\n    - actor.capability >= \"ehs:risk:assess\"\n    - not loop_detected\n    - risk.score >= threshold\naction:\n  - emit: dof.action_required\n  - emit: isgkatip.notification_queued\nguards:\n  max_depth: 6\n  idempotency_key: \"dof:{assessment_id}:{hazard_id}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -941,6 +914,18 @@
     ]
    },
    {
+    "id": "block-s-isg-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Süre testi: periyodu dolan eğitim/muayene için hatırlatma ve uyumsuzluk uyarısı tetiklenir. İdempotency testi: aynı İSG-KATİP bildirimi tekrar gönderilmez. Sağlık verisi izolasyon testi: özel nitelikli kayıt komşu tenant'a sızmaz, crypto-shredding ile silme. DÖF capability testi: yetkisiz aktör düzeltici faaliyeti kapatamaz."
+     }
+    ]
+   },
+   {
     "id": "block-s-isg-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -959,7 +944,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Mevzuat zorunluluğu olan (OSGB/İSG uzmanı portföyü) tenant için aday kategori; reklamsız organik kanalla yayılır."
        }
       ]
      },
@@ -968,16 +953,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "ArcheType engine ile şema, audit + tenancy framework'ten; DÖF onayları capability deny-by-default. Sağlık verisi bitemporal + crypto-shredding."
        }
       ]
      },
@@ -986,7 +962,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Kernel + Scale + Layer-1 üstüne; saha denetimi için offline sync ve outbox."
        }
       ]
      },
@@ -995,7 +971,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "stack-hrms personel köprüsü, stack-lms eğitim köprüsü, stack-compliance mevzuat."
        }
       ]
      },
@@ -1004,7 +980,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "İSG uzmanı/OSGB yönetir; saha personeli mobil denetim; yönetici DÖF onayı."
        }
       ]
      }
@@ -1017,13 +993,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-isg-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-isg-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "stack-hrms: personel ana kaydı; işe giriş muayene ve KKD zimmet çalışana bağlanır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "stack-lms: zorunlu İSG eğitim periyotlarını ve tamamlanma kayıtlarını sağlar."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "stack-compliance: mevzuat takibi ve denetim raporlarını besler."
+      }
+     ]
     ]
    },
    {

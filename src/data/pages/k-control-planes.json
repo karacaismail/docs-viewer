@@ -396,7 +396,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Dört Boyut — Kontrol Düzlemleri (Control Planes) — çekirdek yetenek",
+      "term": "Boyut 1 — Ops/DevOps düzlemi",
       "definition": [
        {
         "type": "strong",
@@ -404,41 +404,51 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Operatör/SRE: hosting, CI/CD, dağıtım/ölçek. be-deploy-profilleri üstünde; altyapı güven sınırı. Frappe Press/cPanel benzeri. Müşteri verisine erişim yok, sadece operasyon."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Boyut 2 — Developer-admin düzlemi",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "SaaS geliştirici: code-base customization, ArcheType arka-planı, DB tarafı (join/relations/views). be-sdk + k-schema. Drupal Views/Django admin benzeri; yüzlerce işlem ama tipli sözleşme içinde."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Boyut 3 — Tenant/Müşteri-admin düzlemi",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "SaaS müşterisi: kendi süreçleri; ArcheType'ı PROMPT ile oluşturur (capability-gated, tek komut + çok-aşamalı AI). Serbest DDL/kod DEĞİL: tipli, hibrit depolama (paylaşılan şema + JSONB; tablo-per-tip yok)."
+       }
+      ]
+     },
+     {
+      "term": "Boyut 4 — Public/Frontpages düzlemi",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Anonim ziyaretçi: StoreFront, frontpages, landing, blog. Surface'in public projeksiyonu (l1-seo: meta/schema/sitemap). Storefront/CMS public benzeri; en dış güven sınırı."
+       }
+      ]
+     },
+     {
+      "term": "Module vs ArcheType — düzlem ayrımı",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Module (Kaya): Boyut 2'de geliştirici özelleştirir, Boyut 3'te müşteri KULLANIR. ArcheType (Büyük Taş): Boyut 2'de arka-plan düzenlenir, Boyut 3'te müşteri PROMPT ile oluşturur."
        }
       ]
      }
@@ -626,15 +636,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Dört düzlem dört ayrı güven sınırı + yetki tavanı (ADR-0015): ops müşteri verisine, müşteri başka tenant'a, public hiçbir yazıma erişemez (deny-by-default). Boyut 3 prompt ile ArcheType üretimi serbest DDL/kod DEĞİL: tipli, capability-gated, hibrit depolama (paylaşılan şema + JSONB). DisableProtection sınıfı önerilemez/uygulanamaz. Agent asla principal değil; etkin yetki = kullanıcı ∩ capability ∩ tool_scope ∩ risk (sus-actions). Tüm düzlem-aşan işlem audit'li. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -662,15 +664,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Düzlem yönlendirme yetki tavanına göre dispatch (plane -> capability seti); ArcheType üretimi tip şablonundan, elle DDL YASAK."
        }
       ]
      },
@@ -688,15 +682,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Public yüzey (Boyut 4) projeksiyon + CDN/cache (anonim, yüksek hacim); developer/tenant panel (B2/B3) tenant-scoped sorgu keyset pagination; ops düzlemi (B1) veri yolundan ayrık."
        }
       ]
      },
@@ -992,7 +978,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Dört Boyut — Kontrol Düzlemleri (Control Planes)",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Dört Boyut — Kontrol Düzlemleri (Control Planes)\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: archetype.create_requested\n  when: \"plane == 'tenant_admin'\"\ncondition:\n  all:\n    - actor.capability >= \"archetype.author\"\n    - tool_scope allows schema_gen\n    - not loop_detected\n    - request is typed AND not raw_ddl    # serbest DDL/kod YASAK\naction:\n  - generate: archetype { storage: shared_schema + jsonb }   # tablo-per-tip yok\n  - record: schema_change { plane, actor, bitemporal: true }\n  - emit: audit.archetype_authored\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{archetype}:author\"\n  external_effects: capability_gated",
     "copyEnabled": true
    },
    {
@@ -1132,6 +1118,18 @@
     ]
    },
    {
+    "id": "block-k-control-planes-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Ops (B1) yetkisi müşteri verisi sorgusunda sıfır/red döndürür. Tenant-admin (B3) prompt isteği raw DDL içeriyorsa reddedilir; yalnız tipli ArcheType üretir. Müşteri başka tenant'ın ArcheType/verisini göremez (RLS + yetki tavanı). Public (B4) yüzey hiçbir yazma capability'sine sahip değil; yalnız projeksiyon okur."
+     }
+    ]
+   },
+   {
     "id": "block-k-control-planes-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1150,7 +1148,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — kernel mimari modeli (bağımsız ürün değil). Platformu kitle/sorumluluk/güven sınırına göre dört kontrol düzlemine ayırır; her düzlem ayrı panel, kullanıcı, yetki tavanı (ADR-0015). Tüm üst katmanlar bu modele oturur."
        }
       ]
      },
@@ -1159,16 +1157,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Dört düzlem kernel'in tenancy + authz + identity'sine dayanır; her düzlem ayrı capability seti + yetki tavanı. Agent asla principal değil; etkin yetki = kullanıcı ∩ capability ∩ tool_scope ∩ risk."
        }
       ]
      },
@@ -1177,7 +1166,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Düzlem ayrımı core sözleşmesi: Module ve ArcheType'ın hangi düzlemde özelleştirildiği/oluşturulduğu sabit kural. Surface'in public projeksiyonu (Boyut 4) core'dan türetilir."
        }
       ]
      },
@@ -1186,7 +1175,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Boyut 2 be-sdk + k-schema; Boyut 3 k-agent-runtime + sus-actions; Boyut 4 l1-seo; Boyut 1 be-deploy-profilleri. Projeksiyon k-surface; uçtan uca akış dx-workflow."
        }
       ]
      },
@@ -1195,7 +1184,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Her app dört düzlemde farklı yüz gösterir: aynı ArcheType geliştirici panelinde (B2) düzenlenir, müşteri panelinde (B3) prompt ile üretilir, public yüzeyde (B4) projeksiyon olarak yayınlanır — tek kaynak, çok düzlem."
        }
       ]
      }

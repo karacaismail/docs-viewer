@@ -424,7 +424,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Tag Manager — Etiket Konteyneri (server-side öncelikli) — çekirdek yetenek",
+      "term": "TagContainer + Tag ArcheType'ları (sürümlü)",
       "definition": [
        {
         "type": "strong",
@@ -432,41 +432,42 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Tek container; tag'ler tanımlı tetikleyici/değişken + consent-kategori (analytics/marketing/functional) ile yönetilir. Her tag bir consent kategorisine bağlı zorunlu alan; tag değişimi audit'li + sürümlü."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Onaylı tag allowlist (custom-HTML kapalı)",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Yalnız allowlist'teki sağlayıcı/etiket enjekte edilir; custom-HTML tag deny-by-default (XSS vektörü); dar network allowlist. CI'da custom-HTML tanımı reddedilir."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Consent eşlemesi (rıza yoksa yüklenmez)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "cc-privacy consent ön koşul; rıza yoksa pazarlama etiketi enjekte edilmez (yalnız zorunlu/transactional). KVKK kapısı."
+       }
+      ]
+     },
+     {
+      "term": "Server-side GTM + dataLayer sözleşmesi",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Tarayıcı yerine sunucu tarafı container; veri sızıntısı + reklam-engelleyici dayanıklılığı. Standart dataLayer olay şeması l1-analytics + l1-experiment ile paylaşılır."
        }
       ]
      }
@@ -654,15 +655,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Custom-HTML tag = XSS vektörü → deny-by-default kapalı; yalnız allowlist sağlayıcı + dar network allowlist; CI'da custom-HTML tanımı reddedilir (güvenlik kapısı). Consent atlama = KVKK ihlali → rıza ön koşul (cc-privacy); rıza yoksa pazarlama tag'i enjekte edilmez, yalnız zorunlu/transactional. Bu modül pii TOPLAMAZ (taşır, ölçmez); tenant-scoped RLS — tag'ler tenant'lar arası karışmaz; her tag değişimi audit'li + sürümlü (geri-alma). Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -690,15 +683,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Enjeksiyon-karar fonksiyonu (consent+allowlist) ve dataLayer doğrulayıcı saf fonksiyon; tag yayını taslak→onay→sürüm workflow'u."
        }
       ]
      },
@@ -716,15 +701,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Tag çoğalması sayfa hızını düşürür → server-side container + denetim; container sürümleri keyset; çoklu ortam (dev/stage/prod) ayrık."
        }
       ]
      },
@@ -1020,7 +997,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Tag Manager — Etiket Konteyneri (server-side öncelikli)",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Tag Manager — Etiket Konteyneri (server-side öncelikli)\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: page.view\n  when: tenant_scoped\ncondition:\n  all:\n    - tag.provider in allowlist          # custom-HTML değil\n    - consent.category_granted(tag)       # rıza kapısı\n    - not loop_detected\naction:\n  - inject: tag                          # server-side tercih\n  - skip_if: consent_missing             # transactional hariç\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{container_version}:{tag}\"\n  external_effects: network_allowlist_only",
     "copyEnabled": true
    },
    {
@@ -1160,6 +1137,18 @@
     ]
    },
    {
+    "id": "block-l1-tagmanager-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Consent yokken marketing tag enjekte EDİLMEZ (deny path); allowlist dışı sağlayıcı reddedilir. Custom-HTML tag tanımı CI'da reddedilir (XSS kapısı); dataLayer olayı şemadan geçer. Tenant izolasyonu: tag'ler tenant'lar arası karışmaz (RLS); tag sürüm geri-alma çalışır. Reklam-engelleyici altında server-side yol etiket teslimini sürdürür."
+     }
+    ]
+   },
+   {
     "id": "block-l1-tagmanager-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1178,7 +1167,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Layer-1 in-tree modül (app değil): tüm pazarlama/ölçüm etiketlerinin tek taşıyıcısı. Ölçüm (l1-analytics), rıza (cc-privacy) ve tag-taşıma FARKLI sorumluluklar — birini diğerine gömmek anti-pattern; yalnız Contract/dataLayer ile konuşur."
        }
       ]
      },
@@ -1187,16 +1176,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Tenancy (RLS — tenant başına container, tag'ler karışmaz), audit (tag değişimi sürümlü), capability ve ArcheType engine kernel'den."
        }
       ]
      },
@@ -1205,7 +1185,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Settings (kanal/ortam), i18n core'dan; enjeksiyon kararı (tag, consent-state) → yükle/atla saf fonksiyon; custom-HTML yasağı manifest'te (WASM sandbox)."
        }
       ]
      },
@@ -1214,7 +1194,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "cc-privacy/cc-notification-consent consent durumunu ön koşul okur; l1-analytics ve l1-experiment paylaşılan dataLayer sözleşmesinden beslenir; fe-cdn ile server-side yol — yalnız Contract."
        }
       ]
      },
@@ -1223,7 +1203,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Frontpages/public Surface ve admin (container/tag yönetimi + consent eşleme + önizleme) aynı container kaydını paylaşır; pii TOPLAMAZ (taşır, ölçmez)."
        }
       ]
      }
@@ -1236,13 +1216,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-l1-tagmanager-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-l1-tagmanager-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "l1-analytics: paylaşılan dataLayer olay şemasından beslenir (ölçüm orada, taşıma burada)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "l1-experiment: aynı dataLayer sözleşmesini tüketir (deney atama olayı)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "cc-privacy / cc-notification-consent: tag enjeksiyonu öncesi consent durumunu sağlar (rıza yoksa atla)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "fe-cdn: server-side GTM endpoint'i reklam-engelleyici dayanıklı yol için kullanılır."
+      }
+     ]
     ]
    },
    {

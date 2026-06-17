@@ -1,0 +1,56 @@
+{
+ "featureDefs": [
+  {
+   "name": "ECA Kural Motoru (Event-Condition-Action)",
+   "desc": "Olay tetikler, koşul değerlendirilir, eylem koşar. Kurallar bildirimseldir; kod gömülmez. Her kural capability ve guard taşır; loop_detected ve max_depth ile zincir patlaması engellenir.",
+   "critical": true
+  },
+  {
+   "name": "Approval Chain (onay zinciri)",
+   "desc": "Çok adımlı onay: rol/tutar eşiğine göre yönlendirme (ör. >50K müdür onayı). Her adım audit'lenir; reddedilen adım gerekçesiyle geri döner. Step-up auth dış efekt gerektiren onaylarda zorunlu.",
+   "critical": true
+  },
+  {
+   "name": "State Machine (durum makinesi)",
+   "desc": "Bağımsız versiyonlu iş durumları + izinli geçişler. Geçersiz geçiş reddedilir; her geçiş event yayınlar ve projeksiyona yansır. Workflow tanımı versiyonludur; çalışan instance kendi versiyonunu taşır.",
+   "critical": true
+  },
+  {
+   "name": "Idempotent + bitemporal kayıt",
+   "desc": "Aynı tetik iki kez gelse tek geçiş olur (idempotency_key). Onay/geçiş geçmişi bitemporal tutulur — 'ne zaman oldu' ve 'ne zaman kaydedildi' ayrı; geriye dönük düzeltme audit iziyle.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Layer-2 SaaS ürünü; Kernel + Scale + Layer-1 üstüne oturur. Kendi ArcheType'larını ve UI'sını sunar; yetki/audit/event-bus framework'ten gelir. BPM, diğer module'lerin onay/otomasyon omurgasıdır.",
+  "kernel": "ECA event'leri kernel event-bus'ından akar; her kural capability deny-by-default ile yetkilendirilir; tüm geçişler audit'e yazılır.",
+  "core": "Tutar eşikli onaylar money Contract'ı üstünden okunur (float değil minor-unit); onay geçmişi bitemporal + audit.",
+  "modules": "Diğer module'ler (Purchase, Sales, HR) onay/otomasyonu BPM'e delege eder; BPM kuralları o module'lerin event'lerine abone olur.",
+  "apps": "App bir onay başlatır, kullanıcı bekletilmeden iş kuyruğa girer; onay tamamlanınca realtime bildirim."
+ },
+ "ecaExample": "trigger:\n  event: purchase_order.submitted\ncondition:\n  all:\n    - actor.capability >= \"po:submit\"\n    - amount.currency == \"TRY\"\n    - amount.minor > 5000000\n    - not loop_detected\naction:\n  - transition: po -> pending_manager_approval\n  - assign: approval_step(role=\"manager\")\n  - emit: approval.requested\nguards:\n  max_depth: 6\n  idempotency_key: \"po:{po_id}:submit\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Her ECA kuralı ve onay adımı capability deny-by-default ile yetkilendirilir; yetkisiz aktör geçiş tetikleyemez.",
+  "Onay zinciri ve durum geçişleri tam audit'lenir (kim, ne zaman, hangi versiyon); RLS ile tenant izolasyonu korunur.",
+  "Dış efekt (ödeme onayı, sözleşme imzası) gerektiren adımlarda step-up auth zorunlu.",
+  "loop_detected + max_depth: kural-tetikler-kural zincirinin sonsuz döngüye girmesi engellenir.",
+  "Tutar eşikleri money Contract'ından gelir; istemci-tarafı tutar manipülasyonu onayı atlatamaz."
+ ],
+ "perfNotes": {
+  "code": "Bekleyen onaylar keyset cursor ile sayfalanır; durum geçişleri event olarak yayınlanıp projeksiyona düşer.",
+  "perf": "Read-model (bekleyen onaylar listesi) projeksiyondan okunur, canlı join'le değil; binlerce açık onayda liste sabit gecikmeyle gelir."
+ },
+ "moduleUsage": [
+  "Purchase: satınalma siparişi tutar eşiğine göre onay zincirine girer.",
+  "Sales/CRM: teklif indirim oranı eşiği aşınca müdür onayına yönlenir.",
+  "HR: izin/masraf talepleri çok adımlı onay durum makinesinde ilerler.",
+  "Builder Stack: s-bpm, prompt'tan üretilen workflow'ların ECA çalışma motorudur."
+ ],
+ "testNotes": [
+  "Geçersiz durum geçişi reddedilir; yalnız izinli geçişler kabul edilir.",
+  "Aynı submit iki kez → tek geçiş (idempotency kanıtı).",
+  "Tutar eşiği altındaki PO onaysız geçer, üstündeki onaya yönlenir (sınır testi).",
+  "Reddedilen onay adımı gerekçesiyle önceki duruma döner, audit'e yazar.",
+  "ECA zinciri max_depth aşınca loop_detected ile durur."
+ ]
+}

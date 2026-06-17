@@ -1157,7 +1157,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Frontend — Test + Tooling + Observability + Security — birincil yetenek",
+      "term": "Test piramidi (unit → E2E)",
       "definition": [
        {
         "type": "strong",
@@ -1165,25 +1165,29 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "Vitest + Testing Library (unit/integration), MSW (API mock), Playwright (E2E web), Maestro (mobile E2E), axe-core (a11y WCAG 2.1 AA gate), Lighthouse CI (perf gate), k6 (load). PR'da test geçmezse yayına çıkmaz."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Test-first ritüel (her feature)",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Önce packages/domain Zod schema (kontrat), sonra MSW handler, sonra failing Vitest unit, sonra implementation, sonra Storybook interaction, sonra Playwright/Maestro happy path. Kontrat testi tanımdan önce."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "Tooling + observability + güvenlik baseline",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "Biome (lint/format, tek config), lefthook (git hooks), changesets (monorepo versiyonlama), t3-env+Zod (env type-safe); Sentry+PostHog self-host (error/analytics/replay); DOMPurify, CSP nonce, httpOnly+SameSite, Pino PII redact (password/tckn/iban)."
        }
       ]
      }
@@ -1371,15 +1375,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Her model/markdown çıktısında DOMPurify zorunlu + rehype sanitize (XSS savunması). Auth token httpOnly cookie + refresh rotation; mobilde secure storage; CSP strict-dynamic nonce-based. CSRF: SameSite=Lax + custom header doğrulama; bağımlılık pnpm audit CI gate + Renovate. PII log redaction (Pino: password/tckn/iban); KVKK veri retention 1 yıl + kullanıcı export endpoint. Ad çakışması notu: changesets (versiyonlama aracı) ≠ kernel ChangeSet (tipli değişiklik zarfı) — karıştırılmamalı. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1407,15 +1403,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Biome (Rust) ~10x ESLint hızında, tek config; lefthook (Go) husky'den hızlı git hook."
        }
       ]
      },
@@ -1433,15 +1421,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Performans bütçesi PR gate: LCP < 2.5s, INP < 200ms, CLS < 0.1, initial JS < 250kb gzip, Lighthouse PWA > 90; mid-tier Android TTI < 3.5s, Capacitor cold start < 1.8s. PostHog session replay blob'ları S3 offload."
        }
       ]
      },
@@ -1877,6 +1857,18 @@
     ]
    },
    {
+    "id": "block-fe-test-tooling-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Lighthouse PWA skoru < 90 olduğunda PR'ın bloklandığı. axe-core ile WCAG 2.1 AA ihlalinin PR gate'inde yakalandığı. Zod kontrat schema'sının backend ArcheType yüzeyiyle uyumsuzluğunda testin düştüğü. Pino redact ile pii alanlarının (tckn/iban) log'a sızmadığı."
+     }
+    ]
+   },
+   {
     "id": "block-fe-test-tooling-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1895,7 +1887,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Frontend tooling crosscut bir endişedir; tek ürüne değil tüm FE'ye uzanır. Kontrat (Zod schema) backend ArcheType yüzeyiyle hizalanır, böylece FE testleri sözleşmeyi doğrular."
        }
       ]
      },
@@ -1904,16 +1896,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "authz (FE token/capability hizası — httpOnly cookie + refresh rotation), audit (PostHog/Sentry olay korelasyonu), Contract (Zod domain schema ↔ ArcheType yüzey sözleşmesi)."
        }
       ]
      },
@@ -1922,7 +1905,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "pii (Pino redact: password/tckn/iban — log'da maskeleme), Contract (kontrat/golden test, KVKK veri export endpoint), keyset (liste UI'larında sayfalama tüketimi)."
        }
       ]
      },
@@ -1931,7 +1914,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Tüm FE modülleri (test/lint/observability tüketicisi), backend yüzeyleri (MSW mock'ları gerçek sözleşmeyi yansıtır)."
        }
       ]
      },
@@ -1940,7 +1923,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Web (Playwright) ve Capacitor mobil (Maestro) uygulamaları; Storybook bileşen izolasyonu."
        }
       ]
      }

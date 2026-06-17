@@ -1,0 +1,53 @@
+{
+ "featureDefs": [
+  {
+   "name": "Anket (Survey) + soru tipi ArcheType'ı",
+   "desc": "Çok-sayfa anket + dallanma (branch logic) + soru tipleri (çoktan seçmeli/derece/açık uçlu); Typeform/SurveyMonkey muadili Layer-2 çekirdek.",
+   "critical": true
+  },
+  {
+   "name": "Yanıt (Response) toplama + kısmi kayıt",
+   "desc": "Anonim/kimlikli yanıt; sayfa-sayfa kısmi kayıt + devam; tekil yanıt (tek kişi tek kez) opsiyonu.",
+   "critical": true
+  },
+  {
+   "name": "AI tema analizi (açık uçlu)",
+   "desc": "Açık uçlu yanıtların tema/duygu kümelenmesi; LLM çağrısı agent-runtime üzerinden, tenant-izolasyonlu, maliyet+kalite izli.",
+   "critical": true
+  },
+  {
+   "name": "Sonuç paylaşım linki + erişim kapısı",
+   "desc": "Tahmin edilemez paylaşım token'ı; salt-okur sonuç; süre/parola/tek-kullanım opsiyonu."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-2 SaaS ürünü; kendi anket/yanıt ArcheType'larını ve UI'sını tanımlar, yetki/audit/event-bus framework'ten gelir. AI tema analizi agent-runtime'ı tüketir, kendi LLM altyapısını kurmaz.",
+  "kernel": "Tenancy (anket+yanıt tenant_id ile izole, RLS), Identity (anket sahibi + opsiyonel yanıtlayan), Audit (yayın/kapama izi) kernel'den.",
+  "core": "App core'una bağlı; Survey bir Domain (Kaya) olarak core sözleşmelerine uyar, core module değişmez. PII (yanıtlayan kimliği) sınıflandırması core'dan.",
+  "modules": "k-agent-runtime (AI tema analizi: LLM provider + prompt + observability), Notification (davet/hatırlatma) module'lerini tüketir — yalnız Contract.",
+  "apps": "CRM app'i yanıtlayanı Contact olarak paylaşır; NPS/feedback geçmişi aynı Party'de toplanır, çift kayıt yok."
+ },
+ "moduleUsage": [
+  "k-agent-runtime: açık uçlu yanıt → embedding + tema kümeleme; LLM çağrısı capability-gated, cost attribution tenant/feature bazlı.",
+  "Notification: anket daveti + hatırlatma email/SMS (İYS/ETK opt-in kapısıyla).",
+  "CRM app: yanıtlayan → Contact; NPS skoru segment ve takip (consent kapısıyla)."
+ ],
+ "ecaExample": "trigger:\n  event: survey_response.submitted\ncondition:\n  all:\n    - actor.capability >= \"survey.respond\"\n    - response.tenant_scoped\n    - not loop_detected\naction:\n  - persist: response\n  - enqueue: ai.theme_analysis   # agent-runtime, async, cost-tracked\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{survey_id}:{respondent_or_session}\"\n  external_effects: llm_call_budgeted",
+ "securityNotes": [
+  "Yanıtlayan email/kimlik + açık uçlu metin pii=true (+retention); anonim anket gerçekten anonim (kimlik bağı tutulmaz). RLS tenant-scoped.",
+  "AI tema analizi tenant-izolasyonlu; yanıt verisi başka tenant promptuna sızmaz; LLM çağrısı bütçeli + denetlenebilir (agent-runtime A08).",
+  "Sonuç paylaşım token'ı tahmin edilemez (imzalı/rastgele); survey.respond ve sonuç-görüntüleme capability deny-by-default.",
+  "Tekil yanıt kontrolü atomik; çift gönderim idempotency ile tek sayılır (oy/NPS manipülasyonu engellenir)."
+ ],
+ "perfNotes": {
+  "code": "Yanıt yazımı hızlı; AI tema analizi asenkron worker'da (ana akışı bloklamaz); embedding pgvector (l1-search / agent-runtime A05).",
+  "perf": "Yanıt listeleri/agregasyon keyset; (tenant_id, survey_id) indeksi; büyük anket sonuçları materialized özet; tema kümeleme batch."
+ },
+ "testNotes": [
+  "Komşu-tenant anket/yanıt sorgusu sıfır döndürür (RLS).",
+  "Anonim ankette yanıtlayan kimliği saklanmaz; kimlikli ankette Contact bağı kurulur.",
+  "Aynı yanıt ikinci kez gönderilince çift sayılmaz (idempotency); tekil-yanıt kuralı ikinci denemeyi reddeder.",
+  "AI tema analizi yanıt verisini tenant sınırında tutar; çapraz-tenant tema sızıntısı yok.",
+  "Sonuç linki süre/parola kapısı geçilmeden veriyi açmaz (deny path)."
+ ]
+}

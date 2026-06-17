@@ -1,0 +1,50 @@
+{
+ "featureDefs": [
+  {
+   "name": "Curriculum",
+   "desc": "Course/Chapter/Lesson/Path; ön koşul (prereq) ve sıralama (sequencing) kuralları.",
+   "critical": true
+  },
+  {
+   "name": "Enrollment + Progress",
+   "desc": "Kayıt, % ilerleme ve completion takibi; öğrenenin yolculuğunun tek kaynağı.",
+   "critical": true
+  },
+  {
+   "name": "Assessment + Gradebook",
+   "desc": "Quiz/attempt/question-bank/rubric + geçme eşiği → ağırlıklı not ve transkript."
+  },
+  {
+   "name": "Standards (SCORM/xAPI/cmi5)",
+   "desc": "İçerik birlikte çalışabilirliği + LRS; 2026 önerisi cmi5 (SCORM 2004 geriye uyum, xAPI ek telemetri).",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Layer 2 Stack; kendi ArcheType ve UI'sını tanımlar, yetki/audit/event-bus kernel'den gelir. CMS authoring'den içerik, HRMS'ten employee tüketir.",
+  "kernel": "Party (öğrenen/eğitmen) + capability + audit + tenancy kernel'den; not ve ilerleme tenant-scoped.",
+  "core": "LMS core module'ü curriculum + enrollment yapısını taşır; assessment/certification ek module olarak biner.",
+  "modules": "stack-cms içerik kaynağı + s-hrms employee + Zoom/Daily live-session + l1-notification hatırlatma ile kompoze.",
+  "apps": "LMS app'inde aynı Party kaydı HR performans ve yetkinlik modülleriyle default entegre."
+ },
+ "moduleUsage": [
+  "LMS App: kurs/ders authoring, kayıt, ilerleme ve sınav akışı.",
+  "Eğitmen App: ödev notlandırma, soru bankası ve canlı oturum yönetimi.",
+  "Öğrenen Self-Service App: kayıtlı kurslar, ilerleme, sertifika ve transkript."
+ ],
+ "ecaExample": "trigger:\n  event: LessonCompleted\ncondition:\n  all:\n    - actor.capability >= \"lms:progress:write\"\n    - enrollment.status == \"active\"\n    - lesson.prereq_satisfied\naction:\n  - emit: ProgressUpdated\n  - emit: CertificateEligibilityChecked\nguards:\n  max_depth: 6\n  idempotency_key: \"progress:{enrollment_id}:{lesson_id}\"\n  external_effects: none",
+ "securityNotes": [
+  "Sınav notu/transkript hassas; capability deny-by-default + RLS ile öğrenen yalnız kendi sonucunu görür.",
+  "Proctoring/gözetim verisi (kamera/davranış) PII; rıza + saklama politikası + audit zorunlu.",
+  "Sertifika verifiable credential olarak imzalanır; geçme eşiği aşılmadan üretilmesi engellenir."
+ ],
+ "perfNotes": {
+  "code": "Curriculum ağacı ve progress listeleri keyset ile sayfalanır; gradebook ağırlıklı not projeksiyondan okur.",
+  "perf": "Dönem başı kayıt + sınav günü zirvesi; live-session attendance ve submission worker'a alınır."
+ },
+ "testNotes": [
+  "Idempotent progress: aynı ders iki kez tamamlanınca ilerlemenin tek sayıldığı doğrulanır.",
+  "Sequencing: prereq tamamlanmadan sonraki dersin açılmadığı test edilir.",
+  "Standart uyum: cmi5 AU launch + Completed/Passed verb'lerinin LRS'e doğru yazıldığı kanıtlanır."
+ ]
+}

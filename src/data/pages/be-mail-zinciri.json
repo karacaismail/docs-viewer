@@ -271,7 +271,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Mail Provider Chain — Çalıştır ve Unut — çekirdek yetenek",
+      "term": "MailProvider sözleşmesi",
       "definition": [
        {
         "type": "strong",
@@ -279,41 +279,51 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Tüm adaptörler tek MailProvider.send(...) arayüzünü uygular (Sendmail/SMTP/Resend/SendGrid/Mailgun/SES/GmailAPI/GraphAPI/PhpMail); çağıran kod hangi sağlayıcının çalıştığını bilmez."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Sıralı sağlayıcı zinciri",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Gönderim Provider #1 başarısızsa #2 → #3 diye iner; sıra konfigürasyondur, hiçbir katman zorunlu değildir. Shared hosting'de sendmail, kurumsalda SES aynı kodla çalışır."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Kuyruklu telafi (outbox ailesi)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Zincir tükenirse mail Postgres kuyruğuna alınır, gecikmeyle yeniden denenir; idempotency_key ile çift gönderim önlenir, mail sessizce kaybolmaz."
+       }
+      ]
+     },
+     {
+      "term": "Alternatif kanal düşüşü",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Mail tüm zincirde başarısızsa kritik içerik (doğrulama kodu) SMS→WhatsApp→push→in-app sırasıyla layer1-notification'ın kanal-agnostik sözleşmesine devredilir."
+       }
+      ]
+     },
+     {
+      "term": "Sağlayıcı sağlık izleme",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her sağlayıcının başarı oranı/gecikmesi metering olaylarıyla izlenir; sıralama panelden değiştirilir, sürekli başarısız sağlayıcı zincirden düşürülebilir."
        }
       ]
      }
@@ -501,15 +511,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Sağlayıcı API anahtarları ve kullanıcı SMTP parolası KMS/secret store'da; tenant RLS ile izole, log'a maskelenerek yazılır. Mail içeriği ve alıcı adresi pii sınıfı; kuyruktaki bekleyen mail at-rest şifreli, tenant başına izole kuyruk. Doğrulama kodu gibi kritik içerik fallback kanala düşerken de tek kullanımlık + süre sınırlı kalır, idempotency korunur. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -537,15 +539,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Zincir denemesi senkron değil; başarısızlık kuyruğa düşer, yeniden deneme keyset (scheduled_at, id) ile sıralı worker'da."
        }
       ]
      },
@@ -563,15 +557,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Sağlıklı sağlayıcı önce denenir (sağlık sırasıyla); sürekli başarısız sağlayıcı circuit breaker ile atlanır, gereksiz timeout maliyeti önlenir."
        }
       ]
      },
@@ -867,7 +853,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Mail Provider Chain — Çalıştır ve Unut",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Mail Provider Chain — Çalıştır ve Unut\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: mail.send_requested\ncondition:\n  all:\n    - not idempotency_seen(message.dedup_key)\n    - chain.has_next_provider\naction:\n  - try: chain.next_provider.send(message)\n  - on_failure: advance_chain or enqueue(postgres, delay=15m)\n  - on_chain_exhausted: emit mail.fallback_to(sms)\nguards:\n  max_depth: 9\n  idempotency_key: \"mail:{message.dedup_key}\"\n  external_effects: retried_via_queue",
     "copyEnabled": true
    },
    {
@@ -1007,6 +993,18 @@
     ]
    },
    {
+    "id": "block-be-mail-zinciri-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Zincir düşüşü: #1 sendmail başarısız simüle edilir, #2 SMTP gönderir, tek mail çıkar. Kuyruk telafi: tüm zincir başarısızsa mail kuyruğa düşer, 15 dk sonra yeniden denenir, kaybolmaz. Idempotency: aynı dedup_key ile iki istek tek mail üretir (kuyruk + zincir birlikte)."
+     }
+    ]
+   },
+   {
     "id": "block-be-mail-zinciri-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1083,13 +1081,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-be-mail-zinciri-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-be-mail-zinciri-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "layer1-notification: Mail bir kanaldır; zincir tükenince fallback_channels sözleşmesi devreye girer, kanal-agnostik gönderim korunur."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "scale-webhook: Sağlayıcı bounce/delivery webhook'ları sağlık metriklerine ve kuyruk durumuna geri beslenir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "kernel-tenancy: Tenant kendi SMTP bilgisini girer; zincir sırası ve anahtarlar tenant RLS altında izole."
+      }
+     ]
     ]
    },
    {

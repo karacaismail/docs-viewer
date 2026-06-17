@@ -352,7 +352,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Subscription Analytics — çekirdek yetenek",
+      "term": "MRR/ARR hareket köprüsü",
       "definition": [
        {
         "type": "strong",
@@ -360,41 +360,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Yeni/genişleme/daralma/churn/reaktivasyon bileşenlerine ayrılmış aylık tekrarlayan gelir; abonelik olaylarından deterministik türetim, ChartMogul/Baremetrics muadili."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Churn + retention kohort analizi",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Müşteri ve gelir churn'ü; kohort bazlı elde tutma matrisi (signup ayı × yaşam ayı); net revenue retention (NRR)."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "LTV + CAC geri ödeme",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Yaşam boyu değer ve müşteri edinme maliyeti geri ödeme süresi; segment bazlı kırılım."
+       }
+      ]
+     },
+     {
+      "term": "Bitemporal abonelik snapshot",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Geçmişe dönük plan/fiyat değişimi yeniden yazmaz; metrik 'olduğu gibi' (as-was) yeniden hesaplanabilir — denetlenebilir gelir tablosu."
        }
       ]
      }
@@ -582,15 +579,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Abone email/plan/tutar pii+money; RLS tenant-scoped — başka tenant'ın MRR/kohortu görülmez. MRR/LTV/ARR Money kuruş hassasiyetinde tamsayı + para birimi; float yok, çok-döviz dönüşüm tarihli kurla (cc-fx-ledger). Metrik salt-okur Projection; analytics.read capability deny-by-default — ham abonelik/fatura yazımı bu üründe yok. Bitemporal: geçmiş dönem MRR yeniden yazılmaz; düzeltme yeni sürüm — denetim izi korunur. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -618,15 +607,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "MRR/kohort materialized projection (continuous aggregation); abonelik olayı geldikçe artımlı güncelleme, gece tam yeniden hesaplama doğrulama amaçlı."
        }
       ]
      },
@@ -644,15 +625,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Pano sorguları önceden-toplanmış tablodan okur (canlı JOIN değil); zaman serisi keyset; büyük tenant'ta kohort matrisi sayfalanır/aralık-sınırlı."
        }
       ]
      },
@@ -948,7 +921,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Subscription Analytics",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Subscription Analytics\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: subscription.plan_changed\ncondition:\n  all:\n    - actor.capability >= \"analytics.read\"\n    - event.tenant_scoped\n    - not loop_detected\naction:\n  - recompute: mrr_movement   # expansion|contraction, idempotent\n  - refresh: cohort_projection\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:mrr:{subscription_id}:{event_id}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -1088,6 +1061,18 @@
     ]
    },
    {
+    "id": "block-s-subscription-analytics-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Komşu-tenant MRR/kohort sorgusu sıfır döndürür (RLS). MRR hareketi = yeni + genişleme − daralma − churn formülü kuruş seviyesinde kapanır (delta = toplam bileşen deltası). Aynı abonelik olayı ikinci kez işlenince metrik çift sayılmaz (idempotency). Çok-döviz abonelik tek raporlama para birimine tarihsel kurla normalize edilir. Geçmiş dönem fiyat düzeltmesi eski raporu yeniden yazmaz; as-was sürüm korunur."
+     }
+    ]
+   },
+   {
     "id": "block-s-subscription-analytics-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1106,7 +1091,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Layer-2 SaaS ürünü; kendi analitik ArcheType'larını/UI'sını tanımlar, yetki/audit/event-bus framework'ten gelir. Abonelik olaylarını tüketir, metrikleri Projection olarak türetir."
        }
       ]
      },
@@ -1115,16 +1100,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Tenancy (her tenant'ın MRR/kohortu RLS ile izole), Identity (analist rolü), Audit (metrik tanım değişimi izi) kernel'den."
        }
       ]
      },
@@ -1133,7 +1109,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Money (gelir/MRR kuruş + para birimi, çok-döviz dönüşüm tarihli kur), bitemporal (as-was metrik), Audit; core sözleşmelerine uyar."
        }
       ]
      },
@@ -1142,7 +1118,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "s-subscription-commerce / s-billing abonelik+fatura olaylarını yayar; bu ürün salt-okur tüketir — yalnız Contract. Ham faturayı sahiplenmez, türev metriği sahiplenir."
        }
       ]
      },
@@ -1151,7 +1127,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "CRM app'i müşteri Party'sini paylaşır; aynı abone hesabı app'ler arası tekilleştirilir, MRR kaynağı tek."
        }
       ]
      }
@@ -1164,13 +1140,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-subscription-analytics-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-subscription-analytics-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-billing / s-subscription-commerce: subscription.created/upgraded/canceled olayları MRR hareket bileşenlerini besler (salt-okur)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "cc-fx-ledger: çok-döviz abonelikte tarihsel kur ile tek raporlama para birimine normalize eder."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "CRM app: abone → Contact; segment bazlı churn/LTV kırılımı (consent kapısıyla)."
+      }
+     ]
     ]
    },
    {

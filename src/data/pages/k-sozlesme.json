@@ -1132,7 +1132,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Sözleşme Yetenekleri — Pinleme, Üretilmiş Test, Projection — çekirdek yetenek",
+      "term": "Şema pinleme (tarih-pinli sözleşme)",
       "definition": [
        {
         "type": "strong",
@@ -1140,41 +1140,42 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Entegrasyon ArcheType'ın belirli tarihli haline sabitlenir ('Invoice'un Haziran-2026 hali'); alanlar evrilse de response transform eskiyi yaşatır. Bitemporal versiyonlama ile her tüketici kendi pinlenmiş biçimini görür; 'Don't break userspace' varlık-düzeyi uygulaması."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Üretilmiş kontrat testi (tanımdan doğan)",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Her ArcheType tanımıyla sistem kendi sınavını üretir: 'komşu tenant verisini okuyabiliyor muyum', 'golden API yanıtı değişti mi'. Geliştirici yazmaz; her ChangeSet komşu-tenant sızıntısına karşı sınanır."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Projection-ArcheType (salt-okur model)",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "projection_of: [Order, Shipment] gibi bildirimsel okuma modeli; bozulursa silinir, kaynaktan yeniden dökülür (yevmiye ↔ mizan). Rapor yüzeyleri canlı yazma tablosunu sorgulamaz."
+       }
+      ]
+     },
+     {
+      "term": "ChangeSet — tipli değişiklik sözleşmesi",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "AI ham SQL değil, tipli ChangeSet zarfı önerir (operations + risk + rollback + audit + baseVersion); doğrulama motoru tek yazma yetkisidir. Her operation yedi-alanla tanımlı (precondition/invariant/validation/risk/rollback/audit/preview), aksi halde uygulanmaz."
        }
       ]
      }
@@ -1362,15 +1363,16 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
+      "text": "Yedi-alan sözleşmesi olmadan operation tanımsız; geçersiz ChangeSet doğrulama motorunca asla uygulanmaz (deny-by-default). change_permission kritik risk; koruma kapatılamaz, admin capability + audit + ters-uygulanabilir rollback zorunlu. "
      },
      {
-      "type": "code",
-      "text": "pii"
+      "type": "term",
+      "text": "Üretilmiş kontrat testi",
+      "termId": "term-uretilmis-kontrat-testi-k-sozlesme"
      },
      {
       "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": " her ChangeSet'i komşu-tenant (RLS) sızıntısına karşı sınar; pin'lenmiş eski tüketici de korunur. publish_surface'ta PII/sistem alanı dışta tutulur; baseVersion ile optimistic locking, son-yazan-kazanır değil merge-uyarısı. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1398,15 +1400,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "ChangeSet ve şema versiyonları keyset ile listelenir; expand-contract ile tip değişiminde çift-yaz, kesintisiz."
        }
       ]
      },
@@ -1424,15 +1418,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Projection'lar okuma yükünü kaynaktan ayırır; bozulan projection kaynaktan yeniden dökülür, canlı tablo etkilenmez. remove_field soft-delete 30g + snapshot ile telafi penceresi."
        }
       ]
      },
@@ -1728,7 +1714,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Sözleşme Yetenekleri — Pinleme, Üretilmiş Test, Projection",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Sözleşme Yetenekleri — Pinleme, Üretilmiş Test, Projection\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: changeset.submitted\ncondition:\n  all:\n    - actor.capability >= \"schema.changeset.apply\"\n    - changeset.baseVersion == archetype.current_version\n    - not loop_detected\n    - changeset.validationResults.all_passed\naction:\n  - emit: changeset.applied\n  - emit: conformance.test_requested\nguards:\n  max_depth: 6\n  idempotency_key: \"changeset:{changeSetId}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1868,6 +1854,18 @@
     ]
    },
    {
+    "id": "block-k-sozlesme-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Eski tarihe pinli tüketicinin, şema evrilse de eski biçimde yanıt aldığı (response transform). baseVersion uyuşmazsa ChangeSet'in optimistic locking ile reddedilip merge-uyarısı gösterdiği. Yedi-alanı eksik operation içeren ChangeSet'in doğrulamada düştüğü. remove_field sonrası 30 gün içinde soft-delete'ten geri-alınabildiği."
+     }
+    ]
+   },
+   {
     "id": "block-k-sozlesme-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1886,7 +1884,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Sözleşme yetenekleri kernel-seviyesi garanti olduğu için tüm ArcheType yazma yolunun (ChangeSet) içinden geçer; hiçbir yapısal değişiklik bunu atlayamaz."
        }
       ]
      },
@@ -1895,16 +1893,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "schema (ArcheType tanımı + pinleme), authz (change_permission, optimistic locking sahipliği), audit (her operation'ın olayı), event-bus (changeset.applied, surface.published)."
        }
       ]
      },
@@ -1913,7 +1902,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "bitemporal (şema pin tarihleri, versiyon geçmişi), Contract (sözleşmenin kendisi — pin/test/projection), money/pii (etkilenen alan sınıfları için risk), keyset (versiyon/ChangeSet listeleme)."
        }
       ]
      },
@@ -1922,7 +1911,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Tüm Layer-2 ürünleri (her ArcheType bu sözleşmelere tabi), Conformance (üretilmiş test koşucusu), Projections (okuma modelleri)."
        }
       ]
      },
@@ -1931,7 +1920,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "ArcheType builder UI (ChangeSet önizleme/onay), uyumluluk panosu."
        }
       ]
      }

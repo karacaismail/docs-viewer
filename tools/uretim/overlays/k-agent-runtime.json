@@ -1,0 +1,54 @@
+{
+ "featureDefs": [
+  {
+   "name": "ArcheType action → MCP tool (A01/A02)",
+   "desc": "Her ArcheType action'ı otomatik MCP endpoint olur (stdio/sse/streaming-http); Tool Registry input/output şema + side-effect bayrakları (read_only/idempotent/destructive/requires_confirmation/blast_radius/cost_class) + semantik arama taşır.",
+   "critical": true
+  },
+  {
+   "name": "Agent kimliği + yetki kesişimi (A03)",
+   "desc": "Etkin yetki = kullanıcı_yetki ∩ agent_scope ∩ session_limit; agent ASLA principal değil. Privilege escalation testi sıfır; tool execution sandbox + ihlal/incident.",
+   "critical": true
+  },
+  {
+   "name": "Tenant-izolasyonlu bellek + PII hijyeni (A04)",
+   "desc": "Kısa/uzun/epizodik/prosedürel bellek + hibrit retrieval; uzun-dönem saklamadan ÖNCE PII temizliği (memory hygiene) — gizlilik ihlali engellenir.",
+   "critical": true
+  },
+  {
+   "name": "LLM sağlayıcı soyutlaması + gözlemlenebilirlik (A07/A08)",
+   "desc": "Anthropic/OpenAI/Azure/Bedrock/Ollama tek soyutlamada; routing/fallback/retry/circuit breaker — tek sağlayıcıya kilit yok. Her çağrı: token/latency/maliyet/trace/hallucination skoru (tenant/agent/feature attribution).",
+   "critical": true
+  },
+  {
+   "name": "Durable agent orkestrasyonu (A09/A10/A11)",
+   "desc": "plan-execute-reflect / multi-agent / DAG; checkpoint&resume + human-in-the-loop (DBOS/Temporal deseni); birleşik SSE/WS stream + konuşma/threading/context compaction."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — kernel-seviyesi yatay yetenek (ürün/stack DEĞİL). Tüm app'lerin AI/agent yeteneğinin güvenlik, maliyet ve gözlemlenebilirlik temelini belirler; agent'ı birinci-sınıf vatandaş yapar (insan-öncelikli Frappe/Odoo/Drupal'da yok). AI Üretim Sözleşmesi + s-ai ile birlikte okunur.",
+  "kernel": "Authz (capability kesişimi — ön koşul kernel-authz), Tenancy (bellek/trace tenant-izolasyonu — ön koşul kernel-tenancy), Identity (agent-user binding), Bus (tool olay yayını) kernel'den; bu katman bunların üstüne agent kimliği ekler.",
+  "core": "Audit (her tool çağrısı + privilege kararı iz bırakır), config-as-data (provider/model/prompt registry), PII sınıflandırma (bellek hijyeni) core kontratı.",
+  "modules": "l1-search (A05 vector store eşdeğeri — pgvector/HNSW), scale-realtime (A10 SSE/WS primitifleri), k-bus (tool olayları), k-control-planes (Boyut 3 müşteri-admin) ile bağlanır — yalnız Contract.",
+  "apps": "Her app'in ArcheType action'ları otomatik agent tool'u olur; SaaS müşterisi PROMPT ile capability-gated ArcheType oluşturur (Boyut 3) — serbest kod/DDL değil, tipli + hibrit depolama."
+ },
+ "ecaExample": "trigger:\n  event: agent.tool_invocation_requested\ncondition:\n  all:\n    - effective_capability == user_cap ∩ agent_scope ∩ session_limit\n    - tool.blast_radius <= allowed\n    - not loop_detected\naction:\n  - if: tool.destructive\n    require: human_in_the_loop      # A09 HITL\n  - execute: tool_in_sandbox        # A03, cost-tracked A08\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{agent}:{tool}:{call_id}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Agent asla principal değil; etkin yetki = kullanıcı ∩ agent_scope ∩ session_limit (ADR-0015). Privilege escalation testi sıfır — kesişim uygulanmazsa agent kullanıcı yetkisini aşar (kritik failure mode).",
+  "Her tool side-effect/idempotency/blast_radius/cost_class anotasyonu taşır; destructive/requires_confirmation tool onaysız çalışmaz (HITL) — yıkıcı işlem blast-radius'la sınırlı.",
+  "Bellek (A04) uzun-dönem saklamadan önce PII temizliği zorunlu; tenant-izolasyonlu — bir tenant'ın belleği/embedding'i başka tenant retrieval'ına sızmaz.",
+  "LLM çağrıları (A08) tam izli: maliyet tenant/agent/feature'a attribute; tek sağlayıcıya bağımlılık yok (fallback+circuit breaker). Dış-etkili agent aksiyonu step-up gerektirir.",
+  "Boyut 3 müşteri-admin PROMPT→ArcheType serbest kod/DDL değildir; capability-gated + hibrit depolama (paylaşılan şema + JSONB); externalReviewRequired — bağımsız güvenlik reviewer şart."
+ ],
+ "perfNotes": {
+  "code": "LLM provider routing cost-optimal (A07); embedding A05 pgvector HNSW; context window compaction (A11) token bütçesini korur; agent workflow durable (checkpoint&resume) — uzun görev kaldığı yerden.",
+  "perf": "Tool discovery semantik arama indeksli; vector hybrid search (vector+BM25+filter); LLM çağrısı streaming (SSE/WS, backpressure/buffering A10); bellek retrieval keyset + tenant-partition."
+ },
+ "testNotes": [
+  "Her agent çağrısında etkin yetki = kullanıcı ∩ agent_scope ∩ session_limit; privilege escalation testi sıfır (kullanıcı yetkisini aşan tool reddedilir).",
+  "Her tool input/output şeması + side-effect/idempotency/blast_radius/cost_class anotasyonu taşır; anotasyonsuz tool expose edilmez.",
+  "Destructive tool onaysız (HITL olmadan) çalışmaz; requires_confirmation kapısı geçilmeden işlem yürümez (deny path).",
+  "Bellek uzun-dönem saklamada PII temizlenir; komşu-tenant bellek/embedding retrieval'a sızmaz (izolasyon).",
+  "LLM sağlayıcı fallback + retry + circuit breaker çalışır; tek sağlayıcı düşünce alternatife geçer (bağımlılık yok); her çağrı maliyet attribution'ı üretir."
+ ]
+}

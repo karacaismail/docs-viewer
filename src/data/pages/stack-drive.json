@@ -356,7 +356,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Drive + Collaboration Stack — birincil yetenek",
+      "term": "Sync engine (CDC + CAS dedup)",
       "definition": [
        {
         "type": "strong",
@@ -364,25 +364,42 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "FastCDC content-defined chunking + content-addressable storage + block-level dedup + delta sync; Dropbox/Seafile seviyesi, basit re-upload değil. Aynı blok tek kez saklanır."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "CRDT co-editing (Yjs/pycrdt)",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Real-time eşzamanlı düzenleme; conflict-free merge, çevrimdışı sonrası yeniden bağlanmada yakınsama. Google Docs muadili."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "Versiyon + paylaşım + namespace",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Dosya sürüm geçmişi (bitemporal), izinli paylaşım, tenant namespace; her paylaşım bağlantısı capability ile sınırlı."
+       }
+      ]
+     },
+     {
+      "term": "Wiki / Spreadsheet / Whiteboard",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "Versiyonlu wiki, formül tablosu, collaborative whiteboard — hepsi aynı sync + CRDT altyapısı üzerinde."
        }
       ]
      }
@@ -570,15 +587,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Paylaşım linki capability deny-by-default — link sahibi yalnız tanımlı dosya/kapsama erişir, namespace dışına çıkamaz (RLS). CAS dedup içerik-adresli: aynı blok tenant'lar arası paylaşılabilir ama erişim metadata tenant'a bağlı — blok varlığı sızıntı vermemeli (per-tenant erişim kontrolü). CRDT op-log append-only; geçmiş düzenleme silinemez, sürüm geri alma yeni op olarak eklenir. Dosya içeriği PII/gizli olabilir; veri ikameti (data residency) jurisdiction'a göre, cc-privacy ile zorunlu. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -606,15 +615,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "-- dosya sürüm listesi (keyset, en yeni)\nSELECT version_id, created_at, size\nFROM file_version\nWHERE tenant_id = $1 AND file_id = $2\nORDER BY created_at DESC, version_id DESC LIMIT 50;"
        }
       ]
      },
@@ -632,15 +633,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Delta sync yalnız değişen blokları taşır (CDC), tam dosya değil — büyük dosyada bant genişliği kritik. CRDT update'leri küçük op-batch; her keystroke ayrı round-trip değil. Sürüm okuması keyset, OFFSET yok."
        }
       ]
      },
@@ -1076,6 +1069,18 @@
     ]
    },
    {
+    "id": "block-stack-drive-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "İki kullanıcının eşzamanlı düzenlemesinin CRDT ile çakışmasız birleştiği, çevrimdışı sonrası yakınsadığı doğrulanır. Aynı bloğun CAS dedup ile tek kez saklandığı, farklı tenant erişiminin izole kaldığı test edilir. Delta sync'in yalnız değişen blokları taşıdığı (tam re-upload değil) doğrulanır. Paylaşım linkinin namespace dışına erişemediği test edilir."
+     }
+    ]
+   },
+   {
     "id": "block-stack-drive-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1094,7 +1099,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Dosya senkron + gerçek-zamanlı işbirliği gerektiğinde; Drive/Dropbox/Notion muadili Layer-2 ana stack."
        }
       ]
      },
@@ -1103,16 +1108,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Dosya/namespace tenant'a izole (RLS); paylaşım yetkisi capability deny-by-default — paylaşılan link yalnız tanımlı kapsama erişir."
        }
       ]
      },
@@ -1121,7 +1117,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Sürüm geçmişi bitemporal (hangi içerik ne zaman vardı); paylaşım/erişim kararları audit'li. CRDT op-log append-only."
        }
       ]
      },
@@ -1130,7 +1126,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Document e-Sign (s-esign köprüsü), diğer modüllerin dosya eki bu stack'e yazar; kendi Drive ArcheType'larını tanımlar."
        }
       ]
      },
@@ -1139,7 +1135,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Dosya yönetim app'i; collaborative editor app'i (CRDT); whiteboard app'i — hepsi tek sync engine üzerinde."
        }
       ]
      }
@@ -1152,13 +1148,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-stack-drive-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-stack-drive-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-esign: belge e-imza akışını Drive'daki dosya sürümüne bağlar (imzalanan tam sürüm sabitlenir)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-audit: paylaşım/erişim ve sürüm değişimi kararlarının delil kaydını tutar."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "scale-blob: büyük blok depolama ve dedup için alt katman olarak kullanılır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "cc-privacy: paylaşım kapsamı ve veri ikametinin consent/jurisdiction ile uyumunu sağlar."
+      }
+     ]
     ]
    },
    {

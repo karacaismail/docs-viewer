@@ -209,7 +209,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Emlak Ofisi Distribution — çekirdek yetenek",
+      "term": "Portfoy yonetimi",
       "definition": [
        {
         "type": "strong",
@@ -217,41 +217,42 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Mulk karti, sahibi ve yetki sozlesmesi takibi; portfoy durumu tek kayitta. s-property uzerine."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Portal ilan senkronu",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Connector deseniyle ilan portallarina (sahibinden benzeri) yayin; durum geri senkronu."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Alici talep eslestirme",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Talep kaydi ve portfoy-talep eslestirme pipeline'i; uygun mulk otomatik onerilir. s-crm uzerine."
+       }
+      ]
+     },
+     {
+      "term": "Komisyon paylasimi",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Paylasim oranlari, tahsilat ve danisman hakedisi; money/audit ile. stack-accounting uzerine."
        }
       ]
      }
@@ -439,15 +440,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Komisyon money kapsaminda: posting deny-by-default, capability realestate:close + audit gerekceli; mutabakat bitemporal. Mulk sahibi/alici verisi pii: ofis tenant'i RLS ile izole; danisman yalniz yetkili portfoyu gorur. Portal connector kimlik bilgisi secret; dis portal yaniti untrusted, senkronda dogrulanir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -475,15 +468,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Portfoy-talep eslestirme keyset ile sayfalanir; portal senkronu connector kotasi bilincli, hata halinde retry."
        }
       ]
      },
@@ -501,15 +486,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Ilan senkronu asenkron event; danisman performans raporu onceden hesaplanir, sorgu aninda agir join yok."
        }
       ]
      },
@@ -805,7 +782,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Emlak Ofisi Distribution",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Emlak Ofisi Distribution\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: realestate.deal.closed\ncondition:\n  all:\n    - actor.capability >= \"realestate:close\"\n    - listing.authorized\n    - not loop_detected\naction:\n  - emit: accounting.commission.posted\n  - emit: realestate.listing.delisted\nguards:\n  max_depth: 6\n  idempotency_key: \"deal:{deal_id}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -945,6 +922,18 @@
     ]
    },
    {
+    "id": "block-dist-realestate-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "realestate:close olmayan aktor komisyon postlama -> deny. Yetkisiz (authorized degil) ilan portala cikmamali. Ayni deal_id ikinci kapanis -> cift komisyon olmamali (idempotency). Baska ofis tenant'inin portfoyu/talebi gorunmemeli (RLS)."
+     }
+    ]
+   },
+   {
     "id": "block-dist-realestate-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -963,7 +952,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — aday distribution (sektor paketi); Stack subset Edition subset Distribution, gelismis UI/UX katmaniyla teslim."
        }
       ]
      },
@@ -972,16 +961,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Authz (ofis/danisman capability), tenancy (ofis verisi RLS), event-bus (ilan/talep/komisyon event'leri)."
        }
       ]
      },
@@ -990,7 +970,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Portfoy/talep/komisyon Contract semasi; otomatik audit + bitemporal."
        }
       ]
      },
@@ -999,7 +979,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "s-property (portfoy), s-classifieds (ilan + portal connector), s-crm (talep pipeline), stack-accounting (komisyon)."
        }
       ]
      },
@@ -1008,7 +988,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Emlak Ofisi App'i; danisman performans raporu hazir gelir."
        }
       ]
      }
@@ -1021,13 +1001,15 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-dist-realestate-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-dist-realestate-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "dist-realestate: Yetki sozlesmesi alinan mulk portfoye girer -> ilan portala senkronlanir -> gelen talep CRM pipeline'inda eslestirme alir -> satista komisyon stack-accounting'te money kaydi + danisman hakedisi audit ile islenir."
+      }
+     ]
     ]
    },
    {

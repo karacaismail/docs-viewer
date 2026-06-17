@@ -1,0 +1,37 @@
+{
+ "featureDefs": [
+  {
+   "name": "Saha rota ve ziyaret planı",
+   "desc": "Saha temsilcisine günlük rota + ziyaret edilecek nokta listesi; ziyaret check-in/check-out konum doğrulamalı, plan-gerçekleşme audit'e bitemporal yazılır.",
+   "critical": true
+  },
+  {
+   "name": "Planogram / raf denetimi",
+   "desc": "Rafta foto + planogram karşılaştırması; uygunsuzluk (out-of-stock, yanlış yerleşim) exception olarak işaretlenir, kanıt görüntü tenant deposunda saklanır."
+  },
+  {
+   "name": "Saha siparişi ve anlık stok",
+   "desc": "Ziyarette alınan sipariş money tipiyle kaydedilir, idempotency_key ile çift sipariş önlenir; bağlantı kopuksa offline kuyruğa alınıp senkronize edilir."
+  }
+ ],
+ "moduleUsage": [
+  "s-crm: Ziyaret edilen nokta bir hesap/party olarak tek kaynaktan gelir; ziyaret geçmişi müşteri kartına işlenir.",
+  "s-inventory: Saha siparişi ve raf out-of-stock bilgisi stok modülüne yansır; anlık stok sorgusu buradan okunur.",
+  "Accounting / Muhasebe: Saha siparişi faturaya ve gelir kaydına money tipiyle bağlanır."
+ ],
+ "ecaExample": "trigger:\n  event: visit.checked_in\ncondition:\n  all:\n    - actor.capability >= \"field.visit\"\n    - geo_within(planned_location, tolerance)\n    - not idempotency_seen(visit.id)\naction:\n  - open_audit_tasks: [shelf_check, order_capture]\n  - emit: visit.started\nguards:\n  max_depth: 3\n  idempotency_key: \"visit:{visit.id}\"\n  external_effects: none",
+ "securityNotes": [
+  "Saha temsilcisi yalnız atanmış rota/hesapları görür; tenant RLS + temsilci scope ile deny-by-default, başka bölgenin verisi gizli.",
+  "Konum ve ziyaret kanıtı (foto) pii sınıfı; tenant deposunda izole, çapraz-tenant erişim engellenir.",
+  "Offline kuyruktan gelen sipariş senkronda idempotency_key ile tekilleştirilir, çift kayıt oluşmaz."
+ ],
+ "perfNotes": {
+  "code": "Rota/ziyaret listesi (tarih, id) keyset; raf fotoğrafı async yüklenir, sipariş yazımı outbox üzerinden.",
+  "perf": "Mobil senkron batch'lenir; düşük bağlantıda offline kuyruk birikir, bağlantı dönünce keyset sırayla gönderilir."
+ },
+ "testNotes": [
+  "Check-in: plan dışı konumdan check-in toleransla reddedilir veya işaretlenir.",
+  "Offline: bağlantısız alınan sipariş kuyruğa girer, senkronda tek kez yazılır.",
+  "Scope: temsilci başka bölgenin hesabını listeleyemez (RLS)."
+ ]
+}

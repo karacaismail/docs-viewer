@@ -1,0 +1,53 @@
+{
+ "featureDefs": [
+  {
+   "name": "Öğrenci ↔ veli ↔ sınıf Party grafiği",
+   "desc": "Öğrenci, veli (guardian) ve sınıf/şube ilişkileri tek Party grafiğinde; bir veli çok öğrenci, bir öğrenci çok veli (boşanma/vasi) — esnek ilişki, çift kayıt yok.",
+   "critical": true
+  },
+  {
+   "name": "Not (grade) + karne dönemi",
+   "desc": "Sınav/ödev notu → dönem ortalaması → karne; bitemporal dönem sürümü (düzeltme yeni sürüm, eski karne silinmez).",
+   "critical": true
+  },
+  {
+   "name": "Yoklama (attendance) + devamsızlık",
+   "desc": "Günlük/ders bazlı yoklama; devamsızlık eşiği → veliye otomatik bildirim (İYS/ETK kapısı).",
+   "critical": true
+  },
+  {
+   "name": "Veli iletişim + duyuru",
+   "desc": "Sınıf/okul duyurusu, veli-öğretmen mesajlaşması; Notification module köprüsü, consent kapılı."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — bu bir Distribution (eğitim sektör paketi): Party + Notification + Billing kesişimi; Stack ⊂ Edition ⊂ Distribution taksonomisinde gelişmiş okul-yönetimi UI/UX ile teslim edilir. Çekirdek module'leri Contract üzerinden kompoze eder.",
+  "kernel": "Party (öğrenci/veli/öğretmen), Tenancy (her okul tenant'ı RLS ile izole), Identity (rol bazlı: yönetici/öğretmen/veli), Audit (not/yoklama izi) kernel'den.",
+  "core": "Money (taksit/tahsilat, kuruş + para birimi), bitemporal (karne/dönem sürümü), PII (reşit olmayan öğrenci verisi — yüksek hassasiyet), i18n; core sözleşmelerine uyar.",
+  "modules": "cc-identity-models (veli/öğrenci kimlik modeli), Notification (yoklama/duyuru), Billing (okul ücreti taksiti) module'lerini tüketir — yalnız Contract.",
+  "apps": "Eğitim distribution'ı tek panelde; aynı veli Party'sini iletişim/ödeme app'leriyle paylaşır; öğrenci-veli-sınıf grafiği tek kaynak."
+ },
+ "moduleUsage": [
+  "cc-identity-models: veli/öğrenci/öğretmen için full_name + E.164 telefon + TC kimlik; reşit olmayan için yaş/veri minimizasyonu.",
+  "Notification: devamsızlık eşiği/karne/duyuru → veliye email/SMS (İYS opt-in; reşit olmayan adına veli rızası).",
+  "Billing: okul ücreti taksit planı → tahsilat; gecikme hatırlatması (consent kapısıyla)."
+ ],
+ "ecaExample": "trigger:\n  event: attendance.absence_recorded\ncondition:\n  all:\n    - actor.capability >= \"attendance.write\"\n    - student.tenant_scoped\n    - absence_count >= threshold\n    - not loop_detected\naction:\n  - notify: [\"guardian\"]   # İYS/ETK kapısı, reşit-değil → veli rızası\nguards:\n  max_depth: 6\n  pii: true\n  idempotency_key: \"{tenant}:{student_id}:{date}\"\n  external_effects: consent_required",
+ "securityNotes": [
+  "Öğrenci reşit değil → en yüksek PII hassasiyeti (+retention); not/yoklama/iletişim pii=true. RLS tenant-scoped — bir okul başka okulun öğrencisini göremez.",
+  "Veli-öğrenci bağı yetki kapısı: veli yalnız kendi çocuğunun notunu/yoklamasını görür (deny-by-default); öğretmen yalnız kendi sınıfı.",
+  "Okul ücreti/taksit Money kuruş hassasiyetinde tamsayı + para birimi; float yok, tahsilat audit'li.",
+  "Bitemporal: onaylanan karne/dönem notu silinmez; düzeltme yeni sürüm — not değişikliği izi (kim/ne zaman) korunur."
+ ],
+ "perfNotes": {
+  "code": "Yoklama günlük batch + anlık giriş; karne hesabı dönem kapanışında; veli bildirimi asenkron worker (eşik tetikli).",
+  "perf": "Öğrenci/not/yoklama listeleri keyset pagination; (tenant_id, class_id) + (student_id, term) indeksi; sınıf bazlı sorgu sayfalanır."
+ },
+ "testNotes": [
+  "Komşu-tenant (başka okul) öğrenci/not/yoklama sorgusu sıfır döndürür (RLS).",
+  "Veli yalnız kendi çocuğunun verisini görür; başka öğrenciyi sorgulayınca reddedilir (deny path).",
+  "Aynı gün aynı öğrenci için yoklama ikinci kez yazılınca çift devamsızlık/bildirim oluşmaz (idempotency).",
+  "Karne düzeltmesi eski karneyi silmez; yeni bitemporal sürüm + değişiklik izi kalır.",
+  "Reşit olmayan öğrenci adına veli rızası olmadan pazarlama/duyuru bildirimi gitmez (consent kapısı)."
+ ]
+}

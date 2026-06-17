@@ -290,7 +290,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "v1 Teslim Profili — Tek Varsayılan ve Kapsam Dışı — çekirdek yetenek",
+      "term": "Tek API profili (GraphQL endpoint)",
       "definition": [
        {
         "type": "strong",
@@ -298,41 +298,59 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "v1'de FastAPI içinde tek GraphQL endpoint; REST/OpenAPI yalnız contract taslağı; aynı Domain için çift davranış (REST+GraphQL) yasak — kombinasyon patlaması önlenir."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Tek deploy profili (Docker Compose)",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Debian + Docker Compose (Hetzner referans); managed cloud/cluster yalnız DeploymentProvider sözleşmesi; K8s/Swarm/multi-region/shared hosting v1 yasak."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Tek kuyruk profili (PostgreSQL + outbox)",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "PostgreSQL tabanlı kuyruk + outbox polling; QueueProvider sözleşmesi var ama Celery/Redis/Kafka/RabbitMQ runtime seçeneği v1 yasak."
+       }
+      ]
+     },
+     {
+      "term": "Tek kimlik profili (yerel + passkey)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "kernel-identity yerel hesap + passkey; federation yalnız Keycloak OIDC referansı; SAML + çoklu haricî sağlayıcı kombinasyonu v1 yasak; IdentityProvider sözleşmesi ertelendi."
+       }
+      ]
+     },
+     {
+      "term": "Sözleşme ≠ destek ayrımı (adapter contract testleri)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Adapter interface'i tanımlı olması destek anlamına GELMEZ; destek statüsü ancak contract test + runbook + observability + restore kanıtıyla değişir."
        }
       ]
      }
@@ -520,15 +538,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Arayüzün (adapter interface) varlığı test edilmemiş taşıyıcının müşteriye açılması riski taşır — failure mode; destek ancak restore + observability kanıtıyla verilir. Kimlik v1'de yerel + passkey + Keycloak OIDC referansı; SAML/çoklu federation yüzeyi kapalı tutularak saldırı yüzeyi daraltılır. Tek deploy profili on-call ve güvenlik yamalama yüzeyini küçültür; multi-region/cluster üretim desteği v1'de yok. Dosya yerel disk atomik yazma + off-site rsync yedek; StorageProvider sözleşmesi ertelendiği için çoklu obje deposu açılmaz (yanlış sızıntı yüzeyi yok). Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -556,15 +566,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "PostgreSQL tabanlı kuyruk + outbox polling tek runtime; PostgreSQL FTS arama; harici motor/broker eklenmeden tek makinede kanıtlanır."
        }
       ]
      },
@@ -582,15 +584,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Test matrisi ve on-call yüzeyi daraltılarak temel sözleşmeler daha derin kanıtlanır; ölçek taşıyıcıları (Kafka/K8s/multi-region) Contract olarak ertelenir."
        }
       ]
      },
@@ -1026,6 +1020,18 @@
     ]
    },
    {
+    "id": "block-be-v1-kapsam-disi-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Adapter contract testleri gelecek implementasyonları bağlar (interface davranış sözleşmesi). Kabul: desteklenen profil temiz makinede tek runbook ile kurulur. Kabul: kapsam dışı taşıyıcılar runtime seçeneği olarak sunulmaz (config'te görünmez). Destek kapısı: contract test + runbook + observability + restore kanıtı tamamlanmadan destek statüsü değişmez."
+     }
+    ]
+   },
+   {
     "id": "block-be-v1-kapsam-disi-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1044,7 +1050,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Bu bir kapsam/teslim profili kararı (Kaya, KARAR): üç kişilik ekibin test matrisini ve on-call yüzeyini daraltıp temel sözleşmeleri derin kanıtlamak için tek varsayılan profil seçer; ertelenen taşıyıcılar yalnız Contract olarak bağlanır."
        }
       ]
      },
@@ -1053,16 +1059,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "kernel-identity yerel + passkey v1 varsayılanı; tenancy/authz/audit tek deploy profilinde kanıtlanır — yetki deny-by-default değişmez, yalnız taşıyıcı yüzeyi daralır."
        }
       ]
      },
@@ -1071,7 +1068,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Adapter contract testleri gelecek implementasyonları bağlar (Provider sözleşmeleri); core sözleşmeleri sabit kalır, taşıyıcı arkada değişebilir."
        }
       ]
      },
@@ -1080,7 +1077,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "QueueProvider/SearchProvider/StorageProvider/DeploymentProvider/IdentityProvider sözleşmeleri tanımlı ama yalnız PostgreSQL kuyruk/FTS, yerel disk, Docker Compose, yerel kimlik v1'de aktif."
        }
       ]
      },
@@ -1089,7 +1086,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Arama PostgreSQL FTS, dosya yerel disk + off-site rsync; app'ler tek runbook ile temiz makinede kurulur, kapsam dışı taşıyıcı runtime seçeneği olarak SUNULMAZ."
        }
       ]
      }

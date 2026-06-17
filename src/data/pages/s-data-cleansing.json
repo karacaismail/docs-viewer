@@ -131,7 +131,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Veri Temizleme Otomasyonu — çekirdek yetenek",
+      "term": "Tekilleştirme (dedup)",
       "definition": [
        {
         "type": "strong",
@@ -139,41 +139,34 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Bulanık eşleştirme ile yinelenen kayıtlar tespit edilir; birleştirme önerisi insan onayına düşer, otomatik birleştirme yalnız yüksek-skor + tersine alınabilir (audit'li) yapılır."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Normalizasyon ve doğrulama",
       "definition": [
        {
         "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
-       },
-       {
-        "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Adres/telefon/vergi-no kurallı normalize edilir, format/checksum doğrulanır; geçersiz kayıt quarantine'e alınır, kaynak değer korunur (geri-alınabilir)."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Zenginleştirme",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Dış kaynaktan (referans veri) eksik alanlar doldurulur; her zenginleştirme provenance ile işaretlenir, hangi kaynak/güven skoru audit'e yazılır."
+       }
+      ]
+     },
+     {
+      "term": "Geri-alınabilir toplu işlem",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her temizleme çalışması bir batch; öncesi/sonrası bitemporal saklanır, hatalı kural toplu geri alınabilir (idempotent reverse)."
        }
       ]
      }
@@ -361,15 +354,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Temizlenen kayıtlar pii sınıfı; tenant RLS ile izole, zenginleştirme için dışarı çıkan veride kişisel alan minimize edilir. Otomatik birleştirme yalnız eşik üstü + geri-alınabilir; eşik altı insan onayı ister (deny-by-default), kör birleştirme yapılmaz. Her batch öncesi snapshot bitemporal saklanır; hatalı kural sonucu kayıp veri geri alınabilir, audit izi değiştirilemez. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -397,15 +382,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Aday eşleşme blocking key ile daraltılır (tam kartezyen yerine), batch (created_at, id) keyset ile işlenir."
        }
       ]
      },
@@ -423,15 +400,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Tekilleştirme blocking + canopy ile O(n²) yerine alt-küme karşılaştırması; zenginleştirme dış çağrıları rate-limit + cache'li."
        }
       ]
      },
@@ -727,7 +696,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Veri Temizleme Otomasyonu",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Veri Temizleme Otomasyonu\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: cleansing.batch_requested\ncondition:\n  all:\n    - actor.capability >= \"data.cleanse\"\n    - match_score >= auto_merge_threshold\n    - not idempotency_seen(batch.id)\naction:\n  - snapshot_before: affected_records\n  - apply: dedup + normalize + enrich\n  - emit: cleansing.batch_applied\nguards:\n  max_depth: 3\n  idempotency_key: \"cleanse:{batch.id}\"\n  external_effects: reversible_via_snapshot",
     "copyEnabled": true
    },
    {
@@ -867,6 +836,18 @@
     ]
    },
    {
+    "id": "block-s-data-cleansing-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Dedup eşik: eşik altı eşleşme otomatik birleşmez, onay kuyruğuna düşer. Geri-alma: uygulanan batch idempotent reverse ile öncesi haline döner. Idempotency: aynı batch.id iki kez çalıştırılırsa tek kez uygulanır."
+     }
+    ]
+   },
+   {
     "id": "block-s-data-cleansing-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -943,13 +924,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-data-cleansing-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-data-cleansing-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-crm: Müşteri/party kayıtları en sık temizleme hedefi; tekilleştirme sonrası tek altın kayıt (golden record) CRM'e döner."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "l1-import: İçe aktarılan ham veri önce temizleme hattından geçirilir, sonra hedef modüle yazılır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "kernel-authz: 'toplu birleştir' ve 'toplu sil' capability deny-by-default; geri-alınamaz işlemler ayrı yetki + onay ister."
+      }
+     ]
     ]
    },
    {

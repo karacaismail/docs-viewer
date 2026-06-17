@@ -467,7 +467,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Saga + Compensation — birincil yetenek",
+      "term": "Orchestration saga (merkezi koordinatör)",
       "definition": [
        {
         "type": "strong",
@@ -475,25 +475,42 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "Adım sırasını ve telafiyi merkezi koordinatör bilir; modüler monolit için tercih. Choreography (event-reaktif, koordinatörsüz) mikroservise uygun, monolitte fazla karmaşık."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "DBOS durable execution",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Postgres-native durable workflow; ek orkestratör kümesi yok. Process crash olursa kaldığı yerden devam eder. Reddedilen alternatif: Temporal (ayrı altyapı maliyeti)."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "Telafi (compensation) adımları",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Her ileri adımın iş-mantığı tersi (refund/release/iptal); bir adım fail edince önceki adımlar geri alınır. ROLLBACK'in cross-aggregate karşılığı."
+       }
+      ]
+     },
+     {
+      "term": "Geri-alınamaz aksiyon sıralaması",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "Telafi edilemez etkiler (gönderilmiş e-posta) akışın SONUNA konur; üç geri-alma sınıfı (tersine / expand-contract / telafi-edilemez) ChangeSet sözleşmesinde tanımlı."
        }
       ]
      }
@@ -681,15 +698,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Her saga adımı tenant_scoped + capability deny-by-default; payment.charge ve refund komşu-tenant siparişine dokunamaz (RLS). Telafi adımları audit'li ve bitemporal kaydedilir — hangi adım ne zaman geri alındı, kim tetikledi izlenebilir. Geri-alınamaz dış etki (e-posta, fon transferi) step_up gerektirir ve akışın sonuna konur; erken tetiklenirse telafi edilemez veri sızıntısı/finansal kayıp riski. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -717,15 +726,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "DBOS workflow Postgres'i durable log olarak kullanır — ek altyapı yok; @DBOS.workflow + @DBOS.transaction ile her adım idempotent ve crash-resumable. Çok yüksek throughput senaryosunda Temporal (history replay) alternatif."
        }
       ]
      },
@@ -743,15 +744,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Saga adımları senkron zincirlenir; dış etkiler (relay/bildirim) outbox üzerinden asenkron iletilir. 2PC/XA'nın blocking lock maliyeti yok — adım-başına commit + telafi modeli daha yüksek eşzamanlılık sağlar."
        }
       ]
      },
@@ -1047,7 +1040,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Saga + Compensation",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Saga + Compensation\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: order.placed\ncondition:\n  all:\n    - actor.capability >= \"order.write\"\n    - tenant_scoped\n    - not loop_detected\naction:\n  - saga.start: place_order\n  - saga.step: payment.charge\n  - saga.step: stock.reserve        # fail -> compensate(payment.refund)\n  - saga.step: shipping.create      # fail -> compensate(stock.release, payment.refund)\n  - saga.step: order.finalize       # irreversible adimlar en sonda\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:order:{order_id}:place\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1187,6 +1180,18 @@
     ]
    },
    {
+    "id": "block-scale-saga-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Orta-adım fail: stock.reserve başarısızken payment.charge commit oldu mu — payment.refund telafisi tetiklenmeli, para iadesi tam olmalı. İdempotency: aynı order.place iki kez tetiklense saga tek kez yürür (idempotency_key), çift charge olmaz. Crash recovery: process workflow ortasında ölürse DBOS kaldığı adımdan devam eder, tamamlanmış adımları tekrar yürütmez. Geri-alınamaz sıra: e-posta adımı finalize'dan önce tetiklenemez (irreversible-last invariant'i)."
+     }
+    ]
+   },
+   {
     "id": "block-scale-saga-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1205,7 +1210,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — cross-aggregate (Order→Payment→Stock→Shipping) tutarlılık için zorunlu; 2'den fazla adımlı her iş akışında saga, distributed transaction (2PC/XA) yerine doğru desendir."
        }
       ]
      },
@@ -1214,16 +1219,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "ChangeSet sözleşmesinin (k-sozlesme) çalışma-zamanı yürütücüsü; üç geri-alma sınıfı kernel kontratında tanımlı, saga telafisi snapshot restore değil iş-mantığı tersidir."
        }
       ]
      },
@@ -1232,7 +1228,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Saga adımları her biri ayrı aggregate'in DBOS.transaction'ıdır; core ArcheType save pipeline'ı outbox'a yazar, saga bu olayları orkestratör sırasıyla tüketir."
        }
       ]
      },
@@ -1241,7 +1237,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Order/Payment/Stock/Shipping module'leri yalnız kendi adımını + telafisini tanımlar; orchestration koordinatörü Contract sınırında adımları zincirler, module'ler birbirini doğrudan çağırmaz."
        }
       ]
      },
@@ -1250,7 +1246,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Sipariş onayı, abonelik yenileme, fatura kesme gibi çok-app iş akışları aynı saga motorunu paylaşır; her app kendi adım/telafi çiftini kayıtlar."
        }
       ]
      }
@@ -1263,13 +1259,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-scale-saga-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-scale-saga-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Commerce/Order app: place_order_saga (charge→reserve→ship→finalize); StockUnavailable'da refund, ShippingFailed'da release+refund."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Subscription app: yenileme sagası — ödeme alınamazsa abonelik aktivasyonu geri alınır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Revenue app: fatura kesme adımı fail ederse upstream rezervasyon telafi edilir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Tüm module'ler: geri-alınamaz adım (e-posta/SMS) saga'nın sonuna pinlenir."
+      }
+     ]
     ]
    },
    {

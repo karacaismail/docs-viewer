@@ -1,0 +1,46 @@
+{
+ "featureDefs": [
+  {
+   "name": "SeoProfile",
+   "desc": "Surface başına title/meta/canonical; on-page sinyaller Surface alanlarından üretilir.",
+   "critical": true
+  },
+  {
+   "name": "StructuredDataMap",
+   "desc": "ArcheType tipi → schema.org tipi eşlemesi (Product/Offer, JobPosting, LocalBusiness, RealEstateListing); JSON-LD render.",
+   "critical": true
+  },
+  {
+   "name": "Hreflang",
+   "desc": "Çoklu dil/tenant için hreflang ilişkileri; international SEO (cc-i18n-standards bağı)."
+  },
+  { "name": "OgImageTemplate", "desc": "OpenGraph/Twitter Card sosyal önizleme meta + OG görsel şablonu." }
+ ],
+ "integration": {
+  "shouldIntegrate": "App değil module: bir Surface public:true ise o Surface için meta + JSON-LD üretir; public Surface yoksa yüklenmez (varsayılan-kapalı). Keşfedilebilirlik ailesinin çekirdeği.",
+  "kernel": "Surface'in public projeksiyonu + schema engine ArcheType tipi; tenant-scoped config (özel domain, analytics ID), RLS.",
+  "core": "Bu çekirdek yalnız meta/on-page/schema/OG üretir; sitemap→l1-sitemap, redirect→l1-redirect, pSEO→l1-pseo, AEO→l1-aeo kardeş module'lere ayrıldı.",
+  "modules": "l1-sitemap + l1-redirect + l1-pseo + l1-aeo keşfedilebilirlik omurgası; ölçüm ikizi l1-analytics (pii sınırı ayrı).",
+  "apps": "StoreFront/blog/landing gibi yayınlanan sayfalar Boyut 4 (public/frontpages) düzleminde bu module ile keşfedilebilir olur."
+ },
+ "moduleUsage": [
+  "CMS/StoreFront App: yayınlanan public Surface'ler için otomatik meta + JSON-LD + OG.",
+  "E-ticaret App: Product/Offer/AggregateRating schema ile ürün sayfası keşfedilebilirliği.",
+  "Tenant Admin App: özel domain + hreflang + analytics ID tenant-scoped SEO ayarları."
+ ],
+ "ecaExample": "trigger:\n  event: SurfacePublished\ncondition:\n  all:\n    - surface.public == true\n    - actor.capability >= \"seo:render\"\n    - prerender.available == true\naction:\n  - emit: MetaRendered\n  - emit: StructuredDataAttached\nguards:\n  max_depth: 6\n  idempotency_key: \"seo:{tenant_id}:{surface_id}\"\n  external_effects: none",
+ "securityNotes": [
+  "Capability deny-by-default: yalnız meta/JSON-LD/OG render; dosya YAZMAZ (sitemap/robots l1-sitemap'te), kernel iç API'sine dokunmaz.",
+  "Modül pii ÜRETMEZ; structured data'ya kişisel veri sızdırılmaz.",
+  "Tenant özel domain bitemporal + SEO değişiklikleri audit'li; özel domain config RLS ile izole."
+ ],
+ "perfNotes": {
+  "code": "Meta/JSON-LD render build-time prerender hattına bağlı; SSR-yok kararı nedeniyle prerender ön koşul.",
+  "perf": "Core Web Vitals bütçesi; pSEO ince-içerik kalite kapısı (boş şablon cezalandırılır, üretim l1-pseo'da)."
+ },
+ "testNotes": [
+  "public:false Surface için modülün hiçbir meta/JSON-LD üretmediği (varsayılan-kapalı) doğrulanır.",
+  "ArcheType→schema eşlemesi: RealEstateListing/JobPosting tipinin doğru JSON-LD'ye render edildiği test edilir.",
+  "Prerender ön koşulu: prerender yoksa SEO çıktısının üretilmediği ve riskin raporlandığı kanıtlanır."
+ ]
+}

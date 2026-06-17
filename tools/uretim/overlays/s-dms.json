@@ -1,0 +1,47 @@
+{
+ "featureDefs": [
+  {
+   "name": "Belge sürümleme (versioning)",
+   "desc": "Document ArcheType + sürüm geçmişi; her sürüm bitemporal (hangi tarihte hangi içerik), eski sürüm silinmez. ChangeSet ile geri-alma.",
+   "critical": true
+  },
+  {
+   "name": "E-imza akışı (Workflow)",
+   "desc": "İmza talebi → imzacı sırası → tamamlanma aşamaları; ArcheType'tan bağımsız versiyonlanan durum makinesi, tenant'a pinli imza zinciri.",
+   "critical": true
+  },
+  {
+   "name": "Retention / saklama politikası",
+   "desc": "Belge sınıfına göre saklama süresi + yasal hold; süre dolunca crypto-shredding ya da arşiv, audit'li."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-2 SaaS ürünü; Kernel + Scale + Layer-1 üstüne oturur, kendi ArcheType'larını tanımlar ama yetki/audit/event-bus framework'ten gelir.",
+  "kernel": "ArcheType engine ile şema + otomatik REST/GraphQL; tenancy (RLS), audit ve bitemporal alanlar kernel'den, DMS kendi Domain'ini (Kaya) tanımlar.",
+  "core": "App core'una bağlı; core module değişmez, DMS bir Domain olarak core sözleşmelerine uyar; dosya gövdesi stack-drive/object storage'da, metadata kernel'de.",
+  "modules": "İmza tamamlanma olayını ilgili iş module'üne (sözleşme/HR/satınalma) yayar; retention süresi dolunca shredding event'i — yalnız Contract üzerinden.",
+  "apps": "Sözleşme, İK, satınalma app'leri aynı Document ArcheType'ını paylaşır; belge tek yerde, çok app projekte eder."
+ },
+ "moduleUsage": [
+  "Sözleşme/CLM app: imzalanacak sözleşmeyi DMS'e bağlar; e-imza tamamlanınca aktivasyon tetikler.",
+  "HR app: özlük belgelerini retention politikasıyla saklar (yasal süre).",
+  "Purchase app: tedarikçi belgelerini sürümlü tutar; eski sürüm denetim için erişilebilir.",
+  "RAG/AI app: yayımlanan belge içeriğini arama/embedding indeksine besler (consent kapısıyla)."
+ ],
+ "ecaExample": "trigger:\n  event: document.signature_completed\ncondition:\n  all:\n    - actor.capability >= \"dms.sign\"\n    - tenant_scoped\n    - not loop_detected\naction:\n  - emit: contract.activated            # outbox, idempotent\n  - schedule: retention_check\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:document:{doc_id}:sign\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Belge içeriği pii içerebilir (+retention); RLS tenant-scoped; e-imza adımı capability deny-by-default + step_up.",
+  "Retention süresi dolunca crypto-shredding (KVKK) — anahtar imha, içerik erişilemez; tüm sürüm geçişleri audit'li.",
+  "İmza bütünlüğü: imzalanan sürüm immutable; sonradan değişiklik yeni sürüm doğurur, imzayı geçersiz kılar.",
+  "Komşu-tenant belge erişimi sıfır (izolasyon); yasal hold kaydı silmeyi bloklar."
+ ],
+ "perfNotes": {
+  "perf": "Belge gövdesi object storage'da (presigned URL), metadata DB'de; sürüm listesi keyset pagination; arama/embedding asenkron worker."
+ },
+ "testNotes": [
+  "Komşu-tenant Document sorgusu sıfır döndürür (izolasyon).",
+  "İmzalı sürüm değiştirilemez: edit yeni sürüm açar, eski imza korunur.",
+  "Retention: süre dolan belge shredding sonrası erişilemez; yasal hold varsa silme reddedilir.",
+  "İmza akışı idempotent: aynı belge iki kez 'completed' yapamaz (idempotency_key)."
+ ]
+}

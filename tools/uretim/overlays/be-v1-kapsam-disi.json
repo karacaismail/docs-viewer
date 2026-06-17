@@ -1,0 +1,52 @@
+{
+ "featureDefs": [
+  {
+   "name": "Tek API profili (GraphQL endpoint)",
+   "desc": "v1'de FastAPI içinde tek GraphQL endpoint; REST/OpenAPI yalnız contract taslağı; aynı Domain için çift davranış (REST+GraphQL) yasak — kombinasyon patlaması önlenir.",
+   "critical": true
+  },
+  {
+   "name": "Tek deploy profili (Docker Compose)",
+   "desc": "Debian + Docker Compose (Hetzner referans); managed cloud/cluster yalnız DeploymentProvider sözleşmesi; K8s/Swarm/multi-region/shared hosting v1 yasak.",
+   "critical": true
+  },
+  {
+   "name": "Tek kuyruk profili (PostgreSQL + outbox)",
+   "desc": "PostgreSQL tabanlı kuyruk + outbox polling; QueueProvider sözleşmesi var ama Celery/Redis/Kafka/RabbitMQ runtime seçeneği v1 yasak.",
+   "critical": true
+  },
+  {
+   "name": "Tek kimlik profili (yerel + passkey)",
+   "desc": "kernel-identity yerel hesap + passkey; federation yalnız Keycloak OIDC referansı; SAML + çoklu haricî sağlayıcı kombinasyonu v1 yasak; IdentityProvider sözleşmesi ertelendi.",
+   "critical": true
+  },
+  {
+   "name": "Sözleşme ≠ destek ayrımı (adapter contract testleri)",
+   "desc": "Adapter interface'i tanımlı olması destek anlamına GELMEZ; destek statüsü ancak contract test + runbook + observability + restore kanıtıyla değişir.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Bu bir kapsam/teslim profili kararı (Kaya, KARAR): üç kişilik ekibin test matrisini ve on-call yüzeyini daraltıp temel sözleşmeleri derin kanıtlamak için tek varsayılan profil seçer; ertelenen taşıyıcılar yalnız Contract olarak bağlanır.",
+  "kernel": "kernel-identity yerel + passkey v1 varsayılanı; tenancy/authz/audit tek deploy profilinde kanıtlanır — yetki deny-by-default değişmez, yalnız taşıyıcı yüzeyi daralır.",
+  "core": "Adapter contract testleri gelecek implementasyonları bağlar (Provider sözleşmeleri); core sözleşmeleri sabit kalır, taşıyıcı arkada değişebilir.",
+  "modules": "QueueProvider/SearchProvider/StorageProvider/DeploymentProvider/IdentityProvider sözleşmeleri tanımlı ama yalnız PostgreSQL kuyruk/FTS, yerel disk, Docker Compose, yerel kimlik v1'de aktif.",
+  "apps": "Arama PostgreSQL FTS, dosya yerel disk + off-site rsync; app'ler tek runbook ile temiz makinede kurulur, kapsam dışı taşıyıcı runtime seçeneği olarak SUNULMAZ."
+ },
+ "securityNotes": [
+  "Arayüzün (adapter interface) varlığı test edilmemiş taşıyıcının müşteriye açılması riski taşır — failure mode; destek ancak restore + observability kanıtıyla verilir.",
+  "Kimlik v1'de yerel + passkey + Keycloak OIDC referansı; SAML/çoklu federation yüzeyi kapalı tutularak saldırı yüzeyi daraltılır.",
+  "Tek deploy profili on-call ve güvenlik yamalama yüzeyini küçültür; multi-region/cluster üretim desteği v1'de yok.",
+  "Dosya yerel disk atomik yazma + off-site rsync yedek; StorageProvider sözleşmesi ertelendiği için çoklu obje deposu açılmaz (yanlış sızıntı yüzeyi yok)."
+ ],
+ "perfNotes": {
+  "code": "PostgreSQL tabanlı kuyruk + outbox polling tek runtime; PostgreSQL FTS arama; harici motor/broker eklenmeden tek makinede kanıtlanır.",
+  "perf": "Test matrisi ve on-call yüzeyi daraltılarak temel sözleşmeler daha derin kanıtlanır; ölçek taşıyıcıları (Kafka/K8s/multi-region) Contract olarak ertelenir."
+ },
+ "testNotes": [
+  "Adapter contract testleri gelecek implementasyonları bağlar (interface davranış sözleşmesi).",
+  "Kabul: desteklenen profil temiz makinede tek runbook ile kurulur.",
+  "Kabul: kapsam dışı taşıyıcılar runtime seçeneği olarak sunulmaz (config'te görünmez).",
+  "Destek kapısı: contract test + runbook + observability + restore kanıtı tamamlanmadan destek statüsü değişmez."
+ ]
+}

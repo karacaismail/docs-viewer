@@ -1,0 +1,57 @@
+{
+ "featureDefs": [
+  {
+   "name": "Stack paket bütünlüğü (FSM+Randevu+E-imza+Portal)",
+   "desc": "Saha servis + randevu + imzalı form + müşteri portalı tek pakette; randevu→iş emri→imza→fatura döngüsü tek tenant'ta akar.",
+   "critical": true
+  },
+  {
+   "name": "Randevu → iş emri köprüsü",
+   "desc": "s-scheduling rezervasyonu s-fsm iş emrine döner; aynı müşteri kaydı paylaşılır, çift kayıt yok; SLA timer iş emrinde.",
+   "critical": true
+  },
+  {
+   "name": "İmzalı servis formu (KEP/5070)",
+   "desc": "s-esign ile servis formu/sözleşme imzası; hukuki delil zinciri audit'li; tamamlanan iş imzayla kapanır.",
+   "critical": false
+  },
+  {
+   "name": "Müşteri portalı (self-servis)",
+   "desc": "Talep açma + randevu görme + iş emri/fatura geçmişi; müşteri yalnız kendi kaydını görür (capability deny-by-default).",
+   "critical": false
+  },
+  {
+   "name": "Bakım sözleşmesi yenileme otomasyonu",
+   "desc": "s-clm bağlanınca süresi dolan bakım sözleşmesi ECA ile yenileme tetikler; periyodik servis planlanır.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — aday yatay stack: mevcut Layer-2 ürünlerini (s-fsm, s-scheduling, s-esign, s-clm) paketler; her biri zaten framework üstünde, yeni runtime icat etmez; paketleme maliyeti düşük.",
+  "kernel": "Tüm paket ürünleri tek tenant_id altında izole (RLS); müşteri + teknisyen Identity'den; her saha/imza aksiyonu Audit'li — kernel'den miras.",
+  "core": "Paketteki her ürün bir Domain (Kaya) olarak core sözleşmelerine uyar; portal core değişmeden ürünlerin projeksiyonunu sunar.",
+  "modules": "Scheduling, FSM job, esign, CLM module'lerini birlikte tüketir; iş emri tamamlanınca muhasebe (fatura) ve notification'a yalnız Contract ile yayar.",
+  "apps": "Müşteri portalı app'i talep/randevu/fatura akışını paylaşılan müşteri kaydı üstünden gösterir; helpdesk ticket'ı FSM job'a dönüşür."
+ },
+ "moduleUsage": [
+  "Müşteri portalı app: müşteri talep açar → randevu → FSM job; yalnız kendi kayıtlarını görür (RLS + capability).",
+  "Muhasebe app: imzayla kapanan iş → TL fatura + tahsilat; döviz değil.",
+  "Notification: randevu hatırlatma SMS + 'teknisyen yolda' (İYS opt-in); sözleşme bitişinde yenileme bildirimi."
+ ],
+ "ecaExample": "trigger:\n  event: maintenance_contract.expiring\n  when: \"days_to_expiry <= 30 AND tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"clm.contract.renew\"\n    - not loop_detected\naction:\n  - emit: scheduling.renewal_visit_requested   # outbox, idempotent\n  - notify: [\"customer\", \"account_owner\"]        # İYS kapısı\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{contract_id}:renewal\"\n  external_effects: none",
+ "securityNotes": [
+  "Müşteri adres/telefon + imza pii=true (+retention); RLS tenant-scoped — başka tenant'ın müşterisi/iş emri görülmez.",
+  "Müşteri portalı capability deny-by-default: müşteri yalnız kendi talep/randevu/faturasını görür, tenant'ın tamamını değil.",
+  "İmzalı form audit + delil zinciri (KEP/5070); idempotency ile çift randevu/iş emri engellenir."
+ ],
+ "perfNotes": {
+  "code": "Portal listeleri keyset (cursor) pagination; (tenant_id, müşteri, tarih) index; sözleşme yenileme tarama asenkron worker.",
+  "perf": "Randevu uygunluk sorgusu indeksli slot taraması; bildirim/yenileme arka planda, portal UI bloklanmaz."
+ },
+ "testNotes": [
+  "Komşu-tenant müşteri/iş emri/randevu sorgusu sıfır döndürür.",
+  "Müşteri portalda yalnız kendi kayıtlarını görür (capability testi).",
+  "Süresi dolan sözleşme iki kez taransa tek yenileme tetikler (idempotency).",
+  "Randevu→iş emri köprüsü aynı müşteri kaydını kullanır, çift kayıt oluşmaz."
+ ]
+}

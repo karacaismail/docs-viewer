@@ -425,7 +425,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Sitemap & Robots — Indexability Motoru — çekirdek yetenek",
+      "term": "sitemap.xml otomatik üretim",
       "definition": [
        {
         "type": "strong",
@@ -433,41 +433,47 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Public ArcheType kayıtlarından lastmod/changefreq/priority ile; >50k URL'de sitemap index'e böler; build-time + olay-tetikli yeniden üretim. (P0)"
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "robots.txt politikası",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "noindex/allow/disallow; iç back-office Surface'leri otomatik disallow; sitemap referansı; RobotsPolicy ArcheType'ı. (P0)"
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "IndexNow / ping kuyruğu",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Yeni/değişen URL'de Bing/Yandex IndexNow + Google ping; rate-limit'li kuyruk; yalnız allowlist domain'e POST. (P1)"
+       }
+      ]
+     },
+     {
+      "term": "hreflang sitemap (çoklu dil)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Çoklu dil tenant'ta alternatif dil bağları (cc-i18n-standards ile); P1."
+       }
+      ]
+     },
+     {
+      "term": "Silinen URL → 410 (l1-redirect bağı)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Silinen kayıt sonraki üretimde sitemap'ten düşer; soft-404 riskine karşı l1-redirect 410 bağı zorunlu."
        }
       ]
      }
@@ -655,15 +661,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Capability deny-by-default: yalnız dar dosya-yolu (/sitemap*.xml, /robots.txt) yazılabilir; kernel iç API'sine erişilmez (WASM sandbox manifest). Tenant izolasyonu (RLS): tenant-A sitemap'i tenant-B URL'i içermez; her tenant kendi domain'inde. IndexNow yalnız allowlist domain'e (Bing/Yandex/Google) POST eder; anahtar tenant-scoped sır — sızıntıda allowlist sınırlar. İç back-office Surface'leri otomatik disallow + sitemap dışı; pii üretilmez; politika değişiklikleri audit'li. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -691,15 +689,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Üretim hook'u ArcheType engine'den public kayıt akışını streaming XML'e serileştirir; >50k URL sitemap index'e bölünür; IndexNow rate-limit'li kuyruk + debounce."
        }
       ]
      },
@@ -717,15 +707,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Büyük tenant'ta tam yeniden üretim maliyetli → olay-tetikli artımlı (debounce) üretim; fe-cdn edge cache + invalidation; build-time prerender ön koşul."
        }
       ]
      },
@@ -1021,7 +1003,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Sitemap & Robots — Indexability Motoru",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Sitemap & Robots — Indexability Motoru\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: archetype.public_record_changed\ncondition:\n  all:\n    - actor.capability >= \"sitemap.file.write\"\n    - surface.is_public\n    - not loop_detected\naction:\n  - enqueue: sitemap.regen   # debounce, build-time + event\n  - emit: indexnow.ping_requested   # allowlist only\nguards:\n  max_depth: 6\n  idempotency_key: \"sitemap:{tenant}:{surface}:{rev}\"\n  external_effects: indexnow_allowlist",
     "copyEnabled": true
    },
    {
@@ -1161,6 +1143,18 @@
     ]
    },
    {
+    "id": "block-l1-sitemap-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Public ArcheType kaydı → sitemap'te tam bir <url>; iç Surface → sitemap'te YOK + robots disallow. Tenant izolasyonu: tenant-A sitemap'i tenant-B URL'i içermez. >50k URL → geçerli sitemap index; lastmod ISO-8601 + XML şema doğrulaması. IndexNow yalnız allowlist domain'e POST eder; silinen kayıt sonraki üretimde düşer (410 bağı)."
+     }
+    ]
+   },
+   {
     "id": "block-l1-sitemap-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1179,7 +1173,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Layer-1 in-tree module (app değil): bir app'in public Surface'i varsa o tenant için sitemap/robots/IndexNow üretir; public Surface yoksa yüklenmez (varsayılan-kapalı). l1-seo render'ından ayrı; tek sorumluluğu keşif yüzeyi."
        }
       ]
      },
@@ -1188,16 +1182,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Çok-kiracılı: her tenant kendi domain'i altında kendi sitemap'ini alır (RLS); capability dar dosya-yolu yazma (yalnız /sitemap*.xml, /robots.txt) + IndexNow network allowlist — kernel iç API'sine dokunmaz."
        }
       ]
      },
@@ -1206,7 +1191,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Headless üretici (surface: none); SitemapPolicy/RobotsPolicy/IndexNowConfig Atom kısıtlı; pii ÜRETMEZ; politika değişiklikleri audit'li, tenant özel domain bitemporal."
        }
       ]
      },
@@ -1215,7 +1200,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Build-time prerender hattına bağlı; ArcheType change event → debounce → regen → IndexNow ping; >50k için sitemap index; fe-cdn ile edge cache invalidation."
        }
       ]
      },
@@ -1224,7 +1209,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Public Surface'i olan app'lerin kayıtları otomatik sitemap'e girer; iç Surface'ler robots disallow + sitemap dışı; admin Surface yalnız politika düzenleme."
        }
       ]
      }

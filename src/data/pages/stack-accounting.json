@@ -682,7 +682,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Accounting + Finans Stack (TR) — birincil yetenek",
+      "term": "Chart of Accounts + Journal/GL (çift taraflı)",
       "definition": [
        {
         "type": "strong",
@@ -690,25 +690,64 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "Tek Düzen Hesap Planı (TR default) + IFRS/GAAP; çift taraflı yevmiye, dönem kapanışı + kilitleme; muhasebe omurgası."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "e-Belge (e-Fatura/e-Arşiv/e-İrsaliye, UBL-TR 1.2)",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "UBL-TR 1.2 XML + mali mühür/e-imza; özel entegratör (İzibiz/eLogo/Foriba); B2B tescilli/B2C ayrımı; GİB'e iletim."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "e-Defter (XBRL-GL + berat)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "XBRL-GL yevmiye + büyük defter, SHA-256 berat; takvim ayını izleyen 3. ayın son günü periyodik gönderim — bitemporal + audit."
+       }
+      ]
+     },
+     {
+      "term": "Beyanname (KDV1/2, MUHSGK, Geçici, BA/BS)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Aylık KDV, birleşik MUHSGK, Geçici/Kurumlar, yıllık BA/BS (5K TL eşik); GİB üzerinden; dönem verisinden türetilir."
+       }
+      ]
+     },
+     {
+      "term": "AP/AR + Banka mutabakat",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "Supplier/customer cari, 3-way match (fatura-PO-mal kabul), aging/dunning; MT940 ekstre import + mutabakat."
+       }
+      ]
+     },
+     {
+      "term": "AI-first capture (banka feed → kategorize → JE)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Banka feed → AI auto-categorize → journal entry önerisi → kullanıcı onayı → kural öğrenme; fiş/fatura OCR; anomali tespiti."
        }
       ]
      }
@@ -896,15 +935,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Mali veri + müşteri/tedarikçi VKN/TCKN pii=true (+retention); RLS tenant-scoped — başka mükellefin defteri görülmez. accounting.* capability deny-by-default; mali müşavir yalnız yetkili olduğu mükellefleri görür (practice management izolasyonu). e-Belge/e-Defter audit + değişmezlik (berat SHA-256); dönem kilidi sonrası geri tarihli kayıt engellenir. GİB/entegratör credential secret=true; gönderim idempotency key ile çift fatura/berat üretmez. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -932,15 +963,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Yevmiye/belge listesi keyset (cursor) + (tenant_id, dönem, hesap) index; e-Defter berat + beyanname üretimi asenkron worker; GİB gönderimi outbox + retry."
        }
       ]
      },
@@ -958,15 +981,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Aylık/dönemsel toplu üretim (e-Defter, beyanname) arka plan job; senkron GİB çağrısı yerine kuyruk; rapor export streaming."
        }
       ]
      },
@@ -1262,7 +1277,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Accounting + Finans Stack (TR)",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Accounting + Finans Stack (TR)\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: invoice.issued\ncondition:\n  all:\n    - actor.capability >= \"accounting.einvoice.send\"\n    - tenant.einvoice_registered\n    - not loop_detected\naction:\n  - enqueue: gib.ubl_tr.transmit   # outbox, at-least-once\n  - emit: journal.entry_posted\nguards:\n  max_depth: 6\n  idempotency_key: \"einvoice:{tenant}:{invoice_id}\"\n  external_effects: integrator_api",
     "copyEnabled": true
    },
    {
@@ -1402,6 +1417,18 @@
     ]
    },
    {
+    "id": "block-stack-accounting-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Komşu-mükellef yevmiye/belge sorgusu sıfır döndürür (RLS + practice management). Money testi: tutar Decimal/Currency kuruş kaybı olmadan; KDV oranları doğru hesaplanır. Idempotency testi: aynı fatura iki kez gönderilse tek e-Fatura GİB'e gider. Dönem kilidi testi: kapanmış döneme geri tarihli yevmiye reddedilir."
+     }
+    ]
+   },
+   {
     "id": "block-stack-accounting-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1420,7 +1447,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Layer-2 finance stack; diğer ürünlerin (POS/satış/satın alma) e-Fatura/e-Arşiv/e-Defter event'lerini tüketir; kendi ArcheType + UI'sı var ama yetki/audit/event-bus/tenancy framework'ten gelir."
        }
       ]
      },
@@ -1429,16 +1456,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Her yevmiye + belge tenant_id ile izole (RLS); muhasebeci/mali müşavir Identity'den; tüm mali kayıt Audit'li (değişmezlik) — kernel'den miras."
        }
       ]
      },
@@ -1447,7 +1465,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Tutar Decimal/Currency (float DEĞİL); kayıtlar bitemporal (effective_date) + audit + dönem kilidi; e-Belge purpose-binding ile saklanır."
        }
       ]
      },
@@ -1456,7 +1474,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Outbox (GİB gönderimi at-least-once), worker (e-Defter berat/beyanname üretimi), FX (TCMB kur), scheduler (periyodik gönderim) module'lerini tüketir; entegratör driver değişse sözleşme sabit."
        }
       ]
      },
@@ -1465,7 +1483,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "POS/satış/satın alma app'leri 'fatura kesildi' event'i yayar → muhasebe e-Belge'ye çevirir; mali müşavir app'i çoklu mükellef yönetir (practice management)."
        }
       ]
      }
@@ -1478,13 +1496,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-stack-accounting-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-stack-accounting-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "POS/Satış app: satış → e-Arşiv/e-Fatura event → muhasebe UBL-TR'ye çevirip GİB'e gönderir (outbox idempotent)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Satın alma app: fatura → 3-way match (PO + mal kabul) → AP cari + yevmiye."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Notification: beyanname son günü yaklaşınca mali müşavire hatırlatma; berat gönderimi başarısızsa uyarı."
+      }
+     ]
     ]
    },
    {

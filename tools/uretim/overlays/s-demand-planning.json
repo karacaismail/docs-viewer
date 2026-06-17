@@ -1,0 +1,44 @@
+{
+ "featureDefs": [
+  {
+   "name": "Talep tahmini ArcheType'ları",
+   "desc": "ForecastModel, DemandPlan, SalesHistory — geçmiş satış + sezonsallık girdisiyle dönem-bazlı tahmin; tahmin değeri money/quantity, kaynak audit'li.",
+   "critical": true
+  },
+  {
+   "name": "S&OP planlama döngüsü (Workflow)",
+   "desc": "Talep → arz dengeleme → konsensüs onay aşamaları; ArcheType'tan bağımsız versiyonlanan durum makinesi, tenant'a pinli onay zinciri."
+  },
+  {
+   "name": "Üretim/tedarik planı çıktısı",
+   "desc": "Onaylanan plan inventory/purchase module'lerine event olarak yayılır; çift kayıt yok, Contract sınırında."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-2 SaaS ürünü; Kernel + Scale + Layer-1 primitive'lerinin üstüne oturur, kendi ArcheType'larını tanımlar ama yetki/audit/event-bus framework'ten gelir.",
+  "kernel": "ArcheType engine ile şema + otomatik REST/GraphQL; tenancy (RLS) ve audit kernel'den ücretsiz, Demand Planning kendi Domain'ini (Kaya) tanımlar.",
+  "core": "App core'una bağlı; core module değişmez, S&OP bir Domain olarak core sözleşmelerine uyar.",
+  "modules": "Inventory (stok seviyesi), Purchase (tedarik) ve Sales (geçmiş satış) module'leriyle yalnız Contract üzerinden konuşur; plan çıktısını event olarak yayar.",
+  "apps": "Supply-chain app'leri aynı SalesHistory/DemandPlan'ı paylaşır; üretim planı satınalma ve envanter app'lerini besler."
+ },
+ "moduleUsage": [
+  "Inventory app: onaylı talep planından yeniden-sipariş (reorder) noktalarını günceller.",
+  "Purchase app: tedarik planı event'inden satınalma talebi (PR) tetikler.",
+  "Sales/CRM app: geçmiş satış verisini tahmin girdisi olarak okur (consent/tenant-scoped).",
+  "Revenue/FP&A app: konsensüs planını gelir projeksiyonuyla hizalar."
+ ],
+ "ecaExample": "trigger:\n  event: demand_plan.consensus_approved\ncondition:\n  all:\n    - actor.capability >= \"sop.approve\"\n    - tenant_scoped\n    - not loop_detected\naction:\n  - emit: supply.plan_published        # outbox, idempotent\n  - notify: [\"purchase-surface\", \"inventory-surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:demand-plan:{period}:approve\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "DemandPlan/Forecast tutarları money tipinde; tahmin girdisi olan satış geçmişi pii içerebilir, RLS tenant-scoped.",
+  "Plan onayı (konsensüs) capability deny-by-default + step_up; yetkisiz aktör planı yayınlayamaz.",
+  "Komşu-tenant satış geçmişi tahmin modeline sızamaz (izolasyon)."
+ ],
+ "perfNotes": {
+  "perf": "Tahmin hesabı asenkron worker'da (ağır model); plan listeleri keyset pagination; geçmiş satış agregasyonu projection_of okuma modelinden."
+ },
+ "testNotes": [
+  "Komşu-tenant SalesHistory sorgusu sıfır döndürür (izolasyon).",
+  "Plan onayı idempotent: aynı dönem iki kez 'approved' yayınlanamaz (idempotency_key).",
+  "Onaysız plan inventory/purchase'a event yaymaz (Workflow kapısı)."
+ ]
+}

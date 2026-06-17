@@ -352,7 +352,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Observability — çekirdek yetenek",
+      "term": "Log Ingest",
       "definition": [
        {
         "type": "strong",
@@ -360,41 +360,34 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Yapılandırılmış log toplama + indeksleme; tenant etiketi, retention sınıfı ve arama."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Metric Store",
       "definition": [
        {
         "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
-       },
-       {
-        "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Zaman serisi metrikleri (counter/gauge/histogram); etiket bazlı sorgu ve downsampling."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Distributed Trace",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Trace/span ağacı; servis-arası gecikme, kök neden ve örnekleme (sampling) kontrolü."
+       }
+      ]
+     },
+     {
+      "term": "Alert Rule",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Eşik/anomali kuralı → bildirim kanalı; sessize alma, eskalasyon ve değişiklik audit'i."
        }
       ]
      }
@@ -582,15 +575,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Log içeriği PII sızdırabilir; ingest'te pii alanları maskelenir, deny-by-default capability ile erişim sınırlı. Tenant telemetri izolasyonu RLS ile; bir tenant başka tenant'ın trace'ini göremez. Alert kuralı değişikliği ve 'log göster' eylemi audit'e yazılır; kim ne zaman erişti izlenir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -618,15 +603,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Log/metric sorguları keyset + zaman penceresi ile sınırlanır; sınırsız tarama engellenir."
        }
       ]
      },
@@ -644,15 +621,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Yüksek hacimli ingest scale-streaming hattına alınır; sorgu tarafı downsample + retention ile hafifler."
        }
       ]
      },
@@ -948,7 +917,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Observability",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Observability\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: MetricThresholdBreached\ncondition:\n  all:\n    - actor.capability >= \"observability:alert:fire\"\n    - rule.enabled == true\n    - not alert.silenced\naction:\n  - emit: AlertFired\n  - emit: NotificationDispatched\nguards:\n  max_depth: 6\n  idempotency_key: \"alert:{rule_id}:{window_start}\"\n  external_effects: notify_channel",
     "copyEnabled": true
    },
    {
@@ -1088,6 +1057,18 @@
     ]
    },
    {
+    "id": "block-s-observability-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Alert idempotency: aynı pencerede eşik tekrar aşılınca tek alert üretildiği doğrulanır. Tenant izolasyon: cross-tenant log/metric/trace erişiminin RLS ile reddedildiği test edilir. Retention cron: süresi dolan telemetrinin gerçekten silindiği kanıtlanır."
+     }
+    ]
+   },
+   {
     "id": "block-s-observability-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1106,7 +1087,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Layer-2 SaaS ürünü (Datadog/Grafana LGTM muadili); yetki/audit/event-bus kernel'den gelir, kendi ArcheType ve UI'sını tanımlar."
        }
       ]
      },
@@ -1115,16 +1096,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Tenancy + capability + audit kernel'den; her telemetri kaydı tenant-scoped, alert değişiklikleri audit'li."
        }
       ]
      },
@@ -1133,7 +1105,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Observability app core module'ü ingest hattını taşır; dashboard/alert ek module olarak biner."
        }
       ]
      },
@@ -1142,7 +1114,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "l1-notification alert kanalı + l1-analytics rapor + scale-streaming yüksek hacimli ingest hattı ile kompoze."
        }
       ]
      },
@@ -1151,7 +1123,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Tüm app'ler aynı panele log/metric/trace yollar; platform genelinde tek gözlem yüzeyi."
        }
       ]
      }
@@ -1164,13 +1136,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-observability-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-observability-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Observability App: log explorer, metric dashboard ve trace görüntüleyici."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "On-call/Operasyon App: alert kuralları, eskalasyon ve incident zaman çizelgesi."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Tenant Admin App: kendi tenant'ının telemetri retention ve erişim ayarları."
+      }
+     ]
     ]
    },
    {

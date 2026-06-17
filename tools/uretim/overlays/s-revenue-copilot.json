@@ -1,0 +1,47 @@
+{
+ "featureDefs": [
+  {
+   "name": "Fırsat skorlama ve tahmin",
+   "desc": "CRM/Sales verisinden fırsat kapanma olasılığı ve gelir tahmini üretir. Skor ve tahmin projeksiyondan okunur; her skor kararı girdileri ve gerekçesiyle audit'lenir. Para tutarları money tipinde.",
+   "critical": true
+  },
+  {
+   "name": "Sonraki en iyi aksiyon (NBA)",
+   "desc": "Fırsat durumuna göre önerilen aksiyon; yalnızca öneri capability'si olan kullanıcıya gösterilir. Sistem otomatik aksiyon almaz — insan onayı şarttır (deny-by-default).",
+   "critical": true
+  },
+  {
+   "name": "Görüşme özeti",
+   "desc": "Görüşme notlarını/transkriptini özetler; PII içerdiğinden erişim kısıtlı ve audit'lenir. Özetler bitemporal saklanır (kaynak zamanı + kayıt zamanı).",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Skorlar ve öneriler CRM/Sales verisinden türediği için event-bus üzerinden besleme almalı; copilot kaynak ürünlerin tablosuna doğrudan yazmaz, yalnızca öneri/skor yayar.",
+  "kernel": "authz (öneri/skor görüntüleme capability'leri), tenancy (RLS ile fırsat izolasyonu), event-bus (opportunity.updated, score.recomputed), audit (skor ve öneri kararları).",
+  "core": "money (gelir tahmini/fırsat değeri), bitemporal (skor/özet geçmişi), pii (görüşme içeriği), Contract (model çıktısının danışma niteliği — bağlayıcı değil), keyset (fırsat/öneri listeleme).",
+  "modules": "CRM (fırsat/müşteri kaynağı), Sales (teklif/kapanma verisi), Notification (öneri bildirimi).",
+  "apps": "Satış ekibi paneli; yönetici tahmin panosu."
+ },
+ "moduleUsage": [
+  "CRM: opportunity.updated → skor yeniden hesaplama tetiği.",
+  "Sales: quote.accepted/rejected → kazanma oranı geri besleme, model girdisi.",
+  "Notification: yüksek öncelikli NBA → ilgili temsilciye bildirim.",
+  "Audit: her skor/öneri kararı girdileri + model versiyonuyla izlenir."
+ ],
+ "ecaExample": "trigger:\n  event: opportunity.updated\ncondition:\n  all:\n    - actor.capability >= \"revenue.copilot.view\"\n    - not loop_detected\n    - opportunity.stage != \"closed\"\naction:\n  - emit: score.recompute_requested\n  - emit: nba.suggestion_drafted\nguards:\n  max_depth: 6\n  idempotency_key: \"opp:{opportunity.id}:score:{revision}\"\n  external_effects: none",
+ "securityNotes": [
+  "Görüşme özeti ve fırsat verisi pii; erişim deny-by-default capability + RLS ile tenant'a kapalı.",
+  "Copilot otomatik aksiyon almaz; her NBA insan onayına tabidir, öneri ≠ icra.",
+  "Skor/öneri kararları model versiyonu + girdileriyle audit'lenir; açıklanabilirlik için saklanır."
+ ],
+ "perfNotes": {
+  "code": "Fırsat ve öneri listeleri keyset (score desc, id) ile; OFFSET kullanılmaz.",
+  "perf": "Skor yeniden hesaplama asenkron ve idempotent (revision key); panel skorları projeksiyon tablosundan okunur, model anlık çağrılmaz."
+ },
+ "testNotes": [
+  "Aynı revision için score.recompute'un tek kez işlendiği (idempotency).",
+  "Öneri görüntüleme capability'si olmayan kullanıcıya skor/NBA gösterilmediği.",
+  "Görüşme özeti pii erişiminin RLS + capability ile sınırlandığı ve audit'lendiği."
+ ]
+}

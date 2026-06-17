@@ -838,7 +838,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "AI Stack — birincil yetenek",
+      "term": "Tipli action yuzeyi (ham SQL yok)",
       "definition": [
        {
         "type": "strong",
@@ -846,25 +846,55 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "AI ajan yalniz onayli, yetkili, audit'li action'lari (publish_order, approve_invoice) cagirir; ham tabloya erisemez. Validation + yetki + side-effect + audit ickin."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "MCP server per bounded context",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Her bounded context kendi MCP server'ini expose eder; modul action'lari otomatik tipli tool olur. Claude Desktop/Cursor dogrudan baglanir."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "Agent capability scope kesisimi",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Erisim = user_perms ile agent_scope ile session_limits kesisimi; token/cost/tool-call butcesi + sandbox (process/container/firecracker). Privilege escalation 0 hedefi."
+       }
+      ]
+     },
+     {
+      "term": "LLM observability + cost/quality",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "Her cagri: token, latency, cost, trace, hallucination skoru; tenant/user/agent/feature bazli cost attribution. Provider-bagimsiz routing + fallback."
+       }
+      ]
+     },
+     {
+      "term": "Agent memory + PII scrubbing",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "4 katmanli bellek (short/long/episodic/procedural); long-term decay/TTL, bellekte PII temizleme, ogrenilen prosedurde human onayi."
        }
       ]
      }
@@ -1052,15 +1082,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Ham SQL erisimi YOK: AI yalniz tipli action yuzeyinden hareket eder; validation + yetki + side-effect + audit ickin uygulanir. Capability kesisimi deny-by-default: user_perms INTERSECT agent_scope INTERSECT session_limits; hicbiri genisletemez, en dar yetki gecerli. Session limits: token_budget / tool_calls_remaining / usd_cost zorunlu; sinir asiminda durur, sandbox (process/container/firecracker) ile izolasyon. Bellekte PII scrubbing + forgetting; ogrenilen prosedur human onayi olmadan otomatik uygulanmaz; MCP tool ciktilari untrusted. Moderation (toxicity/NSFW/PII detection) + anomaly/fraud; egress kontrolu ile saglayiciya yalniz onayli veri cikar. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1088,15 +1110,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Tool discovery latency <100ms; embedding/RAG asenkron pipeline, reindex dual_write/blue_green ile kesintisiz."
        }
       ]
      },
@@ -1114,15 +1128,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Model routing cost-aware + fallback; streaming SSE token akisi, stream fan-out 1->N p99 <100ms; context compaction ile token tasarrufu."
        }
       ]
      },
@@ -1418,7 +1424,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — AI Stack",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — AI Stack\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: ai.tool.invocation_requested\ncondition:\n  all:\n    - actor.capability >= \"ai:invoke\"\n    - scope == intersect(user_perms, agent_scope, session_limits)\n    - session.cost_remaining > 0\n    - not loop_detected\naction:\n  - emit: ai.action.executed_via_contract\nguards:\n  max_depth: 6\n  idempotency_key: \"aitool:{invocation_id}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1558,6 +1564,18 @@
     ]
    },
    {
+    "id": "block-stack-ai-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Ham SQL / tablo erisim denemesi -> reddedilmeli; yalniz action yuzeyi calismali. user_perms disinda agent_scope genisletme -> kesisim daraltmali, escalation olmamali. Session cost/token butcesi bitince -> tool cagrisi durmali. Bellekte PII saklanmamali (scrub testi); untrusted tool ciktisi dogrulama kapisindan gecmeli. Cross-tenant memory/vector erisimi -> RLS reddi."
+     }
+    ]
+   },
+   {
     "id": "block-stack-ai-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1576,7 +1594,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Layer-2 farklilastirici stack; diger stack'ler bu primitive'leri tuketir, framework AI-first iddiasinin kaynagi."
        }
       ]
      },
@@ -1585,16 +1603,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Authz (agent_scope kesisimi capability ile), tenancy (memory/vector tenant-scoped RLS), event-bus (action invocation event'leri)."
        }
       ]
      },
@@ -1603,7 +1612,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Modul action'lari (Contract) otomatik tipli tool olarak yansir; her cagri audit + bitemporal."
        }
       ]
      },
@@ -1612,7 +1621,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "sus-actions (Palantir Ontology kalitimi action disiplini), l1-search (pgvector/RAG), l1-file (OCR/parsing girdisi)."
        }
       ]
      },
@@ -1621,7 +1630,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Tum s-* urunleri kendi MCP tool'larini publish eder; agent'lar cross-product is akisini action yuzeyinden yurutur."
        }
       ]
      }
@@ -1634,13 +1643,15 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-stack-ai-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-stack-ai-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "stack-ai: Bounded context action'lari MCP tool olarak expose edilir -> agent user_perms ile agent_scope ile session_limits kesisiminde calisir -> tool cagrisi validation + yetki + audit kapisindan gecer -> ham SQL yoktur, her etki tipli action uzerinden; cikti untrusted sayilir, dogrulamadan uretime alinmaz."
+      }
+     ]
     ]
    },
    {

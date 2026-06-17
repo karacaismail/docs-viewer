@@ -1,0 +1,51 @@
+{
+ "featureDefs": [
+  {
+   "name": "Product.fulfillment_mode ENUM (stocked / dropship / hybrid)",
+   "desc": "s-commerce'in Product ArcheType'ına additif bayrak; tek değer — aynı ürün hem stoklu hem dropship olamaz (çift sipariş tuzağı). dropship modunda supplier_id FK zorunlu.",
+   "critical": true
+  },
+  {
+   "name": "Sipariş → otomatik PO (outbox)",
+   "desc": "Müşteri siparişi dropship satır içerirse s-purchase'ta tedarikçiye Purchase Order olayı yayılır; outbox + idempotency ile çift PO engellenir.",
+   "critical": true
+  },
+  {
+   "name": "Tedarikçi entegrasyon adaptörü",
+   "desc": "Stok feed (CSV günlük / API / webhook anlık) + sipariş gönderimi + tracking geri alımı. Oberlo/Spocket/AliExpress dış sistem — kredensiyel vault'ta, çağrı hız-limitli."
+  },
+  {
+   "name": "Reverse logistics policy + price lock",
+   "desc": "İade akışı (kim alır/kim para iade eder) durum makinesi; sipariş anında PO tutarı doğrulanır, marj erimesinde otomatik iptal + müşteri bildirimi.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — bağımsız ürün değil, s-commerce üstünde additif capability (yetenek bayrağı). s-purchase (PO) ve s-tms (kargo) ile yalnız Contract üzerinden.",
+  "kernel": "Tenancy (RLS), capability scope ve audit kernel'den; supplier_id ve fulfillment_mode kolonları ArcheType engine ile s-commerce Product şemasına türetilir.",
+  "core": "Notification core'dan (tracking → müşteri bildirimi); para/marj hesabı money tipi (minor unit + currency), iade hareketleri bitemporal + audit.",
+  "modules": "s-purchase module'üne PO olayı yayar, s-tms module'ünden tracking olayını okur; tedarikçi stok feed'i projection'ı günceller — yalnız Contract.",
+  "apps": "Storefront, Sales ve Procurement app'leri aynı Order + PO + Supplier kaydını paylaşır; çift kayıt yok."
+ },
+ "moduleUsage": [
+  "Storefront app: dropship ürünü sepete/siparişe ekler; stok 'sınırsız' veya feed'e göre gösterilir.",
+  "Procurement app: sipariş tetikli PO'yu tedarikçiye iletir; SLA + price lock burada izlenir.",
+  "TMS app: tedarikçiden gelen tracking number'ı siparişe iliştirir; müşteriye otomatik bildirir.",
+  "Support app: kalite şikâyeti/iade akışını reverse logistics policy üzerinden yürütür (görünür yüz satıcı)."
+ ],
+ "ecaExample": "trigger:\n  event: order.placed\n  when: \"line.fulfillment_mode == 'dropship' AND tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"dropship.order\"\n    - po_amount <= price_lock.max   # marj koruması\n    - not loop_detected\naction:\n  - emit: purchase.po_requested     # outbox, supplier'a\n  - on_mismatch: cancel_and_notify  # price lock aşıldı\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{order}:{supplier}:po\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Tedarikçi API kredensiyali vault'ta; supplier feed/order çağrıları tenant-scoped + hız limitli (kötü feed'e karşı circuit breaker).",
+  "Müşteri adres/iletişim verisi pii=true (+retention) tedarikçiye yalnız sevkiyat amacıyla, minimal alanla iletilir (consent + amaç sınırı).",
+  "Price lock + PO tutar doğrulaması deny-by-default: doğrulanmamış marj ile otomatik iptal, kayıpla teslimat engellenir."
+ ],
+ "perfNotes": {
+  "perf": "Stok feed senkron asenkron worker (günlük/anlık); PO + tracking uçları keyset; supplier+mode indeksleri. PO gönderimi outbox ile dış sisteme idempotent."
+ },
+ "testNotes": [
+  "Aynı sipariş ikinci kez işlense de tek PO oluşur (idempotency).",
+  "fulfillment_mode tek değer: ürün aynı anda stocked + dropship olamaz (constraint).",
+  "PO tutarı price_lock üstündeyse sipariş otomatik iptal + müşteri bildirilir.",
+  "Komşu-tenant supplier/PO kaydı sorguda sıfır döner."
+ ]
+}

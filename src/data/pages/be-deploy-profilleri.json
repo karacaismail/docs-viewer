@@ -350,7 +350,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Deploy Profilleri ve Entegrasyon Matrisi — çekirdek yetenek",
+      "term": "Dort birinci-sinif deploy profili",
       "definition": [
        {
         "type": "strong",
@@ -358,41 +358,42 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Ayni kod: P1 kolay kurulum (cPanel-harici), P2 self-host compose, P3 musteri cluster (k8s/swarm), P4 yonetilen bulut. Profil yukseltmek kod degil konfigurasyon terfisi."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Opsiyonel adaptor matrisi",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Observability, storage (S3-uyumlu), mail, DNS, LLM, kuyruk/event olcegi — hepsi sozlesme (Contract) arkasinda opsiyonel adaptor; varsayilan yerel."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Olcege terfi yollari",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Postgres-ici kuyruk/arama -> Celery+Redis -> Kafka/RabbitMQ; yerel disk -> S3; tek Postgres -> cluster. Scale primitive'leri gun-1 dayanikli."
+       }
+      ]
+     },
+     {
+      "term": "Upgrade sozlesmesi",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Tarih-versiyonlu geriye donuk API + 'kullaniciyi kirma' politikasi; major degisiklik named gate + codemod ile, tasinma yuku kullaniciya yikilmaz."
        }
       ]
      }
@@ -580,15 +581,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Adaptor kimlik bilgileri (S3 anahtari, LLM API key, mail/DNS token) secret/pii kapsaminda; vault'ta, capability ops:admin ile erisilir. Yonetilen bulutta tenant izolasyonu RLS + ayri kaynak; operator capability'leri deny-by-default, ortam basina ayri. LLM adaptoru saglayici-bagimsiz; egress kontrolu ile yalniz onayli endpoint'lere cikis, untrusted yanit downstream'de dogrulanir. Upgrade named gate: BC-kiran degisiklik audit + onay olmadan uygulanmaz. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -616,15 +609,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Varsayilan Postgres-ici kuyruk/arama kucuk olcekte yeterli; terfi esikleri konfigurasyonla, kod yolu degismez."
        }
       ]
      },
@@ -642,15 +627,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Kernel/core olcege dayanikli tasarlanir (gun-1); P3'te Redis cluster + worker + ayri GraphQL + Kafka ile yatay olcek acilir."
        }
       ]
      },
@@ -1086,6 +1063,18 @@
     ]
    },
    {
+    "id": "block-be-deploy-profilleri-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Ayni kod dort profilde de bootlamali (P1..P4 smoke). Adaptor degisimi (yerel disk -> S3) Contract'i kirmamali. ops:admin olmayan aktor adaptor secret'ina erisememeli. BC-kiran upgrade named gate olmadan uygulanmamali (codemod zorunlu)."
+     }
+    ]
+   },
+   {
     "id": "block-be-deploy-profilleri-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1104,7 +1093,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — kontrol duzlemi Boyut 1 (Ops/DevOps); deploy ve adaptorler urunun parcasi, dagitim detayi degil."
        }
       ]
      },
@@ -1113,16 +1102,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Storage/DNS/LLM/mail sozlesmeleri kernel seviyesinde; capability ile operator yetkisi, tenancy multiregion'a uzanir."
        }
       ]
      },
@@ -1131,7 +1111,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Adaptor secimi konfigurasyon; Contract sabit kalir, backend degisir (driver pattern paralel)."
        }
       ]
      },
@@ -1140,7 +1120,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "be-mail-zinciri (sirali saglayicilar), scale-multiregion, sus-versioning / sus-bc-policy (upgrade), s-mail (DNS altyapisi)."
        }
       ]
      },
@@ -1149,7 +1129,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Tum App'ler ayni dort profilde kosabilir; yonetilen bulut Editions satisinin dogal kanali."
        }
       ]
      }
@@ -1162,13 +1142,15 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-be-deploy-profilleri-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-be-deploy-profilleri-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "be-deploy-profilleri: Operator profil secer -> ayni docker imaji + compose ortak paydasi kosar -> adaptorler (mail/storage/LLM) Contract uzerinden takilir -> olcek ihtiyaci dogunca P1->P3 konfigurasyon terfisi, kod degismez; major upgrade named gate + codemod ile gelir."
+      }
+     ]
     ]
    },
    {

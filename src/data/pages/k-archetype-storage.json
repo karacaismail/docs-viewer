@@ -415,7 +415,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "ArcheType Depolama — Hibrit Model — çekirdek yetenek",
+      "term": "Paylaşılan şema + JSONB (varsayılan)",
       "definition": [
        {
         "type": "strong",
@@ -423,41 +423,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Tip verisi varsayılan olarak az sayıda sabit paylaşılan tabloya; ortak alanlar sabit kolon, değişken/özel alanlar JSONB kolonunda. FK ilişkilerle bağlanır; otomatik tablo yaratılmaz, dinamik DDL yok, son müşteri tablo yaratamaz."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Opt-in fiziksel tablo terfisi",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Yüksek-hacimli/performans-kritik tip açık kararla fiziksel tabloya terfi eder; varsayılan değil, izlenir, geri-alma planlı."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Metadata-driven dispatch",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Tip davranışı runtime metadata + Strategy/Policy ile çözülür; kodda if/else type-switching YASAK. Strateji auto-discover."
+       }
+      ]
+     },
+     {
+      "term": "Index + cache disiplini",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Sabit kolon B-tree, JSONB GIN index; tablo güncellenince yalnız ilgili anahtar cache invalidate edilir."
        }
       ]
      }
@@ -645,15 +642,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Tenant izolasyonu RLS ile JSONB satırlarında da zorunlu; komşu tenant verisi okunamaz (deny-by-default). Son müşteri tablo yaratamaz, dinamik DDL yok — saldırı yüzeyi ve şema kayması engellenir. JSONB aşırı kullanımı şemasız kaosa kaymasın diye ortak alanlar sabit kolonda; yalnız değişken alan JSONB. Write yetkisi capability deny-by-default; veri değişiklikleri denetim izine bağlanır. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -681,15 +670,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "CREATE INDEX ON entity USING GIN (variable_fields); -- JSONB sorgusu seq-scan değil index plan"
        }
       ]
      },
@@ -707,15 +688,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Az sayıda sabit tablo + JSONB GIN index: yüzlerce tabloya index dağılmaz, yük altında stabil. Sorgu planı seq-scan değil index olmalı. Opt-in terfi iki kod yolu yaratır → terfi kriteri net + izlenir. Raporlama JSONB'de zorsa materialized view/projection."
        }
       ]
      },
@@ -1011,7 +984,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — ArcheType Depolama — Hibrit Model",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — ArcheType Depolama — Hibrit Model\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: entity.record_written\ncondition:\n  all:\n    - actor.capability >= \"storage:write\"\n    - not loop_detected\n    - tenant.rls_scope_valid\naction:\n  - emit: cache.key_invalidated\n  - emit: projection.refresh_requested\nguards:\n  max_depth: 6\n  idempotency_key: \"storage:{entity_type}:{record_id}:{version}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -1151,6 +1124,18 @@
     ]
    },
    {
+    "id": "block-k-archetype-storage-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Şema değişmezliği testi: yeni tip tanımı DDL/tablo YARATMAZ (paylaşılan şema sabit kalır). Plan testi: JSONB alan GIN index ile sorgulanır, sorgu planı seq-scan değil. Dispatch testi: tip davranışı metadata'dan çözülür; kodda if/else type-switch yok. Terfi testi: opt-in fiziksel tabloya geçiş yalnız açık bayrakla, veri taşıma + geri-alma doğrulanır. İzolasyon testi: RLS JSONB satırlarda da geçerli, komşu tenant okuyamaz. Migrate determinizmi: ortamlar arası (prod/dev/beta) değişiklik tekrarlanabilir."
+     }
+    ]
+   },
+   {
     "id": "block-k-archetype-storage-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1169,7 +1154,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Bu çekirdek depolama kararı tüm tip verisi için varsayılandır; tablo-per-tip deseni terk edildi. Yüksek hacim istisnası açık kararla terfi olur."
        }
       ]
      },
@@ -1178,16 +1163,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Tip metadata kaydı (alan tanımları) ve FK ilişki haritası çekirdekte; tenant izolasyonu (RLS) JSONB satırlarda da geçerli."
        }
       ]
      },
@@ -1196,7 +1172,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Paylaşılan PostgreSQL şeması + JSONB kolon; şema sabit olduğu için ortamlar arası (prod/dev/beta) migrate kolay — değişiklik veri/metadata, DDL değil."
        }
       ]
      },
@@ -1205,7 +1181,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Bir module bir bounded-context olarak tipleri kompoze eder; depolama modeli module sınırından bağımsız tek disiplinle çalışır."
        }
       ]
      },
@@ -1214,7 +1190,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "SDK tek komut + çok-aşamalı sorularla tip tanımı üretir; uygulamalar tipli client üzerinden erişir."
        }
       ]
      }

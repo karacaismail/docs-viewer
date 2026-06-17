@@ -1,0 +1,56 @@
+{
+ "featureDefs": [
+  {
+   "name": "Catalog feed sync",
+   "desc": "Ürün katalogu Facebook Catalog API'ye upsert webhook ile senkronize; tek kaynak (s-commerce katalog) çoklu kanala yansır.",
+   "critical": true
+  },
+  {
+   "name": "In-app checkout webhook",
+   "desc": "Instagram/TikTok'tan gelen sipariş webhook'u → order create; imza doğrulama + idempotency zorunlu.",
+   "critical": true
+  },
+  {
+   "name": "Creator / affiliate takibi",
+   "desc": "discount_code, commission_pct, sales_count, payout_pending alanlarıyla creator komisyon ve hak ediş takibi; money tipi para alanlarında."
+  },
+  {
+   "name": "Kanal attribution + ROAS",
+   "desc": "Kanal başına CAC, ROAS, dönüşüm analitiği; her satış kaynağı kanala atfedilir."
+  },
+  {
+   "name": "UGC moderasyon akışı",
+   "desc": "Kullanıcı üretimi içerik onay/red akışı; ürün sayfasına entegrasyon öncesi moderasyon kapısı."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Tenant'ın marka sosyal medya varlığı varsa Faz 2-3'te entegre; sosyal kanal yoksa eklenmez.",
+  "kernel": "Capability flag social deny-by-default; creator komisyon/payout kayıtları audit + bitemporal; webhook aktörü Contract ile doğrulanır.",
+  "core": "s-commerce katalog ve sipariş çekirdeği; recurring/payout para hareketleri money tipi.",
+  "modules": "s-marketing kanal analitiği, s-marketplace creator mağazası bu capability ile birleşir.",
+  "apps": "Pazarlama ekibi kanal yönetir; backend API sync; CS UGC/DM moderasyonu."
+ },
+ "ecaExample": "trigger:\n  event: channel.order_received\ncondition:\n  all:\n    - actor.capability >= \"social:order:ingest\"\n    - not loop_detected\n    - webhook.signature_valid\naction:\n  - emit: order.created\n  - emit: affiliate.commission_accrued\nguards:\n  max_depth: 6\n  idempotency_key: \"social:{channel}:{external_order_id}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Webhook imza doğrulaması (HMAC) zorunlu; doğrulanmamış kanal sipariş çağrısı reddedilir.",
+  "Creator payout para alanları money tipi + audit; komisyon değişikliği bitemporal kayıt.",
+  "social capability deny-by-default; kanal sync ve checkout yetki yoksa açılmaz.",
+  "Müşteri PII (kart, iletişim) platform tarafında kalır; backend yalnız gerekli sipariş alanlarını alır, KVKK retention bildirimli."
+ ],
+ "perfNotes": {
+  "code": "INSERT INTO order_external (...) ON CONFLICT (channel, external_order_id) DO NOTHING; -- idempotent ingest",
+  "perf": "Kanal sipariş ingest idempotent upsert; tekrar gelen webhook çift sipariş yaratmaz. Catalog sync batch + outbox ile asenkron; kanal başına dönüşüm sorgusu keyset sayfalama."
+ },
+ "moduleUsage": [
+  "s-commerce: katalog ve sipariş çekirdeğini sağlar; social kanal onun bir dağıtım yüzeyidir.",
+  "s-marketing: kanal başına CAC/ROAS attribution dashboard'unu besler.",
+  "s-marketplace: creator/influencer kendi mağazasını bu capability ile platformda açar.",
+  "s-accounting: creator komisyon payout'ları muhasebe/ödeme tarafına akar."
+ ],
+ "testNotes": [
+  "Idempotency testi: aynı external_order_id ile gelen iki webhook tek sipariş yaratır.",
+  "İmza doğrulama testi: geçersiz HMAC ile gelen webhook reddedilir.",
+  "Komisyon hesabı testi: commission_pct × satış = payout_pending, money tipi yuvarlama doğru.",
+  "Capability testi: social flag kapalıyken checkout/sync endpoint'leri deny döner."
+ ]
+}

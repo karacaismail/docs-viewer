@@ -1,0 +1,42 @@
+{
+ "featureDefs": [
+  {
+   "name": "OnboardingPlan + ChecklistItem ArcheType'ları",
+   "desc": "İşe alımdan türeyen plan; sözleşme/ekipman/eğitim adımları durum + sorumlu + son tarih taşır. Hibrit şema + JSONB değişken alan (role'a göre farklı checklist).",
+   "critical": true
+  },
+  {
+   "name": "Onboarding Workflow (durum makinesi)",
+   "desc": "Adım tamamlama aşamaları (atandı → devam → tamam → onay); tenant'a pinli, ArcheType'tan bağımsız versiyonlanır."
+  },
+  {
+   "name": "Görev otomasyonu + hatırlatma",
+   "desc": "Geciken adım için Notification; ekipman/erişim talebi ilgili module'e olay olarak iletilir."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-2 SaaS ürünü; paylaşılan Party/Employee ArcheType'ı üzerinden kernel ile zorunlu, HR/IT app'leriyle yalnız Contract üzerinden.",
+  "kernel": "Party/Employee kimliği, tenancy (RLS) ve audit kernel'den; Onboarding kendi tablo şemasını ArcheType engine ile tanımlar — REST/GraphQL otomatik doğar.",
+  "core": "App core'una bağlı; core module değişmez, Onboarding bir Domain (Kaya) olarak core sözleşmelerine uyar; i18n + Notification + Settings core'dan.",
+  "modules": "Identity module'üne erişim/hesap açılış olayı, IT-asset module'üne ekipman talebi yayar; eğitim tamamlanmasını okur — yalnız Contract.",
+  "apps": "HR, Identity ve IT-asset app'leri aynı Employee + Plan kaydını paylaşır; çift kayıt yok."
+ },
+ "moduleUsage": [
+  "HR app: işe alım onaylanınca OnboardingPlan'ı tetikler; role'a göre checklist şablonu seçer.",
+  "Identity app: 'hesap aç' adımında erişim/SSO sağlama olayını tüketir (step-up gerekirse).",
+  "IT-asset app: ekipman tahsis adımını talep olarak alır; teslim tamamlanınca adımı kapatır."
+ ],
+ "ecaExample": "trigger:\n  event: onboarding.step_completed\n  when: \"step == 'contract_signed' AND tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"onboarding.write\"\n    - not loop_detected\naction:\n  - emit: identity.account_provision_requested   # outbox\n  - notify: [\"it-asset\", \"manager\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{employee}:contract\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Sözleşme/kimlik belgesi ve iletişim verisi pii=true (+retention); RLS tenant-scoped, KVKK saklama süresi sonunda imha.",
+  "Hesap/erişim sağlama (provisioning) capability deny-by-default + step-up; yetkisiz adım kapatma audit'e yazılır."
+ ],
+ "perfNotes": {
+  "perf": "Plan/checklist liste uçları keyset (cursor) pagination; sorumlu+durum indeksleri; hatırlatma asenkron worker (geciken adım taraması)."
+ },
+ "testNotes": [
+  "Komşu-tenant OnboardingPlan sorgusu sıfır döndürür.",
+  "Sözleşme imzalanmadan hesap sağlama adımı tetiklenmez (sıra/guard).",
+  "Aynı 'contract_signed' olayı ikinci kez tek provisioning üretir (idempotency)."
+ ]
+}

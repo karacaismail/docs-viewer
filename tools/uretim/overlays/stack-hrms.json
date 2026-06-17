@@ -1,0 +1,56 @@
+{
+ "featureDefs": [
+  {
+   "name": "Effective-dated (bitemporal) core kayıtlar",
+   "desc": "Maaş/pozisyon/org bağlılığı (değer, geçerlilik aralığı) çifti; effective_from/to + recorded_at. Point-in-time ('1 Mart'taki maaş') ve retro (geçmişe etkili zam → bu ay fark) sorgu zorunlu. Ana disiplin.",
+   "critical": true
+  },
+  {
+   "name": "Payroll motoru (element-based, retro, off-cycle)",
+   "desc": "Brüt→net: SGK işçi %14 / işveren %20.75 (5510 teşvikli %15.5), işsizlik %1/%2, gelir vergisi dilimleri, damga %0.00759, asgari ücret istisnası; Money (Decimal) kuruş hassasiyeti, kümülatif matrah.",
+   "critical": true
+  },
+  {
+   "name": "Statutory (TR): SGK e-Bildirge / MUHSGK",
+   "desc": "APHB+MUHSGK birleşik beyanname (GİB), İşten Ayrılış Bildirgesi (İAB), kıdem/ihbar, BES; yurt dışı muadillerin boşluk bıraktığı TR uyum çekirdeği.",
+   "critical": true
+  },
+  {
+   "name": "Employee Master + yaşam döngüsü",
+   "desc": "Özlük, istihdam yaşam döngüsü, rehire; Time&Attendance (shift/clock/OT/geofence), Leave (accrual/kıdem), Onboarding/Offboarding (IT provisioning)."
+  },
+  {
+   "name": "Performance + Talent + Compensation",
+   "desc": "OKR/360°/rating/calibration/PIP, 9-box/HiPo/kariyer yolu, pay grade/band/merit/bonus; HR Document (sözleşme/e-imza/süre takibi)."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-2 Stack (#3); HRMS tek başına anlamlı ama GL (muhasebe) + ödeme + SGK ile birlikte tamamlanır. Kendi Domain'i (Kaya), dışarıya yalnız Contract ile konuşur.",
+  "kernel": "Party (çalışan/yönetici), tenancy (RLS), capability/permission, audit ve ArcheType engine kernel'den; HRMS kendi şemasını ArcheType ile tanımlar — REST/GraphQL otomatik doğar.",
+  "core": "Money/Tax (gelir vergisi/SGK oranları, Decimal), bitemporal (effective-dating — tüm core değer alanda zorunlu), i18n, Calendar (dönem/çalışma günü), Notification core'dan.",
+  "modules": "GL/Accounting'e bordro tahakkuk yevmiyesi yayar; cc-tr (Türkiye Uyum) paketinden SGK/GİB sürücülerini tüketir; ATS/Onboarding alt-module'lerini kompoze eder — yalnız Contract.",
+  "apps": "HRMS, Accounting ve TR-uyum app'leri aynı çalışan + bordro kaydını paylaşır; mali müşavir çok müşteriyi tek platformda yönetir, çift kayıt yok."
+ },
+ "moduleUsage": [
+  "Accounting/GL app: aylık bordro tahakkuk + ödeme yevmiyesini tüketir.",
+  "cc-tr (Türkiye Uyum) app: SGK e-Bildirge (APHB/MUHSGK) ve İAB e-Devlet entegrasyonunu sağlar.",
+  "ATS/Recruitment app: req→pipeline→offer akışını Employee Master'a bağlar (işe alımda onboarding tetikler).",
+  "Time&Attendance app: shift/clock/OT verisini bordro işçilik/fazla mesai kalemine besler."
+ ],
+ "ecaExample": "trigger:\n  event: payroll.period_finalized\n  when: \"period_end AND status == 'approved'\"\ncondition:\n  all:\n    - actor.capability >= \"payroll.post\"\n    - sgk_declaration.valid == true\n    - not loop_detected\naction:\n  - emit: gl.accrual_requested        # outbox, idempotent\n  - emit: sgk.declaration_ready        # APHB/MUHSGK\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{period}:payroll-post\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Ücret/TC kimlik/IBAN/sağlık (özlük) alanları pii=true (+retention); bordro KVKK'da en hassas veri sınıfı, field-level encryption; tenant-scoped RLS.",
+  "Effective-dated kayıt değişmez: onaylanan maaş/bordro silinmez; düzeltme yeni sürüm (retro) — geçmiş izi + SGK düzeltme bildirgesi korunur (bitemporal).",
+  "Bordro post + ücret görüntüleme capability deny-by-default; dar kapsam (ifowner/role); her erişim/onay audit'e yazılır."
+ ],
+ "perfNotes": {
+  "code": "Dönem hesabı batch worker'da paralel (çalışan başına bağımsız); SGK bildirge üretimi finalize sonrası asenkron.",
+  "perf": "Çalışan + effective-dated geçmiş keyset (cursor) pagination; (employee_id, effective_from, effective_to) bileşik indeks; toplu dönem kapanışı kuyruk üstünden."
+ },
+ "testNotes": [
+  "Money kuruş doğruluğu: brüt − SGK/vergi kesintileri = net, bit-bit; SGK tavanı + asgari ücret istisnası doğru uygulanır.",
+  "Point-in-time: '1 Mart'taki maaş/org' doğru döner; geriye dönük zam etki tarihinden fark üretir (time-travel doğruluğu).",
+  "Aynı dönem ikinci kez post edilemez (idempotency); komşu-tenant bordro/ücret sorgusu sıfır döner (RLS).",
+  "Onaylanmış bordro immutable; düzeltme ters kayıt + yeni dönem."
+ ]
+}

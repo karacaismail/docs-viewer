@@ -334,7 +334,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "İlan/Pazaryeri (sahibinden tarzı) Distribution — çekirdek yetenek",
+      "term": "İlan (Listing) ArcheType + kategori taksonomisi",
       "definition": [
        {
         "type": "strong",
@@ -342,41 +342,51 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Başlık/kategori/alanlar/fiyat (Money)/konum/durum (taslak→yayın→süresi doldu); kategoriye özel alan şeması ağaç taksonomiden türer. Lead-gen marketplace — ödeme dışarıda, ilan ücreti+doping içeride."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Doping/öne çıkarma + ödeme",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Ücretli listeleme yükseltme paketleri (s-payment-methods); paket tutarları Money (Decimal), satın alma bitemporal + audit."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Faceted arama (l1-search, foldTurkish)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Kategori/konum/fiyat facet, Türkçe karakter katlama, sıralama; agent/vektör arama için k-agent-runtime (A05). Okuma-optimize projection."
+       }
+      ]
+     },
+     {
+      "term": "Mağaza (Store) + alıcı-satıcı Thread",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Kurumsal satıcı profili, paket/limit, vitrin; mesajlaşma thread'i (pii) spam/abuse korumalı; favori/takip + fiyat-düşüş bildirimi."
+       }
+      ]
+     },
+     {
+      "term": "Şikayet/Trust + moderasyon kuyruğu",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Dolandırıcılık/sahte ilan akışı, moderasyon kuyruğu; eşik altı satıcı/ilan askıya."
        }
       ]
      }
@@ -564,15 +574,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Alıcı-satıcı mesaj/iletişim verisi pii=true (+retention); RLS tenant-scoped, spam/abuse + dolandırıcılık moderasyonu; iletişim bilgisi karşı tarafa kademeli açılır. Doping/ödeme Money kuruş hassasiyetinde tamsayı + para birimi; satın alma bitemporal — iade/iptal yeni kayıt, iz korunur; dış ödeme allowlist + step-up. İlan yayın + doping + moderasyon capability deny-by-default; sahte ilan/şikayet akışı audit'e yazılır (moderasyon kararı izlenebilir). Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -600,15 +602,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Doping uygulaması + reindex asenkron worker; moderasyon kuyruğu öncelikli (sahte ilan hızlı düşer)."
        }
       ]
      },
@@ -626,15 +620,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "İlan/arama uçları faceted + keyset pagination; kategori+konum+durum indeksleri; arama okuma-optimize projection (HNSW/IVF vektör opsiyonu); incremental reindex."
        }
       ]
      },
@@ -930,7 +916,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — İlan/Pazaryeri (sahibinden tarzı) Distribution",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — İlan/Pazaryeri (sahibinden tarzı) Distribution\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: listing.boost_purchased\n  when: tenant_scoped\ncondition:\n  all:\n    - actor.capability >= \"classifieds.boost.buy\"\n    - payment.captured == true\n    - not loop_detected\naction:\n  - apply: listing_promotion           # idempotent\n  - emit: search.reindex_requested      # öne çıkarma sıralaması\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{listing}:{boost_package}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1070,6 +1056,18 @@
     ]
    },
    {
+    "id": "block-dist-sahibinden-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Komşu-tenant ilan/mağaza/thread sorgusu sıfır döndürür (RLS). Aynı doping paketi ikinci kez tek promosyon uygular (idempotency). Ödeme alınmadan doping uygulanmaz (deny path); süresi dolan ilan aramadan düşer. ArcheType seçimi: lead-gen (ilan ücreti, ödeme dışarıda) ≠ transaction marketplace (split/escrow) — karışmaz."
+     }
+    ]
+   },
+   {
     "id": "block-dist-sahibinden-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1088,7 +1086,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — bu bir Distribution (sektör paketi), paralel framework değil: kanonik Classifieds + Marketplace + Payment + Search + CRM stack'lerinin classifieds dikeyinde paketi. Stack ⊂ Edition ⊂ Distribution; bileşen module'lere yalnız Contract."
        }
       ]
      },
@@ -1097,16 +1095,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Party (alıcı/satıcı), tenancy (RLS), audit, event-bus ve ArcheType engine kernel'den; agent runtime kataloğu kanonik k-agent-runtime'da yaşar — bu sayfa paralel kopya tutmaz."
        }
       ]
      },
@@ -1115,7 +1104,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Money (ilan ücreti/doping, kuruş + para birimi), bitemporal (ilan/satın alma sürümü), i18n, Notification, l1-search core'dan."
        }
       ]
      },
@@ -1124,7 +1113,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "s-classifieds (ilan), s-marketplace (mağaza/komisyon), s-payment-methods (doping ödeme), l1-search (arama), s-crm+mesajlaşma module'lerini tüketir; s-property/dist-realestate ile portföy modelini paylaşır — yalnız Contract."
        }
       ]
      },
@@ -1133,7 +1122,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Classifieds, Search ve Payment app'leri aynı İlan + Mağaza + Thread kaydını paylaşır; çift kayıt yok."
        }
       ]
      }
@@ -1146,13 +1135,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-dist-sahibinden-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-dist-sahibinden-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-classifieds: ilan yaşam döngüsü + kategori taksonomisi + alan şemalarını sağlar (dikeyin çekirdeği)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-payment-methods: doping/öne çıkarma paket satışını tahsil eder (Money, dış-etkili → step-up)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "l1-search: faceted arama + foldTurkish sıralama; agent arama için k-agent-runtime (A05 vector) tüketilir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-crm + mesajlaşma: alıcı-satıcı thread, favori, fiyat-düşüş bildirimi; spam/abuse koruması."
+      }
+     ]
     ]
    },
    {

@@ -1,0 +1,51 @@
+{
+ "featureDefs": [
+  {
+   "name": "Product Configurator (kural tabanlı)",
+   "desc": "Seçenek/özellik bağımlılıkları, uyumluluk kuralları, gerekli/yasaklı kombinasyon. Geçersiz konfigürasyon engellenir; kurallar veri olarak tutulur, koda gömülmez.",
+   "critical": true
+  },
+  {
+   "name": "Pricing engine — kademeli + indirim",
+   "desc": "Liste fiyatı, hacim/kademe indirimi, müşteriye özel fiyat, paket fiyatı. Tüm tutarlar Money (Decimal) + para birimi; float YASAK. Onay eşikli indirim (deal desk).",
+   "critical": true
+  },
+  {
+   "name": "Quote/Teklif belge yaşam döngüsü",
+   "desc": "draft -> sent -> viewed -> accepted/rejected/expired durum makinesi; versiyon + revizyon geçmişi bitemporal. PandaDoc muadili e-imza/onay akışı."
+  },
+  {
+   "name": "Quote -> Order/Subscription dönüşümü",
+   "desc": "Kabul edilen teklif sipariş veya abonelik olarak akar; çift veri girişi yok. Salesforce CPQ deseni — CRM fırsatı ile bağ."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-2 SaaS ürünü (Salesforce CPQ/PandaDoc muadili). Kernel + Scale + Layer-1 üstüne oturur; kendi Quote/Configuration ArcheType'larını tanımlar, yetki/audit/event-bus framework'ten gelir. Aynı platformdaki CRM/Commerce ile entegre.",
+  "kernel": "Kimlik/tenancy (RLS)/audit + ArcheType engine kernel'den; müşteri Party'den türer. Teklif tutarları Money (Decimal); teklif/revizyon bitemporal.",
+  "core": "CPQ kendi core module'ü; konfigürasyon kuralları ve fiyat stratejileri additif capability — core sözleşmesi sabit, yeni kural veri olarak eklenir.",
+  "modules": "CRM (fırsat) ile teklif bağı, Commerce/Subscription ile sipariş dönüşümü, Accounting/Revenue ile gelir tanıma yalnız Contract üzerinden.",
+  "apps": "Sales app teklif oluşturur; kabul edilince Commerce/Subscription app aynı müşteri+ürün ArcheType'ından SalesOrder/Subscription türetir, çift kayıt yok."
+ },
+ "moduleUsage": [
+  "Sales/CRM app: fırsattan teklif üretir; konfigüratör geçersiz kombinasyonu engeller, fiyat motoru kademeli indirim uygular.",
+  "Commerce app: kabul edilen teklif SalesOrder'a dönüşür; teklif satırları sipariş satırı olur (tekrar giriş yok).",
+  "Subscription app: yinelenen teklif kalemleri abonelik planına bağlanır (prorate/dunning Commerce'ten).",
+  "Accounting/Revenue app: kabul edilen teklif tutarı gelir tanıma olayını tetikler (Money/Decimal)."
+ ],
+ "ecaExample": "trigger:\n  event: quote.accepted\n  when: \"tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"cpq.quote.convert\"\n    - not loop_detected\n    - quote.total == sum(quote.lines.amount)   # Money invariant, Decimal\naction:\n  - record: sales_order FROM quote { bitemporal: true }\n  - emit: revenue.recognition_scheduled    # outbox idempotent\n  - emit: crm.opportunity_won\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{quote}:convert\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Teklif/fiyat verisi tenant-scoped RLS: bir müşterinin teklifi/özel fiyatı diğerine sızmaz; indirim onay yetkisi capability deny-by-default (deal desk eşiği).",
+  "Tutarlar Money/Decimal; teklif toplamı satır toplamına eşit olmalı (invariant), aksi convert reddedilir.",
+  "Kabul edilen teklif değişmez audit; revizyon yeni versiyon yaratır, eski teklif geriye değişmez. E-imza/onay step-up'lı."
+ ],
+ "perfNotes": {
+  "code": "Konfigürasyon kuralları veri-odaklı kural motoru (rule eval), if-zinciri YASAK; fiyat stratejisi (liste/kademe/özel) runtime dispatch.",
+  "perf": "Teklif listesi keyset pagination; konfigürasyon doğrulama saf hesap + cache'lenebilir kural seti; teklif -> sipariş dönüşümü asenkron olay."
+ },
+ "testNotes": [
+  "Geçersiz ürün konfigürasyonu (yasaklı kombinasyon) teklif oluşturmayı bloke eder.",
+  "Teklif toplamı satır toplamına eşit (Decimal); indirim eşik üstüyse onay gerektirir.",
+  "Aynı teklif ikinci kez siparişe dönüşmez (idempotency).",
+  "Komşu tenant teklif/özel fiyat sorgusu sıfır döndürür (RLS)."
+ ]
+}

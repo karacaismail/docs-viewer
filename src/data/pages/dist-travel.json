@@ -436,15 +436,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Yolcu kimlik/pasaport ve ödeme verisi pii+money sınıfı; tenant RLS ile acente izolasyonu, kapora tahsilatı external_effects step-up ister. Tedarikçi mutabakatı ve komisyon hesabı money tipiyle; kontenjan aşımı veya çift rezervasyon idempotency_key ile engellenir. Döviz kuru sabitleme anı audit'e bitemporal yazılır; 'hangi kurla satıldı' geriye sorgulanabilir, sonradan değiştirilemez. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -942,6 +934,18 @@
     ]
    },
    {
+    "id": "block-dist-travel-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Kontenjan: dolu turda yeni rezervasyon reddedilir, eşzamanlı iki talep yalnız birini onaylar. Kur sabitleme: satış anındaki kur kilitlenir, sonraki kur dalgalanması fatura tutarını değiştirmez. Tedarikçi mutabakat: sezon sonu mutabakat tedarikçi başına toplanır, komisyon money tipiyle doğru ayrışır."
+     }
+    ]
+   },
+   {
     "id": "block-dist-travel-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -960,7 +964,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Tur acentesi bir distribution paketidir: Stack ⊂ Edition ⊂ Distribution; ham stack değil, sektör UI/UX katmanıyla teslim edilir. Event + Scheduling + Procurement + Accounting parçalarını TÜRSAB operasyonuna göre birleştirir."
        }
       ]
      },
@@ -969,16 +973,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "identity/authz (acente personeli rol bazlı capability deny-by-default), tenancy (acente başına RLS), audit (rezervasyon/ödeme bitemporal izi), event-bus."
        }
       ]
      },
@@ -987,7 +982,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Party (yolcu/tedarikçi tek kaynak), Booking primitive, Money ledger (döviz kuru sabitleme + komisyon), Document (TÜRSAB belge şablonları)."
        }
       ]
      },
@@ -996,7 +991,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "s-event (tur: kontenjan/tarih/fiyat sınıfı), s-scheduling (rezervasyon + ödeme planı kapora/taksit), s-procurement (otel/ulaşım sözleşme + sezon sonu mutabakat), stack-accounting (kur sabitleme, acente komisyonu)."
        }
       ]
      },
@@ -1005,7 +1000,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Acente operasyon kabuğu: tur tanımı, rezervasyon ekranı, tedarikçi mutabakat paneli, TÜRSAB belge üretimi."
        }
       ]
      }

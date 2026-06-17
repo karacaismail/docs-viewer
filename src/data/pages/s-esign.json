@@ -195,7 +195,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "E-İmza & Onay — çekirdek yetenek",
+      "term": "İmza zarfı + imzacı sırası",
       "definition": [
        {
         "type": "strong",
@@ -203,41 +203,42 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Belge zarfı; sıralı veya paralel imzacı tanımı, son tarih, hatırlatma. Zarf durumu (taslak/gönderildi/kısmen imzalı/tamam) bitemporal izlenir."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "KEP + 5070 nitelikli imza",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "TR tarafında KEP teslimat ve 5070 sayılı kanuna uygun nitelikli e-imza + zaman damgası; global oyuncuların taşımadığı mevzuat uyumu."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Delil zinciri (hash-chain)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Her imza adımı (kim, ne zaman, hangi belge sürümü) s-audit hash-chain'ine yazılır; sonradan değiştirilemez delil."
+       }
+      ]
+     },
+     {
+      "term": "Şablon + CLM köprüsü",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Tekrarlı sözleşme şablonları; s-clm sözleşme yaşam döngüsüne imza adımı olarak bağlanır."
        }
       ]
      }
@@ -425,15 +426,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "İmzacı erişimi capability deny-by-default; harici imzacı yalnızca davet edildiği zarfı görür, başka zarfa erişim reddedilir. Belge hash imza anında sabitlenir — imzadan sonra belge değişirse imza geçersiz sayılmalı (içerik bütünlüğü), aksi halde delil değeri yok. KEP/5070 nitelikli imza yasal delil; özel anahtar/sertifika işlemleri secret store'da, audit'e anahtar materyali asla yazılmaz. Hash-chain append-only: imza adımı silinemez/değiştirilemez; bitemporal düzeltme bile yeni kayıt olarak eklenir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -461,15 +454,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "-- zarfın imza durumu (keyset)\nSELECT signer_id, signed_at, doc_version\nFROM envelope_signature\nWHERE tenant_id = $1 AND envelope_id = $2\nORDER BY sign_order, signer_id;"
        }
       ]
      },
@@ -487,15 +472,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "İmza akışı düşük hacim ama delil okuması sık; envelope_id + tenant_id index. Hatırlatma cron'u son-tarih yaklaşan zarfları keyset ile tarar, full-scan değil."
        }
       ]
      },
@@ -931,6 +908,18 @@
     ]
    },
    {
+    "id": "block-s-esign-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Sıralı imzada n. imzacının ancak (n-1) tamamlanınca imzalayabildiği doğrulanır. İmza sonrası belge değişiminde imzanın geçersiz sayıldığı (hash uyumsuzluğu) test edilir. Her imza adımının hash-chain'e append-only yazıldığı, geriye değiştirilemediği doğrulanır. KEP/5070 zorunlu jurisdiction'da basit imzanın reddedildiği test edilir."
+     }
+    ]
+   },
+   {
     "id": "block-s-esign-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -949,7 +938,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Belge imza akışı + TR yasal uyum (KEP/5070) gereken müşterilerde; DocuSign alanının TR karşılığı."
        }
       ]
      },
@@ -958,16 +947,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Zarf ve imzacılar tenant'a izole (RLS); imzacı yetkisi capability deny-by-default — yalnızca davet edilen imzacı zarfa erişir."
        }
       ]
      },
@@ -976,7 +956,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "İmza adımları append-only audit + bitemporal sürüm; belge hash'i imza anında sabitlenir, sonradan belge değişirse imza geçersiz."
        }
       ]
      },
@@ -985,7 +965,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "s-clm (sözleşme yaşam döngüsü), s-audit (delil), stack-service üstüne oturur; kendi e-imza ArcheType'larını ekler."
        }
       ]
      },
@@ -994,7 +974,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Gönderen için zarf hazırlama app'i; imzacı için (harici kullanıcı) imza app'i; denetçi için delil görüntüleme."
        }
       ]
      }
@@ -1007,13 +987,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-esign-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-esign-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-clm: sözleşme yaşam döngüsünde imza adımını e-imza modülüne devreder."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-audit: imza olaylarının hash-chain delil zincirini sağlar — yapısal avantaj, ayrıca kurulmaz."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "cc-resolver-ops: imzacının jurisdiction'ına göre KEP/5070 zorunluluğunu resolver'dan alır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "stack-service: imza talebini hizmet/iş akışına bağlar."
+      }
+     ]
     ]
    },
    {

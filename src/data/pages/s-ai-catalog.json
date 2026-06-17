@@ -131,7 +131,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "B2B AI Katalog / Görsel Üretimi — çekirdek yetenek",
+      "term": "Görsel üretim/zenginleştirme pipeline (AI)",
       "definition": [
        {
         "type": "strong",
@@ -139,41 +139,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Ürün görseli üretimi + arka plan temizleme/standardizasyon; çıktı öneri, karar değil — kullanıcı onaylar. Üretilen asset provenance + telif/kaynak izi taşır."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Ürün içeriği üretimi (başlık/açıklama/özellik)",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Katalog metni AI ile zenginleştirme; output guardrail (halüsinasyon/marka uyumu/yasaklı iddia), model + prompt template versiyon pinli."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Toplu katalog otomasyonu (batch)",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "B2B katalog için toplu işleme; maliyet guardrail (token/iş kotası + circuit breaker), asenkron worker."
+       }
+      ]
+     },
+     {
+      "term": "İnceleme + onay akışı",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Üretilen içerik/görsel insan onayına düşer; onaylanmadan katalog/PIM'e yazılmaz (capability-gated)."
        }
       ]
      }
@@ -361,15 +358,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Tenant katalog/marka verisi model eğitimine gitmez; üretilen görsel/metin telif + kaynak izi (provenance) taşır; output guardrail (halüsinasyon/yasaklı iddia). AI yalnız öneri: onaylanmadan katalog/PIM'e yazılmaz (deny-by-default + capability); insan onayı + agent eylemi audit'e (run_id, model_version, scope) yazılır. Maliyet guardrail: günlük model bütçesi + tenant kotası + token-rate circuit breaker; RLS tenant-scoped. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -397,15 +386,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Üretim → guardrail → review asenkron worker; toplu işleme batch + kuyruk (span-level tracing)."
        }
       ]
      },
@@ -423,15 +404,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Üretilen asset Drive/CDN'de; katalog yazma incremental (yalnız onaylı/değişen ürün); iş listeleri keyset pagination."
        }
       ]
      },
@@ -727,7 +700,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — B2B AI Katalog / Görsel Üretimi",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — B2B AI Katalog / Görsel Üretimi\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: catalog.enrichment_requested\n  when: tenant_scoped\ncondition:\n  all:\n    - actor.capability >= \"catalog.ai.generate\"\n    - cost_budget.ok == true\n    - not loop_detected\naction:\n  - generate: content_and_image        # öneri, asenkron\n  - route: human_review                # onaysız yazma yok\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{product}:{model_version}\"\n  external_effects: cost_budget_check",
     "copyEnabled": true
    },
    {
@@ -867,6 +840,18 @@
     ]
    },
    {
+    "id": "block-s-ai-catalog-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Onaysız üretilen içerik/görsel katalog/PIM'e yazılMAZ (deny path). Komşu-tenant ürün/asset sorgusu sıfır döndürür (izolasyon). Maliyet kotası aşılınca üretim circuit breaker ile reddedilir. Üretilen her görsel/metin provenance + model_version izi taşır."
+     }
+    ]
+   },
+   {
     "id": "block-s-ai-catalog-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -885,7 +870,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Layer-2 SaaS ürünü (aday, fırsat haritası); tek başına değil, s-pim/s-product-feed katalog kaynağı üstüne oturur. Kendi Domain'i (Kaya), kaynaklara yalnız Contract ile bağlı. Stack ⊂ Edition ⊂ Distribution."
        }
       ]
      },
@@ -894,16 +879,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Tenancy (RLS), capability scope, audit ve ArcheType engine kernel'den; ArcheType agent'lara MCP tool olarak doğar — entegrasyon yazılmaz, beyandan türer."
        }
       ]
      },
@@ -912,7 +888,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "i18n, Notification, Settings core'dan; üretim asenkron, maliyet/oran circuit breaker; asset depolama Drive/dosya module üzerinden."
        }
       ]
      },
@@ -921,7 +897,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "s-pim/s-product-feed module'ünden ürün kaydını okur, onaylı içerik/görseli geri yazar (re-projection); yeni/değişen ürün event'inde tetiklenir — yalnız Contract."
        }
       ]
      },
@@ -930,7 +906,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "PIM, Catalog ve Commerce app'leri aynı ürün + asset kaydını paylaşır; AI yalnız öneri üretir, çift kayıt yok."
        }
       ]
      }
@@ -943,13 +919,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-ai-catalog-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-ai-catalog-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "PIM app: ürün eksik içerik/görsel için zenginleştirme tetikler; onaylı çıktı ürün kartına yazılır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Product-feed app: kanal feed'i öncesi standart görsel/metin üretir (kanal kuralına uyum)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Commerce/Catalog app: zenginleştirilmiş içeriği vitrine sunar (insan onayı sonrası)."
+      }
+     ]
     ]
    },
    {

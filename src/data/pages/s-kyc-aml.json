@@ -131,7 +131,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "KYC / AML Case Management — çekirdek yetenek",
+      "term": "Kimlik Doğrulama (KYC)",
       "definition": [
        {
         "type": "strong",
@@ -139,41 +139,33 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Müşteri kimlik tespiti ve belge doğrulama; doğrulama sonucu ve kanıt referansı bitemporal + audit'li tutulur. Ham kimlik belgesi maskelenmiş referansla saklanır, gövde değil."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Yaptırım / PEP Tarama",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Yaptırım listesi ve PEP (politik nüfuzlu kişi) eşleştirmesi; eşleşme bir vaka açar. Tarama çağrıları idempotent, sonuç skoru ve liste versiyonu kayıtlı."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Şüpheli İşlem Vaka Yönetimi",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Vaka açma → inceleme → karar (kapat/raporla) durum makinesi; her geçiş gerekçeli ve audit'li. Karar yetkisi rol bazlı, dört-göz onayı eşik üstünde zorunlu."
        }
       ]
      }
@@ -361,15 +353,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Kimlik belgeleri ve tarama sonuçları yüksek hassasiyetli PII; maskeli referansla saklanır, ham gövde erişimi ayrı capability + audit gerektirir. Vaka kararları (kapat/raporla) deny-by-default yetkili; eşik üstünde dört-göz (step-up) zorunlu. RLS ile tenant izolasyonu kritiktir; bir tenant'ın AML vakası komşuya asla görünmez. Tarama liste versiyonu ve skoru kayıtlı; geriye dönük 'neden bu karar' bitemporal izlenebilir. Erişim ve karar logları retention/regülasyon saklama süresine tabi, silme audit'li. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -397,15 +381,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Açık vaka kuyruğu keyset cursor ile sayfalanır; dış tarama çağrıları worker'da batch'lenir ve idempotent tekrar edilir."
        }
       ]
      },
@@ -423,15 +399,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Vaka listesi projeksiyondan okunur; yüksek işlem hacminde kuyruk ekranı sabit gecikmeyle gelir."
        }
       ]
      },
@@ -727,7 +695,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — KYC / AML Case Management",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — KYC / AML Case Management\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: transaction.flagged\ncondition:\n  all:\n    - actor.capability >= \"aml:case:open\"\n    - screening.match_score >= threshold\n    - not loop_detected\naction:\n  - open: aml_case\n  - assign: review_queue(role=\"compliance\")\n  - emit: case.opened\nguards:\n  max_depth: 6\n  idempotency_key: \"aml:case:{transaction_id}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -867,6 +835,18 @@
     ]
    },
    {
+    "id": "block-s-kyc-aml-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Aynı işlem için ikinci vaka açma isteği idempotency ile tekilleştirilir. Eşik altı skor vaka açmaz; eşik üstü açar (sınır testi). Vaka kapatma kararı dört-göz olmadan reddedilir (step-up zorunlu). Komşu tenant'ın AML vakası ve kimlik verisi RLS ile görünmez."
+     }
+    ]
+   },
+   {
     "id": "block-s-kyc-aml-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -885,7 +865,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "SaaS Fırsat Haritası adayı (finance); katalogda eksik olduğu için aday. Layer-2 ürün olarak Kernel + Scale + Layer-1 üstüne oturacak; yetki/audit/event-bus framework'ten gelir. Taksonomi: Stack ⊂ Edition ⊂ Distribution."
        }
       ]
      },
@@ -894,16 +874,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Vaka/tarama olayları event-bus'a yayınlanır; capability deny-by-default ile yetki; tüm vaka geçişleri ve kararlar audit'li, RLS ile tenant izolasyonu."
        }
       ]
      },
@@ -912,7 +883,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Vaka ve karar geçmişi bitemporal; işlem tutarları money Contract'ı üstünden. Dış tarama servisleri outbox/worker üstünden idempotent."
        }
       ]
      },
@@ -921,7 +892,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Payment/Finance işlem akışından şüpheli işlem sinyali, CRM'den müşteri profilini alır; vaka kararını geri yayınlar (ör. hesabı askıya al)."
        }
       ]
      },
@@ -930,7 +901,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "App vaka kuyruğunu sunar; tarama worker'da koşar, eşleşme olunca vaka açılır ve incelemeye düşer."
        }
       ]
      }
@@ -943,13 +914,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-kyc-aml-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-kyc-aml-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Payment / Finance: şüpheli işlem sinyalinin kaynağı; karar sonucu hesabı askıya alabilir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "CRM: müşteri profili ve risk skoruyla vaka zenginleştirme."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-bpm: vaka inceleme/onay akışının ECA + durum makinesi tarafı."
+      }
+     ]
     ]
    },
    {

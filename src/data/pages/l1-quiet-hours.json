@@ -615,7 +615,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Quiet Hours — sessiz saatler — çekirdek yetenek",
+      "term": "Yerel saat penceresi değerlendirme",
       "definition": [
        {
         "type": "strong",
@@ -623,41 +623,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Kullanıcının timezone + quiet_start/quiet_end alanlarıyla bildirim anı yerel saate çevrilir; pencere içinde mi diye bakılır. Karar 'gönder / ertele / bypass' üçlüsüdür, sessiz düşürme değildir."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Kritik bypass kataloğu",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "security_alert, payment_failed gibi olay tipleri Contract'ta kapalı whitelist; quiet pencere içinde olsa bile gönderilir. Tenant katalogu daraltabilir, genişletemez."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Kanal başına politika",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Email/Push/SMS/Phone için ayrı quiet penceresi ve ayrı bypass kümesi; per-channel tercih user_notification_prefs satırında bitemporal tutulur, geçmiş tercih audit edilebilir."
+       }
+      ]
+     },
+     {
+      "term": "Erteleme zamanlaması",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Pencere içinde + non-critical bildirim, kullanıcının uyanma saatine keyset-sıralı kuyruğa scheduled_at ile alınır; idempotency_key ile çift gönderim engellenir."
        }
       ]
      }
@@ -845,15 +842,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Bypass kataloğu deny-by-default: yalnız capability ile işaretli olay tipleri (security, payment) quiet penceresini delebilir; tenant kendi listesini genişletemez, sadece daraltabilir. quiet_start/quiet_end ve timezone PII sınıfı kişisel veri; RLS ile tenant+user izolasyonu, değişiklik audit log'da kim/ne zaman bitemporal tutulur. Erteleme kuyruğu tenant başına izole; bir tenant'ın gecikmiş bildirimi diğerinin penceresini etkilemez. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -881,15 +870,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Quiet kontrolü gönderim öncesi tek satır prefs okuması + yerel saat hesabı; kuyruk keyset (scheduled_at, id) ile sıralı, OFFSET yok."
        }
       ]
      },
@@ -907,15 +888,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Karar O(1); erteleme batch'i uyanma saatinde dakikalık pencerelerde toplanır, thundering-herd jitter ile dağıtılır."
        }
       ]
      },
@@ -1211,7 +1184,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Quiet Hours — sessiz saatler",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Quiet Hours — sessiz saatler\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: notification.dispatch_requested\ncondition:\n  all:\n    - now_local(actor.timezone) within actor.quiet_window[channel]\n    - event.category not in bypass_catalog\n    - not idempotency_seen(event.dedup_key)\naction:\n  - reschedule: next_wake_time(actor.timezone, actor.quiet_end[channel])\n  - emit: notification.deferred\nguards:\n  max_depth: 2\n  idempotency_key: \"notif:{event.id}:{actor.id}:{channel}\"\n  external_effects: deferred_until_window_end",
     "copyEnabled": true
    },
    {
@@ -1351,6 +1324,18 @@
     ]
    },
    {
+    "id": "block-l1-quiet-hours-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Pencere sınırı: tam 22:00 ve 08:00 anlarında erteleme/gönderim kararı deterministik (DST geçişi dahil). Bypass: payment_failed olayı 03:00'te gönderilir, marketing olayı ertelenir. Idempotency: aynı dedup_key ile iki dispatch tek bildirim üretir."
+     }
+    ]
+   },
+   {
     "id": "block-l1-quiet-hours-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1427,13 +1412,21 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-l1-quiet-hours-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-l1-quiet-hours-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "layer1-notification: Worker, kanal sözleşmesi üzerinden göndermeden önce quiet-hours guard'ını çağırır; karar 'gönder / ertele / bypass'."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "kernel-identity: timezone ve quiet tercihi user profilinden okunur; tenant RLS altında yalnız kendi kullanıcısının tercihi görünür."
+      }
+     ]
     ]
    },
    {

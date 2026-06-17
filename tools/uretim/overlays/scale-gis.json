@@ -1,0 +1,45 @@
+{
+ "featureDefs": [
+  {
+   "name": "Coğrafi kolon + GiST index",
+   "desc": "geography(POINT,4326) kolonu ve zorunlu GiST index; index yoksa tablo taraması = ölüm. ArcheType'ta Geo Coordinate alan tipi olarak bildirilir.",
+   "critical": true
+  },
+  {
+   "name": "Proximity sorgusu (KNN)",
+   "desc": "ORDER BY location <-> point LIMIT K ile en yakın K kayıt; keyset benzeri sayfalama için sıralama anahtarı GiST'ten beslenir.",
+   "critical": true
+  },
+  {
+   "name": "Geofencing (containment)",
+   "desc": "ST_Contains(zone.boundary, user_location) ile bir noktanın teslimat/yetki bölgesi içinde olup olmadığı; sınır kararı tenant-scoped polygon'a bağlı."
+  },
+  {
+   "name": "Buffer / intersection",
+   "desc": "ST_Buffer ve ST_Intersects ile bölge genişletme ve kesişim; rota/alan analizleri."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Konum-tabanlı bir özellik (yakın bul, bölge kontrolü, rota) gerekiyorsa entegre edilir; aksi halde eklenmez — varsayılan-basit ilkesi.",
+  "kernel": "ArcheType şemasındaki Geo Coordinate atomik tipi kolonun POINT olarak haritalanmasını sağlar; RLS politikası coğrafi satırlara da uygulanır.",
+  "core": "PostGIS extension PostgreSQL üzerinde; spatial index (GiST) ve sorgu fonksiyonları çekirdek veri katmanında.",
+  "modules": "Teslimat bölgesi, mağaza konumu, saha denetimi gibi modüller bu primitive üstüne oturur.",
+  "apps": "Harita yüzeyi (Mapbox/MapLibre) frontend; backend proximity/containment sorgularını sunar."
+ },
+ "ecaExample": "trigger:\n  event: order.delivery_address_set\ncondition:\n  all:\n    - actor.capability >= \"delivery:zone:check\"\n    - not loop_detected\n    - st_contains(zone.boundary, order.location)\naction:\n  - emit: order.delivery_zone_confirmed\nguards:\n  max_depth: 6\n  idempotency_key: \"geofence:{order_id}:{zone_id}\"\n  external_effects: none",
+ "securityNotes": [
+  "Konum verisi PII'dir; kullanıcı koordinatları crypto-shredding kapsamında, retention bildirimi ArcheType'ta tanımlı.",
+  "Geofencing kararı capability deny-by-default: yetki yoksa bölge sorgusu reddedilir, sonuç sızdırılmaz.",
+  "Tenant izolasyonu coğrafi satırlarda da RLS ile; komşu tenant'ın delivery_zone polygon'u okunamaz."
+ ],
+ "perfNotes": {
+  "code": "CREATE INDEX shop_loc ON shop USING GIST(location); -- proximity: ORDER BY location <-> point LIMIT 10",
+  "perf": "GiST index zorunlu; olmadan her sorgu seq-scan. KNN operatörü (<->) index'i kullanır, ORDER BY + LIMIT ile keyset benzeri sayfalama mümkün. Geography hesabı geometry'den pahalı ama 100 km+ mesafede doğru."
+ },
+ "testNotes": [
+  "GiST index varlığı ve sorgu planının seq-scan değil index-scan olduğu doğrulanır.",
+  "Geography ile geometry mesafe farkı testi: uzun mesafede geometry'nin hatalı, geography'nin doğru sonuç verdiği.",
+  "Geofencing sınır testi: polygon kenarındaki nokta içeride/dışarıda kararı deterministik.",
+  "RLS testi: komşu tenant'ın coğrafi kayıtlarına proximity sorgusu sonuç döndürmez."
+ ]
+}

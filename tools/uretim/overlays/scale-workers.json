@@ -1,0 +1,54 @@
+{
+ "featureDefs": [
+  {
+   "name": "Idempotent Job Handler",
+   "desc": "Her job bir idempotency_key taşır; handler önce 'bu key işlendi mi' kontrolü yapar (processed_jobs tablosu, UNIQUE constraint). At-least-once teslimatta retry/restart sonucu değiştirmez. money/external-effect job'larında zorunlu.",
+   "critical": true
+  },
+  {
+   "name": "Outbox Relay Worker",
+   "desc": "Outbox tablosundan keyset cursor ile okuyan, event-bus'a yayınlayıp satırı 'published' işaretleyen recurring worker. Transactional outbox pattern'in teslimat ucu; DB commit ile event yayını arasındaki atomikliği sağlar.",
+   "critical": true
+  },
+  {
+   "name": "Projection Rebuild Worker",
+   "desc": "Read-model'i event akışından yeniden kuran job. Stale projeksiyonu tespit edip arka planda yeniden hesaplar; UI'yi bloklamaz.",
+   "critical": false
+  },
+  {
+   "name": "Scheduler (cron)",
+   "desc": "Recurring job'ları (her gün 02:00 cleanup, abandonment reminder) tetikleyen tek scheduler pod. Tenant'lar arası adil sıralama + quiet-hours uyumu.",
+   "critical": false
+  },
+  {
+   "name": "Priority + Backoff Retry",
+   "desc": "payment webhook yüksek, marketing email düşük öncelik. Hata sonrası exponential backoff + max retry; aşılınca dead-letter queue'ya düşer.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Workers bir Scale primitive'idir; kernel'in event-bus'ı ve outbox'ı bunsuz teslim edilemez. Bütün async iş (mail, fan-out, projection, webhook) buradan akar.",
+  "kernel": "Event-bus yayınını (outbox relay) ve audit yazımını worker tetikler; tenant bağlamı job payload'ında taşınır, handler RLS altında koşar.",
+  "core": "money/bitemporal yazan job'lar Contract üstünden gider; ham SQL değil. processed_jobs ledger'ı audit'e bağlı.",
+  "modules": "Her module kendi @job handler'larını tanımlar; kuyruk adı ve öncelik manifest'te beyan edilir. Worker module koduna saf-fonksiyon yüzeyinden dokunur.",
+  "apps": "App bir job'u 'kuyruğa at' der, senkron cevabı hemen döner; sonuç hazır olunca realtime/webhook ile bildirilir."
+ },
+ "ecaExample": "trigger:\n  event: cart.abandoned\ncondition:\n  all:\n    - actor.capability >= \"job:schedule\"\n    - not loop_detected\n    - within_quiet_hours == false\naction:\n  - schedule:\n      job: send_abandonment_reminder\n      delay: 15m\n      queue: emails\n      priority: low\nguards:\n  max_depth: 6\n  idempotency_key: \"cart:{cart_id}:abandon-reminder\"\n  external_effects: rate_limited",
+ "securityNotes": [
+  "Job payload'ında tenant_id taşınır; handler her sorguyu RLS altında koşturur — komşu tenant verisi worker'da da görünmez.",
+  "Capability deny-by-default: job:schedule / job:run yetkisi olmayan aktör kuyruğa iş atamaz.",
+  "idempotency_key money/external-effect job'larında zorunlu; çift teslimat çift tahsilat üretemez.",
+  "Dead-letter queue'daki payload PII içerebilir — maskelenmiş loglanır, retention'a tabidir.",
+  "Webhook delivery worker'ı SSRF'e karşı allow-list + step-up gerektiren dış efektleri ayrı işaretler."
+ ],
+ "perfNotes": {
+  "code": "Outbox relay keyset cursor (WHERE id > :last ORDER BY id LIMIT :n) ile okur; OFFSET kullanmaz.",
+  "perf": "Keyset sayfalama outbox büyüse de O(1) ilerler; kuyruk başına ayrı worker pool ve autoscale ile p99 teslimat gecikmesi sabit kalır."
+ },
+ "testNotes": [
+  "Aynı job'ı iki kez tetikle → tek yan etki (idempotency kanıtı).",
+  "Worker restart simülasyonu → in-flight job kaybolmaz, yeniden alınır.",
+  "Quiet-hours penceresinde scheduled reminder ertelenir, içeride değil.",
+  "Dead-letter: max retry aşıldığında job DLQ'ya düşer, ana kuyruğu bloklamaz."
+ ]
+}

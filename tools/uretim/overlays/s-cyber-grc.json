@@ -1,0 +1,50 @@
+{
+ "featureDefs": [
+  {
+   "name": "Kontrol kutuphanesi",
+   "desc": "NIS2/DORA/SOC2/ISO kontrol katalogu; her kontrol sahibi, durum ve denetim periyodu ile. Cerceveler arasi kontrol eslemesi.",
+   "critical": true
+  },
+  {
+   "name": "Kanit toplama (evidence)",
+   "desc": "Otomatik/manuel kanit baglama; kanit tarih-versiyonlu, immutable, denetcinin izledigi audit trail.",
+   "critical": true
+  },
+  {
+   "name": "Uyum denetimi raporu",
+   "desc": "Kontrol-kanit kapsama orani, acik bulgular, denetim hazirlik durumu; cerceve bazli (NIS2/DORA/SOC2/ISO) rapor.",
+   "critical": false
+  },
+  {
+   "name": "Bulgu / aksiyon takibi",
+   "desc": "Eksik kontrol veya kanit icin remediation gorevi; son tarih + sorumlu + kapanis kaniti.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — aday yatay urun (SaaS Firsat Haritasi); Stack subset Edition subset Distribution taksonomisinde stack.",
+  "kernel": "Authz (denetci/sorumlu capability), tenancy (organizasyon uyum verisi RLS), event-bus (kontrol durum degisim event'leri).",
+  "core": "Kontrol/kanit/bulgu Contract semasi; her kanit bitemporal + audit (denetim icin zorunlu).",
+  "modules": "Platform audit log (kanit kaynagi), l1-file (kanit dosyalari), AI (kanit siniflandirma opsiyonel).",
+  "apps": "Cyber GRC App'i; uyum durumu diger urunlerin audit/event verisinden beslenir."
+ },
+ "moduleUsage": [
+  "s-cyber-grc: Kontrol kutuphanesi cerceveden yuklenir -> her kontrole kanit (otomatik audit log veya manuel dosya) baglanir -> kapsama orani ve acik bulgular raporlanir -> remediation gorevi capability-bagli atanir; kanit immutable + audit ile denetim hazirligi saglanir."
+ ],
+ "ecaExample": "trigger:\n  event: grc.evidence.attached\ncondition:\n  all:\n    - actor.capability >= \"grc:evidence:write\"\n    - control.in_scope\n    - not loop_detected\naction:\n  - emit: grc.control.coverage_updated\nguards:\n  max_depth: 6\n  idempotency_key: \"evidence:{evidence_id}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Kanit pii/gizli veri icerebilir: deny-by-default, capability grc:evidence:read/write ayri; denetci yalniz kendi organizasyon kapsamini gorur (RLS).",
+  "Kanit immutable + audit: degistirme yeni surum uretir, eskiyi silmez; denetim butunlugu icin zorunlu.",
+  "Cerceve esleme dogrulamasi: bir kontrolu yanlis cerceveye baglama audit'lenir; kapsama orani manipulasyonu onlenir."
+ ],
+ "perfNotes": {
+  "code": "Kontrol-kanit kapsama orani onceden hesaplanir; buyuk kanit listesi keyset ile sayfalanir.",
+  "perf": "Otomatik kanit toplama audit log event'lerinden asenkron; rapor uretimi agir join yerine materialize edilmis kapsama tablosu."
+ },
+ "testNotes": [
+  "grc:evidence:write olmayan aktor kanit baglama -> deny.",
+  "Kanit silme denemesi -> reddedilmeli (immutable, yeni surum).",
+  "Baska organizasyon kapsamindaki kontrol/kanit gorunmemeli (RLS).",
+  "Kapsama orani yalniz gecerli kanitla artmali."
+ ]
+}

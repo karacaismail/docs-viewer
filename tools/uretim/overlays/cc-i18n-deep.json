@@ -1,0 +1,47 @@
+{
+ "featureDefs": [
+  {
+   "name": "ICU MessageFormat pluralization motoru",
+   "desc": "Çoğul kuralı diller arası farklı: TR tek form, EN iki, RU üç, AR altı (zero/one/two/few/many/other). react-i18next + i18next-icu; '1 item(s)' YASAK. Locale CLDR kategorisiyle çözülür.",
+   "critical": true
+  },
+  {
+   "name": "Locale-aware format (Intl.* zorunlu)",
+   "desc": "Tarih/sayı/para Intl.DateTimeFormat + Intl.NumberFormat ile; manuel nokta/virgül veya toLocaleString() default YASAK. Money yine Decimal; sadece gösterim katmanı locale'e bağlı."
+  },
+  {
+   "name": "RTL layout (CSS logical properties)",
+   "desc": "Arapça/İbranice/Farsça için <html dir>; text-align:start, margin-inline-start; sabit left/right YASAK. Yön-bağımlı ikon transform:scaleX(-1) ile flip."
+  },
+  {
+   "name": "Fallback chain + locale resolver",
+   "desc": "tr-TR -> tr -> en (default) zinciri; navigator.languages (çoğul) ile tespit. Eksik anahtar default'a düşer, kullanıcıya ham key gösterilmez."
+  },
+  {
+   "name": "Static analysis kapısı (hard-coded string yakalama)",
+   "desc": "CI: tüm UI string t() ile sarılı mı, hard-coded tarih/sayı format var mı tarar. Çeviri dışı sızıntı build'i kırar."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — bağımsız ürün değil, tüm frontend yüzeylerini kesen crosscut katman; l1-misc i18n temelini derinleştirir, her app'in UI string'lerine uygulanır.",
+  "kernel": "i18n kendi başına kernel ArcheType yaratmaz; ama kullanıcı locale tercihi identity/profil ile tutulur, tenant varsayılan locale tenancy ayarından gelir.",
+  "core": "Çeviri kaynakları (catalog) core sözleşmesi: anahtar şeması sabit; yeni dil eklemek core'u değiştirmez, sadece kaynak dosyası ekler (additif).",
+  "modules": "Her Layer-2 modül UI string'lerini t() ile sunar; format yardımcıları paylaşılan crosscut util'den gelir, modül başına kopya YASAK.",
+  "apps": "Storefront/admin/tenant panel aynı locale resolver + fallback chain'i paylaşır; dil seçimi oturum/tercih üzerinden tüm yüzeylere yayılır."
+ },
+ "securityNotes": [
+  "Çeviri kaynakları kullanıcı girdisiyle birleşirken HTML enjeksiyonu (XSS) engellenir: interpolasyon escape'li, dangerouslySetInnerHTML çeviri için YASAK.",
+  "Locale parametresi allowlist'e karşı doğrulanır (tr-TR, en-US...); serbest string ile path/format injection kapatılır.",
+  "RTL/format değişimi yetki sınırını değiştirmez; sadece gösterim — capability kararı locale'den bağımsız."
+ ],
+ "perfNotes": {
+  "code": "Pluralization saf seçim fonksiyonu (CLDR kategorisi -> mesaj); if (lang=='ar') zinciri yerine kategori tablosu dispatch.",
+  "perf": "Çeviri katalogu dile göre lazy-load + cache; her render'da format nesnesi yaratmak yerine locale başına Intl formatter memoize edilir."
+ },
+ "testNotes": [
+  "AR için 0/1/2/few/many/other altı formun hepsi doğru mesaja eşlenir.",
+  "tr-TR 1234567.89 -> '1.234.567,89'; en-US aynı sayı '1,234,567.89'.",
+  "Eksik anahtar fallback chain ile default dile düşer, ham key sızmaz.",
+  "RTL modunda logical property kullanan layout aynalanır; sabit left/right kullanan bileşen testte yakalanır."
+ ]
+}

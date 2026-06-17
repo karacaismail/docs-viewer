@@ -1,0 +1,46 @@
+{
+ "featureDefs": [
+  {
+   "name": "A11y metadata kontratı",
+   "desc": "Her image yanıtında alt zorunlu (boş reddedilir); field schema label + description + ariaLabel taşır. Contract düzeyinde tanımlı; üretici tüm endpoint'lere otomatik dahil eder.",
+   "critical": true
+  },
+  {
+   "name": "user_prefs tercih saklama",
+   "desc": "theme (light/dark/high-contrast), font_size, reduce_motion kullanıcı bağlı kayıt. RLS ile kullanıcı yalnız kendi tercihini görür; cihazlar arası senkron.",
+   "critical": true
+  },
+  {
+   "name": "Semantic color token",
+   "desc": "Yanıtta hex değil semantic token (danger/success). Tema çözümü frontend'de; backend tema-bağımsız kalır.",
+   "critical": false
+  },
+  {
+   "name": "Jurisdiction-bağlı uyum kapısı",
+   "desc": "cc-jurisdiction-resolver ile AB kullanıcısı için WCAG 2.2 AA + erişilebilirlik beyanı zorunlu (EAA compliance ekseni).",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — a11y metadata tüm Contract'ların ortak kesitidir; tekil ürün değil çapraz-kesen kural.",
+  "kernel": "Authz (kullanıcı kendi tercihini okur/yazar), tenancy (user_prefs tenant-scoped RLS).",
+  "core": "Contract field schema'ya label/description/ariaLabel alanları; image tipine alt zorunluluğu validation.",
+  "modules": "cc-jurisdiction-resolver (AB->WCAG kapısı), cc-compliance-matrix (uyum durumu).",
+  "apps": "Her App image/form ureten ekranlarinda a11y metadata'yi tuketir."
+ },
+ "securityNotes": [
+  "user_prefs deny-by-default: capability prefs:write yalniz kendi user_id icin; baska kullanicinin tercihi yazilamaz (RLS + capability).",
+  "Erisilebilirlik beyani sayfasi jurisdiction'a gore kosullu; AB kullanicida eksikse compliance-matrix uyari uretir.",
+  "alt text serbest metin: XSS'e karsi render'da kacislanir, depolamada uzunluk siniri."
+ ],
+ "perfNotes": {
+  "code": "user_prefs okumasi her istekte tekrar etmesin; session/token claim'ine gomulur veya kisa TTL cache.",
+  "perf": "Tercih degisimi nadir; yazma maliyeti onemsiz. Image alt alani zaten metadata satirinda, ek sorgu yok."
+ },
+ "testNotes": [
+  "Image upload alt bos -> 422 reddedilmeli.",
+  "Baska user_id icin prefs:write -> deny.",
+  "AB jurisdiction kullanici + beyan sayfasi yok -> compliance-matrix non-conform isaretlemeli.",
+  "Color token yaniti hex icermemeli (semantic kalmali)."
+ ]
+}

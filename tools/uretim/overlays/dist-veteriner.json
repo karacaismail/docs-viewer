@@ -1,0 +1,45 @@
+{
+ "featureDefs": [
+  {
+   "name": "Hasta (hayvan) kaydı + sahip bağı",
+   "desc": "Hayvan: tür/ırk/yaş/kimlik (çip), sahip (Party), tıbbi geçmiş. Sahip-hayvan ilişkisi; kayıt bitemporal, tıbbi veri hassas (pii-flag).",
+   "critical": true
+  },
+  {
+   "name": "Klinik randevu",
+   "desc": "Randevu: hayvan × veteriner × slot; çakışma engelli, hatırlatma. Randevu durum makinesi (planlandı->geldi->tamamlandı->iptal)."
+  },
+  {
+   "name": "Aşı/tedavi takibi",
+   "desc": "Aşı takvimi, tedavi/reçete, tekrar tarihi hatırlatma. Tıbbi kayıt append-only audit; aşı geçmişi resmî kayda esas.",
+   "critical": true
+  },
+  {
+   "name": "Stok + faturalama",
+   "desc": "İlaç/sarf stok hareketi (ledger); muayene/işlem faturalama. Tutarlar Money (Decimal) + KDV; e-Belge entegrasyonu opsiyonel."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — aday Distribution (dikey): Health + Randevu + Inventory paketinin veteriner alıcı profiline uyarlanması. mevcut katalogda eksik olduğu için aday. Taksonomi: Stack ⊂ Edition ⊂ Distribution. Kernel zorunlu; modüller arası yalnız Contract.",
+  "kernel": "Kimlik/tenancy (RLS)/audit kernel'den; sahip ve veteriner Party'den türer. Tıbbi kayıt/aşı bitemporal append-only; hassas veri pii-flag; faturalama Money (Decimal).",
+  "core": "Paket core'u yok; sağlık+randevu+envanter modüllerinin veteriner uyarlaması (hasta = hayvan). Her modül sözleşmesini korur (additif).",
+  "modules": "Randevu modülü (slot/çakışma), Inventory (s-commerce stok ledger), faturalama/e-Belge (s-tax-compliance) yalnız Contract. dist-realestate ile dikey-paket deseni paylaşır.",
+  "apps": "Klinik app randevu + hasta kaydı + tedavi; Inventory app ilaç stoğunu aynı Stock Movement ledger'a yazar; faturalama muhasebeye GL postingi, çift kayıt yok."
+ },
+ "ecaExample": "trigger:\n  event: vaccination.administered\n  when: \"tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"vet.treatment.record\"\n    - not loop_detected\n    - patient.owner_id is set\naction:\n  - record: vaccination { animal_id, vaccine, dose, ts, bitemporal: true }\n  - emit: inventory.stock_consumed       # ilaç ledger\n  - emit: notification.next_dose_due     # outbox idempotent\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{animal}:{vaccine}:{date}\"\n  external_effects: none",
+ "securityNotes": [
+  "Tıbbi kayıt + sahip iletişim PII: tenant-scoped RLS, pii-flag; başka kliniğin hasta kaydı sızmaz (capability deny-by-default).",
+  "Aşı/tedavi geçmişi değişmez audit append-only (resmî kayda esas); geriye değişmez, düzeltme yeni kayıt.",
+  "Faturalama Money/Decimal + KDV; stok tüketimi ledger'dan, geriye yazılamaz (yeni hareket)."
+ ],
+ "perfNotes": {
+  "code": "Randevu çakışma kontrolü saf hesap (slot aralığı); aşı tekrar tarihi kural tablosu, if-zinciri YASAK.",
+  "perf": "Randevu/hasta listesi keyset pagination; aşı hatırlatma asenkron worker (cron); ilaç stok bakiyesi ledger projeksiyonu + cache."
+ },
+ "testNotes": [
+  "Çakışan randevu slotu reddedilir.",
+  "Aşı kaydı stok tüketimi tetikler; aynı aşı/gün ikinci kez işlenmez (idempotency).",
+  "Tıbbi kayıt geriye değişmez (audit); düzeltme yeni satır.",
+  "Komşu klinik hasta/tedavi sorgusu sıfır döndürür (RLS)."
+ ]
+}

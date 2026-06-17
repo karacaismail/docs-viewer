@@ -1,0 +1,50 @@
+{
+ "featureDefs": [
+  {
+   "name": "Dashboard + Question + Datasource ArcheType'ları",
+   "desc": "Metabase/Looker muadili çekirdek varlıklar; sorgu/grafik tanımı hibrit şema + JSONB. Veri kaynağı bağlantısı tenant-scoped.",
+   "critical": true
+  },
+  {
+   "name": "Text-to-SQL (AI)",
+   "desc": "Doğal dil → SQL; karar değil öneri, kullanıcı görür/onaylar. Üretilen SQL yalnız izinli şema/satır üzerinde çalışır (RLS + capability WHERE enjeksiyonu).",
+   "critical": true
+  },
+  {
+   "name": "Doğal dil sorgu + açıklama",
+   "desc": "Soru → sonuç + üretilen sorgunun gerekçesi (provenance); halüsinasyon/atfsız metrik output guardrail'e takılır."
+  },
+  {
+   "name": "Scheduled refresh + projection",
+   "desc": "Dashboard verisi okuma-optimize projection'dan; pahalı sorgu asenkron yenilenir, canlı tabloyu yormaz."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-2 SaaS ürünü; tek başına değil, diğer app'lerin veri/projection'ı üstüne oturur. Kendi Domain'i (Kaya), kaynaklara yalnız Contract ile (okuma) bağlı.",
+  "kernel": "Tenancy (RLS), capability scope ve audit kernel'den; Dashboard/Question kendi şemasını ArcheType engine ile tanımlar — ArcheType agent'lara MCP tool olarak doğar.",
+  "core": "i18n, Notification, Settings core'dan; metrik sorguları okuma-replica/projection üzerinden çalışır, OLTP yolu korunur.",
+  "modules": "Diğer module'lerin yayımladığı olay/projection'ı okur (read-only); yazma yapmaz — yalnız Contract.",
+  "apps": "Tüm app'ler aynı veri kaynağını paylaşır; BI yalnız okur, çift kayıt/yazma yok."
+ },
+ "moduleUsage": [
+  "Sales/CRM app: pipeline metriklerini dashboard'a okur (yetki kullanıcıyla taşınır).",
+  "Finance app: gelir/gider projection'ını text-to-SQL ile sorgulatır; sonuç para tipinde (minor unit + currency).",
+  "Ops app: operasyon KPI'larını scheduled refresh ile gösterir; canlı tabloyu yormaz."
+ ],
+ "ecaExample": "trigger:\n  event: bi.query_requested\ncondition:\n  all:\n    - actor.capability >= \"bi.read\"\n    - requester.can_read(datasource)   # RLS-aware\n    - not loop_detected\naction:\n  - generate: sql_from_nl              # text-to-SQL, onaylı\n  - run: query                          # capability/RLS WHERE enjekte\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{query_hash}:{schema_version}\"\n  external_effects: cost_budget_check",
+ "securityNotes": [
+  "Text-to-SQL çıktısı yalnız izinli şema/satırda çalışır: capability + RLS WHERE olarak enjekte edilir (deny-by-default); yetkisiz tabloya erişim engellenir.",
+  "SQL enjeksiyonu + tehlikeli ifade (DROP/UPDATE) parse/whitelist ile reddedilir; BI deny-by-default yalnız SELECT.",
+  "PII kolonları sorgu/sonuçta maskelenir; tenant verisi model eğitimine gitmez; maliyet guardrail (token/sorgu kotası + circuit breaker)."
+ ],
+ "perfNotes": {
+  "code": "NL→SQL üretimi + sonuç render asenkron; pahalı dashboard scheduled refresh ile önceden hesaplanır (span-level tracing).",
+  "perf": "Sorgular okuma-replica/projection üzerinden; sonuç listeleri keyset; sık metrikler materialized; OLTP yolu izole tutulur."
+ },
+ "testNotes": [
+  "Yetkisiz datasource/tablo text-to-SQL sonucuna girmez (deny path).",
+  "Komşu-tenant verisi dashboard'da görünmez (izolasyon).",
+  "Üretilen SQL yalnız SELECT; yazma/DDL ifadesi reddedilir.",
+  "Maliyet kotası aşılınca sorgu circuit breaker ile reddedilir."
+ ]
+}

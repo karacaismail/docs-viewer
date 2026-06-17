@@ -1,0 +1,19 @@
+{
+ "integration": {
+  "shouldIntegrate": "Workspace bağımsız bir ürün değil, mevcut Mail + Comms + Drive + Scheduling parçalarını tek SSO altında paketleyen yatay stack'tir; her parça kendi başına satılabilir ama kimlik/yetki/audit ortak kernel'den gelir.",
+  "kernel": "identity (tek oturum/2FA), authz (parça başına capability deny-by-default), tenancy (RLS ile tenant izolasyonu), event-bus (parçalar arası olay), audit (bitemporal erişim izi).",
+  "core": "Party (kullanıcı/grup tek kaynak), Notification (quiet-hours'a saygılı), Storage (Drive dosya + sürüm), Calendar primitive.",
+  "modules": "s-mail (custom domain, paylaşımlı kutu, deliverability), s-comms (Jitsi video + kanal), stack-drive (dosya/sürüm/paylaşım), s-scheduling (uygunluk/tampon/hatırlatma).",
+  "apps": "Tek workspace kabuğu: mail, takvim, drive, chat tek oturumla; reseller/MSP paneli müşteri domain'lerini yönetir."
+ },
+ "securityNotes": [
+  "Tek SSO tüm parçalara erişim verir ama her parça ayrı capability ister; deny-by-default, bir parçaya yetki diğerini açmaz.",
+  "Mail/dosya/takvim içeriği pii sınıfı; KVKK veri yerliliği için self-host, tenant RLS ile izolasyon, çapraz-tenant paylaşım açık onay ister.",
+  "Deliverability anahtarları (DKIM/SMTP) KMS'te; reseller müşteri domain'i adına işlem yaparken delegasyon audit'e bitemporal yazılır."
+ ],
+ "testNotes": [
+  "SSO: bir parçada oturum açan kullanıcı diğer parçaya yeniden giriş yapmadan geçer, capability eksikse erişim reddedilir.",
+  "Tenant izolasyon: A tenant'ı B tenant'ının drive dosyasını listeleyemez (RLS doğrulaması).",
+  "Bildirim: workspace bildirimi quiet-hours penceresine saygı duyar, kritik güvenlik uyarısı bypass eder."
+ ]
+}

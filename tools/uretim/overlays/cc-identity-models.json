@@ -1,0 +1,58 @@
+{
+ "featureDefs": [
+  {
+   "name": "Tek fullName isim modeli + name_order",
+   "desc": "firstName/lastName YASAK; tek full_name + opsiyonel given/family + name_order enum (given_family/family_given/single/custom) + honorific. Tek isim (Sukarno), soyad-önce (Wang Wei), patronymic, çoklu soyad kapsanır.",
+   "critical": true
+  },
+  {
+   "name": "E.164 telefon (libphonenumber)",
+   "desc": "+[ülke kodu][numara], max 15 hane; CHECK regex + country_code (ISO 3166). '10 hane' varsayımı yok; doğrulama ülke bazlı libphonenumber ile.",
+   "critical": true
+  },
+  {
+   "name": "Ülke-aware adres + raw_input",
+   "desc": "country_code + line_1/2 + city + region + postal_code (nullable: HK/IE) + formatted + raw_input JSONB. i18n-postal-address/CLDR ile alan sırası ülkeye göre dinamik.",
+   "critical": true
+  },
+  {
+   "name": "Vergi/kimlik doğrulama (VIES kritik)",
+   "desc": "tax_id_type enum + value + verified_at + source + response JSONB. AB B2B için VIES real-time ZORUNLU; geçersiz VAT = reverse charge yok. TC 11-hane algoritma + NVI.",
+   "critical": true
+  },
+  {
+   "name": "Cinsiyet opsiyonel + non_binary + veri minimizasyonu",
+   "desc": "gender enum nullable (DE 'divers' yasal); doğum tarihi yerine yaş aralığı/18+ flag — KVKK/GDPR veri minimizasyonu; özel nitelikli veri zorunlu yapılmaz."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — crosscut kimlik veri modeli; Party/kişi üreten her module'ü keser. ABD-merkezli varsayımları (firstName/lastName, 10-hane telefon, state+ZIP zorunlu) baştan kırar; sonradan migration ağrılı.",
+  "kernel": "Identity (kişi/Party kimliği), Tenancy (RLS — kimlik kayıtları tenant-scoped), Audit (raw_input + doğrulama izi) kernel'den; şema ortak iskelet + ülke-aware özelleştirme.",
+  "core": "PII sınıflandırma + bitemporal (kimlik/adres değişim sürümü) + i18n core; çift yazma yapısal alanlar + raw_input JSONB (reversibility/audit).",
+  "modules": "l1-party ArcheType bu modelleri taşır; cc-jurisdiction-resolver hangi alanın zorunlu olduğunu, cc-i18n-standards format kurallarını verir — yalnız Contract.",
+  "apps": "Tüm app'ler ortak kişi/adres/telefon/vergi modelini paylaşır; aynı Party tek kayıt, ülke-aware form tek codebase ile render."
+ },
+ "moduleUsage": [
+  "l1-party: full_name/given/family/name_order + ContactPhone(E.164) + PostalAddress + TaxId ArcheType alanlarını taşır.",
+  "cc-jurisdiction-resolver: country_code'a göre zorunlu alan/format/yaş kuralını çözer (DE 'divers', JP ters sıra, HK posta kodu yok).",
+  "cc-compliance-matrix / s-kvkk: yaş aralığı + özel nitelikli veri minimizasyonu + DSR export kişisel alanları kapsar."
+ ],
+ "ecaExample": "trigger:\n  event: tax_id.submitted\n  when: country_code in EU\ncondition:\n  all:\n    - actor.capability >= \"party.write\"\n    - tax_id_type == \"EU_VAT\"\n    - not loop_detected\naction:\n  - call: vies.verify              # vies.ec.europa.eu, dış-etkili\n  - persist: { verified_at, verification_source: \"VIES\", response }\nguards:\n  max_depth: 6\n  pii: true\n  idempotency_key: \"{tenant}:vat:{tax_id_value}\"\n  external_effects: allowlist_call",
+ "securityNotes": [
+  "İsim/telefon/adres/vergi/cinsiyet pii=true (+retention); cinsiyet özel nitelikli — zorunlu yapma, KVKK. RLS tenant-scoped.",
+  "Çift yazma: yapısal alanlar + raw_input JSONB — kullanıcının girdiği ham veri audit + reversibility için korunur (parse hatasında kayıp yok).",
+  "VAT/TC doğrulaması dış-etkili (VIES/NVI) allowlist'li akış; party.write capability deny-by-default; geçersiz VAT reverse charge'ı engeller (vergi sonucu).",
+  "Veri minimizasyonu: tam doğum tarihi yerine yaş aralığı/18+ flag; tarihi sakla, GÖSTERME (alkol/kumar yaş kontrolü). ABD SSN saklamamayı tercih."
+ ],
+ "perfNotes": {
+  "code": "VIES/NVI doğrulama asenkron job (ana kayıt akışını bloklamaz); country_code seçimine göre form alanları client-side dinamik render (libaddressinput şeması).",
+  "perf": "Kişi/adres listeleri keyset; (tenant_id, country_code) + tax_id_value unique partial index; raw_input JSONB GIN; telefon E.164 normalize edilmiş kolonda arama."
+ },
+ "testNotes": [
+  "Endonezya tek-isim ('Sukarno', name_order='single') family_name boş olsa da kayıt başarılı (firstName/lastName zorunluluğu yok).",
+  "Geçersiz E.164 (regex ihlali) reddedilir; +905321234567 country_code='TR' ile parse edilir.",
+  "country_code değişiminde form yeniden çizilir, önceki veri raw_input'ta saklanır (kayıp yok).",
+  "Geçersiz AB VAT'ta reverse charge uygulanmaz; geçerli VAT verified_at + VIES kaynağı yazar.",
+  "Komşu-tenant kişi/adres/vergi sorgusu sıfır döndürür (RLS); doğum tarihi UI'de gösterilmez, 18+ flag döner."
+ ]
+}

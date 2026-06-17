@@ -1,0 +1,53 @@
+{
+ "featureDefs": [
+  {
+   "name": "Connector orkestrasyonu (Activepieces, headless)",
+   "desc": "Trendyol/Hepsiburada/Amazon/N11/eBay piece'leri; retry/kuyruk/tetikleyici Activepieces'a devredilir, üstte tipli sözleşmeler. Kendi Commerce şart değil — mevcut site/ERP'ye de bağlanır.",
+   "critical": true
+  },
+  {
+   "name": "Ürün/varyant eşleme motoru",
+   "desc": "Barkod/varyant eşleştirme + kategori haritası; her kanalın kendi taksonomisine tipli map — eşleşmeyen kayıt hata panosuna düşer.",
+   "critical": true
+  },
+  {
+   "name": "Stok/fiyat senkron + idempotent sipariş tüketimi",
+   "desc": "inventory.stock_changed → kanallara push; konsolide sipariş kuyruğu idempotent tüketim (scale-idempotency) — çift sipariş/çift düşüm yok.",
+   "critical": true
+  },
+  {
+   "name": "Kanal fiyat kuralı + hata/kota panosu",
+   "desc": "Kanal bazlı marj/komisyon hesabı (s-payment-methods komisyon matrisi); kota aşımı/reddedilen ürün/eşleşmeyen sipariş tek panoda."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet ama headless — bağlayıcı orkestrasyonu Activepieces'ta, bu modül tipli sözleşme + eşleme + kalite/hata panosunu sahiplenir. Kendi Commerce'i zorunlu değil; mevcut site/ERP'ye de oturur. Aday katalog kaydı.",
+  "kernel": "Tenancy (her satıcının kanal bağlantısı/eşlemesi RLS ile izole), Identity (kanal-ops rolü), Audit (senkron + sipariş izi), Bus (outbox→Activepieces tetik) kernel'den.",
+  "core": "Money (fiyat/komisyon/marj kuruş + para birimi), Audit, idempotency core kontratı; sipariş/stok olayı bitemporal değil ama denetlenebilir.",
+  "modules": "scale-idempotency (sipariş tek-tüketim), s-payment-methods (komisyon matrisi), Commerce/Inventory (opsiyonel kaynak) module'lerini tüketir — yalnız Contract.",
+  "apps": "Commerce app'i ürün/stok kaynağı olabilir ama zorunlu değil; aynı ürün Party'si app'ler arası paylaşılır, kanal eşlemesi tek kaynak."
+ },
+ "moduleUsage": [
+  "scale-idempotency: pazaryeri sipariş webhook'u idempotency_key ({{event_id}}) ile tek kez tüketilir; tekrar = no-op.",
+  "s-payment-methods: kanal bazlı komisyon/marj matrisi fiyat kuralını besler (Trendyol vs Hepsiburada farkı).",
+  "Commerce/Inventory (opsiyonel): stok kaynağı; stock_changed olayı senkron akışını tetikler — headless modda dış ERP de olabilir."
+ ],
+ "ecaExample": "trigger:\n  event: inventory.stock_changed\ncondition:\n  all:\n    - actor.capability >= \"channel.sync\"\n    - channel_binding.active\n    - not loop_detected\naction:\n  - delegate: activepieces.update_stock   # retry: exponential, kuyruk\n  - on_error: { route: dlq, notify: \"channel-ops\" }\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:channel:{sku}:{event_id}\"\n  external_effects: allowlist_connector",
+ "securityNotes": [
+  "Kanal API anahtarları/satıcı kimlik bilgileri encrypted-at-rest; RLS tenant-scoped — bir satıcı başka satıcının kanal bağlantısını/siparişini göremez.",
+  "Fiyat/komisyon/marj Money kuruş hassasiyetinde tamsayı + para birimi; float yok, kanal komisyon matrisi denetlenebilir.",
+  "Dış connector çağrıları (Activepieces piece) allowlist'li; channel.sync capability deny-by-default; webhook imza/HMAC doğrulanır.",
+  "Sipariş tüketimi idempotent (scale-idempotency); çift webhook = tek sipariş, stok çift düşmez (over-sell/yanlış mutabakat engellenir)."
+ ],
+ "perfNotes": {
+  "code": "Stok/fiyat senkron Activepieces kuyruğunda exponential retry; hata DLQ; eşleme tablosu (barkod→kanal SKU) cache; sipariş tüketimi batch.",
+  "perf": "Sipariş/hata panosu listeleri keyset; (tenant_id, channel) + sku indeksi; yüksek hacimde kanal başına rate-limit + backpressure."
+ },
+ "testNotes": [
+  "Komşu-tenant kanal bağlantısı/sipariş/eşleme sorgusu sıfır döndürür (RLS).",
+  "Aynı pazaryeri sipariş webhook'u ikinci kez gelince çift sipariş/çift stok düşümü oluşmaz (idempotency_key={event_id}).",
+  "Eşleşmeyen barkod/varyant senkronu durdurur ve hata panosuna düşürür (sessiz hata yok).",
+  "Kanal fiyatı = baz fiyat + komisyon/marj kuralı kuruş seviyesinde doğru hesaplanır.",
+  "Connector hatası DLQ'ya gider ve channel-ops bildirimi tetikler (kayıp senkron yok)."
+ ]
+}

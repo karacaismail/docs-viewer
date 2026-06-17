@@ -1,0 +1,49 @@
+{
+ "featureDefs": [
+  {
+   "name": "Matter (Dosya)",
+   "desc": "Hukuki dosya: müvekkil, karşı taraf, dava türü, mahkeme, durum; tüm hukuk işinin merkez kaydı.",
+   "critical": true
+  },
+  {
+   "name": "Client / Conflict Check",
+   "desc": "Müvekkil kaydı + çıkar çatışması taraması: yeni iş alınırken karşı taraf eşleşmesi denetimi.",
+   "critical": true
+  },
+  {
+   "name": "Hearing / Deadline",
+   "desc": "Duruşma ve usul süresi takvimi; hatırlatma, ertelenme ve hak düşürücü süre uyarısı."
+  },
+  {
+   "name": "Time & Billing",
+   "desc": "Saat girişi (timekeeping) → faturalama; trust/emanet hesabı ayrımı ve makbuz."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Distribution paketi (sektör dikeyi, Clio muadili); kernel + scale + L1 üstüne kurulu Layer-2 ürün. Yetki/audit/event-bus framework'ten gelir.",
+  "kernel": "Party (müvekkil/karşı taraf) + capability + audit + bitemporal kernel'den; dosya geçmişi zaman-doğru tutulur.",
+  "core": "Legal app core module'ü Matter yaşam döngüsünü taşır; faturalama/takvim ek module olarak biner.",
+  "modules": "s-billing time-billing motoru + l1-notification süre hatırlatma + l1-search dosya arama + cc-privacy gizlilik ile kompoze.",
+  "apps": "Hukuk app'i tek panel; aynı Party kaydı muhasebe (cari) ve iletişim modülleriyle default entegre."
+ },
+ "moduleUsage": [
+  "Hukuk App: dosya yönetimi, müvekkil portföyü ve çıkar çatışması taraması.",
+  "Takvim/Duruşma App: hak düşürücü süre uyarıları, duruşma hatırlatma ve ajanda.",
+  "Faturalama App: saat girişi → fatura, emanet/trust hesap mutabakatı."
+ ],
+ "ecaExample": "trigger:\n  event: MatterOpened\ncondition:\n  all:\n    - actor.capability >= \"legal:matter:create\"\n    - not conflict_detected\n    - client.kyc_status == \"verified\"\naction:\n  - emit: ConflictCheckPassed\n  - emit: MatterActivated\nguards:\n  max_depth: 6\n  idempotency_key: \"matter:{client_id}:{matter_ref}\"\n  external_effects: none",
+ "securityNotes": [
+  "Avukat-müvekkil gizliliği: dosya içeriği yüksek hassasiyet; capability deny-by-default + RLS ile yalnız atanan ekibe.",
+  "Çıkar çatışması taraması zorunlu kapı; karşı taraf eşleşmesi varsa dosya açılışı bloke edilir.",
+  "Müvekkil PII + dava verisi KVKK kapsamında; 'göster' eylemi audit'e yazılır, silme/saklama politikasına bağlı."
+ ],
+ "perfNotes": {
+  "code": "Dosya ve duruşma listeleri keyset ile sayfalanır; conflict check indeksli isim/PII eşlemesiyle çalışır.",
+  "perf": "Süre/duruşma hatırlatma cron'u günlük taranır; yaklaşan hak düşürücü süreler öncelik kuyruğunda."
+ },
+ "testNotes": [
+  "Conflict check: karşı tarafı mevcut müvekkille eşleşen dosyanın açılmadığı doğrulanır.",
+  "Bitemporal: dosya durumu geçmişe dönük düzeltildiğinde önceki halin korunduğu test edilir.",
+  "Trust hesap ayrımı: emanet parası operasyonel gelirden ayrı muhasebeleştiği kanıtlanır."
+ ]
+}

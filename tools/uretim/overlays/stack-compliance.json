@@ -1,0 +1,46 @@
+{
+ "featureDefs": [
+  {
+   "name": "KVKK — VERBİS envanteri + DSR portalı",
+   "desc": "Kişisel veri envanteri, aydınlatma yönetimi, ilgili kişi başvurusu (DSR) portalı. PII-flag metadata sayesinde envanter otomatik türetilir; rakiplerde manuel. s-kvkk modülü.",
+   "critical": true
+  },
+  {
+   "name": "İSG — risk değerlendirme + İSG-KATİP",
+   "desc": "Risk değerlendirme, eğitim takibi, İSG-KATİP entegrasyonu. Denetim dönemi takvimli; eğitim/muayene süreleri hatırlatmalı. s-isg modülü."
+  },
+  {
+   "name": "e-Belge — e-Fatura/e-Arşiv/e-İrsaliye",
+   "desc": "GİB entegrasyonlu e-Fatura/e-Arşiv/e-İrsaliye; zorunluluk genişlemesi takipli. Money (Decimal) + KDV; belge bitemporal. s-tax-compliance modülü.",
+   "critical": true
+  },
+  {
+   "name": "Audit — append-only + hash chain",
+   "desc": "Değişmez kayıt, hash zinciri (tamper-evidence), denetim raporu. Mevzuat denetiminde kanıt; geriye değişmez. s-audit modülü.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — aday Stack: mevzuat çekişli dört modülün (KVKK+İSG+e-Belge+Audit) tek alıcı profiline (uyum sorumlusu/DPO) paketlenmesi. Taksonomi: Stack ⊂ Edition ⊂ Distribution. Kernel zorunlu; modüller arası yalnız Contract.",
+  "kernel": "Kimlik/tenancy (RLS)/audit kernel'den; PII-flag metadata KVKK envanterini besler. Audit zinciri kernel append-only ledger üstüne; e-Belge tutarları Money (Decimal).",
+  "core": "Paket core'u yok; dört bağımsız modülün capability bohçası. Her modül kendi sözleşmesini korur, paket additif birleşim — kod tekrarı yok.",
+  "modules": "s-kvkk + s-isg + s-tax-compliance + s-audit aynı kernel audit/PII altyapısını paylaşır; e-Belge -> muhasebe GL postingi Contract; KVKK DSR -> ilgili modüllerden veri toplama Contract.",
+  "apps": "Uyum (compliance) panel tek yüzeyde dört modülü sunar; ortak audit kaydı tek kaynağa yazar, modül başına ayrı denetim defteri yok."
+ },
+ "ecaExample": "trigger:\n  event: dsr.access_requested\n  when: \"tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"kvkk.dsr.fulfill\"\n    - not loop_detected\n    - subject.identity_verified == true\naction:\n  - collect: personal_data ACROSS modules BY pii_flag   # envanter otomatik\n  - record: dsr_request { subject, scope, ts, bitemporal: true }\n  - emit: audit.dsr_logged          # hash-chain, append-only\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{subject}:dsr\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "KVKK verisi en yüksek hassasiyet: tenant-scoped RLS + PII-flag; DSR yanıtı kimlik doğrulama (step-up) sonrası, capability deny-by-default.",
+  "Audit hash zinciri tamper-evident: kayıt geriye değiştirilemez; e-Belge tutarları Money/Decimal, GİB ile mutabakat invariant.",
+  "Mevzuat raporu yalnız uyum sorumlusu yetkisine; modüller arası veri toplama Contract üzerinden, ham PII gereksiz yere kopyalanmaz."
+ ],
+ "perfNotes": {
+  "code": "PII envanter türetme metadata taraması (flag -> kayıt), elle liste YASAK; modül-başı toplama saf fonksiyon birleşimi.",
+  "perf": "DSR toplama asenkron worker (modüller arası); audit zinciri append-only ardışık yazım; denetim raporu keyset pagination + materialize."
+ },
+ "testNotes": [
+  "DSR talebi PII-flag'li tüm modüllerden veri toplar; flagsiz alan dahil olmaz.",
+  "Audit kaydı değiştirilince hash zinciri kırılır (tamper tespiti).",
+  "e-Belge tutarı Money/Decimal; mükerrer belge üretilmez (idempotency).",
+  "Komşu tenant KVKK/audit verisi sorgusu sıfır döndürür (RLS)."
+ ]
+}

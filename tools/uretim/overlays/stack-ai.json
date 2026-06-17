@@ -1,0 +1,58 @@
+{
+ "featureDefs": [
+  {
+   "name": "Tipli action yuzeyi (ham SQL yok)",
+   "desc": "AI ajan yalniz onayli, yetkili, audit'li action'lari (publish_order, approve_invoice) cagirir; ham tabloya erisemez. Validation + yetki + side-effect + audit ickin.",
+   "critical": true
+  },
+  {
+   "name": "MCP server per bounded context",
+   "desc": "Her bounded context kendi MCP server'ini expose eder; modul action'lari otomatik tipli tool olur. Claude Desktop/Cursor dogrudan baglanir.",
+   "critical": true
+  },
+  {
+   "name": "Agent capability scope kesisimi",
+   "desc": "Erisim = user_perms ile agent_scope ile session_limits kesisimi; token/cost/tool-call butcesi + sandbox (process/container/firecracker). Privilege escalation 0 hedefi.",
+   "critical": true
+  },
+  {
+   "name": "LLM observability + cost/quality",
+   "desc": "Her cagri: token, latency, cost, trace, hallucination skoru; tenant/user/agent/feature bazli cost attribution. Provider-bagimsiz routing + fallback.",
+   "critical": false
+  },
+  {
+   "name": "Agent memory + PII scrubbing",
+   "desc": "4 katmanli bellek (short/long/episodic/procedural); long-term decay/TTL, bellekte PII temizleme, ogrenilen prosedurde human onayi.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-2 farklilastirici stack; diger stack'ler bu primitive'leri tuketir, framework AI-first iddiasinin kaynagi.",
+  "kernel": "Authz (agent_scope kesisimi capability ile), tenancy (memory/vector tenant-scoped RLS), event-bus (action invocation event'leri).",
+  "core": "Modul action'lari (Contract) otomatik tipli tool olarak yansir; her cagri audit + bitemporal.",
+  "modules": "sus-actions (Palantir Ontology kalitimi action disiplini), l1-search (pgvector/RAG), l1-file (OCR/parsing girdisi).",
+  "apps": "Tum s-* urunleri kendi MCP tool'larini publish eder; agent'lar cross-product is akisini action yuzeyinden yurutur."
+ },
+ "moduleUsage": [
+  "stack-ai: Bounded context action'lari MCP tool olarak expose edilir -> agent user_perms ile agent_scope ile session_limits kesisiminde calisir -> tool cagrisi validation + yetki + audit kapisindan gecer -> ham SQL yoktur, her etki tipli action uzerinden; cikti untrusted sayilir, dogrulamadan uretime alinmaz."
+ ],
+ "ecaExample": "trigger:\n  event: ai.tool.invocation_requested\ncondition:\n  all:\n    - actor.capability >= \"ai:invoke\"\n    - scope == intersect(user_perms, agent_scope, session_limits)\n    - session.cost_remaining > 0\n    - not loop_detected\naction:\n  - emit: ai.action.executed_via_contract\nguards:\n  max_depth: 6\n  idempotency_key: \"aitool:{invocation_id}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Ham SQL erisimi YOK: AI yalniz tipli action yuzeyinden hareket eder; validation + yetki + side-effect + audit ickin uygulanir.",
+  "Capability kesisimi deny-by-default: user_perms INTERSECT agent_scope INTERSECT session_limits; hicbiri genisletemez, en dar yetki gecerli.",
+  "Session limits: token_budget / tool_calls_remaining / usd_cost zorunlu; sinir asiminda durur, sandbox (process/container/firecracker) ile izolasyon.",
+  "Bellekte PII scrubbing + forgetting; ogrenilen prosedur human onayi olmadan otomatik uygulanmaz; MCP tool ciktilari untrusted.",
+  "Moderation (toxicity/NSFW/PII detection) + anomaly/fraud; egress kontrolu ile saglayiciya yalniz onayli veri cikar."
+ ],
+ "perfNotes": {
+  "code": "Tool discovery latency <100ms; embedding/RAG asenkron pipeline, reindex dual_write/blue_green ile kesintisiz.",
+  "perf": "Model routing cost-aware + fallback; streaming SSE token akisi, stream fan-out 1->N p99 <100ms; context compaction ile token tasarrufu."
+ },
+ "testNotes": [
+  "Ham SQL / tablo erisim denemesi -> reddedilmeli; yalniz action yuzeyi calismali.",
+  "user_perms disinda agent_scope genisletme -> kesisim daraltmali, escalation olmamali.",
+  "Session cost/token butcesi bitince -> tool cagrisi durmali.",
+  "Bellekte PII saklanmamali (scrub testi); untrusted tool ciktisi dogrulama kapisindan gecmeli.",
+  "Cross-tenant memory/vector erisimi -> RLS reddi."
+ ]
+}

@@ -194,7 +194,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Mail Suite — çekirdek yetenek",
+      "term": "Tenant-bilinçli posta kutusu yönetimi",
       "definition": [
        {
         "type": "strong",
@@ -202,41 +202,29 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Mailcow üstünde kutu/takma ad/paylaşımlı kutu yönetimi; her kutu tenant'a bağlı (RLS). Domain bağlanınca PowerDNS ile SPF/DKIM/DMARC otomatik kaydı. Kutu sahipliği ve erişim capability ile."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Bounce/complaint/suppress yaşam döngüsü",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "L1 notification altyapısının kurumsal yüzü; sert/yumuşak bounce, şikayet ve suppress listesi olayları event olarak işlenir. Suppress kaydı idempotent; tekrar gönderim guard'la engellenir."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Arşiv ve saklama politikaları (KVKK)",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Yasal saklama/arşiv politikaları; veri yerliliği zorunluluğu için tenant bölgesine bağlı saklama. Arşivlenen posta bitemporal indekslenir, erişim audit'lenir."
        }
       ]
      }
@@ -424,15 +412,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Posta içeriği ve adresler pii; paylaşımlı kutu erişimi capability + RLS ile tenant'a kapalı. Arşiv erişimi deny-by-default; saklama politikası altındaki posta süresinden önce silinemez (guard). DKIM özel anahtarları ve SMTP kimlik bilgileri sır olarak; yönetim aksiyonları audit'lenir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -460,15 +440,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Kutu mesaj listeleri ve suppress sorguları keyset (received_at, id) ile; OFFSET kullanılmaz."
        }
       ]
      },
@@ -486,15 +458,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Bounce/complaint oranı (tenant_id, type) kısmi index ile deliverability sayacı ucuz; reputation projeksiyondan okunur."
        }
       ]
      },
@@ -790,7 +754,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Mail Suite",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Mail Suite\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: mail.bounced\ncondition:\n  all:\n    - bounce.type == \"hard\"\n    - not loop_detected\n    - not address.in_suppress_list\naction:\n  - emit: suppress.add_requested\n  - emit: notification.deliverability_alert\nguards:\n  max_depth: 6\n  idempotency_key: \"bounce:{message.id}:{address}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -930,6 +894,18 @@
     ]
    },
    {
+    "id": "block-s-mail-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Aynı hard bounce'un tekrarında suppress listesine tek kez eklendiği (idempotency). Saklama süresi içindeki arşiv postasının silme talebinin guard ile durduğu. Başka tenant'ın paylaşımlı kutusuna erişimin RLS ile reddedildiği."
+     }
+    ]
+   },
+   {
     "id": "block-s-mail-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -948,7 +924,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Bounce/complaint olayları ve paylaşımlı kutu → talep akışı diğer ürünleri tetiklediği için event-bus üzerinden entegre olmalı."
        }
       ]
      },
@@ -957,16 +933,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "authz (kutu/alias/arşiv capability'leri), tenancy (RLS ile kutu izolasyonu), event-bus (mail.bounced, mail.complaint, mailbox.message_received), audit (yönetim aksiyonları, arşiv erişimi)."
        }
       ]
      },
@@ -975,7 +942,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "pii (posta içeriği, alıcı adresleri), bitemporal (arşiv/saklama pencereleri), Contract (managed deliverability hizmet koşulları), keyset (kutu/mesaj listeleme)."
        }
       ]
      },
@@ -984,7 +951,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Notification/L1 (bounce/complaint/suppress kaynağı), Helpdesk (paylaşımlı kutu → talep), Audit (saklama/erişim)."
        }
       ]
      },
@@ -993,7 +960,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "MSP/reseller yönetim paneli; tenant kendi domain self-service kurulumu."
        }
       ]
      }
@@ -1006,13 +973,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-mail-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-mail-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Notification (L1): mail.bounced/complaint → suppress listesi güncelleme tetiği."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Helpdesk: paylaşımlı kutuya gelen mesaj → destek talebi açma köprüsü."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Audit: arşiv erişimi ve saklama politikası değişikliği aktör kimliğiyle izlenir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Community/Comms: bildirim e-postaları için ortak gönderim altyapısı."
+      }
+     ]
     ]
    },
    {

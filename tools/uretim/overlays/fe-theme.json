@@ -1,0 +1,44 @@
+{
+ "featureDefs": [
+  {
+   "name": "ThemeTokens",
+   "desc": "Renk/spacing/tipografi token seti (tokens.css deseni); tek kaynaktan tema değişkenleri.",
+   "critical": true
+  },
+  {
+   "name": "SurfaceTemplate",
+   "desc": "Surface layout/bileşen sunum override'ı; yalnız görünüm, iş mantığı değil."
+  },
+  {
+   "name": "ThemeManifest",
+   "desc": "Uyum + izin beyanı: deny-by-default sunum yazma sınırı, a11y/perf bütçe taahhüdü.",
+   "critical": true
+  },
+  {
+   "name": "Edition Pin",
+   "desc": "Bir Edition bir theme'i pinler; Distribution theme'i içerir — sunum mekanizmasını çözer."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "App değil module değil — SDK'nın tek-komut sunum buildable'ı (sdk theme create). Edition'ı görsel olarak gerçekleştirir; core module'e ve iş mantığına DOKUNMAZ.",
+  "kernel": "Runtime kernel'den gelir; theme runtime'ı kullandırır, yeniden yazmaz. Token değişiklikleri audit'li + versiyonlu.",
+  "core": "Core module değişmezdir; theme yalnız token + Surface şablon override + a11y/perf bütçesi içinde sunumu değiştirir.",
+  "modules": "stack-editions Edition kavramı + dx-marketplace dağıtım + fe-cdn teslim ile kompoze; capability WASM sandbox'ta yalnız sunum yazma.",
+  "apps": "Tenant/Edition başına theme pinlenir; aynı kod farklı app görünümünü token üzerinden alır."
+ },
+ "ecaExample": "trigger:\n  event: ThemeTokenChanged\ncondition:\n  all:\n    - actor.capability >= \"theme:token:write\"\n    - change.scope == \"presentation\"\n    - a11y_budget_ok and perf_budget_ok\naction:\n  - emit: ThemeVersionBumped\n  - emit: EditionThemeReapplied\nguards:\n  max_depth: 6\n  idempotency_key: \"theme:{tenant_id}:{edition_id}:{version}\"\n  external_effects: none",
+ "securityNotes": [
+  "Capability deny-by-default: yalnız sunum (token + şablon) yazma; iş mantığına / core module'e / kernel iç API'sine DOKUNMAZ.",
+  "Theme pii ÜRETMEZ; sunum katmanında kişisel veri taşınmaz.",
+  "WASM sandbox: token dışı 'kod' theme'e sızarsa Edition sınırı bozulur, kabul kapısı reddeder."
+ ],
+ "perfNotes": {
+  "code": "Eager CSS/JS bütçesi size-limit kapısından geçer; token-tabanlı, React 19 + Radix uyumlu, yasak kütüphane yok.",
+  "perf": "a11y (axe: kontrast/dokunma hedefi/odak) + perf (size-limit) deterministik kapı; atlanamaz."
+ },
+ "testNotes": [
+  "Token değişimi yalnız sunumu etkiler; iş mantığı testleri kırılmaz (presentation-only ispatı).",
+  "Tenant izolasyonu: bir tenant'ın theme'i diğerine karışmaz; Edition pin doğru theme'i çözer.",
+  "Kabul kapısı: axe kontrast/odak + size-limit bütçesi aşılırsa derlemenin reddedildiği doğrulanır."
+ ]
+}

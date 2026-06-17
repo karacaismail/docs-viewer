@@ -659,7 +659,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Frontend — Kilitli Kararlar — birincil yetenek",
+      "term": "Tek codebase coklu hedef",
       "definition": [
        {
         "type": "strong",
@@ -667,25 +667,55 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "Tek React codebase -> PWA + iOS + Android (Capacitor native shell). Store yayini + native API erisimi, ayri RN maliyeti yok."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Offline read + write queue",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Form offline doldurulur, write kuyruga alinir, online'da sync. Yjs CRDT ile catisma cozumu."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "Auth: Logto (OIDC + passkey + multi-tenant)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "OIDC + magic link + passkey/WebAuthn; organizasyon switch. Node/Postgres native, dis KYC bagimliligi yok."
+       }
+      ]
+     },
+     {
+      "term": "AI-first render katmani",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "Streaming + tool timeline + generative UI + artifact + voice; multi-provider (Anthropic/OpenAI/Gemini) yetenek/maliyet routing."
+       }
+      ]
+     },
+     {
+      "term": "KYC: TC kimlik NFC kendi modulu",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "NFCPassportReader + jmrtd sarmali; Sumsub/Veriff dis bagimliligi yok. KYB icin pragmatik 3. parti (Veriff/Onfido)."
        }
       ]
      }
@@ -873,15 +903,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Auth Logto: passkey/WebAuthn + OIDC; capability deny-by-default, organizasyon switch tenant izolasyonunu kirmaz. KYC TC kimlik NFC kendi modulunde: kimlik verisi pii, secure enclave/biometric baseline (iOS 16+, Android 9+); dis saglayiciya ham kimlik gonderilmez. Offline write queue: sync sirasinda server-side yeniden yetki + validation; istemci kuyrugu guvenilmez sayilir. OTA kendi FastAPI server: imza dogrulamasi ile sahte guncelleme onlenir (Capgo/Supabase bagimliligi reddedildi). Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -909,15 +931,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Tek codebase: PWA + Capacitor; realtime icin SSE/WebSocket/Yjs dogru kanal secimi, socket.io soyutlamasi yok."
        }
       ]
      },
@@ -935,15 +949,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Offline-capable + write queue ile zayif baglantida UX bloklanmaz; AI render streaming ile ilk token hizli."
        }
       ]
      },
@@ -1379,6 +1385,18 @@
     ]
    },
    {
+    "id": "block-fe-locked-decisions-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Kilitli 15 karardan sapma -> ADR olmadan kabul edilmemeli (karar disiplini). Offline doldurulan form online'da sync olmali, catisma CRDT ile cozulmeli. KYC kimlik verisi dis saglayiciya ham gonderilmemeli (NFC kendi modulu). OTA imzasiz guncelleme yuklenmemeli."
+     }
+    ]
+   },
+   {
     "id": "block-fe-locked-decisions-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1397,7 +1415,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — frontend kilitli kararlar tek dogruluk kaynagi; AI agent prompt'lari (CLAUDE.md, Cursor rules) buradan uretilir."
        }
       ]
      },
@@ -1406,16 +1424,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Auth (Logto OIDC) kernel identity/authz ile hizalanir; multi-tenant organizasyon switch tenancy ile."
        }
       ]
      },
@@ -1424,7 +1433,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Backend FastAPI + Postgres + Prisma ayri repo, openapi.json uretir; frontend bu sozlesmeyi tuketir."
        }
       ]
      },
@@ -1433,7 +1442,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Realtime (SSE + native WebSocket + Yjs CRDT), KYC NFC modulu, OTA server (kendi minimal FastAPI)."
        }
       ]
      },
@@ -1442,7 +1451,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Tum App'ler hibrit (operator + son kullanici) tek panelde; AI uretim UX adr-0018 sozlesmesine uyar."
        }
       ]
      }
@@ -1455,13 +1464,15 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-fe-locked-decisions-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-fe-locked-decisions-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "fe-locked-decisions: 15 satir karar kilitlenir -> CLAUDE.md / Cursor rules / AI agent prompt'lari buradan uretilir -> bir karari degistirmek ADR (Architecture Decision Record) gerektirir; AI uretim UX (Otopilot/Atolye, DecisionCard, sonuc-once onizleme) adr-0018'de baglayici."
+      }
+     ]
     ]
    },
    {

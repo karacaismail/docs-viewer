@@ -1,0 +1,52 @@
+{
+ "featureDefs": [
+  {
+   "name": "TagContainer + Tag ArcheType'ları (sürümlü)",
+   "desc": "Tek container; tag'ler tanımlı tetikleyici/değişken + consent-kategori (analytics/marketing/functional) ile yönetilir. Her tag bir consent kategorisine bağlı zorunlu alan; tag değişimi audit'li + sürümlü.",
+   "critical": true
+  },
+  {
+   "name": "Onaylı tag allowlist (custom-HTML kapalı)",
+   "desc": "Yalnız allowlist'teki sağlayıcı/etiket enjekte edilir; custom-HTML tag deny-by-default (XSS vektörü); dar network allowlist. CI'da custom-HTML tanımı reddedilir.",
+   "critical": true
+  },
+  {
+   "name": "Consent eşlemesi (rıza yoksa yüklenmez)",
+   "desc": "cc-privacy consent ön koşul; rıza yoksa pazarlama etiketi enjekte edilmez (yalnız zorunlu/transactional). KVKK kapısı.",
+   "critical": true
+  },
+  {
+   "name": "Server-side GTM + dataLayer sözleşmesi",
+   "desc": "Tarayıcı yerine sunucu tarafı container; veri sızıntısı + reklam-engelleyici dayanıklılığı. Standart dataLayer olay şeması l1-analytics + l1-experiment ile paylaşılır."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-1 in-tree modül (app değil): tüm pazarlama/ölçüm etiketlerinin tek taşıyıcısı. Ölçüm (l1-analytics), rıza (cc-privacy) ve tag-taşıma FARKLI sorumluluklar — birini diğerine gömmek anti-pattern; yalnız Contract/dataLayer ile konuşur.",
+  "kernel": "Tenancy (RLS — tenant başına container, tag'ler karışmaz), audit (tag değişimi sürümlü), capability ve ArcheType engine kernel'den.",
+  "core": "Settings (kanal/ortam), i18n core'dan; enjeksiyon kararı (tag, consent-state) → yükle/atla saf fonksiyon; custom-HTML yasağı manifest'te (WASM sandbox).",
+  "modules": "cc-privacy/cc-notification-consent consent durumunu ön koşul okur; l1-analytics ve l1-experiment paylaşılan dataLayer sözleşmesinden beslenir; fe-cdn ile server-side yol — yalnız Contract.",
+  "apps": "Frontpages/public Surface ve admin (container/tag yönetimi + consent eşleme + önizleme) aynı container kaydını paylaşır; pii TOPLAMAZ (taşır, ölçmez)."
+ },
+ "moduleUsage": [
+  "l1-analytics: paylaşılan dataLayer olay şemasından beslenir (ölçüm orada, taşıma burada).",
+  "l1-experiment: aynı dataLayer sözleşmesini tüketir (deney atama olayı).",
+  "cc-privacy / cc-notification-consent: tag enjeksiyonu öncesi consent durumunu sağlar (rıza yoksa atla).",
+  "fe-cdn: server-side GTM endpoint'i reklam-engelleyici dayanıklı yol için kullanılır."
+ ],
+ "ecaExample": "trigger:\n  event: page.view\n  when: tenant_scoped\ncondition:\n  all:\n    - tag.provider in allowlist          # custom-HTML değil\n    - consent.category_granted(tag)       # rıza kapısı\n    - not loop_detected\naction:\n  - inject: tag                          # server-side tercih\n  - skip_if: consent_missing             # transactional hariç\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{container_version}:{tag}\"\n  external_effects: network_allowlist_only",
+ "securityNotes": [
+  "Custom-HTML tag = XSS vektörü → deny-by-default kapalı; yalnız allowlist sağlayıcı + dar network allowlist; CI'da custom-HTML tanımı reddedilir (güvenlik kapısı).",
+  "Consent atlama = KVKK ihlali → rıza ön koşul (cc-privacy); rıza yoksa pazarlama tag'i enjekte edilmez, yalnız zorunlu/transactional.",
+  "Bu modül pii TOPLAMAZ (taşır, ölçmez); tenant-scoped RLS — tag'ler tenant'lar arası karışmaz; her tag değişimi audit'li + sürümlü (geri-alma)."
+ ],
+ "perfNotes": {
+  "code": "Enjeksiyon-karar fonksiyonu (consent+allowlist) ve dataLayer doğrulayıcı saf fonksiyon; tag yayını taslak→onay→sürüm workflow'u.",
+  "perf": "Tag çoğalması sayfa hızını düşürür → server-side container + denetim; container sürümleri keyset; çoklu ortam (dev/stage/prod) ayrık."
+ },
+ "testNotes": [
+  "Consent yokken marketing tag enjekte EDİLMEZ (deny path); allowlist dışı sağlayıcı reddedilir.",
+  "Custom-HTML tag tanımı CI'da reddedilir (XSS kapısı); dataLayer olayı şemadan geçer.",
+  "Tenant izolasyonu: tag'ler tenant'lar arası karışmaz (RLS); tag sürüm geri-alma çalışır.",
+  "Reklam-engelleyici altında server-side yol etiket teslimini sürdürür."
+ ]
+}

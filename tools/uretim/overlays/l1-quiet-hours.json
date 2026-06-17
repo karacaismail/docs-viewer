@@ -1,0 +1,41 @@
+{
+ "featureDefs": [
+  {
+   "name": "Yerel saat penceresi değerlendirme",
+   "desc": "Kullanıcının timezone + quiet_start/quiet_end alanlarıyla bildirim anı yerel saate çevrilir; pencere içinde mi diye bakılır. Karar 'gönder / ertele / bypass' üçlüsüdür, sessiz düşürme değildir.",
+   "critical": true
+  },
+  {
+   "name": "Kritik bypass kataloğu",
+   "desc": "security_alert, payment_failed gibi olay tipleri Contract'ta kapalı whitelist; quiet pencere içinde olsa bile gönderilir. Tenant katalogu daraltabilir, genişletemez.",
+   "critical": true
+  },
+  {
+   "name": "Kanal başına politika",
+   "desc": "Email/Push/SMS/Phone için ayrı quiet penceresi ve ayrı bypass kümesi; per-channel tercih user_notification_prefs satırında bitemporal tutulur, geçmiş tercih audit edilebilir."
+  },
+  {
+   "name": "Erteleme zamanlaması",
+   "desc": "Pencere içinde + non-critical bildirim, kullanıcının uyanma saatine keyset-sıralı kuyruğa scheduled_at ile alınır; idempotency_key ile çift gönderim engellenir."
+  }
+ ],
+ "moduleUsage": [
+  "layer1-notification: Worker, kanal sözleşmesi üzerinden göndermeden önce quiet-hours guard'ını çağırır; karar 'gönder / ertele / bypass'.",
+  "kernel-identity: timezone ve quiet tercihi user profilinden okunur; tenant RLS altında yalnız kendi kullanıcısının tercihi görünür."
+ ],
+ "ecaExample": "trigger:\n  event: notification.dispatch_requested\ncondition:\n  all:\n    - now_local(actor.timezone) within actor.quiet_window[channel]\n    - event.category not in bypass_catalog\n    - not idempotency_seen(event.dedup_key)\naction:\n  - reschedule: next_wake_time(actor.timezone, actor.quiet_end[channel])\n  - emit: notification.deferred\nguards:\n  max_depth: 2\n  idempotency_key: \"notif:{event.id}:{actor.id}:{channel}\"\n  external_effects: deferred_until_window_end",
+ "securityNotes": [
+  "Bypass kataloğu deny-by-default: yalnız capability ile işaretli olay tipleri (security, payment) quiet penceresini delebilir; tenant kendi listesini genişletemez, sadece daraltabilir.",
+  "quiet_start/quiet_end ve timezone PII sınıfı kişisel veri; RLS ile tenant+user izolasyonu, değişiklik audit log'da kim/ne zaman bitemporal tutulur.",
+  "Erteleme kuyruğu tenant başına izole; bir tenant'ın gecikmiş bildirimi diğerinin penceresini etkilemez."
+ ],
+ "perfNotes": {
+  "code": "Quiet kontrolü gönderim öncesi tek satır prefs okuması + yerel saat hesabı; kuyruk keyset (scheduled_at, id) ile sıralı, OFFSET yok.",
+  "perf": "Karar O(1); erteleme batch'i uyanma saatinde dakikalık pencerelerde toplanır, thundering-herd jitter ile dağıtılır."
+ },
+ "testNotes": [
+  "Pencere sınırı: tam 22:00 ve 08:00 anlarında erteleme/gönderim kararı deterministik (DST geçişi dahil).",
+  "Bypass: payment_failed olayı 03:00'te gönderilir, marketing olayı ertelenir.",
+  "Idempotency: aynı dedup_key ile iki dispatch tek bildirim üretir."
+ ]
+}

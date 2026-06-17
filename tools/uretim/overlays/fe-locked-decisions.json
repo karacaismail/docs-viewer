@@ -1,0 +1,55 @@
+{
+ "featureDefs": [
+  {
+   "name": "Tek codebase coklu hedef",
+   "desc": "Tek React codebase -> PWA + iOS + Android (Capacitor native shell). Store yayini + native API erisimi, ayri RN maliyeti yok.",
+   "critical": true
+  },
+  {
+   "name": "Offline read + write queue",
+   "desc": "Form offline doldurulur, write kuyruga alinir, online'da sync. Yjs CRDT ile catisma cozumu.",
+   "critical": true
+  },
+  {
+   "name": "Auth: Logto (OIDC + passkey + multi-tenant)",
+   "desc": "OIDC + magic link + passkey/WebAuthn; organizasyon switch. Node/Postgres native, dis KYC bagimliligi yok.",
+   "critical": true
+  },
+  {
+   "name": "AI-first render katmani",
+   "desc": "Streaming + tool timeline + generative UI + artifact + voice; multi-provider (Anthropic/OpenAI/Gemini) yetenek/maliyet routing.",
+   "critical": false
+  },
+  {
+   "name": "KYC: TC kimlik NFC kendi modulu",
+   "desc": "NFCPassportReader + jmrtd sarmali; Sumsub/Veriff dis bagimliligi yok. KYB icin pragmatik 3. parti (Veriff/Onfido).",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — frontend kilitli kararlar tek dogruluk kaynagi; AI agent prompt'lari (CLAUDE.md, Cursor rules) buradan uretilir.",
+  "kernel": "Auth (Logto OIDC) kernel identity/authz ile hizalanir; multi-tenant organizasyon switch tenancy ile.",
+  "core": "Backend FastAPI + Postgres + Prisma ayri repo, openapi.json uretir; frontend bu sozlesmeyi tuketir.",
+  "modules": "Realtime (SSE + native WebSocket + Yjs CRDT), KYC NFC modulu, OTA server (kendi minimal FastAPI).",
+  "apps": "Tum App'ler hibrit (operator + son kullanici) tek panelde; AI uretim UX adr-0018 sozlesmesine uyar."
+ },
+ "moduleUsage": [
+  "fe-locked-decisions: 15 satir karar kilitlenir -> CLAUDE.md / Cursor rules / AI agent prompt'lari buradan uretilir -> bir karari degistirmek ADR (Architecture Decision Record) gerektirir; AI uretim UX (Otopilot/Atolye, DecisionCard, sonuc-once onizleme) adr-0018'de baglayici."
+ ],
+ "securityNotes": [
+  "Auth Logto: passkey/WebAuthn + OIDC; capability deny-by-default, organizasyon switch tenant izolasyonunu kirmaz.",
+  "KYC TC kimlik NFC kendi modulunde: kimlik verisi pii, secure enclave/biometric baseline (iOS 16+, Android 9+); dis saglayiciya ham kimlik gonderilmez.",
+  "Offline write queue: sync sirasinda server-side yeniden yetki + validation; istemci kuyrugu guvenilmez sayilir.",
+  "OTA kendi FastAPI server: imza dogrulamasi ile sahte guncelleme onlenir (Capgo/Supabase bagimliligi reddedildi)."
+ ],
+ "perfNotes": {
+  "code": "Tek codebase: PWA + Capacitor; realtime icin SSE/WebSocket/Yjs dogru kanal secimi, socket.io soyutlamasi yok.",
+  "perf": "Offline-capable + write queue ile zayif baglantida UX bloklanmaz; AI render streaming ile ilk token hizli."
+ },
+ "testNotes": [
+  "Kilitli 15 karardan sapma -> ADR olmadan kabul edilmemeli (karar disiplini).",
+  "Offline doldurulan form online'da sync olmali, catisma CRDT ile cozulmeli.",
+  "KYC kimlik verisi dis saglayiciya ham gonderilmemeli (NFC kendi modulu).",
+  "OTA imzasiz guncelleme yuklenmemeli."
+ ]
+}

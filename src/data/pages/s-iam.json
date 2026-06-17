@@ -352,7 +352,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Identity & Access (IAM) — çekirdek yetenek",
+      "term": "RBAC — rol-bazlı yetki",
       "definition": [
        {
         "type": "strong",
@@ -360,41 +360,29 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Role/Permission/Assignment ArcheType'ları; rol→izin eşlemesi, kullanıcıya rol ataması. Kernel capability sözleşmesinin tenant-yapılandırılabilir katmanı."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "ABAC / ReBAC — öznitelik ve ilişki bazlı",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "OpenFGA muadili: ilişki tuple'ları (user→relation→object) + öznitelik koşulları; 'belge sahibinin ekibi düzenleyebilir' gibi graf-tabanlı yetki çözümü."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Yetki kararı (authorization check)",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "check(user, action, resource) → allow/deny; deny-by-default. Karar düşük gecikmeli (cache'li graf), her istek yolunda."
        }
       ]
      }
@@ -582,15 +570,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Deny-by-default çekirdek ilke: eşleşen rol/ilişki yoksa erişim reddedilir; capability kernel sözleşmesiyle hizalı. İlişki tuple'ları ve rol atamaları pii bağlamlı; RLS tenant-scoped, komşu-tenant grafı sorgulanamaz. Yetki değişikliği (rol/izin/tuple) audit'li + bitemporal — hangi tarihte kim neye erişebiliyordu izlenebilir (denetim/forensics). Privilege escalation koruması: rol atama capability'si ayrı ve step_up gerektirir; kendi kendine yetki yükseltme reddedilir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -644,15 +624,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Yetki kararı her istek yolunda — graf cache'li (ilişki tuple index), karar p95 düşük tutulur; ReBAC zincir çözümü sınırlı derinlikte (cycle/derinlik kapısı)."
        }
       ]
      },
@@ -948,7 +920,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Identity & Access (IAM)",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Identity & Access (IAM)\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: access.check_requested\ncondition:\n  all:\n    - tenant_scoped\n    - relation_or_role_grants(user, action, resource)   # deny-by-default\n    - not loop_detected\naction:\n  - decision: allow\n  - emit: access.decision_logged       # outbox, idempotent\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:authz:{user}:{action}:{resource}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -1088,6 +1060,18 @@
     ]
    },
    {
+    "id": "block-s-iam-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Deny-by-default: tanımsız erişim reddedilir (allow yalnız açık kural/ilişkiyle). Komşu-tenant yetki grafı sorgulanamaz (izolasyon). ReBAC: 'sahibin ekibi' ilişkisi doğru çözülür; ilişki kalkınca erişim anında kapanır. Privilege escalation: kullanıcı kendi rolünü yükseltemez (ayrı capability + step_up)."
+     }
+    ]
+   },
+   {
     "id": "block-s-iam-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1106,7 +1090,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Layer-2 SaaS ürünü; Kernel + Scale + Layer-1 üstüne oturur. Kernel zaten capability deny-by-default taşır; s-iam bunu OpenFGA/Logto sınıfı tenant-yapılandırılabilir RBAC+ABAC/ReBAC yüzeyine çıkarır."
        }
       ]
      },
@@ -1115,16 +1099,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Kernel authz (capability) sözleşmesini genişletir; ArcheType engine ile şema + otomatik REST/GraphQL, tenancy (RLS) ve audit kernel'den, IAM kendi Domain'ini (Kaya) tanımlar."
        }
       ]
      },
@@ -1133,7 +1108,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "App core'una bağlı; core module değişmez. Her ArcheType erişimi IAM kararını çağırır, karar Contract'ı tek kaynak."
        }
       ]
      },
@@ -1142,7 +1117,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Tüm Layer-2 module'leri yetki kararını IAM Contract'ından alır (check fonksiyonu); module kendi izin mantığını gömmez, deny-by-default'a uyar."
        }
       ]
      },
@@ -1151,7 +1126,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Tüm app'ler aynı rol/ilişki grafını paylaşır; SSO (k-sso) ile kimlik, IAM ile yetki — kimlik doğrulama ve yetkilendirme ayrı katman."
        }
       ]
      }
@@ -1164,13 +1139,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-iam-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-iam-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Tüm module'ler: ArcheType erişiminde check(user, action, resource) çağırır; deny-by-default."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "HR/People app: 'yöneticisi onaylar' ReBAC ilişkisini IAM grafından çözer."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "DMS app: 'belge sahibinin ekibi düzenler' ilişki tuple'ı ile erişim."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Admin Surface: rol/izin yönetimi IAM'in kendi yüzeyinden; değişiklik audit'li."
+      }
+     ]
     ]
    },
    {

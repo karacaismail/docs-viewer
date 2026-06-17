@@ -131,7 +131,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "AI Voice Agent — çekirdek yetenek",
+      "term": "Çağrı karşılama + niyet çözümleme",
       "definition": [
        {
         "type": "strong",
@@ -139,41 +139,16 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Sesli AI ajanı gelen çağrıyı karşılar, konuşmadan niyeti (randevu/sipariş/destek) çözer; karar değil öneri, güven kalibrasyonu zorunlu."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Entegre aksiyon",
       "definition": [
        {
         "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
-       },
-       {
-        "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
-       }
-      ]
-     },
-     {
-      "term": "Sözleşmeli sınır",
-      "definition": [
-       {
-        "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Çözülen niyet ilgili module'e (CRM/randevu/Helpdesk) Contract üzerinden event olarak bağlanır; ajan doğrudan yazmaz, sözleşme sınırında kalır."
        }
       ]
      }
@@ -361,15 +336,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Ses kaydı ve transkript pii (+retention); RLS tenant-scoped, komşu-tenant görüşmesi erişilemez. AI çıktısı karar değil öneri; düşük güvende insana yönlendir (route_to_human) — otomatik geri-alınamaz aksiyon yok. Dış aksiyon (sipariş/randevu) step_up gerektirir; RAG beslemesi consent kapısıyla. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -423,15 +390,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "STT/TTS dış servis (düşük gecikme kritik); niyet çözümleme asenkron olabilir ama çağrı içi yanıt streaming; transkript indeksleme worker'da."
        }
       ]
      },
@@ -727,7 +686,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — AI Voice Agent",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — AI Voice Agent\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: voice.intent_resolved\ncondition:\n  all:\n    - actor.capability >= \"voice.act\"\n    - confidence >= threshold            # karar degil oneri\n    - tenant_scoped\n    - not loop_detected\naction:\n  - propose: crm.activity_logged        # outbox, idempotent\n  - on_low_confidence: route_to_human\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:call:{call_id}:intent\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -867,6 +826,18 @@
     ]
    },
    {
+    "id": "block-s-ai-voice-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Düşük güven: eşik altı niyet otomatik aksiyona dönüşmez, insana yönlenir. Komşu-tenant görüşme/transkript erişimi sıfır (izolasyon). Niyet idempotent: aynı çağrı iki kez aktivite/aksiyon üretmez (idempotency_key)."
+     }
+    ]
+   },
+   {
     "id": "block-s-ai-voice-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -885,7 +856,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet (aday) — Layer-2 SaaS ürünü; Kernel + Scale + Layer-1 üstüne oturur. SaaS Fırsat Haritası kategorisinde eksik olduğu için aday; taksonomi: Stack ⊂ Edition ⊂ Distribution."
        }
       ]
      },
@@ -894,16 +865,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Kernel identity (arayan eşleştirme) ve tenancy (RLS); konuşma/niyet ArcheType'ı engine ile tanımlanır, audit kernel'den. Voice Agent kendi Domain'ini (Kaya) tanımlar."
        }
       ]
      },
@@ -912,7 +874,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "App core'una bağlı; core module değişmez. Ses akışı dış STT/TTS servisi, niyet/aksiyon kaydı kernel'de."
        }
       ]
      },
@@ -921,7 +883,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "CRM (arayan bağlamı), randevu ve Helpdesk module'lerine niyet event'i yayar; ajan kararı insan onayına/öneriye bağlı, doğrudan module yazmaz — Contract."
        }
       ]
      },
@@ -930,7 +892,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "CRM ve çağrı merkezi app'leri aynı arayan/konuşma verisini paylaşır; görüşme RAG'a beslenebilir."
        }
       ]
      }
@@ -943,13 +905,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-ai-voice-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-ai-voice-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-crm: arayanı Party ile eşleştirir, görüşmeyi aktivite olarak yazar."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Randevu/booking app: 'randevu al' niyetini slot rezervasyonuna bağlar (öneri → onay)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Helpdesk app: 'destek' niyetini ticket'a köprüler."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "RAG/AI app: konuşma transkriptini bilgi tabanına besler (consent kapısıyla)."
+      }
+     ]
     ]
    },
    {

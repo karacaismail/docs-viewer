@@ -1,0 +1,43 @@
+{
+ "featureDefs": [
+  {
+   "name": "Test piramidi (unit → E2E)",
+   "desc": "Vitest + Testing Library (unit/integration), MSW (API mock), Playwright (E2E web), Maestro (mobile E2E), axe-core (a11y WCAG 2.1 AA gate), Lighthouse CI (perf gate), k6 (load). PR'da test geçmezse yayına çıkmaz.",
+   "critical": true
+  },
+  {
+   "name": "Test-first ritüel (her feature)",
+   "desc": "Önce packages/domain Zod schema (kontrat), sonra MSW handler, sonra failing Vitest unit, sonra implementation, sonra Storybook interaction, sonra Playwright/Maestro happy path. Kontrat testi tanımdan önce.",
+   "critical": true
+  },
+  {
+   "name": "Tooling + observability + güvenlik baseline",
+   "desc": "Biome (lint/format, tek config), lefthook (git hooks), changesets (monorepo versiyonlama), t3-env+Zod (env type-safe); Sentry+PostHog self-host (error/analytics/replay); DOMPurify, CSP nonce, httpOnly+SameSite, Pino PII redact (password/tckn/iban).",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Frontend tooling crosscut bir endişedir; tek ürüne değil tüm FE'ye uzanır. Kontrat (Zod schema) backend ArcheType yüzeyiyle hizalanır, böylece FE testleri sözleşmeyi doğrular.",
+  "kernel": "authz (FE token/capability hizası — httpOnly cookie + refresh rotation), audit (PostHog/Sentry olay korelasyonu), Contract (Zod domain schema ↔ ArcheType yüzey sözleşmesi).",
+  "core": "pii (Pino redact: password/tckn/iban — log'da maskeleme), Contract (kontrat/golden test, KVKK veri export endpoint), keyset (liste UI'larında sayfalama tüketimi).",
+  "modules": "Tüm FE modülleri (test/lint/observability tüketicisi), backend yüzeyleri (MSW mock'ları gerçek sözleşmeyi yansıtır).",
+  "apps": "Web (Playwright) ve Capacitor mobil (Maestro) uygulamaları; Storybook bileşen izolasyonu."
+ },
+ "securityNotes": [
+  "Her model/markdown çıktısında DOMPurify zorunlu + rehype sanitize (XSS savunması).",
+  "Auth token httpOnly cookie + refresh rotation; mobilde secure storage; CSP strict-dynamic nonce-based.",
+  "CSRF: SameSite=Lax + custom header doğrulama; bağımlılık pnpm audit CI gate + Renovate.",
+  "PII log redaction (Pino: password/tckn/iban); KVKK veri retention 1 yıl + kullanıcı export endpoint.",
+  "Ad çakışması notu: changesets (versiyonlama aracı) ≠ kernel ChangeSet (tipli değişiklik zarfı) — karıştırılmamalı."
+ ],
+ "perfNotes": {
+  "code": "Biome (Rust) ~10x ESLint hızında, tek config; lefthook (Go) husky'den hızlı git hook.",
+  "perf": "Performans bütçesi PR gate: LCP < 2.5s, INP < 200ms, CLS < 0.1, initial JS < 250kb gzip, Lighthouse PWA > 90; mid-tier Android TTI < 3.5s, Capacitor cold start < 1.8s. PostHog session replay blob'ları S3 offload."
+ },
+ "testNotes": [
+  "Lighthouse PWA skoru < 90 olduğunda PR'ın bloklandığı.",
+  "axe-core ile WCAG 2.1 AA ihlalinin PR gate'inde yakalandığı.",
+  "Zod kontrat schema'sının backend ArcheType yüzeyiyle uyumsuzluğunda testin düştüğü.",
+  "Pino redact ile pii alanlarının (tckn/iban) log'a sızmadığı."
+ ]
+}

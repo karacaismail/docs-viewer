@@ -301,7 +301,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Security Model — birincil yetenek",
+      "term": "Katmanlı savunma (defense in depth)",
       "definition": [
        {
         "type": "strong",
@@ -309,25 +309,33 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "App-level authz + DB RLS + WAF + rate limit. Her katman bağımsız; biri delinse diğeri tutar. authz deny-by-default capability modeliyle, RLS ile tenant izolasyonu garanti."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "STRIDE tehdit modeli + OWASP Top 10",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Spoofing/Tampering/Repudiation/Information disclosure/DoS/Elevation karşı önlemler; SQLi (parameterized), XSS (auto-escape), CSRF (token), SSRF (URL allowlist), open redirect, broken auth."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "Sır rotasyonu + PII şifreleme + değişmez audit",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "Vault driver ile otomatik secret rotate; field-level AES-256-GCM ve key versioning ile pii şifreleme; append-only audit log (forensics için değiştirilemez). Tedarik zinciri: SBOM, Sigstore, reproducible builds."
        }
       ]
      }
@@ -515,15 +523,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Capability deny-by-default; elevation (privilege escalation) MFA + step-up + audit olmadan verilmez. PII field-level AES-256-GCM + key versioning; anahtar rotasyonu eski veriyi geri-çözebilir tutar. Audit log append-only ve değişmez; repudiation ve forensics için bütünlük korunur. Defense in depth: app authz delinse RLS, RLS delinse WAF/rate-limit; tek nokta hatası yok. Bağımlılık taraması (dependabot/snyk/trivy) + SBOM + Sigstore ile tedarik zinciri güvenliği. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -551,15 +551,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Audit ve güvenlik olayları keyset (occurred_at, id) ile; rate-limit sayaçları sabit maliyetli (Redis)."
        }
       ]
      },
@@ -577,15 +569,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Field-level şifreleme yalnızca pii kolonlarında; RLS predicate'leri index'li, sorgu planı bozulmaz. WAF/rate-limit gateway'de, uygulama yükünü azaltır."
        }
       ]
      },
@@ -881,7 +865,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Security Model",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Security Model\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: auth.elevation_requested\ncondition:\n  all:\n    - actor.capability >= \"security.elevation.grant\"\n    - not loop_detected\n    - actor.mfa_verified\naction:\n  - emit: audit.security_event\n  - emit: elevation.granted\nguards:\n  max_depth: 6\n  idempotency_key: \"elevation:{actor.id}:{request.id}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1021,6 +1005,18 @@
     ]
    },
    {
+    "id": "block-crosscut-security-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Yetkisiz elevation'ın MFA/step-up olmadan reddedildiği ve audit'e yazıldığı. Cross-tenant veri erişiminin RLS ile engellendiği (information disclosure). Audit kaydının değiştirilemediği (append-only ihlal denemesi reddi). OWASP vektörlerinin (SQLi/XSS/CSRF/SSRF) ilgili savunmayla bloklandığı."
+     }
+    ]
+   },
+   {
     "id": "block-crosscut-security-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1039,7 +1035,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Güvenlik crosscut bir endişedir; tek ürüne değil tüm Layer-2 ürünlerine ve kernel'e uzanır. Her ürün authz/audit/RLS'i framework'ten alır, kendi başına güvenlik yeniden yazmaz."
        }
       ]
      },
@@ -1048,16 +1044,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "authz (capability deny-by-default, elevation kontrolü), tenancy (RLS — information disclosure savunması), audit (append-only, repudiation savunması), event-bus (security.alert)."
        }
       ]
      },
@@ -1066,7 +1053,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "pii (field-level AES-256-GCM şifreleme + key versioning), bitemporal (audit zaman bütünlüğü), money (yetkisiz değişiklik koruması), Contract (güvenlik SLA/politika), keyset (audit/alert listeleme)."
        }
       ]
      },
@@ -1075,7 +1062,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Tüm Layer-2 ürünleri (güvenlik tüketicisi), Audit/Compliance (kanıt), Identity (auth/spoofing savunması)."
        }
       ]
      },
@@ -1084,7 +1071,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Güvenlik operasyon panosu; WAF/rate-limit gateway katmanı."
        }
       ]
      }

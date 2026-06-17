@@ -723,7 +723,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "i18n Derinleştirme — pluralization, RTL, lokal format — çekirdek yetenek",
+      "term": "ICU MessageFormat pluralization motoru",
       "definition": [
        {
         "type": "strong",
@@ -731,41 +731,43 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Çoğul kuralı diller arası farklı: TR tek form, EN iki, RU üç, AR altı (zero/one/two/few/many/other). react-i18next + i18next-icu; '1 item(s)' YASAK. Locale CLDR kategorisiyle çözülür."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Locale-aware format (Intl.* zorunlu)",
       "definition": [
        {
         "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
-       },
-       {
-        "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Tarih/sayı/para Intl.DateTimeFormat + Intl.NumberFormat ile; manuel nokta/virgül veya toLocaleString() default YASAK. Money yine Decimal; sadece gösterim katmanı locale'e bağlı."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "RTL layout (CSS logical properties)",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Arapça/İbranice/Farsça için <html dir>; text-align:start, margin-inline-start; sabit left/right YASAK. Yön-bağımlı ikon transform:scaleX(-1) ile flip."
+       }
+      ]
+     },
+     {
+      "term": "Fallback chain + locale resolver",
+      "definition": [
+       {
+        "type": "text",
+        "text": "tr-TR -> tr -> en (default) zinciri; navigator.languages (çoğul) ile tespit. Eksik anahtar default'a düşer, kullanıcıya ham key gösterilmez."
+       }
+      ]
+     },
+     {
+      "term": "Static analysis kapısı (hard-coded string yakalama)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "CI: tüm UI string t() ile sarılı mı, hard-coded tarih/sayı format var mı tarar. Çeviri dışı sızıntı build'i kırar."
        }
       ]
      }
@@ -953,15 +955,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Çeviri kaynakları kullanıcı girdisiyle birleşirken HTML enjeksiyonu (XSS) engellenir: interpolasyon escape'li, dangerouslySetInnerHTML çeviri için YASAK. Locale parametresi allowlist'e karşı doğrulanır (tr-TR, en-US...); serbest string ile path/format injection kapatılır. RTL/format değişimi yetki sınırını değiştirmez; sadece gösterim — capability kararı locale'den bağımsız. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -989,15 +983,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Pluralization saf seçim fonksiyonu (CLDR kategorisi -> mesaj); if (lang=='ar') zinciri yerine kategori tablosu dispatch."
        }
       ]
      },
@@ -1015,15 +1001,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Çeviri katalogu dile göre lazy-load + cache; her render'da format nesnesi yaratmak yerine locale başına Intl formatter memoize edilir."
        }
       ]
      },
@@ -1459,6 +1437,18 @@
     ]
    },
    {
+    "id": "block-cc-i18n-deep-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "AR için 0/1/2/few/many/other altı formun hepsi doğru mesaja eşlenir. tr-TR 1234567.89 -> '1.234.567,89'; en-US aynı sayı '1,234,567.89'. Eksik anahtar fallback chain ile default dile düşer, ham key sızmaz. RTL modunda logical property kullanan layout aynalanır; sabit left/right kullanan bileşen testte yakalanır."
+     }
+    ]
+   },
+   {
     "id": "block-cc-i18n-deep-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1477,7 +1467,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — bağımsız ürün değil, tüm frontend yüzeylerini kesen crosscut katman; l1-misc i18n temelini derinleştirir, her app'in UI string'lerine uygulanır."
        }
       ]
      },
@@ -1486,16 +1476,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "i18n kendi başına kernel ArcheType yaratmaz; ama kullanıcı locale tercihi identity/profil ile tutulur, tenant varsayılan locale tenancy ayarından gelir."
        }
       ]
      },
@@ -1504,7 +1485,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Çeviri kaynakları (catalog) core sözleşmesi: anahtar şeması sabit; yeni dil eklemek core'u değiştirmez, sadece kaynak dosyası ekler (additif)."
        }
       ]
      },
@@ -1513,7 +1494,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Her Layer-2 modül UI string'lerini t() ile sunar; format yardımcıları paylaşılan crosscut util'den gelir, modül başına kopya YASAK."
        }
       ]
      },
@@ -1522,7 +1503,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Storefront/admin/tenant panel aynı locale resolver + fallback chain'i paylaşır; dil seçimi oturum/tercih üzerinden tüm yüzeylere yayılır."
        }
       ]
      }

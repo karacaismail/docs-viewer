@@ -1,0 +1,50 @@
+{
+ "featureDefs": [
+  {
+   "name": "Dort birinci-sinif deploy profili",
+   "desc": "Ayni kod: P1 kolay kurulum (cPanel-harici), P2 self-host compose, P3 musteri cluster (k8s/swarm), P4 yonetilen bulut. Profil yukseltmek kod degil konfigurasyon terfisi.",
+   "critical": true
+  },
+  {
+   "name": "Opsiyonel adaptor matrisi",
+   "desc": "Observability, storage (S3-uyumlu), mail, DNS, LLM, kuyruk/event olcegi — hepsi sozlesme (Contract) arkasinda opsiyonel adaptor; varsayilan yerel.",
+   "critical": true
+  },
+  {
+   "name": "Olcege terfi yollari",
+   "desc": "Postgres-ici kuyruk/arama -> Celery+Redis -> Kafka/RabbitMQ; yerel disk -> S3; tek Postgres -> cluster. Scale primitive'leri gun-1 dayanikli.",
+   "critical": false
+  },
+  {
+   "name": "Upgrade sozlesmesi",
+   "desc": "Tarih-versiyonlu geriye donuk API + 'kullaniciyi kirma' politikasi; major degisiklik named gate + codemod ile, tasinma yuku kullaniciya yikilmaz.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — kontrol duzlemi Boyut 1 (Ops/DevOps); deploy ve adaptorler urunun parcasi, dagitim detayi degil.",
+  "kernel": "Storage/DNS/LLM/mail sozlesmeleri kernel seviyesinde; capability ile operator yetkisi, tenancy multiregion'a uzanir.",
+  "core": "Adaptor secimi konfigurasyon; Contract sabit kalir, backend degisir (driver pattern paralel).",
+  "modules": "be-mail-zinciri (sirali saglayicilar), scale-multiregion, sus-versioning / sus-bc-policy (upgrade), s-mail (DNS altyapisi).",
+  "apps": "Tum App'ler ayni dort profilde kosabilir; yonetilen bulut Editions satisinin dogal kanali."
+ },
+ "moduleUsage": [
+  "be-deploy-profilleri: Operator profil secer -> ayni docker imaji + compose ortak paydasi kosar -> adaptorler (mail/storage/LLM) Contract uzerinden takilir -> olcek ihtiyaci dogunca P1->P3 konfigurasyon terfisi, kod degismez; major upgrade named gate + codemod ile gelir."
+ ],
+ "securityNotes": [
+  "Adaptor kimlik bilgileri (S3 anahtari, LLM API key, mail/DNS token) secret/pii kapsaminda; vault'ta, capability ops:admin ile erisilir.",
+  "Yonetilen bulutta tenant izolasyonu RLS + ayri kaynak; operator capability'leri deny-by-default, ortam basina ayri.",
+  "LLM adaptoru saglayici-bagimsiz; egress kontrolu ile yalniz onayli endpoint'lere cikis, untrusted yanit downstream'de dogrulanir.",
+  "Upgrade named gate: BC-kiran degisiklik audit + onay olmadan uygulanmaz."
+ ],
+ "perfNotes": {
+  "code": "Varsayilan Postgres-ici kuyruk/arama kucuk olcekte yeterli; terfi esikleri konfigurasyonla, kod yolu degismez.",
+  "perf": "Kernel/core olcege dayanikli tasarlanir (gun-1); P3'te Redis cluster + worker + ayri GraphQL + Kafka ile yatay olcek acilir."
+ },
+ "testNotes": [
+  "Ayni kod dort profilde de bootlamali (P1..P4 smoke).",
+  "Adaptor degisimi (yerel disk -> S3) Contract'i kirmamali.",
+  "ops:admin olmayan aktor adaptor secret'ina erisememeli.",
+  "BC-kiran upgrade named gate olmadan uygulanmamali (codemod zorunlu)."
+ ]
+}

@@ -352,7 +352,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Data Pipeline / ETL — çekirdek yetenek",
+      "term": "Kaynak konektör + senkron motoru",
       "definition": [
        {
         "type": "strong",
@@ -360,41 +360,42 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "DB/API/dosya kaynaklarından inkremental (CDC/cursor) çekim; her senkron tenant'a izole, çalışma durumu ve son cursor bitemporal izlenir."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Dönüşüm + şema eşleme (T)",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Kaynak kayıtların hedef ArcheType şemasına map'lenmesi; tip/format dönüşümü deklaratif, hatalı satır dead-letter kuyruğuna düşer, pipeline durmaz."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Idempotent yükleme + dedup",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Hedefe yazımda idempotency_key ile tekrar çalıştırmada duplikat yok; kısmi başarısız batch yeniden denenebilir (at-least-once + dedup = effectively-once)."
+       }
+      ]
+     },
+     {
+      "term": "Pipeline gözlemlenebilirlik",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Çalışma başına satır sayısı, gecikme, hata oranı; başarısız senkron audit'lenir, kaynak credential erişimi capability ile sınırlı."
        }
       ]
      }
@@ -582,15 +583,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Kaynak sistem credential'ları en hassas varlık — capability deny-by-default, secret store'da; pipeline log'una asla düz metin yazılmaz. Çekilen veri PII içerebilir; hedef tenant'a yazımda RLS zorunlu, cross-tenant pipeline tanımı reddedilir. Idempotency_key yoksa yeniden çalıştırma duplikat üretir; finansal hedefte bu çift kayıt = mutabakat hatası. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -618,15 +611,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "-- inkremental çekim: cursor üzerinden keyset\nSELECT * FROM source_table\nWHERE updated_at > $last_cursor\nORDER BY updated_at, id LIMIT $batch;"
        }
       ]
      },
@@ -644,15 +629,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Tam tablo yerine cursor/CDC inkremental; OFFSET tabanlı sayfalama büyük kaynakta yıkıcı. Hedef yazım batch + COPY, satır satır INSERT değil. Dead-letter kuyruğu pipeline'ı bloklamadan hatalı satırı ayırır."
        }
       ]
      },
@@ -1088,6 +1065,18 @@
     ]
    },
    {
+    "id": "block-s-etl-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Aynı batch'in iki kez çalıştırılmasında idempotency_key ile hedefte duplikat oluşmadığı doğrulanır. Hatalı/şema-dışı satırın dead-letter'a düştüğü, pipeline'ın durmadan devam ettiği test edilir. Kaynak cursor'ın çalışma ortasında crash sonrası kaldığı yerden (watermark) devam ettiği doğrulanır."
+     }
+    ]
+   },
+   {
     "id": "block-s-etl-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1106,7 +1095,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Müşterinin dış sistemlerden veri taşıması (entegrasyon ürünleştirme) gerektiğinde; tek sistem içi akış için scale-etl/outbox yeterli."
        }
       ]
      },
@@ -1115,16 +1104,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Her pipeline tenant_id taşır, RLS ile izole; kaynak credential'lar capability deny-by-default, yalnızca pipeline owner erişir."
        }
       ]
      },
@@ -1133,7 +1113,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Senkron çalışmaları ve config değişiklikleri audit'lenir; cursor/watermark bitemporal — 'hangi veriyi ne zaman çektik' yeniden üretilebilir."
        }
       ]
      },
@@ -1142,7 +1122,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Hedef olarak herhangi bir Layer-2 modülün ArcheType'ına yazar; l1-import/l1-export primitive'lerini ürünleştirir."
        }
       ]
      },
@@ -1151,7 +1131,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Veri mühendisi için pipeline kurulum/izleme app'i; sonuç verisi tüketen modüllerin app'leri downstream."
        }
       ]
      }
@@ -1164,13 +1144,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-etl-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-etl-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-etl: l1-import ve l1-export primitive'lerini SaaS ürünü olarak paketler; ham çekim/yazım onlardan gelir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "scale-etl / scale-outbox: büyük hacimli batch ve event-driven akışta alt katman olarak kullanılır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-audit: senkron çalışmalarının ve şema değişikliklerinin delil kaydını hash-chain'e bağlar."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "cc-obs: pipeline gecikme/hata metriklerini gözlemlenebilirlik katmanına yayar."
+      }
+     ]
     ]
    },
    {

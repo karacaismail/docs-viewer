@@ -1,0 +1,58 @@
+{
+ "featureDefs": [
+  {
+   "name": "Autocomplete (typeahead) endpoint",
+   "desc": "2-3 harf sonra öneri; 150ms debounce, önceki sorgular cache'li; pg_trgm + GIN index ya da Meilisearch suggester üstüne kurulur.",
+   "critical": true
+  },
+  {
+   "name": "Faceted aggregation (kategori filtreler)",
+   "desc": "'Marka: Apple (24)' sayımları her arama sonrası; çoklu seçim AND/OR; aggregation tenant-scope WHERE altında çalışır.",
+   "critical": true
+  },
+  {
+   "name": "Did-you-mean (yazım düzeltme)",
+   "desc": "Levenshtein ≤2 / pg_trgm similarity(); 'eklma' → 'elma' önerisi; TR phonetic varyantı ile kullanıcı kaybedilmez.",
+   "critical": true
+  },
+  {
+   "name": "Search analytics tablosu",
+   "desc": "search_queries(query, results_count, clicked_position, user_id, ts); results_count=0 = içerik boşluğu, günlük rapor; pii=düşük ama tenant-scoped.",
+   "critical": true
+  },
+  {
+   "name": "Index sync (save → outbox → index update)",
+   "desc": "ArcheType kaydı değişince outbox event → search index güncellenir; eventual consistency, çift güncelleme idempotent.",
+   "critical": false
+  },
+  {
+   "name": "Spatial search (PostGIS ST_DWithin)",
+   "desc": "'yakın eczane' arama filtresi + coğrafi yakınlık; scale-gis primitive'i ile birlikte.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Arama bir Layer-1 primitive'inin derinleştirmesi: BM25 + vector üstüne typeahead/faceted/did-you-mean/analytics ekler; kendi servisi (Meilisearch) olsa da yetki + tenant-scope framework'ten gelir, yeniden icat etmez.",
+  "kernel": "Faceted aggregation ve sonuçlar tenant-scope WHERE + capability ile sınırlanır; kullanıcının göremediği ArcheType alanı index'e girse de sonuçta filtrelenir (deny-by-default).",
+  "core": "Index'lenecek alanlar ArcheType şemasından türetilir; para/pii alanları index'e ham girmez, görünür projeksiyon alanları index'lenir.",
+  "modules": "Ölçek sınıfına göre: <100K Postgres FTS + pg_trgm, 100K-10M Meilisearch, 10M+ OpenSearch; vector için pgvector — boyut büyüdükçe motor değişir, sözleşme sabit.",
+  "apps": "App input + dropdown panel + facet sidebar gösterir; 'sıfır sonuç' aramalar ürün ekibine içerik fırsatı raporu olarak döner."
+ },
+ "ecaExample": "trigger:\n  event: archetype.saved\ncondition:\n  all:\n    - actor.capability >= \"resource:read\"\n    - not loop_detected\naction:\n  - enqueue: search.index.upsert   # outbox, eventual\n  - emit: search.analytics.logged\nguards:\n  max_depth: 6\n  idempotency_key: \"searchidx:{tenant}:{archetype_id}:{rev}\"\n  external_effects: none",
+ "securityNotes": [
+  "Faceted sayım ve arama sonuçları tenant-scope WHERE + RLS ile sınırlı; bir tenant'ın index kaydı başka tenant aramasında görünmez.",
+  "Index'e yalnız capability ile görünür alanlar girer; pii/para alanları ham index'lenmez, sonuçta deny-by-default filtrelenir.",
+  "search_queries log'u kişiyi izleyebilir (pii=orta) — purpose-binding + retention ile tutulur, audit'lenir.",
+  "Ağır arama / autocomplete endpoint'i rate-limit'li (debounce sunucuda da doğrulanır) — tuş başına istek seli engellenir."
+ ],
+ "perfNotes": {
+  "code": "Autocomplete pg_trgm GIN index ya da Meilisearch prefix; faceted sayım önbelleğe alınır; did-you-mean similarity() eşik filtreli; index sync asenkron worker.",
+  "perf": "Debounce 150ms istemci + sunucu; sonuç + facet keyset (cursor) sayfalı; 100K+ doküman Postgres FTS'i zorlar → Meilisearch'e geçiş gerekir."
+ },
+ "testNotes": [
+  "Tenant izolasyon testi: bir tenant'ın index kaydı komşu tenant aramasında asla görünmez.",
+  "Did-you-mean testi: 'eklma' sorgusu 'elma' önerir (similarity eşiği).",
+  "Sıfır-sonuç testi: results_count=0 satırı search_queries'e yazılır, günlük rapora düşer.",
+  "Index sync idempotency: aynı save event iki kez işlense tek upsert oluşur."
+ ]
+}

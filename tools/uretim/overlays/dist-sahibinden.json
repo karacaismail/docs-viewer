@@ -1,0 +1,56 @@
+{
+ "featureDefs": [
+  {
+   "name": "İlan (Listing) ArcheType + kategori taksonomisi",
+   "desc": "Başlık/kategori/alanlar/fiyat (Money)/konum/durum (taslak→yayın→süresi doldu); kategoriye özel alan şeması ağaç taksonomiden türer. Lead-gen marketplace — ödeme dışarıda, ilan ücreti+doping içeride.",
+   "critical": true
+  },
+  {
+   "name": "Doping/öne çıkarma + ödeme",
+   "desc": "Ücretli listeleme yükseltme paketleri (s-payment-methods); paket tutarları Money (Decimal), satın alma bitemporal + audit.",
+   "critical": true
+  },
+  {
+   "name": "Faceted arama (l1-search, foldTurkish)",
+   "desc": "Kategori/konum/fiyat facet, Türkçe karakter katlama, sıralama; agent/vektör arama için k-agent-runtime (A05). Okuma-optimize projection.",
+   "critical": true
+  },
+  {
+   "name": "Mağaza (Store) + alıcı-satıcı Thread",
+   "desc": "Kurumsal satıcı profili, paket/limit, vitrin; mesajlaşma thread'i (pii) spam/abuse korumalı; favori/takip + fiyat-düşüş bildirimi."
+  },
+  {
+   "name": "Şikayet/Trust + moderasyon kuyruğu",
+   "desc": "Dolandırıcılık/sahte ilan akışı, moderasyon kuyruğu; eşik altı satıcı/ilan askıya."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — bu bir Distribution (sektör paketi), paralel framework değil: kanonik Classifieds + Marketplace + Payment + Search + CRM stack'lerinin classifieds dikeyinde paketi. Stack ⊂ Edition ⊂ Distribution; bileşen module'lere yalnız Contract.",
+  "kernel": "Party (alıcı/satıcı), tenancy (RLS), audit, event-bus ve ArcheType engine kernel'den; agent runtime kataloğu kanonik k-agent-runtime'da yaşar — bu sayfa paralel kopya tutmaz.",
+  "core": "Money (ilan ücreti/doping, kuruş + para birimi), bitemporal (ilan/satın alma sürümü), i18n, Notification, l1-search core'dan.",
+  "modules": "s-classifieds (ilan), s-marketplace (mağaza/komisyon), s-payment-methods (doping ödeme), l1-search (arama), s-crm+mesajlaşma module'lerini tüketir; s-property/dist-realestate ile portföy modelini paylaşır — yalnız Contract.",
+  "apps": "Classifieds, Search ve Payment app'leri aynı İlan + Mağaza + Thread kaydını paylaşır; çift kayıt yok."
+ },
+ "moduleUsage": [
+  "s-classifieds: ilan yaşam döngüsü + kategori taksonomisi + alan şemalarını sağlar (dikeyin çekirdeği).",
+  "s-payment-methods: doping/öne çıkarma paket satışını tahsil eder (Money, dış-etkili → step-up).",
+  "l1-search: faceted arama + foldTurkish sıralama; agent arama için k-agent-runtime (A05 vector) tüketilir.",
+  "s-crm + mesajlaşma: alıcı-satıcı thread, favori, fiyat-düşüş bildirimi; spam/abuse koruması."
+ ],
+ "ecaExample": "trigger:\n  event: listing.boost_purchased\n  when: tenant_scoped\ncondition:\n  all:\n    - actor.capability >= \"classifieds.boost.buy\"\n    - payment.captured == true\n    - not loop_detected\naction:\n  - apply: listing_promotion           # idempotent\n  - emit: search.reindex_requested      # öne çıkarma sıralaması\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{listing}:{boost_package}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Alıcı-satıcı mesaj/iletişim verisi pii=true (+retention); RLS tenant-scoped, spam/abuse + dolandırıcılık moderasyonu; iletişim bilgisi karşı tarafa kademeli açılır.",
+  "Doping/ödeme Money kuruş hassasiyetinde tamsayı + para birimi; satın alma bitemporal — iade/iptal yeni kayıt, iz korunur; dış ödeme allowlist + step-up.",
+  "İlan yayın + doping + moderasyon capability deny-by-default; sahte ilan/şikayet akışı audit'e yazılır (moderasyon kararı izlenebilir)."
+ ],
+ "perfNotes": {
+  "code": "Doping uygulaması + reindex asenkron worker; moderasyon kuyruğu öncelikli (sahte ilan hızlı düşer).",
+  "perf": "İlan/arama uçları faceted + keyset pagination; kategori+konum+durum indeksleri; arama okuma-optimize projection (HNSW/IVF vektör opsiyonu); incremental reindex."
+ },
+ "testNotes": [
+  "Komşu-tenant ilan/mağaza/thread sorgusu sıfır döndürür (RLS).",
+  "Aynı doping paketi ikinci kez tek promosyon uygular (idempotency).",
+  "Ödeme alınmadan doping uygulanmaz (deny path); süresi dolan ilan aramadan düşer.",
+  "ArcheType seçimi: lead-gen (ilan ücreti, ödeme dışarıda) ≠ transaction marketplace (split/escrow) — karışmaz."
+ ]
+}

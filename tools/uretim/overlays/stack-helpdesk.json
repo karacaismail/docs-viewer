@@ -1,0 +1,47 @@
+{
+ "featureDefs": [
+  {
+   "name": "Bilet yaşam döngüsü + SLA timer",
+   "desc": "Ticket ArcheType'ı yaratım/atama/eskalasyon/çözüm durumlarıyla; plan-bazlı SLA timer (response/resolution) bitemporal hesaplanır. Atama ve eskalasyon capability'ye bağlı, durum geçişleri audit'lenir.",
+   "critical": true
+  },
+  {
+   "name": "Bilgi tabanı + topluluk Q&A",
+   "desc": "Makale + AI arama; forum soru/oy/kabul edilen yanıt. Yayın ve moderasyon deny-by-default capability ile; içerik indekslenir, düzenleme geçmişi bitemporal.",
+   "critical": false
+  },
+  {
+   "name": "Müşteri portalı + saha hizmeti",
+   "desc": "Self-service bilet/KB/indirme portalı (dış aktör, RLS ile yalnızca kendi biletleri); saha hizmeti için rota/çizelgeleme. Müşteri PII'si korunur.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Bilet açma, SLA ihlali ve eskalasyon bildirim/diğer ürünleri tetiklediği için event-bus üzerinden entegre olmalı; çok kanaldan (e-posta, form, chat) gelen girdiler tek akışta birleşir.",
+  "kernel": "authz (atama/eskalasyon/moderasyon capability'leri), tenancy (RLS ile bilet izolasyonu), event-bus (ticket.created, sla.breached), audit (atama ve durum geçişleri).",
+  "core": "bitemporal (SLA timer, düzenleme geçmişi), pii (müşteri iletişim), Contract (SLA taahhüdü — plan koşulları), keyset (bilet/makale listeleme).",
+  "modules": "Notification (bilet/SLA bildirimi), Search (KB/forum indeksleme), Mail (paylaşımlı kutu → bilet), CRM (müşteri ilişkisi).",
+  "apps": "Müşteri portalı dış edition; iç ajan paneli çekirdek UI."
+ },
+ "moduleUsage": [
+  "Mail: paylaşımlı kutuya gelen mesaj → ticket.created köprüsü.",
+  "Notification: sla.breached → ilgili ajana/yöneticiye eskalasyon bildirimi.",
+  "Search: makale/forum gönderisi → asenkron indeksleme; AI arama keyset ile.",
+  "Community: çözülmemiş forum sorusu → bilete dönüştürme."
+ ],
+ "ecaExample": "trigger:\n  event: ticket.sla_timer_elapsed\ncondition:\n  all:\n    - ticket.state != \"resolved\"\n    - not loop_detected\n    - ticket.sla_policy.escalation_enabled\naction:\n  - emit: sla.breached\n  - emit: notification.escalation_dispatch\nguards:\n  max_depth: 6\n  idempotency_key: \"ticket:{ticket.id}:sla:{stage}\"\n  external_effects: none",
+ "securityNotes": [
+  "Müşteri portalı dış aktör; deny-by-default capability + RLS ile yalnızca kendi biletlerine erişim.",
+  "Müşteri iletişim ve bilet içeriği pii; dışa aktarım minimum alan ilkesiyle, erişim audit'lenir.",
+  "Atama/eskalasyon/moderasyon yetki gerektirir; sıradan ajan SLA politikasını değiştiremez."
+ ],
+ "perfNotes": {
+  "code": "Bilet ve makale listeleri keyset (updated_at, id) ile; OFFSET kullanılmaz.",
+  "perf": "Açık/SLA-riskli bilet sayacı (tenant_id, state) kısmi index ile ucuz; ajan performans metrikleri projeksiyondan okunur."
+ },
+ "testNotes": [
+  "SLA timer dolduğunda aynı stage için tek sla.breached üretildiği (idempotency).",
+  "Müşterinin başka müşterinin biletine erişiminin RLS ile reddedildiği.",
+  "Yetkisiz ajanın SLA politikası/atama değiştiremediği."
+ ]
+}

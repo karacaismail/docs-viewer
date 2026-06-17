@@ -1,0 +1,53 @@
+{
+ "featureDefs": [
+  {
+   "name": "Emisyon veri toplama (Scope 1/2/3)",
+   "desc": "Aktivite verisi (enerji/yakıt/seyahat) → emisyon faktörü → CO2e; kaynak kayıt + faktör versiyonu bitemporal + audit izli.",
+   "critical": true
+  },
+  {
+   "name": "Sosyal + Yönetişim göstergeleri",
+   "desc": "İş gücü/çeşitlilik/iş kazası (S) ve yönetim kurulu/etik (G) metrikleri ArcheType'ı; kanıt belgesi ekli, denetlenebilir.",
+   "critical": true
+  },
+  {
+   "name": "Standart rapor üretimi (GRI/ESRS/TSRS)",
+   "desc": "Toplanan veriden standart çerçeveye eşlenmiş rapor; dönemsel; her gösterge kaynağa kadar izlenebilir (denetim).",
+   "critical": false
+  },
+  {
+   "name": "Emisyon faktör kütüphanesi (versiyonlu)",
+   "desc": "DEFRA/IPCC faktör seti, effective_date ile versiyonlu; faktör değişince geçmiş hesap bitemporal korunur.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Aday Layer-2 data-intelligence ürünü (Stack ⊂ Edition ⊂ Distribution); kendi ESG ArcheType + UI'sı olur ama yetki/audit/event-bus/tenancy framework'ten gelir, yeniden icat etmez.",
+  "kernel": "Her ESG kaydı + kanıt belgesi tenant_id ile izole (RLS); veri sağlayan kullanıcı Identity'den; denetim için tüm değişiklik Audit'li — kernel'den miras.",
+  "core": "Emisyon/finansal-bağlı tutarlar Decimal (float değil); faktör + gösterge bitemporal (effective_date) + audit; raporun kaynağa izlenebilirliği purpose-binding ile korunur.",
+  "modules": "Diğer ürünlerden veri tüketir: enerji/yakıt giderini muhasebe (stack-accounting), seyahat/lojistik aktivitesini ilgili modüllerden Contract ile alır; worker dönemsel rapor üretir.",
+  "apps": "Muhasebe/satın alma app'leri gider event'i yayar → ESG aktivite verisine eşlenir; rapor app'i standart çerçeve çıktısını (PDF/XBRL) sunar."
+ },
+ "moduleUsage": [
+  "Muhasebe app: enerji/yakıt gider satırı → ESG aktivite verisi (Scope 1/2) otomatik eşleme.",
+  "Satın alma/lojistik app: tedarik zinciri aktivitesi → Scope 3 emisyon hesabı (Contract ile).",
+  "Notification: raporlama dönemi sonu yaklaşınca sorumluya hatırlatma; eksik gösterge uyarısı."
+ ],
+ "ecaExample": "trigger:\n  event: expense.energy_posted\ncondition:\n  all:\n    - actor.capability >= \"esg.activity.record\"\n    - not loop_detected\naction:\n  - persist: esg.activity_datum   # bitemporal, faktör versiyonlu\n  - emit: esg.emission_recalculated\nguards:\n  max_depth: 6\n  idempotency_key: \"esg:{tenant}:{expense_id}:scope2\"\n  external_effects: none",
+ "securityNotes": [
+  "ESG kanıt belgeleri + tedarikçi verisi tenant-scoped (RLS); başka tenant'ın emisyon/sosyal verisi görülmez.",
+  "esg.* capability deny-by-default; kullanıcı yalnız yetkili olduğu kapsamda veri girer/raporu görür.",
+  "Faktör + gösterge değişiklikleri audit + bitemporal (denetçi geçmiş hesabı doğrular); geri tarihli düzeltme iz bırakır.",
+  "Raporlanan gösterge kaynağa kadar izlenebilir (purpose-binding) — greenwashing/uydurma veri denetimle yakalanır."
+ ],
+ "perfNotes": {
+  "code": "Aktivite verisi keyset (cursor) + (tenant_id, dönem, scope) index; dönemsel emisyon toplulaştırma + rapor üretimi asenkron worker.",
+  "perf": "Büyük aktivite hacminde rapor senkron değil arka plan job; faktör versiyonu değişince yeniden hesap batch'lenir."
+ },
+ "testNotes": [
+  "Komşu-tenant ESG verisi/raporu sorgusu sıfır döndürür (RLS).",
+  "Bitemporal testi: faktör güncellenince geçmiş dönem hesabı değişmez, yeni dönem yeni faktörle hesaplanır.",
+  "İzlenebilirlik testi: rapordaki her gösterge kaynak kayda kadar geri izlenir.",
+  "Idempotency testi: aynı gider event'i iki kez gelse tek aktivite kaydı oluşur."
+ ]
+}

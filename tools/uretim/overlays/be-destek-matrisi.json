@@ -1,0 +1,53 @@
+{
+ "featureDefs": [
+  {
+   "name": "Üç destek seviyesi — Desteklenen / Deneysel / Yasak",
+   "desc": "Desteklenen: CI + release + runbook + observability + on-call + upgrade/restore kanıtı tam. Deneysel: izole pilot, SLA yok, geri-dönüş yolu var. Yasak: bilinen güvenlik/operasyon açığı ya da kanıtsız semantik.",
+   "critical": true
+  },
+  {
+   "name": "Desteklenen v1 profili",
+   "desc": "Debian + Docker Compose + PostgreSQL; Hetzner referans ortamı; yerel geliştirme. Her satır contract testi + runbook + on-call sahibi taşır. Runtime varsayılan olarak yalnız bunu sunar.",
+   "critical": true
+  },
+  {
+   "name": "Yasak kombinasyonlar",
+   "desc": "Shared hosting (worker/WAL-PITR/sandbox önkoşulları kanıtsız) ve multi-region active-active (conflict/residency/failover kanıtı yok) — destek reddedilir, satış vaadi/SLA verilemez.",
+   "critical": true
+  },
+  {
+   "name": "Statü değişikliği kapısı (ADR + kanıt)",
+   "desc": "Bir kombinasyonun statüsü ancak ADR ve kanıtla değişir; deneysel profil zımnen SLA kapsamına alınamaz, listede olmayana zımni destek verilmez."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — bu bir özellik değil, müşteri beklentisini + test matrisini + destek ekibinin sorumluluk sınırını belirleyen kontrat. be-v1-kapsam-disi ve be-deploy-profilleri önkoşuludur; build-enterprise-readiness ile hizalanır.",
+  "kernel": "Kernel'in güvenlik invariant'leri (RLS, capability, audit) ancak Desteklenen profilde kanıtlanmış sayılır; Yasak profilde kernel garantileri verilmez (örn. shared hosting'de sandbox izolasyonu kanıtsız).",
+  "core": "Core depolama/worker semantiği (WAL/PITR, broker) yalnız Desteklenen profil altyapısında garanti edilir; Deneysel storage'da (S3-uyumlu) tam restore kanıtı eksik olduğundan core SLA'sı askıdadır.",
+  "modules": "Layer-2 module'leri yalnız Desteklenen profilde üretim SLA'sı alır; Kubernetes/Swarm ve haricî broker 'deneysel değil' (yalnız interface/taslak var) — module release artefaktı bu profillerde üretilmez.",
+  "apps": "Satış ve kurulum ekranı yalnız Desteklenen profili varsayılan sunar; Deneysel seçenek üretim gibi gösterilemez (failure mode), app dağıtımı matristen türer."
+ },
+ "moduleUsage": [
+  "be-deploy-profilleri: deployment profilleri bu matrisin statü kaynağı; runtime varsayılanı buradan gelir.",
+  "be-v1-kapsam-disi: kapsam-dışı kombinasyonlar (shared hosting, multi-region) bu matriste Yasak olarak işaretlenir.",
+  "build-enterprise-readiness: kurumsal hazırlık değerlendirmesi Desteklenen satırların kanıt setine (runbook/restore/on-call) dayanır.",
+  "Satış/kurulum app yüzeyi: yalnız Desteklenen profili gösterir; Deneysel/Yasak runtime'da varsayılan sunulmaz."
+ ],
+ "ecaExample": "trigger:\n  event: deploy.profile_selected\ncondition:\n  all:\n    - actor.capability >= \"deploy.configure\"\n    - support_status(profile) == \"supported\"   # deny-by-default\n    - evidence_complete(profile)                 # CI+runbook+restore+on-call\naction:\n  - allow: provision\n  - on_experimental: warn_no_sla\n  - on_forbidden: reject_and_redirect_to_compose\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:deploy:{profile}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Yasak statü güvenlik temellidir: shared hosting'de güvenli sandbox + worker + WAL/PITR önkoşulları kanıtlanamadığından kullanılamaz; istek reddedilir, Compose profiline yönlendirilir.",
+  "Multi-region active-active conflict/residency/failover kanıtı olmadan yasak — veri-yerleşimi (residency) ve tutarlılık garantisi verilemez.",
+  "externalReviewRequired=true: statü değişikliği harici (senior SRE) inceleme + ADR + kanıt gerektirir; zımni statü yükseltme engellenir.",
+  "Failure mode koruması: satış/kurulum ekranı Deneysel seçeneği Desteklenen gibi sunarsa bu bir uyumsuzluk hatasıdır (acceptance criteria ihlali)."
+ ],
+ "perfNotes": {
+  "code": "Runtime yalnız Desteklenen profili varsayılan provision eder; Deneysel best-effort, Yasak reddedilir. Statü tablosu tek kaynak (single source) — kurulum, test matrisi ve on-call sorumluluğu buradan türer.",
+  "perf": "Desteklenen profilde yük testi + restore penceresi kanıtlı (örn. Debian/Compose temiz kurulum→upgrade→rollback→restore); Deneysel storage'da maliyet/restore kanıtı eksik olduğundan üretim önerilmez."
+ },
+ "testNotes": [
+  "Runtime varsayılanı: yalnız Desteklenen profil sunulur; Yasak profil seçimi reddedilir, Compose'a yönlendirir.",
+  "Her Desteklenen satır contract testi + runbook + on-call sahibi taşır (eksikse satır Desteklenen olamaz).",
+  "Statü değişikliği ADR + kanıt + harici inceleme olmadan geçmez (kapı testi).",
+  "Failure mode: kurulum ekranı Deneysel seçeneği Desteklenen gibi göstermez (UI doğrulaması)."
+ ]
+}

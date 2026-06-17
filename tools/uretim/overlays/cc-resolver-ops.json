@@ -1,0 +1,55 @@
+{
+ "featureDefs": [
+  {
+   "name": "Jurisdiction backfill (confidence-scored)",
+   "desc": "Mevcut kullanıcılara IP geo + signup country + payment + delivery sinyallerinden jurisdiction ataması; yüksek confidence otomatik, orta/düşük insan onayı veya self-service düzeltme.",
+   "critical": true
+  },
+  {
+   "name": "Shadow → opt-in → full rollout",
+   "desc": "Resolver eski sistemle paralel çalışır, karar farkları log'lanır; %5 beta sonra kademeli, feature flag (cc-rollout) ile her aşama kontrollü.",
+   "critical": true
+  },
+  {
+   "name": "Deny-by-default failure mode",
+   "desc": "Resolver çökünce en sıkı fallback policy yüklenir; marketing skip, sanctions check zorunlu, audit 'resolver_fallback' tag, SRE alarm. Sessiz kabul yasal ihlal sayılır.",
+   "critical": true
+  },
+  {
+   "name": "4-göz config governance",
+   "desc": "Jurisdiction config draft (compliance) → review (legal) → approve (CTO) → deploy; üç farklı kişi, OpenFGA yetki ayrımı, her adım audit. CHECK constraint ile draft_by≠reviewed_by≠approved_by.",
+   "critical": true
+  },
+  {
+   "name": "Decision-trace (5 yıl)",
+   "desc": "Her resolver kararının input/resolved-axes/applied-policy/outcome kaydı; 'neden bu kural uygulandı' sorusunun 5 yıl sonra cevabı, month-partition, %100 sampling async insert.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Resolver canlıya alınmadan ÖNCE bu 5 katman hazır olmalı; aksi halde prod incident ve toplu yasal ihlal riski.",
+  "kernel": "OpenFGA capability deny-by-default config governance'ın temeli; her config adımı farklı capability (compliance:write, legal:approve, config:deploy) gerektirir.",
+  "core": "decision_trace l1-audit'in delil zincirine bağlı, append-only; config_change tablosu bitemporal (effective_from), 4-göz CHECK constraint DB seviyesinde.",
+  "modules": "cc-jurisdiction-resolver (resolver'ın kendisi), cc-rollout (feature flag), cc-compliance-matrix (kural seti) ile birlikte çalışır.",
+  "apps": "Compliance/legal config app'i (4-göz workflow); SRE observability app'i (decision-trace + fallback alarm dashboard)."
+ },
+ "ecaExample": "trigger:\n  event: jurisdiction_config.deploy_requested\ncondition:\n  all:\n    - actor.capability >= \"config:deploy\"\n    - draft_by != reviewed_by\n    - reviewed_by != approved_by\n    - not loop_detected\naction:\n  - emit: config.deployed\n  - emit: cache.invalidate(per_jurisdiction)\nguards:\n  max_depth: 6\n  idempotency_key: \"config-deploy:{jurisdiction_code}:{effective_from}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Failure mode deny-by-default: resolver çöktüğünde varsayılan kabul = sanctions/data-residency ihlali; fallback en sıkı kural seti olmalı, request reddi DEĞİL (UX yıkar) ama sessiz kabul de değil.",
+  "Config governance tek kişi yetkisi YASAK: draft/review/approve üç farklı identity, OpenFGA ile ayrık capability; CHECK constraint DB seviyesinde garanti (uygulama bypass edilse bile).",
+  "Cache invalidation hot path: config değişince eski kuralla cevap vermek yasal ihlal; event-based flush (config-update → Redis per-jurisdiction key) gecikmesi audit'lenmeli.",
+  "decision_trace PII içerir (user_country, payment_country); 5 yıl retention yasal ama erişim capability deny-by-default, RLS ile sınırlı.",
+  "Backfill düşük-confidence kullanıcıyı otomatik atamak toplu yanlış jurisdiction = toplu ihlal; orta/düşük mutlaka insan onayı veya self-service."
+ ],
+ "perfNotes": {
+  "code": "-- decision_trace async batch insert, month partition\nINSERT INTO decision_trace (...) VALUES (...);\n-- okuma: keyset (decided_at, trace_id), month partition pruning\nSELECT * FROM decision_trace\nWHERE user_id = $1 AND decided_at >= $2\nORDER BY decided_at DESC, trace_id DESC LIMIT 50;",
+  "perf": "Resolver hot-path: 3-katmanlı cache (L1 in-process LRU 60sn, L2 Redis 5dk/1saat/6saat, L3 Postgres source-of-truth). Cache miss tek query ~5ms acceptable. decision_trace %100 sampling ama async batch insert — senkron yazım request latency'sini öldürür. Trace okuması month-partition + keyset, OFFSET yok."
+ },
+ "testNotes": [
+  "Shadow mode'da karar farkının < %1 olduğu, full migration öncesi onay metriği olarak doğrulanır.",
+  "Resolver çökünce fallback policy'nin en sıkı kural setini yüklediği, marketing skip + sanctions zorunlu + audit tag attığı test edilir.",
+  "Config deploy'da draft_by=reviewed_by veya reviewed_by=approved_by ise CHECK constraint'in reddettiği doğrulanır.",
+  "Cache invalidation event'inin config-update sonrası per-jurisdiction key'i flush ettiği, pod L1'lerinin yeniden DB'den çektiği doğrulanır.",
+  "decision_trace'in idempotency ile DST geçiş gününde duplikat fatura kararı üretmediği test edilir."
+ ]
+}

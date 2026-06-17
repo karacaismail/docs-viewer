@@ -371,7 +371,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Contract Management (CLM) — çekirdek yetenek",
+      "term": "Sözleşme yaşam döngüsü durumları",
       "definition": [
        {
         "type": "strong",
@@ -379,41 +379,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Taslak → müzakere → imza bekliyor → yürürlükte → yenileme/fesih durum makinesi; her geçiş Contract kuralıyla doğrulanır, geçiş audit'e yazılır."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Madde çıkarımı (clause extraction)",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "AI ile yüklenen sözleşmeden madde/yükümlülük/tarih çıkarımı; çıktı guardrail'den geçer, ham metne referans (provenance) saklanır, insan onayı olmadan yürürlüğe girmez."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "e-İmza akışı",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "İmza talebi sıralı/paralel imzacılara gider; imza dış efekt, step-up doğrulama, imzalı PDF hash'i bitemporal kayda bağlanır."
+       }
+      ]
+     },
+     {
+      "term": "Yenileme ve yükümlülük takvimi",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Çıkarılan tarihlerden (fesih ihbarı, otomatik yenileme) hatırlatma üretilir; layer1-notification ile quiet-hours'a saygılı gönderilir."
        }
       ]
      }
@@ -601,15 +598,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Sözleşme içeriği ve karşı taraf verisi pii sınıfı; tenant RLS ile izole, madde çıkarımı için AI'a giden metinde kişisel veri maskelenir (input guardrail). İmza capability tutar eşiğiyle kademeli; deny-by-default, eşik üstü imza dört göz + step-up ister. AI clause extraction çıktısı doğrudan yürürlüğe girmez; insan onayı + provenance referansı zorunlu, halüsinasyon guardrail'i devrede. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -637,15 +626,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Sözleşme listesi (yenileme_tarihi, id) keyset; clause extraction senkron değil, doküman yüklenince async worker."
        }
       ]
      },
@@ -663,15 +644,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Büyük PDF'lerde çıkarım sayfa bazlı parçalanır; AI maliyet guardrail'i tenant token kotasıyla sınırlanır."
        }
       ]
      },
@@ -967,7 +940,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Contract Management (CLM)",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Contract Management (CLM)\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: contract.signature_requested\ncondition:\n  all:\n    - actor.capability >= \"clm.sign\"\n    - contract.value <= actor.signing_limit\n    - not idempotency_seen(contract.version_hash)\naction:\n  - dispatch_envelope: signers\n  - emit: contract.out_for_signature\nguards:\n  max_depth: 4\n  idempotency_key: \"clm:{contract.id}:{contract.version_hash}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1107,6 +1080,18 @@
     ]
    },
    {
+    "id": "block-s-clm-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Durum makinesi: yürürlükteki sözleşme doğrudan taslağa dönemez, geçiş reddedilir. Idempotency: aynı version_hash ile iki imza talebi tek zarf üretir. Clause extraction: çıkarılan fesih tarihi insan onayı bekleyen kuyruğa düşer, otomatik yürürlüğe girmez."
+     }
+    ]
+   },
+   {
     "id": "block-s-clm-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1183,13 +1168,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-clm-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-clm-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Accounting / Muhasebe: Sözleşme bedeli ve ödeme planı money tipiyle gelir tahakkukuna bağlanır (revenue recognition tetiği)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-crm: Sözleşme bir hesap/fırsat ile ilişkilenir; karşı taraf party olarak tek kaynaktan gelir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "kernel-authz: 'sözleşme imzala' capability deny-by-default; imza yetkisi tutar eşiğine göre kademeli (onay matrisi)."
+      }
+     ]
     ]
    },
    {

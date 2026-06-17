@@ -1,0 +1,50 @@
+{
+ "featureDefs": [
+  {
+   "name": "Portfoy yonetimi",
+   "desc": "Mulk karti, sahibi ve yetki sozlesmesi takibi; portfoy durumu tek kayitta. s-property uzerine.",
+   "critical": true
+  },
+  {
+   "name": "Portal ilan senkronu",
+   "desc": "Connector deseniyle ilan portallarina (sahibinden benzeri) yayin; durum geri senkronu.",
+   "critical": true
+  },
+  {
+   "name": "Alici talep eslestirme",
+   "desc": "Talep kaydi ve portfoy-talep eslestirme pipeline'i; uygun mulk otomatik onerilir. s-crm uzerine.",
+   "critical": false
+  },
+  {
+   "name": "Komisyon paylasimi",
+   "desc": "Paylasim oranlari, tahsilat ve danisman hakedisi; money/audit ile. stack-accounting uzerine.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — aday distribution (sektor paketi); Stack subset Edition subset Distribution, gelismis UI/UX katmaniyla teslim.",
+  "kernel": "Authz (ofis/danisman capability), tenancy (ofis verisi RLS), event-bus (ilan/talep/komisyon event'leri).",
+  "core": "Portfoy/talep/komisyon Contract semasi; otomatik audit + bitemporal.",
+  "modules": "s-property (portfoy), s-classifieds (ilan + portal connector), s-crm (talep pipeline), stack-accounting (komisyon).",
+  "apps": "Emlak Ofisi App'i; danisman performans raporu hazir gelir."
+ },
+ "moduleUsage": [
+  "dist-realestate: Yetki sozlesmesi alinan mulk portfoye girer -> ilan portala senkronlanir -> gelen talep CRM pipeline'inda eslestirme alir -> satista komisyon stack-accounting'te money kaydi + danisman hakedisi audit ile islenir."
+ ],
+ "ecaExample": "trigger:\n  event: realestate.deal.closed\ncondition:\n  all:\n    - actor.capability >= \"realestate:close\"\n    - listing.authorized\n    - not loop_detected\naction:\n  - emit: accounting.commission.posted\n  - emit: realestate.listing.delisted\nguards:\n  max_depth: 6\n  idempotency_key: \"deal:{deal_id}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Komisyon money kapsaminda: posting deny-by-default, capability realestate:close + audit gerekceli; mutabakat bitemporal.",
+  "Mulk sahibi/alici verisi pii: ofis tenant'i RLS ile izole; danisman yalniz yetkili portfoyu gorur.",
+  "Portal connector kimlik bilgisi secret; dis portal yaniti untrusted, senkronda dogrulanir."
+ ],
+ "perfNotes": {
+  "code": "Portfoy-talep eslestirme keyset ile sayfalanir; portal senkronu connector kotasi bilincli, hata halinde retry.",
+  "perf": "Ilan senkronu asenkron event; danisman performans raporu onceden hesaplanir, sorgu aninda agir join yok."
+ },
+ "testNotes": [
+  "realestate:close olmayan aktor komisyon postlama -> deny.",
+  "Yetkisiz (authorized degil) ilan portala cikmamali.",
+  "Ayni deal_id ikinci kapanis -> cift komisyon olmamali (idempotency).",
+  "Baska ofis tenant'inin portfoyu/talebi gorunmemeli (RLS)."
+ ]
+}

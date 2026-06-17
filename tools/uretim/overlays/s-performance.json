@@ -1,0 +1,48 @@
+{
+ "featureDefs": [
+  {
+   "name": "Objective / Key Result",
+   "desc": "Hedef + ölçülebilir anahtar sonuç ağacı; sahiplik, dönem, ilerleme yüzdesi ve cascade (şirket→ekip→birey).",
+   "critical": true
+  },
+  {
+   "name": "Review Cycle",
+   "desc": "Dönemsel değerlendirme süreci: self / manager / peer aşamaları, takvim, kilitlenme ve onay durumu."
+  },
+  {
+   "name": "360 Feedback",
+   "desc": "Çok-kaynaklı geri bildirim toplama; anonimlik politikası, soru seti ve yetkinlik eşlemesi."
+  },
+  {
+   "name": "Competency Matrix",
+   "desc": "Rol bazlı yetkinlik çerçevesi + seviye; skill-gap çıkarımı ve gelişim planı bağı."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Layer-2 HR ürünü; yetki/audit/event-bus kernel'den gelir, kendi ArcheType ve UI'sını tanımlar. Tek başına satılabilir ama altyapı ortaktır.",
+  "kernel": "Party (employee) kimliği, capability tabanlı yetki, audit ve tenancy kernel'den; performans verisi tenant-scoped.",
+  "core": "HR app core module'ü employee/org yapısını taşır; performance bunun üstüne oturan module'dür.",
+  "modules": "s-hrms employee kaynağı + l1-notification döngü hatırlatması + l1-analytics ilerleme raporu ile kompoze.",
+  "apps": "HRMS app'inde tek panel; CRM/ERP'deki aynı Party kaydı performans değerlendirmesine de bağlanır."
+ },
+ "moduleUsage": [
+  "HRMS App: OKR ağacı, review cycle takvimi ve 360 feedback toplama akışı.",
+  "Yönetici Paneli App: ekip ilerlemesi, calibration ve yetkinlik matrisi görünümü.",
+  "Çalışan Self-Service App: kendi hedefleri, self-review ve aldığı geri bildirim."
+ ],
+ "ecaExample": "trigger:\n  event: ReviewCycleOpened\ncondition:\n  all:\n    - actor.capability >= \"performance:review:write\"\n    - cycle.status == \"active\"\n    - reviewer != subject\naction:\n  - emit: SelfReviewRequested\n  - emit: ManagerReviewRequested\nguards:\n  max_depth: 6\n  idempotency_key: \"review:{cycle_id}:{employee_id}\"\n  external_effects: none",
+ "securityNotes": [
+  "Performans notu ve maaş etkisi hassas veridir; capability deny-by-default + listede gizli/detayda maskeli.",
+  "360 feedback anonimliği: değerlendiren kimliği yetkisiz role açılmaz; 'göster' eylemi audit'e yazılır.",
+  "Calibration verisi tenant izolasyonu ile RLS arkasında; cross-tenant kıyas mümkün değil."
+ ],
+ "perfNotes": {
+  "code": "Review listesi ve OKR ağacı keyset ile sayfalanır; org-wide raporlar materialized projeksiyondan okur.",
+  "perf": "Dönem kapanışında (cycle close) toplu hesap dalgası; worker'a alınır, eşzamanlı yük dağıtılır."
+ },
+ "testNotes": [
+  "reviewer != subject kuralı: kişinin kendini manager-review yapamadığı doğrulanır.",
+  "Bitemporal: geçmiş dönem notunun düzeltilmesi mevcut dönemi bozmadan kayıt altına alınır.",
+  "Anonim 360: yetkisiz rolün değerlendiren kimliğine erişemediği test edilir."
+ ]
+}

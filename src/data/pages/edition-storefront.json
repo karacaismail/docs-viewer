@@ -188,7 +188,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Storefront Edition — çekirdek yetenek",
+      "term": "Tema galerisi + marka sihirbazı (UI farkı)",
       "definition": [
        {
         "type": "strong",
@@ -196,41 +196,16 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Parent Commerce stack'in kodu/şeması aynı kalır; edition yalnızca Lighthouse-yeşil vitrin şablonları ve marka renk sihirbazı sunar. Yeni fonksiyon eklemez — ihtiyaç parent stack'e gider."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Rehberli ilk-satış akışı (UX farkı)",
       "definition": [
        {
         "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
-       },
-       {
-        "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
-       }
-      ]
-     },
-     {
-      "term": "Sözleşmeli sınır",
-      "definition": [
-       {
-        "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Ürün ekleme tek form, kargo/ödeme kurulumu kontrol listesiyle, ilk satışa kadar rehberli mod. Akış sırası UI katmanında; sipariş/ödeme primitive'leri Commerce core'undan gelir."
        }
       ]
      }
@@ -418,15 +393,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Edition yeni veri yüzeyi açmaz; publish edilen vitrin PII/sistem alanını dışarı sızdırmaz (parent surface kuralı). Tema/yayın yönetimi deny-by-default capability ile; mağaza verisi RLS ile tenant'a kapalı. Vitrin public; ödeme akışı Commerce'ın güvenli primitive'lerine devredilir, edition kart verisi tutmaz. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -454,15 +421,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Vitrin ürün listeleri keyset ile; tema varlıkları statik ve CDN'den sunulur, render bloklamaz."
        }
       ]
      },
@@ -480,15 +439,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Lighthouse-yeşil şablonlar; sayfa katalog projeksiyonundan okunur, canlı sipariş tablosunu sorgulamaz."
        }
       ]
      },
@@ -784,7 +735,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Storefront Edition",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Storefront Edition\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: storefront.published\ncondition:\n  all:\n    - actor.capability >= \"storefront.theme.publish\"\n    - not loop_detected\n    - theme.lighthouse_score >= threshold\naction:\n  - emit: cdn.invalidate_requested\n  - emit: storefront.live\nguards:\n  max_depth: 6\n  idempotency_key: \"storefront:{store.id}:publish:{version}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -924,6 +875,18 @@
     ]
    },
    {
+    "id": "block-edition-storefront-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Edition'ın parent şemaya alan/fonksiyon eklemediğinin (sözleşme) doğrulandığı. publish'in aynı versiyonla tekrarında tek cdn.invalidate üretildiği. Yayınlanan vitrinde PII/sistem alanının görünmediği."
+     }
+    ]
+   },
+   {
     "id": "block-edition-storefront-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -942,7 +905,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Edition kendi iş mantığını eklemez; tüm sipariş/ödeme/katalog olayları parent Commerce stack'in event-bus'ı üzerinden akar. Edition sadece bu olayların sunum/onboarding yüzüdür."
        }
       ]
      },
@@ -951,16 +914,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "authz (vitrin yönetici capability'leri), tenancy (RLS ile mağaza izolasyonu), event-bus (Commerce olaylarının tüketimi), audit (tema/yayın değişiklikleri)."
        }
       ]
      },
@@ -969,7 +923,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "money (fiyat gösterimi — kaynak Commerce), Contract (edition core module seti ile aynı sözleşme), pii (alıcı bilgisi — Commerce'tan), keyset (ürün/sipariş listeleme)."
        }
       ]
      },
@@ -978,7 +932,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Commerce stack (katalog/sepet/sipariş core'u), Payment (ödeme-hazır vitrin), CDN (tema varlıkları)."
        }
       ]
      },
@@ -987,7 +941,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "B2C vitrin uygulamasının kendisi; storefront teması bu edition."
        }
       ]
      }

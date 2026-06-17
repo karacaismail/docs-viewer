@@ -1,0 +1,53 @@
+{
+ "featureDefs": [
+  {
+   "name": "Sync engine (CDC + CAS dedup)",
+   "desc": "FastCDC content-defined chunking + content-addressable storage + block-level dedup + delta sync; Dropbox/Seafile seviyesi, basit re-upload değil. Aynı blok tek kez saklanır.",
+   "critical": true
+  },
+  {
+   "name": "CRDT co-editing (Yjs/pycrdt)",
+   "desc": "Real-time eşzamanlı düzenleme; conflict-free merge, çevrimdışı sonrası yeniden bağlanmada yakınsama. Google Docs muadili.",
+   "critical": true
+  },
+  {
+   "name": "Versiyon + paylaşım + namespace",
+   "desc": "Dosya sürüm geçmişi (bitemporal), izinli paylaşım, tenant namespace; her paylaşım bağlantısı capability ile sınırlı.",
+   "critical": true
+  },
+  {
+   "name": "Wiki / Spreadsheet / Whiteboard",
+   "desc": "Versiyonlu wiki, formül tablosu, collaborative whiteboard — hepsi aynı sync + CRDT altyapısı üzerinde.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Dosya senkron + gerçek-zamanlı işbirliği gerektiğinde; Drive/Dropbox/Notion muadili Layer-2 ana stack.",
+  "kernel": "Dosya/namespace tenant'a izole (RLS); paylaşım yetkisi capability deny-by-default — paylaşılan link yalnız tanımlı kapsama erişir.",
+  "core": "Sürüm geçmişi bitemporal (hangi içerik ne zaman vardı); paylaşım/erişim kararları audit'li. CRDT op-log append-only.",
+  "modules": "Document e-Sign (s-esign köprüsü), diğer modüllerin dosya eki bu stack'e yazar; kendi Drive ArcheType'larını tanımlar.",
+  "apps": "Dosya yönetim app'i; collaborative editor app'i (CRDT); whiteboard app'i — hepsi tek sync engine üzerinde."
+ },
+ "moduleUsage": [
+  "s-esign: belge e-imza akışını Drive'daki dosya sürümüne bağlar (imzalanan tam sürüm sabitlenir).",
+  "s-audit: paylaşım/erişim ve sürüm değişimi kararlarının delil kaydını tutar.",
+  "scale-blob: büyük blok depolama ve dedup için alt katman olarak kullanılır.",
+  "cc-privacy: paylaşım kapsamı ve veri ikametinin consent/jurisdiction ile uyumunu sağlar."
+ ],
+ "securityNotes": [
+  "Paylaşım linki capability deny-by-default — link sahibi yalnız tanımlı dosya/kapsama erişir, namespace dışına çıkamaz (RLS).",
+  "CAS dedup içerik-adresli: aynı blok tenant'lar arası paylaşılabilir ama erişim metadata tenant'a bağlı — blok varlığı sızıntı vermemeli (per-tenant erişim kontrolü).",
+  "CRDT op-log append-only; geçmiş düzenleme silinemez, sürüm geri alma yeni op olarak eklenir.",
+  "Dosya içeriği PII/gizli olabilir; veri ikameti (data residency) jurisdiction'a göre, cc-privacy ile zorunlu."
+ ],
+ "perfNotes": {
+  "code": "-- dosya sürüm listesi (keyset, en yeni)\nSELECT version_id, created_at, size\nFROM file_version\nWHERE tenant_id = $1 AND file_id = $2\nORDER BY created_at DESC, version_id DESC LIMIT 50;",
+  "perf": "Delta sync yalnız değişen blokları taşır (CDC), tam dosya değil — büyük dosyada bant genişliği kritik. CRDT update'leri küçük op-batch; her keystroke ayrı round-trip değil. Sürüm okuması keyset, OFFSET yok."
+ },
+ "testNotes": [
+  "İki kullanıcının eşzamanlı düzenlemesinin CRDT ile çakışmasız birleştiği, çevrimdışı sonrası yakınsadığı doğrulanır.",
+  "Aynı bloğun CAS dedup ile tek kez saklandığı, farklı tenant erişiminin izole kaldığı test edilir.",
+  "Delta sync'in yalnız değişen blokları taşıdığı (tam re-upload değil) doğrulanır.",
+  "Paylaşım linkinin namespace dışına erişemediği test edilir."
+ ]
+}

@@ -1,0 +1,50 @@
+{
+ "featureDefs": [
+  {
+   "name": "Pazaryeri connector hub",
+   "desc": "Trendyol/Hepsiburada/Amazon tipli connector sozlesmeleri; eslesme, kota ve hata yonetimi. Headless cekirdek, arkada orkestrasyon.",
+   "critical": true
+  },
+  {
+   "name": "Feed besleme",
+   "desc": "Google Shopping / Meta katalog beslemeleri; urun verisi periyodik veya event-tetikli yayinlanir.",
+   "critical": false
+  },
+  {
+   "name": "Siparis konsolidasyonu",
+   "desc": "Tum kanallarin siparisi tek kuyrukta (outbox deseni); cift islem onleme idempotency ile.",
+   "critical": true
+  },
+  {
+   "name": "Yorum / itibar havuzu",
+   "desc": "Kanal yorumlarini tek havuzda toplama-yanitlama; itibar takibi tek arayuzden.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — aday yatay stack; Commerce'ten bagimsiz satilir, baglaninca stok gercek zamanli.",
+  "kernel": "Authz (kanal/connector yetkisi capability-bagli), tenancy (satici verisi RLS), event-bus (siparis/stok event'leri).",
+  "core": "Connector ve siparis Contract semasi; otomatik audit + bitemporal.",
+  "modules": "s-channel-hub (connector'lar), scale-outbox (siparis konsolidasyon kuyrugu), stack-commerce (stok kopru).",
+  "apps": "Channel App'i; Commerce baglaninca stok/fiyat senkronu downstream."
+ },
+ "moduleUsage": [
+  "stack-channel: Pazaryeri siparisi gelir -> connector normalize eder -> outbox tek kuyruga yazar -> idempotency_key ile cift islem onlenir -> Commerce bagliysa stok decrement event'i yayinlanir."
+ ],
+ "ecaExample": "trigger:\n  event: channel.order.received\ncondition:\n  all:\n    - actor.capability >= \"channel:sync\"\n    - connector.healthy\n    - not loop_detected\naction:\n  - emit: channel.order.consolidated\n  - emit: commerce.stock.reserve_requested\nguards:\n  max_depth: 6\n  idempotency_key: \"chorder:{channel}:{external_order_id}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Connector kimlik bilgileri (API anahtarlari) pii/secret kapsaminda; vault'ta tutulur, capability channel:admin ile erisilir.",
+  "Siparis konsolidasyonu deny-by-default: yalniz channel:sync hareket uretir; cross-tenant siparis enjekte edilemez (RLS).",
+  "Dis pazaryeri yaniti untrusted: normalize sirasinda dogrulama, idempotency ile replay korumasi."
+ ],
+ "perfNotes": {
+  "code": "Connector cagrilari rate-limit/kota bilincli; hata halinde outbox retry + dead-letter.",
+  "perf": "Yuksek hacimli siparis akisi outbox ile asenkron; kanal API kotasi connector seviyesinde backpressure ile yonetilir."
+ },
+ "testNotes": [
+  "Ayni external_order_id ikinci kez -> cift siparis olusmamali (idempotency).",
+  "channel:sync olmayan aktor senkron -> deny.",
+  "Cross-tenant siparis konsolidasyonu -> RLS reddi.",
+  "Connector kimlik bilgisi yanit/loglara sizmamali."
+ ]
+}

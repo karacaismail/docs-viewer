@@ -304,7 +304,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Conversational Commerce / Chatbot — çekirdek yetenek",
+      "term": "Conversation/Session ArcheType",
       "definition": [
        {
         "type": "strong",
@@ -312,41 +312,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Kanal (web/WhatsApp/IG), kullanıcı, mesaj dizisi, durum (open/handed-off/closed), intent. Çok kanallı oturum tek modelde; mesaj geçmişi append-only."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Intent/NLU + bot akışı",
       "definition": [
        {
         "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
-       },
-       {
-        "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Niyet sınıflandırma, slot dolumu, akış (karşılama/ürün sorma/sipariş durumu). Kural + LLM hibrit; yanıt kaynağı izlenebilir (RAG/knowledge base)."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Human handoff (insana devir)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Bot çözemezse canlı temsilciye devir; SLA + atama. Devir noktası ve bağlam korunur; müşteri tekrar anlatmaz."
+       }
+      ]
+     },
+     {
+      "term": "Conversational commerce (sepet->ödeme)",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Mesaj içinden ürün/katalog -> sepet linki -> link tabanlı ödeme. Satış mesajda kapanır; Commerce ArcheType'ları (Cart/Order) framework'ten."
        }
       ]
      }
@@ -534,15 +531,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Konuşma içeriği + telefon PII: tenant-scoped RLS, pii-flag; temsilci yalnız atandığı oturumu görür (capability deny-by-default). Kanal parametresi allowlist'e karşı doğrulanır; gelen webhook imza ile doğrulanır (spoof engelleme). Mesaj geçmişi değişmez audit append-only; bot kararı + handoff izlenebilir. Ödeme linki ile satış step-up/3DS Commerce'te. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -570,15 +559,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Intent yönlendirme saf sınıflandırma -> akış dispatch; if (intent==...) zinciri YASAK, akış tablosu/strateji. LLM çağrısı yan-etki sınırında."
        }
       ]
      },
@@ -596,15 +577,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Mesaj akışı asenkron worker; oturum listesi keyset pagination; bot yanıt cache (sık intent); gelen webhook idempotent dedupe."
        }
       ]
      },
@@ -900,7 +873,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Conversational Commerce / Chatbot",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Conversational Commerce / Chatbot\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: conversation.message_received\n  when: \"tenant_scoped AND channel in allowlist\"\ncondition:\n  all:\n    - actor.capability >= \"conversation.bot.respond\"\n    - not loop_detected\n    - bot.confidence >= threshold\naction:\n  - record: message { conversation_id, body, direction, ts, pii: true }\n  - emit: bot.reply_sent          # düşük güvende: handoff.requested\n  - emit: crm.contact_touched     # outbox idempotent\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{conversation}:{message_id}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1040,6 +1013,18 @@
     ]
    },
    {
+    "id": "block-s-conversational-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Düşük bot güveninde oturum insana devredilir, bağlam korunur (müşteri tekrar anlatmaz). Aynı kanal mesajı (webhook retry) ikinci kez işlenmez (idempotency). Temsilci komşu oturumu görmez (RLS); PII yetkisiz response'ta sızmaz. Geçersiz imzalı webhook reddedilir."
+     }
+    ]
+   },
+   {
     "id": "block-s-conversational-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1058,7 +1043,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Layer-2 SaaS ürünü (satış botu + müşteri hizmeti). Kernel + Scale + Layer-1 üstüne oturur; kendi Conversation ArcheType'ını tanımlar, yetki/audit/event-bus framework'ten gelir. Commerce/CRM/Comms ile entegre."
        }
       ]
      },
@@ -1067,16 +1052,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Kimlik/tenancy (RLS)/audit + ArcheType engine kernel'den; kullanıcı Party'den türer. Mesaj/oturum bitemporal append-only; PII (telefon/içerik) pii-flag."
        }
       ]
      },
@@ -1085,7 +1061,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Conversational core module; intent modelleri ve akışlar additif capability — core sözleşmesi sabit, yeni akış veri/konfigürasyon olarak."
        }
       ]
      },
@@ -1094,7 +1070,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "s-comms (inbox/atama/SLA), s-channel-hub (WhatsApp/Telegram/IG kanalları), Commerce (katalog/sepet/ödeme), CRM (müşteri bağı) yalnız Contract üzerinden."
        }
       ]
      },
@@ -1103,7 +1079,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Inbox/agent app canlı devri yönetir; Commerce app mesajdan gelen sepet linkini aynı Cart/Order ArcheType'ıyla işler, çift kayıt yok."
        }
       ]
      }
@@ -1116,13 +1092,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-conversational-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-conversational-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Comms/Inbox app: bot çözemediğinde oturum canlı temsilciye atanır (SLA + bağlam korunur)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Channel Hub app: WhatsApp/Telegram/IG DM kanallarından mesaj alır; tek Conversation modeline yazar."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Commerce app: mesaj içi katalog -> sepet linki -> ödeme; satış Cart/Order ArcheType'ında kapanır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "CRM app: konuşma müşteri kaydına bağlanır; intent/etiket fırsat veya destek talebine dönüşür."
+      }
+     ]
     ]
    },
    {

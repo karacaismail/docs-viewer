@@ -1,0 +1,49 @@
+{
+ "featureDefs": [
+  {
+   "name": "Subscription Schedule",
+   "desc": "customer_id + product_id + interval ENUM (weekly/monthly/quarterly/yearly) + next_billing_date + status; recurring kesmenin tek kaynağı.",
+   "critical": true
+  },
+  {
+   "name": "Pause / Skip / Swap",
+   "desc": "Müşteri portalından dönem atlama, geçici durdurma, bu ay başka ürün; churn'ü düşüren kontroller."
+  },
+  {
+   "name": "Dunning Akışı",
+   "desc": "Ödeme alınamazsa retry + bildirim + kademeli askıya alma; başarısız tahsilatı kurtarma politikası.",
+   "critical": true
+  },
+  {
+   "name": "Cycle Order Üretimi",
+   "desc": "next_billing_date ≤ today olan abonelikler için order + shipment + cycle_number; idempotent gece job'ı."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Subscription commerce ayrı capability'dir; recurring billing motorunu s-billing'den ödünç alır, kendi iş mantığını ekler. SaaS subscription ile karıştırılmaz.",
+  "kernel": "Party (customer) + money tipi (multi-currency, vergi) + audit + bitemporal kernel'den; tahsilat tutarı money ArcheType'ı.",
+  "core": "s-commerce sipariş/sevkiyat çekirdeği; subscription yalnız 'periyodik order üretici' olarak üstüne biner.",
+  "modules": "s-billing recurring motoru + scale-workers-deep scheduler + l1-notification bildirim; subscription bunları kompoze eder.",
+  "apps": "E-ticaret app'i ürün kartına subscribable + interval ekler; checkout abonelik akışını aynı katalogdan sunar."
+ },
+ "moduleUsage": [
+  "E-ticaret App: ürün kartı subscribable bayrağı + interval seçimi, checkout'ta abonelik başlatma.",
+  "Müşteri Portalı App: pause/skip/swap/cancel endpoint'leri ve sonraki teslim tarihi görünümü.",
+  "CS/Operasyon App: churn oranı + dunning kuyruğu + askıya alınan abonelik listesi."
+ ],
+ "ecaExample": "trigger:\n  event: BillingCycleDue\ncondition:\n  all:\n    - subscription.status == \"active\"\n    - subscription.next_billing_date <= today\n    - actor.capability >= \"subscription:charge\"\naction:\n  - emit: SubscriptionCharged\n  - emit: OrderCreated\n  - emit: ShipmentRequested\nguards:\n  max_depth: 6\n  idempotency_key: \"sub:{subscription_id}:{cycle_number}\"\n  external_effects: payment_capture",
+ "securityNotes": [
+  "Tahsilat tetikleyen cron dış efekttir; capability deny-by-default + idempotency_key ile çift charge engellenir.",
+  "Müşteri portalı pause/cancel yalnız kendi subscription'ına erişir; tenant + owner RLS zorunlu.",
+  "Ödeme PII/kart verisi tutulmaz; Stripe token referansı, audit'e tutar+durum yazılır, kart değil."
+ ],
+ "perfNotes": {
+  "code": "Gece job'ı next_billing_date üzerinde keyset ile sayfalanır; tüm tabloyu OFFSET ile taramaz.",
+  "perf": "Aylık zirvede (ayın 1'i) tahsilat dalgası: kuyruk + worker pool ile yayılır, tek seferde değil."
+ },
+ "testNotes": [
+  "Idempotent cycle: aynı cycle_number iki kez işlenirse tek order + tek charge doğrulanır.",
+  "Pause sonrası next_billing_date'in doğru ötelendiği ve atlanan dönemin tahsil edilmediği test edilir.",
+  "Dunning: başarısız tahsilatta retry sayısı + askıya alma eşiği + bildirim tetiklemesi kanıtlanır."
+ ]
+}

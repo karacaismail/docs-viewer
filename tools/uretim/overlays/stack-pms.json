@@ -1,0 +1,51 @@
+{
+ "featureDefs": [
+  {
+   "name": "WorkItem hiyerarşisi",
+   "desc": "Epic/Story/Task/Subtask ağacı + backlog; durum geçişleri event yayar, parent rollup türetilmiş okuma modeli.",
+   "critical": true
+  },
+  {
+   "name": "Dependency Graph (authored)",
+   "desc": "Blocks/blocked-by kenarları insan tarafından çizilir (MRP'deki BOM-türevli grafın aksine); kritik yol bu graftan hesaplanır, döngü reddedilir.",
+   "critical": true
+  },
+  {
+   "name": "Scheduling + otomatik yeniden-zamanlama",
+   "desc": "Gantt/timeline; bağımlılık değişince ardıl görevler otomatik kaydırılır, baseline'dan sapma ölçülür.",
+   "critical": true
+  },
+  {
+   "name": "Baseline snapshot (sapma)",
+   "desc": "'İlk plan ne idi' bitemporal snapshot; plan vs gerçekleşen sapması zamanda dondurulmuş referansla karşılaştırılır.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Proje tabanlı işletmelerde (yazılım/ajans/inşaat); Linear/Jira/Asana muadili Layer-2 ana stack.",
+  "kernel": "Proje/board tenant'a izole (RLS); atama/onay yetkileri capability deny-by-default (kim atayabilir, kim gate onaylar).",
+  "core": "Durum geçişleri ve approval gate kararları audit'li; baseline snapshot bitemporal — geçmiş plan değişmez, yeni snapshot eklenir.",
+  "modules": "Helpdesk/CRM gibi diğer Layer-2 ürünlerden work intake cross-link; kendi PMS ArcheType'larını (WorkItem, Dependency, Milestone) tanımlar.",
+  "apps": "Proje müdürü için board/Gantt app'i; ekip üyesi için görev app'i; üst yönetim için portfolio/roadmap rollup app'i."
+ },
+ "moduleUsage": [
+  "s-helpdesk: gelen talebi (request → task) PMS work intake'ine cross-link eder.",
+  "s-crm: müşteri kaynaklı işi proje görevine bağlar.",
+  "l1-analytics: velocity/burndown/slippage metriklerini okuma modelinden besler.",
+  "s-audit: approval gate ve milestone kararlarının delil kaydını tutar."
+ ],
+ "securityNotes": [
+  "Dependency graph authored — kullanıcı döngü (A blocks B blocks A) çizemez; kritik yol hesabı sonsuz döngüye girmez (max_depth guard).",
+  "Approval gate capability deny-by-default; görev sahibi kendi milestone'unu onaylayamaz (4-göz benzeri ayrım).",
+  "Cross-tenant proje görünürlüğü yok; portfolio rollup yalnız aynı tenant projelerini toplar (RLS)."
+ ],
+ "perfNotes": {
+  "code": "-- board görünümü: keyset, açık görevler\nSELECT * FROM work_item\nWHERE tenant_id = $1 AND board_id = $2 AND status != 'done'\nORDER BY rank, id LIMIT 100;",
+  "perf": "View'lar (List/Kanban/Gantt) read-model; her görünüm canlı join değil materialize. Dependency graph kritik yol hesabı topolojik sıra ile, N×N taraması değil. Rank tabanlı keyset sıralama, OFFSET yok."
+ },
+ "testNotes": [
+  "Dependency graph'a döngü eklemenin reddedildiği, kritik yolun döngüsüz hesaplandığı doğrulanır.",
+  "Bağımlılık değişince ardıl görevlerin otomatik yeniden-zamanlandığı test edilir.",
+  "Baseline snapshot'ın bir kez donduğu, sonraki değişikliklerin sapma olarak ölçüldüğü doğrulanır."
+ ]
+}

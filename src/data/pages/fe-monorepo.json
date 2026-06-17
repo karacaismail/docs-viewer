@@ -268,7 +268,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Frontend — Monorepo İskeleti — birincil yetenek",
+      "term": "pnpm workspaces + strict sınır",
       "definition": [
        {
         "type": "strong",
@@ -276,25 +276,51 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "apps/ (web, mobile, ota-server) + packages/ (11 paylaşılan) + tools/. Strict node_modules ile paketler yalnız beyan ettikleri bağımlılığı görür; phantom dependency yok. Tek codebase'de web + mobile + OTA."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "packages/domain — tek doğruluk kaynağı",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Zod şemaları + business logic + CASL ability'leri burada. Backend FastAPI bunlardan Pydantic üretir (datamodel-code-generator); frontend ile backend kontratı tek yerden türetilir."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "packages/api — üretilen tipli client",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "openapi-typescript ile backend OpenAPI'den tip üretir, openapi-fetch ile çağırır. Client elle yazılmaz; backend değişince tip kırılması derleme anında yakalanır."
+       }
+      ]
+     },
+     {
+      "term": "packages/offline + realtime",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "offline: TanStack Query persist + IndexedDB write queue (çevrimdışı yazım kuyruğu). realtime: SSE/WS client + Yjs/Hocuspocus. Çevrimdışı yazımlar bağlanınca idempotent replay edilir."
+       }
+      ]
+     },
+     {
+      "term": "packages/native + kyc",
+      "definition": [
+       {
+        "type": "text",
+        "text": "native: Capacitor modüllerinin tek dispatch noktası. kyc: TC NFC Capacitor modülü + KYB Veriff adapter — hassas kimlik yüzeyi tek pakette izole."
        }
       ]
      }
@@ -482,15 +508,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "packages/kyc TC NFC + KYB Veriff hassas kimlik yüzeyini tek pakette izole eder; başka paket doğrudan import edemez. CASL ability'leri yetkiyi göstermez/saklar ama enforce etmez — son kararı her zaman backend capability check verir (UI bypass edilemez varsayılır). packages/api üretilen tipli client'tır; elle URL/sorgu kurulmaz, böylece yanlış endpoint/parametre derlemede yakalanır. i18n mesajları kod yerine sözlükte; kullanıcı verisi mesaj şablonuna interpolasyonla girerken XSS'e karşı kaçışlanır. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -518,15 +536,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "openapi-typescript + datamodel-code-generator ile tip ve Pydantic üretimi build-time; runtime maliyeti yok."
        }
       ]
      },
@@ -544,15 +554,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Strict workspace ve paylaşılan tsconfig.base.json artımlı build + tip-paylaşımıyla CI süresini düşürür; offline write queue ağ gidişlerini batch'ler."
        }
       ]
      },
@@ -988,6 +990,18 @@
     ]
    },
    {
+    "id": "block-fe-monorepo-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "packages/test-utils MSW handler'ları ile her paket backend'siz test edilir. domain Zod şeması ↔ üretilen Pydantic uyumu round-trip testiyle doğrulanır. offline write queue: çevrimdışı yapılan yazım, bağlanınca tam bir kez replay edilir (idempotency). Paket sınırı ihlali (yasak cross-import) Biome/ESLint kuralında CI'da kırmızı verir."
+     }
+    ]
+   },
+   {
     "id": "block-fe-monorepo-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1006,7 +1020,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Monorepo iskeleti diğer her frontend işinin ön şartıdır; paket sınırı ve paylaşılan tsconfig/Biome olmadan 70+ ürünün arayüzü tutarlı kalamaz."
        }
       ]
      },
@@ -1015,16 +1029,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Frontend kernel'i enforce etmez, yansıtır: capability deny-by-default CASL ability'leri (packages/domain) ile UI'da gizleme/disable olarak görünür; yetki kararı backend'dedir."
        }
       ]
      },
@@ -1033,7 +1038,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "money/PII tipleri Zod şemasında modellenir (Money value object, maskeli alanlar); para asla float değil, minor-unit + currency olarak taşınır."
        }
       ]
      },
@@ -1042,7 +1047,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Her ürün apps/ veya packages/ altında ayrı klasör; ortak parça shared pakete taşınır. Paket sınırı ESLint/Biome kuralıyla zorlanır."
        }
       ]
      },
@@ -1051,7 +1056,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "apps/web PWA ana giriş; apps/mobile Capacitor wrapper; apps/ota-server OTA manifest + S3 yönlendirme. Üçü packages/'i paylaşır."
        }
       ]
      }

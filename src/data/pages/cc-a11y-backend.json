@@ -641,7 +641,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Accessibility Backend — API yanıt yapısı + dark/high-contrast — çekirdek yetenek",
+      "term": "A11y metadata kontratı",
       "definition": [
        {
         "type": "strong",
@@ -649,41 +649,42 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Her image yanıtında alt zorunlu (boş reddedilir); field schema label + description + ariaLabel taşır. Contract düzeyinde tanımlı; üretici tüm endpoint'lere otomatik dahil eder."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "user_prefs tercih saklama",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "theme (light/dark/high-contrast), font_size, reduce_motion kullanıcı bağlı kayıt. RLS ile kullanıcı yalnız kendi tercihini görür; cihazlar arası senkron."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Semantic color token",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Yanıtta hex değil semantic token (danger/success). Tema çözümü frontend'de; backend tema-bağımsız kalır."
+       }
+      ]
+     },
+     {
+      "term": "Jurisdiction-bağlı uyum kapısı",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "cc-jurisdiction-resolver ile AB kullanıcısı için WCAG 2.2 AA + erişilebilirlik beyanı zorunlu (EAA compliance ekseni)."
        }
       ]
      }
@@ -871,15 +872,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "user_prefs deny-by-default: capability prefs:write yalniz kendi user_id icin; baska kullanicinin tercihi yazilamaz (RLS + capability). Erisilebilirlik beyani sayfasi jurisdiction'a gore kosullu; AB kullanicida eksikse compliance-matrix uyari uretir. alt text serbest metin: XSS'e karsi render'da kacislanir, depolamada uzunluk siniri. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -907,15 +900,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "user_prefs okumasi her istekte tekrar etmesin; session/token claim'ine gomulur veya kisa TTL cache."
        }
       ]
      },
@@ -933,15 +918,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Tercih degisimi nadir; yazma maliyeti onemsiz. Image alt alani zaten metadata satirinda, ek sorgu yok."
        }
       ]
      },
@@ -1377,6 +1354,18 @@
     ]
    },
    {
+    "id": "block-cc-a11y-backend-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Image upload alt bos -> 422 reddedilmeli. Baska user_id icin prefs:write -> deny. AB jurisdiction kullanici + beyan sayfasi yok -> compliance-matrix non-conform isaretlemeli. Color token yaniti hex icermemeli (semantic kalmali)."
+     }
+    ]
+   },
+   {
     "id": "block-cc-a11y-backend-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1395,7 +1384,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — a11y metadata tüm Contract'ların ortak kesitidir; tekil ürün değil çapraz-kesen kural."
        }
       ]
      },
@@ -1404,16 +1393,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Authz (kullanıcı kendi tercihini okur/yazar), tenancy (user_prefs tenant-scoped RLS)."
        }
       ]
      },
@@ -1422,7 +1402,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Contract field schema'ya label/description/ariaLabel alanları; image tipine alt zorunluluğu validation."
        }
       ]
      },
@@ -1431,7 +1411,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "cc-jurisdiction-resolver (AB->WCAG kapısı), cc-compliance-matrix (uyum durumu)."
        }
       ]
      },
@@ -1440,7 +1420,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Her App image/form ureten ekranlarinda a11y metadata'yi tuketir."
        }
       ]
      }

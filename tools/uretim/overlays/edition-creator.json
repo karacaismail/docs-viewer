@@ -1,0 +1,48 @@
+{
+ "featureDefs": [
+  {
+   "name": "Kajabi-sınıfı satış sayfası Surface'leri",
+   "desc": "Aynı LMS ArcheType'ları üzerine eğitmen marka/landing + kurs satış sayfası şablonları; estetik dönüşümün kendisi. Yeni ArcheType/alan EKLEMEZ — yalnız yüzey.",
+   "critical": true
+  },
+  {
+   "name": "Üç adımlı yayın UX'i (video → fiyat → yayınla)",
+   "desc": "Teknik ekipsiz creator için adımlı akış; capability-gated, hata tolere; parent LMS core'unu değiştirmez."
+  },
+  {
+   "name": "Dikey-video uyumlu oynatıcı (öğrenci tarafı)",
+   "desc": "Mobil/dikey video oynatma Surface'i; içerik/ilerleme kaydı parent stack'ten gelir."
+  },
+  {
+   "name": "Ödeme + sertifika + topluluk yüzeyi",
+   "desc": "Kurs satışı tahsilat (para tipi), tamamlama sertifikası ve topluluk alanı; akışlar parent module'leri tüketir, yeni fonksiyon değil."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet ama yalnız UX katmanında — Edition fonksiyon eklemez; aynı core module seti ve kod parent LMS stack'ten gelir. Fark UI estetiği, UX akışı ve pazara-çıkış paketindedir (landing/fiyat/onboarding). Yeni ihtiyaç parent stack'e gider.",
+  "kernel": "Kimlik, tenancy (RLS), audit ve ArcheType engine değişmez biçimde parent stack üzerinden kernel'den gelir; Edition kendi kerneline sahip değildir.",
+  "core": "Temel {{ref:stack-lms}} core'udur (kurs/ölçme/ilerleme); core module ve sözleşmeleri değişmez; i18n, Notification, Money core'dan.",
+  "modules": "Parent stack'in mevcut module'lerini (LMS/Ödeme/Sertifika) AYNEN tüketir; ek module beyan etmez — yalnız Contract.",
+  "apps": "LMS app'inin creator self-serve paketlenmesi; aynı veri ve ArcheType'lar üzerine farklı Surface/onboarding sunar, çift kayıt yok."
+ },
+ "moduleUsage": [
+  "stack-lms: kurs/ölçme/ilerleme core'unu olduğu gibi tüketir; Edition yalnız Surface ve yayın UX'i ekler.",
+  "Ödeme module: kurs satışı tahsilatını üç-adım akışında tetikler (para tipi, dış-etkili → step-up).",
+  "Sertifika module: kurs tamamlamada tamamlama belgesi üretir; içerik parent'tan gelir."
+ ],
+ "ecaExample": "trigger:\n  event: course.publish_requested\n  when: tenant_scoped\ncondition:\n  all:\n    - actor.capability >= \"lms.course.publish\"\n    - not loop_detected\naction:\n  - delegate: course.publish_flow         # parent module akışı\n  - notify: [\"creator-surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{course}:publish\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Edition yeni güven sınırı açmaz; tüm yetki parent LMS capability'leri + RLS üzerinden — sadeleştirilmiş creator UI yetki tavanını GENİŞLETMEZ.",
+  "Öğrenci/creator verisi pii=true (+retention) parent stack'ten; tenant-scoped, başka creator'ın öğrencisi görünmez.",
+  "Ödeme dış-etkili aksiyon ECA içinde yürütülmez; allowlist'li akışa delege + parasal sonuçta step-up; tahsilat Money kuruş hassasiyetinde."
+ ],
+ "perfNotes": {
+  "perf": "Satış sayfası/oynatıcı Surface'leri keyset (cursor) pagination; video listeleme + ilerleme okuma-optimize; ek sorgu yükü parent stack ile paylaşılır."
+ },
+ "testNotes": [
+  "Edition Surface'leri parent LMS ArcheType'larıyla aynı veriyi gösterir; çift kayıt veya kopuk şema yok.",
+  "Edition'a fonksiyon eklenmediği kanıtı: parent stack ArcheType/module seti ile birebir aynı kontrat.",
+  "Komşu-creator/tenant veri görünmez (RLS).",
+  "Yayın akışı parasal sonuçta step-up ister (dış-etkili guard)."
+ ]
+}

@@ -217,7 +217,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Meet & Comms Hub — çekirdek yetenek",
+      "term": "Video çekirdeği (Jitsi self-host)",
       "definition": [
        {
         "type": "strong",
@@ -225,41 +225,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Toplantı, kayıt, ekran paylaşımı; kayıt stack-drive arşivine. Self-host — veri-egemenliği segmenti için Teams/Zoom alternatifi."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Ekip kanalları (chat)",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Kanal, thread, mention, arama; her mesaj event bus'a olay olarak düşer. Rocket.Chat/Mattermost muadili."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Müşteri inbox (omni-channel)",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Site widget'ı + WhatsApp/Instagram kanalları; konuşma → Helpdesk ticket köprüsü. Chatwoot muadili."
+       }
+      ]
+     },
+     {
+      "term": "Story/duyuru + ERP köprüsü",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Şirket içi hikâye akışı (tüketici UX'i kuruma uyarlanır); toplantı notu → s-crm aktivitesi, görüşme → RAG beslemesi."
        }
       ]
      }
@@ -447,15 +444,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Konuşma/mesaj içeriği pii (+retention); RLS tenant-scoped; self-host veri-egemenliği (kamu/savunma/hukuk/sağlık) segmenti için Teams/Zoom kullanılamayan senaryoyu çözer. Müşteri inbox dış kanalları (WhatsApp/IG) Contract üzerinden; gelen mesaj doğrulama + hız limiti (spam/enjeksiyon koruması). Video kaydı erişimi capability deny-by-default; kayıt arşivi (stack-drive) tenant izole, komşu-tenant kaydı erişilemez. RAG beslemesi consent kapısıyla: görüşme indeksleme açık rıza/politika olmadan yapılmaz. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -509,15 +498,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Video Jitsi self-host (ayrı kaynak); chat/presence scale-realtime üzerinden WS; mesaj geçmişi keyset pagination; RAG indeksleme asenkron worker."
        }
       ]
      },
@@ -813,7 +794,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Meet & Comms Hub",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Meet & Comms Hub\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: meeting.note_created\ncondition:\n  all:\n    - actor.capability >= \"comms.write\"\n    - tenant_scoped\n    - not loop_detected\naction:\n  - emit: crm.activity_logged          # outbox, idempotent\n  - enqueue: rag.index_conversation\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:meeting:{meeting_id}:note\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -953,6 +934,18 @@
     ]
    },
    {
+    "id": "block-s-comms-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Komşu-tenant konuşma/kayıt erişimi sıfır döndürür (izolasyon). Müşteri inbox: WhatsApp/IG'den gelen konuşma doğru tenant ticket'ına köprülenir. Toplantı notu idempotent: aynı not iki kez CRM aktivitesi yazmaz (idempotency_key). RAG beslemesi consent kapalıyken görüşmeyi indekslemez (deny-by-default)."
+     }
+    ]
+   },
+   {
     "id": "block-s-comms-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -971,7 +964,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet (aday) — Layer-2 SaaS ürünü; realtime primitive (SSE/WS/Yjs) ve kernel identity hazır olduğundan maliyetin büyüğü ödenmiş. Tek pakette video+chat+müşteri inbox + ERP event-bus entegrasyonu farkı."
        }
       ]
      },
@@ -980,16 +973,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Kernel identity (kimlik) ve tenancy (RLS) hazır; mesaj/konuşma ArcheType'ları engine ile tanımlanır, audit kernel'den. Comms kendi Domain'ini (Kaya) tanımlar."
        }
       ]
      },
@@ -998,7 +982,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "App core'una bağlı; core module değişmez. Video çekirdeği (Jitsi) dış process, metadata/olay kernel'de."
        }
       ]
      },
@@ -1007,7 +991,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "scale-realtime primitive'ini tüketir (canlı kanal/presence); s-crm'e toplantı notunu aktivite olarak, Helpdesk'e konuşmayı ticket olarak yayar — yalnız Contract."
        }
       ]
      },
@@ -1016,7 +1000,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "CRM, Helpdesk ve Drive app'leri aynı konuşma/kayıt verisini paylaşır; görüşme RAG'a beslenir, çift kayıt yok."
        }
       ]
      }
@@ -1029,13 +1013,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-comms-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-comms-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "scale-realtime: canlı kanal/presence/typing göstergesi için WS/SSE primitive'ini tüketir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-crm: toplantı notu ve görüşme özeti müşteri aktivitesi olarak yazılır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Helpdesk app: müşteri inbox konuşması ticket'a köprülenir (widget/WhatsApp/IG)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "stack-drive: video kaydı arşive; RAG/AI app görüşme transkriptini embedding indeksine besler."
+      }
+     ]
     ]
    },
    {

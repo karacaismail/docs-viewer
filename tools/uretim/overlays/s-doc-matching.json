@@ -1,0 +1,42 @@
+{
+ "featureDefs": [
+  {
+   "name": "OCR ve belge sınıflama",
+   "desc": "Gelen belge (fatura, irsaliye, PO) OCR ile metne çevrilir, tip sınıflandırılır; çıktı confidence skoruyla gelir, düşük skor insan kuyruğuna düşer.",
+   "critical": true
+  },
+  {
+   "name": "Üç yönlü eşleştirme (3-way match)",
+   "desc": "Fatura ↔ sipariş (PO) ↔ mal kabul (GRN) tutar/miktar/birim fiyat toleransı içinde eşleştirilir; eşleşmeyen satır exception olarak işaretlenir.",
+   "critical": true
+  },
+  {
+   "name": "Tolerans ve istisna kuralları",
+   "desc": "Tutar/miktar sapma toleransı Contract'ta tanımlı; tolerans dışı eşleşme otomatik onaylanmaz, onay akışına yönlendirilir."
+  },
+  {
+   "name": "Eşleşme denetim izi",
+   "desc": "Her eşleştirme kararı (otomatik/manuel, hangi belgeler, hangi tolerans) bitemporal audit'e yazılır; 'neden eşleşti' geriye sorgulanabilir."
+  }
+ ],
+ "moduleUsage": [
+  "s-purchase: PO ve mal kabul kayıtları buradan gelir; eşleşen fatura ödeme onayına 'matched' olarak geçer.",
+  "s-tax-compliance: Gelen e-faturanın GİB kaydı belge defterinden okunur, OCR yerine yapısal veri tercih edilir.",
+  "Accounting / Muhasebe: Eşleşmiş fatura yevmiyeye money tipiyle düşer; eşleşmeyen tutar askıda hesapta bekler."
+ ],
+ "ecaExample": "trigger:\n  event: document.ingested\ncondition:\n  all:\n    - document.type == \"invoice\"\n    - match_candidate(document.po_ref) exists\n    - amount_delta within tolerance\n    - not idempotency_seen(document.fingerprint)\naction:\n  - link: invoice <-> po <-> grn\n  - emit: document.matched\nguards:\n  max_depth: 3\n  idempotency_key: \"match:{document.fingerprint}\"\n  external_effects: none",
+ "securityNotes": [
+  "Belge içeriği (tutar, tedarikçi, kalem) money+pii sınıfı; tenant RLS ile izole, OCR'a giden görüntü tenant deposunda kalır.",
+  "Otomatik eşleştirme yalnız tolerans içinde; tolerans dışı veya düşük OCR confidence onay capability'si ister (deny-by-default).",
+  "Eşleştirme kararı değiştirilemez audit izi bırakır; manuel override kim/ne zaman bitemporal kaydedilir."
+ ],
+ "perfNotes": {
+  "code": "Aday PO araması fingerprint + tedarikçi indeksinden; eşleşme listesi (tarih, id) keyset, OCR async worker'da.",
+  "perf": "Toplu belge yüklemede OCR batch'lenir; eşleştirme aday kümesi tedarikçi+tarih penceresiyle daraltılır, tam tarama yapılmaz."
+ },
+ "testNotes": [
+  "Tolerans sınırı: tutar farkı tolerans eşiğinin 1 kuruş üstündeyse exception'a düşer.",
+  "Idempotency: aynı belge fingerprint'i iki kez yüklenirse tek eşleşme üretilir.",
+  "Çok-belge: bir PO'ya bölünmüş iki fatura toplam toleransla eşleşir, audit'e iki satır yazılır."
+ ]
+}

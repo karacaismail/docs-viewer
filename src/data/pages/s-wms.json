@@ -352,7 +352,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Warehouse Management (WMS) — çekirdek yetenek",
+      "term": "Wave / batch picking",
       "definition": [
        {
         "type": "strong",
@@ -360,41 +360,42 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Siparisler dalga halinde gruplanir; toplama rotasi optimize edilir. Pick gorevleri capability-bagli atanir."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Slotting (yerlesim optimizasyonu)",
       "definition": [
        {
         "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
-       },
-       {
-        "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "SKU hiz sinifina gore raf konumu; sik donen urun toplama noktasina yakin. Periyodik yeniden slotlama."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Barkod / RFID hareket kaydi",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Her stok hareketi (receive/putaway/pick/ship) barkod/RFID taramasiyla event uretir; bitemporal stok defteri."
+       }
+      ]
+     },
+     {
+      "term": "Stok defteri (bitemporal)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Lokasyon x SKU bakiyesi; her hareket immutable kayit + audit. Geriye donuk duzeltme valid-time ile."
        }
       ]
      }
@@ -582,15 +583,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Stok hareketi deny-by-default: capability wms:receive/wms:pick/wms:ship ayri; tek rol tum hareketleri yapamaz (gorev ayriligi). Tenant izolasyonu RLS ile zorunlu; baska tenant lokasyonuna hareket yazilamaz. Negatif stok korumasi: pick.qty > balance reddedilir; duzeltme yalniz wms:adjust + audit gerekcesiyle. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -618,15 +611,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Lokasyon x SKU bakiyesi keyset ile sayfalanir; sicak SKU'larda satir kilidi yerine event-sourced increment."
        }
       ]
      },
@@ -644,15 +629,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Wave picking yuksek hacimli; hareket yazimi outbox uzerinden asenkron yayinlanir, toplama UI'si bloklanmaz."
        }
       ]
      },
@@ -948,7 +925,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Warehouse Management (WMS)",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Warehouse Management (WMS)\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: wms.pick.completed\ncondition:\n  all:\n    - actor.capability >= \"wms:pick\"\n    - location.balance >= pick.qty\n    - not loop_detected\naction:\n  - emit: wms.stock.decremented\n  - emit: wms.wave.line_closed\nguards:\n  max_depth: 6\n  idempotency_key: \"pick:{pick_id}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1088,6 +1065,18 @@
     ]
    },
    {
+    "id": "block-s-wms-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "wms:pick olmayan aktor pick denemesi -> deny. Balance alti pick -> reddedilmeli, negatif stok olusmamali. Ayni idempotency_key ile tekrar pick -> cift dusum olmamali. Cross-tenant lokasyon hareketi -> RLS reddi."
+     }
+    ]
+   },
+   {
     "id": "block-s-wms-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1106,7 +1095,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Layer-2 SaaS urunu; kendi semasini ve UI'sini tanimlar, framework primitive'lerini tuketir."
        }
       ]
      },
@@ -1115,16 +1104,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Authz (depo/personel capability), tenancy (RLS ile tenant stok izolasyonu), event-bus (stok hareketi event'leri)."
        }
       ]
      },
@@ -1133,7 +1113,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Contract ile SKU/Location/Movement semasi; otomatik REST/GraphQL; audit + bitemporal ucretsiz."
        }
       ]
      },
@@ -1142,7 +1122,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Layer-1 file (etiket/foto), outbox (hareket event'lerinin guvenli yayini)."
        }
       ]
      },
@@ -1151,7 +1131,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "s-wms App'i; downstream s-* urunleri (siparis/sevkiyat) stok event'lerini dinler."
        }
       ]
      }
@@ -1164,13 +1144,15 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-wms-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-wms-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-wms: Receive -> Putaway -> Pick -> Pack -> Ship akisinda her adim Contract action; stok bakiyesi bitemporal defterde tutulur, capability deny-by-default ile yalniz yetkili personel hareket uretir."
+      }
+     ]
     ]
    },
    {

@@ -306,7 +306,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Shift / Workforce Planning — çekirdek yetenek",
+      "term": "Vardiya planlama",
       "definition": [
        {
         "type": "strong",
@@ -314,41 +314,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Personel-vardiya atama, çakışma kontrolü, vardiya şablonları; atama değişiklikleri audit'lenir."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Zaman-devam takibi",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Giriş/çıkış, fazla mesai, devamsızlık kayıtları; bordro köprüsü için saat verisi."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Vardiya değişim/onay akışı",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Personel vardiya değişim talebi → yönetici onayı; onay zinciri capability ile."
+       }
+      ]
+     },
+     {
+      "term": "Yasal sınır kontrolü",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Günlük/haftalık azami çalışma, dinlenme süresi (TR İş Kanunu) ihlal uyarısı."
        }
       ]
      }
@@ -536,15 +533,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Vardiya/devam verisi personel PII; RLS ile tenant izolasyonu, KVKK retention bildirimli. Onay akışı capability deny-by-default; yetkisiz personel başkasının vardiyasını değiştiremez. Bordroya akan saat verisi bitemporal — geriye dönük düzeltme 'o tarihte ne biliyorduk' ile izlenir. Vardiya atama değişiklikleri audit log'a (kim, ne zaman, eski/yeni) yazılır. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -572,15 +561,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "SELECT * FROM shift WHERE tenant_id = $1 AND start_at >= $2 ORDER BY start_at, id LIMIT 50; -- keyset"
        }
       ]
      },
@@ -598,15 +579,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Vardiya takvim sorguları keyset sayfalama; (tenant_id, start_at) index. Çakışma kontrolü exclusion constraint ile DB seviyesinde."
        }
       ]
      },
@@ -902,7 +875,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Shift / Workforce Planning",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Shift / Workforce Planning\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: shift.swap_requested\ncondition:\n  all:\n    - actor.capability >= \"workforce:shift:swap\"\n    - not loop_detected\n    - not legal_hours_exceeded(target_employee, new_shift)\naction:\n  - emit: shift.swap_pending_approval\nguards:\n  max_depth: 6\n  idempotency_key: \"swap:{shift_id}:{from_emp}:{to_emp}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -1042,6 +1015,18 @@
     ]
    },
    {
+    "id": "block-s-workforce-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Çakışma testi: aynı personele örtüşen iki vardiya atanamaz (exclusion constraint). Yasal sınır testi: haftalık azami saati aşan vardiya değişimi reddedilir. RLS testi: komşu tenant'ın vardiya/devam kayıtları okunamaz. Onay zinciri testi: yetkisiz aktörün swap talebi capability deny döner."
+     }
+    ]
+   },
+   {
     "id": "block-s-workforce-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1060,7 +1045,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "İK/personel yönetimi olan tenant için Faz 2-3'te (kernel + scale + L1 hazır sonrası) entegre edilir."
        }
       ]
      },
@@ -1069,16 +1054,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Layer-2 SaaS ürünü; ArcheType engine ile şema, otomatik REST/GraphQL, audit + tenancy framework'ten gelir. Vardiya/devam kayıtları RLS ile tenant-izole."
        }
       ]
      },
@@ -1087,7 +1063,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Kernel + Scale + Layer-1 primitive'leri (audit, event-bus, kuyruk) üstüne oturur."
        }
       ]
      },
@@ -1096,7 +1072,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "HRMS personel köprüsü, bordro modülüne saat verisi besler."
        }
       ]
      },
@@ -1105,7 +1081,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Stack squad ürünü yönetir; AI squad vardiya optimizasyon önerileri için."
        }
       ]
      }
@@ -1118,13 +1094,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-workforce-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-workforce-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "stack-hrms: personel ana kaydı; vardiya atamaları çalışan kimliğine bağlanır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Bordro modülü: zaman-devam ve fazla mesai saatleri ücret hesabına akar."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "stack-lms: zorunlu eğitim periyotları vardiya planında dikkate alınabilir."
+      }
+     ]
     ]
    },
    {

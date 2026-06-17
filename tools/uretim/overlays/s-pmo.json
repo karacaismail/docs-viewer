@@ -1,0 +1,48 @@
+{
+ "featureDefs": [
+  {
+   "name": "Portfolio Item",
+   "desc": "Proje/girişim kaydı: stratejik hedef bağı, faz, durum ve önceliklendirme skoru.",
+   "critical": true
+  },
+  {
+   "name": "Resource Plan",
+   "desc": "Kapasite vs talep: kişi/rol ataması, allocation %, çakışma ve over-allocation uyarısı."
+  },
+  {
+   "name": "Prioritization Model",
+   "desc": "Skorlama (örn. değer/efor, WSJF) ile portföy sıralaması; karar gerekçesi izlenir."
+  },
+  {
+   "name": "PMO Governance",
+   "desc": "Aşama kapısı (stage-gate) onayları, durum raporu ve risk/issue kaydı."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Aday (candidate) Layer-2 ürün; katalogda eksik olduğu için fırsat olarak eklendi. Olgunlaşınca yetki/audit/event-bus kernel'den gelir.",
+  "kernel": "Party (kaynak/sahip) + capability + audit + tenancy kernel'den; portföy verisi tenant-scoped.",
+  "core": "PMO core module'ü portföy + governance yapısını taşır; kaynak planlama ek module olarak biner.",
+  "modules": "s-hrms kapasite kaynağı + l1-notification kapı hatırlatma + l1-analytics portföy raporu ile kompoze edilir.",
+  "apps": "PMO app'i tek panel; aynı Party ve proje kaydı finans/HR modülleriyle default entegre."
+ },
+ "moduleUsage": [
+  "PMO App: portföy önceliklendirme, stage-gate onayları ve durum raporu.",
+  "Kaynak Yönetimi App: kapasite-talep dengesi, allocation ve çakışma uyarıları.",
+  "Yönetim Paneli App: portföy sağlığı, risk/issue özeti ve karar geçmişi."
+ ],
+ "ecaExample": "trigger:\n  event: StageGateRequested\ncondition:\n  all:\n    - actor.capability >= \"pmo:gate:approve\"\n    - portfolio_item.status == \"in_review\"\n    - not resource_conflict\naction:\n  - emit: GateApproved\n  - emit: PortfolioItemAdvanced\nguards:\n  max_depth: 6\n  idempotency_key: \"gate:{portfolio_item_id}:{stage}\"\n  external_effects: none",
+ "securityNotes": [
+  "Portföy ve bütçe verisi hassas; capability deny-by-default + RLS ile yalnız yetkili rol görür.",
+  "Stage-gate onayı ve önceliklendirme değişikliği audit'e yazılır; karar kim verdi izlenir.",
+  "Aday durumda kapsam küçük tutulur; kanıtlanmamış runtime vaadi verilmez (deny-by-default)."
+ ],
+ "perfNotes": {
+  "code": "Portföy ve kaynak listeleri keyset ile sayfalanır; kapasite raporu materialized projeksiyondan okur.",
+  "perf": "Planlama döngüsü (çeyrek başı) yoğun yeniden hesap; allocation çakışma kontrolü worker'a alınır."
+ },
+ "testNotes": [
+  "resource_conflict kapısı: çakışan kaynak ataması olan kalemin gate'ten geçemediği doğrulanır.",
+  "Bitemporal: geçmiş önceliklendirme kararının düzeltilmesi mevcut portföyü bozmadan kaydedilir.",
+  "Idempotent gate: aynı stage onayı iki kez gelince tek ilerleme üretildiği test edilir."
+ ]
+}

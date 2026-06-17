@@ -1,0 +1,51 @@
+{
+ "featureDefs": [
+  {
+   "name": "Çok-para birimi konsolidasyon motoru",
+   "desc": "Birden çok tüzel kişiliğin defterlerini ortak raporlama para birimine çevirip eler; spot/ortalama/kapanış kurları kalem tipine göre seçilir.",
+   "critical": true
+  },
+  {
+   "name": "Transfer pricing eliminasyonu",
+   "desc": "Grup içi alış/satış ve borç/alacak kalemlerinin karşılıklı elenmesi; intercompany eşleşmesi tutmazsa fark hesabına düşer ve raporlanır.",
+   "critical": true
+  },
+  {
+   "name": "Kur farkı (CTA) hesaplama",
+   "desc": "Yeniden değerleme ve çeviri farklarının özkaynak altında ayrı kalemde (cumulative translation adjustment) izlenmesi.",
+   "critical": true
+  },
+  {
+   "name": "Konsolidasyon dönemi kilidi",
+   "desc": "Kapatılan konsolidasyon döneminin yeniden açılması bitemporal düzeltme kaydı gerektirir; geçmiş silinmez, düzeltme yeni efektif tarihle yazılır.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Birden çok tüzel kişilik / para birimi olan müşterilerde; tek şirket tek para biriminde gereksiz.",
+  "kernel": "Tenant = grup; alt tüzel kişilikler tenant içi entity. Capability deny-by-default: konsolide rapor okuma yetkisi entity bazlı değil grup bazlı verilir.",
+  "core": "Money tipi zorunlu (currency + minor units); tüm kur çevrimleri audit'lenir, bitemporal kur tablosu 'hangi kuru ne zaman bildik' sorusunu yanıtlar.",
+  "modules": "s-revenue-recognition, s-fpa ve genel muhasebe defterinden okur; kendi konsolidasyon ArcheType'larını üstüne tanımlar.",
+  "apps": "Grup CFO'su için konsolide rapor app'i; her entity kendi defter app'inde çalışır, konsolidasyon yukarıda toplar."
+ },
+ "moduleUsage": [
+  "s-fpa: konsolide bütçe-gerçekleşen karşılaştırması için grup seviyesi rakamları buradan alır.",
+  "s-revenue-recognition: grup içi gelir kalemlerini eliminasyon öncesi/sonrası ayrımıyla besler.",
+  "s-audit: kur çevrimi ve eliminasyon adımlarının delil zincirini hash-chain'e bağlar.",
+  "cc-resolver-ops: her entity'nin jurisdiction/para birimi ekseni resolver'dan gelir; konsolidasyon raporlama para birimini sabitler."
+ ],
+ "securityNotes": [
+  "Konsolide rapor grup geneli finansal görünüm — capability deny-by-default, yalnızca grup CFO rolü; entity yöneticisi sadece kendi entity'sini görür (RLS).",
+  "Kur tablosu bitemporal: geçmişe dönük kur değişimi (düzeltme) eski kararı silmez, yeni efektif tarihle eklenir; aksi halde kapanmış dönem manipüle edilebilir.",
+  "Money kalemleri minor-unit integer; float yuvarlama eliminasyonda fark hesabını şişirir, audit'te açıklanamayan sapma doğurur."
+ ],
+ "perfNotes": {
+  "code": "SELECT entity_id, sum(amount_minor) FILTER (WHERE intercompany)\nFROM ledger_line\nWHERE tenant_id = $1 AND period_id = $2\nGROUP BY entity_id;",
+  "perf": "Konsolidasyon period_id + tenant_id keyset üzerinden batch çalışır, satır satır değil. Eliminasyon eşleştirmesi grup içi anahtar üzerinde indexlenir; aksi halde N×M intercompany taraması."
+ },
+ "testNotes": [
+  "Intercompany alış/satış tam eşleşince eliminasyon bakiyesinin sıfırlandığı, eşleşmeyince fark hesabına düştüğü doğrulanır.",
+  "Kapanmış konsolidasyon döneminde düzeltmenin yeni efektif tarihle yazıldığı, geçmişin değişmediği test edilir.",
+  "Kur tipi seçimi (kapanış vs ortalama) kalem tipine göre doğru uygulanır."
+ ]
+}

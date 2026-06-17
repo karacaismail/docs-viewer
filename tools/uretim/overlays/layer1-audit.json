@@ -1,0 +1,58 @@
+{
+ "featureDefs": [
+  {
+   "name": "Append-only audit log",
+   "desc": "Immutable, sadece-INSERT denetim günlüğü; UPDATE/DELETE DB seviyesinde reddedilir. Aylık range partition, mali için 10 yıl retention.",
+   "critical": true
+  },
+  {
+   "name": "Forensic aktör ayrımı",
+   "desc": "human_actor_id, agent_id, model_id, tool_id, approval_id, change_set_id, before/after_hash, risk_score alanları; 'kararı kim verdi, AI mı önerdi, motor mu uyguladı' okunabilir.",
+   "critical": true
+  },
+  {
+   "name": "Event replay / sourcing",
+   "desc": "Olay zincirini baştan oynatarak istenen tarihteki state'i üretme; bug forensiği için."
+  },
+  {
+   "name": "Activity feed (UX)",
+   "desc": "Audit'ten ayrı: soft-delete OK, 30-180 gün, realtime push (SSE/WebSocket). Audit ile birleştirilmez."
+  },
+  {
+   "name": "Agent audit channel",
+   "desc": "AI agent tool çağrıları ayrı kanal + run_id, tool_name, capability_scope_id, blast_radius metadata; yüksek blast_radius otomatik kilit + insan onayı."
+  },
+  {
+   "name": "Retention policy",
+   "desc": "ArcheType bazlı saklama süresi (mali 10 yıl, KVKK varsayılan 5 yıl, configurable); aşılınca silme."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Her veri değişikliği audit'e yazılır — çekirdek zorunluluk, opsiyonel değil. Activity feed UX gerektiren modüllerde açılır.",
+  "kernel": "Her ArcheType Action otomatik audit kaydı üretir; tenant_id zorunlu, RLS ile izole. Capability/PDP kararları ve step-up onayları audit'e iz bırakır.",
+  "core": "Layer-1 in-tree primitive; partition'lı audit_log tablosu + changes JSONB. Bitemporal ana tablolarla (HRMS bordro, GL, KVKK, sözleşme, sağlık) hibrit ilişki.",
+  "modules": "Tüm Layer-2 ürünleri bu primitive'i tüketir; muhasebe, HRMS, drive, support audit çeker.",
+  "apps": "Admin/denetçi panelinde 'Hareketler' sekmesi; son kullanıcı farkında değil, sistem otomatik yazar."
+ },
+ "ecaExample": "trigger:\n  event: archetype.changed\ncondition:\n  all:\n    - actor.capability >= \"audit:write\"\n    - not loop_detected\naction:\n  - emit: audit.entry_appended\n  - emit: activity.feed_pushed\nguards:\n  max_depth: 6\n  idempotency_key: \"audit:{change_set_id}\"\n  external_effects: none",
+ "securityNotes": [
+  "Audit append-only/WORM: UPDATE/DELETE DB seviyesinde yasak — tamper-proof yasal kanıt zinciri.",
+  "user_agent + ip kaydı compromise tespiti için: aynı user'dan beklenmedik ip = alarm.",
+  "Agent eylemleri delegasyon izi tutar (human_actor_id + agent_id ayrı); agent kimliğe bürünmez, adına çalışır.",
+  "Yüksek blast_radius agent eylemi otomatik kilit + step-up onayı; capability_scope_id ile hasar limitli.",
+  "Tenant izolasyonu: audit cross-tenant join yapmaz, RLS + partition ile izole.",
+  "before_hash/after_hash değişiklik bütünlüğünü doğrular; KVKK için crypto-shredding ile barışık (iskelet kalır, içerik anahtar imhasıyla okunamaz)."
+ ],
+ "perfNotes": {
+  "code": "CREATE TABLE audit_log (...) PARTITION BY RANGE (occurred_at); -- aylık partition, changes jsonb, append-only",
+  "perf": "Aylık range partition: eski partition'lar cold storage'a iner, sorgu maliyeti düşer. Audit = cold writes + nadir forensic okuma; Activity = hot reads + Redis stream. İkisi ayrı tablo → indeks ekonomisi korunur. changes JSONB şema esnekliği sağlar."
+ },
+ "testNotes": [
+  "Immutability testi: audit_log satırına UPDATE/DELETE denemesi DB tarafından reddedilir.",
+  "Forensic alan testi: her kayıtta human_actor_id/agent_id/model_id/change_set_id dolu, ayrımı okunabilir.",
+  "Replay testi: belirli timestamp için event zinciri o anki state'i deterministik üretir.",
+  "Blast radius testi: agent yüksek-etki eylemi (örn. toplu silme) otomatik kilit + onay tetikler.",
+  "Retention testi: ArcheType bazlı süre aşılınca silme planlanır, mali 10 yıl korunur.",
+  "RLS testi: komşu tenant'ın audit kayıtları okunamaz."
+ ]
+}

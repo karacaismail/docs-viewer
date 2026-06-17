@@ -1,0 +1,53 @@
+{
+ "featureDefs": [
+  {
+   "name": "pnpm workspaces + strict sınır",
+   "desc": "apps/ (web, mobile, ota-server) + packages/ (11 paylaşılan) + tools/. Strict node_modules ile paketler yalnız beyan ettikleri bağımlılığı görür; phantom dependency yok. Tek codebase'de web + mobile + OTA.",
+   "critical": true
+  },
+  {
+   "name": "packages/domain — tek doğruluk kaynağı",
+   "desc": "Zod şemaları + business logic + CASL ability'leri burada. Backend FastAPI bunlardan Pydantic üretir (datamodel-code-generator); frontend ile backend kontratı tek yerden türetilir.",
+   "critical": true
+  },
+  {
+   "name": "packages/api — üretilen tipli client",
+   "desc": "openapi-typescript ile backend OpenAPI'den tip üretir, openapi-fetch ile çağırır. Client elle yazılmaz; backend değişince tip kırılması derleme anında yakalanır.",
+   "critical": true
+  },
+  {
+   "name": "packages/offline + realtime",
+   "desc": "offline: TanStack Query persist + IndexedDB write queue (çevrimdışı yazım kuyruğu). realtime: SSE/WS client + Yjs/Hocuspocus. Çevrimdışı yazımlar bağlanınca idempotent replay edilir.",
+   "critical": false
+  },
+  {
+   "name": "packages/native + kyc",
+   "desc": "native: Capacitor modüllerinin tek dispatch noktası. kyc: TC NFC Capacitor modülü + KYB Veriff adapter — hassas kimlik yüzeyi tek pakette izole.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Monorepo iskeleti diğer her frontend işinin ön şartıdır; paket sınırı ve paylaşılan tsconfig/Biome olmadan 70+ ürünün arayüzü tutarlı kalamaz.",
+  "kernel": "Frontend kernel'i enforce etmez, yansıtır: capability deny-by-default CASL ability'leri (packages/domain) ile UI'da gizleme/disable olarak görünür; yetki kararı backend'dedir.",
+  "core": "money/PII tipleri Zod şemasında modellenir (Money value object, maskeli alanlar); para asla float değil, minor-unit + currency olarak taşınır.",
+  "modules": "Her ürün apps/ veya packages/ altında ayrı klasör; ortak parça shared pakete taşınır. Paket sınırı ESLint/Biome kuralıyla zorlanır.",
+  "apps": "apps/web PWA ana giriş; apps/mobile Capacitor wrapper; apps/ota-server OTA manifest + S3 yönlendirme. Üçü packages/'i paylaşır."
+ },
+ "moduleUsage": [],
+ "securityNotes": [
+  "packages/kyc TC NFC + KYB Veriff hassas kimlik yüzeyini tek pakette izole eder; başka paket doğrudan import edemez.",
+  "CASL ability'leri yetkiyi göstermez/saklar ama enforce etmez — son kararı her zaman backend capability check verir (UI bypass edilemez varsayılır).",
+  "packages/api üretilen tipli client'tır; elle URL/sorgu kurulmaz, böylece yanlış endpoint/parametre derlemede yakalanır.",
+  "i18n mesajları kod yerine sözlükte; kullanıcı verisi mesaj şablonuna interpolasyonla girerken XSS'e karşı kaçışlanır."
+ ],
+ "perfNotes": {
+  "code": "openapi-typescript + datamodel-code-generator ile tip ve Pydantic üretimi build-time; runtime maliyeti yok.",
+  "perf": "Strict workspace ve paylaşılan tsconfig.base.json artımlı build + tip-paylaşımıyla CI süresini düşürür; offline write queue ağ gidişlerini batch'ler."
+ },
+ "testNotes": [
+  "packages/test-utils MSW handler'ları ile her paket backend'siz test edilir.",
+  "domain Zod şeması ↔ üretilen Pydantic uyumu round-trip testiyle doğrulanır.",
+  "offline write queue: çevrimdışı yapılan yazım, bağlanınca tam bir kez replay edilir (idempotency).",
+  "Paket sınırı ihlali (yasak cross-import) Biome/ESLint kuralında CI'da kırmızı verir."
+ ]
+}

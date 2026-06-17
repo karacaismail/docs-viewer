@@ -304,7 +304,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Document Classification & Matching — çekirdek yetenek",
+      "term": "OCR ve belge sınıflama",
       "definition": [
        {
         "type": "strong",
@@ -312,41 +312,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Gelen belge (fatura, irsaliye, PO) OCR ile metne çevrilir, tip sınıflandırılır; çıktı confidence skoruyla gelir, düşük skor insan kuyruğuna düşer."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Üç yönlü eşleştirme (3-way match)",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Fatura ↔ sipariş (PO) ↔ mal kabul (GRN) tutar/miktar/birim fiyat toleransı içinde eşleştirilir; eşleşmeyen satır exception olarak işaretlenir."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Tolerans ve istisna kuralları",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Tutar/miktar sapma toleransı Contract'ta tanımlı; tolerans dışı eşleşme otomatik onaylanmaz, onay akışına yönlendirilir."
+       }
+      ]
+     },
+     {
+      "term": "Eşleşme denetim izi",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her eşleştirme kararı (otomatik/manuel, hangi belgeler, hangi tolerans) bitemporal audit'e yazılır; 'neden eşleşti' geriye sorgulanabilir."
        }
       ]
      }
@@ -534,15 +531,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Belge içeriği (tutar, tedarikçi, kalem) money+pii sınıfı; tenant RLS ile izole, OCR'a giden görüntü tenant deposunda kalır. Otomatik eşleştirme yalnız tolerans içinde; tolerans dışı veya düşük OCR confidence onay capability'si ister (deny-by-default). Eşleştirme kararı değiştirilemez audit izi bırakır; manuel override kim/ne zaman bitemporal kaydedilir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -570,15 +559,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Aday PO araması fingerprint + tedarikçi indeksinden; eşleşme listesi (tarih, id) keyset, OCR async worker'da."
        }
       ]
      },
@@ -596,15 +577,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Toplu belge yüklemede OCR batch'lenir; eşleştirme aday kümesi tedarikçi+tarih penceresiyle daraltılır, tam tarama yapılmaz."
        }
       ]
      },
@@ -900,7 +873,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Document Classification & Matching",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Document Classification & Matching\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: document.ingested\ncondition:\n  all:\n    - document.type == \"invoice\"\n    - match_candidate(document.po_ref) exists\n    - amount_delta within tolerance\n    - not idempotency_seen(document.fingerprint)\naction:\n  - link: invoice <-> po <-> grn\n  - emit: document.matched\nguards:\n  max_depth: 3\n  idempotency_key: \"match:{document.fingerprint}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -1040,6 +1013,18 @@
     ]
    },
    {
+    "id": "block-s-doc-matching-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Tolerans sınırı: tutar farkı tolerans eşiğinin 1 kuruş üstündeyse exception'a düşer. Idempotency: aynı belge fingerprint'i iki kez yüklenirse tek eşleşme üretilir. Çok-belge: bir PO'ya bölünmüş iki fatura toplam toleransla eşleşir, audit'e iki satır yazılır."
+     }
+    ]
+   },
+   {
     "id": "block-s-doc-matching-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1116,13 +1101,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-doc-matching-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-doc-matching-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-purchase: PO ve mal kabul kayıtları buradan gelir; eşleşen fatura ödeme onayına 'matched' olarak geçer."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-tax-compliance: Gelen e-faturanın GİB kaydı belge defterinden okunur, OCR yerine yapısal veri tercih edilir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Accounting / Muhasebe: Eşleşmiş fatura yevmiyeye money tipiyle düşer; eşleşmeyen tutar askıda hesapta bekler."
+      }
+     ]
     ]
    },
    {

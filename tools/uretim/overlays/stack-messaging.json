@@ -1,0 +1,45 @@
+{
+ "featureDefs": [
+  {
+   "name": "Ortak gelen kutusu (resmî WhatsApp Business API)",
+   "desc": "Ekip ataması, etiket, SLA üzerinde müşteri-inbox. Resmî API + KVKK uyumu, gri-bölge rakiplerinden yapısal ayrışma. s-comms müşteri-inbox yarısı.",
+   "critical": true
+  },
+  {
+   "name": "Katalog-sipariş akışı (mesaj içi)",
+   "desc": "Ürün kataloğu -> mesaj içinden sepet linki. stack-commerce ürün kataloğu yeniden kullanılır; mesajda satış kapanır. Cart/Order ArcheType framework'ten."
+  },
+  {
+   "name": "Mesaj otomasyonu (akışlar)",
+   "desc": "Karşılama, sepet hatırlatma, sipariş durumu bildirimi. s-channel-hub akışları; şablonlar Meta onaylı, opt-out korunur.",
+   "critical": true
+  },
+  {
+   "name": "Link tabanlı tahsilat",
+   "desc": "Mesajda kapanan satış için link tabanlı ödeme. s-payment-methods; tutarlar Money (Decimal), ödeme step-up/3DS."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — aday Stack: Comms + Channel Hub + Payment birleşimi. Alıcı profili (WhatsApp'tan satan esnaf/e-ticaretçi) mevcut hiçbir stack'le örtüşmez; Edition değil yeni Stack. Taksonomi: Stack ⊂ Edition ⊂ Distribution.",
+  "kernel": "Kimlik/tenancy (RLS)/audit kernel'den; müşteri Party'den türer. Mesaj/oturum bitemporal append-only; telefon PII-flag; tahsilat Money (Decimal).",
+  "core": "Paket core'u yok; üç modülün capability bohçası. Resmî API adaptörü tek kanal entegrasyonu; her modül sözleşmesini korur (additif).",
+  "modules": "s-comms (inbox), s-channel-hub (otomasyon + çok-kanal), s-payment-methods (tahsilat), stack-commerce (katalog) yalnız Contract. Meta tek-kanal riski Telegram/IG genişlemesiyle (channel-hub) yapısal cevap.",
+  "apps": "Inbox/agent app + Commerce app aynı müşteri/katalog/sipariş ArcheType'ını paylaşır; mesajdan gelen sepet aynı Cart'a yazar, çift kayıt yok."
+ },
+ "ecaExample": "trigger:\n  event: whatsapp.message_received\n  when: \"tenant_scoped AND webhook.signature_valid\"\ncondition:\n  all:\n    - actor.capability >= \"messaging.inbox.handle\"\n    - not loop_detected\n    - contact.opt_in == true\naction:\n  - record: message { conversation_id, body, direction, ts, pii: true }\n  - emit: inbox.assigned_to_team        # SLA başlat\n  - emit: automation.flow_triggered     # outbox idempotent\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{wa_message_id}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Telefon + mesaj içeriği PII: tenant-scoped RLS, pii-flag; temsilci yalnız atandığı konuşmayı görür (capability deny-by-default).",
+  "Gelen webhook Meta imzası ile doğrulanır (spoof engelleme); giden şablon Meta onaylı + opt-out/consent korunur (KVKK).",
+  "Mesaj geçmişi değişmez audit append-only; link tabanlı tahsilat Money/Decimal, ödeme step-up/3DS. Tek-kanal API riski çok-kanal ile dağıtılır."
+ ],
+ "perfNotes": {
+  "code": "Otomasyon akışı tetik->aksiyon tablosu (rule eval), if-zinciri YASAK; kanal adaptörü strateji (WhatsApp/Telegram/IG dispatch).",
+  "perf": "Mesaj akışı asenkron worker; konuşma listesi keyset pagination; giden mesaj rate-limit (Meta kotası); webhook idempotent dedupe."
+ },
+ "testNotes": [
+  "Geçersiz imzalı WhatsApp webhook reddedilir.",
+  "Opt-in olmayan kişiye otomasyon mesajı gönderilmez (consent kapısı).",
+  "Aynı wa_message_id ikinci kez işlenmez (idempotency).",
+  "Temsilci komşu konuşmayı görmez (RLS); telefon yetkisiz response'ta sızmaz."
+ ]
+}

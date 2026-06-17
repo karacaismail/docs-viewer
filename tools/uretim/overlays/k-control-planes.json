@@ -1,0 +1,50 @@
+{
+ "featureDefs": [
+  {
+   "name": "Boyut 1 — Ops/DevOps düzlemi",
+   "desc": "Operatör/SRE: hosting, CI/CD, dağıtım/ölçek. be-deploy-profilleri üstünde; altyapı güven sınırı. Frappe Press/cPanel benzeri. Müşteri verisine erişim yok, sadece operasyon.",
+   "critical": true
+  },
+  {
+   "name": "Boyut 2 — Developer-admin düzlemi",
+   "desc": "SaaS geliştirici: code-base customization, ArcheType arka-planı, DB tarafı (join/relations/views). be-sdk + k-schema. Drupal Views/Django admin benzeri; yüzlerce işlem ama tipli sözleşme içinde.",
+   "critical": true
+  },
+  {
+   "name": "Boyut 3 — Tenant/Müşteri-admin düzlemi",
+   "desc": "SaaS müşterisi: kendi süreçleri; ArcheType'ı PROMPT ile oluşturur (capability-gated, tek komut + çok-aşamalı AI). Serbest DDL/kod DEĞİL: tipli, hibrit depolama (paylaşılan şema + JSONB; tablo-per-tip yok).",
+   "critical": true
+  },
+  {
+   "name": "Boyut 4 — Public/Frontpages düzlemi",
+   "desc": "Anonim ziyaretçi: StoreFront, frontpages, landing, blog. Surface'in public projeksiyonu (l1-seo: meta/schema/sitemap). Storefront/CMS public benzeri; en dış güven sınırı."
+  },
+  {
+   "name": "Module vs ArcheType — düzlem ayrımı",
+   "desc": "Module (Kaya): Boyut 2'de geliştirici özelleştirir, Boyut 3'te müşteri KULLANIR. ArcheType (Büyük Taş): Boyut 2'de arka-plan düzenlenir, Boyut 3'te müşteri PROMPT ile oluşturur."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — kernel mimari modeli (bağımsız ürün değil). Platformu kitle/sorumluluk/güven sınırına göre dört kontrol düzlemine ayırır; her düzlem ayrı panel, kullanıcı, yetki tavanı (ADR-0015). Tüm üst katmanlar bu modele oturur.",
+  "kernel": "Dört düzlem kernel'in tenancy + authz + identity'sine dayanır; her düzlem ayrı capability seti + yetki tavanı. Agent asla principal değil; etkin yetki = kullanıcı ∩ capability ∩ tool_scope ∩ risk.",
+  "core": "Düzlem ayrımı core sözleşmesi: Module ve ArcheType'ın hangi düzlemde özelleştirildiği/oluşturulduğu sabit kural. Surface'in public projeksiyonu (Boyut 4) core'dan türetilir.",
+  "modules": "Boyut 2 be-sdk + k-schema; Boyut 3 k-agent-runtime + sus-actions; Boyut 4 l1-seo; Boyut 1 be-deploy-profilleri. Projeksiyon k-surface; uçtan uca akış dx-workflow.",
+  "apps": "Her app dört düzlemde farklı yüz gösterir: aynı ArcheType geliştirici panelinde (B2) düzenlenir, müşteri panelinde (B3) prompt ile üretilir, public yüzeyde (B4) projeksiyon olarak yayınlanır — tek kaynak, çok düzlem."
+ },
+ "ecaExample": "trigger:\n  event: archetype.create_requested\n  when: \"plane == 'tenant_admin'\"\ncondition:\n  all:\n    - actor.capability >= \"archetype.author\"\n    - tool_scope allows schema_gen\n    - not loop_detected\n    - request is typed AND not raw_ddl    # serbest DDL/kod YASAK\naction:\n  - generate: archetype { storage: shared_schema + jsonb }   # tablo-per-tip yok\n  - record: schema_change { plane, actor, bitemporal: true }\n  - emit: audit.archetype_authored\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{archetype}:author\"\n  external_effects: capability_gated",
+ "securityNotes": [
+  "Dört düzlem dört ayrı güven sınırı + yetki tavanı (ADR-0015): ops müşteri verisine, müşteri başka tenant'a, public hiçbir yazıma erişemez (deny-by-default).",
+  "Boyut 3 prompt ile ArcheType üretimi serbest DDL/kod DEĞİL: tipli, capability-gated, hibrit depolama (paylaşılan şema + JSONB). DisableProtection sınıfı önerilemez/uygulanamaz.",
+  "Agent asla principal değil; etkin yetki = kullanıcı ∩ capability ∩ tool_scope ∩ risk (sus-actions). Tüm düzlem-aşan işlem audit'li."
+ ],
+ "perfNotes": {
+  "code": "Düzlem yönlendirme yetki tavanına göre dispatch (plane -> capability seti); ArcheType üretimi tip şablonundan, elle DDL YASAK.",
+  "perf": "Public yüzey (Boyut 4) projeksiyon + CDN/cache (anonim, yüksek hacim); developer/tenant panel (B2/B3) tenant-scoped sorgu keyset pagination; ops düzlemi (B1) veri yolundan ayrık."
+ },
+ "testNotes": [
+  "Ops (B1) yetkisi müşteri verisi sorgusunda sıfır/red döndürür.",
+  "Tenant-admin (B3) prompt isteği raw DDL içeriyorsa reddedilir; yalnız tipli ArcheType üretir.",
+  "Müşteri başka tenant'ın ArcheType/verisini göremez (RLS + yetki tavanı).",
+  "Public (B4) yüzey hiçbir yazma capability'sine sahip değil; yalnız projeksiyon okur."
+ ]
+}

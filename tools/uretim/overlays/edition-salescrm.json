@@ -1,0 +1,48 @@
+{
+ "featureDefs": [
+  {
+   "name": "Pipedrive-sınıfı tek-ekran fırsat panosu (Surface)",
+   "desc": "Aynı Marketing+CRM ArcheType'ları üzerine sürükle-bırak aşama kartları + renkli pipeline; yeni ArcheType/alan EKLEMEZ — yalnız Surface estetiği.",
+   "critical": true
+  },
+  {
+   "name": "Satışçı günlük modu — 'sıradaki 5 arama'",
+   "desc": "Rapor değil hedef-odaklı UX akışı; günlük arama kuyruğu + hedef çubuğu; capability-gated, parent stack core'unu değiştirmez."
+  },
+  {
+   "name": "Telefon/WhatsApp tek-tık aksiyonu",
+   "desc": "Fırsat kartından tek tık iletişim; Comms/Notification module'üne delege, dış-etkili akış allowlist + consent kapısı."
+  },
+  {
+   "name": "Satış müdürü hedef/performans çubuğu (Projection)",
+   "desc": "Pipeline kaynaklarından türetilen salt-okur hedef görünümü; bozulursa kaynaktan yeniden dökülür — yeni veri tutmaz."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet ama yalnız UX katmanında — Edition fonksiyon eklemez; aynı core module seti ve kod parent Marketing+CRM stack'ten gelir. Fark UI estetiği, UX akışı ve pazara-çıkış paketinde (landing/fiyat/onboarding). Yeni ihtiyaç parent stack'e gider.",
+  "kernel": "Kimlik, Tenancy (RLS), Audit ve ArcheType engine değişmez biçimde parent stack üzerinden kernel'den gelir; Edition kendi kerneline sahip değildir.",
+  "core": "Temel stack-marketing + s-crm core'udur (fırsat/pipeline/aktivite); core module ve sözleşmeleri değişmez. Fonksiyon eklemek Edition işi değildir.",
+  "modules": "Parent stack'in mevcut module'lerini (CRM/Marketing/Comms) AYNEN tüketir; ek module beyan etmez — yalnız Contract.",
+  "apps": "CRM app'inin saha-satış odaklı paketlenmesi; aynı Party/fırsat verisi üzerine farklı Surface/UX sunar, çift kayıt yok."
+ },
+ "moduleUsage": [
+  "s-crm: fırsat/pipeline/aktivite core'unu olduğu gibi tüketir; Edition yalnız pano Surface ve günlük-mod UX ekler.",
+  "stack-marketing: lead/segment kaynağını AYNEN kullanır; ek alan/ArcheType eklemez.",
+  "Comms/Notification: telefon/WhatsApp tek-tık dış-etkili akış (allowlist + İYS/consent kapısı)."
+ ],
+ "ecaExample": "trigger:\n  event: deal.stage_changed\n  when: tenant_scoped\ncondition:\n  all:\n    - actor.capability >= \"crm.deal.update\"\n    - not loop_detected\naction:\n  - refresh: target_bar_projection   # salt-okur, kaynaktan türer\n  - emit: deal.activity_logged\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:deal:{deal_id}:{stage}\"\n  external_effects: none",
+ "securityNotes": [
+  "Edition yeni güven sınırı açmaz; tüm yetki parent stack capability'leri + RLS üzerinden — sadeleştirilmiş pano UI yetki tavanını GENİŞLETMEZ.",
+  "Müşteri/fırsat verisi pii=true; RLS tenant-scoped — bir satış ekibi başka tenant'ın pipeline'ını göremez; satışçı yalnız atanmış fırsatları.",
+  "Telefon/WhatsApp dış-etkili aksiyon ECA içinde yürütülmez; allowlist'li akışa delege + İYS/consent kapısı (izinsiz arama/mesaj yok)."
+ ],
+ "perfNotes": {
+  "perf": "Sürükle-bırak pano + günlük arama kuyruğu Surface'leri keyset (cursor) pagination; hedef çubuğu materialized/continuous-aggregation projection; ek sorgu yükü parent stack ile paylaşılır."
+ },
+ "testNotes": [
+  "Edition Surface'leri parent CRM/Marketing ArcheType'larıyla aynı veriyi gösterir; çift kayıt veya kopuk şema yok.",
+  "Edition'a fonksiyon eklenmediği kanıtı: parent stack ArcheType/module seti ile birebir aynı kontrat (yalnız Surface farkı).",
+  "Komşu-tenant pipeline/fırsat görünmez (RLS); satışçı atanmamış fırsatı göremez (deny-by-default).",
+  "Telefon/WhatsApp tek-tık consent/İYS kapısı geçilmeden dış aksiyon tetiklemez (deny path)."
+ ]
+}

@@ -1,0 +1,47 @@
+{
+ "featureDefs": [
+  {
+   "name": "Tenant-bilinçli posta kutusu yönetimi",
+   "desc": "Mailcow üstünde kutu/takma ad/paylaşımlı kutu yönetimi; her kutu tenant'a bağlı (RLS). Domain bağlanınca PowerDNS ile SPF/DKIM/DMARC otomatik kaydı. Kutu sahipliği ve erişim capability ile.",
+   "critical": true
+  },
+  {
+   "name": "Bounce/complaint/suppress yaşam döngüsü",
+   "desc": "L1 notification altyapısının kurumsal yüzü; sert/yumuşak bounce, şikayet ve suppress listesi olayları event olarak işlenir. Suppress kaydı idempotent; tekrar gönderim guard'la engellenir.",
+   "critical": true
+  },
+  {
+   "name": "Arşiv ve saklama politikaları (KVKK)",
+   "desc": "Yasal saklama/arşiv politikaları; veri yerliliği zorunluluğu için tenant bölgesine bağlı saklama. Arşivlenen posta bitemporal indekslenir, erişim audit'lenir.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Bounce/complaint olayları ve paylaşımlı kutu → talep akışı diğer ürünleri tetiklediği için event-bus üzerinden entegre olmalı.",
+  "kernel": "authz (kutu/alias/arşiv capability'leri), tenancy (RLS ile kutu izolasyonu), event-bus (mail.bounced, mail.complaint, mailbox.message_received), audit (yönetim aksiyonları, arşiv erişimi).",
+  "core": "pii (posta içeriği, alıcı adresleri), bitemporal (arşiv/saklama pencereleri), Contract (managed deliverability hizmet koşulları), keyset (kutu/mesaj listeleme).",
+  "modules": "Notification/L1 (bounce/complaint/suppress kaynağı), Helpdesk (paylaşımlı kutu → talep), Audit (saklama/erişim).",
+  "apps": "MSP/reseller yönetim paneli; tenant kendi domain self-service kurulumu."
+ },
+ "moduleUsage": [
+  "Notification (L1): mail.bounced/complaint → suppress listesi güncelleme tetiği.",
+  "Helpdesk: paylaşımlı kutuya gelen mesaj → destek talebi açma köprüsü.",
+  "Audit: arşiv erişimi ve saklama politikası değişikliği aktör kimliğiyle izlenir.",
+  "Community/Comms: bildirim e-postaları için ortak gönderim altyapısı."
+ ],
+ "ecaExample": "trigger:\n  event: mail.bounced\ncondition:\n  all:\n    - bounce.type == \"hard\"\n    - not loop_detected\n    - not address.in_suppress_list\naction:\n  - emit: suppress.add_requested\n  - emit: notification.deliverability_alert\nguards:\n  max_depth: 6\n  idempotency_key: \"bounce:{message.id}:{address}\"\n  external_effects: none",
+ "securityNotes": [
+  "Posta içeriği ve adresler pii; paylaşımlı kutu erişimi capability + RLS ile tenant'a kapalı.",
+  "Arşiv erişimi deny-by-default; saklama politikası altındaki posta süresinden önce silinemez (guard).",
+  "DKIM özel anahtarları ve SMTP kimlik bilgileri sır olarak; yönetim aksiyonları audit'lenir."
+ ],
+ "perfNotes": {
+  "code": "Kutu mesaj listeleri ve suppress sorguları keyset (received_at, id) ile; OFFSET kullanılmaz.",
+  "perf": "Bounce/complaint oranı (tenant_id, type) kısmi index ile deliverability sayacı ucuz; reputation projeksiyondan okunur."
+ },
+ "testNotes": [
+  "Aynı hard bounce'un tekrarında suppress listesine tek kez eklendiği (idempotency).",
+  "Saklama süresi içindeki arşiv postasının silme talebinin guard ile durduğu.",
+  "Başka tenant'ın paylaşımlı kutusuna erişimin RLS ile reddedildiği."
+ ]
+}

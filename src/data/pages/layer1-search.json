@@ -771,7 +771,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Search (Hybrid: BM25 + Vector) — birincil yetenek",
+      "term": "Hybrid Retrieval (BM25 + Vector)",
       "definition": [
        {
         "type": "strong",
@@ -779,25 +779,38 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "Lexical BM25 + dense vector sonuçlarını Reciprocal Rank Fusion (k=60) ile birleştirir; default Postgres FTS + pgvector."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Embedding Pipeline",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "ArcheType save → DocumentSaved event → chunk → embed → pgvector projeksiyonu; idempotent, checksum ile değişim tespiti."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "Reranking",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "İlk-k sonucu cross-encoder ile yeniden sıralar (Cohere Rerank v3 / BGE-m3); Türkçe için BGE-m3."
+       }
+      ]
+     },
+     {
+      "term": "Search Driver Swap",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Arayüz core'da, backend driver arkasında: default SQL/pgvector, production Meilisearch/Typesense/OpenSearch."
        }
       ]
      }
@@ -985,15 +998,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Her hybrid sorgu tenant_id = current_setting('app.tenant_id') ile filtrelenir; cross-tenant arama RLS ile imkânsız. Embedding provider çağrısı dış efekt; capability deny-by-default + idempotency ile çift maliyet engellenir. İndekslenen alanda PII varsa maskeleme/pii-matrisi uygulanır; arama sonucu yetkisiz alanı sızdırmaz. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1021,15 +1026,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Hybrid sorgu her kanalda LIMIT 50 + RRF sonra LIMIT 20; HNSW (m, ef_search) ile recall/latency dengelenir."
        }
       ]
      },
@@ -1047,15 +1044,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Embedding throughput hedefi >1000/dk, hybrid NDCG@10 >0.75, query p95 <250ms; reindex blue/green ile zero-downtime."
        }
       ]
      },
@@ -1351,7 +1340,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Search (Hybrid: BM25 + Vector)",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Search (Hybrid: BM25 + Vector)\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: DocumentSaved\ncondition:\n  all:\n    - actor.capability >= \"search:index:write\"\n    - document.checksum != index.checksum\naction:\n  - emit: EmbeddingJobQueued\n  - emit: SearchIndexUpdated\nguards:\n  max_depth: 6\n  idempotency_key: \"embed:{source_id}:{model_id}:{checksum}\"\n  external_effects: embedding_provider_call",
     "copyEnabled": true
    },
    {
@@ -1491,6 +1480,18 @@
     ]
    },
    {
+    "id": "block-layer1-search-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "RRF birleştirme: BM25-only ve vector-only sonuçların k=60 ile doğru kaynaştığı doğrulanır. Idempotent embed: aynı checksum ile job tekrar kuyruğa girmediği test edilir. Reindex zero-downtime: model upgrade sırasında dual_write/blue_green ile arama kesintisiz kanıtlanır."
+     }
+    ]
+   },
+   {
     "id": "block-layer1-search-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1509,7 +1510,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Layer 1 in-tree: arama interface'i core'da yaşar ama Elasticsearch kernel'e FUSE EDİLMEZ; backend driver pattern arkasında swap edilir."
        }
       ]
      },
@@ -1518,16 +1519,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Tenant_id current_setting ile her sorguda zorunlu; schema engine ArcheType save event'ini doğurur."
        }
       ]
      },
@@ -1536,7 +1528,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Search interface core'da; indexleme scale-projections pattern'inin özelleşmesi — module geliştirici 'index güncelle' düşünmez."
        }
       ]
      },
@@ -1545,7 +1537,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Embedding pipeline + reindex job + index-health ayrı module yetenekleri; provider registry ile model versiyonlanır."
        }
       ]
      },
@@ -1554,7 +1546,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Her app üst bara arama kutusu (/, Ctrl+K) koyar; doğal dil sorgusu structured filtreye L2'de (S06) çevrilir."
        }
       ]
      }

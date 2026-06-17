@@ -1,0 +1,45 @@
+{
+ "featureDefs": [
+  {
+   "name": "Hyper-table chunk yönetimi",
+   "desc": "Zaman bazlı otomatik chunk (chunk_time_interval 1 day); append-heavy INSERT yolu eski chunk'lardan ayrışır, sıcak/soğuk ayrımı disk düzeyinde kurulur.",
+   "critical": true
+  },
+  {
+   "name": "Continuous aggregation (1m/1h/1d)",
+   "desc": "Ham saniyelik veriden materialize edilmiş downsample katmanları; sorgu en kaba uygun granularity'den okunur, ham tablo taranmaz.",
+   "critical": true
+  },
+  {
+   "name": "Retention + compression policy",
+   "desc": "7 gün sonra compression (%90), 30/90 gün eşiklerinde downsample, 365 gün sonra DROP; politika deklaratif, tenant başına RLS ile sınırlı.",
+   "critical": true
+  },
+  {
+   "name": "Sensör tenant izolasyonu",
+   "desc": "Her ölçüm satırı tenant_id taşır; hyper-table üzerinde RLS, continuous aggregation'lar tenant-aware tanımlanır.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Yalnızca sensör/metrik akışı varsa; yoksa cluster opsiyonel, eklenmez.",
+  "kernel": "RLS + tenancy ham metrik tablosunda zorunlu; her chunk tenant_id ile sınırlanır.",
+  "core": "Audit yalnızca retention/compression policy değişikliklerine bağlanır (DROP kararı denetlenebilir); ham ölçüm satırı audit'e girmez (hacim nedeniyle).",
+  "modules": "scale-timeseries bir altyapı katmanı; metrik üreten modüller (cc-obs, IoT app) buradan okur/yazar.",
+  "apps": "Sayaç/hava istasyonu app'leri write-path; dashboard app'leri continuous aggregation read-path."
+ },
+ "perfNotes": {
+  "code": "SELECT time_bucket('1 hour', ts) AS b, avg(value)\nFROM metric\nWHERE tenant_id = $1 AND sensor_id = $2\n  AND ts >= now() - interval '7 days'\nGROUP BY b ORDER BY b;",
+  "perf": "Sorgu uygun continuous aggregate'e düşürülmeli; 100K/sn write'ta ham tablo full-scan yıkıcı. Keyset/time-range zorunlu, OFFSET yok. compression sonrası eski chunk üzerinde segmentby=sensor_id ile sorgu lokalize."
+ },
+ "securityNotes": [
+  "Ham metrik tablosunda RLS deny-by-default; cross-tenant time_bucket sorgusu sızıntı riski, tenant_id WHERE policy ile zorunlu.",
+  "Retention DROP geri dönülemez — policy değişikliği 4-göz veya en az audit kaydı gerektirir, aksi halde veri kaybı sessiz olur.",
+  "PII içeren sensör (örn. konum izi) varsa retention süresi yasal saklama ile çelişebilir; bitemporal değil ama retention deklaratif olmalı."
+ ],
+ "testNotes": [
+  "chunk_time_interval sınırında (gün geçişi) INSERT'in doğru chunk'a düştüğü doğrulanır.",
+  "Continuous aggregate'in geç gelen (out-of-order) ham veriyi refresh policy ile yakaladığı test edilir.",
+  "Retention policy'nin tenant izolasyonunu bozmadan yalnızca yaş eşiğindeki chunk'ları düşürdüğü doğrulanır."
+ ]
+}

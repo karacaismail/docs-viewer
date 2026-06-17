@@ -1,0 +1,53 @@
+{
+ "featureDefs": [
+  {
+   "name": "sitemap.xml otomatik üretim",
+   "desc": "Public ArcheType kayıtlarından lastmod/changefreq/priority ile; >50k URL'de sitemap index'e böler; build-time + olay-tetikli yeniden üretim. (P0)",
+   "critical": true
+  },
+  {
+   "name": "robots.txt politikası",
+   "desc": "noindex/allow/disallow; iç back-office Surface'leri otomatik disallow; sitemap referansı; RobotsPolicy ArcheType'ı. (P0)",
+   "critical": true
+  },
+  {
+   "name": "IndexNow / ping kuyruğu",
+   "desc": "Yeni/değişen URL'de Bing/Yandex IndexNow + Google ping; rate-limit'li kuyruk; yalnız allowlist domain'e POST. (P1)",
+   "critical": false
+  },
+  {
+   "name": "hreflang sitemap (çoklu dil)",
+   "desc": "Çoklu dil tenant'ta alternatif dil bağları (cc-i18n-standards ile); P1.",
+   "critical": false
+  },
+  {
+   "name": "Silinen URL → 410 (l1-redirect bağı)",
+   "desc": "Silinen kayıt sonraki üretimde sitemap'ten düşer; soft-404 riskine karşı l1-redirect 410 bağı zorunlu.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Layer-1 in-tree module (app değil): bir app'in public Surface'i varsa o tenant için sitemap/robots/IndexNow üretir; public Surface yoksa yüklenmez (varsayılan-kapalı). l1-seo render'ından ayrı; tek sorumluluğu keşif yüzeyi.",
+  "kernel": "Çok-kiracılı: her tenant kendi domain'i altında kendi sitemap'ini alır (RLS); capability dar dosya-yolu yazma (yalnız /sitemap*.xml, /robots.txt) + IndexNow network allowlist — kernel iç API'sine dokunmaz.",
+  "core": "Headless üretici (surface: none); SitemapPolicy/RobotsPolicy/IndexNowConfig Atom kısıtlı; pii ÜRETMEZ; politika değişiklikleri audit'li, tenant özel domain bitemporal.",
+  "modules": "Build-time prerender hattına bağlı; ArcheType change event → debounce → regen → IndexNow ping; >50k için sitemap index; fe-cdn ile edge cache invalidation.",
+  "apps": "Public Surface'i olan app'lerin kayıtları otomatik sitemap'e girer; iç Surface'ler robots disallow + sitemap dışı; admin Surface yalnız politika düzenleme."
+ },
+ "ecaExample": "trigger:\n  event: archetype.public_record_changed\ncondition:\n  all:\n    - actor.capability >= \"sitemap.file.write\"\n    - surface.is_public\n    - not loop_detected\naction:\n  - enqueue: sitemap.regen   # debounce, build-time + event\n  - emit: indexnow.ping_requested   # allowlist only\nguards:\n  max_depth: 6\n  idempotency_key: \"sitemap:{tenant}:{surface}:{rev}\"\n  external_effects: indexnow_allowlist",
+ "securityNotes": [
+  "Capability deny-by-default: yalnız dar dosya-yolu (/sitemap*.xml, /robots.txt) yazılabilir; kernel iç API'sine erişilmez (WASM sandbox manifest).",
+  "Tenant izolasyonu (RLS): tenant-A sitemap'i tenant-B URL'i içermez; her tenant kendi domain'inde.",
+  "IndexNow yalnız allowlist domain'e (Bing/Yandex/Google) POST eder; anahtar tenant-scoped sır — sızıntıda allowlist sınırlar.",
+  "İç back-office Surface'leri otomatik disallow + sitemap dışı; pii üretilmez; politika değişiklikleri audit'li."
+ ],
+ "perfNotes": {
+  "code": "Üretim hook'u ArcheType engine'den public kayıt akışını streaming XML'e serileştirir; >50k URL sitemap index'e bölünür; IndexNow rate-limit'li kuyruk + debounce.",
+  "perf": "Büyük tenant'ta tam yeniden üretim maliyetli → olay-tetikli artımlı (debounce) üretim; fe-cdn edge cache + invalidation; build-time prerender ön koşul."
+ },
+ "testNotes": [
+  "Public ArcheType kaydı → sitemap'te tam bir <url>; iç Surface → sitemap'te YOK + robots disallow.",
+  "Tenant izolasyonu: tenant-A sitemap'i tenant-B URL'i içermez.",
+  ">50k URL → geçerli sitemap index; lastmod ISO-8601 + XML şema doğrulaması.",
+  "IndexNow yalnız allowlist domain'e POST eder; silinen kayıt sonraki üretimde düşer (410 bağı)."
+ ]
+}

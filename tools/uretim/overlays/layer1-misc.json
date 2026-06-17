@@ -1,0 +1,58 @@
+{
+ "featureDefs": [
+  {
+   "name": "i18n / Localization primitive",
+   "desc": "gettext .po (modül başına tr/en), ArcheType label çevirisi, sayı/tarih/para biçimi (TR 1.000,50 vs US), CLDR çoğul, RTL desteği.",
+   "critical": true
+  },
+  {
+   "name": "Money + Tax + FX (Currency/ExchangeRate)",
+   "desc": "Currency (ISO 4217, decimals) + ExchangeRate (Decimal, effective_date, TCMB/ECB); vergi adapter (KDV/VAT/GST); tutar float DEĞİL Decimal.",
+   "critical": true
+  },
+  {
+   "name": "Realtime (SSE / WebSocket / Presence)",
+   "desc": "SSE tek yönlü (notification, live counter), WebSocket çift yönlü (chat, co-edit), Presence Redis pub/sub + heartbeat.",
+   "critical": false
+  },
+  {
+   "name": "Webhook + API Gateway",
+   "desc": "Giden webhook (HMAC + exponential backoff + dead letter), gelen webhook (imza + idempotency), ArcheType→otomatik REST+GraphQL+OpenAPI 3.1, per-tenant throttling.",
+   "critical": true
+  },
+  {
+   "name": "Calendar (RRULE / timezone / iCal)",
+   "desc": "Event + recurrence (RRULE) + exception + IANA timezone (DST), iCal/.ics export, CalDAV sync, boş-slot uygunluk sorgusu.",
+   "critical": false
+  },
+  {
+   "name": "Reporting + Dashboard (no-code)",
+   "desc": "No-code query builder, scheduled export, dashboard widget (KPI/trend/gauge), CSV/Excel/PDF; Saved View tenant-scoped.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Layer-1 in-tree primitive paketi: i18n/money/realtime/webhook/calendar/reporting her ürünün tekrar yazmaması için bir kez framework içinde sunulur; ürünler tüketir, yeniden icat etmez.",
+  "kernel": "Webhook config + Saved View + raporlar tenant-scoped (RLS); API Gateway endpoint'leri capability deny-by-default; her ArcheType alanı yetkiyle expose edilir.",
+  "core": "Money alanları Decimal/Currency (float değil); FX bitemporal (effective_date) + audit; ArcheType→REST/GraphQL otomatik üretimde para/pii serileştirmesi korunur.",
+  "modules": "Outbox (giden webhook at-least-once), worker (rapor export), Redis pub/sub (presence/realtime), scheduler (TCMB kur 15:30) module'lerini birlikte sağlar.",
+  "apps": "Tüm app'ler tarih seçici, para gösterimi, dil değiştirme, anlık bildirim, rapor widget'ını buradan tüketir — ürün başına tekrar yok."
+ },
+ "ecaExample": "trigger:\n  event: archetype.event_published\ncondition:\n  all:\n    - actor.capability >= \"webhook.subscribe\"\n    - subscription.tenant_scoped\n    - not loop_detected\naction:\n  - enqueue: webhook.deliver   # outbox, HMAC, exp-backoff\n  - on_fail: dead_letter\nguards:\n  max_depth: 6\n  idempotency_key: \"webhook:{tenant}:{subscription_id}:{event_id}\"\n  external_effects: signed_delivery",
+ "securityNotes": [
+  "Giden webhook HMAC imzalı + dead letter; gelen webhook imza doğrulama + idempotency (replay engellenir).",
+  "API Gateway endpoint'leri capability deny-by-default + per-tenant/per-key throttling; yetkisiz alan expose edilmez.",
+  "Webhook config + raporlar RLS tenant-scoped; başka tenant'ın aboneliği/raporu görülmez.",
+  "FX/money değişiklikleri audit'li (bitemporal effective_date); kur kaynağı (TCMB/ECB) izlenir."
+ ],
+ "perfNotes": {
+  "code": "Webhook teslimi outbox + asenkron worker (exp-backoff); realtime Redis pub/sub ile fan-out; rapor export arka plan job + streaming; SSE proxy-friendly HTTP.",
+  "perf": "WebSocket/SSE ölçeği için Redis Pub/Sub; ağır rapor senkron değil scheduled export; API throttling tenant kotasıyla aşırı yükü keser."
+ },
+ "testNotes": [
+  "Webhook idempotency: aynı event iki kez yayılsa tek teslim (idempotency key).",
+  "Money testi: Currency/Decimal kuruş kaybı olmadan biçimlenir; TR 1.000,50 vs US 1,000.50 doğru.",
+  "Tenant izolasyon testi: bir tenant'ın webhook config/raporu komşu tenant'a görünmez (RLS).",
+  "Calendar testi: RRULE + DST geçişinde doğru oturum üretir; iCal export geçerli .ics."
+ ]
+}

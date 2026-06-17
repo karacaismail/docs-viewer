@@ -1,0 +1,44 @@
+{
+ "featureDefs": [
+  {
+   "name": "Outbox Relay",
+   "desc": "Transactional outbox tablosundan event'leri sıralı yayınlayan worker; modüler monolit'te Kafka yerine birincil yol.",
+   "critical": true
+  },
+  {
+   "name": "NOTIFY Köprüsü",
+   "desc": "Postgres LISTEN/NOTIFY üzerinden in-process consumer'lara düşük gecikmeli sinyal; 100K event/sn'ye kadar yeterli."
+  },
+  {
+   "name": "Windowed Aggregator",
+   "desc": "Belirli zaman penceresinde (örn. son 5 dk) sayım/toplam tutan stateful işlemci; checkpoint + idempotent replay."
+  },
+  {
+   "name": "Stream Driver Sözleşmesi",
+   "desc": "Outbox → Redpanda/Kafka geçişini tek arayüz arkasına alan driver; 1M+ event/sn'de takılır, altı değişmez.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Streaming kernel'e fuse EDİLMEZ; event bus sözleşmesi kernel'de, akış işleme opsiyonel scale katmanıdır.",
+  "kernel": "Event bus Contract + idempotency anahtarı + bitemporal event zaman damgası kernel'de tanımlı.",
+  "core": "Outbox tablosu ve relay worker scale-outbox çekirdeğinden gelir; projeksiyonlar scale-projections ile paylaşılır.",
+  "modules": "Stream driver bir module: Postgres-NOTIFY varsayılan, Redpanda/Kafka swap; capability ile yetkilendirilir.",
+  "apps": "Hiçbir app doğrudan Kafka client'ı bilmez; yalnız 'emit event' çağırır, akış katmanı arkada çözülür."
+ },
+ "ecaExample": "trigger:\n  event: DocumentViewed\ncondition:\n  all:\n    - actor.capability >= \"stream:aggregate\"\n    - not loop_detected\n    - window.event_rate < 1_000_000\naction:\n  - emit: ViewCountWindowUpdated\nguards:\n  max_depth: 6\n  idempotency_key: \"view:{doc_id}:{window_start}\"\n  external_effects: none",
+ "securityNotes": [
+  "Consumer group offset'i tenant_id ile damgalanır; cross-tenant event sızıntısı RLS + topic-key ile engellenir.",
+  "Outbox relay yalnız emit eder, dış efekt (ödeme/mail) tetiklerse step-up + capability deny-by-default kontrolü şart.",
+  "Windowed state replay idempotent olmalı; aynı event iki kez işlenirse sayım bozulmamalı (idempotency_key)."
+ ],
+ "perfNotes": {
+  "code": "< 10K/sn sync handler; 10K-100K Postgres NOTIFY + worker pool; 100K+ ancak ölçülerek Redpanda.",
+  "perf": "Kafka erken eklenince günde saatlerce operations yükü; karar matrisi event/sn eşiğine göre kademeli."
+ },
+ "testNotes": [
+  "Outbox at-least-once + idempotent consumer: aynı event çift teslimde tek sonuç doğrulanır.",
+  "Windowed aggregation: pencere sınırında gelen geç event'in doğru pencereye düştüğü test edilir.",
+  "Driver swap testi: NOTIFY→Redpanda geçişinde app kodu değişmeden aynı Contract'ın geçtiği kanıtlanır."
+ ]
+}

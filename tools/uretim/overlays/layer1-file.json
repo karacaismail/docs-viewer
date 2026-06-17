@@ -1,0 +1,47 @@
+{
+ "featureDefs": [
+  {
+   "name": "Storage driver soyutlamasi",
+   "desc": "Local/S3/R2/Azure/GCS/MinIO tek Protocol arkasinda (put/get/delete/signed_url/copy/head). Backend degisimi core kodunu etkilemez.",
+   "critical": true
+  },
+  {
+   "name": "Pre-signed URL yukleme",
+   "desc": "Istemci sunucudan gecmeden dogrudan storage'a yukler; kisa omurlu imzali URL. Sunucu yuku ve gecikme azalir.",
+   "critical": true
+  },
+  {
+   "name": "Versioning zinciri",
+   "desc": "file_version: content hash + kim + ne zaman, immutable. Rollback opsiyonu; Drive icin block-level delta + CRDT ustune.",
+   "critical": true
+  },
+  {
+   "name": "Lifecycle / TTL",
+   "desc": "Temp 24s, abandoned asset 7g, 90g sonra cold storage. Storage policy veya scheduled worker ile.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-1 in-tree primitive; tum ust katmanlar dosya isini buradan alir.",
+  "kernel": "Authz (signed_url erisimi capability-bagli), tenancy (blob key tenant-scoped), event-bus (FileUploaded).",
+  "core": "FileMetadata Contract satiri; MIME validation + virus scan pipeline.",
+  "modules": "s-drive (Block Storage: content-addressable, FastCDC dedup), AI moderation + search index (FileUploaded dinler).",
+  "apps": "Her form 'dosya ekle' alani, thumbnail/HLS variant uretimi."
+ },
+ "securityNotes": [
+  "Pre-signed URL deny-by-default: yalniz capability file:write olan aktor icin uretilir; kisa TTL, tek kullanim hedefli key.",
+  "MIME validation + virus scan (ClamAV) final blob CDN'e gitmeden; content-type spoofing reddedilir.",
+  "signed_url okuma da capability-bagli; tenant izolasyonu blob key prefix + RLS metadata ile.",
+  "Versiyon kaydi immutable: content hash ile butunluk; rollback yeni surum uretir, eskiyi silmez (audit)."
+ ],
+ "perfNotes": {
+  "code": "Upload temp blob'a; thumbnail (64/256/1024) ve HLS transcode asenkron worker'da, FileUploaded event ile tetiklenir.",
+  "perf": "Pre-signed URL ile buyuk dosyalar sunucuyu bypass eder; CDN push ile okuma olceklenir. Cold storage gecisi maliyeti dusurur."
+ },
+ "testNotes": [
+  "file:write capability'si olmayan aktore signed PUT URL uretilmemeli.",
+  "Yanlis MIME / viruslu icerik final blob'a gecmemeli.",
+  "Versiyon rollback eski icerigi silmemeli (immutable zincir).",
+  "Cross-tenant blob key erisimi -> reddedilmeli."
+ ]
+}

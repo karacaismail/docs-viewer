@@ -367,7 +367,16 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "MRP / Manufacturing Stack — birincil yetenek",
+      "term": "Engineering — Multi-level BOM + ECO",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Çok seviyeli BOM, ECO (mühendislik değişiklik emri), effectivity (geçerlilik tarihi), where-used (nerede kullanılıyor). Ürün ağacı bitemporal; revizyon geçmişi audit'li."
+       }
+      ]
+     },
+     {
+      "term": "MRP Engine — bağımlı talep patlatma",
       "definition": [
        {
         "type": "strong",
@@ -375,25 +384,47 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "Patlatma, netleme, lead-time offset, regenerative + net-change. Bileşen talebi tahmin EDİLMEZ, BOM'dan hesaplanır (determinizm). Reorder-point (bağımsız talep) deseninden bu ayırır."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Capacity Planning (CRP) + Finite Scheduling/APS",
       "definition": [
        {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "İş merkezi/makine, sonlu/sonsuz kapasite; detaylı çizelge, sıralama, drum-buffer-rope. Sonlu çizelge gerçek kapasiteyle plan üretir."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "Production Order lifecycle + Shop Floor/MES",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "planned -> firmed -> released -> in-progress -> completed -> closed durum makinesi; iş emri dağıtım, gerçek-zaman data, IoT/OT entegrasyonu. Durum geçişleri audit'li."
+       }
+      ]
+     },
+     {
+      "term": "Costing — standard rollup + WIP valuation",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "Standart maliyet rollup, sapma (variance) analizi, WIP değerleme. Tüm tutarlar Money (Decimal); maliyet -> GL postingi muhasebeye."
+       }
+      ]
+     },
+     {
+      "term": "QMS + Maintenance/EAM + Subcontracting",
+      "definition": [
+       {
+        "type": "text",
+        "text": "In-process/NCR/CAPA/SPC/supplier quality; PM plan/asset health/OEE; fason (dış işlem). S&OP stratejik planlama. Gerekmeyen modül install edilmez."
        }
       ]
      }
@@ -581,15 +612,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Tenant izolasyonu RLS: BOM/maliyet/iş emri bir üreticiden diğerine sızmaz; maliyet görünürlüğü capability deny-by-default (operatör maliyet göremez). Maliyet/WIP tutarları Money/Decimal; standart maliyet rollup ile gerçek toplam tutarlılığı invariant kapı, sapma ayrı kayıt. İş emri durum geçişi ve BOM revizyonu değişmez audit (A08); kapanan production order geriye değişmez, düzeltme yeni ECO/kayıt. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -617,15 +640,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "MRP patlatma saf hesap (BOM ağacı -> net ihtiyaç); planlama stratejisi (regenerative vs net-change) runtime dispatch, if-zinciri YASAK."
        }
       ]
      },
@@ -643,15 +658,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "MRP run asenkron worker (regenerative ağır; net-change artımlı); where-used sorgusu indeksli BOM kenarları; iş emri listesi keyset pagination; büyük patlatma batch."
        }
       ]
      },
@@ -947,7 +954,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — MRP / Manufacturing Stack",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — MRP / Manufacturing Stack\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: mps.committed\n  when: \"tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"mrp.run.execute\"\n    - not loop_detected\n    - bom.effectivity_valid == true\naction:\n  - compute: gross_to_net_requirements BY bom_explosion   # determinizm, tahmin değil\n  - record: planned_order PER component { bitemporal: true }\n  - emit: purchase.requisition_requested   # outbox idempotent\n  - emit: capacity.load_evaluated\nguards:\n  max_depth: 8\n  idempotency_key: \"{tenant}:{mps_version}:mrp_run\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -1087,6 +1094,18 @@
     ]
    },
    {
+    "id": "block-stack-mrp-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "BOM patlatma deterministik: aynı MPS + aynı BOM -> aynı net ihtiyaç (tahmin değil hesap). Production order durum makinesi yalnız izinli geçişlere izin verir (released sonrası planned'a dönülemez). Aynı MPS versiyonu ikinci MRP run'da mükerrer planlı sipariş üretmez (idempotency). Maliyet rollup toplamı bileşen maliyetleri toplamına eşit (Decimal); sapma ayrı kalemde. Komşu üreticinin BOM/maliyet sorgusu sıfır döndürür (RLS)."
+     }
+    ]
+   },
+   {
     "id": "block-stack-mrp-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1105,7 +1124,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Layer-2 ana stack (#14). Kernel + Scale + Layer-1 üstüne oturur; ERP'den GL postingi, Commerce'ten stock ledger besleme alır. Kendi ArcheType/UI'sını sunar, framework altyapısını kullanır."
        }
       ]
      },
@@ -1114,16 +1133,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Kimlik/tenancy (RLS)/audit + ArcheType engine kernel'den. BOM/iş emri bitemporal; maliyet Money (Decimal). Olaylar event-bus üzerinden."
        }
       ]
      },
@@ -1132,7 +1142,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "MRP core module sabit sözleşme; planlama stratejileri (regenerative/net-change) ve sonlu/sonsuz kapasite additif capability — core değişmez."
        }
       ]
      },
@@ -1141,7 +1151,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "s-accounting'ten GL postingi (maliyet/WIP), s-commerce inventory'den stock ledger; QMS/EAM/Subcontracting modülleriyle yalnız Contract. MPS -> MRP -> satınalma olay zinciri."
        }
       ]
      },
@@ -1150,7 +1160,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Manufacturing app + Shop Floor terminali aynı Production Order ArcheType'ını paylaşır; MES gerçek-zaman verisi tek kaynağa yazar, çift kayıt yok."
        }
       ]
      }
@@ -1163,13 +1173,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-stack-mrp-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-stack-mrp-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Manufacturing app: BOM patlatma + MRP run; net ihtiyaç -> planlı iş emri / satınalma talebi."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Shop Floor/MES terminali: iş emri durum geçişi (released->in-progress->completed) + IoT/OT gerçek-zaman geri besleme."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Accounting app: production order kapanınca standart maliyet rollup -> GL postingi + WIP değerleme."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Inventory (s-commerce) app: hammadde tüketimi + mamul girişi stock ledger'a Stock Movement yazar."
+      }
+     ]
     ]
    },
    {

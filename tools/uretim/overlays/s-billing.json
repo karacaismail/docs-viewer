@@ -1,0 +1,58 @@
+{
+ "featureDefs": [
+  {
+   "name": "Subscription lifecycle state machine",
+   "desc": "trialing → active → past_due → unpaid → canceled geçişleri; trial, conversion, renewal, upgrade/downgrade, cancellation, reactivation. Durum geçişleri audit'li.",
+   "critical": true
+  },
+  {
+   "name": "Dunning state machine",
+   "desc": "Ödeme başarısız → retry (1/3/7 gün) + email + suspend (veri silinmez); kart süresi/declined kaynaklı churn yönetimi.",
+   "critical": true
+  },
+  {
+   "name": "Prorating",
+   "desc": "Plan değişiminde kalan süreye orantılı fatura (günlük ücret × kalan gün); tutarlar money tipi, yuvarlama denetimli.",
+   "critical": true
+  },
+  {
+   "name": "Vergi otomasyonu (KDV/VAT)",
+   "desc": "TR %20 KDV, AB reverse charge (B2B)/yerel oran (B2C), ABD state tax; yargı bölgesi resolver, e-Fatura TR ayrı."
+  },
+  {
+   "name": "Sağlayıcı webhook + fatura PDF",
+   "desc": "Stripe/Iyzico webhook (payment.succeeded/failed) → subscription güncelle; hosted invoice / PDF üretimi."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "15 SaaS ürünü SaaS olarak satılacaksa billing altyapısı ilk müşteriden ÖNCE hazır olmalı; sonradan migration aylar sürer.",
+  "kernel": "ArcheType engine ile subscription/invoice şeması, audit + tenancy framework'ten; her billing event l1-audit'e iz bırakır, tutarlar money tipi + bitemporal.",
+  "core": "Stripe (uluslararası) veya Iyzico/PayTR (TR) sağlayıcı; custom billing yazma — PCI-DSS/vergi/dunning sağlayıcıda. Webhook listener çekirdekte.",
+  "modules": "s-accounting GL kaydı, s-subscription-commerce aynı recurring motoru paylaşır (iş mantığı farklı).",
+  "apps": "Backend entegrasyon yazar; muhasebe vergi kuralı verir; CS dunning takip eder."
+ },
+ "ecaExample": "trigger:\n  event: payment.failed\ncondition:\n  all:\n    - actor.capability >= \"billing:dunning:run\"\n    - not loop_detected\n    - retry_count < max_retries\naction:\n  - emit: subscription.past_due\n  - emit: dunning.retry_scheduled\nguards:\n  max_depth: 6\n  idempotency_key: \"dunning:{subscription_id}:{invoice_id}:{attempt}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Billing = revenue engine; her event l1-audit'e yazılır (çift/eksik fatura, vergi hatası forensiği).",
+  "Tutar alanları money tipi + bitemporal; geriye dönük düzeltme 'o tarihte ne faturalandı' ile izlenir.",
+  "Kart verisi sağlayıcıda (Stripe/Iyzico) kalır — PCI-DSS scope dışı; backend yalnız token/referans tutar.",
+  "Webhook imza doğrulaması zorunlu; idempotency ile çift işleme engellenir (duplicate charge/fatura).",
+  "Billing capability deny-by-default; suspend veri silmez, KVKK retention bildirimli."
+ ],
+ "perfNotes": {
+  "code": "INSERT INTO billing_event (...) ON CONFLICT (provider_event_id) DO NOTHING; -- idempotent webhook",
+  "perf": "Webhook idempotent (provider_event_id unique); tekrar gelen olay çift fatura yaratmaz. Dunning retry kuyruk/zamanlayıcı ile asenkron. Subscription liste sorguları keyset; MRR toplama materialized view/projection."
+ },
+ "moduleUsage": [
+  "s-accounting: fatura ve tahsilat GL kaydına işlenir, vergi hesabı muhasebeyle hizalanır.",
+  "s-subscription-commerce: aynı recurring billing motorunu paylaşır (fiziksel/dijital periyodik teslim).",
+  "s-commerce: tek seferlik ödeme tarafıyla ayrışır; billing recurring revenue motorudur."
+ ],
+ "testNotes": [
+  "State machine testi: geçersiz geçiş (örn. canceled → past_due) reddedilir; reactivation 90 gün penceresi.",
+  "Prorating testi: ay ortası upgrade kalan güne orantılı, money yuvarlama doğru.",
+  "Dunning testi: 1/3/7 gün retry sıralı, max retry sonrası suspend; veri silinmez.",
+  "Idempotency testi: aynı webhook event_id iki kez gelince tek fatura/güncelleme.",
+  "Vergi testi: TR %20 KDV, AB B2B reverse charge doğru hesaplanır."
+ ]
+}

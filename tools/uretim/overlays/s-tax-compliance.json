@@ -1,0 +1,42 @@
+{
+ "featureDefs": [
+  {
+   "name": "GİB e-Belge entegrasyonu",
+   "desc": "e-Fatura/e-Arşiv/e-İrsaliye GİB veya özel entegratör üzerinden gönderim; her belge UBL-TR şemasına göre üretilir, ETTN ile tekilleştirilir.",
+   "critical": true
+  },
+  {
+   "name": "Bitemporal belge defteri",
+   "desc": "Her belge versiyonu (taslak→imzalı→GİB onaylı→iptal) bitemporal kayıt; mevzuat denetiminde 'o anda ne gönderildi' geriye doğru sorgulanabilir.",
+   "critical": true
+  },
+  {
+   "name": "İmza ve mühür zinciri",
+   "desc": "Mali mühür / e-imza ile imzalama dış efekt; step-up doğrulama ister, imza anahtarı KMS'te, audit'e imzalayan kim/ne zaman yazılır."
+  },
+  {
+   "name": "Mutabakat ve durum geri besleme",
+   "desc": "GİB'den gelen onay/ret durumu webhook ile belge defterine işlenir; başarısız belge kuyruğa alınıp idempotent yeniden gönderilir."
+  }
+ ],
+ "moduleUsage": [
+  "Accounting / Muhasebe: Kesilen faturanın mali kaydı yevmiyeye düşer; money tipi minor-unit + currency, vergi matrahı KDV oranına göre ayrışır.",
+  "s-purchase: Tedarikçi e-faturaları gelen kutusuna düşer, PO ile eşleşmek üzere s-doc-matching'e devredilir.",
+  "kernel-authz: 'fatura kes' ve 'fatura iptal' ayrı capability; deny-by-default, iptal yetkisi daha dar role bağlı."
+ ],
+ "ecaExample": "trigger:\n  event: invoice.issued\ncondition:\n  all:\n    - actor.capability >= \"einvoice.sign\"\n    - document.schema_valid (UBL-TR)\n    - not idempotency_seen(document.ettn)\naction:\n  - sign_with_seal: document\n  - dispatch: gib_integrator\n  - emit: einvoice.submitted\nguards:\n  max_depth: 4\n  idempotency_key: \"einv:{document.ettn}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Mali mühür/e-imza anahtarı KMS'te; imzalama capability deny-by-default ve step-up ister, anahtar materyali asla uygulama belleğine kopyalanmaz.",
+  "Vergi kimlik no, fatura tutarı ve belge içeriği money+pii sınıfı; tenant RLS ile izole, GİB gönderim audit log'u bitemporal ve değiştirilemez.",
+  "İptal işlemi geri-alınamaz mevzuat etkisi taşır; ayrı capability + dört göz onayı önerilir."
+ ],
+ "perfNotes": {
+  "code": "Belge listesi (tarih, id) keyset sayfalama; GİB gönderimi senkron değil, outbox üzerinden async worker.",
+  "perf": "Toplu kesimde belgeler batch'lenir; entegratör rate-limit'ine circuit breaker + exponential backoff ile uyulur."
+ },
+ "testNotes": [
+  "UBL-TR şema validasyonu: eksik VKN veya negatif matrah belgesi reddedilir.",
+  "Idempotency: aynı ETTN ile iki gönderim tek GİB kaydı üretir.",
+  "İptal akışı: GİB onaylı faturanın iptali audit'e iki ayrı bitemporal satır olarak düşer."
+ ]
+}

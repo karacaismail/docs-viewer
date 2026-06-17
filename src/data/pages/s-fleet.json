@@ -340,7 +340,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Fleet Management — çekirdek yetenek",
+      "term": "Araç (Vehicle) ArcheType'ı",
       "definition": [
        {
         "type": "strong",
@@ -348,41 +348,51 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Plaka + tip + km + yakıt + atanan sürücü + durum; filo çekirdeği — Samsara muadili envanter varlığı; tenant'a izole."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Canlı konum takibi (telematics)",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "GPS ping → time-series; ST_DWithin coğrafi sorgu; sürücü konumu pii=true, retention + amaç bağlama ile."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Bakım planı + servis hatırlatma",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "km/tarih eşiği → bakım iş emri; periyodik servis, muayene, sigorta yenileme ECA tetikler."
+       }
+      ]
+     },
+     {
+      "term": "Yakıt + maliyet defteri (money)",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Yakıt/bakım gideri Decimal/Currency (float değil) TL; araç başı toplam sahip olma maliyeti; muhasebeye fatura."
+       }
+      ]
+     },
+     {
+      "term": "TR muhasebe entegrasyonu",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Bakım/yakıt gideri → Türk muhasebe ürünleriyle aynı platformda fatura/gider — Samsara'nın TR boşluğu."
        }
       ]
      }
@@ -570,15 +580,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Sürücü konumu + plaka pii=true (+retention); RLS tenant-scoped — başka tenant'ın aracı/sürücüsü görülmez. Sürücü yetkisi capability deny-by-default: sürücü yalnız atandığı aracı görür, tüm filoyu değil. Konum geçmişi amaç bağlama (purpose-binding) ile tutulur; telematics ingest idempotency key ile çift ping engellenir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -606,15 +608,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Araç/konum listesi keyset (cursor) pagination; (tenant_id, plaka, ts) + GiST coğrafi index; konum ingest asenkron worker + time-series tablo."
        }
       ]
      },
@@ -632,15 +626,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Yüksek frekanslı GPS ping time-series'e batch yazılır; canlı harita son-konum projeksiyonundan okur, ham log'u taramaz."
        }
       ]
      },
@@ -936,7 +922,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Fleet Management",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Fleet Management\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: vehicle.odometer_updated\n  when: \"km >= next_service_km AND tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"fleet.maintenance.schedule\"\n    - not loop_detected\naction:\n  - emit: maintenance.work_order_requested   # outbox, idempotent\n  - notify: [\"fleet_manager\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{vehicle_id}:service:{next_service_km}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -1076,6 +1062,18 @@
     ]
    },
    {
+    "id": "block-s-fleet-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Komşu-tenant araç/sürücü sorgusu sıfır döndürür. Sürücü yalnız kendi atanmış aracını görebilir (capability testi). Aynı bakım eşiği iki kez tetiklense tek iş emri üretir (idempotency). Yakıt gideri Currency olarak kuruş kaybı olmadan muhasebeye yazılır."
+     }
+    ]
+   },
+   {
     "id": "block-s-fleet-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1094,7 +1092,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Layer-2 SaaS ürünü; kendi Araç/Sürücü/Bakım ArcheType'larını ve UI'sını tanımlar ama yetki/audit/event-bus/tenancy framework'ten gelir, yeniden icat etmez."
        }
       ]
      },
@@ -1103,16 +1101,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Tenancy (her araç tenant_id ile izole, RLS), Identity (sürücü + filo yöneticisi kimliği), Audit (konum/bakım aksiyon izi) kernel'den miras."
        }
       ]
      },
@@ -1121,7 +1110,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "App core'una bağlı; Fleet bir Domain (Kaya) olarak core sözleşmelerine uyar, core module değişmez."
        }
       ]
      },
@@ -1130,7 +1119,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Time-series (konum), scale-gis (coğrafi sorgu), worker (telematics ingest) module'lerini tüketir; bakım olayını muhasebeye yalnız Contract ile yayar."
        }
       ]
      },
@@ -1139,7 +1128,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "FSM/saha app'i araç atamasını filo modülünden çeker; aynı sürücü kaydını paylaşır, çift kayıt yok."
        }
       ]
      }
@@ -1152,13 +1141,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-fleet-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-fleet-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Helpdesk/FSM app: saha iş emri → en yakın müsait araç (ST_DWithin) atanır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Muhasebe app: yakıt/bakım gideri → TL gider kaydı + KDV; döviz abonelik değil."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Notification: bakım eşiği aşıldı → filo yöneticisine push; sürücüye 'muayene zamanı' SMS (İYS opt-in)."
+      }
+     ]
     ]
    },
    {

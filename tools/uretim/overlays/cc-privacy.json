@@ -1,0 +1,45 @@
+{
+ "featureDefs": [
+  {
+   "name": "Right to be Forgotten",
+   "desc": "Silme talebi: soft delete + 30 gün sonra cron ile gerçek DELETE + audit; KVKK m.7 / GDPR m.17.",
+   "critical": true
+  },
+  {
+   "name": "Data Portability (DSAR export)",
+   "desc": "Kullanıcının tüm verisini tablolardan toplayıp JSON/CSV indirme; KVKK m.11 / GDPR m.20.",
+   "critical": true
+  },
+  {
+   "name": "Consent Management",
+   "desc": "Pazarlama/analitik/çerez için ayrı rıza kaydı + iptal; public form açık rıza akışı buna bağlanır."
+  },
+  {
+   "name": "Breach Notification",
+   "desc": "Sızıntı tespiti → 72 saat playbook: impact assessment → KVKK/EDPB + kullanıcı bildirimi.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Crosscut: mahremiyet hukukun değil sistemin işi. Sonradan eklenemez; baştan her veri tipine pii metadata + audit bağı.",
+  "kernel": "pii sınıflandırma matrisi + audit (l1-audit) + bitemporal kernel'de; her veri tipi pii_fields metadata taşır.",
+  "core": "Soft delete (deleted_at) yetmez; retention/silme cron'u core katmanda; encryption at rest + in transit.",
+  "modules": "Consent altyapısı + l1-notification ihlal/rıza bildirimi + l1-audit erişim kaydı ile kompoze; public form yüzeyi consent'i kullanır.",
+  "apps": "Tüm app'lerde 'verimi indir' + 'verimi sil' + rıza paneli zorunlu; aynı Party kaydı tek silme talebiyle kapsanır."
+ },
+ "ecaExample": "trigger:\n  event: ErasureRequested\ncondition:\n  all:\n    - actor.capability >= \"privacy:erase\"\n    - request.identity_verified\n    - not legal_hold_active\naction:\n  - emit: SoftDeleted\n  - schedule: HardDeleteAfter30d\n  - emit: AuditLogged\nguards:\n  max_depth: 6\n  idempotency_key: \"erasure:{subject_id}:{request_id}\"\n  external_effects: notification_to_authority",
+ "securityNotes": [
+  "pii alanı listede gizli, detayda maskeli, public'te yasak; 'göster' eylemi audit'e (l1-audit) yazılır.",
+  "Capability deny-by-default: silme/export/rıza-değişikliği yalnız doğrulanmış kimlikle; legal_hold varsa silme bloke.",
+  "Pseudonymization (geri çözülemez hash) analitiğe; fatura gibi saklama zorunlu kayıtlarda PII maskelenir, soft delete yetmez."
+ ],
+ "perfNotes": {
+  "code": "DSAR export tüm tabloları subject_id ile keyset tarar; retention cron deleted_at < now-30d batch DELETE.",
+  "perf": "İhlal bildirimi 72 saat içinde; export ve hard-delete worker'a alınır, talep dalgası kuyrukla yayılır."
+ },
+ "testNotes": [
+  "Hard delete: 30 gün sonra cron'un PII'yi gerçekten sildiği ve audit kaydının kaldığı doğrulanır.",
+  "Public form: açık rıza onayı olmadan gönderimin reddedildiği ve rızanın audit'e yazıldığı test edilir.",
+  "Legal hold: saklama yükümlülüğü aktifken silme talebinin bloke edildiği (pseudonymize fallback) kanıtlanır."
+ ]
+}

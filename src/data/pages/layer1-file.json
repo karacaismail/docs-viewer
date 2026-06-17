@@ -341,7 +341,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "File & Storage — birincil yetenek",
+      "term": "Storage driver soyutlamasi",
       "definition": [
        {
         "type": "strong",
@@ -349,25 +349,42 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "Local/S3/R2/Azure/GCS/MinIO tek Protocol arkasinda (put/get/delete/signed_url/copy/head). Backend degisimi core kodunu etkilemez."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Pre-signed URL yukleme",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Istemci sunucudan gecmeden dogrudan storage'a yukler; kisa omurlu imzali URL. Sunucu yuku ve gecikme azalir."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "Versioning zinciri",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "file_version: content hash + kim + ne zaman, immutable. Rollback opsiyonu; Drive icin block-level delta + CRDT ustune."
+       }
+      ]
+     },
+     {
+      "term": "Lifecycle / TTL",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "Temp 24s, abandoned asset 7g, 90g sonra cold storage. Storage policy veya scheduled worker ile."
        }
       ]
      }
@@ -554,16 +571,13 @@
     "title": "Güvenlik optimizasyonu",
     "segments": [
      {
-      "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
+      "type": "term",
+      "text": "Pre-signed URL",
+      "termId": "term-pre-signed-url-layer1-file"
      },
      {
       "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": " deny-by-default: yalniz capability file:write olan aktor icin uretilir; kisa TTL, tek kullanim hedefli key. MIME validation + virus scan (ClamAV) final blob CDN'e gitmeden; content-type spoofing reddedilir. signed_url okuma da capability-bagli; tenant izolasyonu blob key prefix + RLS metadata ile. Versiyon kaydi immutable: content hash ile butunluk; rollback yeni surum uretir, eskiyi silmez (audit). Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -591,15 +605,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Upload temp blob'a; thumbnail (64/256/1024) ve HLS transcode asenkron worker'da, FileUploaded event ile tetiklenir."
        }
       ]
      },
@@ -617,15 +623,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Pre-signed URL ile buyuk dosyalar sunucuyu bypass eder; CDN push ile okuma olceklenir. Cold storage gecisi maliyeti dusurur."
        }
       ]
      },
@@ -1061,6 +1059,18 @@
     ]
    },
    {
+    "id": "block-layer1-file-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "file:write capability'si olmayan aktore signed PUT URL uretilmemeli. Yanlis MIME / viruslu icerik final blob'a gecmemeli. Versiyon rollback eski icerigi silmemeli (immutable zincir). Cross-tenant blob key erisimi -> reddedilmeli."
+     }
+    ]
+   },
+   {
     "id": "block-layer1-file-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1079,7 +1089,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Layer-1 in-tree primitive; tum ust katmanlar dosya isini buradan alir."
        }
       ]
      },
@@ -1088,16 +1098,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Authz (signed_url erisimi capability-bagli), tenancy (blob key tenant-scoped), event-bus (FileUploaded)."
        }
       ]
      },
@@ -1106,7 +1107,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "FileMetadata Contract satiri; MIME validation + virus scan pipeline."
        }
       ]
      },
@@ -1115,7 +1116,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "s-drive (Block Storage: content-addressable, FastCDC dedup), AI moderation + search index (FileUploaded dinler)."
        }
       ]
      },
@@ -1124,7 +1125,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Her form 'dosya ekle' alani, thumbnail/HLS variant uretimi."
        }
       ]
      }

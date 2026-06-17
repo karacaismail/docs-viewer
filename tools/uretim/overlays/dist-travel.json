@@ -1,0 +1,19 @@
+{
+ "integration": {
+  "shouldIntegrate": "Tur acentesi bir distribution paketidir: Stack ⊂ Edition ⊂ Distribution; ham stack değil, sektör UI/UX katmanıyla teslim edilir. Event + Scheduling + Procurement + Accounting parçalarını TÜRSAB operasyonuna göre birleştirir.",
+  "kernel": "identity/authz (acente personeli rol bazlı capability deny-by-default), tenancy (acente başına RLS), audit (rezervasyon/ödeme bitemporal izi), event-bus.",
+  "core": "Party (yolcu/tedarikçi tek kaynak), Booking primitive, Money ledger (döviz kuru sabitleme + komisyon), Document (TÜRSAB belge şablonları).",
+  "modules": "s-event (tur: kontenjan/tarih/fiyat sınıfı), s-scheduling (rezervasyon + ödeme planı kapora/taksit), s-procurement (otel/ulaşım sözleşme + sezon sonu mutabakat), stack-accounting (kur sabitleme, acente komisyonu).",
+  "apps": "Acente operasyon kabuğu: tur tanımı, rezervasyon ekranı, tedarikçi mutabakat paneli, TÜRSAB belge üretimi."
+ },
+ "securityNotes": [
+  "Yolcu kimlik/pasaport ve ödeme verisi pii+money sınıfı; tenant RLS ile acente izolasyonu, kapora tahsilatı external_effects step-up ister.",
+  "Tedarikçi mutabakatı ve komisyon hesabı money tipiyle; kontenjan aşımı veya çift rezervasyon idempotency_key ile engellenir.",
+  "Döviz kuru sabitleme anı audit'e bitemporal yazılır; 'hangi kurla satıldı' geriye sorgulanabilir, sonradan değiştirilemez."
+ ],
+ "testNotes": [
+  "Kontenjan: dolu turda yeni rezervasyon reddedilir, eşzamanlı iki talep yalnız birini onaylar.",
+  "Kur sabitleme: satış anındaki kur kilitlenir, sonraki kur dalgalanması fatura tutarını değiştirmez.",
+  "Tedarikçi mutabakat: sezon sonu mutabakat tedarikçi başına toplanır, komisyon money tipiyle doğru ayrışır."
+ ]
+}

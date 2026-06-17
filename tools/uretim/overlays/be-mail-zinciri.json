@@ -1,0 +1,47 @@
+{
+ "featureDefs": [
+  {
+   "name": "MailProvider sözleşmesi",
+   "desc": "Tüm adaptörler tek MailProvider.send(...) arayüzünü uygular (Sendmail/SMTP/Resend/SendGrid/Mailgun/SES/GmailAPI/GraphAPI/PhpMail); çağıran kod hangi sağlayıcının çalıştığını bilmez.",
+   "critical": true
+  },
+  {
+   "name": "Sıralı sağlayıcı zinciri",
+   "desc": "Gönderim Provider #1 başarısızsa #2 → #3 diye iner; sıra konfigürasyondur, hiçbir katman zorunlu değildir. Shared hosting'de sendmail, kurumsalda SES aynı kodla çalışır.",
+   "critical": true
+  },
+  {
+   "name": "Kuyruklu telafi (outbox ailesi)",
+   "desc": "Zincir tükenirse mail Postgres kuyruğuna alınır, gecikmeyle yeniden denenir; idempotency_key ile çift gönderim önlenir, mail sessizce kaybolmaz.",
+   "critical": true
+  },
+  {
+   "name": "Alternatif kanal düşüşü",
+   "desc": "Mail tüm zincirde başarısızsa kritik içerik (doğrulama kodu) SMS→WhatsApp→push→in-app sırasıyla layer1-notification'ın kanal-agnostik sözleşmesine devredilir."
+  },
+  {
+   "name": "Sağlayıcı sağlık izleme",
+   "desc": "Her sağlayıcının başarı oranı/gecikmesi metering olaylarıyla izlenir; sıralama panelden değiştirilir, sürekli başarısız sağlayıcı zincirden düşürülebilir."
+  }
+ ],
+ "moduleUsage": [
+  "layer1-notification: Mail bir kanaldır; zincir tükenince fallback_channels sözleşmesi devreye girer, kanal-agnostik gönderim korunur.",
+  "scale-webhook: Sağlayıcı bounce/delivery webhook'ları sağlık metriklerine ve kuyruk durumuna geri beslenir.",
+  "kernel-tenancy: Tenant kendi SMTP bilgisini girer; zincir sırası ve anahtarlar tenant RLS altında izole."
+ ],
+ "ecaExample": "trigger:\n  event: mail.send_requested\ncondition:\n  all:\n    - not idempotency_seen(message.dedup_key)\n    - chain.has_next_provider\naction:\n  - try: chain.next_provider.send(message)\n  - on_failure: advance_chain or enqueue(postgres, delay=15m)\n  - on_chain_exhausted: emit mail.fallback_to(sms)\nguards:\n  max_depth: 9\n  idempotency_key: \"mail:{message.dedup_key}\"\n  external_effects: retried_via_queue",
+ "securityNotes": [
+  "Sağlayıcı API anahtarları ve kullanıcı SMTP parolası KMS/secret store'da; tenant RLS ile izole, log'a maskelenerek yazılır.",
+  "Mail içeriği ve alıcı adresi pii sınıfı; kuyruktaki bekleyen mail at-rest şifreli, tenant başına izole kuyruk.",
+  "Doğrulama kodu gibi kritik içerik fallback kanala düşerken de tek kullanımlık + süre sınırlı kalır, idempotency korunur."
+ ],
+ "perfNotes": {
+  "code": "Zincir denemesi senkron değil; başarısızlık kuyruğa düşer, yeniden deneme keyset (scheduled_at, id) ile sıralı worker'da.",
+  "perf": "Sağlıklı sağlayıcı önce denenir (sağlık sırasıyla); sürekli başarısız sağlayıcı circuit breaker ile atlanır, gereksiz timeout maliyeti önlenir."
+ },
+ "testNotes": [
+  "Zincir düşüşü: #1 sendmail başarısız simüle edilir, #2 SMTP gönderir, tek mail çıkar.",
+  "Kuyruk telafi: tüm zincir başarısızsa mail kuyruğa düşer, 15 dk sonra yeniden denenir, kaybolmaz.",
+  "Idempotency: aynı dedup_key ile iki istek tek mail üretir (kuyruk + zincir birlikte)."
+ ]
+}

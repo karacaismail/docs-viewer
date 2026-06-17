@@ -1,0 +1,42 @@
+{
+ "featureDefs": [
+  {
+   "name": "Birleşik gözlemlenebilirlik (logs/metrics/traces)",
+   "desc": "structlog JSON log + Prometheus metric + OpenTelemetry trace tek pane; her kayıt trace_id ile korele, çok-tenant tag'li, RED method (Rate/Errors/Duration) standart.",
+   "critical": true
+  },
+  {
+   "name": "SLO + error budget",
+   "desc": "Servis başına SLI/SLO tanımı; kalan error budget ve burn-rate alerting. Bütçe tükenince dağıtım dondurma sinyali, on-call routing escalation policy ile.",
+   "critical": true
+  },
+  {
+   "name": "Backup & DR (RPO/RTO)",
+   "desc": "PostgreSQL pg_basebackup + WAL archiving (pgBackRest); RPO<5dk, RTO<1sa, cross-region replica, at-rest şifreli backup, aylık restore drill, tenant-aware backup."
+  },
+  {
+   "name": "AI model ops & anomaly detection",
+   "desc": "NIST AI RMF (Govern/Map/Measure/Manage): model versiyon pinleme + rollback, prompt template versioning, eval dataset CI-gating, drift detection; tenant verisi eğitime gitmez, PII maskelenir."
+  }
+ ],
+ "moduleUsage": [
+  "kernel-bus: Event-bus akışı trace_id ile span'lere bağlanır; her olay multi-tenant tag taşır, gözlemleme bu tag'lerle filtrelenir.",
+  "scale-workers: Worker throughput ve kuyruk gecikmesi metric'lenir; backpressure ve burn-rate alerting bu sinyallerden beslenir.",
+  "s-ai-governance: AI model eval/drift/hallucination metrikleri buradan toplanır; acceptance criteria ve red-team hedeflerine bağlanır."
+ ],
+ "ecaExample": "trigger:\n  event: slo.error_budget_burn\ncondition:\n  all:\n    - burn_rate > fast_burn_threshold\n    - service.budget_remaining < critical_floor\n    - not idempotency_seen(alert.window_key)\naction:\n  - page: on_call(service.team)\n  - signal: freeze_deploys(service)\n  - emit: slo.breach_alerting\nguards:\n  max_depth: 2\n  idempotency_key: \"slo:{service.id}:{alert.window_key}\"\n  external_effects: pager_dispatch",
+ "securityNotes": [
+  "Log/trace içeriğinde PII maskelenir; tenant verisi gözlem kayıtlarına ham geçmez, çok-tenant tag erişimi capability ile sınırlı (deny-by-default).",
+  "Backup at-rest şifreli; restore yetkisi ayrı capability + step-up, tenant-aware backup'ta bir tenant diğerinin yedeğine erişemez.",
+  "AI tarafında tenant verisi model eğitimine gitmez; prompt'a giren PII input guardrail'de maskelenir, çıktı guardrail (halüsinasyon/toksik/format) devrede."
+ ],
+ "perfNotes": {
+  "code": "Performance budget: API p50<50ms, p95<200ms, p99<500ms; endpoint başına max 10 query (N+1 engeli), cache hit >%80, worker >100 job/s.",
+  "perf": "Metric toplama düşük kardinalite tag'lerle; yüksek-kardinalite alan trace'e bırakılır, gözlem maliyeti tag patlamasıyla şişmez."
+ },
+ "testNotes": [
+  "SLO burn: hızlı tükenme eşiği aşılınca tek sayfa (page) üretilir, aynı pencerede tekrar paging yapılmaz (idempotency).",
+  "Restore drill: aylık test RPO<5dk / RTO<1sa hedeflerini doğrular, tenant-aware geri yükleme izole çalışır.",
+  "AI eval gating: model/prompt değişiminde regression eval koşar, eşik altı sonuç dağıtımı bloklar."
+ ]
+}

@@ -359,7 +359,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Destek Matrisi — Desteklenen, Deneysel, Yasak — çekirdek yetenek",
+      "term": "Üç destek seviyesi — Desteklenen / Deneysel / Yasak",
       "definition": [
        {
         "type": "strong",
@@ -367,41 +367,42 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Desteklenen: CI + release + runbook + observability + on-call + upgrade/restore kanıtı tam. Deneysel: izole pilot, SLA yok, geri-dönüş yolu var. Yasak: bilinen güvenlik/operasyon açığı ya da kanıtsız semantik."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Desteklenen v1 profili",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Debian + Docker Compose + PostgreSQL; Hetzner referans ortamı; yerel geliştirme. Her satır contract testi + runbook + on-call sahibi taşır. Runtime varsayılan olarak yalnız bunu sunar."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Yasak kombinasyonlar",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Shared hosting (worker/WAL-PITR/sandbox önkoşulları kanıtsız) ve multi-region active-active (conflict/residency/failover kanıtı yok) — destek reddedilir, satış vaadi/SLA verilemez."
+       }
+      ]
+     },
+     {
+      "term": "Statü değişikliği kapısı (ADR + kanıt)",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Bir kombinasyonun statüsü ancak ADR ve kanıtla değişir; deneysel profil zımnen SLA kapsamına alınamaz, listede olmayana zımni destek verilmez."
        }
       ]
      }
@@ -589,15 +590,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Yasak statü güvenlik temellidir: shared hosting'de güvenli sandbox + worker + WAL/PITR önkoşulları kanıtlanamadığından kullanılamaz; istek reddedilir, Compose profiline yönlendirilir. Multi-region active-active conflict/residency/failover kanıtı olmadan yasak — veri-yerleşimi (residency) ve tutarlılık garantisi verilemez. externalReviewRequired=true: statü değişikliği harici (senior SRE) inceleme + ADR + kanıt gerektirir; zımni statü yükseltme engellenir. Failure mode koruması: satış/kurulum ekranı Deneysel seçeneği Desteklenen gibi sunarsa bu bir uyumsuzluk hatasıdır (acceptance criteria ihlali). Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -625,15 +618,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Runtime yalnız Desteklenen profili varsayılan provision eder; Deneysel best-effort, Yasak reddedilir. Statü tablosu tek kaynak (single source) — kurulum, test matrisi ve on-call sorumluluğu buradan türer."
        }
       ]
      },
@@ -651,15 +636,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Desteklenen profilde yük testi + restore penceresi kanıtlı (örn. Debian/Compose temiz kurulum→upgrade→rollback→restore); Deneysel storage'da maliyet/restore kanıtı eksik olduğundan üretim önerilmez."
        }
       ]
      },
@@ -955,7 +932,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Destek Matrisi — Desteklenen, Deneysel, Yasak",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Destek Matrisi — Desteklenen, Deneysel, Yasak\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: deploy.profile_selected\ncondition:\n  all:\n    - actor.capability >= \"deploy.configure\"\n    - support_status(profile) == \"supported\"   # deny-by-default\n    - evidence_complete(profile)                 # CI+runbook+restore+on-call\naction:\n  - allow: provision\n  - on_experimental: warn_no_sla\n  - on_forbidden: reject_and_redirect_to_compose\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:deploy:{profile}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1095,6 +1072,18 @@
     ]
    },
    {
+    "id": "block-be-destek-matrisi-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Runtime varsayılanı: yalnız Desteklenen profil sunulur; Yasak profil seçimi reddedilir, Compose'a yönlendirir. Her Desteklenen satır contract testi + runbook + on-call sahibi taşır (eksikse satır Desteklenen olamaz). Statü değişikliği ADR + kanıt + harici inceleme olmadan geçmez (kapı testi). Failure mode: kurulum ekranı Deneysel seçeneği Desteklenen gibi göstermez (UI doğrulaması)."
+     }
+    ]
+   },
+   {
     "id": "block-be-destek-matrisi-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1113,7 +1102,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — bu bir özellik değil, müşteri beklentisini + test matrisini + destek ekibinin sorumluluk sınırını belirleyen kontrat. be-v1-kapsam-disi ve be-deploy-profilleri önkoşuludur; build-enterprise-readiness ile hizalanır."
        }
       ]
      },
@@ -1122,16 +1111,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Kernel'in güvenlik invariant'leri (RLS, capability, audit) ancak Desteklenen profilde kanıtlanmış sayılır; Yasak profilde kernel garantileri verilmez (örn. shared hosting'de sandbox izolasyonu kanıtsız)."
        }
       ]
      },
@@ -1140,7 +1120,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Core depolama/worker semantiği (WAL/PITR, broker) yalnız Desteklenen profil altyapısında garanti edilir; Deneysel storage'da (S3-uyumlu) tam restore kanıtı eksik olduğundan core SLA'sı askıdadır."
        }
       ]
      },
@@ -1149,7 +1129,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Layer-2 module'leri yalnız Desteklenen profilde üretim SLA'sı alır; Kubernetes/Swarm ve haricî broker 'deneysel değil' (yalnız interface/taslak var) — module release artefaktı bu profillerde üretilmez."
        }
       ]
      },
@@ -1158,7 +1138,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Satış ve kurulum ekranı yalnız Desteklenen profili varsayılan sunar; Deneysel seçenek üretim gibi gösterilemez (failure mode), app dağıtımı matristen türer."
        }
       ]
      }
@@ -1171,13 +1151,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-be-destek-matrisi-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-be-destek-matrisi-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "be-deploy-profilleri: deployment profilleri bu matrisin statü kaynağı; runtime varsayılanı buradan gelir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "be-v1-kapsam-disi: kapsam-dışı kombinasyonlar (shared hosting, multi-region) bu matriste Yasak olarak işaretlenir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "build-enterprise-readiness: kurumsal hazırlık değerlendirmesi Desteklenen satırların kanıt setine (runbook/restore/on-call) dayanır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Satış/kurulum app yüzeyi: yalnız Desteklenen profili gösterir; Deneysel/Yasak runtime'da varsayılan sunulmaz."
+      }
+     ]
     ]
    },
    {

@@ -1,0 +1,50 @@
+{
+ "featureDefs": [
+  {
+   "name": "Paylaşılan şema + JSONB (varsayılan)",
+   "desc": "Tip verisi varsayılan olarak az sayıda sabit paylaşılan tabloya; ortak alanlar sabit kolon, değişken/özel alanlar JSONB kolonunda. FK ilişkilerle bağlanır; otomatik tablo yaratılmaz, dinamik DDL yok, son müşteri tablo yaratamaz.",
+   "critical": true
+  },
+  {
+   "name": "Opt-in fiziksel tablo terfisi",
+   "desc": "Yüksek-hacimli/performans-kritik tip açık kararla fiziksel tabloya terfi eder; varsayılan değil, izlenir, geri-alma planlı.",
+   "critical": true
+  },
+  {
+   "name": "Metadata-driven dispatch",
+   "desc": "Tip davranışı runtime metadata + Strategy/Policy ile çözülür; kodda if/else type-switching YASAK. Strateji auto-discover.",
+   "critical": false
+  },
+  {
+   "name": "Index + cache disiplini",
+   "desc": "Sabit kolon B-tree, JSONB GIN index; tablo güncellenince yalnız ilgili anahtar cache invalidate edilir.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Bu çekirdek depolama kararı tüm tip verisi için varsayılandır; tablo-per-tip deseni terk edildi. Yüksek hacim istisnası açık kararla terfi olur.",
+  "kernel": "Tip metadata kaydı (alan tanımları) ve FK ilişki haritası çekirdekte; tenant izolasyonu (RLS) JSONB satırlarda da geçerli.",
+  "core": "Paylaşılan PostgreSQL şeması + JSONB kolon; şema sabit olduğu için ortamlar arası (prod/dev/beta) migrate kolay — değişiklik veri/metadata, DDL değil.",
+  "modules": "Bir module bir bounded-context olarak tipleri kompoze eder; depolama modeli module sınırından bağımsız tek disiplinle çalışır.",
+  "apps": "SDK tek komut + çok-aşamalı sorularla tip tanımı üretir; uygulamalar tipli client üzerinden erişir."
+ },
+ "ecaExample": "trigger:\n  event: entity.record_written\ncondition:\n  all:\n    - actor.capability >= \"storage:write\"\n    - not loop_detected\n    - tenant.rls_scope_valid\naction:\n  - emit: cache.key_invalidated\n  - emit: projection.refresh_requested\nguards:\n  max_depth: 6\n  idempotency_key: \"storage:{entity_type}:{record_id}:{version}\"\n  external_effects: none",
+ "securityNotes": [
+  "Tenant izolasyonu RLS ile JSONB satırlarında da zorunlu; komşu tenant verisi okunamaz (deny-by-default).",
+  "Son müşteri tablo yaratamaz, dinamik DDL yok — saldırı yüzeyi ve şema kayması engellenir.",
+  "JSONB aşırı kullanımı şemasız kaosa kaymasın diye ortak alanlar sabit kolonda; yalnız değişken alan JSONB.",
+  "Write yetkisi capability deny-by-default; veri değişiklikleri denetim izine bağlanır."
+ ],
+ "perfNotes": {
+  "code": "CREATE INDEX ON entity USING GIN (variable_fields); -- JSONB sorgusu seq-scan değil index plan",
+  "perf": "Az sayıda sabit tablo + JSONB GIN index: yüzlerce tabloya index dağılmaz, yük altında stabil. Sorgu planı seq-scan değil index olmalı. Opt-in terfi iki kod yolu yaratır → terfi kriteri net + izlenir. Raporlama JSONB'de zorsa materialized view/projection."
+ },
+ "testNotes": [
+  "Şema değişmezliği testi: yeni tip tanımı DDL/tablo YARATMAZ (paylaşılan şema sabit kalır).",
+  "Plan testi: JSONB alan GIN index ile sorgulanır, sorgu planı seq-scan değil.",
+  "Dispatch testi: tip davranışı metadata'dan çözülür; kodda if/else type-switch yok.",
+  "Terfi testi: opt-in fiziksel tabloya geçiş yalnız açık bayrakla, veri taşıma + geri-alma doğrulanır.",
+  "İzolasyon testi: RLS JSONB satırlarda da geçerli, komşu tenant okuyamaz.",
+  "Migrate determinizmi: ortamlar arası (prod/dev/beta) değişiklik tekrarlanabilir."
+ ]
+}

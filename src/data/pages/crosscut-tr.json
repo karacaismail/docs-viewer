@@ -697,7 +697,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Türkiye Uyum Birinci Sınıf — birincil yetenek",
+      "term": "e-Belge sağlayıcı sürücüsü (driver)",
       "definition": [
        {
         "type": "strong",
@@ -705,25 +705,60 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "Foriba/İzibiz/Uyumsoft/Logo değiştirilebilir sürücü; ArcheType invoice submit → GİB UBL-TR XML üretimi → yanıt başarılıysa audit'e kayıt. e-Fatura/e-Arşiv/e-Defter framework-level."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "KVKK veri-sahibi hakları (Madde 11) endpoint'leri",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "GET /kvkk/my-data (erişim), POST /kvkk/forget-me (PII null, ID korunur — referential integrity), consent versioning per kategori, AI scoring itiraz akışı; 72 saat ihlal bildirimi alert."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "VERBİS + veri envanteri (Madde 16) otomasyonu",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Entity'lerde PII tagging → otomatik VERBİS bildirim formatı export; yıllık çalışan >50 veya bilanço >100M TL zorunlu kayıt otomatik."
+       }
+      ]
+     },
+     {
+      "term": "SGK/MERSİS/KEP/e-Devlet entegrasyon paketi",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "SGK e-Bildirge (APHB/MUHSGK/İAB), MERSİS şirket sorgu, KEP yasal tebligat, e-Devlet "
+       },
+       {
+        "type": "term",
+        "text": "OAuth",
+        "termId": "term-oauth-crosscut-tr"
+       },
+       {
+        "type": "text",
+        "text": ", m-imza (TÜRKKEP), ETK izin (İYS), BKM/TROY, TCMB FX (15:30 yayın)."
+       }
+      ]
+     },
+     {
+      "term": "Yurt dışı veri aktarımı (Mart 2024) + TR-içi öncelik",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Standart sözleşme/BCR yolu; hangi ArcheType verisi hangi servise gidiyor → tenant admin'e bildirim + açık rıza; default driver TR-içi (Foriba/NetGSM TR, Hetzner FSN1 AB)."
        }
       ]
      }
@@ -911,15 +946,16 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
+      "text": "KVKK silme (forget-me) tam silme DEĞİL: PII alanlar null, ID korunur (referential integrity) + finansal kayıt (fatura/e-Defter/sözleşme) "
      },
      {
-      "type": "code",
-      "text": "pii"
+      "type": "term",
+      "text": "VUK",
+      "termId": "term-vuk-crosscut-tr"
      },
      {
       "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": " 10 yıl tutulur — silme hakkı + saklama yükümlülüğü aynı anda karşılanır. PII tagging + field-level encryption (LandX D02): hangi alan at-rest şifreli + key rotation; Pino redact ile log scrubbing — sızıntıda veri çözülemez. İhlal bildirimi 72 saat içinde KVKK'ya; framework alert tetikler. AI scoring kararına itiraz akışı (otomatik karar itirazı Madde 11) deny-by-default capability ile. Yurt dışı aktarım (Mart 2024): hangi ArcheType verisi hangi dış servise gidiyor tenant admin'e bildirim + açık rıza; consent versioning per kategori; default TR-içi driver önceliği. GİB/SGK bildirimleri dış-etkili allowlist'li akış; kvkk.* ve beyan capability'leri deny-by-default; e-Devlet OAuth federasyonu güven sınırı korunur. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -947,15 +983,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "e-Fatura/SGK bildirimleri asenkron worker (sağlayıcı API dış-etkili, retry'li); TCMB FX günlük 15:30 batch çekim + cache; VERBİS export periyodik (aylık scan)."
        }
       ]
      },
@@ -973,15 +1001,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "DSR export (my-data) çok-tablo toplama asenkron, ana akışı bloklamaz; mükellef/beyan listeleri keyset; PII discovery field tarama batch (canlı sorguyu yormaz)."
        }
       ]
      },
@@ -1277,7 +1297,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Türkiye Uyum Birinci Sınıf",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Türkiye Uyum Birinci Sınıf\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: data_subject.erasure_requested   # KVKK Madde 7\ncondition:\n  all:\n    - actor.capability >= \"kvkk.erase\"\n    - legal_hold_check == clear\n    - not loop_detected\naction:\n  - anonymize: [pii_columns]              # forget-me: PII null, ID korunur\n  - retain: [invoice, e_defter, contract]  # VUK 10y\n  - emit: kvkk.erasure_completed\nguards:\n  max_depth: 6\n  pii: true\n  retention: \"financial: 10y (VUK); personal: anonymized\"\n  external_effects: legal_review_required",
     "copyEnabled": true
    },
    {
@@ -1417,6 +1437,18 @@
     ]
    },
    {
+    "id": "block-crosscut-tr-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "forget-me sonrası PII kolonlar null/anonimize, ID + finansal kayıt (fatura/e-Defter) durur (VUK 10y); referential integrity bozulmaz. e-Fatura submit → GİB UBL-TR XML üretir; başarılı yanıt audit'e yazılır (denetim izi). Komşu-tenant beyan/PII/mükellef sorgusu sıfır döndürür (RLS). Yurt dışına veri giden ArcheType için tenant admin bildirimi + açık rıza olmadan aktarım yapılmaz (consent kapısı). Yıllık çalışan >50 / bilanço >100M TL eşiğinde VERBİS export otomatik tetiklenir; veri envanteri (Madde 16) formatı üretilir."
+     }
+    ]
+   },
+   {
     "id": "block-crosscut-tr-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1435,7 +1467,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Türkiye uyumu add-on modül DEĞİL, framework-level crosscut paket; PII/finansal/İK verisi üreten her module'ü keser. Hetzner'de host, müşteriler TR'de — yasal zorunlulukların yazılım karşılığı sessizce işler."
        }
       ]
      },
@@ -1444,16 +1476,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Tenancy (RLS — her mükellefin beyan/PII'si izole), Identity (e-Devlet OAuth federasyonu), Audit (GİB/SGK bildirim + KVKK kararı izi) kernel'den."
        }
       ]
      },
@@ -1462,7 +1485,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Money (e-Fatura tutarı kuruş + para birimi, TCMB kuru), bitemporal (VUK 10 yıl saklama, defter dönem sürümü), Audit zorunlu, PII tagging core kontratı."
        }
       ]
      },
@@ -1471,7 +1494,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "LandX D02 (PII Governance/classification/field-encryption/log redaction) + D03 (Compliance Framework: control matrix/evidence/periodic scan/VERBİS), cc-identity-models (TC kimlik/VAT) ile bağlanır — yalnız Contract."
        }
       ]
      },
@@ -1480,7 +1503,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Muhasebe/İK/CRM app'leri ortak TR-uyum paketini paylaşır; aynı mükellef Party'si e-Fatura/SGK/KVKK akışlarında tek kaynak."
        }
       ]
      }
@@ -1493,13 +1516,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-crosscut-tr-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-crosscut-tr-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "cc-identity-models: TC kimlik (11-hane + algoritma + NVI) ve AB VAT (VIES) doğrulaması e-Belge/mükellef akışını besler."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "LandX D02 PII Governance: ArcheType field PII keşfi + classification + field-level encryption + Pino log redaction KVKK silme/erişim otomasyonuna bağlanır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "LandX D03 Compliance Framework: KVKK+GDPR Madde 30+SOC2 control matrix + evidence collection + aylık scan + VERBİS export."
+      }
+     ]
     ]
    },
    {

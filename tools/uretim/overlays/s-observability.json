@@ -1,0 +1,48 @@
+{
+ "featureDefs": [
+  {
+   "name": "Log Ingest",
+   "desc": "Yapılandırılmış log toplama + indeksleme; tenant etiketi, retention sınıfı ve arama.",
+   "critical": true
+  },
+  {
+   "name": "Metric Store",
+   "desc": "Zaman serisi metrikleri (counter/gauge/histogram); etiket bazlı sorgu ve downsampling."
+  },
+  {
+   "name": "Distributed Trace",
+   "desc": "Trace/span ağacı; servis-arası gecikme, kök neden ve örnekleme (sampling) kontrolü."
+  },
+  {
+   "name": "Alert Rule",
+   "desc": "Eşik/anomali kuralı → bildirim kanalı; sessize alma, eskalasyon ve değişiklik audit'i."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Layer-2 SaaS ürünü (Datadog/Grafana LGTM muadili); yetki/audit/event-bus kernel'den gelir, kendi ArcheType ve UI'sını tanımlar.",
+  "kernel": "Tenancy + capability + audit kernel'den; her telemetri kaydı tenant-scoped, alert değişiklikleri audit'li.",
+  "core": "Observability app core module'ü ingest hattını taşır; dashboard/alert ek module olarak biner.",
+  "modules": "l1-notification alert kanalı + l1-analytics rapor + scale-streaming yüksek hacimli ingest hattı ile kompoze.",
+  "apps": "Tüm app'ler aynı panele log/metric/trace yollar; platform genelinde tek gözlem yüzeyi."
+ },
+ "moduleUsage": [
+  "Observability App: log explorer, metric dashboard ve trace görüntüleyici.",
+  "On-call/Operasyon App: alert kuralları, eskalasyon ve incident zaman çizelgesi.",
+  "Tenant Admin App: kendi tenant'ının telemetri retention ve erişim ayarları."
+ ],
+ "ecaExample": "trigger:\n  event: MetricThresholdBreached\ncondition:\n  all:\n    - actor.capability >= \"observability:alert:fire\"\n    - rule.enabled == true\n    - not alert.silenced\naction:\n  - emit: AlertFired\n  - emit: NotificationDispatched\nguards:\n  max_depth: 6\n  idempotency_key: \"alert:{rule_id}:{window_start}\"\n  external_effects: notify_channel",
+ "securityNotes": [
+  "Log içeriği PII sızdırabilir; ingest'te pii alanları maskelenir, deny-by-default capability ile erişim sınırlı.",
+  "Tenant telemetri izolasyonu RLS ile; bir tenant başka tenant'ın trace'ini göremez.",
+  "Alert kuralı değişikliği ve 'log göster' eylemi audit'e yazılır; kim ne zaman erişti izlenir."
+ ],
+ "perfNotes": {
+  "code": "Log/metric sorguları keyset + zaman penceresi ile sınırlanır; sınırsız tarama engellenir.",
+  "perf": "Yüksek hacimli ingest scale-streaming hattına alınır; sorgu tarafı downsample + retention ile hafifler."
+ },
+ "testNotes": [
+  "Alert idempotency: aynı pencerede eşik tekrar aşılınca tek alert üretildiği doğrulanır.",
+  "Tenant izolasyon: cross-tenant log/metric/trace erişiminin RLS ile reddedildiği test edilir.",
+  "Retention cron: süresi dolan telemetrinin gerçekten silindiği kanıtlanır."
+ ]
+}

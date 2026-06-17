@@ -1,0 +1,36 @@
+{
+ "featureDefs": [
+  {
+   "name": "Tema galerisi + marka sihirbazı (UI farkı)",
+   "desc": "Parent Commerce stack'in kodu/şeması aynı kalır; edition yalnızca Lighthouse-yeşil vitrin şablonları ve marka renk sihirbazı sunar. Yeni fonksiyon eklemez — ihtiyaç parent stack'e gider.",
+   "critical": true
+  },
+  {
+   "name": "Rehberli ilk-satış akışı (UX farkı)",
+   "desc": "Ürün ekleme tek form, kargo/ödeme kurulumu kontrol listesiyle, ilk satışa kadar rehberli mod. Akış sırası UI katmanında; sipariş/ödeme primitive'leri Commerce core'undan gelir.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Edition kendi iş mantığını eklemez; tüm sipariş/ödeme/katalog olayları parent Commerce stack'in event-bus'ı üzerinden akar. Edition sadece bu olayların sunum/onboarding yüzüdür.",
+  "kernel": "authz (vitrin yönetici capability'leri), tenancy (RLS ile mağaza izolasyonu), event-bus (Commerce olaylarının tüketimi), audit (tema/yayın değişiklikleri).",
+  "core": "money (fiyat gösterimi — kaynak Commerce), Contract (edition core module seti ile aynı sözleşme), pii (alıcı bilgisi — Commerce'tan), keyset (ürün/sipariş listeleme).",
+  "modules": "Commerce stack (katalog/sepet/sipariş core'u), Payment (ödeme-hazır vitrin), CDN (tema varlıkları).",
+  "apps": "B2C vitrin uygulamasının kendisi; storefront teması bu edition."
+ },
+ "ecaExample": "trigger:\n  event: storefront.published\ncondition:\n  all:\n    - actor.capability >= \"storefront.theme.publish\"\n    - not loop_detected\n    - theme.lighthouse_score >= threshold\naction:\n  - emit: cdn.invalidate_requested\n  - emit: storefront.live\nguards:\n  max_depth: 6\n  idempotency_key: \"storefront:{store.id}:publish:{version}\"\n  external_effects: none",
+ "securityNotes": [
+  "Edition yeni veri yüzeyi açmaz; publish edilen vitrin PII/sistem alanını dışarı sızdırmaz (parent surface kuralı).",
+  "Tema/yayın yönetimi deny-by-default capability ile; mağaza verisi RLS ile tenant'a kapalı.",
+  "Vitrin public; ödeme akışı Commerce'ın güvenli primitive'lerine devredilir, edition kart verisi tutmaz."
+ ],
+ "perfNotes": {
+  "code": "Vitrin ürün listeleri keyset ile; tema varlıkları statik ve CDN'den sunulur, render bloklamaz.",
+  "perf": "Lighthouse-yeşil şablonlar; sayfa katalog projeksiyonundan okunur, canlı sipariş tablosunu sorgulamaz."
+ },
+ "testNotes": [
+  "Edition'ın parent şemaya alan/fonksiyon eklemediğinin (sözleşme) doğrulandığı.",
+  "publish'in aynı versiyonla tekrarında tek cdn.invalidate üretildiği.",
+  "Yayınlanan vitrinde PII/sistem alanının görünmediği."
+ ]
+}

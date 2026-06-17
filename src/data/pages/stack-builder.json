@@ -575,7 +575,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Builder Stack — çekirdek yetenek",
+      "term": "Otopilot + Atölye (iki mod, tek motor)",
       "definition": [
        {
         "type": "strong",
@@ -583,41 +583,55 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Tek karar ağacının iki görünümü. Otopilot: AI sürer, tam aday paketi kurar, yalnız zorunlu kavşaklarda durur, tek tık. Atölye: insan sürer, her kavşak bir DecisionCard [a,b,c,d]+AI-önerisi+serbest sub_prompt. Mod her an değişir; Atölye seçimleri 'insan-kararı kilidi' ile Otopilot geçişinde ezilmez."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "DecisionCard + sub_prompt",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Atölye'nin atomu: soru + 'neden önemli' + [a,b,c,d] (her şıkta AI-önerisi rozeti, gerekçe, sonuç önizlemesi) + 'diğer (yaz)' → sub_prompt textarea. Şıklar yetmezse insan kendi şıkkını yazar, AI yapıya çevirir, çıktı yine doğrulama kapısından geçer."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Sonuç-önce sentetik önizleme",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Otopilot şema/jargon değil, sentetik veriyle dolu çalışan önizleme gösterir ('işte kitap tablon — 6 örnek kitapla'); kullanıcı sonucu onaylar. 60+ kitle soyut alan listesini değerlendiremez."
+       }
+      ]
+     },
+     {
+      "term": "BuilderFlow durum makinesi",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "idle → intent_received → draft_generating → draft_generated → synthetic_preview_generated → mandatory_gates_detected → user_reviewing/adjusting → validation_running → approval_required → approved → applying_changeset → applied → post_apply_health_check → completed. Her hata durumu öğretici mesaj + geri dönüş taşır."
+       }
+      ]
+     },
+     {
+      "term": "Explanation Content Contract",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "DecisionCard '?' açıklaması runtime'da LLM tarafından serbest ÜRETİLMEZ; onaylı corpus'tan (glossary + seven-questions overlay) gelir. AI yalnız doğru açıklama anahtarını seçer, metni yazmaz. Şema: {term, context, locale, what, why, how, example, risk, change_later, plain_language_summary}; her açıklama versiyonlanır + auditlenir."
        }
       ]
      }
@@ -805,15 +819,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "sub_prompt untrusted girdidir; her değişiklik ChangeSet kapısından geçer, doğrudan şemaya yazılmaz. '?' açıklaması onaylı corpus'tan gelir — runtime LLM üretimi yok; bu enjeksiyon yüzeyini ve yanlış/yanıltıcı açıklamayı kapatır. Capability deny-by-default: agent_permission_denied ve tenant_policy_blocked birer hata durumudur; agent yetkisiz üretim yapamaz. synthetic_data_blocked: sentetik önizleme verisi gerçek tenant verisine yazılmadan üretilir; PII sızması engellenir. migration_failed → rollback_required: başarısız ChangeSet geri alınır, kısmi uygulanmış şema bırakılmaz. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -841,15 +847,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "synthetic_preview_generated aşaması gerçek migration'dan önce gelir; kullanıcı sonucu uygulamadan görür."
        }
       ]
      },
@@ -867,15 +865,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Sonuç-önce önizleme, hatalı üretimi apply'dan önce yakalayarak migration_failed/rollback maliyetini düşürür; iki mod tek motoru paylaştığı için bakım yükü tek."
        }
       ]
      },
@@ -1171,7 +1161,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Builder Stack",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Builder Stack\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: builder.intent.received\ncondition:\n  all:\n    - actor.capability >= \"builder:generate\"\n    - tenant_policy_allows\n    - not loop_detected\naction:\n  - generate: draft + synthetic_preview\n  - detect: mandatory_gates\n  - require: changeset_approval\nguards:\n  max_depth: 6\n  idempotency_key: \"builderflow:{tenant}:{intent_id}\"\n  external_effects: synthetic_only",
     "copyEnabled": true
    },
    {
@@ -1311,6 +1301,18 @@
     ]
    },
    {
+    "id": "block-stack-builder-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Atölye'de yapılan seçim, Otopilot'a geçişte 'insan-kararı kilidi' ile korunur (ezilmez). '?' açıklaması corpus anahtarından gelir; LLM serbest metin üretmediği doğrulanır. BuilderFlow hata durumları (generation_failed, validation_failed, rollback_required) öğretici mesaj + geri dönüş üretir. synthetic_data_blocked: önizleme verisi gerçek tabloya yazılmaz."
+     }
+    ]
+   },
+   {
     "id": "block-stack-builder-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1329,7 +1331,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Builder Stack, katalogda modül duran Studio'nun bağımsız alıcıya paketlenmesidir (Power Apps / Zoho Creator karşılığı). AI-first farkın vitrini; prompt'tan ArcheType/form/workflow/portal üretir."
        }
       ]
      },
@@ -1338,16 +1340,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Üretim ChangeSet kapısından geçer; capability deny-by-default ile agent yetkisi sınırlı (agent_permission_denied bir hata durumudur). Audit her ChangeSet'i kaydeder."
        }
       ]
      },
@@ -1356,7 +1349,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Üretilen ArcheType'lar Contract üstünden money/bitemporal/audit alır; sentetik önizleme verisi tenant'a yazılmadan üretilir (synthetic_data_blocked guard'ı)."
        }
       ]
      },
@@ -1365,7 +1358,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "App Builder = s-studio, Form Builder = s-survey genelleşmesi, Workflow = s-bpm (ECA), Portal Builder = ArcheType metadata'sından otomatik. Builder bunları kompoze eder."
        }
       ]
      },
@@ -1374,7 +1367,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Çıktı çalışan bir iç araç/portal; kullanıcı prompt verir, Otopilot tam paketi kurar, tek onayla applied olur."
        }
       ]
      }

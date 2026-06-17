@@ -206,7 +206,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Compliance Stack (TR) — çekirdek yetenek",
+      "term": "KVKK — VERBİS envanteri + DSR portalı",
       "definition": [
        {
         "type": "strong",
@@ -214,41 +214,42 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Kişisel veri envanteri, aydınlatma yönetimi, ilgili kişi başvurusu (DSR) portalı. PII-flag metadata sayesinde envanter otomatik türetilir; rakiplerde manuel. s-kvkk modülü."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "İSG — risk değerlendirme + İSG-KATİP",
       "definition": [
        {
         "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
-       },
-       {
-        "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Risk değerlendirme, eğitim takibi, İSG-KATİP entegrasyonu. Denetim dönemi takvimli; eğitim/muayene süreleri hatırlatmalı. s-isg modülü."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "e-Belge — e-Fatura/e-Arşiv/e-İrsaliye",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "GİB entegrasyonlu e-Fatura/e-Arşiv/e-İrsaliye; zorunluluk genişlemesi takipli. Money (Decimal) + KDV; belge bitemporal. s-tax-compliance modülü."
+       }
+      ]
+     },
+     {
+      "term": "Audit — append-only + hash chain",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Değişmez kayıt, hash zinciri (tamper-evidence), denetim raporu. Mevzuat denetiminde kanıt; geriye değişmez. s-audit modülü."
        }
       ]
      }
@@ -436,15 +437,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "KVKK verisi en yüksek hassasiyet: tenant-scoped RLS + PII-flag; DSR yanıtı kimlik doğrulama (step-up) sonrası, capability deny-by-default. Audit hash zinciri tamper-evident: kayıt geriye değiştirilemez; e-Belge tutarları Money/Decimal, GİB ile mutabakat invariant. Mevzuat raporu yalnız uyum sorumlusu yetkisine; modüller arası veri toplama Contract üzerinden, ham PII gereksiz yere kopyalanmaz. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -472,15 +465,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "PII envanter türetme metadata taraması (flag -> kayıt), elle liste YASAK; modül-başı toplama saf fonksiyon birleşimi."
        }
       ]
      },
@@ -498,15 +483,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "DSR toplama asenkron worker (modüller arası); audit zinciri append-only ardışık yazım; denetim raporu keyset pagination + materialize."
        }
       ]
      },
@@ -802,7 +779,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Compliance Stack (TR)",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Compliance Stack (TR)\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: dsr.access_requested\n  when: \"tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"kvkk.dsr.fulfill\"\n    - not loop_detected\n    - subject.identity_verified == true\naction:\n  - collect: personal_data ACROSS modules BY pii_flag   # envanter otomatik\n  - record: dsr_request { subject, scope, ts, bitemporal: true }\n  - emit: audit.dsr_logged          # hash-chain, append-only\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{subject}:dsr\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -942,6 +919,18 @@
     ]
    },
    {
+    "id": "block-stack-compliance-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "DSR talebi PII-flag'li tüm modüllerden veri toplar; flagsiz alan dahil olmaz. Audit kaydı değiştirilince hash zinciri kırılır (tamper tespiti). e-Belge tutarı Money/Decimal; mükerrer belge üretilmez (idempotency). Komşu tenant KVKK/audit verisi sorgusu sıfır döndürür (RLS)."
+     }
+    ]
+   },
+   {
     "id": "block-stack-compliance-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -960,7 +949,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — aday Stack: mevzuat çekişli dört modülün (KVKK+İSG+e-Belge+Audit) tek alıcı profiline (uyum sorumlusu/DPO) paketlenmesi. Taksonomi: Stack ⊂ Edition ⊂ Distribution. Kernel zorunlu; modüller arası yalnız Contract."
        }
       ]
      },
@@ -969,16 +958,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Kimlik/tenancy (RLS)/audit kernel'den; PII-flag metadata KVKK envanterini besler. Audit zinciri kernel append-only ledger üstüne; e-Belge tutarları Money (Decimal)."
        }
       ]
      },
@@ -987,7 +967,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Paket core'u yok; dört bağımsız modülün capability bohçası. Her modül kendi sözleşmesini korur, paket additif birleşim — kod tekrarı yok."
        }
       ]
      },
@@ -996,7 +976,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "s-kvkk + s-isg + s-tax-compliance + s-audit aynı kernel audit/PII altyapısını paylaşır; e-Belge -> muhasebe GL postingi Contract; KVKK DSR -> ilgili modüllerden veri toplama Contract."
        }
       ]
      },
@@ -1005,7 +985,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Uyum (compliance) panel tek yüzeyde dört modülü sunar; ortak audit kaydı tek kaynağa yazar, modül başına ayrı denetim defteri yok."
        }
       ]
      }

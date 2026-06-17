@@ -424,7 +424,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Redirect & URL Yönetimi — çekirdek yetenek",
+      "term": "301/302 yönlendirme yönetimi",
       "definition": [
        {
         "type": "strong",
@@ -432,41 +432,51 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Eski→yeni eşleme tablosu; slug değişiminde otomatik 301 kaydı; manuel kural ekleme. Slug taşınırken link-equity kaybolmaz. Öncelik P0."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "410 Gone",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Silinen ArcheType kaydı için soft-404 yerine net 410; sitemap'ten düşürme bağı. Arama motoruna 'kalıcı gitti' sinyali. Öncelik P0."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "URL alias / slug (pathauto)",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "ArcheType alanlarından desenli slug üretimi; çakışma çözümü; çoklu dil slug. Öncelik P1."
+       }
+      ]
+     },
+     {
+      "term": "Kanonik birleştirme",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Trailing slash, case, parametre normalizasyonu → tek kanonik URL. Yanlış birleştirme indexleme kaybı riski. Öncelik P1."
+       }
+      ]
+     },
+     {
+      "term": "Döngü/zincir denetimi",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Yönlendirme zinciri >2 ve döngü tespiti; build/CI uyarısı. Deterministik kapı — döngü reddedilir. Öncelik P1."
        }
       ]
      }
@@ -654,15 +664,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "ArcheType'lar: Redirect (from/to/status/reason), UrlAlias (pattern→slug), CanonicalRule (normalizasyon politikası). Capability deny-by-default: yalnız yönlendirme tablosu + alias yazma; pii üretmez; çalışma-zamanı yönlendirme edge'de ya da prerender manifestinde. Tüm kurallar audit'li; from/to bitemporal (hangi tarihte hangi hedef — tarihçe) — dış backlink'li eski URL kayıt silinse de 301/410 olarak yaşar. Tenant izolasyonu: bir tenant'ın redirect kuralı başka tenant'ın path'ini çözemez (RLS). Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -690,15 +692,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Çözüm O(1) lookup (edge cache); zincir sadeleştirici A→B→C zincirini A→C'ye indirger; döngü dedektörü saf fonksiyon, build/CI'da deterministik kapı. Slug üreteci pattern→slug saf fonksiyon."
        }
       ]
      },
@@ -716,15 +710,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Yönlendirme çözümü edge'de (fe-cdn) cache'lenir, origin'e gitmez; aşırı zincir (>2) link-equity ve hız kaybı yaratır, bu yüzden sadeleştirme zorunludur."
        }
       ]
      },
@@ -1020,7 +1006,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Redirect & URL Yönetimi",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Redirect & URL Yönetimi\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: archetype.slug_changed\ncondition:\n  all:\n    - actor.capability >= \"redirect.write\"\n    - tenant_scoped\n    - not redirect_loop_detected      # deterministik kapi\naction:\n  - redirect.append: { from: old_slug, to: new_slug, status: 301 }\n  - sitemap.drop: old_slug\n  - emit: url.redirect_registered     # outbox, idempotent\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:redirect:{old_slug}\"\n  external_effects: relayed_async",
     "copyEnabled": true
    },
    {
@@ -1160,6 +1146,18 @@
     ]
    },
    {
+    "id": "block-l1-redirect-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Slug değişimi → eski URL 301 yeni'ye; silinen kayıt → 410 (soft-404 değil). Zincir A→B→C → A doğrudan C'ye sadeleşir; döngü A→B→A reddedilir (CI kırmızı). Kanonik: /x/ ve /X aynı kanonik'e birleşir; yanlış birleştirme indexleme kaybı testle korunur. Dış backlink'li eski URL korunur: kayıt silinse de 301/410 yaşar (link-equity). Tenant izolasyonu: komşu-tenant path'i çözülmez. Edge ve prerender çözümü tek kaynaktan (Contract) bit-bit tutarlı."
+     }
+    ]
+   },
+   {
     "id": "block-l1-redirect-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1178,7 +1176,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Frontpages ailesinin URL-yaşam-döngüsü ayağı; public Surface'i olan app'lerde aktif. Ayrı module çünkü yönlendirme tablosu yazma + döngü denetimi sorumluluğu l1-seo render'ından ayrıdır."
        }
       ]
      },
@@ -1187,16 +1185,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "ArcheType slug'ı kernel alan tanımından türer (pathauto deseni); slug değiştiğinde kernel save pipeline'ı eski→yeni 301'i, kayıt silindiğinde 410'u otomatik kaydeder. Tenant-scoped, RLS."
        }
       ]
      },
@@ -1205,7 +1194,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Çözüm fonksiyonu (path → 301/410/None) core Contract'ı olarak yayınlanır; tek kaynaktan (single source) hem edge hem prerender çağırır, tutarlılık burada zorlanır."
        }
       ]
      },
@@ -1214,7 +1203,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "l1-sitemap ile URL düşürme, l1-seo ile meta/canonical etiketi koordine; bu module yalnız URL yaşam döngüsünü (301/410/alias/kanonik) sahiplenir, render'a karışmaz."
        }
       ]
      },
@@ -1223,7 +1212,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Public Surface'li tüm app'ler (StoreFront, blog, frontpages) aynı redirect tablosunu paylaşır; iç back-office'te module opsiyoneldir."
        }
       ]
      }
@@ -1236,13 +1225,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-l1-redirect-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-l1-redirect-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "StoreFront/e-ticaret app: ürün slug değişiminde otomatik 301; ürün silininde 410 + sitemap düşürme."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Blog/frontpages app: yazı slug normalizasyonu (kanonik) + pathauto alias."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "fe-cdn: çalışma-zamanı yönlendirme edge'de O(1) lookup ile çözülür (prerender manifesti)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "l1-sitemap: 410 olan URL sitemap'ten düşürülür; l1-seo canonical etiketini bu module'ün kanonik kararıyla hizalar."
+      }
+     ]
     ]
    },
    {

@@ -1,0 +1,50 @@
+{
+ "featureDefs": [
+  {
+   "name": "Wave / batch picking",
+   "desc": "Siparisler dalga halinde gruplanir; toplama rotasi optimize edilir. Pick gorevleri capability-bagli atanir.",
+   "critical": true
+  },
+  {
+   "name": "Slotting (yerlesim optimizasyonu)",
+   "desc": "SKU hiz sinifina gore raf konumu; sik donen urun toplama noktasina yakin. Periyodik yeniden slotlama.",
+   "critical": false
+  },
+  {
+   "name": "Barkod / RFID hareket kaydi",
+   "desc": "Her stok hareketi (receive/putaway/pick/ship) barkod/RFID taramasiyla event uretir; bitemporal stok defteri.",
+   "critical": true
+  },
+  {
+   "name": "Stok defteri (bitemporal)",
+   "desc": "Lokasyon x SKU bakiyesi; her hareket immutable kayit + audit. Geriye donuk duzeltme valid-time ile.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-2 SaaS urunu; kendi semasini ve UI'sini tanimlar, framework primitive'lerini tuketir.",
+  "kernel": "Authz (depo/personel capability), tenancy (RLS ile tenant stok izolasyonu), event-bus (stok hareketi event'leri).",
+  "core": "Contract ile SKU/Location/Movement semasi; otomatik REST/GraphQL; audit + bitemporal ucretsiz.",
+  "modules": "Layer-1 file (etiket/foto), outbox (hareket event'lerinin guvenli yayini).",
+  "apps": "s-wms App'i; downstream s-* urunleri (siparis/sevkiyat) stok event'lerini dinler."
+ },
+ "moduleUsage": [
+  "s-wms: Receive -> Putaway -> Pick -> Pack -> Ship akisinda her adim Contract action; stok bakiyesi bitemporal defterde tutulur, capability deny-by-default ile yalniz yetkili personel hareket uretir."
+ ],
+ "ecaExample": "trigger:\n  event: wms.pick.completed\ncondition:\n  all:\n    - actor.capability >= \"wms:pick\"\n    - location.balance >= pick.qty\n    - not loop_detected\naction:\n  - emit: wms.stock.decremented\n  - emit: wms.wave.line_closed\nguards:\n  max_depth: 6\n  idempotency_key: \"pick:{pick_id}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Stok hareketi deny-by-default: capability wms:receive/wms:pick/wms:ship ayri; tek rol tum hareketleri yapamaz (gorev ayriligi).",
+  "Tenant izolasyonu RLS ile zorunlu; baska tenant lokasyonuna hareket yazilamaz.",
+  "Negatif stok korumasi: pick.qty > balance reddedilir; duzeltme yalniz wms:adjust + audit gerekcesiyle."
+ ],
+ "perfNotes": {
+  "code": "Lokasyon x SKU bakiyesi keyset ile sayfalanir; sicak SKU'larda satir kilidi yerine event-sourced increment.",
+  "perf": "Wave picking yuksek hacimli; hareket yazimi outbox uzerinden asenkron yayinlanir, toplama UI'si bloklanmaz."
+ },
+ "testNotes": [
+  "wms:pick olmayan aktor pick denemesi -> deny.",
+  "Balance alti pick -> reddedilmeli, negatif stok olusmamali.",
+  "Ayni idempotency_key ile tekrar pick -> cift dusum olmamali.",
+  "Cross-tenant lokasyon hareketi -> RLS reddi."
+ ]
+}

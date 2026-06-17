@@ -326,7 +326,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Tax Compliance / e-Fatura — çekirdek yetenek",
+      "term": "GİB e-Belge entegrasyonu",
       "definition": [
        {
         "type": "strong",
@@ -334,41 +334,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "e-Fatura/e-Arşiv/e-İrsaliye GİB veya özel entegratör üzerinden gönderim; her belge UBL-TR şemasına göre üretilir, ETTN ile tekilleştirilir."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Bitemporal belge defteri",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Her belge versiyonu (taslak→imzalı→GİB onaylı→iptal) bitemporal kayıt; mevzuat denetiminde 'o anda ne gönderildi' geriye doğru sorgulanabilir."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "İmza ve mühür zinciri",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Mali mühür / e-imza ile imzalama dış efekt; step-up doğrulama ister, imza anahtarı KMS'te, audit'e imzalayan kim/ne zaman yazılır."
+       }
+      ]
+     },
+     {
+      "term": "Mutabakat ve durum geri besleme",
+      "definition": [
+       {
+        "type": "text",
+        "text": "GİB'den gelen onay/ret durumu webhook ile belge defterine işlenir; başarısız belge kuyruğa alınıp idempotent yeniden gönderilir."
        }
       ]
      }
@@ -556,15 +553,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Mali mühür/e-imza anahtarı KMS'te; imzalama capability deny-by-default ve step-up ister, anahtar materyali asla uygulama belleğine kopyalanmaz. Vergi kimlik no, fatura tutarı ve belge içeriği money+pii sınıfı; tenant RLS ile izole, GİB gönderim audit log'u bitemporal ve değiştirilemez. İptal işlemi geri-alınamaz mevzuat etkisi taşır; ayrı capability + dört göz onayı önerilir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -592,15 +581,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Belge listesi (tarih, id) keyset sayfalama; GİB gönderimi senkron değil, outbox üzerinden async worker."
        }
       ]
      },
@@ -618,15 +599,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Toplu kesimde belgeler batch'lenir; entegratör rate-limit'ine circuit breaker + exponential backoff ile uyulur."
        }
       ]
      },
@@ -922,7 +895,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Tax Compliance / e-Fatura",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Tax Compliance / e-Fatura\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: invoice.issued\ncondition:\n  all:\n    - actor.capability >= \"einvoice.sign\"\n    - document.schema_valid (UBL-TR)\n    - not idempotency_seen(document.ettn)\naction:\n  - sign_with_seal: document\n  - dispatch: gib_integrator\n  - emit: einvoice.submitted\nguards:\n  max_depth: 4\n  idempotency_key: \"einv:{document.ettn}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1062,6 +1035,18 @@
     ]
    },
    {
+    "id": "block-s-tax-compliance-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "UBL-TR şema validasyonu: eksik VKN veya negatif matrah belgesi reddedilir. Idempotency: aynı ETTN ile iki gönderim tek GİB kaydı üretir. İptal akışı: GİB onaylı faturanın iptali audit'e iki ayrı bitemporal satır olarak düşer."
+     }
+    ]
+   },
+   {
     "id": "block-s-tax-compliance-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1138,13 +1123,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-tax-compliance-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-tax-compliance-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Accounting / Muhasebe: Kesilen faturanın mali kaydı yevmiyeye düşer; money tipi minor-unit + currency, vergi matrahı KDV oranına göre ayrışır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-purchase: Tedarikçi e-faturaları gelen kutusuna düşer, PO ile eşleşmek üzere s-doc-matching'e devredilir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "kernel-authz: 'fatura kes' ve 'fatura iptal' ayrı capability; deny-by-default, iptal yetkisi daha dar role bağlı."
+      }
+     ]
     ]
    },
    {

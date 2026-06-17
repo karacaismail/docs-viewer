@@ -304,7 +304,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Loyalty & Referral — çekirdek yetenek",
+      "term": "Puan Defteri (point ledger)",
       "definition": [
        {
         "type": "strong",
@@ -312,41 +312,42 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Kazanım/harcama hareketleri append-only ledger'da tutulur; bakiye türetilir, üzerine yazılmaz. Her hareket idempotent + audit'li; çift kazanım/çift harcama engellenir."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Kademe (tier) Motoru",
       "definition": [
        {
         "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
-       },
-       {
-        "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Eşik/koşul bazlı kademe yükselme-düşme (ör. yıllık harcamaya göre Gold). Kademe geçişleri bitemporal; geriye dönük kampanya düzeltmesi audit iziyle."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Referral Kodu + Atıf",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Tekil referral kodu üretimi, davet → kayıt → dönüşüm atıfı. Self-referral ve döngüsel atıf (loop_detected) engellenir; ödül yalnız geçerli dönüşümde verilir."
+       }
+      ]
+     },
+     {
+      "term": "Ödül/İtfa (redemption)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Puanın indirim/hediyeye dönüşümü; itfa anında bakiye kilidi + idempotent düşüm. Parasal karşılık money Contract'ı üstünden (minor-unit)."
        }
       ]
      }
@@ -534,15 +535,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Puan ledger'ı append-only; bakiye türetilir, doğrudan yazılamaz — manipülasyon audit'siz kalamaz. İtfa idempotent + bakiye kilidi: aynı itfa iki kez işlenip çift düşüm/çift ödül üretemez. Self-referral ve döngüsel atıf (loop_detected) engellenir; ödül yalnız geçerli dönüşümde. Capability deny-by-default: loyalty:accrue / loyalty:redeem yetkisi gerekir. Müşteri PII'si ve referral grafiği RLS ile tenant'a izole; komşu tenant görünmez. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -570,15 +563,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Bakiye ledger'dan projeksiyonla türetilir; hareket listesi keyset cursor ile sayfalanır."
        }
       ]
      },
@@ -596,15 +581,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Türetilmiş bakiye projeksiyonu canlı toplam-sorgusunu önler; milyon hareketli müşteride bakiye sabit gecikmeyle okunur."
        }
       ]
      },
@@ -900,7 +877,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Loyalty & Referral",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Loyalty & Referral\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: order.paid\ncondition:\n  all:\n    - actor.capability >= \"loyalty:accrue\"\n    - order.amount.minor > 0\n    - not loop_detected\naction:\n  - ledger.append:\n      type: accrual\n      points: floor(order.amount.minor / 100)\n  - evaluate: tier_upgrade\nguards:\n  max_depth: 6\n  idempotency_key: \"loyalty:accrue:{order_id}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -1040,6 +1017,18 @@
     ]
    },
    {
+    "id": "block-s-loyalty-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Aynı sipariş için ikinci kazanım idempotency ile tekilleştirilir. İtfa sırasında bakiye kilidi çift harcamayı engeller. Self-referral ödül üretmez; döngüsel atıf loop_detected ile reddedilir. Kademe eşiği sınırında (tam eşik değeri) yükselme doğru tetiklenir. Komşu tenant'ın puan defteri RLS ile görünmez."
+     }
+    ]
+   },
+   {
     "id": "block-s-loyalty-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1058,7 +1047,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Layer-2 SaaS ürünü; Kernel + Scale + Layer-1 üstüne oturur. Smile.io sınıfı sadakat; kendi ArcheType'larını ve UI'sını sunar, yetki/audit/event-bus framework'ten gelir."
        }
       ]
      },
@@ -1067,16 +1056,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Kazanım/itfa olayları event-bus'a yayınlanır; capability deny-by-default ile yetki; ledger tam audit'li, RLS ile tenant izolasyonu."
        }
       ]
      },
@@ -1085,7 +1065,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Puan ledger'ı para mantığıyla (money Contract) modellenir — append-only, türetilen bakiye; kademe/atıf geçmişi bitemporal."
        }
       ]
      },
@@ -1094,7 +1074,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "POS/Sales satışından kazanım, Marketing/CRM kampanyasından bonus, Subscription yenilemesinden tier girdisi alır; ödül olayını geri yayınlar."
        }
       ]
      },
@@ -1103,7 +1083,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "App satışta puan kazandırır, müşteri portalında bakiye/itfa gösterir; toplu kampanya kazanımı worker'da işlenir."
        }
       ]
      }
@@ -1116,13 +1096,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-loyalty-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-loyalty-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "POS / Sales: satış tutarına göre puan kazanımı."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Marketing / CRM: kampanya/segment bazlı bonus puan ve referral teşviki."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Subscription Analytics: yenileme ve LTV girdisiyle kademe değerlendirmesi."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Commerce: itfa edilen puanın sepet indirimine uygulanması."
+      }
+     ]
     ]
    },
    {

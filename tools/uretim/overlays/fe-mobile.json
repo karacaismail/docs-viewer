@@ -1,0 +1,58 @@
+{
+ "featureDefs": [
+  {
+   "name": "Capacitor 7 native kabuk",
+   "desc": "PWA + iOS/Android native sarmalı; aynı web kodu. Baseline (2026 Mayıs): Node ≥20 LTS, iOS target 14, Android minSdk 23 / targetSdk 35, Kotlin 2.0, JDK 21, Xcode 16+ (M4 native).",
+   "critical": true
+  },
+  {
+   "name": "TC kimlik NFC — kendi Capacitor modülü",
+   "desc": "iOS NFCPassportReader (MIT) + Android jmrtd (LGPL-3.0) sarmalı; eMRTD/ICAO 9303. TC kimlik CAN (6 hane) kullanır (MRZ değil), PACE protokolü zorunlu (BAC reddedilir).",
+   "critical": true
+  },
+  {
+   "name": "KYC akışı — selfie/liveness + belge",
+   "desc": "ML Kit Face Detection + custom challenge (göz kırp/baş çevir); frame'ler backend'e, FastAPI'de DeepFace/FaceNet match. Belge: ML Kit document-scanner + OCR. İmza: react-signature-canvas + PDF embed."
+  },
+  {
+   "name": "KYB — Veriff/Onfido managed",
+   "desc": "Vergi levhası, ticaret sicil doğrulaması; Türkiye için Veriff daha güçlü. API-only entegrasyon (dış servis).",
+   "critical": true
+  },
+  {
+   "name": "Secure storage + biometrik",
+   "desc": "Keychain + Android Keystore (capacitor-secure-storage); FaceID/TouchID/BiometricPrompt (capacitor-biometric-auth). Deep link OIDC callback (Universal/App Links)."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — mobil yüzey ayrı bir ürün değil, mevcut web Surface'lerinin native projeksiyonudur; KYC/KYB ise kernel identity + party doğrulama akışının cihaz-tarafı ayağıdır.",
+  "kernel": "KYC sonucu kernel identity'ye doğrulanmış-kimlik claim'i olarak bağlanır; TC kimlik no kernel'de saklanmaz, yalnız hash/tek-seferlik jeton tutulur (KVKK 2023/1430).",
+  "core": "Capacitor config app-bazlı (appId, scheme, OTA manifest); core ArcheType Surface'leri PWA olarak çıkar, native module'ler yalnız cihaz yeteneği (NFC/kamera/biometrik) ekler.",
+  "modules": "KYB doğrulama Veriff/Onfido Contract'ı üzerinden çağrılır; sonuç olayı (verified/rejected) party/onboarding module'üne event olarak döner, module dış API'yi doğrudan tüketmez.",
+  "apps": "POS (BLE), saha servisi (background geolocation), onboarding (KYC/KYB) app'leri aynı Capacitor modül ekosistemini paylaşır; her app gerekli izinleri (entitlement) açar."
+ },
+ "moduleUsage": [
+  "Onboarding app: TC kimlik NFC + selfie/liveness → doğrulanmış kimlik; DG2 (foto) lokal cihazda karşılaştırılır, sunucuya gitmez.",
+  "Finans/hesap açılış app: KYB (Veriff) vergi levhası + ticaret sicil doğrulaması.",
+  "POS app: BLE (yazıcı/terminal) + secure storage (anahtar saklama).",
+  "Saha servisi app: foreground + background geolocation; push notification (FCM/APNs)."
+ ],
+ "ecaExample": "trigger:\n  event: kyc.identity_scanned\n  when: \"source == 'tc_nfc' AND pace_verified\"\ncondition:\n  all:\n    - actor.capability >= \"identity.verify\"\n    - consent_explicit == true          # KVKK acik riza\n    - not loop_detected\naction:\n  - identity.attach_claim: verified_person\n  - store: tc_no_hash                    # ham TC no SAKLANMAZ\n  - emit: identity.kyc_completed         # outbox, idempotent\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:kyc:{session_id}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "KVKK veri minimizasyonu (2023/1430): TC kimlik no veritabanında SAKLANMAZ; yalnız hash veya tek-seferlik doğrulama jetonu tutulur. DG2 (foto) lokal cihazda karşılaştırılır.",
+  "Kişisel veri işleme açık rıza + EİDS Tebliği zorunlu; KVK Kurumu izni olmadan TC kimlik akışı açılamaz.",
+  "PACE protokolü zorunlu (BAC reddedilir); çip CardOS tabanlı — CAN ile erişim, MRZ değil. Apple 'NFC Tag Reading' entitlement gerekli.",
+  "Selfie frame'leri ve biyometrik veri pii=true + retention; secure storage (Keychain/Keystore) dışında ham biyometri tutulmaz. KYB sonucu audit'li."
+ ],
+ "perfNotes": {
+  "code": "Native module'ler lazy yüklenir; KYC frame'leri stream olarak backend'e gider, cihazda buffer'lanmaz. OTA (live updates) manifest + publicKey ile imzalı kanal (beta/prod).",
+  "perf": "DG2 foto karşılaştırması lokal (round-trip yok); liveness challenge frame-bazlı; document-scanner OCR server-side opsiyonu ağır cihazlarda tercih. Mobil kullanıcı oranı ~%70 — PWA + native paralel."
+ },
+ "testNotes": [
+  "TC NFC: PACE doğrulanmadan kimlik claim'i bağlanmaz; BAC denemesi reddedilir.",
+  "KVKK invariant: akış sonunda DB'de ham TC kimlik no aranır → bulunmamalı (yalnız hash/jeton).",
+  "Liveness: statik foto (spoof) challenge'ı geçememeli; göz kırp/baş çevir doğrulanmalı.",
+  "Açık rıza kapısı: consent alınmadan KYC başlatılamaz (deny-by-default).",
+  "Capacitor baseline: minSdk 23 altı / iOS 14 altı cihazda native module graceful degrade (PWA fallback)."
+ ]
+}

@@ -386,7 +386,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Theme — Sunum Buildable'ı (SDK üçüncü artefakt) — çekirdek yetenek",
+      "term": "ThemeTokens",
       "definition": [
        {
         "type": "strong",
@@ -394,41 +394,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Renk/spacing/tipografi token seti (tokens.css deseni); tek kaynaktan tema değişkenleri."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "SurfaceTemplate",
       "definition": [
        {
         "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
-       },
-       {
-        "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Surface layout/bileşen sunum override'ı; yalnız görünüm, iş mantığı değil."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "ThemeManifest",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Uyum + izin beyanı: deny-by-default sunum yazma sınırı, a11y/perf bütçe taahhüdü."
+       }
+      ]
+     },
+     {
+      "term": "Edition Pin",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Bir Edition bir theme'i pinler; Distribution theme'i içerir — sunum mekanizmasını çözer."
        }
       ]
      }
@@ -616,15 +613,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Capability deny-by-default: yalnız sunum (token + şablon) yazma; iş mantığına / core module'e / kernel iç API'sine DOKUNMAZ. Theme pii ÜRETMEZ; sunum katmanında kişisel veri taşınmaz. WASM sandbox: token dışı 'kod' theme'e sızarsa Edition sınırı bozulur, kabul kapısı reddeder. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -652,15 +641,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Eager CSS/JS bütçesi size-limit kapısından geçer; token-tabanlı, React 19 + Radix uyumlu, yasak kütüphane yok."
        }
       ]
      },
@@ -678,15 +659,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "a11y (axe: kontrast/dokunma hedefi/odak) + perf (size-limit) deterministik kapı; atlanamaz."
        }
       ]
      },
@@ -982,7 +955,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Theme — Sunum Buildable'ı (SDK üçüncü artefakt)",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Theme — Sunum Buildable'ı (SDK üçüncü artefakt)\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: ThemeTokenChanged\ncondition:\n  all:\n    - actor.capability >= \"theme:token:write\"\n    - change.scope == \"presentation\"\n    - a11y_budget_ok and perf_budget_ok\naction:\n  - emit: ThemeVersionBumped\n  - emit: EditionThemeReapplied\nguards:\n  max_depth: 6\n  idempotency_key: \"theme:{tenant_id}:{edition_id}:{version}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -1122,6 +1095,18 @@
     ]
    },
    {
+    "id": "block-fe-theme-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Token değişimi yalnız sunumu etkiler; iş mantığı testleri kırılmaz (presentation-only ispatı). Tenant izolasyonu: bir tenant'ın theme'i diğerine karışmaz; Edition pin doğru theme'i çözer. Kabul kapısı: axe kontrast/odak + size-limit bütçesi aşılırsa derlemenin reddedildiği doğrulanır."
+     }
+    ]
+   },
+   {
     "id": "block-fe-theme-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1140,7 +1125,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "App değil module değil — SDK'nın tek-komut sunum buildable'ı (sdk theme create). Edition'ı görsel olarak gerçekleştirir; core module'e ve iş mantığına DOKUNMAZ."
        }
       ]
      },
@@ -1149,16 +1134,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Runtime kernel'den gelir; theme runtime'ı kullandırır, yeniden yazmaz. Token değişiklikleri audit'li + versiyonlu."
        }
       ]
      },
@@ -1167,7 +1143,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Core module değişmezdir; theme yalnız token + Surface şablon override + a11y/perf bütçesi içinde sunumu değiştirir."
        }
       ]
      },
@@ -1176,7 +1152,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "stack-editions Edition kavramı + dx-marketplace dağıtım + fe-cdn teslim ile kompoze; capability WASM sandbox'ta yalnız sunum yazma."
        }
       ]
      },
@@ -1185,7 +1161,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Tenant/Edition başına theme pinlenir; aynı kod farklı app görünümünü token üzerinden alır."
        }
       ]
      }

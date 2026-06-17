@@ -1,0 +1,49 @@
+{
+ "featureDefs": [
+  {
+   "name": "Kimlik Doğrulama (KYC)",
+   "desc": "Müşteri kimlik tespiti ve belge doğrulama; doğrulama sonucu ve kanıt referansı bitemporal + audit'li tutulur. Ham kimlik belgesi maskelenmiş referansla saklanır, gövde değil.",
+   "critical": true
+  },
+  {
+   "name": "Yaptırım / PEP Tarama",
+   "desc": "Yaptırım listesi ve PEP (politik nüfuzlu kişi) eşleştirmesi; eşleşme bir vaka açar. Tarama çağrıları idempotent, sonuç skoru ve liste versiyonu kayıtlı.",
+   "critical": true
+  },
+  {
+   "name": "Şüpheli İşlem Vaka Yönetimi",
+   "desc": "Vaka açma → inceleme → karar (kapat/raporla) durum makinesi; her geçiş gerekçeli ve audit'li. Karar yetkisi rol bazlı, dört-göz onayı eşik üstünde zorunlu.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "SaaS Fırsat Haritası adayı (finance); katalogda eksik olduğu için aday. Layer-2 ürün olarak Kernel + Scale + Layer-1 üstüne oturacak; yetki/audit/event-bus framework'ten gelir. Taksonomi: Stack ⊂ Edition ⊂ Distribution.",
+  "kernel": "Vaka/tarama olayları event-bus'a yayınlanır; capability deny-by-default ile yetki; tüm vaka geçişleri ve kararlar audit'li, RLS ile tenant izolasyonu.",
+  "core": "Vaka ve karar geçmişi bitemporal; işlem tutarları money Contract'ı üstünden. Dış tarama servisleri outbox/worker üstünden idempotent.",
+  "modules": "Payment/Finance işlem akışından şüpheli işlem sinyali, CRM'den müşteri profilini alır; vaka kararını geri yayınlar (ör. hesabı askıya al).",
+  "apps": "App vaka kuyruğunu sunar; tarama worker'da koşar, eşleşme olunca vaka açılır ve incelemeye düşer."
+ },
+ "ecaExample": "trigger:\n  event: transaction.flagged\ncondition:\n  all:\n    - actor.capability >= \"aml:case:open\"\n    - screening.match_score >= threshold\n    - not loop_detected\naction:\n  - open: aml_case\n  - assign: review_queue(role=\"compliance\")\n  - emit: case.opened\nguards:\n  max_depth: 6\n  idempotency_key: \"aml:case:{transaction_id}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Kimlik belgeleri ve tarama sonuçları yüksek hassasiyetli PII; maskeli referansla saklanır, ham gövde erişimi ayrı capability + audit gerektirir.",
+  "Vaka kararları (kapat/raporla) deny-by-default yetkili; eşik üstünde dört-göz (step-up) zorunlu.",
+  "RLS ile tenant izolasyonu kritiktir; bir tenant'ın AML vakası komşuya asla görünmez.",
+  "Tarama liste versiyonu ve skoru kayıtlı; geriye dönük 'neden bu karar' bitemporal izlenebilir.",
+  "Erişim ve karar logları retention/regülasyon saklama süresine tabi, silme audit'li."
+ ],
+ "perfNotes": {
+  "code": "Açık vaka kuyruğu keyset cursor ile sayfalanır; dış tarama çağrıları worker'da batch'lenir ve idempotent tekrar edilir.",
+  "perf": "Vaka listesi projeksiyondan okunur; yüksek işlem hacminde kuyruk ekranı sabit gecikmeyle gelir."
+ },
+ "moduleUsage": [
+  "Payment / Finance: şüpheli işlem sinyalinin kaynağı; karar sonucu hesabı askıya alabilir.",
+  "CRM: müşteri profili ve risk skoruyla vaka zenginleştirme.",
+  "s-bpm: vaka inceleme/onay akışının ECA + durum makinesi tarafı."
+ ],
+ "testNotes": [
+  "Aynı işlem için ikinci vaka açma isteği idempotency ile tekilleştirilir.",
+  "Eşik altı skor vaka açmaz; eşik üstü açar (sınır testi).",
+  "Vaka kapatma kararı dört-göz olmadan reddedilir (step-up zorunlu).",
+  "Komşu tenant'ın AML vakası ve kimlik verisi RLS ile görünmez."
+ ]
+}

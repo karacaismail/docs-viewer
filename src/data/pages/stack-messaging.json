@@ -228,7 +228,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Mesajlaşma Ticareti Stack (WhatsApp) — çekirdek yetenek",
+      "term": "Ortak gelen kutusu (resmî WhatsApp Business API)",
       "definition": [
        {
         "type": "strong",
@@ -236,41 +236,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Ekip ataması, etiket, SLA üzerinde müşteri-inbox. Resmî API + KVKK uyumu, gri-bölge rakiplerinden yapısal ayrışma. s-comms müşteri-inbox yarısı."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Katalog-sipariş akışı (mesaj içi)",
       "definition": [
        {
         "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
-       },
-       {
-        "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Ürün kataloğu -> mesaj içinden sepet linki. stack-commerce ürün kataloğu yeniden kullanılır; mesajda satış kapanır. Cart/Order ArcheType framework'ten."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Mesaj otomasyonu (akışlar)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Karşılama, sepet hatırlatma, sipariş durumu bildirimi. s-channel-hub akışları; şablonlar Meta onaylı, opt-out korunur."
+       }
+      ]
+     },
+     {
+      "term": "Link tabanlı tahsilat",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Mesajda kapanan satış için link tabanlı ödeme. s-payment-methods; tutarlar Money (Decimal), ödeme step-up/3DS."
        }
       ]
      }
@@ -458,15 +455,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Telefon + mesaj içeriği PII: tenant-scoped RLS, pii-flag; temsilci yalnız atandığı konuşmayı görür (capability deny-by-default). Gelen webhook Meta imzası ile doğrulanır (spoof engelleme); giden şablon Meta onaylı + opt-out/consent korunur (KVKK). Mesaj geçmişi değişmez audit append-only; link tabanlı tahsilat Money/Decimal, ödeme step-up/3DS. Tek-kanal API riski çok-kanal ile dağıtılır. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -494,15 +483,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Otomasyon akışı tetik->aksiyon tablosu (rule eval), if-zinciri YASAK; kanal adaptörü strateji (WhatsApp/Telegram/IG dispatch)."
        }
       ]
      },
@@ -520,15 +501,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Mesaj akışı asenkron worker; konuşma listesi keyset pagination; giden mesaj rate-limit (Meta kotası); webhook idempotent dedupe."
        }
       ]
      },
@@ -824,7 +797,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Mesajlaşma Ticareti Stack (WhatsApp)",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Mesajlaşma Ticareti Stack (WhatsApp)\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: whatsapp.message_received\n  when: \"tenant_scoped AND webhook.signature_valid\"\ncondition:\n  all:\n    - actor.capability >= \"messaging.inbox.handle\"\n    - not loop_detected\n    - contact.opt_in == true\naction:\n  - record: message { conversation_id, body, direction, ts, pii: true }\n  - emit: inbox.assigned_to_team        # SLA başlat\n  - emit: automation.flow_triggered     # outbox idempotent\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{wa_message_id}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -964,6 +937,18 @@
     ]
    },
    {
+    "id": "block-stack-messaging-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Geçersiz imzalı WhatsApp webhook reddedilir. Opt-in olmayan kişiye otomasyon mesajı gönderilmez (consent kapısı). Aynı wa_message_id ikinci kez işlenmez (idempotency). Temsilci komşu konuşmayı görmez (RLS); telefon yetkisiz response'ta sızmaz."
+     }
+    ]
+   },
+   {
     "id": "block-stack-messaging-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -982,7 +967,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — aday Stack: Comms + Channel Hub + Payment birleşimi. Alıcı profili (WhatsApp'tan satan esnaf/e-ticaretçi) mevcut hiçbir stack'le örtüşmez; Edition değil yeni Stack. Taksonomi: Stack ⊂ Edition ⊂ Distribution."
        }
       ]
      },
@@ -991,16 +976,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Kimlik/tenancy (RLS)/audit kernel'den; müşteri Party'den türer. Mesaj/oturum bitemporal append-only; telefon PII-flag; tahsilat Money (Decimal)."
        }
       ]
      },
@@ -1009,7 +985,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Paket core'u yok; üç modülün capability bohçası. Resmî API adaptörü tek kanal entegrasyonu; her modül sözleşmesini korur (additif)."
        }
       ]
      },
@@ -1018,7 +994,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "s-comms (inbox), s-channel-hub (otomasyon + çok-kanal), s-payment-methods (tahsilat), stack-commerce (katalog) yalnız Contract. Meta tek-kanal riski Telegram/IG genişlemesiyle (channel-hub) yapısal cevap."
        }
       ]
      },
@@ -1027,7 +1003,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Inbox/agent app + Commerce app aynı müşteri/katalog/sipariş ArcheType'ını paylaşır; mesajdan gelen sepet aynı Cart'a yazar, çift kayıt yok."
        }
       ]
      }

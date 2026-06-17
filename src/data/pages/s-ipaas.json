@@ -366,7 +366,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Integration Hub (iPaaS) — çekirdek yetenek",
+      "term": "Connector + Trigger/Action ArcheType'ı",
       "definition": [
        {
         "type": "strong",
@@ -374,41 +374,55 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Bağlantı (kimlik bilgisi) + tetikleyici + aksiyon; iPaaS çekirdeği — Zapier/n8n muadili akış varlığı; tenant'a izole."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Flow runner (ECA üstünde otomasyon)",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "trigger → condition → action zinciri; loop/derinlik guard'lı; framework event-bus üstünde çalışır, kendi runtime'ını icat etmez."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Webhook giriş + dış API çağrısı",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Gelen webhook (l1-webhook-in) + giden HTTP aksiyon; imza doğrulama + idempotency; dış efekt step-up gerektirir."
+       }
+      ]
+     },
+     {
+      "term": "Şifrelenmiş credential vault",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "OAuth token / API key tenant başına şifreli saklanır (secret=true); deny-by-default erişim; rotation + audit."
+       }
+      ]
+     },
+     {
+      "term": "TR muhasebe/yerel connector kataloğu",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Türk muhasebe + yerel SaaS connector'ları hazır — Zapier'in TR boşluğu; aynı platform içi ürünlere native bağlanır."
        }
       ]
      }
@@ -596,15 +610,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Credential (OAuth/API key) secret=true, tenant başına şifreli; RLS tenant-scoped — başka tenant'ın bağlantısı görülmez. ipaas.flow.run capability deny-by-default; flow yalnız sahibinin yetkili olduğu kaynaklara erişir, tüm tenant verisine değil. Giden API çağrısı dış efekt → step-up; SSRF koruması (iç ağ adresleri engelli); her çalıştırma audit'lenir. Loop guard (max_depth) + idempotency key ile flow zinciri sonsuz döngü/çift aksiyon üretmez. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -632,15 +638,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Flow aksiyonları asenkron worker + outbox (at-least-once); webhook giriş kuyruğa alınır; çalıştırma logu keyset (cursor) + (tenant_id, flow_id, ts) index."
        }
       ]
      },
@@ -658,15 +656,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Senkron dış API yerine kuyruk + retry/backoff; yoğun trigger'lar batch'lenir, event-bus bloklanmaz."
        }
       ]
      },
@@ -962,7 +952,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Integration Hub (iPaaS)",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Integration Hub (iPaaS)\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: flow.trigger_matched\ncondition:\n  all:\n    - actor.capability >= \"ipaas.flow.run\"\n    - not loop_detected\n    - depth < max_depth\naction:\n  - enqueue: ipaas.action.dispatch   # outbox, at-least-once\n  - emit: flow.run_started\nguards:\n  max_depth: 6\n  idempotency_key: \"flow:{tenant}:{flow_id}:{trigger_event_id}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1102,6 +1092,18 @@
     ]
    },
    {
+    "id": "block-s-ipaas-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Komşu-tenant credential/flow sorgusu sıfır döndürür (RLS). Loop testi: flow kendini tetiklerse max_depth'te durur, sonsuz döngü yok. Idempotency testi: aynı trigger event iki kez gelse tek aksiyon dispatch edilir. SSRF testi: giden aksiyon iç ağ adresine (169.254/10.x) gidemez."
+     }
+    ]
+   },
+   {
     "id": "block-s-ipaas-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1120,7 +1122,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Layer-2 platform-horizontal ürünü; kendi Connector/Flow ArcheType'larını ve UI'sını tanımlar ama yetki/audit/event-bus/tenancy framework'ten gelir, runtime'ı yeniden icat etmez."
        }
       ]
      },
@@ -1129,16 +1131,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Tenancy (her flow + credential tenant_id ile izole, RLS), Identity (flow sahibi), Audit (her çalıştırma izi) kernel'den miras."
        }
       ]
      },
@@ -1147,7 +1140,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "App core'una bağlı; iPaaS bir Domain (Kaya) olarak core sözleşmelerine uyar; flow'lar yalnız Contract ile diğer modüllere yayar."
        }
       ]
      },
@@ -1156,7 +1149,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Event-bus (trigger), scale-webhook (giriş/çıkış), worker (async aksiyon), outbox (at-least-once) module'lerini tüketir; ECA guard'larını (max_depth, idempotency) miras alır."
        }
       ]
      },
@@ -1165,7 +1158,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Platform içi tüm app'ler tetikleyici/aksiyon olarak görünür; bir app'in olayı başka app'te aksiyon tetikler — çift entegrasyon kodu yok."
        }
       ]
      }
@@ -1178,13 +1171,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-ipaas-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-ipaas-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Muhasebe app: 'fatura kesildi' event → iPaaS flow → dış muhasebe/e-fatura API'sine push."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "CRM app: yeni lead → flow → Slack/email/SMS bildirim (İYS opt-in kontrollü)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Notification: flow hata verince sahibe push; başarısız çalıştırma retry kuyruğuna."
+      }
+     ]
     ]
    },
    {

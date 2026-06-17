@@ -1,0 +1,58 @@
+{
+ "featureDefs": [
+  {
+   "name": "Connector + Trigger/Action ArcheType'ı",
+   "desc": "Bağlantı (kimlik bilgisi) + tetikleyici + aksiyon; iPaaS çekirdeği — Zapier/n8n muadili akış varlığı; tenant'a izole.",
+   "critical": true
+  },
+  {
+   "name": "Flow runner (ECA üstünde otomasyon)",
+   "desc": "trigger → condition → action zinciri; loop/derinlik guard'lı; framework event-bus üstünde çalışır, kendi runtime'ını icat etmez.",
+   "critical": true
+  },
+  {
+   "name": "Webhook giriş + dış API çağrısı",
+   "desc": "Gelen webhook (l1-webhook-in) + giden HTTP aksiyon; imza doğrulama + idempotency; dış efekt step-up gerektirir.",
+   "critical": true
+  },
+  {
+   "name": "Şifrelenmiş credential vault",
+   "desc": "OAuth token / API key tenant başına şifreli saklanır (secret=true); deny-by-default erişim; rotation + audit.",
+   "critical": true
+  },
+  {
+   "name": "TR muhasebe/yerel connector kataloğu",
+   "desc": "Türk muhasebe + yerel SaaS connector'ları hazır — Zapier'in TR boşluğu; aynı platform içi ürünlere native bağlanır.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-2 platform-horizontal ürünü; kendi Connector/Flow ArcheType'larını ve UI'sını tanımlar ama yetki/audit/event-bus/tenancy framework'ten gelir, runtime'ı yeniden icat etmez.",
+  "kernel": "Tenancy (her flow + credential tenant_id ile izole, RLS), Identity (flow sahibi), Audit (her çalıştırma izi) kernel'den miras.",
+  "core": "App core'una bağlı; iPaaS bir Domain (Kaya) olarak core sözleşmelerine uyar; flow'lar yalnız Contract ile diğer modüllere yayar.",
+  "modules": "Event-bus (trigger), scale-webhook (giriş/çıkış), worker (async aksiyon), outbox (at-least-once) module'lerini tüketir; ECA guard'larını (max_depth, idempotency) miras alır.",
+  "apps": "Platform içi tüm app'ler tetikleyici/aksiyon olarak görünür; bir app'in olayı başka app'te aksiyon tetikler — çift entegrasyon kodu yok."
+ },
+ "moduleUsage": [
+  "Muhasebe app: 'fatura kesildi' event → iPaaS flow → dış muhasebe/e-fatura API'sine push.",
+  "CRM app: yeni lead → flow → Slack/email/SMS bildirim (İYS opt-in kontrollü).",
+  "Notification: flow hata verince sahibe push; başarısız çalıştırma retry kuyruğuna."
+ ],
+ "ecaExample": "trigger:\n  event: flow.trigger_matched\ncondition:\n  all:\n    - actor.capability >= \"ipaas.flow.run\"\n    - not loop_detected\n    - depth < max_depth\naction:\n  - enqueue: ipaas.action.dispatch   # outbox, at-least-once\n  - emit: flow.run_started\nguards:\n  max_depth: 6\n  idempotency_key: \"flow:{tenant}:{flow_id}:{trigger_event_id}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Credential (OAuth/API key) secret=true, tenant başına şifreli; RLS tenant-scoped — başka tenant'ın bağlantısı görülmez.",
+  "ipaas.flow.run capability deny-by-default; flow yalnız sahibinin yetkili olduğu kaynaklara erişir, tüm tenant verisine değil.",
+  "Giden API çağrısı dış efekt → step-up; SSRF koruması (iç ağ adresleri engelli); her çalıştırma audit'lenir.",
+  "Loop guard (max_depth) + idempotency key ile flow zinciri sonsuz döngü/çift aksiyon üretmez."
+ ],
+ "perfNotes": {
+  "code": "Flow aksiyonları asenkron worker + outbox (at-least-once); webhook giriş kuyruğa alınır; çalıştırma logu keyset (cursor) + (tenant_id, flow_id, ts) index.",
+  "perf": "Senkron dış API yerine kuyruk + retry/backoff; yoğun trigger'lar batch'lenir, event-bus bloklanmaz."
+ },
+ "testNotes": [
+  "Komşu-tenant credential/flow sorgusu sıfır döndürür (RLS).",
+  "Loop testi: flow kendini tetiklerse max_depth'te durur, sonsuz döngü yok.",
+  "Idempotency testi: aynı trigger event iki kez gelse tek aksiyon dispatch edilir.",
+  "SSRF testi: giden aksiyon iç ağ adresine (169.254/10.x) gidemez."
+ ]
+}

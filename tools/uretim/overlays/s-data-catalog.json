@@ -1,0 +1,51 @@
+{
+ "featureDefs": [
+  {
+   "name": "Veri varlığı kataloğu",
+   "desc": "Tablo/alan/veri seti envanteri, metadata ve etiketleme; arama ve keşif. PII/duyarlılık etiketleri yargı bölgesi kurallarıyla.",
+   "critical": true
+  },
+  {
+   "name": "Lineage (soy) grafiği",
+   "desc": "Veri kaynağından tüketime köken-bağımlılık grafiği; bir alanın nereden geldiği ve nereyi etkilediği izlenir.",
+   "critical": true
+  },
+  {
+   "name": "Sahiplik + yönetişim",
+   "desc": "Veri sahibi/steward atama, erişim politikası ve onay; capability deny-by-default."
+  },
+  {
+   "name": "Politika/uyum etiketleri",
+   "desc": "Retention, PII bayrağı, sınıflandırma; KVKK/GDPR ve çok-yargı bölgesi resolver ile."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Veri varlığı çoğalan, yönetişim/uyum gereken tenant için aday (SaaS Fırsat Haritası); katalogda eksik olduğu için candidate. Taksonomi: Stack subset of Edition subset of Distribution.",
+  "kernel": "ArcheType engine ile katalog şeması, audit + tenancy framework'ten; sahiplik/erişim kararları PDP üzerinden, RLS ile izole.",
+  "core": "Kernel + Scale + Layer-1 üstüne; lineage grafiği için ilişki deposu, metadata için JSONB.",
+  "modules": "s-data-platform/ETL lineage kaynağı, compliance uyum etiketleri.",
+  "apps": "Veri sahibi/steward yönetir; denetçi okur; backend metadata harvest."
+ },
+ "ecaExample": "trigger:\n  event: dataset.schema_changed\ncondition:\n  all:\n    - actor.capability >= \"catalog:lineage:update\"\n    - not loop_detected\naction:\n  - emit: lineage.graph_updated\n  - emit: governance.review_suggested\nguards:\n  max_depth: 6\n  idempotency_key: \"lineage:{dataset_id}:{schema_version}\"\n  external_effects: none",
+ "securityNotes": [
+  "Katalog metadata'sı hassas yapı bilgisi içerir; erişim capability deny-by-default, RLS ile tenant-izole.",
+  "PII/duyarlılık etiketleri retention ve crypto-shredding politikalarını besler; yargı bölgesi resolver ile.",
+  "Sahiplik/erişim politikası değişiklikleri audit'lenir (kim, ne zaman, hangi politika).",
+  "Lineage grafiği cross-tenant sızıntı yapmaz; komşu tenant veri soyunu göremez."
+ ],
+ "perfNotes": {
+  "code": "WITH RECURSIVE lineage AS (...) SELECT ... -- köken grafiği gezinmesi, indeksli kenar tablosu",
+  "perf": "Lineage gezinmesi recursive CTE + indeksli kenar tablosu; derin grafik için materialized projection. Katalog arama keyset + JSONB GIN metadata index."
+ },
+ "moduleUsage": [
+  "compliance: uyum etiketleri (PII, retention, sınıflandırma) denetim raporlarını besler.",
+  "s-data-platform: ETL/pipeline metadata'sı lineage grafiğinin kaynağıdır.",
+  "s-predictive: model girdisi veri setlerinin soyu ve sahipliği katalogdan izlenir."
+ ],
+ "testNotes": [
+  "Lineage testi: kaynak şema değişimi bağımlı alanları doğru işaretler, grafik güncellenir.",
+  "Sahiplik testi: steward atanmamış varlık yönetişim uyarısı üretir.",
+  "Etiket testi: PII işaretli varlık retention/crypto-shredding politikasını tetikler.",
+  "RLS testi: komşu tenant'ın katalog ve lineage verisi okunamaz."
+ ]
+}

@@ -1,0 +1,54 @@
+{
+ "featureDefs": [
+  {
+   "name": "sdk app create — test-önce iskelet",
+   "desc": "Bildirimsel tanımdan (YAML veya interaktif soru) iskelet üretir; sıra kullanıcı kuralıyla aynıdır: ÖNCE test dosyaları (kontrat + 'komşu tenant okuyamaz' senaryosu, kırmızı başlar), sonra ArcheType YAML, sonra boş saf-hook, sonra manifest + izin beyanı. Boş klasör değil, ilk dakikadan koşan yapı.",
+   "critical": true
+  },
+  {
+   "name": "Dar tipli AI yüzeyi (vibecoding sözleşmesi)",
+   "desc": "AI'ın görüp değiştirebildiği yalnız archetypes/*.yaml + hooks/*.py (saf fonksiyon) + tests/* + theme token'ları. Göremediği: kernel iç API'si, ORM oturumu, tenant bağlamı — hepsi SDK çağrılarının arkasında. Yüzey bilinçle dardır; bu aynı anda hata-alanı daraltması, lisans sınırı ve WASM izin sınırıdır.",
+   "critical": true
+  },
+  {
+   "name": "ArcheType üretimi — tek komut + çok aşamalı AI",
+   "desc": "sdk archetype <ad> tek komutla seven-questions akışını başlatır (Ne/Niçin/Nasıl/Nerede/Ne zaman/Kim/Analoji). Tekil bildirimsel varlık üretir (ör. iyzico, SEO). theme de tek-komut: sdk theme create → token + Surface şablonu.",
+   "critical": true
+  },
+  {
+   "name": "sdk check / build — geçmeyen iskelet pakete dönüşmez",
+   "desc": "sdk check: pyright strict + üretilmiş tenant-izolasyon testleri + conformance suite. sdk build: WASM sandbox'a uygun module paketi; kurulum hedefi 'Chrome extension kadar basit'. Kapı geçilmeden paket üretilmez.",
+   "critical": true
+  },
+  {
+   "name": "Granülerlik dili + komşuluk kuralı",
+   "desc": "İş, granülerlik diliyle tarif edilir: 'crm dağ yap', 'listing orta taş yap'. ArcheType = Büyük Taş (tek-komut buildable); module = Kaya (geliştirici kompozisyonu); app = Dağ (module kompozisyonu). Komşuluk kuralını ihlal eden tarif iskelet üretmeden reddedilir.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "SDK, app/module geliştirmenin TEK kapısıdır (Karar 10) ve MIT lisanslıdır; lisans mimarisindeki API-boundary'nin teknik gövdesi budur. Kernel iç API'si SDK'dan sızarsa hem AGPL/MIT sınırı bulanır hem AI'ın hata alanı büyür.",
+  "kernel": "SDK kernel'i sarmalar ama yüzeye sızdırmaz; tenant bağlamı, ORM oturumu, event-bus erişimi SDK çağrılarının arkasındadır. Geliştirici/AI yalnız bildirimsel tanım + saf hook görür.",
+  "core": "Üretilen ArcheType'lar Contract üstünden money/bitemporal/audit'i ücretsiz alır; hook'lar saf fonksiyondur, ham DB oturumuna dokunamaz.",
+  "modules": "module Kaya seviyesidir: SDK ile bir bounded-context içinde ArcheType'lar birleştirilir (tek-komut buildable değil, geliştirici kompozisyon eforu). developer-admin panelinde özelleştirilir (Kontrol Düzlemi Boyut 2).",
+  "apps": "app Dağ seviyesidir: core module + ArcheType + module'ler birleştirilir. Müşteri tarafı (prompt ile ArcheType) Boyut 3'tür; SDK Boyut 2'dir."
+ },
+ "ecaExample": "trigger:\n  event: sdk.archetype.create.requested\ncondition:\n  all:\n    - actor.capability >= \"sdk:generate\"\n    - granularity_neighbor_rule_satisfied\n    - not loop_detected\naction:\n  - run: seven_questions_dialog\n  - emit: archetype.scaffold.generated\n  - require: changeset_review\nguards:\n  max_depth: 6\n  idempotency_key: \"archetype:{app}:{name}:{spec_hash}\"\n  external_effects: none",
+ "securityNotes": [
+  "AI yüzey sözleşmesi bir güvenlik sınırıdır: AI kernel iç API'sine, ORM oturumuna, tenant bağlamına erişemez — saf-hook + bildirimsel tanımla sınırlıdır.",
+  "Üretilen iskelet 'komşu tenant okuyamaz' tenant-izolasyon testlerini İÇERİR; bu testler kırmızı başlar, geçmeden paket üretilmez (RLS deny-by-default kanıtı).",
+  "Capability deny-by-default: manifest izin beyanı olmadan hook event'e abone olamaz; WASM sandbox izinleri manifest'le sınırlıdır.",
+  "sub_prompt / iş tarifi untrusted girdidir; iskelet üretiminden önce komşuluk kuralı + doğrulama kapısından geçer.",
+  "MIT/AGPL sınırı: kernel iç API'si SDK yüzeyinden sızarsa lisans sınırı bulanır — yüzey dar tutularak boundary korunur."
+ ],
+ "perfNotes": {
+  "code": "Üretilen client tipli ve elle yazılmaz; pyright strict derlemede tip hatalarını yakalar, runtime kontrolü değil.",
+  "perf": "Test-önce iskelet 'sonra test yazarız'ı yapısal olarak imkânsız kılar; her AI çıktısı doğulduğu anda kapıya girer, geç bulunan hata maliyeti düşer."
+ },
+ "testNotes": [
+  "Üretilen tests/ kırmızı başlamalı; hook gövdeleri doldurulunca yeşile döner (test-önce kanıtı).",
+  "sdk check: pyright strict + tenant-izolasyon + conformance suite geçmeden sdk build başarısız olur.",
+  "AI yüzey ihlali: hook'tan kernel iç API'sine erişim denemesi derleme/lint kapısında reddedilir.",
+  "Komşuluk kuralı ihlali ('listing dağ yap' gibi yanlış seviye) iskelet üretmeden hata döner."
+ ]
+}

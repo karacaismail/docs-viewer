@@ -1,0 +1,51 @@
+{
+ "featureDefs": [
+  {
+   "name": "Video çekirdeği (Jitsi self-host)",
+   "desc": "Toplantı, kayıt, ekran paylaşımı; kayıt stack-drive arşivine. Self-host — veri-egemenliği segmenti için Teams/Zoom alternatifi.",
+   "critical": true
+  },
+  {
+   "name": "Ekip kanalları (chat)",
+   "desc": "Kanal, thread, mention, arama; her mesaj event bus'a olay olarak düşer. Rocket.Chat/Mattermost muadili.",
+   "critical": true
+  },
+  {
+   "name": "Müşteri inbox (omni-channel)",
+   "desc": "Site widget'ı + WhatsApp/Instagram kanalları; konuşma → Helpdesk ticket köprüsü. Chatwoot muadili."
+  },
+  {
+   "name": "Story/duyuru + ERP köprüsü",
+   "desc": "Şirket içi hikâye akışı (tüketici UX'i kuruma uyarlanır); toplantı notu → s-crm aktivitesi, görüşme → RAG beslemesi."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet (aday) — Layer-2 SaaS ürünü; realtime primitive (SSE/WS/Yjs) ve kernel identity hazır olduğundan maliyetin büyüğü ödenmiş. Tek pakette video+chat+müşteri inbox + ERP event-bus entegrasyonu farkı.",
+  "kernel": "Kernel identity (kimlik) ve tenancy (RLS) hazır; mesaj/konuşma ArcheType'ları engine ile tanımlanır, audit kernel'den. Comms kendi Domain'ini (Kaya) tanımlar.",
+  "core": "App core'una bağlı; core module değişmez. Video çekirdeği (Jitsi) dış process, metadata/olay kernel'de.",
+  "modules": "scale-realtime primitive'ini tüketir (canlı kanal/presence); s-crm'e toplantı notunu aktivite olarak, Helpdesk'e konuşmayı ticket olarak yayar — yalnız Contract.",
+  "apps": "CRM, Helpdesk ve Drive app'leri aynı konuşma/kayıt verisini paylaşır; görüşme RAG'a beslenir, çift kayıt yok."
+ },
+ "moduleUsage": [
+  "scale-realtime: canlı kanal/presence/typing göstergesi için WS/SSE primitive'ini tüketir.",
+  "s-crm: toplantı notu ve görüşme özeti müşteri aktivitesi olarak yazılır.",
+  "Helpdesk app: müşteri inbox konuşması ticket'a köprülenir (widget/WhatsApp/IG).",
+  "stack-drive: video kaydı arşive; RAG/AI app görüşme transkriptini embedding indeksine besler."
+ ],
+ "ecaExample": "trigger:\n  event: meeting.note_created\ncondition:\n  all:\n    - actor.capability >= \"comms.write\"\n    - tenant_scoped\n    - not loop_detected\naction:\n  - emit: crm.activity_logged          # outbox, idempotent\n  - enqueue: rag.index_conversation\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:meeting:{meeting_id}:note\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Konuşma/mesaj içeriği pii (+retention); RLS tenant-scoped; self-host veri-egemenliği (kamu/savunma/hukuk/sağlık) segmenti için Teams/Zoom kullanılamayan senaryoyu çözer.",
+  "Müşteri inbox dış kanalları (WhatsApp/IG) Contract üzerinden; gelen mesaj doğrulama + hız limiti (spam/enjeksiyon koruması).",
+  "Video kaydı erişimi capability deny-by-default; kayıt arşivi (stack-drive) tenant izole, komşu-tenant kaydı erişilemez.",
+  "RAG beslemesi consent kapısıyla: görüşme indeksleme açık rıza/politika olmadan yapılmaz."
+ ],
+ "perfNotes": {
+  "perf": "Video Jitsi self-host (ayrı kaynak); chat/presence scale-realtime üzerinden WS; mesaj geçmişi keyset pagination; RAG indeksleme asenkron worker."
+ },
+ "testNotes": [
+  "Komşu-tenant konuşma/kayıt erişimi sıfır döndürür (izolasyon).",
+  "Müşteri inbox: WhatsApp/IG'den gelen konuşma doğru tenant ticket'ına köprülenir.",
+  "Toplantı notu idempotent: aynı not iki kez CRM aktivitesi yazmaz (idempotency_key).",
+  "RAG beslemesi consent kapalıyken görüşmeyi indekslemez (deny-by-default)."
+ ]
+}

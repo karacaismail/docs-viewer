@@ -1,0 +1,56 @@
+{
+ "featureDefs": [
+  {
+   "name": "Lead + Pipeline",
+   "desc": "Lead capture/qualify/score + opportunity/stage/forecast. Pipeline durum makinesidir; aşama geçişleri audit'li, tahmin (forecast) projeksiyondan türetilir.",
+   "critical": true
+  },
+  {
+   "name": "Email + Marketing Automation",
+   "desc": "Campaign/template/segment/A-B + drip/trigger workflow. Gönderim worker kuyruğunda idempotent; aynı kampanya aynı kişiye çift gönderilmez.",
+   "critical": true
+  },
+  {
+   "name": "SMS Marketing + ETK/IYS opt-in",
+   "desc": "Toplu SMS, ETK izni (IYS entegrasyonu). Opt-in/opt-out izin kaydı zorunlu; izinsiz gönderim deny-by-default ile engellenir, izin geçmişi bitemporal.",
+   "critical": true
+  },
+  {
+   "name": "Segment + Affiliate + Loyalty",
+   "desc": "RFM/cohort/LTV/churn-risk segmentasyonu; affiliate link/commission/attribution; Smile.io sınıfı loyalty. Komisyon money Contract'ı üstünden, atıf loop_detected korumalı.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Layer-2 Stack (Klaviyo + Salesforce CRM muadili). Kernel + Scale + Layer-1 üstüne oturur; hedeflenmiş mesajlaşma ve pipeline omurgası. Kendi ArcheType'larını ve UI'sını sunar, yetki/audit/event-bus framework'ten gelir.",
+  "kernel": "Kampanya/gönderim olayları event-bus'a yayınlanır; capability deny-by-default ile yetki; izin ve gönderim kayıtları audit'li, RLS ile tenant izolasyonu.",
+  "core": "Komisyon/affiliate tutarları money Contract'ı üstünden; izin (consent) ve segment üyeliği bitemporal. Toplu gönderim outbox/worker üstünden idempotent.",
+  "modules": "POS/Sales/Commerce'ten satış ve müşteri olayını, Subscription'dan churn sinyalini alır; segment ve kampanya sonucunu geri yayınlar.",
+  "apps": "App segment seçer, kampanya planlar; gönderim worker'a kuyruğa girer, açılma/tıklama metriği projeksiyona düşer."
+ },
+ "ecaExample": "trigger:\n  event: cart.abandoned\ncondition:\n  all:\n    - actor.capability >= \"campaign:send\"\n    - contact.sms_consent == true\n    - within_quiet_hours == false\n    - not loop_detected\naction:\n  - schedule:\n      job: send_winback_sms\n      delay: 30m\n      queue: sms\nguards:\n  max_depth: 6\n  idempotency_key: \"winback:{contact_id}:{cart_id}\"\n  external_effects: rate_limited",
+ "securityNotes": [
+  "ETK/IYS izni deny-by-default: opt-in kaydı olmadan SMS/email gönderilmez; izin geçmişi bitemporal denetlenir.",
+  "Toplu gönderim idempotent + quiet-hours korumalı; aynı kişiye çift gönderim ve gece gönderimi engellenir.",
+  "Affiliate atıfı self-referral ve döngü (loop_detected) korumalı; komisyon yalnız geçerli dönüşümde.",
+  "Capability deny-by-default: campaign:send / segment:export yetkisi gerekir.",
+  "Müşteri PII'si ve segment üyeliği RLS ile tenant'a izole; export maskeleme + audit'e tabi."
+ ],
+ "perfNotes": {
+  "code": "Segment üyeliği projeksiyonla materyalize edilir; gönderim listesi keyset cursor ile batch'lenir.",
+  "perf": "Materyalize segment, her gönderimde canlı RFM hesabını önler; milyon kişilik segmentte gönderim sabit throughput'la akar."
+ },
+ "moduleUsage": [
+  "POS / Sales / Commerce: satış ve sepet olaylarından kampanya tetikleme ve atıf.",
+  "Subscription Analytics: churn-risk sinyaliyle winback kampanyası.",
+  "s-loyalty: kampanya bonusu ve referral teşvikinin puan tarafı.",
+  "s-bpm: indirim/onay gerektiren kampanyaların ECA akışı."
+ ],
+ "testNotes": [
+  "İzinsiz (opt-in yok) kişiye gönderim deny-by-default ile reddedilir.",
+  "Aynı winback aynı kişiye iki kez tetiklenmez (idempotency).",
+  "Quiet-hours penceresinde SMS ertelenir, içeride gönderilmez.",
+  "Self-referral affiliate komisyonu üretmez (loop_detected).",
+  "Komşu tenant'ın segmenti RLS ile görünmez."
+ ]
+}

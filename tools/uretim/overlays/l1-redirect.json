@@ -1,0 +1,58 @@
+{
+ "featureDefs": [
+  {
+   "name": "301/302 yönlendirme yönetimi",
+   "desc": "Eski→yeni eşleme tablosu; slug değişiminde otomatik 301 kaydı; manuel kural ekleme. Slug taşınırken link-equity kaybolmaz. Öncelik P0.",
+   "critical": true
+  },
+  {
+   "name": "410 Gone",
+   "desc": "Silinen ArcheType kaydı için soft-404 yerine net 410; sitemap'ten düşürme bağı. Arama motoruna 'kalıcı gitti' sinyali. Öncelik P0.",
+   "critical": true
+  },
+  {
+   "name": "URL alias / slug (pathauto)",
+   "desc": "ArcheType alanlarından desenli slug üretimi; çakışma çözümü; çoklu dil slug. Öncelik P1."
+  },
+  {
+   "name": "Kanonik birleştirme",
+   "desc": "Trailing slash, case, parametre normalizasyonu → tek kanonik URL. Yanlış birleştirme indexleme kaybı riski. Öncelik P1."
+  },
+  {
+   "name": "Döngü/zincir denetimi",
+   "desc": "Yönlendirme zinciri >2 ve döngü tespiti; build/CI uyarısı. Deterministik kapı — döngü reddedilir. Öncelik P1.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Frontpages ailesinin URL-yaşam-döngüsü ayağı; public Surface'i olan app'lerde aktif. Ayrı module çünkü yönlendirme tablosu yazma + döngü denetimi sorumluluğu l1-seo render'ından ayrıdır.",
+  "kernel": "ArcheType slug'ı kernel alan tanımından türer (pathauto deseni); slug değiştiğinde kernel save pipeline'ı eski→yeni 301'i, kayıt silindiğinde 410'u otomatik kaydeder. Tenant-scoped, RLS.",
+  "core": "Çözüm fonksiyonu (path → 301/410/None) core Contract'ı olarak yayınlanır; tek kaynaktan (single source) hem edge hem prerender çağırır, tutarlılık burada zorlanır.",
+  "modules": "l1-sitemap ile URL düşürme, l1-seo ile meta/canonical etiketi koordine; bu module yalnız URL yaşam döngüsünü (301/410/alias/kanonik) sahiplenir, render'a karışmaz.",
+  "apps": "Public Surface'li tüm app'ler (StoreFront, blog, frontpages) aynı redirect tablosunu paylaşır; iç back-office'te module opsiyoneldir."
+ },
+ "moduleUsage": [
+  "StoreFront/e-ticaret app: ürün slug değişiminde otomatik 301; ürün silininde 410 + sitemap düşürme.",
+  "Blog/frontpages app: yazı slug normalizasyonu (kanonik) + pathauto alias.",
+  "fe-cdn: çalışma-zamanı yönlendirme edge'de O(1) lookup ile çözülür (prerender manifesti).",
+  "l1-sitemap: 410 olan URL sitemap'ten düşürülür; l1-seo canonical etiketini bu module'ün kanonik kararıyla hizalar."
+ ],
+ "ecaExample": "trigger:\n  event: archetype.slug_changed\ncondition:\n  all:\n    - actor.capability >= \"redirect.write\"\n    - tenant_scoped\n    - not redirect_loop_detected      # deterministik kapi\naction:\n  - redirect.append: { from: old_slug, to: new_slug, status: 301 }\n  - sitemap.drop: old_slug\n  - emit: url.redirect_registered     # outbox, idempotent\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:redirect:{old_slug}\"\n  external_effects: relayed_async",
+ "securityNotes": [
+  "ArcheType'lar: Redirect (from/to/status/reason), UrlAlias (pattern→slug), CanonicalRule (normalizasyon politikası).",
+  "Capability deny-by-default: yalnız yönlendirme tablosu + alias yazma; pii üretmez; çalışma-zamanı yönlendirme edge'de ya da prerender manifestinde.",
+  "Tüm kurallar audit'li; from/to bitemporal (hangi tarihte hangi hedef — tarihçe) — dış backlink'li eski URL kayıt silinse de 301/410 olarak yaşar.",
+  "Tenant izolasyonu: bir tenant'ın redirect kuralı başka tenant'ın path'ini çözemez (RLS)."
+ ],
+ "perfNotes": {
+  "code": "Çözüm O(1) lookup (edge cache); zincir sadeleştirici A→B→C zincirini A→C'ye indirger; döngü dedektörü saf fonksiyon, build/CI'da deterministik kapı. Slug üreteci pattern→slug saf fonksiyon.",
+  "perf": "Yönlendirme çözümü edge'de (fe-cdn) cache'lenir, origin'e gitmez; aşırı zincir (>2) link-equity ve hız kaybı yaratır, bu yüzden sadeleştirme zorunludur."
+ },
+ "testNotes": [
+  "Slug değişimi → eski URL 301 yeni'ye; silinen kayıt → 410 (soft-404 değil).",
+  "Zincir A→B→C → A doğrudan C'ye sadeleşir; döngü A→B→A reddedilir (CI kırmızı).",
+  "Kanonik: /x/ ve /X aynı kanonik'e birleşir; yanlış birleştirme indexleme kaybı testle korunur.",
+  "Dış backlink'li eski URL korunur: kayıt silinse de 301/410 yaşar (link-equity).",
+  "Tenant izolasyonu: komşu-tenant path'i çözülmez. Edge ve prerender çözümü tek kaynaktan (Contract) bit-bit tutarlı."
+ ]
+}

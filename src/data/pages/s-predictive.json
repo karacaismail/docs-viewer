@@ -304,7 +304,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Predictive Analytics — çekirdek yetenek",
+      "term": "Talep/stok tahmini",
       "definition": [
        {
         "type": "strong",
@@ -312,41 +312,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Geçmiş satış serisinden talep ve yeniden sipariş noktası tahmini; tahminler kaynak veriye bağlı, deterministik değil — açıklanabilir."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Churn tahmini",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Abonelik/müşteri davranışından ayrılma riski skoru; risk_score audit'lenir, karar insan onayına bağlanabilir."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Feature store / besleme",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Projection/materialized view'lardan model girdileri; outbox ile asenkron besleme, çevrimiçi sorguyu yormaz."
+       }
+      ]
+     },
+     {
+      "term": "Tahmin açıklanabilirliği",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Her tahmin için kaynak sinyaller ve model/versiyon metadata; forensic izlenebilirlik."
        }
       ]
      }
@@ -534,15 +531,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Tahmin girdileri müşteri davranış verisi (PII); RLS ile tenant izolasyonu, retention bildirimli. Model çıktısı karar verici değil öneri; yüksek etki eylemi step-up onayına bağlanır (deny-by-default). Her tahmin model_id + feature versiyonu ile audit'lenir — regresyon ve üretilebilirlik için. Eğitim verisinde cross-tenant sızıntı engellenir; modeller tenant sınırına saygılı beslenir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -570,15 +559,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "REFRESH MATERIALIZED VIEW CONCURRENTLY mv_demand_features; -- outbox-tetikli, çevrimiçi sorguyu bloklamaz"
        }
       ]
      },
@@ -596,15 +577,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Model girdileri materialized view/projection üzerinden; ağır toplama asenkron. Skor sorguları keyset; serileştirilmiş tahmin sonuçları cache, kaynak değişince ilgili anahtar invalidate."
        }
       ]
      },
@@ -900,7 +873,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Predictive Analytics",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Predictive Analytics\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: subscription.usage_updated\ncondition:\n  all:\n    - actor.capability >= \"predictive:churn:score\"\n    - not loop_detected\naction:\n  - emit: churn.score_computed\n  - emit: retention.review_suggested\nguards:\n  max_depth: 6\n  idempotency_key: \"churn:{customer_id}:{period}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -1040,6 +1013,18 @@
     ]
    },
    {
+    "id": "block-s-predictive-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Açıklanabilirlik testi: her tahmin kaydı model_id + feature versiyonu içerir. RLS testi: bir tenant'ın tahmin girdileri/çıktıları başka tenant'a sızmaz. Karar kapısı testi: yüksek etki önerisi otomatik uygulanmaz, step-up onayı ister. Idempotency testi: aynı (customer_id, period) için churn skoru tekrar tetiklendiğinde çift kayıt oluşmaz."
+     }
+    ]
+   },
+   {
     "id": "block-s-predictive-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1058,7 +1043,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Veri-yoğun karar (stok, talep, churn) olan tenant için Faz 2-3'te entegre; yeterli geçmiş veri yoksa eklenmez."
        }
       ]
      },
@@ -1067,16 +1052,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Layer-2 SaaS ürünü; ArcheType engine ile şema, audit + tenancy framework'ten. Tahmin kayıtları model_id + prompt/feature versiyonu ile audit'lenir."
        }
       ]
      },
@@ -1085,7 +1061,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Kernel + Scale (projections, timeseries) + Layer-1 üstüne. Model girdileri projection katmanından beslenir."
        }
       ]
      },
@@ -1094,7 +1070,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "s-inventory talep tahmini, s-subscription-analytics churn tüketir."
        }
       ]
      },
@@ -1103,7 +1079,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Stack squad ürünü; AI squad model yaşam döngüsü ve değerlendirme için."
        }
       ]
      }
@@ -1116,13 +1092,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-predictive-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-predictive-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-inventory: talep/stok tahminini yeniden sipariş kararında kullanır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-subscription-analytics: churn skorunu elde tutma kampanyalarına bağlar."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "scale-projections: tahmin için materialized view/feature beslemesini sağlar."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "scale-timeseries: zaman serisi girdilerini barındırır."
+      }
+     ]
     ]
    },
    {

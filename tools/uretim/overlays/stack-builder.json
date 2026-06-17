@@ -1,0 +1,54 @@
+{
+ "featureDefs": [
+  {
+   "name": "Otopilot + Atölye (iki mod, tek motor)",
+   "desc": "Tek karar ağacının iki görünümü. Otopilot: AI sürer, tam aday paketi kurar, yalnız zorunlu kavşaklarda durur, tek tık. Atölye: insan sürer, her kavşak bir DecisionCard [a,b,c,d]+AI-önerisi+serbest sub_prompt. Mod her an değişir; Atölye seçimleri 'insan-kararı kilidi' ile Otopilot geçişinde ezilmez.",
+   "critical": true
+  },
+  {
+   "name": "DecisionCard + sub_prompt",
+   "desc": "Atölye'nin atomu: soru + 'neden önemli' + [a,b,c,d] (her şıkta AI-önerisi rozeti, gerekçe, sonuç önizlemesi) + 'diğer (yaz)' → sub_prompt textarea. Şıklar yetmezse insan kendi şıkkını yazar, AI yapıya çevirir, çıktı yine doğrulama kapısından geçer.",
+   "critical": true
+  },
+  {
+   "name": "Sonuç-önce sentetik önizleme",
+   "desc": "Otopilot şema/jargon değil, sentetik veriyle dolu çalışan önizleme gösterir ('işte kitap tablon — 6 örnek kitapla'); kullanıcı sonucu onaylar. 60+ kitle soyut alan listesini değerlendiremez.",
+   "critical": true
+  },
+  {
+   "name": "BuilderFlow durum makinesi",
+   "desc": "idle → intent_received → draft_generating → draft_generated → synthetic_preview_generated → mandatory_gates_detected → user_reviewing/adjusting → validation_running → approval_required → approved → applying_changeset → applied → post_apply_health_check → completed. Her hata durumu öğretici mesaj + geri dönüş taşır.",
+   "critical": false
+  },
+  {
+   "name": "Explanation Content Contract",
+   "desc": "DecisionCard '?' açıklaması runtime'da LLM tarafından serbest ÜRETİLMEZ; onaylı corpus'tan (glossary + seven-questions overlay) gelir. AI yalnız doğru açıklama anahtarını seçer, metni yazmaz. Şema: {term, context, locale, what, why, how, example, risk, change_later, plain_language_summary}; her açıklama versiyonlanır + auditlenir.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Builder Stack, katalogda modül duran Studio'nun bağımsız alıcıya paketlenmesidir (Power Apps / Zoho Creator karşılığı). AI-first farkın vitrini; prompt'tan ArcheType/form/workflow/portal üretir.",
+  "kernel": "Üretim ChangeSet kapısından geçer; capability deny-by-default ile agent yetkisi sınırlı (agent_permission_denied bir hata durumudur). Audit her ChangeSet'i kaydeder.",
+  "core": "Üretilen ArcheType'lar Contract üstünden money/bitemporal/audit alır; sentetik önizleme verisi tenant'a yazılmadan üretilir (synthetic_data_blocked guard'ı).",
+  "modules": "App Builder = s-studio, Form Builder = s-survey genelleşmesi, Workflow = s-bpm (ECA), Portal Builder = ArcheType metadata'sından otomatik. Builder bunları kompoze eder.",
+  "apps": "Çıktı çalışan bir iç araç/portal; kullanıcı prompt verir, Otopilot tam paketi kurar, tek onayla applied olur."
+ },
+ "ecaExample": "trigger:\n  event: builder.intent.received\ncondition:\n  all:\n    - actor.capability >= \"builder:generate\"\n    - tenant_policy_allows\n    - not loop_detected\naction:\n  - generate: draft + synthetic_preview\n  - detect: mandatory_gates\n  - require: changeset_approval\nguards:\n  max_depth: 6\n  idempotency_key: \"builderflow:{tenant}:{intent_id}\"\n  external_effects: synthetic_only",
+ "securityNotes": [
+  "sub_prompt untrusted girdidir; her değişiklik ChangeSet kapısından geçer, doğrudan şemaya yazılmaz.",
+  "'?' açıklaması onaylı corpus'tan gelir — runtime LLM üretimi yok; bu enjeksiyon yüzeyini ve yanlış/yanıltıcı açıklamayı kapatır.",
+  "Capability deny-by-default: agent_permission_denied ve tenant_policy_blocked birer hata durumudur; agent yetkisiz üretim yapamaz.",
+  "synthetic_data_blocked: sentetik önizleme verisi gerçek tenant verisine yazılmadan üretilir; PII sızması engellenir.",
+  "migration_failed → rollback_required: başarısız ChangeSet geri alınır, kısmi uygulanmış şema bırakılmaz."
+ ],
+ "perfNotes": {
+  "code": "synthetic_preview_generated aşaması gerçek migration'dan önce gelir; kullanıcı sonucu uygulamadan görür.",
+  "perf": "Sonuç-önce önizleme, hatalı üretimi apply'dan önce yakalayarak migration_failed/rollback maliyetini düşürür; iki mod tek motoru paylaştığı için bakım yükü tek."
+ },
+ "testNotes": [
+  "Atölye'de yapılan seçim, Otopilot'a geçişte 'insan-kararı kilidi' ile korunur (ezilmez).",
+  "'?' açıklaması corpus anahtarından gelir; LLM serbest metin üretmediği doğrulanır.",
+  "BuilderFlow hata durumları (generation_failed, validation_failed, rollback_required) öğretici mesaj + geri dönüş üretir.",
+  "synthetic_data_blocked: önizleme verisi gerçek tabloya yazılmaz."
+ ]
+}

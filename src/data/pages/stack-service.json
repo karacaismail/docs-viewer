@@ -217,7 +217,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Service Stack — çekirdek yetenek",
+      "term": "Stack paket bütünlüğü (FSM+Randevu+E-imza+Portal)",
       "definition": [
        {
         "type": "strong",
@@ -225,41 +225,47 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Saha servis + randevu + imzalı form + müşteri portalı tek pakette; randevu→iş emri→imza→fatura döngüsü tek tenant'ta akar."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Randevu → iş emri köprüsü",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "s-scheduling rezervasyonu s-fsm iş emrine döner; aynı müşteri kaydı paylaşılır, çift kayıt yok; SLA timer iş emrinde."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "İmzalı servis formu (KEP/5070)",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "s-esign ile servis formu/sözleşme imzası; hukuki delil zinciri audit'li; tamamlanan iş imzayla kapanır."
+       }
+      ]
+     },
+     {
+      "term": "Müşteri portalı (self-servis)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Talep açma + randevu görme + iş emri/fatura geçmişi; müşteri yalnız kendi kaydını görür (capability deny-by-default)."
+       }
+      ]
+     },
+     {
+      "term": "Bakım sözleşmesi yenileme otomasyonu",
+      "definition": [
+       {
+        "type": "text",
+        "text": "s-clm bağlanınca süresi dolan bakım sözleşmesi ECA ile yenileme tetikler; periyodik servis planlanır."
        }
       ]
      }
@@ -447,15 +453,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Müşteri adres/telefon + imza pii=true (+retention); RLS tenant-scoped — başka tenant'ın müşterisi/iş emri görülmez. Müşteri portalı capability deny-by-default: müşteri yalnız kendi talep/randevu/faturasını görür, tenant'ın tamamını değil. İmzalı form audit + delil zinciri (KEP/5070); idempotency ile çift randevu/iş emri engellenir. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -483,15 +481,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Portal listeleri keyset (cursor) pagination; (tenant_id, müşteri, tarih) index; sözleşme yenileme tarama asenkron worker."
        }
       ]
      },
@@ -509,15 +499,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Randevu uygunluk sorgusu indeksli slot taraması; bildirim/yenileme arka planda, portal UI bloklanmaz."
        }
       ]
      },
@@ -813,7 +795,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Service Stack",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Service Stack\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: maintenance_contract.expiring\n  when: \"days_to_expiry <= 30 AND tenant_scoped\"\ncondition:\n  all:\n    - actor.capability >= \"clm.contract.renew\"\n    - not loop_detected\naction:\n  - emit: scheduling.renewal_visit_requested   # outbox, idempotent\n  - notify: [\"customer\", \"account_owner\"]        # İYS kapısı\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{contract_id}:renewal\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -953,6 +935,18 @@
     ]
    },
    {
+    "id": "block-stack-service-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Komşu-tenant müşteri/iş emri/randevu sorgusu sıfır döndürür. Müşteri portalda yalnız kendi kayıtlarını görür (capability testi). Süresi dolan sözleşme iki kez taransa tek yenileme tetikler (idempotency). Randevu→iş emri köprüsü aynı müşteri kaydını kullanır, çift kayıt oluşmaz."
+     }
+    ]
+   },
+   {
     "id": "block-stack-service-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -971,7 +965,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — aday yatay stack: mevcut Layer-2 ürünlerini (s-fsm, s-scheduling, s-esign, s-clm) paketler; her biri zaten framework üstünde, yeni runtime icat etmez; paketleme maliyeti düşük."
        }
       ]
      },
@@ -980,16 +974,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Tüm paket ürünleri tek tenant_id altında izole (RLS); müşteri + teknisyen Identity'den; her saha/imza aksiyonu Audit'li — kernel'den miras."
        }
       ]
      },
@@ -998,7 +983,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Paketteki her ürün bir Domain (Kaya) olarak core sözleşmelerine uyar; portal core değişmeden ürünlerin projeksiyonunu sunar."
        }
       ]
      },
@@ -1007,7 +992,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Scheduling, FSM job, esign, CLM module'lerini birlikte tüketir; iş emri tamamlanınca muhasebe (fatura) ve notification'a yalnız Contract ile yayar."
        }
       ]
      },
@@ -1016,7 +1001,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Müşteri portalı app'i talep/randevu/fatura akışını paylaşılan müşteri kaydı üstünden gösterir; helpdesk ticket'ı FSM job'a dönüşür."
        }
       ]
      }
@@ -1029,13 +1014,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-stack-service-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-stack-service-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Müşteri portalı app: müşteri talep açar → randevu → FSM job; yalnız kendi kayıtlarını görür (RLS + capability)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Muhasebe app: imzayla kapanan iş → TL fatura + tahsilat; döviz değil."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Notification: randevu hatırlatma SMS + 'teknisyen yolda' (İYS opt-in); sözleşme bitişinde yenileme bildirimi."
+      }
+     ]
     ]
    },
    {

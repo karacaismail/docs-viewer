@@ -1,0 +1,51 @@
+{
+ "featureDefs": [
+  {
+   "name": "Deterministik varyant atama",
+   "desc": "Hash-tabanlı atama: aynı kullanıcı hep aynı varyantı görür (tutarlı deneyim); örneklem oranı (50/50 ±tolerans) korunur. Surface override ile varyant render edilir.",
+   "critical": true
+  },
+  {
+   "name": "Maruziyet kaydı (ExposureEvent)",
+   "desc": "Kullanıcının varyanta maruz kaldığı bir kez kaydedilir; dönüşüm ölçümü değil — o l1-analytics'ten okunur. Maruziyet anonim/consent sınırında.",
+   "critical": true
+  },
+  {
+   "name": "İstatistiksel karar kapısı",
+   "desc": "Anlamlılık/güç kapısı; erken durdurma (p-hacking) reddedilir, kazanan ancak kapı geçilince ilan edilir. Deterministik hesap.",
+   "critical": true
+  },
+  {
+   "name": "Feature-flag rollout + kill-switch",
+   "desc": "Server-side flag + kademeli açma; kill-switch anında tüm trafiği kontrole çeker. Kazanan varyant deney bitince kalıcılaşır.",
+   "critical": true
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Enterprise CRO yeteneği (P2); MVP'de gereksiz, büyük ölçekte kritik. App değil module — Surface varyantı + Experiment ArcheType.",
+  "kernel": "Capability deny-by-default: yalnız varyant atama + maruziyet kaydı; kernel iç API'sine dokunmaz, kendi pii ölçümü yok.",
+  "core": "Deney ve karar audit'li; maruziyet pii sınırı (anonim/consent). Experiment/Variant/ExposureEvent/FeatureFlag ArcheType'ları, audit:true.",
+  "modules": "l1-analytics'ten dönüşüm OKUR (ölçüm ile deney ayrı tutulur); l1-tagmanager etiket taşır; cc-privacy rıza kapsamı; l1-pseo şablon deneyi.",
+  "apps": "Admin Surface: deney kurulumu + canlı sonuç + karar — App değil, mevcut Surface'lara varyant override enjekte eden module."
+ },
+ "ecaExample": "trigger:\n  event: surface.render_requested\ncondition:\n  all:\n    - actor.capability >= \"experiment:assign\"\n    - consent.analytics == true\n    - not loop_detected\naction:\n  - emit: variant.assigned(hash(user_id, experiment_id))\n  - emit: exposure.recorded\nguards:\n  max_depth: 6\n  idempotency_key: \"exposure:{experiment_id}:{user_id}\"\n  external_effects: none",
+ "securityNotes": [
+  "Maruziyet kaydı pii sınırında: consent yoksa anonim/atlanır; rıza dışı izleme yok (cc-privacy kapsamı zorunlu).",
+  "Bu module kendi dönüşüm/pii ölçümünü tutmaz — l1-analytics'ten OKUR; veri sahipliği ayrımı capability ile zorlanır (deny-by-default).",
+  "İstatistiksel kapı p-hacking/erken-durdurmaya karşı koruma: AI veya kullanıcı kendi deneyini erken 'kazandı' ilan edemez; kapı deterministik.",
+  "SEO cloaking riski: arama botuna farklı içerik gösterme yasak; varyantlar kanonik altında, bot tutarlılığı korunur.",
+  "Kill-switch capability deny-by-default — yalnız yetkili rol tüm trafiği anında kontrole çekebilir; audit'li."
+ ],
+ "perfNotes": {
+  "code": "-- maruziyet bir kez (idempotent upsert)\nINSERT INTO exposure_event (experiment_id, user_hash, variant, seen_at)\nVALUES ($1, $2, $3, now())\nON CONFLICT (experiment_id, user_hash) DO NOTHING;",
+  "perf": "Varyant atama saf hash fonksiyonu — DB lookup'sız, deterministik, hot-path'te ucuz. Maruziyet idempotent upsert (çift kayıt yok). Flag okuması server-side cache'li; her render ayrı sorgu değil."
+ },
+ "testNotes": [
+  "Aynı kullanıcının her zaman aynı varyantı gördüğü (deterministik hash) doğrulanır.",
+  "Örneklem oranının 50/50 ±tolerans korunduğu test edilir.",
+  "Maruziyetin bir kez kaydedildiği (idempotent) doğrulanır.",
+  "İstatistiksel kapının erken-durdurmayı reddettiği, kazananı ancak anlamlılıkta ilan ettiği test edilir.",
+  "Kill-switch'in anında tüm trafiği kontrol varyantına çektiği doğrulanır.",
+  "Consent yoksa atamanın anonim/atlandığı test edilir."
+ ]
+}

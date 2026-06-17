@@ -688,7 +688,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Streaming — Kafka, real-time aggregation — çekirdek yetenek",
+      "term": "Outbox Relay",
       "definition": [
        {
         "type": "strong",
@@ -696,41 +696,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Transactional outbox tablosundan event'leri sıralı yayınlayan worker; modüler monolit'te Kafka yerine birincil yol."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "NOTIFY Köprüsü",
       "definition": [
        {
         "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
-       },
-       {
-        "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Postgres LISTEN/NOTIFY üzerinden in-process consumer'lara düşük gecikmeli sinyal; 100K event/sn'ye kadar yeterli."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Windowed Aggregator",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Belirli zaman penceresinde (örn. son 5 dk) sayım/toplam tutan stateful işlemci; checkpoint + idempotent replay."
+       }
+      ]
+     },
+     {
+      "term": "Stream Driver Sözleşmesi",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Outbox → Redpanda/Kafka geçişini tek arayüz arkasına alan driver; 1M+ event/sn'de takılır, altı değişmez."
        }
       ]
      }
@@ -918,15 +915,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Consumer group offset'i tenant_id ile damgalanır; cross-tenant event sızıntısı RLS + topic-key ile engellenir. Outbox relay yalnız emit eder, dış efekt (ödeme/mail) tetiklerse step-up + capability deny-by-default kontrolü şart. Windowed state replay idempotent olmalı; aynı event iki kez işlenirse sayım bozulmamalı (idempotency_key). Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -954,15 +943,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "< 10K/sn sync handler; 10K-100K Postgres NOTIFY + worker pool; 100K+ ancak ölçülerek Redpanda."
        }
       ]
      },
@@ -980,15 +961,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Kafka erken eklenince günde saatlerce operations yükü; karar matrisi event/sn eşiğine göre kademeli."
        }
       ]
      },
@@ -1284,7 +1257,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Streaming — Kafka, real-time aggregation",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Streaming — Kafka, real-time aggregation\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: DocumentViewed\ncondition:\n  all:\n    - actor.capability >= \"stream:aggregate\"\n    - not loop_detected\n    - window.event_rate < 1_000_000\naction:\n  - emit: ViewCountWindowUpdated\nguards:\n  max_depth: 6\n  idempotency_key: \"view:{doc_id}:{window_start}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -1424,6 +1397,18 @@
     ]
    },
    {
+    "id": "block-scale-streaming-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Outbox at-least-once + idempotent consumer: aynı event çift teslimde tek sonuç doğrulanır. Windowed aggregation: pencere sınırında gelen geç event'in doğru pencereye düştüğü test edilir. Driver swap testi: NOTIFY→Redpanda geçişinde app kodu değişmeden aynı Contract'ın geçtiği kanıtlanır."
+     }
+    ]
+   },
+   {
     "id": "block-scale-streaming-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1442,7 +1427,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Streaming kernel'e fuse EDİLMEZ; event bus sözleşmesi kernel'de, akış işleme opsiyonel scale katmanıdır."
        }
       ]
      },
@@ -1451,16 +1436,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Event bus Contract + idempotency anahtarı + bitemporal event zaman damgası kernel'de tanımlı."
        }
       ]
      },
@@ -1469,7 +1445,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Outbox tablosu ve relay worker scale-outbox çekirdeğinden gelir; projeksiyonlar scale-projections ile paylaşılır."
        }
       ]
      },
@@ -1478,7 +1454,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Stream driver bir module: Postgres-NOTIFY varsayılan, Redpanda/Kafka swap; capability ile yetkilendirilir."
        }
       ]
      },
@@ -1487,7 +1463,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Hiçbir app doğrudan Kafka client'ı bilmez; yalnız 'emit event' çağırır, akış katmanı arkada çözülür."
        }
       ]
      }

@@ -620,7 +620,16 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Commerce Stack — birincil yetenek",
+      "term": "Catalog + Pricing (B2B kademeli)",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Product/Variant/Bundle/Attribute/Category/Collection/Brand; PriceList/PriceTier/DiscountRule/ChannelPricing. Tüm fiyatlar Money (Decimal) + para birimi; float YASAK. Kanal-bazlı fiyat additif."
+       }
+      ]
+     },
+     {
+      "term": "Inventory ledger (stok hareketi)",
       "definition": [
        {
         "type": "strong",
@@ -628,25 +637,51 @@
        },
        {
         "type": "text",
-        "text": "Bu sayfanın tanımladığı temel iş/teknik yetenek; sahiplik ve sınır."
+        "text": "Stock Item, Stock Movement (append-only ledger), Reservation, Warehouse, Bin Location. Stok bakiyesi türetilir, doğrudan yazılmaz; rezervasyon ile aşırı satış engellenir."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Cart split — multi-seller checkout",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Yetenek dışarıya Contract/Surface üzerinden açılır; tenant ve yetki bağlamı zorunlu."
+        "text": "Cart.lines[] tek; checkout'ta seller_id'ye göre group + her group'a ayrı SalesOrder. AliExpress deseni; baştan kurulmazsa sonradan her şey kırılır. CheckoutSession multi-seller bölünmeyi taşır."
        }
       ]
      },
      {
-      "term": "Gözlemlenebilirlik",
+      "term": "Payment + Returns (escrow entegre)",
       "definition": [
        {
         "type": "text",
-        "text": "Audit, yapılandırılmış log ve SLO bütçesi birinci sınıf."
+        "text": "PaymentMethod/Transaction/Refund/Capture/Authorization; RMA/ReturnReason/Refund. İade escrow ile entegre; tüm tutarlar Money, auth->capture->refund durum makinesi audit'li."
+       }
+      ]
+     },
+     {
+      "term": "Çoklu iş modeli — capability flag (enum YASAK)",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "14 model (B2C/B2B/C2C/B2B2B/B2B2C/C2B/D2C/B2G/C2G/G2C/B2E/P2P/M2C/O2O) + hibrit yetenek (marketplace/dropshipping/subscription/social) flag olarak. Müşteri B2C'den B2B'ye GEÇMEZ, B2B'yi AÇAR. Flag tablosu zorunlu."
+       }
+      ]
+     },
+     {
+      "term": "Multi-channel + POS + Subscription",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kanal sync (Trendyol/Hepsiburada/Amazon TR/Etsy); Odoo POS muadili offline-first; Recharge muadili recurring billing + prorate + dunning. Gerekmeyen alt-modül install edilmez (modüler)."
        }
       ]
      }
@@ -834,15 +869,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Tenant izolasyonu RLS: bir mağazanın ürün/sipariş/müşteri verisi diğerine sızmaz; B2B fiyat listesi yalnız yetkili segmente görünür (capability deny-by-default). Para tutarları Money/Decimal; cart split sonrası alt-sipariş toplamı sepet tutarına eşit olmalı (invariant kapı), aksi checkout reddedilir. Ödeme akışı (auth->capture->refund) değişmez audit; sahte kart/chargeback yüzeyi için 3DS/step-up; stok ledger geriye yazılamaz, düzeltme yeni hareket. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -870,15 +897,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "İş modeli davranışı capability flag ile runtime dispatch (B2C/B2B/marketplace strateji); if (model==...) zinciri YASAK. Fiyat/indirim hesabı saf fonksiyon."
        }
       ]
      },
@@ -896,15 +915,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Stok bakiyesi ledger'dan projeksiyon + cache; ürün listesi/sipariş geçmişi keyset pagination; kanal sync asenkron worker (batch); seller_id+durum bileşik indeks."
        }
       ]
      },
@@ -1200,7 +1211,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Commerce Stack",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Commerce Stack\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: checkout.submitted\n  when: \"tenant_scoped AND cart.lines.count > 0\"\ncondition:\n  all:\n    - actor.capability >= \"commerce.order.create\"\n    - not loop_detected\n    - all_lines.stock_reserved == true   # Inventory invariant\naction:\n  - split: cart.lines BY seller_id\n  - record: sales_order PER seller { bitemporal: true, money: Decimal }\n  - emit: payment.authorize_requested    # outbox idempotent\n  - emit: inventory.reservation_committed\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{cart}:checkout\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1340,6 +1351,18 @@
     ]
    },
    {
+    "id": "block-stack-commerce-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Çok-satıcılı sepet checkout'ta seller_id'ye bölünür; alt-sipariş toplamı == sepet tutarı (Decimal). Marketplace/B2B bayrağı kapalı tenant'ta ilgili alanlar eklenmez; mevcut B2C akışı değişmez (additif). Aynı checkout ikinci kez sipariş üretmez (idempotency). Rezervasyonsuz satır checkout'u bloke eder; aşırı satış oluşmaz. Komşu mağaza ürün/sipariş sorgusu sıfır döndürür (RLS)."
+     }
+    ]
+   },
+   {
     "id": "block-stack-commerce-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1358,7 +1381,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Layer-2 merkez stack (5 üründe çekirdek). Kernel + Scale + Layer-1 üstüne oturur; kendi ArcheType/UI'sını sunar, yetki/audit/event-bus framework'ten gelir. Komşu modüllerle yalnız Contract."
        }
       ]
      },
@@ -1367,16 +1390,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Kimlik/tenancy (RLS)/audit + ArcheType engine kernel'den; müşteri Party'den türer. Para = Money (Decimal) + ISO 4217; bitemporal sipariş/iade."
        }
       ]
      },
@@ -1385,7 +1399,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Commerce core module sabit sözleşme; iş modelleri ve hibrit yetenekler additif capability flag — core değişmez, enum genişletmek YASAK."
        }
       ]
      },
@@ -1394,7 +1408,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "s-ecommerce-models iş-modeli yeteneklerini, s-marketplace multi-vendor (komisyon/split), s-classifieds lead-gen (AYRI mimari), s-mrp inventory'ye stok ledger besler. Satış -> muhasebe GL postingi Contract."
        }
       ]
      },
@@ -1403,7 +1417,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Storefront/POS/B2B Portal aynı Catalog/Order ArcheType'ını paylaşır; kanal bayrakları çift kayıt yaratmaz, multi-channel sync tek kaynak."
        }
       ]
      }
@@ -1416,13 +1430,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-stack-commerce-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-stack-commerce-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Storefront app: catalog + cart; çok-satıcılı sepet checkout'ta seller_id'ye bölünür, ayrı SalesOrder."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "POS app: offline-first satış; senkronda aynı stock ledger'a Stock Movement yazar."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "B2B Portal app: PriceTier kademeli fiyat + RFQ/Quotation; net-30 ödeme bayrağı capability ile açılır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Accounting/Revenue app: SalesOrder tamamlanınca GL postingi + KDV (Tax module); iade Refund olayı."
+      }
+     ]
     ]
    },
    {

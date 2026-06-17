@@ -1,0 +1,50 @@
+{
+ "featureDefs": [
+  {
+   "name": "Parsel / suru yonetimi",
+   "desc": "Parsel ve hayvan/suru kaydi; konum, durum ve sahiplik. Uretim biriminin temel envanteri.",
+   "critical": true
+  },
+  {
+   "name": "Sensor / IoT telemetri",
+   "desc": "Saha sensoru/IoT cihazindan olcum akisi (nem, sicaklik, konum); yuksek hacimli time-series, event-tetikli alarm.",
+   "critical": true
+  },
+  {
+   "name": "Uretim takip + izlenebilirlik",
+   "desc": "Tohum/girdi -> hasat -> sevkiyat zinciri; lot/parti bazli izlenebilirlik (traceability), geriye donuk sorgu.",
+   "critical": true
+  },
+  {
+   "name": "Envanter entegrasyonu",
+   "desc": "Girdi (gubre/yem/ilac) ve cikti (urun) stok hareketi; uretim takibiyle baglantili bitemporal stok.",
+   "critical": false
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — aday distribution (sektor paketi); IoT + Traceability + Inventory birlesimi, gelismis UI/UX ile teslim.",
+  "kernel": "Authz (ciftci/operator capability), tenancy (isletme verisi RLS), event-bus (sensor alarm + uretim event'leri).",
+  "core": "Parsel/suru/lot Contract semasi; her uretim adimi audit + bitemporal izlenebilirlik.",
+  "modules": "Time-series ingest (sensor), l1-file (saha foto/belge), envanter modulu, AI forecasting (verim/talep tahmini opsiyonel).",
+  "apps": "AgriTech App'i; izlenebilirlik downstream sevkiyat/ticaret urunlerine event ile baglanir."
+ },
+ "moduleUsage": [
+  "dist-agritech: Parsel/suru kaydedilir -> IoT sensor olcumleri time-series olarak akar, esik asiminda alarm event'i -> girdi-hasat-sevkiyat lot bazli izlenebilirlik zincirinde kayda gecer -> envanter hareketi bitemporal stokta; capability deny-by-default ile yalniz yetkili operator hareket uretir."
+ ],
+ "ecaExample": "trigger:\n  event: agri.sensor.threshold_breached\ncondition:\n  all:\n    - actor.capability >= \"agri:operate\"\n    - reading.parcel_in_tenant\n    - not loop_detected\naction:\n  - emit: agri.alert.raised\n  - emit: agri.task.created\nguards:\n  max_depth: 6\n  idempotency_key: \"sensoralert:{reading_id}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "IoT cihaz kimligi dogrulanir (device identity); sahte telemetri enjeksiyonu reddedilir, cihaz capability ile yetkilenir.",
+  "Isletme verisi tenant-scoped RLS; baska isletmenin parsel/suru/olcum verisi gorunmez.",
+  "Izlenebilirlik kaydi immutable + audit: lot zinciri geriye donuk degistirilemez (gida guvenligi/denetim icin)."
+ ],
+ "perfNotes": {
+  "code": "Sensor telemetrisi time-series store'a asenkron ingest; alarm degerlendirmesi event-tetikli, ham veri sorgusu keyset ile.",
+  "perf": "Yuksek hacimli IoT akisi outbox/stream ile tamponlanir; izlenebilirlik sorgusu lot indeksinden, agir join yok."
+ },
+ "testNotes": [
+  "agri:operate olmayan aktor saha hareketi -> deny.",
+  "Yetkisiz/sahte cihazdan telemetri -> reddedilmeli.",
+  "Cross-tenant parsel/olcum erisimi -> RLS reddi.",
+  "Izlenebilirlik lot kaydi degistirme -> reddedilmeli (immutable)."
+ ]
+}

@@ -1,0 +1,52 @@
+{
+ "featureDefs": [
+  {
+   "name": "Appointment + Patient ArcheType'ları",
+   "desc": "Randevu/hasta çekirdek varlıkları; uygunluk + tampon + kaynak (doktor/oda) çakışma kontrolü. Hasta verisi özel nitelikli PII (sağlık) — şema düzeyinde işaretli.",
+   "critical": true
+  },
+  {
+   "name": "Klinik HRMS (vardiya + hekim)",
+   "desc": "Personel/hekim vardiya, izin, yetkinlik; s-hrms module köprüsü — randevu uygunluğunu sürükler.",
+   "critical": true
+  },
+  {
+   "name": "Billing + SGK/özel ödeme",
+   "desc": "Hizmet ücretlendirme, tahsilat; para tipi (minor unit + currency), faturalama bitemporal + audit.",
+   "critical": true
+  },
+  {
+   "name": "Hatırlatma + no-show yönetimi",
+   "desc": "SMS/e-posta hatırlatma (consent kapısıyla); gelmeyen hasta takibi, tampon yeniden değerlendirme."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — bu bir Distribution (sektör paketi): Scheduling + HRMS + Billing kesişimi; Stack ⊂ Edition ⊂ Distribution taksonomisinde gelişmiş UI/UX ile teslim edilir. Randevu tek başına demo kapatıcı ama HRMS/Billing module'leriyle Contract üzerinden bağlanır.",
+  "kernel": "Party (hasta/hekim), tenancy (RLS), audit, event-bus kernel'den; distribution kendi klinik ArcheType'larını kompoze eder.",
+  "core": "Money (hizmet/tahsilat, kuruş + para birimi), bitemporal (randevu/fatura dönem sürümü), i18n, Notification; core sözleşmelerine uyar.",
+  "modules": "s-scheduling (randevu), s-hrms (vardiya), s-billing module'lerini tüketir; SGK/ödeme dış sistemine allowlist'li akışla bağlanır — yalnız Contract.",
+  "apps": "Klinik distribution'ı tek panelde; aynı hasta/hekim Party'sini randevu/billing/HRMS app'leriyle paylaşır — çift kayıt yok."
+ },
+ "moduleUsage": [
+  "s-scheduling: hekim/oda uygunluğuna göre randevu açar; tampon + tatil takvimi uygulanır.",
+  "s-hrms: hekim vardiya/izin durumu randevu uygunluğunu kısıtlar (çakışma engeli).",
+  "s-billing: tamamlanan randevu hizmet kalemine fatura/tahsilat üretir (para tipi).",
+  "Notification: randevu hatırlatma + no-show bildirimi consent kapısıyla gönderilir."
+ ],
+ "ecaExample": "trigger:\n  event: appointment.booked\n  when: tenant_scoped\ncondition:\n  all:\n    - actor.capability >= \"clinic.appointment.write\"\n    - resource_available(doctor, room, slot)   # çakışma yok\n    - not loop_detected\naction:\n  - reserve: slot                              # idempotent\n  - emit: notification.reminder_scheduled       # consent kapısı\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{doctor}:{slot}\"\n  external_effects: step_up_required",
+ "securityNotes": [
+  "Hasta/sağlık verisi özel nitelikli pii=true (+retention); RLS tenant-scoped — bir klinik başka kliniğin hastasını göremez; KVKK açık rıza + saklama süresi.",
+  "Hizmet/tahsilat Money kuruş hassasiyetinde tamsayı + para birimi; float yok; faturalama bitemporal — düzeltme yeni sürüm, iz korunur.",
+  "Randevu yazma + hasta kaydı erişimi capability deny-by-default; SGK/ödeme dış-etkili aksiyon allowlist + step-up; her erişim audit'e yazılır."
+ ],
+ "perfNotes": {
+  "code": "Slot rezervasyonu transactional (çakışma kilidi); hatırlatma asenkron worker (yaklaşan randevu taraması).",
+  "perf": "Randevu/hasta listeleri keyset pagination; hekim+slot indeksleri; çok-şube sorgusu sayfalanır."
+ },
+ "testNotes": [
+  "Komşu-tenant hasta/randevu sorgusu sıfır döndürür (RLS).",
+  "Aynı slot iki kez rezerve edilemez (çakışma + idempotency).",
+  "Hekim izinli/vardiya dışındaysa randevu açılamaz (deny path).",
+  "Tamamlanan randevu ikinci kez faturalanmaz (idempotency)."
+ ]
+}

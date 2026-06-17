@@ -755,7 +755,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Billing + Subscription — SaaS satış altyapısı — çekirdek yetenek",
+      "term": "Subscription lifecycle state machine",
       "definition": [
        {
         "type": "strong",
@@ -763,41 +763,51 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "trialing → active → past_due → unpaid → canceled geçişleri; trial, conversion, renewal, upgrade/downgrade, cancellation, reactivation. Durum geçişleri audit'li."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Dunning state machine",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Ödeme başarısız → retry (1/3/7 gün) + email + suspend (veri silinmez); kart süresi/declined kaynaklı churn yönetimi."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Prorating",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Plan değişiminde kalan süreye orantılı fatura (günlük ücret × kalan gün); tutarlar money tipi, yuvarlama denetimli."
+       }
+      ]
+     },
+     {
+      "term": "Vergi otomasyonu (KDV/VAT)",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "TR %20 KDV, AB reverse charge (B2B)/yerel oran (B2C), ABD state tax; yargı bölgesi resolver, e-Fatura TR ayrı."
+       }
+      ]
+     },
+     {
+      "term": "Sağlayıcı webhook + fatura PDF",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Stripe/Iyzico webhook (payment.succeeded/failed) → subscription güncelle; hosted invoice / PDF üretimi."
        }
       ]
      }
@@ -985,15 +995,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Billing = revenue engine; her event l1-audit'e yazılır (çift/eksik fatura, vergi hatası forensiği). Tutar alanları money tipi + bitemporal; geriye dönük düzeltme 'o tarihte ne faturalandı' ile izlenir. Kart verisi sağlayıcıda (Stripe/Iyzico) kalır — PCI-DSS scope dışı; backend yalnız token/referans tutar. Webhook imza doğrulaması zorunlu; idempotency ile çift işleme engellenir (duplicate charge/fatura). Billing capability deny-by-default; suspend veri silmez, KVKK retention bildirimli. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1021,15 +1023,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "INSERT INTO billing_event (...) ON CONFLICT (provider_event_id) DO NOTHING; -- idempotent webhook"
        }
       ]
      },
@@ -1047,15 +1041,16 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
+        "text": "Webhook idempotent (provider_event_id unique); tekrar gelen olay çift fatura yaratmaz. Dunning retry kuyruk/zamanlayıcı ile asenkron. Subscription liste sorguları keyset; "
        },
        {
-        "type": "code",
-        "text": "async def"
+        "type": "term",
+        "text": "MRR",
+        "termId": "term-mrr-s-billing"
        },
        {
         "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": " toplama materialized view/projection."
        }
       ]
      },
@@ -1351,7 +1346,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Billing + Subscription — SaaS satış altyapısı",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Billing + Subscription — SaaS satış altyapısı\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: payment.failed\ncondition:\n  all:\n    - actor.capability >= \"billing:dunning:run\"\n    - not loop_detected\n    - retry_count < max_retries\naction:\n  - emit: subscription.past_due\n  - emit: dunning.retry_scheduled\nguards:\n  max_depth: 6\n  idempotency_key: \"dunning:{subscription_id}:{invoice_id}:{attempt}\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1491,6 +1486,18 @@
     ]
    },
    {
+    "id": "block-s-billing-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "State machine testi: geçersiz geçiş (örn. canceled → past_due) reddedilir; reactivation 90 gün penceresi. Prorating testi: ay ortası upgrade kalan güne orantılı, money yuvarlama doğru. Dunning testi: 1/3/7 gün retry sıralı, max retry sonrası suspend; veri silinmez. Idempotency testi: aynı webhook event_id iki kez gelince tek fatura/güncelleme. Vergi testi: TR %20 KDV, AB B2B reverse charge doğru hesaplanır."
+     }
+    ]
+   },
+   {
     "id": "block-s-billing-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1509,7 +1516,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "15 SaaS ürünü SaaS olarak satılacaksa billing altyapısı ilk müşteriden ÖNCE hazır olmalı; sonradan migration aylar sürer."
        }
       ]
      },
@@ -1518,16 +1525,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "ArcheType engine ile subscription/invoice şeması, audit + tenancy framework'ten; her billing event l1-audit'e iz bırakır, tutarlar money tipi + bitemporal."
        }
       ]
      },
@@ -1536,7 +1534,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Stripe (uluslararası) veya Iyzico/PayTR (TR) sağlayıcı; custom billing yazma — PCI-DSS/vergi/dunning sağlayıcıda. Webhook listener çekirdekte."
        }
       ]
      },
@@ -1545,7 +1543,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "s-accounting GL kaydı, s-subscription-commerce aynı recurring motoru paylaşır (iş mantığı farklı)."
        }
       ]
      },
@@ -1554,7 +1552,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Backend entegrasyon yazar; muhasebe vergi kuralı verir; CS dunning takip eder."
        }
       ]
      }
@@ -1567,13 +1565,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-billing-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-billing-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "s-accounting: fatura ve tahsilat GL kaydına işlenir, vergi hesabı muhasebeyle hizalanır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-subscription-commerce: aynı recurring billing motorunu paylaşır (fiziksel/dijital periyodik teslim)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "s-commerce: tek seferlik ödeme tarafıyla ayrışır; billing recurring revenue motorudur."
+      }
+     ]
     ]
    },
    {

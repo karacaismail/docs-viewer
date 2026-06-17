@@ -1,0 +1,51 @@
+{
+ "featureDefs": [
+  {
+   "name": "Vardiya planlama",
+   "desc": "Personel-vardiya atama, çakışma kontrolü, vardiya şablonları; atama değişiklikleri audit'lenir.",
+   "critical": true
+  },
+  {
+   "name": "Zaman-devam takibi",
+   "desc": "Giriş/çıkış, fazla mesai, devamsızlık kayıtları; bordro köprüsü için saat verisi.",
+   "critical": true
+  },
+  {
+   "name": "Vardiya değişim/onay akışı",
+   "desc": "Personel vardiya değişim talebi → yönetici onayı; onay zinciri capability ile."
+  },
+  {
+   "name": "Yasal sınır kontrolü",
+   "desc": "Günlük/haftalık azami çalışma, dinlenme süresi (TR İş Kanunu) ihlal uyarısı."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "İK/personel yönetimi olan tenant için Faz 2-3'te (kernel + scale + L1 hazır sonrası) entegre edilir.",
+  "kernel": "Layer-2 SaaS ürünü; ArcheType engine ile şema, otomatik REST/GraphQL, audit + tenancy framework'ten gelir. Vardiya/devam kayıtları RLS ile tenant-izole.",
+  "core": "Kernel + Scale + Layer-1 primitive'leri (audit, event-bus, kuyruk) üstüne oturur.",
+  "modules": "HRMS personel köprüsü, bordro modülüne saat verisi besler.",
+  "apps": "Stack squad ürünü yönetir; AI squad vardiya optimizasyon önerileri için."
+ },
+ "ecaExample": "trigger:\n  event: shift.swap_requested\ncondition:\n  all:\n    - actor.capability >= \"workforce:shift:swap\"\n    - not loop_detected\n    - not legal_hours_exceeded(target_employee, new_shift)\naction:\n  - emit: shift.swap_pending_approval\nguards:\n  max_depth: 6\n  idempotency_key: \"swap:{shift_id}:{from_emp}:{to_emp}\"\n  external_effects: none",
+ "securityNotes": [
+  "Vardiya/devam verisi personel PII; RLS ile tenant izolasyonu, KVKK retention bildirimli.",
+  "Onay akışı capability deny-by-default; yetkisiz personel başkasının vardiyasını değiştiremez.",
+  "Bordroya akan saat verisi bitemporal — geriye dönük düzeltme 'o tarihte ne biliyorduk' ile izlenir.",
+  "Vardiya atama değişiklikleri audit log'a (kim, ne zaman, eski/yeni) yazılır."
+ ],
+ "perfNotes": {
+  "code": "SELECT * FROM shift WHERE tenant_id = $1 AND start_at >= $2 ORDER BY start_at, id LIMIT 50; -- keyset",
+  "perf": "Vardiya takvim sorguları keyset sayfalama; (tenant_id, start_at) index. Çakışma kontrolü exclusion constraint ile DB seviyesinde."
+ },
+ "moduleUsage": [
+  "stack-hrms: personel ana kaydı; vardiya atamaları çalışan kimliğine bağlanır.",
+  "Bordro modülü: zaman-devam ve fazla mesai saatleri ücret hesabına akar.",
+  "stack-lms: zorunlu eğitim periyotları vardiya planında dikkate alınabilir."
+ ],
+ "testNotes": [
+  "Çakışma testi: aynı personele örtüşen iki vardiya atanamaz (exclusion constraint).",
+  "Yasal sınır testi: haftalık azami saati aşan vardiya değişimi reddedilir.",
+  "RLS testi: komşu tenant'ın vardiya/devam kayıtları okunamaz.",
+  "Onay zinciri testi: yetkisiz aktörün swap talebi capability deny döner."
+ ]
+}

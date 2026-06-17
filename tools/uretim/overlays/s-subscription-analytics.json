@@ -1,0 +1,53 @@
+{
+ "featureDefs": [
+  {
+   "name": "MRR/ARR hareket köprüsü",
+   "desc": "Yeni/genişleme/daralma/churn/reaktivasyon bileşenlerine ayrılmış aylık tekrarlayan gelir; abonelik olaylarından deterministik türetim, ChartMogul/Baremetrics muadili.",
+   "critical": true
+  },
+  {
+   "name": "Churn + retention kohort analizi",
+   "desc": "Müşteri ve gelir churn'ü; kohort bazlı elde tutma matrisi (signup ayı × yaşam ayı); net revenue retention (NRR).",
+   "critical": true
+  },
+  {
+   "name": "LTV + CAC geri ödeme",
+   "desc": "Yaşam boyu değer ve müşteri edinme maliyeti geri ödeme süresi; segment bazlı kırılım.",
+   "critical": false
+  },
+  {
+   "name": "Bitemporal abonelik snapshot",
+   "desc": "Geçmişe dönük plan/fiyat değişimi yeniden yazmaz; metrik 'olduğu gibi' (as-was) yeniden hesaplanabilir — denetlenebilir gelir tablosu."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Evet — Layer-2 SaaS ürünü; kendi analitik ArcheType'larını/UI'sını tanımlar, yetki/audit/event-bus framework'ten gelir. Abonelik olaylarını tüketir, metrikleri Projection olarak türetir.",
+  "kernel": "Tenancy (her tenant'ın MRR/kohortu RLS ile izole), Identity (analist rolü), Audit (metrik tanım değişimi izi) kernel'den.",
+  "core": "Money (gelir/MRR kuruş + para birimi, çok-döviz dönüşüm tarihli kur), bitemporal (as-was metrik), Audit; core sözleşmelerine uyar.",
+  "modules": "s-subscription-commerce / s-billing abonelik+fatura olaylarını yayar; bu ürün salt-okur tüketir — yalnız Contract. Ham faturayı sahiplenmez, türev metriği sahiplenir.",
+  "apps": "CRM app'i müşteri Party'sini paylaşır; aynı abone hesabı app'ler arası tekilleştirilir, MRR kaynağı tek."
+ },
+ "moduleUsage": [
+  "s-billing / s-subscription-commerce: subscription.created/upgraded/canceled olayları MRR hareket bileşenlerini besler (salt-okur).",
+  "cc-fx-ledger: çok-döviz abonelikte tarihsel kur ile tek raporlama para birimine normalize eder.",
+  "CRM app: abone → Contact; segment bazlı churn/LTV kırılımı (consent kapısıyla)."
+ ],
+ "ecaExample": "trigger:\n  event: subscription.plan_changed\ncondition:\n  all:\n    - actor.capability >= \"analytics.read\"\n    - event.tenant_scoped\n    - not loop_detected\naction:\n  - recompute: mrr_movement   # expansion|contraction, idempotent\n  - refresh: cohort_projection\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:mrr:{subscription_id}:{event_id}\"\n  external_effects: none",
+ "securityNotes": [
+  "Abone email/plan/tutar pii+money; RLS tenant-scoped — başka tenant'ın MRR/kohortu görülmez.",
+  "MRR/LTV/ARR Money kuruş hassasiyetinde tamsayı + para birimi; float yok, çok-döviz dönüşüm tarihli kurla (cc-fx-ledger).",
+  "Metrik salt-okur Projection; analytics.read capability deny-by-default — ham abonelik/fatura yazımı bu üründe yok.",
+  "Bitemporal: geçmiş dönem MRR yeniden yazılmaz; düzeltme yeni sürüm — denetim izi korunur."
+ ],
+ "perfNotes": {
+  "code": "MRR/kohort materialized projection (continuous aggregation); abonelik olayı geldikçe artımlı güncelleme, gece tam yeniden hesaplama doğrulama amaçlı.",
+  "perf": "Pano sorguları önceden-toplanmış tablodan okur (canlı JOIN değil); zaman serisi keyset; büyük tenant'ta kohort matrisi sayfalanır/aralık-sınırlı."
+ },
+ "testNotes": [
+  "Komşu-tenant MRR/kohort sorgusu sıfır döndürür (RLS).",
+  "MRR hareketi = yeni + genişleme − daralma − churn formülü kuruş seviyesinde kapanır (delta = toplam bileşen deltası).",
+  "Aynı abonelik olayı ikinci kez işlenince metrik çift sayılmaz (idempotency).",
+  "Çok-döviz abonelik tek raporlama para birimine tarihsel kurla normalize edilir.",
+  "Geçmiş dönem fiyat düzeltmesi eski raporu yeniden yazmaz; as-was sürüm korunur."
+ ]
+}

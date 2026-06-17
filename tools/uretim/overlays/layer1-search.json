@@ -1,0 +1,44 @@
+{
+ "featureDefs": [
+  {
+   "name": "Hybrid Retrieval (BM25 + Vector)",
+   "desc": "Lexical BM25 + dense vector sonuçlarını Reciprocal Rank Fusion (k=60) ile birleştirir; default Postgres FTS + pgvector.",
+   "critical": true
+  },
+  {
+   "name": "Embedding Pipeline",
+   "desc": "ArcheType save → DocumentSaved event → chunk → embed → pgvector projeksiyonu; idempotent, checksum ile değişim tespiti.",
+   "critical": true
+  },
+  {
+   "name": "Reranking",
+   "desc": "İlk-k sonucu cross-encoder ile yeniden sıralar (Cohere Rerank v3 / BGE-m3); Türkçe için BGE-m3."
+  },
+  {
+   "name": "Search Driver Swap",
+   "desc": "Arayüz core'da, backend driver arkasında: default SQL/pgvector, production Meilisearch/Typesense/OpenSearch."
+  }
+ ],
+ "integration": {
+  "shouldIntegrate": "Layer 1 in-tree: arama interface'i core'da yaşar ama Elasticsearch kernel'e FUSE EDİLMEZ; backend driver pattern arkasında swap edilir.",
+  "kernel": "Tenant_id current_setting ile her sorguda zorunlu; schema engine ArcheType save event'ini doğurur.",
+  "core": "Search interface core'da; indexleme scale-projections pattern'inin özelleşmesi — module geliştirici 'index güncelle' düşünmez.",
+  "modules": "Embedding pipeline + reindex job + index-health ayrı module yetenekleri; provider registry ile model versiyonlanır.",
+  "apps": "Her app üst bara arama kutusu (/, Ctrl+K) koyar; doğal dil sorgusu structured filtreye L2'de (S06) çevrilir."
+ },
+ "ecaExample": "trigger:\n  event: DocumentSaved\ncondition:\n  all:\n    - actor.capability >= \"search:index:write\"\n    - document.checksum != index.checksum\naction:\n  - emit: EmbeddingJobQueued\n  - emit: SearchIndexUpdated\nguards:\n  max_depth: 6\n  idempotency_key: \"embed:{source_id}:{model_id}:{checksum}\"\n  external_effects: embedding_provider_call",
+ "securityNotes": [
+  "Her hybrid sorgu tenant_id = current_setting('app.tenant_id') ile filtrelenir; cross-tenant arama RLS ile imkânsız.",
+  "Embedding provider çağrısı dış efekt; capability deny-by-default + idempotency ile çift maliyet engellenir.",
+  "İndekslenen alanda PII varsa maskeleme/pii-matrisi uygulanır; arama sonucu yetkisiz alanı sızdırmaz."
+ ],
+ "perfNotes": {
+  "code": "Hybrid sorgu her kanalda LIMIT 50 + RRF sonra LIMIT 20; HNSW (m, ef_search) ile recall/latency dengelenir.",
+  "perf": "Embedding throughput hedefi >1000/dk, hybrid NDCG@10 >0.75, query p95 <250ms; reindex blue/green ile zero-downtime."
+ },
+ "testNotes": [
+  "RRF birleştirme: BM25-only ve vector-only sonuçların k=60 ile doğru kaynaştığı doğrulanır.",
+  "Idempotent embed: aynı checksum ile job tekrar kuyruğa girmediği test edilir.",
+  "Reindex zero-downtime: model upgrade sırasında dual_write/blue_green ile arama kesintisiz kanıtlanır."
+ ]
+}

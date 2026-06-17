@@ -306,7 +306,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Workflow / BPM Engine — çekirdek yetenek",
+      "term": "ECA Kural Motoru (Event-Condition-Action)",
       "definition": [
        {
         "type": "strong",
@@ -314,41 +314,46 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Olay tetikler, koşul değerlendirilir, eylem koşar. Kurallar bildirimseldir; kod gömülmez. Her kural capability ve guard taşır; loop_detected ve max_depth ile zincir patlaması engellenir."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Approval Chain (onay zinciri)",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Çok adımlı onay: rol/tutar eşiğine göre yönlendirme (ör. >50K müdür onayı). Her adım audit'lenir; reddedilen adım gerekçesiyle geri döner. Step-up auth dış efekt gerektiren onaylarda zorunlu."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "State Machine (durum makinesi)",
       "definition": [
        {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Bağımsız versiyonlu iş durumları + izinli geçişler. Geçersiz geçiş reddedilir; her geçiş event yayınlar ve projeksiyona yansır. Workflow tanımı versiyonludur; çalışan instance kendi versiyonunu taşır."
+       }
+      ]
+     },
+     {
+      "term": "Idempotent + bitemporal kayıt",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Aynı tetik iki kez gelse tek geçiş olur (idempotency_key). Onay/geçiş geçmişi bitemporal tutulur — 'ne zaman oldu' ve 'ne zaman kaydedildi' ayrı; geriye dönük düzeltme audit iziyle."
        }
       ]
      }
@@ -536,15 +541,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Her ECA kuralı ve onay adımı capability deny-by-default ile yetkilendirilir; yetkisiz aktör geçiş tetikleyemez. Onay zinciri ve durum geçişleri tam audit'lenir (kim, ne zaman, hangi versiyon); RLS ile tenant izolasyonu korunur. Dış efekt (ödeme onayı, sözleşme imzası) gerektiren adımlarda step-up auth zorunlu. loop_detected + max_depth: kural-tetikler-kural zincirinin sonsuz döngüye girmesi engellenir. Tutar eşikleri money Contract'ından gelir; istemci-tarafı tutar manipülasyonu onayı atlatamaz. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -572,15 +569,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Bekleyen onaylar keyset cursor ile sayfalanır; durum geçişleri event olarak yayınlanıp projeksiyona düşer."
        }
       ]
      },
@@ -598,15 +587,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Read-model (bekleyen onaylar listesi) projeksiyondan okunur, canlı join'le değil; binlerce açık onayda liste sabit gecikmeyle gelir."
        }
       ]
      },
@@ -902,7 +883,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Workflow / BPM Engine",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Workflow / BPM Engine\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: purchase_order.submitted\ncondition:\n  all:\n    - actor.capability >= \"po:submit\"\n    - amount.currency == \"TRY\"\n    - amount.minor > 5000000\n    - not loop_detected\naction:\n  - transition: po -> pending_manager_approval\n  - assign: approval_step(role=\"manager\")\n  - emit: approval.requested\nguards:\n  max_depth: 6\n  idempotency_key: \"po:{po_id}:submit\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -1042,6 +1023,18 @@
     ]
    },
    {
+    "id": "block-s-bpm-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Geçersiz durum geçişi reddedilir; yalnız izinli geçişler kabul edilir. Aynı submit iki kez → tek geçiş (idempotency kanıtı). Tutar eşiği altındaki PO onaysız geçer, üstündeki onaya yönlenir (sınır testi). Reddedilen onay adımı gerekçesiyle önceki duruma döner, audit'e yazar. ECA zinciri max_depth aşınca loop_detected ile durur."
+     }
+    ]
+   },
+   {
     "id": "block-s-bpm-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1060,7 +1053,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Layer-2 SaaS ürünü; Kernel + Scale + Layer-1 üstüne oturur. Kendi ArcheType'larını ve UI'sını sunar; yetki/audit/event-bus framework'ten gelir. BPM, diğer module'lerin onay/otomasyon omurgasıdır."
        }
       ]
      },
@@ -1069,16 +1062,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "ECA event'leri kernel event-bus'ından akar; her kural capability deny-by-default ile yetkilendirilir; tüm geçişler audit'e yazılır."
        }
       ]
      },
@@ -1087,7 +1071,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Tutar eşikli onaylar money Contract'ı üstünden okunur (float değil minor-unit); onay geçmişi bitemporal + audit."
        }
       ]
      },
@@ -1096,7 +1080,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Diğer module'ler (Purchase, Sales, HR) onay/otomasyonu BPM'e delege eder; BPM kuralları o module'lerin event'lerine abone olur."
        }
       ]
      },
@@ -1105,7 +1089,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "App bir onay başlatır, kullanıcı bekletilmeden iş kuyruğa girer; onay tamamlanınca realtime bildirim."
        }
       ]
      }
@@ -1118,13 +1102,33 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-bpm-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-bpm-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "Purchase: satınalma siparişi tutar eşiğine göre onay zincirine girer."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Sales/CRM: teklif indirim oranı eşiği aşınca müdür onayına yönlenir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "HR: izin/masraf talepleri çok adımlı onay durum makinesinde ilerler."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Builder Stack: s-bpm, prompt'tan üretilen workflow'ların ECA çalışma motorudur."
+      }
+     ]
     ]
    },
    {

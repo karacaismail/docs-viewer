@@ -426,7 +426,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Programmatic SEO — ArcheType → Toplu Sayfa Üretimi — çekirdek yetenek",
+      "term": "Şablon → toplu public Surface üretimi",
       "definition": [
        {
         "type": "strong",
@@ -434,41 +434,51 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "PseoTemplate (ArcheType başına slot eşleme + schema tipi) + kayıt verisi → her kayıt için optimize public Surface (title/meta/schema dolu); ArcheType→Surface motorunun doğal uzantısı. P0."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "İçerik kalite kapısı (ince-içerik koruması)",
       "definition": [
        {
-        "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
+        "type": "strong",
+        "text": "Kritik. "
        },
        {
         "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "QualityGate Atom eşik kuralları: min. özgün veri/alan, tekrar/ince-içerik tespiti; geçemeyen kayıt noindex'te kalır + sitemap dışı. ZORUNLU, atlanamaz — Google spam cezası riski. P0."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Deterministik + audit'li üretim",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Aynı veri → aynı sayfa (byte-stable); üretim hook'u l1-seo + l1-sitemap'i besler; şablon değişimi versiyonlu; build-time prerender'a bağlı."
+       }
+      ]
+     },
+     {
+      "term": "Faceted koleksiyon + iç-link örgüsü",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Filtre kombinasyonlarından küme sayfaları (şehir+kategori) + kanonik/parametre disiplini (crawl bütçesi); otomatik related/breadcrumb/hub-spoke iç link (otorite akışı). P1."
+       }
+      ]
+     },
+     {
+      "term": "Şablon varyantı + i18n",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Çoklu dil şablon (cc-i18n-standards) + A/B şablon (l1-experiment); büyük ölçek artımlı üretim (milyon+ sayfa). P2/enterprise."
        }
       ]
      }
@@ -656,15 +666,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Kalite kapısı geçmeden hiçbir kayıt indexlenmez (deny-by-default); ince-içerik (thin content) Google spam cezası → kapı ZORUNLU, atlanamaz, boş şablon sayfa üretilmez. Modül PII ÜRETMEZ; kernel iç API'sine dokunmaz (capability deny-by-default, dar yetki); yalnız public ArcheType verisinden üretim. Tenant izolasyonu: üretilen Surface tenant-scoped; bir tenant'ın PSEO sayfası başka tenant verisini sızdırmaz (RLS kabul kriteri). Faceted parametre patlaması crawl bütçesi tüketir → kanonik/noindex disiplini; üretim deterministik + audit'li (kim/hangi şablon sürümü). Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -692,15 +694,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Üretim build-time prerender'a bağlı; kayıt değişiminde artımlı (değişen kayıt yeniden üretilir); kalite skorlayıcı + iç-link örücü saf deterministik fonksiyon."
        }
       ]
      },
@@ -718,15 +712,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Büyük ölçek (milyon+ sayfa) artımlı üretim; faceted küme kanonik ile sınırlı (parametre patlaması indexlenmez); şablon doldurucu byte-stable (gereksiz yeniden-üretim yok)."
        }
       ]
      },
@@ -1022,7 +1008,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Programmatic SEO — ArcheType → Toplu Sayfa Üretimi",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Programmatic SEO — ArcheType → Toplu Sayfa Üretimi\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: archetype_record.changed   # public ArcheType\ncondition:\n  all:\n    - actor.capability >= \"pseo.generate\"\n    - record.public == true\n    - quality_gate.passed\n    - not loop_detected\naction:\n  - generate: public_surface         # deterministik, byte-stable\n  - feed: [l1_seo, l1_sitemap]\n  - else: { keep: noindex, log: thin_content }\nguards:\n  max_depth: 6\n  pii: false\n  idempotency_key: \"{tenant}:pseo:{archetype}:{record_id}:{template_version}\"\n  external_effects: none",
     "copyEnabled": true
    },
    {
@@ -1162,6 +1148,18 @@
     ]
    },
    {
+    "id": "block-l1-pseo-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "1 ArcheType kaydı → 1 geçerli optimize Surface (title/meta/schema dolu); determinizm: aynı veri → aynı sayfa (byte-stable). Kalite eşiğini geçemeyen kayıt → noindex + sitemap dışı; yetersiz veri → üretim atlanır, log'a düşer (sessiz boş sayfa yok). İç link örgüsü çözülebilir (kırık link yok); faceted kanonik doğru (parametre patlaması indexlenmez). Tenant izolasyonu: komşu-tenant PSEO Surface/veri görünmez (RLS). Kabul kapısı: deterministik testler + reviewer + SEO uzman örneklem denetimi (ince-içerik politikası); AI kendi çıktısını onaylamaz."
+     }
+    ]
+   },
+   {
     "id": "block-l1-pseo-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1180,7 +1178,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet — Layer-1 in-tree module (app DEĞİL); framework'ün killer farkı. ArcheType→Surface motorunun üstüne oturur; toplu üretim + ince-içerik kalite kapısı, l1-seo'nun tekil meta render'ından AYRI sorumluluktur. Rakipler elle yapar, bu modül ArcheType'tan üretir."
        }
       ]
      },
@@ -1189,16 +1187,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Tenancy (üretilen Surface'ler tenant-scoped — izolasyon testi kabul kriteri), Audit (üretim deterministik + izli), Schema (kaynak ArcheType) kernel'den; kernel iç API'sine DOKUNMAZ."
        }
       ]
      },
@@ -1207,7 +1196,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "k-surface (üretim hedefi), k-schema (kaynak ArcheType + slot), Contract (üretim tetikleyici + dry-run rapor) core kontratı; PII ÜRETMEZ."
        }
       ]
      },
@@ -1216,7 +1205,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "l1-seo (meta/schema render — beslenir), l1-sitemap (keşif yüzeyi — beslenir), l1-aeo (FAQ/cevap schema), l1-experiment (A/B), cc-i18n-standards (çoklu dil) ile bağlanır — yalnız Contract."
        }
       ]
      },
@@ -1225,7 +1214,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "Killer kullanım: dist-sahibinden (classifieds), real-estate, e-ticaret, eğitim katalog; her ilan/ürün/portföy/kurs kaydı public sayfaya dönüşür."
        }
       ]
      }
@@ -1238,13 +1227,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-l1-pseo-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-l1-pseo-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "l1-seo: üretilen her Surface'in title/meta/schema'sını render eder; bu modül üretim + kaliteyi, l1-seo tekil meta'yı sahiplenir."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "l1-sitemap: kalite kapısını geçen Surface keşif yüzeyine eklenir; geçemeyen sitemap dışı kalır."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "cc-i18n-standards / l1-experiment: çoklu dil şablon ve A/B şablon varyantı (P2/enterprise)."
+      }
+     ]
     ]
    },
    {

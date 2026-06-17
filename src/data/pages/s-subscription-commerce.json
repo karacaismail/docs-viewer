@@ -741,7 +741,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Subscription Commerce — abonelik tabanlı e-ticaret — çekirdek yetenek",
+      "term": "Subscription Schedule",
       "definition": [
        {
         "type": "strong",
@@ -749,41 +749,38 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "customer_id + product_id + interval ENUM (weekly/monthly/quarterly/yearly) + next_billing_date + status; recurring kesmenin tek kaynağı."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Pause / Skip / Swap",
       "definition": [
        {
         "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
-       },
-       {
-        "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Müşteri portalından dönem atlama, geçici durdurma, bu ay başka ürün; churn'ü düşüren kontroller."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Dunning Akışı",
+      "definition": [
+       {
+        "type": "strong",
+        "text": "Kritik. "
+       },
+       {
+        "type": "text",
+        "text": "Ödeme alınamazsa retry + bildirim + kademeli askıya alma; başarısız tahsilatı kurtarma politikası."
+       }
+      ]
+     },
+     {
+      "term": "Cycle Order Üretimi",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "next_billing_date ≤ today olan abonelikler için order + shipment + cycle_number; idempotent gece job'ı."
        }
       ]
      }
@@ -971,15 +968,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Tahsilat tetikleyen cron dış efekttir; capability deny-by-default + idempotency_key ile çift charge engellenir. Müşteri portalı pause/cancel yalnız kendi subscription'ına erişir; tenant + owner RLS zorunlu. Ödeme PII/kart verisi tutulmaz; Stripe token referansı, audit'e tutar+durum yazılır, kart değil. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -1007,15 +996,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tip-güvenli sınırlar, ölü kod yok, saf fonksiyon + Strategy; "
-       },
-       {
-        "type": "code",
-        "text": "if (type==...)"
-       },
-       {
-        "type": "text",
-        "text": " yasak — runtime dispatch."
+        "text": "Gece job'ı next_billing_date üzerinde keyset ile sayfalanır; tüm tabloyu OFFSET ile taramaz."
        }
       ]
      },
@@ -1033,15 +1014,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Aylık zirvede (ayın 1'i) tahsilat dalgası: kuyruk + worker pool ile yayılır, tek seferde değil."
        }
       ]
      },
@@ -1337,7 +1310,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Subscription Commerce — abonelik tabanlı e-ticaret",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Subscription Commerce — abonelik tabanlı e-ticaret\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: BillingCycleDue\ncondition:\n  all:\n    - subscription.status == \"active\"\n    - subscription.next_billing_date <= today\n    - actor.capability >= \"subscription:charge\"\naction:\n  - emit: SubscriptionCharged\n  - emit: OrderCreated\n  - emit: ShipmentRequested\nguards:\n  max_depth: 6\n  idempotency_key: \"sub:{subscription_id}:{cycle_number}\"\n  external_effects: payment_capture",
     "copyEnabled": true
    },
    {
@@ -1477,6 +1450,18 @@
     ]
    },
    {
+    "id": "block-s-subscription-commerce-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Idempotent cycle: aynı cycle_number iki kez işlenirse tek order + tek charge doğrulanır. Pause sonrası next_billing_date'in doğru ötelendiği ve atlanan dönemin tahsil edilmediği test edilir. Dunning: başarısız tahsilatta retry sayısı + askıya alma eşiği + bildirim tetiklemesi kanıtlanır."
+     }
+    ]
+   },
+   {
     "id": "block-s-subscription-commerce-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -1495,7 +1480,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Subscription commerce ayrı capability'dir; recurring billing motorunu s-billing'den ödünç alır, kendi iş mantığını ekler. SaaS subscription ile karıştırılmaz."
        }
       ]
      },
@@ -1504,16 +1489,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Party (customer) + money tipi (multi-currency, vergi) + audit + bitemporal kernel'den; tahsilat tutarı money ArcheType'ı."
        }
       ]
      },
@@ -1522,7 +1498,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "s-commerce sipariş/sevkiyat çekirdeği; subscription yalnız 'periyodik order üretici' olarak üstüne biner."
        }
       ]
      },
@@ -1531,7 +1507,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "s-billing recurring motoru + scale-workers-deep scheduler + l1-notification bildirim; subscription bunları kompoze eder."
        }
       ]
      },
@@ -1540,7 +1516,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "E-ticaret app'i ürün kartına subscribable + interval ekler; checkout abonelik akışını aynı katalogdan sunar."
        }
       ]
      }
@@ -1553,13 +1529,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-s-subscription-commerce-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-s-subscription-commerce-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "E-ticaret App: ürün kartı subscribable bayrağı + interval seçimi, checkout'ta abonelik başlatma."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Müşteri Portalı App: pause/skip/swap/cancel endpoint'leri ve sonraki teslim tarihi görünümü."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "CS/Operasyon App: churn oranı + dunning kuyruğu + askıya alınan abonelik listesi."
+      }
+     ]
     ]
    },
    {

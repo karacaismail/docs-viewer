@@ -188,7 +188,7 @@
     "type": "definitionList",
     "items": [
      {
-      "term": "Creator Edition — çekirdek yetenek",
+      "term": "Kajabi-sınıfı satış sayfası Surface'leri",
       "definition": [
        {
         "type": "strong",
@@ -196,41 +196,34 @@
        },
        {
         "type": "text",
-        "text": "Bu birimin sahibi olduğu birincil iş yeteneği; bildirimsel tanım + projekte eden Surface."
+        "text": "Aynı LMS ArcheType'ları üzerine eğitmen marka/landing + kurs satış sayfası şablonları; estetik dönüşümün kendisi. Yeni ArcheType/alan EKLEMEZ — yalnız yüzey."
        }
       ]
      },
      {
-      "term": "Alan bayrakları",
+      "term": "Üç adımlı yayın UX'i (video → fiyat → yayınla)",
       "definition": [
        {
         "type": "text",
-        "text": "Para=Money (Decimal), kişisel veri="
-       },
-       {
-        "type": "code",
-        "text": "pii"
-       },
-       {
-        "type": "text",
-        "text": "(+retention), tarihçeli="
-       },
-       {
-        "type": "code",
-        "text": "bitemporal"
-       },
-       {
-        "type": "text",
-        "text": ", her şey audit'li."
+        "text": "Teknik ekipsiz creator için adımlı akış; capability-gated, hata tolere; parent LMS core'unu değiştirmez."
        }
       ]
      },
      {
-      "term": "Sözleşmeli sınır",
+      "term": "Dikey-video uyumlu oynatıcı (öğrenci tarafı)",
       "definition": [
        {
         "type": "text",
-        "text": "Dış erişim yalnız Contract (API kapısı) üzerinden; doğrudan tablo erişimi yok."
+        "text": "Mobil/dikey video oynatma Surface'i; içerik/ilerleme kaydı parent stack'ten gelir."
+       }
+      ]
+     },
+     {
+      "term": "Ödeme + sertifika + topluluk yüzeyi",
+      "definition": [
+       {
+        "type": "text",
+        "text": "Kurs satışı tahsilat (para tipi), tamamlama sertifikası ve topluluk alanı; akışlar parent module'leri tüketir, yeni fonksiyon değil."
        }
       ]
      }
@@ -418,15 +411,7 @@
     "segments": [
      {
       "type": "text",
-      "text": "Saldırı yüzeyini küçült: en az yetki, kısa-ömürlü token, alan-düzeyi "
-     },
-     {
-      "type": "code",
-      "text": "pii"
-     },
-     {
-      "type": "text",
-      "text": " maskeleme.  Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
+      "text": "Edition yeni güven sınırı açmaz; tüm yetki parent LMS capability'leri + RLS üzerinden — sadeleştirilmiş creator UI yetki tavanını GENİŞLETMEZ. Öğrenci/creator verisi pii=true (+retention) parent stack'ten; tenant-scoped, başka creator'ın öğrencisi görünmez. Ödeme dış-etkili aksiyon ECA içinde yürütülmez; allowlist'li akışa delege + parasal sonuçta step-up; tahsilat Money kuruş hassasiyetinde. Standartlar: OWASP ASVS, OWASP Top 10:2025, NIST SSDF; sözleşme "
      },
      {
       "type": "ref",
@@ -480,15 +465,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Keyset (cursor) pagination — OFFSET yok; N+1 yok; "
-       },
-       {
-        "type": "code",
-        "text": "async def"
-       },
-       {
-        "type": "text",
-        "text": " içinde bloklama yok; p95 SLO bütçesi; gerekli indeks."
+        "text": "Satış sayfası/oynatıcı Surface'leri keyset (cursor) pagination; video listeleme + ilerleme okuma-optimize; ek sorgu yükü parent stack ile paylaşılır."
        }
       ]
      },
@@ -784,7 +761,7 @@
     "type": "codeBlock",
     "title": "ECA kuralı — Creator Edition",
     "language": "yaml",
-    "code": "# Olay-Koşul-Eylem (deklaratif, no-code) — Creator Edition\ntrigger:\n  event: archetype.updated        # kaynak: ArcheType / Workflow / zamanlayıcı\n  when: \"tenant_scoped AND payload.changed\"\ncondition:\n  all:\n    - actor.capability >= \"write\"  # etkin yetki = kullanıcı ∩ capability ∩ tool_scope\n    - not loop_detected            # döngü/yan-tenant/derinlik>6 koruması\naction:\n  - emit: domain.event            # outbox üzerinden idempotent\n  - notify: [\"surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{entity}:{event}\"\n  external_effects: step_up_required   # dış etki allowlist + out-of-band onay\n",
+    "code": "trigger:\n  event: course.publish_requested\n  when: tenant_scoped\ncondition:\n  all:\n    - actor.capability >= \"lms.course.publish\"\n    - not loop_detected\naction:\n  - delegate: course.publish_flow         # parent module akışı\n  - notify: [\"creator-surface\"]\nguards:\n  max_depth: 6\n  idempotency_key: \"{tenant}:{course}:publish\"\n  external_effects: step_up_required",
     "copyEnabled": true
    },
    {
@@ -924,6 +901,18 @@
     ]
    },
    {
+    "id": "block-edition-creator-urs-co-3",
+    "type": "callout",
+    "variant": "tip",
+    "title": "Bu birime özel test notları",
+    "segments": [
+     {
+      "type": "text",
+      "text": "Edition Surface'leri parent LMS ArcheType'larıyla aynı veriyi gösterir; çift kayıt veya kopuk şema yok. Edition'a fonksiyon eklenmediği kanıtı: parent stack ArcheType/module seti ile birebir aynı kontrat. Komşu-creator/tenant veri görünmez (RLS). Yayın akışı parasal sonuçta step-up ister (dış-etkili guard)."
+     }
+    ]
+   },
+   {
     "id": "block-edition-creator-urs-h-11",
     "type": "heading",
     "level": 3,
@@ -942,7 +931,7 @@
        },
        {
         "type": "text",
-        "text": "Evet — kernel ile zorunlu (kimlik/tenancy/audit), modüller arası yalnız Contract üzerinden."
+        "text": "Evet ama yalnız UX katmanında — Edition fonksiyon eklemez; aynı core module seti ve kod parent LMS stack'ten gelir. Fark UI estetiği, UX akışı ve pazara-çıkış paketindedir (landing/fiyat/onboarding). Yeni ihtiyaç parent stack'e gider."
        }
       ]
      },
@@ -951,16 +940,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Kernel kimliği, ArcheType engine, tenancy (RLS) ve audit'i sağlar; SDK/AI kernel iç API'sine dokunamaz ("
-       },
-       {
-        "type": "ref",
-        "text": "k-tenancy",
-        "refId": "k-tenancy"
-       },
-       {
-        "type": "text",
-        "text": ")."
+        "text": "Kimlik, tenancy (RLS), audit ve ArcheType engine değişmez biçimde parent stack üzerinden kernel'den gelir; Edition kendi kerneline sahip değildir."
        }
       ]
      },
@@ -969,7 +949,16 @@
       "definition": [
        {
         "type": "text",
-        "text": "App başına tek, değişmez core; bu birim core sözleşmelerine uyar, core'u değiştirmez."
+        "text": "Temel "
+       },
+       {
+        "type": "ref",
+        "text": "stack-lms",
+        "refId": "stack-lms"
+       },
+       {
+        "type": "text",
+        "text": " core'udur (kurs/ölçme/ilerleme); core module ve sözleşmeleri değişmez; i18n, Notification, Money core'dan."
        }
       ]
      },
@@ -978,7 +967,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Diğer modüllerin tablosuna dokunmaz; yalnız Contract (API kapısı) üzerinden konuşur, capability deny-by-default."
+        "text": "Parent stack'in mevcut module'lerini (LMS/Ödeme/Sertifika) AYNEN tüketir; ek module beyan etmez — yalnız Contract."
        }
       ]
      },
@@ -987,7 +976,7 @@
       "definition": [
        {
         "type": "text",
-        "text": "Tüm app'ler paylaşılan ArcheType'larla (ör. Party) varsayılan entegre gelir; bu birim aynı sözleşmeyi izler."
+        "text": "LMS app'inin creator self-serve paketlenmesi; aynı veri ve ArcheType'lar üzerine farklı Surface/onboarding sunar, çift kayıt yok."
        }
       ]
      }
@@ -1000,13 +989,27 @@
     "text": "11. Module kullanımı — diğer app'ler nasıl faydalanır"
    },
    {
-    "id": "block-edition-creator-urs-p-3",
-    "type": "paragraph",
-    "segments": [
-     {
-      "type": "text",
-      "text": "Bu birim bir module ise: yetenekleri Contract üzerinden açar; tüketen app'ler paylaşılan ArcheType (ör. Party) ve capability talebiyle bağlanır; doğrudan tabloya değil API kapısına. Module değilse (kernel/karar/eğitim): doğrudan tüketilmez, kendisini uygulayan modüllere kural/altyapı sağlar."
-     }
+    "id": "block-edition-creator-urs-list",
+    "type": "list",
+    "items": [
+     [
+      {
+       "type": "text",
+       "text": "stack-lms: kurs/ölçme/ilerleme core'unu olduğu gibi tüketir; Edition yalnız Surface ve yayın UX'i ekler."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Ödeme module: kurs satışı tahsilatını üç-adım akışında tetikler (para tipi, dış-etkili → step-up)."
+      }
+     ],
+     [
+      {
+       "type": "text",
+       "text": "Sertifika module: kurs tamamlamada tamamlama belgesi üretir; içerik parent'tan gelir."
+      }
+     ]
     ]
    },
    {
