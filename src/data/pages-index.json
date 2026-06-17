@@ -56,6 +56,20 @@
     "page-crosscut-tr",
     "page-crosscut-security",
     "page-k-granulerlik"
+   ],
+   "relations": [
+    {
+     "type": "uses",
+     "target": "page-kernel-schema"
+    },
+    {
+     "type": "uses",
+     "target": "page-crosscut-tr"
+    },
+    {
+     "type": "uses",
+     "target": "page-crosscut-security"
+    }
    ]
   },
   {
@@ -78,6 +92,32 @@
     "page-k-terminoloji",
     "page-k-archetype-bayraklari",
     "page-k-sozlesme"
+   ],
+   "relations": [
+    {
+     "type": "sibling",
+     "target": "page-k-surface"
+    },
+    {
+     "type": "sibling",
+     "target": "page-k-archetype-storage"
+    },
+    {
+     "type": "uses",
+     "target": "page-adr-0022-archetype-storage"
+    },
+    {
+     "type": "depends-on",
+     "target": "page-scale-cache"
+    },
+    {
+     "type": "sibling",
+     "target": "page-k-sozlesme"
+    },
+    {
+     "type": "uses",
+     "target": "page-sus-actions"
+    }
    ]
   },
   {
@@ -88,9 +128,20 @@
    "summary": "Her request'in başında 'kim bu' sorusunu cevaplayan mekanizma. Login/signup'tan çok daha fazlası.",
    "categoryId": "kernel",
    "meta": {
+    "granularity": "kaya",
     "badge": "Layer 0 — Kernel #2"
    },
-   "related": []
+   "related": [],
+   "relations": [
+    {
+     "type": "sibling",
+     "target": "page-kernel-authz"
+    },
+    {
+     "type": "sibling",
+     "target": "page-k-sso"
+    }
+   ]
   },
   {
    "id": "page-kernel-authz",
@@ -100,10 +151,33 @@
    "summary": "Kim ne yapabilir? Query layer'a örülmüş — application-level if-check yetmez.",
    "categoryId": "kernel",
    "meta": {
+    "granularity": "kaya",
     "badge": "Layer 0 — Kernel #3"
    },
    "related": [
     "page-be-kararlar"
+   ],
+   "relations": [
+    {
+     "type": "sibling",
+     "target": "page-kernel-identity"
+    },
+    {
+     "type": "sibling",
+     "target": "page-kernel-tenancy"
+    },
+    {
+     "type": "uses",
+     "target": "page-stack-drive"
+    },
+    {
+     "type": "uses",
+     "target": "page-sus-actions"
+    },
+    {
+     "type": "uses",
+     "target": "page-adr-0015-aksiyon-taksonomisi-yetki"
+    }
    ]
   },
   {
@@ -114,9 +188,24 @@
    "summary": "SaaS = aynı yazılım çok müşteriye, izole veri. Day-1'den tenant_id her satırda.",
    "categoryId": "kernel",
    "meta": {
+    "granularity": "kaya",
     "badge": "Layer 0 — Kernel #4"
    },
-   "related": []
+   "related": [],
+   "relations": [
+    {
+     "type": "sibling",
+     "target": "page-kernel-authz"
+    },
+    {
+     "type": "sibling",
+     "target": "page-k-tenancy-deep"
+    },
+    {
+     "type": "uses",
+     "target": "page-layer1-audit"
+    }
+   ]
   },
   {
    "id": "page-kernel-bus",
@@ -126,9 +215,20 @@
    "summary": "Module'lerin loose-coupled konuştuğu omurga. Aynı kod, üç ölçek.",
    "categoryId": "kernel",
    "meta": {
+    "granularity": "kaya",
     "badge": "Layer 0 — Kernel #5"
    },
-   "related": []
+   "related": [],
+   "relations": [
+    {
+     "type": "depends-on",
+     "target": "page-scale-outbox"
+    },
+    {
+     "type": "sibling",
+     "target": "page-kernel-plugin"
+    }
+   ]
   },
   {
    "id": "page-kernel-plugin",
@@ -138,11 +238,22 @@
    "summary": "Framework olmanın can damarı. Modül yazılabiliyorsa platform, yazılamıyorsa uygulama.",
    "categoryId": "kernel",
    "meta": {
+    "granularity": "kaya",
     "badge": "Layer 0 — Kernel #6"
    },
    "related": [
     "page-be-kararlar",
     "page-k-terminoloji"
+   ],
+   "relations": [
+    {
+     "type": "uses",
+     "target": "page-be-kararlar"
+    },
+    {
+     "type": "sibling",
+     "target": "page-kernel-bus"
+    }
    ]
   },
   {
@@ -153,10 +264,33 @@
    "summary": "Dual-write problem'inin tek doğru çözümü. Save pipeline'a örülü.",
    "categoryId": "scale",
    "meta": {
+    "granularity": "orta-tas",
     "badge": "Scale primitive #1"
    },
    "related": [
     "page-stack-channel"
+   ],
+   "relations": [
+    {
+     "type": "depends-on",
+     "target": "page-scale-workers"
+    },
+    {
+     "type": "sibling",
+     "target": "page-scale-saga"
+    },
+    {
+     "type": "sibling",
+     "target": "page-scale-idempotency"
+    },
+    {
+     "type": "sibling",
+     "target": "page-scale-projections"
+    },
+    {
+     "type": "uses",
+     "target": "page-layer1-workflow"
+    }
    ]
   },
   {
@@ -382,10 +516,29 @@
    "summary": "Yazma normalize, okuma denormalize. Event-driven senkron.",
    "categoryId": "scale",
    "meta": {
+    "granularity": "orta-tas",
     "badge": "Scale primitive #2"
    },
    "related": [
     "page-k-sozlesme"
+   ],
+   "relations": [
+    {
+     "type": "depends-on",
+     "target": "page-scale-outbox"
+    },
+    {
+     "type": "depends-on",
+     "target": "page-scale-workers"
+    },
+    {
+     "type": "sibling",
+     "target": "page-scale-counter"
+    },
+    {
+     "type": "sibling",
+     "target": "page-scale-streaming"
+    }
    ]
   },
   {
@@ -397,12 +550,39 @@
    "categoryId": "kernel",
    "meta": {
     "granularity": "orta-tas",
-    "state": "wip"
+    "state": "wip",
+    "breadcrumb": [
+     {
+      "id": "page-kernel-identity",
+      "title": "Identity",
+      "granularity": "kaya"
+     },
+     {
+      "id": "page-k-sso",
+      "title": "SSO + Federation — kurumsal kimlik girişi",
+      "granularity": "orta-tas"
+     }
+    ]
    },
    "related": [
     "page-kernel-identity",
     "page-crosscut-security",
     "page-cc-privacy"
+   ],
+   "parent": "page-kernel-identity",
+   "relations": [
+    {
+     "type": "depends-on",
+     "target": "page-kernel-identity"
+    },
+    {
+     "type": "uses",
+     "target": "page-crosscut-security"
+    },
+    {
+     "type": "uses",
+     "target": "page-cc-privacy"
+    }
    ]
   },
   {
@@ -421,6 +601,24 @@
     "page-scale-saga",
     "page-sus-durable",
     "page-scale-outbox"
+   ],
+   "relations": [
+    {
+     "type": "depends-on",
+     "target": "page-scale-workers"
+    },
+    {
+     "type": "sibling",
+     "target": "page-scale-saga"
+    },
+    {
+     "type": "sibling",
+     "target": "page-scale-outbox"
+    },
+    {
+     "type": "uses",
+     "target": "page-sus-durable"
+    }
    ]
   },
   {
@@ -531,6 +729,20 @@
     "page-crosscut-observability",
     "page-scale-multiregion",
     "page-adr-0024-dev-workflow"
+   ],
+   "relations": [
+    {
+     "type": "depends-on",
+     "target": "page-crosscut-observability"
+    },
+    {
+     "type": "uses",
+     "target": "page-scale-multiregion"
+    },
+    {
+     "type": "uses",
+     "target": "page-k-archetype-storage"
+    }
    ]
   },
   {
@@ -559,12 +771,39 @@
    "categoryId": "kernel",
    "meta": {
     "granularity": "orta-tas",
-    "state": "wip"
+    "state": "wip",
+    "breadcrumb": [
+     {
+      "id": "page-kernel-tenancy",
+      "title": "Tenancy",
+      "granularity": "kaya"
+     },
+     {
+      "id": "page-k-tenancy-deep",
+      "title": "Sharding — büyük ölçek için yatay bölme",
+      "granularity": "orta-tas"
+     }
+    ]
    },
    "related": [
     "page-kernel-tenancy",
     "page-scale-multiregion",
     "page-cc-privacy"
+   ],
+   "parent": "page-kernel-tenancy",
+   "relations": [
+    {
+     "type": "depends-on",
+     "target": "page-kernel-tenancy"
+    },
+    {
+     "type": "depends-on",
+     "target": "page-scale-multiregion"
+    },
+    {
+     "type": "uses",
+     "target": "page-cc-privacy"
+    }
    ]
   },
   {
@@ -575,9 +814,20 @@
    "summary": "Like, view, follower. Backend swappable.",
    "categoryId": "scale",
    "meta": {
+    "granularity": "orta-tas",
     "badge": "Scale primitive #3"
    },
-   "related": []
+   "related": [],
+   "relations": [
+    {
+     "type": "sibling",
+     "target": "page-scale-projections"
+    },
+    {
+     "type": "sibling",
+     "target": "page-scale-cache"
+    }
+   ]
   },
   {
    "id": "page-scale-timeseries",
@@ -594,6 +844,16 @@
     "page-scale-cache",
     "page-crosscut-observability",
     "page-s-iot"
+   ],
+   "relations": [
+    {
+     "type": "sibling",
+     "target": "page-scale-cache"
+    },
+    {
+     "type": "uses",
+     "target": "page-crosscut-observability"
+    }
    ]
   },
   {
@@ -611,6 +871,24 @@
     "page-scale-outbox",
     "page-scale-projections",
     "page-kernel-bus"
+   ],
+   "relations": [
+    {
+     "type": "depends-on",
+     "target": "page-scale-outbox"
+    },
+    {
+     "type": "sibling",
+     "target": "page-scale-projections"
+    },
+    {
+     "type": "sibling",
+     "target": "page-scale-workers"
+    },
+    {
+     "type": "uses",
+     "target": "page-kernel-bus"
+    }
    ]
   },
   {
@@ -627,6 +905,16 @@
    "related": [
     "page-atomic-types",
     "page-layer1-search"
+   ],
+   "relations": [
+    {
+     "type": "uses",
+     "target": "page-atomic-types"
+    },
+    {
+     "type": "uses",
+     "target": "page-layer1-search"
+    }
    ]
   },
   {
@@ -644,6 +932,12 @@
     "page-layer1-notification",
     "page-edu-u22-email-sms",
     "page-edu-u15-ux-60-plus"
+   ],
+   "relations": [
+    {
+     "type": "sibling",
+     "target": "page-layer1-notification"
+    }
    ]
   },
   {
@@ -661,6 +955,24 @@
     "page-layer1-misc",
     "page-crosscut-tr",
     "page-fe-core-ui"
+   ],
+   "relations": [
+    {
+     "type": "sibling",
+     "target": "page-cc-i18n-standards"
+    },
+    {
+     "type": "sibling",
+     "target": "page-crosscut-tr"
+    },
+    {
+     "type": "uses",
+     "target": "page-layer1-misc"
+    },
+    {
+     "type": "uses",
+     "target": "page-fe-core-ui"
+    }
    ]
   },
   {
@@ -680,6 +992,28 @@
     "page-fe-mobile",
     "page-cc-jurisdiction-resolver",
     "page-cc-compliance-matrix"
+   ],
+   "relations": [
+    {
+     "type": "depends-on",
+     "target": "page-cc-jurisdiction-resolver"
+    },
+    {
+     "type": "sibling",
+     "target": "page-cc-compliance-matrix"
+    },
+    {
+     "type": "uses",
+     "target": "page-fe-core-ui"
+    },
+    {
+     "type": "uses",
+     "target": "page-fe-mobile"
+    },
+    {
+     "type": "uses",
+     "target": "page-edu-u15-ux-60-plus"
+    }
    ]
   },
   {
@@ -690,9 +1024,32 @@
    "summary": "Async job queue. Outbox relay, projection rebuild, fan-out, cron — hepsi burada.",
    "categoryId": "scale",
    "meta": {
+    "granularity": "orta-tas",
     "badge": "Scale primitive #4"
    },
-   "related": []
+   "related": [],
+   "relations": [
+    {
+     "type": "sibling",
+     "target": "page-scale-workers-deep"
+    },
+    {
+     "type": "sibling",
+     "target": "page-scale-outbox"
+    },
+    {
+     "type": "depends-on",
+     "target": "page-scale-idempotency"
+    },
+    {
+     "type": "sibling",
+     "target": "page-scale-saga"
+    },
+    {
+     "type": "uses",
+     "target": "page-sus-durable"
+    }
+   ]
   },
   {
    "id": "page-l1-search-deep",
@@ -709,6 +1066,20 @@
     "page-layer1-search",
     "page-scale-gis",
     "page-scale-cache"
+   ],
+   "relations": [
+    {
+     "type": "sibling",
+     "target": "page-layer1-search"
+    },
+    {
+     "type": "depends-on",
+     "target": "page-scale-gis"
+    },
+    {
+     "type": "depends-on",
+     "target": "page-scale-cache"
+    }
    ]
   },
   {
@@ -719,9 +1090,32 @@
    "summary": "Cross-aggregate transaction. Adım fail ederse önceki adımları geri al.",
    "categoryId": "scale",
    "meta": {
+    "granularity": "orta-tas",
     "badge": "Scale primitive #5"
    },
-   "related": []
+   "related": [],
+   "relations": [
+    {
+     "type": "uses",
+     "target": "page-sus-durable"
+    },
+    {
+     "type": "uses",
+     "target": "page-k-sozlesme"
+    },
+    {
+     "type": "depends-on",
+     "target": "page-scale-workers"
+    },
+    {
+     "type": "sibling",
+     "target": "page-scale-outbox"
+    },
+    {
+     "type": "sibling",
+     "target": "page-scale-idempotency"
+    }
+   ]
   },
   {
    "id": "page-s-crm",
@@ -852,10 +1246,33 @@
    "summary": "Aynı istek iki kez geldi sonuç değişmesin. Webhook retry, payment, third-party API.",
    "categoryId": "scale",
    "meta": {
+    "granularity": "orta-tas",
     "badge": "Scale primitive #6"
    },
    "related": [
     "page-s-channel-hub"
+   ],
+   "relations": [
+    {
+     "type": "uses",
+     "target": "page-k-sozlesme"
+    },
+    {
+     "type": "uses",
+     "target": "page-layer1-workflow"
+    },
+    {
+     "type": "sibling",
+     "target": "page-scale-workers"
+    },
+    {
+     "type": "sibling",
+     "target": "page-scale-webhook"
+    },
+    {
+     "type": "sibling",
+     "target": "page-scale-saga"
+    }
    ]
   },
   {
@@ -1150,6 +1567,44 @@
     "page-layer1-audit",
     "page-cc-resolver-ops",
     "page-cc-identity-models"
+   ],
+   "relations": [
+    {
+     "type": "sibling",
+     "target": "page-cc-resolver-ops"
+    },
+    {
+     "type": "sibling",
+     "target": "page-cc-identity-models"
+    },
+    {
+     "type": "sibling",
+     "target": "page-cc-compliance-matrix"
+    },
+    {
+     "type": "sibling",
+     "target": "page-cc-privacy"
+    },
+    {
+     "type": "sibling",
+     "target": "page-crosscut-tr"
+    },
+    {
+     "type": "sibling",
+     "target": "page-cc-i18n-deep"
+    },
+    {
+     "type": "uses",
+     "target": "page-kernel-authz"
+    },
+    {
+     "type": "uses",
+     "target": "page-layer1-audit"
+    },
+    {
+     "type": "uses",
+     "target": "page-sus-versioning"
+    }
    ]
   },
   {
@@ -1184,6 +1639,28 @@
     "page-cc-i18n-deep",
     "page-edu-u15-ux-60-plus",
     "page-crosscut-tr"
+   ],
+   "relations": [
+    {
+     "type": "depends-on",
+     "target": "page-cc-jurisdiction-resolver"
+    },
+    {
+     "type": "sibling",
+     "target": "page-cc-i18n-deep"
+    },
+    {
+     "type": "sibling",
+     "target": "page-crosscut-tr"
+    },
+    {
+     "type": "uses",
+     "target": "page-layer1-misc"
+    },
+    {
+     "type": "uses",
+     "target": "page-edu-u15-ux-60-plus"
+    }
    ]
   },
   {
@@ -1217,6 +1694,32 @@
     "page-s-revenue-recognition",
     "page-edu-u02b-para-tarih",
     "page-edu-u21-money-tax"
+   ],
+   "relations": [
+    {
+     "type": "depends-on",
+     "target": "page-cc-jurisdiction-resolver"
+    },
+    {
+     "type": "uses",
+     "target": "page-stack-accounting"
+    },
+    {
+     "type": "uses",
+     "target": "page-s-billing"
+    },
+    {
+     "type": "uses",
+     "target": "page-s-revenue-recognition"
+    },
+    {
+     "type": "uses",
+     "target": "page-edu-u02b-para-tarih"
+    },
+    {
+     "type": "uses",
+     "target": "page-edu-u21-money-tax"
+    }
    ]
   },
   {
@@ -1253,6 +1756,32 @@
     "page-crosscut-security",
     "page-layer1-audit",
     "page-cc-fx-ledger"
+   ],
+   "relations": [
+    {
+     "type": "depends-on",
+     "target": "page-cc-jurisdiction-resolver"
+    },
+    {
+     "type": "sibling",
+     "target": "page-cc-privacy"
+    },
+    {
+     "type": "sibling",
+     "target": "page-crosscut-tr"
+    },
+    {
+     "type": "sibling",
+     "target": "page-crosscut-security"
+    },
+    {
+     "type": "sibling",
+     "target": "page-cc-fx-ledger"
+    },
+    {
+     "type": "uses",
+     "target": "page-layer1-audit"
+    }
    ]
   },
   {
@@ -1288,6 +1817,32 @@
     "page-edu-u22-email-sms",
     "page-stack-marketing",
     "page-l1-quiet-hours"
+   ],
+   "relations": [
+    {
+     "type": "depends-on",
+     "target": "page-cc-jurisdiction-resolver"
+    },
+    {
+     "type": "sibling",
+     "target": "page-cc-compliance-matrix"
+    },
+    {
+     "type": "uses",
+     "target": "page-layer1-notification"
+    },
+    {
+     "type": "uses",
+     "target": "page-l1-quiet-hours"
+    },
+    {
+     "type": "uses",
+     "target": "page-stack-marketing"
+    },
+    {
+     "type": "uses",
+     "target": "page-edu-u22-email-sms"
+    }
    ]
   },
   {
@@ -1321,6 +1876,32 @@
     "page-layer1-party",
     "page-edu-u02b-para-tarih",
     "page-edu-u04b-veri-tasarim"
+   ],
+   "relations": [
+    {
+     "type": "depends-on",
+     "target": "page-cc-jurisdiction-resolver"
+    },
+    {
+     "type": "sibling",
+     "target": "page-cc-i18n-standards"
+    },
+    {
+     "type": "sibling",
+     "target": "page-cc-compliance-matrix"
+    },
+    {
+     "type": "uses",
+     "target": "page-layer1-party"
+    },
+    {
+     "type": "uses",
+     "target": "page-edu-u02b-para-tarih"
+    },
+    {
+     "type": "uses",
+     "target": "page-edu-u04b-veri-tasarim"
+    }
    ]
   },
   {
@@ -1355,6 +1936,36 @@
     "page-cc-obs-deep",
     "page-layer1-audit",
     "page-kernel-authz"
+   ],
+   "relations": [
+    {
+     "type": "depends-on",
+     "target": "page-cc-jurisdiction-resolver"
+    },
+    {
+     "type": "depends-on",
+     "target": "page-cc-rollout"
+    },
+    {
+     "type": "sibling",
+     "target": "page-cc-compliance-matrix"
+    },
+    {
+     "type": "sibling",
+     "target": "page-crosscut-observability"
+    },
+    {
+     "type": "sibling",
+     "target": "page-cc-obs-deep"
+    },
+    {
+     "type": "uses",
+     "target": "page-layer1-audit"
+    },
+    {
+     "type": "uses",
+     "target": "page-kernel-authz"
+    }
    ]
   },
   {
@@ -1488,6 +2099,32 @@
     "page-stack-commerce",
     "page-s-tax-compliance",
     "page-fe-cdn"
+   ],
+   "relations": [
+    {
+     "type": "depends-on",
+     "target": "page-cc-jurisdiction-resolver"
+    },
+    {
+     "type": "sibling",
+     "target": "page-cc-compliance-matrix"
+    },
+    {
+     "type": "sibling",
+     "target": "page-crosscut-tr"
+    },
+    {
+     "type": "uses",
+     "target": "page-stack-commerce"
+    },
+    {
+     "type": "uses",
+     "target": "page-s-tax-compliance"
+    },
+    {
+     "type": "uses",
+     "target": "page-fe-cdn"
+    }
    ]
   },
   {
@@ -1520,6 +2157,28 @@
     "page-cc-jurisdiction-resolver",
     "page-fe-core-ui",
     "page-fe-mobile"
+   ],
+   "relations": [
+    {
+     "type": "depends-on",
+     "target": "page-cc-jurisdiction-resolver"
+    },
+    {
+     "type": "sibling",
+     "target": "page-cc-i18n-standards"
+    },
+    {
+     "type": "sibling",
+     "target": "page-cc-a11y-backend"
+    },
+    {
+     "type": "uses",
+     "target": "page-fe-core-ui"
+    },
+    {
+     "type": "uses",
+     "target": "page-fe-mobile"
+    }
    ]
   },
   {
@@ -1816,6 +2475,16 @@
    },
    "related": [
     "page-be-mail-zinciri"
+   ],
+   "relations": [
+    {
+     "type": "sibling",
+     "target": "page-l1-quiet-hours"
+    },
+    {
+     "type": "sibling",
+     "target": "page-layer1-misc"
+    }
    ]
   },
   {
@@ -2405,7 +3074,17 @@
     "granularity": "kaya",
     "badge": "Layer 1 — In-tree"
    },
-   "related": []
+   "related": [],
+   "relations": [
+    {
+     "type": "sibling",
+     "target": "page-layer1-party"
+    },
+    {
+     "type": "sibling",
+     "target": "page-layer1-file"
+    }
+   ]
   },
   {
    "id": "page-edition-people",
@@ -2535,6 +3214,32 @@
     "page-be-sdk",
     "page-k-granulerlik",
     "page-adr-0023-ia-navigasyon"
+   ],
+   "relations": [
+    {
+     "type": "sibling",
+     "target": "page-kernel-schema"
+    },
+    {
+     "type": "sibling",
+     "target": "page-kernel-plugin"
+    },
+    {
+     "type": "sibling",
+     "target": "page-k-surface"
+    },
+    {
+     "type": "sibling",
+     "target": "page-k-control-planes"
+    },
+    {
+     "type": "uses",
+     "target": "page-dx-cli"
+    },
+    {
+     "type": "uses",
+     "target": "page-stack-editions"
+    }
    ]
   },
   {
@@ -2846,6 +3551,28 @@
     "page-be-kararlar",
     "page-k-surface",
     "page-adr-0023-ia-navigasyon"
+   ],
+   "relations": [
+    {
+     "type": "sibling",
+     "target": "page-k-terminoloji"
+    },
+    {
+     "type": "sibling",
+     "target": "page-atomic-types"
+    },
+    {
+     "type": "uses",
+     "target": "page-be-sdk"
+    },
+    {
+     "type": "uses",
+     "target": "page-edu-faz-haritasi"
+    },
+    {
+     "type": "uses",
+     "target": "page-be-kararlar"
+    }
    ]
   },
   {
@@ -2889,6 +3616,40 @@
     "page-k-control-planes",
     "page-k-archetype-bayraklari",
     "page-k-sozlesme"
+   ],
+   "relations": [
+    {
+     "type": "sibling",
+     "target": "page-kernel-schema"
+    },
+    {
+     "type": "sibling",
+     "target": "page-k-terminoloji"
+    },
+    {
+     "type": "sibling",
+     "target": "page-k-granulerlik"
+    },
+    {
+     "type": "sibling",
+     "target": "page-k-control-planes"
+    },
+    {
+     "type": "uses",
+     "target": "page-layer1-workflow"
+    },
+    {
+     "type": "uses",
+     "target": "page-layer1-party"
+    },
+    {
+     "type": "uses",
+     "target": "page-be-sdk"
+    },
+    {
+     "type": "uses",
+     "target": "page-stack-editions"
+    }
    ]
   },
   {
@@ -2910,6 +3671,32 @@
     "page-cc-privacy",
     "page-layer1-audit",
     "page-be-kararlar"
+   ],
+   "relations": [
+    {
+     "type": "sibling",
+     "target": "page-kernel-schema"
+    },
+    {
+     "type": "sibling",
+     "target": "page-k-surface"
+    },
+    {
+     "type": "uses",
+     "target": "page-sus-bitemporal"
+    },
+    {
+     "type": "uses",
+     "target": "page-cc-privacy"
+    },
+    {
+     "type": "uses",
+     "target": "page-layer1-audit"
+    },
+    {
+     "type": "uses",
+     "target": "page-be-kararlar"
+    }
    ]
   },
   {
@@ -2931,6 +3718,40 @@
     "page-sus-conformance",
     "page-scale-projections",
     "page-be-kararlar"
+   ],
+   "relations": [
+    {
+     "type": "sibling",
+     "target": "page-kernel-schema"
+    },
+    {
+     "type": "sibling",
+     "target": "page-k-surface"
+    },
+    {
+     "type": "uses",
+     "target": "page-sus-versioning"
+    },
+    {
+     "type": "uses",
+     "target": "page-sus-conformance"
+    },
+    {
+     "type": "depends-on",
+     "target": "page-scale-projections"
+    },
+    {
+     "type": "uses",
+     "target": "page-be-kararlar"
+    },
+    {
+     "type": "uses",
+     "target": "page-sus-actions"
+    },
+    {
+     "type": "uses",
+     "target": "page-adr-0016-changeset-migration"
+    }
    ]
   },
   {
@@ -2943,13 +3764,44 @@
    "meta": {
     "granularity": "orta-tas",
     "state": "wip",
-    "badge": "ÖRNEK"
+    "badge": "ÖRNEK",
+    "breadcrumb": [
+     {
+      "id": "page-k-granulerlik",
+      "title": "Granülerlik Zinciri — Dağ'dan Atom'a",
+      "granularity": "kaya"
+     },
+     {
+      "id": "page-k-wbs",
+      "title": "WBS Örneği — Dağ'dan Atom'a Görsel Kırılım",
+      "granularity": "orta-tas"
+     }
+    ]
    },
    "related": [
     "page-k-granulerlik",
     "page-k-surface",
     "page-edu-faz-haritasi",
     "page-be-sdk"
+   ],
+   "parent": "page-k-granulerlik",
+   "relations": [
+    {
+     "type": "depends-on",
+     "target": "page-k-granulerlik"
+    },
+    {
+     "type": "sibling",
+     "target": "page-k-surface"
+    },
+    {
+     "type": "uses",
+     "target": "page-edu-faz-haritasi"
+    },
+    {
+     "type": "uses",
+     "target": "page-be-sdk"
+    }
    ]
   },
   {
@@ -3665,6 +4517,40 @@
     "page-k-control-planes",
     "page-dist-sahibinden",
     "page-edition-departman-copilot"
+   ],
+   "relations": [
+    {
+     "type": "depends-on",
+     "target": "page-kernel-authz"
+    },
+    {
+     "type": "depends-on",
+     "target": "page-kernel-tenancy"
+    },
+    {
+     "type": "sibling",
+     "target": "page-kernel-bus"
+    },
+    {
+     "type": "sibling",
+     "target": "page-k-control-planes"
+    },
+    {
+     "type": "uses",
+     "target": "page-stack-ai"
+    },
+    {
+     "type": "uses",
+     "target": "page-sus-ai-uretim-sozlesmesi"
+    },
+    {
+     "type": "uses",
+     "target": "page-layer1-search"
+    },
+    {
+     "type": "depends-on",
+     "target": "page-scale-realtime"
+    }
    ]
   },
   {
@@ -4001,8 +4887,28 @@
    "title": "Türkiye Uyum Birinci Sınıf",
    "summary": "e-Belge, e-Defter, SGK, KVKK, BES, MERSİS, KEP — framework-level paket.",
    "categoryId": "crosscut",
-   "meta": {},
-   "related": []
+   "meta": {
+    "granularity": "orta-tas"
+   },
+   "related": [],
+   "relations": [
+    {
+     "type": "sibling",
+     "target": "page-cc-privacy"
+    },
+    {
+     "type": "sibling",
+     "target": "page-cc-compliance-matrix"
+    },
+    {
+     "type": "sibling",
+     "target": "page-cc-notification-consent"
+    },
+    {
+     "type": "sibling",
+     "target": "page-cc-jurisdiction-resolver"
+    }
+   ]
   },
   {
    "id": "page-s-ai-catalog",
@@ -4258,8 +5164,24 @@
    "title": "Security Model",
    "summary": "STRIDE threat model + OWASP Top 10 + defense in depth.",
    "categoryId": "crosscut",
-   "meta": {},
-   "related": []
+   "meta": {
+    "granularity": "orta-tas"
+   },
+   "related": [],
+   "relations": [
+    {
+     "type": "sibling",
+     "target": "page-cc-privacy"
+    },
+    {
+     "type": "sibling",
+     "target": "page-crosscut-observability"
+    },
+    {
+     "type": "sibling",
+     "target": "page-cc-compliance-matrix"
+    }
+   ]
   },
   {
    "id": "page-l1-pseo",
@@ -4552,6 +5474,32 @@
     "page-scale-cache",
     "page-cc-obs-deep",
     "page-k-terminoloji"
+   ],
+   "relations": [
+    {
+     "type": "sibling",
+     "target": "page-kernel-schema"
+    },
+    {
+     "type": "sibling",
+     "target": "page-k-terminoloji"
+    },
+    {
+     "type": "uses",
+     "target": "page-adr-0022-archetype-storage"
+    },
+    {
+     "type": "uses",
+     "target": "page-edu-u25-doctype-vs-ddd"
+    },
+    {
+     "type": "depends-on",
+     "target": "page-scale-cache"
+    },
+    {
+     "type": "uses",
+     "target": "page-cc-obs-deep"
+    }
    ]
   },
   {
@@ -4621,8 +5569,24 @@
    "title": "Observability + Performance + DR",
    "summary": "Logging, metrics, tracing, alerting, backup, restore.",
    "categoryId": "crosscut",
-   "meta": {},
-   "related": []
+   "meta": {
+    "granularity": "orta-tas"
+   },
+   "related": [],
+   "relations": [
+    {
+     "type": "sibling",
+     "target": "page-cc-obs-deep"
+    },
+    {
+     "type": "sibling",
+     "target": "page-crosscut-security"
+    },
+    {
+     "type": "uses",
+     "target": "page-sus-actions"
+    }
+   ]
   },
   {
    "id": "page-adr-0024-dev-workflow",
@@ -4665,6 +5629,36 @@
     "page-l1-seo",
     "page-dx-workflow",
     "page-k-terminoloji"
+   ],
+   "relations": [
+    {
+     "type": "sibling",
+     "target": "page-k-surface"
+    },
+    {
+     "type": "sibling",
+     "target": "page-k-agent-runtime"
+    },
+    {
+     "type": "uses",
+     "target": "page-be-sdk"
+    },
+    {
+     "type": "uses",
+     "target": "page-be-deploy-profilleri"
+    },
+    {
+     "type": "uses",
+     "target": "page-sus-actions"
+    },
+    {
+     "type": "uses",
+     "target": "page-l1-seo"
+    },
+    {
+     "type": "uses",
+     "target": "page-dx-workflow"
+    }
    ]
   },
   {
@@ -5183,6 +6177,24 @@
     "page-scale-projections",
     "page-crosscut-observability",
     "page-adr-0022-archetype-storage"
+   ],
+   "relations": [
+    {
+     "type": "sibling",
+     "target": "page-scale-counter"
+    },
+    {
+     "type": "depends-on",
+     "target": "page-scale-projections"
+    },
+    {
+     "type": "uses",
+     "target": "page-k-archetype-storage"
+    },
+    {
+     "type": "uses",
+     "target": "page-crosscut-observability"
+    }
    ]
   },
   {
@@ -5214,6 +6226,24 @@
     "page-crosscut-security",
     "page-edu-u14-cache-ratelimit",
     "page-kernel-tenancy"
+   ],
+   "relations": [
+    {
+     "type": "sibling",
+     "target": "page-scale-cache"
+    },
+    {
+     "type": "uses",
+     "target": "page-kernel-tenancy"
+    },
+    {
+     "type": "uses",
+     "target": "page-crosscut-security"
+    },
+    {
+     "type": "uses",
+     "target": "page-edu-u14-cache-ratelimit"
+    }
    ]
   },
   {
@@ -5248,6 +6278,24 @@
     "page-crosscut-tr",
     "page-cc-privacy",
     "page-be-deploy-profilleri"
+   ],
+   "relations": [
+    {
+     "type": "uses",
+     "target": "page-kernel-tenancy"
+    },
+    {
+     "type": "uses",
+     "target": "page-cc-privacy"
+    },
+    {
+     "type": "uses",
+     "target": "page-crosscut-tr"
+    },
+    {
+     "type": "uses",
+     "target": "page-crosscut-observability"
+    }
    ]
   },
   {
@@ -5283,6 +6331,24 @@
     "page-kernel-bus",
     "page-scale-cache",
     "page-s-comms"
+   ],
+   "relations": [
+    {
+     "type": "uses",
+     "target": "page-kernel-bus"
+    },
+    {
+     "type": "uses",
+     "target": "page-layer1-notification"
+    },
+    {
+     "type": "uses",
+     "target": "page-fe-ai-realtime"
+    },
+    {
+     "type": "sibling",
+     "target": "page-scale-cache"
+    }
    ]
   },
   {
@@ -5315,6 +6381,28 @@
     "page-crosscut-security",
     "page-scale-saga",
     "page-be-mail-zinciri"
+   ],
+   "relations": [
+    {
+     "type": "depends-on",
+     "target": "page-scale-outbox"
+    },
+    {
+     "type": "sibling",
+     "target": "page-scale-idempotency"
+    },
+    {
+     "type": "sibling",
+     "target": "page-scale-saga"
+    },
+    {
+     "type": "uses",
+     "target": "page-crosscut-security"
+    },
+    {
+     "type": "uses",
+     "target": "page-layer1-misc"
+    }
    ]
   },
   {
@@ -5345,6 +6433,20 @@
     "page-scale-saga",
     "page-sus-versioning",
     "page-crosscut-observability"
+   ],
+   "relations": [
+    {
+     "type": "sibling",
+     "target": "page-crosscut-observability"
+    },
+    {
+     "type": "uses",
+     "target": "page-scale-saga"
+    },
+    {
+     "type": "uses",
+     "target": "page-sus-versioning"
+    }
    ]
   },
   {
@@ -5377,6 +6479,36 @@
     "page-sus-bitemporal",
     "page-s-kvkk",
     "page-k-archetype-bayraklari"
+   ],
+   "relations": [
+    {
+     "type": "sibling",
+     "target": "page-crosscut-tr"
+    },
+    {
+     "type": "sibling",
+     "target": "page-crosscut-security"
+    },
+    {
+     "type": "sibling",
+     "target": "page-cc-notification-consent"
+    },
+    {
+     "type": "uses",
+     "target": "page-k-archetype-bayraklari"
+    },
+    {
+     "type": "uses",
+     "target": "page-layer1-audit"
+    },
+    {
+     "type": "uses",
+     "target": "page-s-kvkk"
+    },
+    {
+     "type": "uses",
+     "target": "page-sus-bitemporal"
+    }
    ]
   },
   {
