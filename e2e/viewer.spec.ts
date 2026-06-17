@@ -107,15 +107,13 @@ test.describe("explanation panel sözleşmesi (kabul #10, 12 §Etkileşim)", () 
     await expect(chip).toBeFocused(); // focus dönüşü
   });
 
-  test("inline term: !/? ikili kontrol sözleşmesi (12 §3)", async ({ page }) => {
+  test("inline term: tooltip (hover) + ? panel sözleşmesi (12 §3)", async ({ page }) => {
     await page.goto("/docs/egitim/edu-u08-eventbus");
     const term = page.locator(".term-wrap").first();
     await term.scrollIntoViewIfNeeded();
-    // `!` kısa açıklama popover'ı (tap/click ile — hover şartı yok)
-    await term.getByRole("button", { name: /kısa açıklama/ }).click();
+    // Kısa açıklama: alt çizgili terimin kendisine bağlı tooltip (hover/focus) — ayrı `!` kontrolü kaldırıldı
+    await term.locator(".term").first().hover();
     await expect(page.locator(".tooltip")).toBeVisible();
-    await page.keyboard.press("Escape");
-    await expect(page.locator(".tooltip")).toBeHidden();
     // `?` uzun açıklama panelini açar; Escape kapatır
     await term.getByRole("button", { name: /panelini aç/ }).click();
     await expect(page.getByRole("dialog")).toBeVisible();
