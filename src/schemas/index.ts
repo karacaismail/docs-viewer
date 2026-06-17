@@ -311,8 +311,6 @@ export const PageIndexEntrySchema = PageObjectSchema.pick({
   categoryId: true,
   meta: true,
   related: true,
-  parent: true,
-  relations: true,
 });
 export type PageIndexEntry = z.infer<typeof PageIndexEntrySchema>;
 export const PagesIndexFileSchema = z.object({

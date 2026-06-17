@@ -580,8 +580,6 @@ write("pages-index.json", {
     categoryId: r.page.categoryId,
     meta: r.page.meta,
     related: r.page.related,
-    ...(r.page.parent ? { parent: r.page.parent } : {}),
-    ...(r.page.relations?.length ? { relations: r.page.relations } : {}),
   })),
 });
 for (const r of results) {

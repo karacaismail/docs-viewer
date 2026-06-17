@@ -325,11 +325,11 @@ export function ContentArea() {
         );
       })()}
 
-      {entry.relations && entry.relations.length > 0 && (
+      {page?.relations && page.relations.length > 0 && (
         <nav className="relations" aria-label="İlişkiler">
           <h2>İlişkiler</h2>
           {Object.entries(
-            entry.relations.reduce<Record<string, { type: string; target: string }[]>>((acc, rel) => {
+            page.relations.reduce<Record<string, { type: string; target: string }[]>>((acc, rel) => {
               const list = acc[rel.type] ?? [];
               list.push(rel);
               acc[rel.type] = list;
